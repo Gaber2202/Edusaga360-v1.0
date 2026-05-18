@@ -1,0 +1,277 @@
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { tenantQuery } from '../../api/supabaseClient';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Badge } from '../ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Switch } from '../ui/switch';
+import { Plus, Pencil, Star, Check, X, Zap, Building2, Crown } from 'lucide-react';
+
+/* ─── Static plan definitions (display only) ─── */
+const PLAN_DEFS = {
+  starter: {
+    icon: Zap,
+    color: 'from-slate-600 to-slate-700',
+    badge: 'bg-slate-100 text-slate-700 border-slate-300',
+    accent: 'text-slate-600',
+    limits: { users: 500, employees: 50, students: 300, branches: 1 },
+    features: [
+      { label: 'Core Modules', included: true },
+      { label: 'Admissions & Enrollment', included: true },
+      { label: 'Student Management', included: true },
+      { label: 'Fee Management', included: true },
+      { label: 'Basic Reports', included: true },
+      { label: 'HR Module', included: false },
+      { label: 'Payroll', included: false },
+      { label: 'Government Relations', included: false },
+      { label: 'Yamen HR AI Assistant', included: false },
+      { label: 'Priority Support', included: false },
+    ],
+  },
+  growth: {
+    icon: Building2,
+    color: 'from-blue-600 to-indigo-700',
+    badge: 'bg-blue-100 text-blue-700 border-blue-300',
+    accent: 'text-blue-600',
+    limits: { users: 4000, employees: 200, students: 2000, branches: 3 },
+    features: [
+      { label: 'Core Modules', included: true },
+      { label: 'Admissions & Enrollment', included: true },
+      { label: 'Student Management', included: true },
+      { label: 'Fee Management', included: true },
+      { label: 'Advanced Reports', included: true },
+      { label: 'HR Module', included: true },
+      { label: 'Payroll', included: true },
+      { label: 'Government Relations', included: true },
+      { label: 'Yamen HR AI (Limited)', included: true },
+      { label: 'Priority Support', included: false },
+    ],
+  },
+  enterprise: {
+    icon: Crown,
+    color: 'from-amber-500 to-orange-600',
+    badge: 'bg-amber-100 text-amber-700 border-amber-300',
+    accent: 'text-amber-600',
+    limits: { users: '10,000+', employees: '10,000+', students: 'Unlimited', branches: 20 },
+    features: [
+      { label: 'All Modules', included: true },
+      { label: 'Admissions & Enrollment', included: true },
+      { label: 'Student Management', included: true },
+      { label: 'Fee Management', included: true },
+      { label: 'Full Analytics & Reports', included: true },
+      { label: 'HR Module', included: true },
+      { label: 'Payroll', included: true },
+      { label: 'Government Relations', included: true },
+      { label: 'Full Yamen HR AI Assistant', included: true },
+      { label: 'Priority Support', included: true },
+    ],
+  },
+};
+
+/* ─── Plan Card ─── */
+function PlanCard({ plan, def, isRTL, onEdit }) {
+  const label = (ar, en) => isRTL ? ar : en;
+  const Icon = def.icon;
+  const limits = def.limits;
+
+  return (
+    <div className={`relative bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col`}>
+      {/* Header gradient */}
+      <div className={`bg-gradient-to-br ${def.color} p-5 text-white`}>
+        <div className="flex items-center justify-between mb-3">
+          <Icon className="w-6 h-6 opacity-90" />
+          {plan.is_featured && <Star className="w-5 h-5 text-amber-300 fill-amber-300" />}
+        </div>
+        <h3 className="text-xl font-bold">{isRTL ? plan.name_ar : plan.name_en}</h3>
+        <p className="text-sm opacity-75 mt-0.5">{isRTL ? plan.description_ar : plan.description_en}</p>
+
+
+      </div>
+
+      {/* Limits */}
+      <div className="px-5 py-3 bg-slate-50 border-b border-slate-100">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+          {[
+            { key: 'users',     label: label('مستخدمون', 'Users')    },
+            { key: 'employees', label: label('موظفون',    'Employees') },
+            { key: 'students',  label: label('طلاب',      'Students')  },
+            { key: 'branches',  label: label('فروع',      'Branches')  },
+          ].map(({ key, label: lbl }) => (
+            <div key={key} className="flex items-center justify-between text-xs">
+              <span className="text-slate-500">{lbl}</span>
+              <span className="font-semibold text-slate-800">{limits[key]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Feature list */}
+      <div className="px-5 py-4 flex-1">
+        <ul className="space-y-2">
+          {def.features.map((f, i) => (
+            <li key={i} className="flex items-center gap-2 text-sm">
+              {f.included
+                ? <Check className={`w-4 h-4 flex-shrink-0 ${def.accent}`} />
+                : <X className="w-4 h-4 flex-shrink-0 text-slate-300" />
+              }
+              <span className={f.included ? 'text-slate-700' : 'text-slate-400'}>{f.label}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Footer */}
+      <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between">
+        <Badge className={`text-xs border ${def.badge}`}>
+          {plan.plan_code?.toUpperCase()}
+        </Badge>
+        <Button variant="ghost" size="sm" onClick={() => onEdit(plan)}>
+          <Pencil className="w-3.5 h-3.5 me-1" />
+          {label('تعديل', 'Edit')}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Main Tab ─── */
+export default function SubscriptionPlansTab({ isRTL }) {
+  const qc = useQueryClient();
+  const label = (ar, en) => isRTL ? ar : en;
+
+  const { data: plans = [], isLoading } = useQuery({
+    queryKey: ['subscriptionPlans'],
+    queryFn: () => tenantQuery('subscription_plans').select('*').order('display_order'),
+  });
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({});
+
+  const openNew = () => {
+    setEditing(null);
+    setForm({
+      plan_code: '', name_ar: '', name_en: '', description_ar: '', description_en: '',
+      price_monthly_sar: 0, price_yearly_sar: 0, trial_days: 30,
+      max_employees: 50, max_students: 300, max_branches: 1,
+      yamen_ai_monthly_limit: 0, storage_gb: 10,
+      is_active: true, is_featured: false, display_order: plans.length + 1,
+      enabled_modules: [],
+    });
+    setDialogOpen(true);
+  };
+
+  const openEdit = (plan) => { setEditing(plan); setForm({ ...plan }); setDialogOpen(true); };
+  const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const handleSave = async () => {
+    setSaving(true);
+    if (editing) await tenantQuery('subscription_plans').update(form);
+    else await tenantQuery('subscription_plans').insert(form);
+    qc.invalidateQueries({ queryKey: ['subscriptionPlans'] });
+    setSaving(false);
+    setDialogOpen(false);
+  };
+
+  if (isLoading) return <div className="text-center py-12 text-slate-400">{label('جاري التحميل...', 'Loading...')}</div>;
+
+  // Merge DB plans with static defs; fall back to starter style if unknown code
+  const orderedCodes = ['starter', 'growth', 'enterprise'];
+  const sorted = [...plans].sort((a, b) => {
+    const ai = orderedCodes.indexOf(a.plan_code);
+    const bi = orderedCodes.indexOf(b.plan_code);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-semibold text-slate-800">{label('خطط الاشتراك', 'Subscription Plans')}</h2>
+          <p className="text-xs text-slate-400 mt-0.5">{label('الأسعار تُحدد حسب عدد المستخدمين والوحدات المفعّلة', 'Pricing is defined per users & enabled modules')}</p>
+        </div>
+        <Button size="sm" onClick={openNew}>
+          <Plus className="w-4 h-4 me-1" />{label('خطة جديدة', 'New Plan')}
+        </Button>
+      </div>
+
+      {plans.length === 0 ? (
+        <div className="text-center py-16 text-slate-400">
+          <p className="mb-3">{label('لا توجد خطط بعد', 'No plans yet')}</p>
+          <Button variant="outline" size="sm" onClick={openNew}>{label('إضافة خطة', 'Add Plan')}</Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {sorted.map(plan => (
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              def={PLAN_DEFS[plan.plan_code] || PLAN_DEFS.starter}
+              isRTL={isRTL}
+              onEdit={openEdit}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Edit / Create Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editing ? label('تعديل الخطة', 'Edit Plan') : label('خطة جديدة', 'New Plan')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>{label('الاسم بالعربي', 'Name (AR)')}</Label><Input value={form.name_ar || ''} onChange={e => set('name_ar', e.target.value)} /></div>
+              <div><Label>{label('الاسم بالإنجليزي', 'Name (EN)')}</Label><Input value={form.name_en || ''} onChange={e => set('name_en', e.target.value)} /></div>
+            </div>
+            <div>
+              <Label>{label('رمز الخطة', 'Plan Code')}</Label>
+              <Input value={form.plan_code || ''} onChange={e => set('plan_code', e.target.value.toLowerCase())} placeholder="starter / growth / enterprise" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>{label('وصف عربي', 'Description (AR)')}</Label><Input value={form.description_ar || ''} onChange={e => set('description_ar', e.target.value)} /></div>
+              <div><Label>{label('وصف إنجليزي', 'Description (EN)')}</Label><Input value={form.description_en || ''} onChange={e => set('description_en', e.target.value)} /></div>
+            </div>
+            <div className="border-t border-slate-100 pt-3">
+              <p className="text-xs text-slate-400 mb-2">{label('الأسعار (اختياري - اتركها فارغة للتسعير المخصص)', 'Pricing (optional — leave 0 for custom pricing)')}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>{label('السعر الشهري (ر.س)', 'Monthly Price (SAR)')}</Label><Input type="number" value={form.price_monthly_sar || 0} onChange={e => set('price_monthly_sar', +e.target.value)} /></div>
+                <div><Label>{label('السعر السنوي (ر.س)', 'Yearly Price (SAR)')}</Label><Input type="number" value={form.price_yearly_sar || 0} onChange={e => set('price_yearly_sar', +e.target.value)} /></div>
+              </div>
+            </div>
+            <div className="border-t border-slate-100 pt-3">
+              <p className="text-xs text-slate-400 mb-2">{label('الحدود', 'Limits')}</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label>{label('موظفون', 'Employees')}</Label><Input type="number" value={form.max_employees || 0} onChange={e => set('max_employees', +e.target.value)} /></div>
+                <div><Label>{label('طلاب', 'Students')}</Label><Input type="number" value={form.max_students || 0} onChange={e => set('max_students', +e.target.value)} /></div>
+                <div><Label>{label('فروع', 'Branches')}</Label><Input type="number" value={form.max_branches || 0} onChange={e => set('max_branches', +e.target.value)} /></div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>{label('يامن AI/شهر', 'Yamen AI/mo')}</Label><Input type="number" value={form.yamen_ai_monthly_limit || 0} onChange={e => set('yamen_ai_monthly_limit', +e.target.value)} /></div>
+              <div><Label>{label('أيام التجربة', 'Trial Days')}</Label><Input type="number" value={form.trial_days || 30} onChange={e => set('trial_days', +e.target.value)} /></div>
+            </div>
+            <div className="flex items-center justify-between">
+              <Label>{label('نشط', 'Active')}</Label>
+              <Switch checked={!!form.is_active} onCheckedChange={v => set('is_active', v)} />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label>{label('خطة مميزة', 'Featured Plan')}</Label>
+              <Switch checked={!!form.is_featured} onCheckedChange={v => set('is_featured', v)} />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{label('إلغاء', 'Cancel')}</Button>
+            <Button onClick={handleSave} disabled={saving || !form.name_ar || !form.plan_code}>
+              {saving ? label('جاري الحفظ...', 'Saving...') : label('حفظ', 'Save')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

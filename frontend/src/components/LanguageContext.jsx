@@ -1,0 +1,1193 @@
+import React, { createContext, useContext, useState } from 'react';
+
+const translations = {
+  ar: {
+    // Navigation - Main Modules
+    dashboard: 'لوحة التحكم',
+    admissions: 'القبول والتسجيل',
+    students: 'الطلاب',
+    attendance: 'الحضور والغياب',
+    fees: 'الرسوم والفواتير',
+    finance: 'المالية',
+    procurement: 'المشتريات',
+    assets: 'الأصول الثابتة',
+    reports: 'التقارير',
+    yamenAI: 'يامن AI',
+    settings: 'الإعدادات',
+    integrations: 'التكاملات',
+    workflowEngine: 'محرك سير العمل',
+    performanceEvaluation: 'تقييم الأداء',
+    archiveAndDocuments: 'الأرشيف والمستندات',
+    assetAssignments: 'تعيين الأصول للموظفين',
+    assetRentals: 'إيجار الأصول',
+    security: 'الأمان',
+    auditLogs: 'سجل المراجعة',
+    notifications: 'الإشعارات',
+    notificationCenter: 'مركز الإشعارات',
+    notificationPreferences: 'تفضيلات الإشعارات',
+    notificationSettings: 'إعدادات الإشعارات',
+    staffInbox: 'صندوق الرسائل',
+    academicRecords: 'السجل الأكاديمي',
+    messages: 'الرسائل',
+    profile: 'الملف الشخصي',
+    payments: 'المدفوعات',
+    logout: 'تسجيل الخروج',
+    
+    // Sub-modules
+    chartOfAccounts: 'دليل الحسابات',
+    journalEntries: 'القيود اليومية',
+    generalLedger: 'دفتر الأستاذ',
+    accountsReceivable: 'حسابات القبض',
+    accountsPayable: 'حسابات الدفع',
+    fiscalPeriods: 'الفترات المالية',
+    costCenters: 'مراكز التكلفة',
+    vendors: 'الموردين',
+    purchaseRequisitions: 'طلبات الشراء',
+    purchaseOrders: 'أوامر الشراء',
+    goodsReceiving: 'استلام البضائع',
+    bills: 'الفواتير',
+    assetRegister: 'سجل الأصول',
+    depreciation: 'الإهلاك',
+    contracts: 'العقود',
+    collections: 'التحصيل',
+    refunds: 'المبالغ المستردة',
+    reconciliation: 'التسوية',
+    branches: 'الفروع',
+    users: 'المستخدمين',
+    roles: 'الأدوار',
+    hr: 'الموارد البشرية',
+    employees: 'الموظفون',
+    employee_attendance: 'حضور الموظفين',
+    student_attendance: 'حضور الطلاب',
+    leaves: 'الإجازات',
+    overtime: 'العمل الإضافي',
+    payroll: 'الرواتب',
+    eosb: 'مكافأة نهاية الخدمة',
+    governmentRelations: 'العلاقات الحكومية',
+    hrApprovalsInbox: 'صندوق الموافقات',
+    
+    // Common
+    save: 'حفظ',
+    cancel: 'إلغاء',
+    edit: 'تعديل',
+    delete: 'حذف',
+    add: 'إضافة',
+    create: 'إنشاء',
+    new: 'جديد',
+    search: 'بحث',
+    filter: 'تصفية',
+    export: 'تصدير',
+    import: 'استيراد',
+    print: 'طباعة',
+    send: 'إرسال',
+    generate: 'إنشاء',
+    configure: 'تكوين',
+    loading: 'جاري التحميل...',
+    noData: 'لا توجد بيانات',
+    confirm: 'تأكيد',
+    close: 'إغلاق',
+    actions: 'الإجراءات',
+    status: 'الحالة',
+    date: 'التاريخ',
+    notes: 'ملاحظات',
+    total: 'الإجمالي',
+    branch: 'الفرع',
+    all: 'الكل',
+    view: 'عرض',
+    details: 'التفاصيل',
+    approve: 'اعتماد',
+    reject: 'رفض',
+    pending: 'قيد الانتظار',
+    approved: 'معتمد',
+    rejected: 'مرفوض',
+    post: 'ترحيل',
+    posted: 'مرحل',
+    draft: 'مسودة',
+    
+    // Roles
+    admin: 'مدير النظام',
+    accountant: 'المحاسب',
+    finance: 'المالية',
+    procurement: 'المشتريات',
+    admissions: 'القبول',
+    collections: 'التحصيل',
+    branch_manager: 'مدير الفرع',
+    auditor: 'المدقق',
+    teacher: 'المعلم',
+    parent: 'ولي الأمر',
+    
+    // Student related
+    studentName: 'اسم الطالب',
+    studentNameAr: 'الاسم بالعربي',
+    studentNameEn: 'الاسم بالإنجليزي',
+    grade: 'الصف',
+    section: 'الشعبة',
+    academicYear: 'العام الدراسي',
+    enrollmentDate: 'تاريخ التسجيل',
+    dateOfBirth: 'تاريخ الميلاد',
+    gender: 'الجنس',
+    male: 'ذكر',
+    female: 'أنثى',
+    nationality: 'الجنسية',
+    nationalId: 'رقم الهوية',
+    address: 'العنوان',
+    phone: 'الهاتف',
+    email: 'البريد الإلكتروني',
+    
+    // Status
+    active: 'نشط',
+    inactive: 'غير نشط',
+    transferred: 'منقول',
+    graduated: 'متخرج',
+    withdrawn: 'منسحب',
+    submitted: 'مقدم',
+    under_review: 'قيد المراجعة',
+    waitlist: 'قائمة الانتظار',
+    accepted: 'مقبول',
+    enrolled: 'مسجل',
+    
+    // Attendance
+    present: 'حاضر',
+    absent: 'غائب',
+    late: 'متأخر',
+    excused: 'غياب بعذر',
+    markAttendance: 'تسجيل الحضور',
+    attendanceHistory: 'سجل الحضور',
+    
+    // Fees
+    invoice: 'فاتورة',
+    invoices: 'الفواتير',
+    payment: 'دفعة',
+    payments: 'المدفوعات',
+    paid: 'مدفوع',
+    unpaid: 'غير مدفوع',
+    partial: 'مدفوع جزئياً',
+    overdue: 'متأخر',
+    tuition: 'الرسوم الدراسية',
+    transport: 'النقل',
+    activities: 'الأنشطة',
+    discount: 'خصم',
+    amount: 'المبلغ',
+    dueDate: 'تاريخ الاستحقاق',
+    sar: 'ر.س',
+    balance: 'الرصيد',
+    subtotal: 'المجموع الفرعي',
+    vat: 'ضريبة القيمة المضافة',
+    
+    // Guardian
+    guardian: 'ولي الأمر',
+    guardianName: 'اسم ولي الأمر',
+    relationship: 'صلة القرابة',
+    father: 'الأب',
+    mother: 'الأم',
+    other: 'أخرى',
+    
+    // Finance
+    debit: 'مدين',
+    credit: 'دائن',
+    account: 'الحساب',
+    accountCode: 'رقم الحساب',
+    journalEntry: 'قيد يومية',
+    reference: 'المرجع',
+    description: 'الوصف',
+    period: 'الفترة',
+    fiscalYear: 'السنة المالية',
+    opening: 'افتتاحي',
+    closing: 'ختامي',
+    
+    // Procurement
+    vendor: 'المورد',
+    purchaseRequisition: 'طلب شراء',
+    purchaseOrder: 'أمر شراء',
+    quantity: 'الكمية',
+    unitPrice: 'سعر الوحدة',
+    
+    // Assets
+    asset: 'أصل',
+    assetCode: 'رمز الأصل',
+    category: 'الفئة',
+    acquisitionDate: 'تاريخ الاقتناء',
+    acquisitionCost: 'تكلفة الاقتناء',
+    usefulLife: 'العمر الإنتاجي',
+    depreciationMethod: 'طريقة الإهلاك',
+    netBookValue: 'صافي القيمة الدفترية',
+    
+    // Grades
+    KG1: 'روضة أولى',
+    KG2: 'روضة ثانية',
+    KG3: 'تمهيدي',
+    Grade1: 'الصف الأول',
+    Grade2: 'الصف الثاني',
+    Grade3: 'الصف الثالث',
+    Grade4: 'الصف الرابع',
+    Grade5: 'الصف الخامس',
+    Grade6: 'الصف السادس',
+    Grade7: 'الصف السابع',
+    Grade8: 'الصف الثامن',
+    Grade9: 'الصف التاسع',
+    Grade10: 'الصف العاشر',
+    Grade11: 'الصف الحادي عشر',
+    Grade12: 'الصف الثاني عشر',
+    
+    // Dashboard
+    totalStudents: 'إجمالي الطلاب',
+    newApplications: 'طلبات جديدة',
+    todayAttendance: 'حضور اليوم',
+    pendingFees: 'رسوم مستحقة',
+    recentActivities: 'النشاطات الأخيرة',
+    recentApplications: 'الطلبات الحديثة',
+    recentInvoices: 'الفواتير الحديثة',
+    quickActions: 'إجراءات سريعة',
+    collectionRate: 'نسبة التحصيل',
+    arAging: 'أعمار الذمم المدينة',
+    
+    // Application
+    newApplication: 'طلب قبول جديد',
+    applicationStatus: 'حالة الطلب',
+    reviewApplication: 'مراجعة الطلب',
+    approveApplication: 'قبول الطلب',
+    rejectApplication: 'رفض الطلب',
+    convertToStudent: 'تحويل لطالب',
+    documents: 'المستندات',
+    uploadDocument: 'رفع مستند',
+    previousSchool: 'المدرسة السابقة',
+    applyingForGrade: 'الصف المطلوب',
+    pipeline: 'خط سير الطلبات',
+    sla: 'مستوى الخدمة',
+    
+    // Contracts
+    contract: 'عقد',
+    contractNumber: 'رقم العقد',
+    services: 'الخدمات',
+    paymentSchedule: 'جدول السداد',
+    installment: 'قسط',
+    
+    // Integrations
+    connector: 'موصل',
+    connected: 'متصل',
+    disconnected: 'غير متصل',
+    lastSync: 'آخر مزامنة',
+    syncNow: 'مزامنة الآن',
+    paymentGateway: 'بوابة الدفع',
+    sisLms: 'نظام إدارة الطلاب',
+    identity: 'الهوية',
+    notifications: 'الإشعارات',
+    zatca: 'هيئة الزكاة والضريبة',
+    
+    // Security
+    mfa: 'التحقق الثنائي',
+    sso: 'تسجيل الدخول الموحد',
+    permissions: 'الصلاحيات',
+    auditTrail: 'سجل المراجعة',
+    
+    // Misc
+    selectBranch: 'اختر الفرع',
+    allBranches: 'جميع الفروع',
+    vat: 'ضريبة القيمة المضافة',
+    vatManagement: 'إدارة ضريبة القيمة المضافة',
+
+    // HR Extended
+        recruitment: 'التوظيف',
+        attendanceDevices: 'أجهزة الحضور',
+        ess: 'الخدمة الذاتية',
+        systemHealth: 'صحة النظام',
+        invoices: 'الفواتير',
+
+        // Phase 2
+        crm: 'خدمة العملاء',
+        itHelpdesk: 'الدعم التقني',
+        facilities: 'المرافق والصيانة',
+        communications: 'الاتصالات',
+        operations: 'لوحة العمليات',
+        cms: 'إدارة المحتوى',
+        parentPortal: 'بوابة أولياء الأمور',
+
+        // Payroll Module
+        payrollSystem: 'نظام الرواتب',
+        payRuns: 'كشوفات الرواتب',
+        salaryComponents: 'عناصر الراتب',
+        loansAdvances: 'القروض والسلف',
+        tuitionAdvances: 'سلف الرسوم الدراسية',
+        bankExports: 'ملفات البنك',
+        gosi: 'التأمينات الاجتماعية',
+        basicSalary: 'الراتب الأساسي',
+        housingAllowance: 'بدل السكن',
+        transportAllowance: 'بدل النقل',
+        teachingAllowance: 'بدل التدريس',
+        grossSalary: 'إجمالي الراتب',
+        netSalary: 'صافي الراتب',
+        deductions: 'الاستقطاعات',
+        earnings: 'المكتسبات',
+        payslip: 'كشف الراتب',
+        loanRequest: 'طلب قرض',
+        installment: 'قسط',
+        remainingBalance: 'الرصيد المتبقي',
+        disbursement: 'الصرف',
+        wpsFile: 'ملف WPS',
+        salaryTransfer: 'تحويل الرواتب',
+        gosiEmployee: 'تأمينات الموظف',
+        gosiEmployer: 'تأمينات صاحب العمل',
+        saudi: 'سعودي',
+        nonSaudi: 'غير سعودي',
+        
+        // Fleet & Expenses
+        fleetManagement: 'إدارة الأسطول',
+        expenses: 'المصروفات',
+        hrContracts: 'العقود',
+        govIntegrations: 'التكاملات الحكومية',
+
+        // TAMARA Payment
+        tamara: 'تمارا',
+        buyNowPayLater: 'اشترِ الآن وادفع لاحقاً',
+        paidViaTamara: 'مدفوع عبر تمارا',
+        tamaraReference: 'رقم مرجع تمارا',
+        tamaraInstallment: 'تقسيط تمارا',
+
+        // Payslips
+        payslips: 'قسائم الراتب',
+        myPayslips: 'قسائم راتبي',
+        pdfPasswordProtection: 'حماية ملف PDF بكلمة مرور',
+        passwordHint: 'تلميح كلمة المرور',
+        pdfWatermark: 'علامة مائية على PDF',
+
+        // System Monitoring
+        systemMonitoring: 'مراقبة النظام',
+        systemErrors: 'أخطاء النظام',
+        fixedIssues: 'المشاكل المحلولة',
+        smokeTest: 'اختبار شامل',
+
+        // Holidays & Leave
+        holidayCalendar: 'تقويم الإجازات الرسمية',
+        leaveBalances: 'رصيد الإجازات',
+        nationalHoliday: 'إجازة وطنية',
+        schoolHoliday: 'إجازة مدرسية',
+        optionalObservance: 'إجازة اختيارية',
+        holidayName: 'اسم الإجازة',
+        holidayType: 'نوع الإجازة',
+        startDate: 'تاريخ البداية',
+        endDate: 'تاريخ النهاية',
+        leaveType: 'نوع الإجازة',
+        entitlement: 'الاستحقاق',
+        usedDays: 'الأيام المستخدمة',
+        pendingDays: 'الأيام قيد الانتظار',
+        remainingDays: 'الأيام المتبقية',
+        carriedOverDays: 'الأيام المنقولة',
+        accrualMethod: 'طريقة الاستحقاق',
+        carryoverAllowed: 'السماح بنقل الأرصدة',
+        adjustBalance: 'تعديل الرصيد',
+        currentBalance: 'الرصيد الحالي',
+        reason: 'السبب',
+        manualAdjustment: 'تعديل يدوي',
+        adjustedBy: 'معدل بواسطة',
+        adjustmentHistory: 'سجل التعديلات',
+
+        // HR Policies Library
+        hrPoliciesLibrary: 'مكتبة سياسات الموارد البشرية',
+        policyCode: 'رمز السياسة',
+        policyVersion: 'إصدار السياسة',
+        policyStatus: 'حالة السياسة',
+        draftPolicy: 'مسودة',
+        underReview: 'قيد المراجعة',
+        approvedPolicy: 'معتمدة',
+        publishedPolicy: 'منشورة',
+        archivedPolicy: 'مؤرشفة',
+        newPolicy: 'سياسة جديدة',
+        editPolicy: 'تعديل السياسة',
+        publishPolicy: 'نشر السياسة',
+        archivePolicy: 'أرشفة السياسة',
+        comparePolicy: 'مقارنة السياسات',
+        exportToPDF: 'تصدير إلى PDF',
+        sharePolicyEmail: 'مشاركة عبر البريد الإلكتروني',
+        sharePolicyWhatsApp: 'مشاركة عبر واتس أب',
+        policyTemplate: 'نموذج سياسة',
+        complianceNotes: 'ملاحظات الامتثال',
+        changeLog: 'سجل التغييرات',
+        approvalWorkflow: 'سير العمل للموافقة',
+        
+        // Bulk Invoicing & Companies
+        bulkInvoiceGeneration: 'إنشاء فواتير جماعية',
+        bulkGeneration: 'إنشاء فواتير جماعية',
+        tuitionFeesConfiguration: 'إعدادات الرسوم الدراسية',
+        parentIntakeLinks: 'روابط تسجيل أولياء الأمور',
+        filterCriteria: 'معايير التصفية',
+        groupingCriteria: 'معايير التجميع',
+        matchingStudents: 'الطلاب المطابقين',
+        batchSummary: 'ملخص الدفعة',
+        expectedInvoices: 'الفواتير المتوقعة',
+        batchName: 'اسم الدفعة',
+        postMode: 'وضع الترحيل',
+        excluded: 'مستبعد',
+        exclude: 'استبعاد',
+        generateInvoices: 'إنشاء الفواتير',
+        companies: 'الشركات',
+        company: 'الشركة',
+        companyCode: 'رمز الشركة',
+        allCompanies: 'جميع الشركات',
+        
+        // Bank Templates & Management
+        bankFileTemplates: 'قوالب ملفات البنوك',
+        bankManagement: 'إدارة البنوك',
+        studentTags: 'وسوم الطلاب',
+        subsidiaries: 'الشركات التابعة',
+        essTestMode: 'وضع اختبار ESS',
+        exportFormat: 'صيغة التصدير',
+        bankAlbilad: 'بنك البلاد',
+        templateMapping: 'مطابقة القالب',
+        uploadTemplate: 'رفع القالب',
+        columnMapping: 'مطابقة الأعمدة',
+        importBankFile: 'استيراد ملف البنك',
+        reconciliationLog: 'سجل التسوية',
+        
+        // Companies & Subsidiaries
+        companies: 'الشركات',
+        subsidiaries: 'الشركات التابعة',
+        company: 'الشركة',
+        subsidiary: 'شركة تابعة',
+        companyType: 'نوع الشركة',
+        parentCompany: 'الشركة الأم',
+        subsidiaryCompany: 'شركة تابعة',
+        employingCompany: 'الشركة المشغلة',
+        visaCompany: 'شركة التأشيرة',
+        visaType: 'نوع التأشيرة',
+        
+        // Student Tags
+        studentTags: 'وسوم الطلاب',
+        tags: 'الوسوم',
+        tag: 'وسم',
+        vip: 'VIP',
+        scholarship: 'منحة دراسية',
+        specialCare: 'رعاية خاصة',
+        referralTag: 'إحالة',
+        customTag: 'وسم مخصص',
+        autoAssignRules: 'قواعد التخصيص التلقائي',
+        
+        // Bank Management
+        bankManagement: 'إدارة البنوك',
+        addBank: 'إضافة بنك',
+        bankAlbilad: 'بنك البلاد',
+        supportedFormats: 'الصيغ المدعومة',
+        templateMapping: 'مطابقة القالب',
+        
+        // Parent Intake Sending
+        sendIntakeLink: 'إرسال رابط التسجيل',
+        referralDetails: 'بيانات الإحالة',
+        referralSource: 'مصدر الإحالة',
+        referralType: 'نوع الإحالة',
+        partner: 'شريك',
+        agent: 'وكيل',
+        employeeReferral: 'إحالة موظف',
+        sendVia: 'إرسال عبر',
+        whatsapp: 'واتس أب',
+        communicationLog: 'سجل الاتصالات',
+
+        // Fee Types
+        feeType: 'نوع الرسوم',
+        feeTypes: 'أنواع الرسوم',
+        manageFeeTypes: 'إدارة أنواع الرسوم',
+        newFeeType: 'نوع رسوم جديد',
+        feeTypeCode: 'رمز النوع',
+        systemDefault: 'افتراضي',
+
+        // ESS Test Mode
+        essTestMode: 'وضع اختبار ESS',
+        testModeEnabled: 'وضع الاختبار مفعل',
+        testEmployee: 'الموظف التجريبي',
+        platformConsole: 'لوحة تحكم المنصة',
+
+        // Subscription & SaaS
+        subscription: 'الاشتراك',
+        superAdmin: 'لوحة تحكم المنصة',
+
+        // New HR modules
+        onboarding: 'إلحاق الموظفين',
+        trainingDevelopment: 'التدريب والتطوير',
+        disciplinaryCases: 'إدارة القضايا',
+        workforcePlanning: 'تخطيط القوى العاملة',
+
+        // Contract statuses
+        sent: 'مرسل',
+        signed: 'موقع',
+        rejected: 'مرفوض',
+        expired: 'منتهي',
+        contractTemplates: 'قوالب العقود',
+
+        // Discount types
+        none: 'لا يوجد',
+        sibling: 'خصم الإخوة',
+        staff: 'خصم الموظفين',
+        scholarship: 'منحة',
+        early_payment: 'دفع مبكر',
+        special: 'خصم خاص',
+
+        // Integration Hub
+        integrationHub: 'مركز التكامل',
+
+        // HR Dashboard
+        hrDashboard: 'لوحة تحكم الموارد البشرية',
+        
+        // Finance Dashboard & new pages
+        financeDashboard: 'لوحة تحكم المالية',
+        trialBalance: 'ميزان المراجعة',
+        financialStatements: 'القوائم المالية',
+        monthEndClose: 'إقفال الفترة',
+
+        // Grades Configuration
+        grades: 'الصفوف الدراسية',
+        gradeConfiguration: 'إعدادات الصفوف',
+        schoolClinic: 'العيادة المدرسية',
+        libraryManagement: 'المكتبة',
+        canteenManagement: 'المقصف',
+        transportManagement: 'النقل المدرسي',
+        gradeCode: 'رمز الصف',
+        displayOrder: 'الترتيب',
+        levelCategory: 'المرحلة التعليمية',
+        kindergarten: 'رياض الأطفال',
+        primary: 'الابتدائي',
+        intermediate: 'المتوسط',
+        secondary: 'الثانوي',
+        newGrade: 'صف جديد',
+        editGrade: 'تعديل الصف',
+        noGradeConfiguration: 'لا توجد إعدادات رسوم لهذا العام الدراسي والصف',
+        createFeeConfiguration: 'إنشاء إعدادات الرسوم',
+        feePreview: 'معاينة الرسوم',
+        autoAssignedFees: 'الرسوم المخصصة تلقائياً',
+        overrideFees: 'تجاوز الرسوم',
+        feeBreakdown: 'تفصيل الرسوم',
+        },
+  en: {
+    // Navigation - Main Modules
+    dashboard: 'Dashboard',
+    admissions: 'Admissions',
+    students: 'Students',
+    attendance: 'Attendance',
+    fees: 'Fees & Billing',
+    finance: 'Finance',
+    procurement: 'Procurement',
+    assets: 'Fixed Assets',
+    reports: 'Reports',
+    yamenAI: 'YAMEN AI',
+    settings: 'Settings',
+    integrations: 'Integrations',
+    security: 'Security',
+    auditLogs: 'Audit Logs',
+    notifications: 'Notifications',
+    notificationCenter: 'Notification Center',
+    notificationPreferences: 'Notification Preferences',
+    notificationSettings: 'Notification Settings',
+    staffInbox: 'Staff Inbox',
+    academicRecords: 'Academic Records',
+    messages: 'Messages',
+    profile: 'Profile',
+    payments: 'Payments',
+    logout: 'Logout',
+    
+    // Sub-modules
+    chartOfAccounts: 'Chart of Accounts',
+    journalEntries: 'Journal Entries',
+    generalLedger: 'General Ledger',
+    accountsReceivable: 'Accounts Receivable',
+    accountsPayable: 'Accounts Payable',
+    fiscalPeriods: 'Fiscal Periods',
+    costCenters: 'Cost Centers',
+    vendors: 'Vendors',
+    purchaseRequisitions: 'Purchase Requisitions',
+    purchaseOrders: 'Purchase Orders',
+    goodsReceiving: 'Goods Receiving',
+    bills: 'Bills',
+    assetRegister: 'Asset Register',
+    depreciation: 'Depreciation',
+    contracts: 'Contracts',
+    collections: 'Collections',
+    refunds: 'Refunds',
+    reconciliation: 'Reconciliation',
+    branches: 'Branches',
+    users: 'Users',
+    roles: 'Roles',
+    hr: 'Human Resources',
+    employees: 'Employees',
+    employee_attendance: 'Employee Attendance',
+    student_attendance: 'Student Attendance',
+    leaves: 'Leaves',
+    overtime: 'Overtime',
+    payroll: 'Payroll',
+    eosb: 'End of Service Benefits',
+    governmentRelations: 'Government Relations',
+    hrApprovalsInbox: 'HR Approvals Inbox',
+    workflowEngine: 'Workflow Engine',
+    performanceEvaluation: 'Performance Evaluation',
+    archiveAndDocuments: 'Archive and Documents',
+    assetAssignments: 'Asset Assignments',
+    assetRentals: 'Asset Rentals',
+    
+    // Common
+    save: 'Save',
+    cancel: 'Cancel',
+    edit: 'Edit',
+    delete: 'Delete',
+    add: 'Add',
+    create: 'Create',
+    new: 'New',
+    search: 'Search',
+    filter: 'Filter',
+    export: 'Export',
+    import: 'Import',
+    print: 'Print',
+    send: 'Send',
+    generate: 'Generate',
+    configure: 'Configure',
+    loading: 'Loading...',
+    noData: 'No data available',
+    confirm: 'Confirm',
+    close: 'Close',
+    actions: 'Actions',
+    status: 'Status',
+    date: 'Date',
+    notes: 'Notes',
+    total: 'Total',
+    branch: 'Branch',
+    all: 'All',
+    view: 'View',
+    details: 'Details',
+    approve: 'Approve',
+    reject: 'Reject',
+    pending: 'Pending',
+    approved: 'Approved',
+    rejected: 'Rejected',
+    post: 'Post',
+    posted: 'Posted',
+    draft: 'Draft',
+    
+    // Roles
+    admin: 'Administrator',
+    accountant: 'Accountant',
+    finance: 'Finance',
+    procurement: 'Procurement',
+    admissions: 'Admissions',
+    collections: 'Collections',
+    branch_manager: 'Branch Manager',
+    auditor: 'Auditor',
+    teacher: 'Teacher',
+    parent: 'Parent',
+    
+    // Student related
+    studentName: 'Student Name',
+    studentNameAr: 'Name (Arabic)',
+    studentNameEn: 'Name (English)',
+    grade: 'Grade',
+    section: 'Section',
+    academicYear: 'Academic Year',
+    enrollmentDate: 'Enrollment Date',
+    dateOfBirth: 'Date of Birth',
+    gender: 'Gender',
+    male: 'Male',
+    female: 'Female',
+    nationality: 'Nationality',
+    nationalId: 'National ID',
+    address: 'Address',
+    phone: 'Phone',
+    email: 'Email',
+    
+    // Status
+    active: 'Active',
+    inactive: 'Inactive',
+    transferred: 'Transferred',
+    graduated: 'Graduated',
+    withdrawn: 'Withdrawn',
+    submitted: 'Submitted',
+    under_review: 'Under Review',
+    waitlist: 'Waitlist',
+    accepted: 'Accepted',
+    enrolled: 'Enrolled',
+    
+    // Attendance
+    present: 'Present',
+    absent: 'Absent',
+    late: 'Late',
+    excused: 'Excused',
+    markAttendance: 'Mark Attendance',
+    attendanceHistory: 'Attendance History',
+    
+    // Fees
+    invoice: 'Invoice',
+    invoices: 'Invoices',
+    payment: 'Payment',
+    payments: 'Payments',
+    paid: 'Paid',
+    unpaid: 'Unpaid',
+    partial: 'Partial',
+    overdue: 'Overdue',
+    tuition: 'Tuition',
+    transport: 'Transport',
+    activities: 'Activities',
+    discount: 'Discount',
+    amount: 'Amount',
+    dueDate: 'Due Date',
+    sar: 'SAR',
+    balance: 'Balance',
+    subtotal: 'Subtotal',
+    vat: 'VAT',
+    
+    // Guardian
+    guardian: 'Guardian',
+    guardianName: 'Guardian Name',
+    relationship: 'Relationship',
+    father: 'Father',
+    mother: 'Mother',
+    other: 'Other',
+    
+    // Finance
+    debit: 'Debit',
+    credit: 'Credit',
+    account: 'Account',
+    accountCode: 'Account Code',
+    journalEntry: 'Journal Entry',
+    reference: 'Reference',
+    description: 'Description',
+    period: 'Period',
+    fiscalYear: 'Fiscal Year',
+    opening: 'Opening',
+    closing: 'Closing',
+    
+    // Procurement
+    vendor: 'Vendor',
+    purchaseRequisition: 'Purchase Requisition',
+    purchaseOrder: 'Purchase Order',
+    quantity: 'Quantity',
+    unitPrice: 'Unit Price',
+    
+    // Assets
+    asset: 'Asset',
+    assetCode: 'Asset Code',
+    category: 'Category',
+    acquisitionDate: 'Acquisition Date',
+    acquisitionCost: 'Acquisition Cost',
+    usefulLife: 'Useful Life',
+    depreciationMethod: 'Depreciation Method',
+    netBookValue: 'Net Book Value',
+    
+    // Grades
+    KG1: 'KG 1',
+    KG2: 'KG 2',
+    KG3: 'KG 3',
+    Grade1: 'Grade 1',
+    Grade2: 'Grade 2',
+    Grade3: 'Grade 3',
+    Grade4: 'Grade 4',
+    Grade5: 'Grade 5',
+    Grade6: 'Grade 6',
+    Grade7: 'Grade 7',
+    Grade8: 'Grade 8',
+    Grade9: 'Grade 9',
+    Grade10: 'Grade 10',
+    Grade11: 'Grade 11',
+    Grade12: 'Grade 12',
+    
+    // Dashboard
+    totalStudents: 'Total Students',
+    newApplications: 'New Applications',
+    todayAttendance: 'Today\'s Attendance',
+    pendingFees: 'Pending Fees',
+    recentActivities: 'Recent Activities',
+    recentApplications: 'Recent Applications',
+    recentInvoices: 'Recent Invoices',
+    quickActions: 'Quick Actions',
+    collectionRate: 'Collection Rate',
+    arAging: 'AR Aging',
+    
+    // Application
+    newApplication: 'New Application',
+    applicationStatus: 'Application Status',
+    reviewApplication: 'Review Application',
+    approveApplication: 'Approve',
+    rejectApplication: 'Reject',
+    convertToStudent: 'Convert to Student',
+    documents: 'Documents',
+    uploadDocument: 'Upload Document',
+    previousSchool: 'Previous School',
+    applyingForGrade: 'Applying for Grade',
+    pipeline: 'Pipeline',
+    sla: 'SLA',
+    
+    // Contracts
+    contract: 'Contract',
+    contractNumber: 'Contract Number',
+    services: 'Services',
+    paymentSchedule: 'Payment Schedule',
+    installment: 'Installment',
+    
+    // Integrations
+    connector: 'Connector',
+    connected: 'Connected',
+    disconnected: 'Disconnected',
+    lastSync: 'Last Sync',
+    syncNow: 'Sync Now',
+    paymentGateway: 'Payment Gateway',
+    sisLms: 'SIS/LMS',
+    identity: 'Identity',
+    notifications: 'Notifications',
+    zatca: 'ZATCA',
+    
+    // Security
+    mfa: 'MFA',
+    sso: 'SSO',
+    permissions: 'Permissions',
+    auditTrail: 'Audit Trail',
+    
+    // Misc
+    selectBranch: 'Select Branch',
+    allBranches: 'All Branches',
+    vat: 'VAT',
+    vatManagement: 'VAT Management',
+
+    // HR Extended
+        recruitment: 'Recruitment',
+        attendanceDevices: 'Attendance Devices',
+        ess: 'Self Service',
+        systemHealth: 'System Health',
+        invoices: 'Invoices',
+
+        // Phase 2
+        crm: 'CRM',
+        itHelpdesk: 'IT Helpdesk',
+        facilities: 'Facilities',
+        communications: 'Communications',
+        operations: 'Operations',
+        cms: 'CMS',
+        parentPortal: 'Parent Portal',
+
+        // Payroll Module
+        payrollSystem: 'Payroll System',
+        payRuns: 'Pay Runs',
+        salaryComponents: 'Salary Components',
+        loansAdvances: 'Loans & Advances',
+        tuitionAdvances: 'Tuition Advances',
+        bankExports: 'Bank Exports',
+        gosi: 'GOSI',
+        basicSalary: 'Basic Salary',
+        housingAllowance: 'Housing Allowance',
+        transportAllowance: 'Transport Allowance',
+        teachingAllowance: 'Teaching Allowance',
+        grossSalary: 'Gross Salary',
+        netSalary: 'Net Salary',
+        deductions: 'Deductions',
+        earnings: 'Earnings',
+        payslip: 'Payslip',
+        loanRequest: 'Loan Request',
+        installment: 'Installment',
+        remainingBalance: 'Remaining Balance',
+        disbursement: 'Disbursement',
+        wpsFile: 'WPS File',
+        salaryTransfer: 'Salary Transfer',
+        gosiEmployee: 'GOSI Employee',
+        gosiEmployer: 'GOSI Employer',
+        saudi: 'Saudi',
+        nonSaudi: 'Non-Saudi',
+
+        // Fleet & Expenses
+        fleetManagement: 'Fleet Management',
+        expenses: 'Expenses',
+        hrContracts: 'Contracts',
+        govIntegrations: 'Government Integrations',
+
+        // TAMARA Payment
+        tamara: 'TAMARA',
+        buyNowPayLater: 'Buy Now, Pay Later',
+        paidViaTamara: 'Paid via TAMARA',
+        tamaraReference: 'TAMARA Reference',
+        tamaraInstallment: 'TAMARA Installment',
+
+        // Payslips
+        payslips: 'Payslips',
+        myPayslips: 'My Payslips',
+        pdfPasswordProtection: 'PDF Password Protection',
+        passwordHint: 'Password Hint',
+        pdfWatermark: 'PDF Watermark',
+
+        // System Monitoring
+        systemMonitoring: 'System Monitoring',
+        systemErrors: 'System Errors',
+        fixedIssues: 'Fixed Issues',
+        smokeTest: 'Smoke Test',
+
+        // Holidays & Leave
+        holidayCalendar: 'Holiday Calendar',
+        leaveBalances: 'Leave Balances',
+        nationalHoliday: 'National Holiday',
+        schoolHoliday: 'School Holiday',
+        optionalObservance: 'Optional Observance',
+        holidayName: 'Holiday Name',
+        holidayType: 'Holiday Type',
+        startDate: 'Start Date',
+        endDate: 'End Date',
+        leaveType: 'Leave Type',
+        entitlement: 'Entitlement',
+        usedDays: 'Used Days',
+        pendingDays: 'Pending Days',
+        remainingDays: 'Remaining Days',
+        carriedOverDays: 'Carried Over Days',
+        accrualMethod: 'Accrual Method',
+        carryoverAllowed: 'Carryover Allowed',
+        adjustBalance: 'Adjust Balance',
+        currentBalance: 'Current Balance',
+        reason: 'Reason',
+        manualAdjustment: 'Manual Adjustment',
+        adjustedBy: 'Adjusted By',
+        adjustmentHistory: 'Adjustment History',
+
+        // HR Policies Library
+        hrPoliciesLibrary: 'HR Policies Library',
+        policyCode: 'Policy Code',
+        policyVersion: 'Policy Version',
+        policyStatus: 'Policy Status',
+        draftPolicy: 'Draft',
+        underReview: 'Under Review',
+        approvedPolicy: 'Approved',
+        publishedPolicy: 'Published',
+        archivedPolicy: 'Archived',
+        newPolicy: 'New Policy',
+        editPolicy: 'Edit Policy',
+        publishPolicy: 'Publish Policy',
+        archivePolicy: 'Archive Policy',
+        comparePolicy: 'Compare Policies',
+        exportToPDF: 'Export to PDF',
+        sharePolicyEmail: 'Share via Email',
+        sharePolicyWhatsApp: 'Share via WhatsApp',
+        policyTemplate: 'Policy Template',
+        complianceNotes: 'Compliance Notes',
+        changeLog: 'Change Log',
+        approvalWorkflow: 'Approval Workflow',
+
+        // Bulk Invoicing & Companies  
+        bulkInvoiceGeneration: 'Bulk Invoice Generation',
+        bulkGeneration: 'Bulk Invoice Generation',
+        tuitionFeesConfiguration: 'Tuition Fees Configuration',
+        parentIntakeLinks: 'Parent Intake Links',
+        filterCriteria: 'Filter Criteria',
+        groupingCriteria: 'Grouping Criteria',
+        matchingStudents: 'Matching Students',
+        batchSummary: 'Batch Summary',
+        expectedInvoices: 'Expected Invoices',
+        batchName: 'Batch Name',
+        postMode: 'Post Mode',
+        excluded: 'Excluded',
+        exclude: 'Exclude',
+        generateInvoices: 'Generate Invoices',
+        companies: 'Companies',
+        company: 'Company',
+        companyCode: 'Company Code',
+        allCompanies: 'All Companies',
+        bulkGeneration: 'Bulk Generation',
+
+        // Bank Templates & Management
+        bankFileTemplates: 'Bank File Templates',
+        bankManagement: 'Bank Management',
+        studentTags: 'Student Tags',
+        subsidiaries: 'Subsidiaries',
+        essTestMode: 'ESS Test Mode',
+        exportFormat: 'Export Format',
+        bankAlbilad: 'Bank Albilad',
+        templateMapping: 'Template Mapping',
+        uploadTemplate: 'Upload Template',
+        columnMapping: 'Column Mapping',
+        importBankFile: 'Import Bank File',
+        reconciliationLog: 'Reconciliation Log',
+
+        // Companies & Subsidiaries
+        companies: 'Companies',
+        subsidiaries: 'Subsidiaries',
+        company: 'Company',
+        subsidiary: 'Subsidiary',
+        companyType: 'Company Type',
+        parentCompany: 'Parent Company',
+        subsidiaryCompany: 'Subsidiary',
+        employingCompany: 'Employing Company',
+        visaCompany: 'Visa Company',
+        visaType: 'Visa Type',
+
+        // Student Tags
+        studentTags: 'Student Tags',
+        tags: 'Tags',
+        tag: 'Tag',
+        vip: 'VIP',
+        scholarship: 'Scholarship',
+        specialCare: 'Special Care',
+        referralTag: 'Referral',
+        customTag: 'Custom Tag',
+        autoAssignRules: 'Auto-Assign Rules',
+
+        // Bank Management
+        bankManagement: 'Bank Management',
+        addBank: 'Add Bank',
+        bankAlbilad: 'Bank Albilad',
+        supportedFormats: 'Supported Formats',
+        templateMapping: 'Template Mapping',
+
+        // Parent Intake Sending
+        sendIntakeLink: 'Send Intake Link',
+        referralDetails: 'Referral Details',
+        referralSource: 'Referral Source',
+        referralType: 'Referral Type',
+        partner: 'Partner',
+        agent: 'Agent',
+        employeeReferral: 'Employee Referral',
+        sendVia: 'Send Via',
+        whatsapp: 'WhatsApp',
+        communicationLog: 'Communication Log',
+
+        // ESS Test Mode
+        essTestMode: 'ESS Test Mode',
+        testModeEnabled: 'Test Mode Enabled',
+        testEmployee: 'Test Employee',
+        platformConsole: 'Platform Console',
+
+        // Roles & Permissions
+        rolesPermissions: 'Roles & Permissions',
+        trialUsers: 'Trial Users',
+        creator: 'Creator',
+        ceo: 'CEO',
+        cfo: 'CFO',
+        hrHead: 'HR Head',
+        itUser: 'IT User',
+
+        // Fee Types
+        feeType: 'Fee Type',
+        feeTypes: 'Fee Types',
+        manageFeeTypes: 'Manage Fee Types',
+        newFeeType: 'New Fee Type',
+        feeTypeCode: 'Type Code',
+        systemDefault: 'System',
+
+        // Contract statuses
+        sent: 'Sent',
+        signed: 'Signed',
+        rejected: 'Rejected',
+        expired: 'Expired',
+        contractTemplates: 'Contract Template',
+
+        // Discount types
+        none: 'None',
+        sibling: 'Sibling Discount',
+        staff: 'Staff Discount',
+        scholarship: 'Scholarship',
+        early_payment: 'Early Payment',
+        special: 'Special Discount',
+
+        // Integration Hub
+        integrationHub: 'Integration Hub',
+
+        // HR Dashboard
+        hrDashboard: 'HR Dashboard',
+
+        // Finance Dashboard & new pages
+        financeDashboard: 'Finance Dashboard',
+        trialBalance: 'Trial Balance',
+        financialStatements: 'Financial Statements',
+        monthEndClose: 'Month-End Close',
+
+        // Grades Configuration
+        grades: 'Grades',
+        gradeConfiguration: 'Grade Configuration',
+        schoolClinic: 'School Clinic',
+        libraryManagement: 'Library',
+        canteenManagement: 'Canteen',
+        transportManagement: 'Transport',
+        gradeCode: 'Grade Code',
+        displayOrder: 'Display Order',
+        levelCategory: 'Level Category',
+        kindergarten: 'Kindergarten',
+        primary: 'Primary',
+        intermediate: 'Intermediate',
+        secondary: 'Secondary',
+        newGrade: 'New Grade',
+        editGrade: 'Edit Grade',
+        noGradeConfiguration: 'No fee configuration found for this Academic Year and Grade',
+        createFeeConfiguration: 'Create Fee Configuration',
+        feePreview: 'Fee Preview',
+        autoAssignedFees: 'Auto-Assigned Fees',
+        overrideFees: 'Override Fees',
+        feeBreakdown: 'Fee Breakdown',
+
+        // Contract Template Language Support
+        contentArabic: 'Content (Arabic)',
+        contentEnglish: 'Content (English)',
+        bothLanguages: 'Both Languages',
+        englishContentMissing: 'English content is missing',
+
+        // Subscription & SaaS
+        subscription: 'Subscription',
+        superAdmin: 'Super Admin',
+
+        // New HR modules
+        onboarding: 'Onboarding',
+        trainingDevelopment: 'Training & Development',
+        disciplinaryCases: 'Case Management',
+        workforcePlanning: 'Workforce Planning',
+        rolesPermissions: 'Roles & Permissions',
+        trialUsers: 'Trial Users',
+        creator: 'Creator',
+        }
+        };
+
+        const LanguageContext = createContext();
+
+export function LanguageProvider({ children }) {
+  const [language, setLanguage] = useState(() => {
+    // Initialize from localStorage immediately to prevent flicker
+    return localStorage.getItem('erp_language') || 'ar';
+  });
+  
+  const toggleLanguage = () => {
+    const newLang = language === 'ar' ? 'en' : 'ar';
+    setLanguage(newLang);
+    localStorage.setItem('erp_language', newLang);
+  };
+  
+  // Memoize context value to prevent unnecessary re-renders
+  const value = React.useMemo(() => ({
+    language,
+    toggleLanguage,
+    t: (key) => translations[language][key] || key,
+    isRTL: language === 'ar'
+  }), [language]);
+  
+  return (
+    <LanguageContext.Provider value={value}>
+      {children}
+    </LanguageContext.Provider>
+  );
+}
+
+export function useLanguage() {
+  const context = useContext(LanguageContext);
+  if (!context) {
+    // SAFE GUARD: Never crash the app - return safe defaults
+    console.warn('⚠️ useLanguage called outside LanguageProvider - using defaults');
+    
+    // Log to system error (async, non-blocking)
+    try {
+      import('../api/supabaseClient').then(({ supabase }) => {
+        supabase.from('system_errors').insert({
+          error_type: 'LanguageProvider Missing',
+          severity: 'warning',
+          module: 'LanguageContext',
+          error_message: 'useLanguage hook called outside LanguageProvider',
+          stack_trace: new Error().stack,
+          timestamp: new Date().toISOString()
+        }).catch(() => {});
+      }).catch(() => {});
+    } catch (_e) {
+      // Silent - don't crash on logging attempt
+    }
+
+    // Return safe defaults - app continues working
+    return {
+      language: 'ar',
+      isRTL: true,
+      toggleLanguage: () => console.warn('LanguageProvider not available'),
+      t: (key) => key
+    };
+  }
+  return context;
+}
+
+export default LanguageContext;
