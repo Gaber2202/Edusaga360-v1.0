@@ -76,11 +76,13 @@ export const AuthProvider = ({ children }) => {
     session,
     isAuthenticated,
     isLoadingAuth,
+    isLoadingPublicSettings: false,
     authError,
     login,
     signUp,
     logout,
     resetPassword,
+    navigateToLogin: () => window.location.replace('/school-login'),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
