@@ -1,10 +1,10 @@
-import { Toaster } from '@/components/ui/sonner';
+import { Toaster } from './components/ui/sonner';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClientInstance } from '@/lib/query-client';
+import { queryClientInstance } from './lib/query-client';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from '@/lib/AuthContext';
-import Login from '@/pages/Login';
-import Dashboard from '@/pages/Dashboard';
+import { AuthProvider, useAuth } from './lib/AuthContext';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoadingAuth } = useAuth();
