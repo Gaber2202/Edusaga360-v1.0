@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../api/supabaseClient';
+import { useAuth } from '../lib/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -7,9 +8,10 @@ import { LogIn, Eye, EyeOff, ArrowRight } from 'lucide-react';
 
 /**
  * /school-login — Branded sign-in page for existing EduSaga 360 school admins.
- * Collects email + password then delegates auth to Base44 SSO.
+ * Collects email + password then authenticates via Supabase Auth.
  */
 export default function SchoolLogin() {
+  const { login } = useAuth();
   const [lang, setLang] = useState(() => {
     try { return localStorage.getItem('erp_language') || 'ar'; } catch { return 'ar'; }
   });
@@ -27,6 +29,7 @@ export default function SchoolLogin() {
   const [showPass, setShowPass] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [authFailure, setAuthFailure] = useState('');
 
   const isRTL = lang === 'ar';
   const t = (ar, en) => isRTL ? ar : en;
@@ -45,12 +48,17 @@ export default function SchoolLogin() {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    // Redirect to Base44 SSO. returnUrl brings user back to wherever they came from.
-    const urlParams = new URLSearchParams(window.location.search);
-    const returnUrl = urlParams.get('return') ? decodeURIComponent(urlParams.get('return')) : '/';
+    setAuthFailure('');
     try {
-      window.location.href = '/login';
+      const { error } = await login(email, password);
+      if (error) {
+        setAuthFailure(t('فشل تسجيل الدخول. تحقق من بريدك وكلمة المرور.', 'Login failed. Please check your email and password.'));
+        setLoading(false);
+        return;
+      }
+      window.location.replace('/');
     } catch {
+      setAuthFailure(t('حدث خطأ. حاول مرة أخرى.', 'An error occurred. Please try again.'));
       setLoading(false);
     }
   };
@@ -139,6 +147,12 @@ export default function SchoolLogin() {
               </div>
               {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
             </div>
+
+            {authFailure && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                {authFailure}
+              </p>
+            )}
 
             <Button
               type="submit"
