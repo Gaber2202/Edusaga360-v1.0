@@ -40,7 +40,7 @@ export default function Branches() {
 
   const { data: branches = [], isLoading } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => tenantQuery('branchs').select('*').match(tenantFilter()),
+    queryFn: () => tenantQuery('branches').select('*').match(tenantFilter()),
     enabled: hasTenantAccess,
   });
 
@@ -56,10 +56,10 @@ export default function Branches() {
       const data = { ...formData, code: branchCode, tenant_id: tenantId };
 
       if (editingBranch?.id) {
-        await tenantQuery('branchs').update(data);
+        await tenantQuery('branches').update(data);
         await logAuditEvent({ action: AuditActions.UPDATE, entityType: 'Branch', entityId: editingBranch.id, oldValues: editingBranch, newValues: data });
       } else {
-        const created = await tenantQuery('branchs').insert(data);
+        const created = await tenantQuery('branches').insert(data);
         await logAuditEvent({ action: AuditActions.CREATE, entityType: 'Branch', entityId: created.id, newValues: data });
       }
 

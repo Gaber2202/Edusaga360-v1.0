@@ -36,15 +36,15 @@ export default function Dashboard() {
   const isSchoolAdmin = ['admin', 'admissions', 'branch_manager'].includes(userRole);
   const isBranchMgr = userRole === 'branch_manager';
 
-  const { data: students = [] } = useQuery({ queryKey: ['students', tenantId], queryFn: () => tenantQuery('students').select('*').match(tenantFilter(), '-created_date'), enabled: hasTenantAccess && (isSchoolAdmin || userRole === 'parent') });
-  const { data: applications = [] } = useQuery({ queryKey: ['applications', tenantId], queryFn: () => tenantQuery('applications').select('*').match(tenantFilter(), '-created_date'), enabled: hasTenantAccess && isSchoolAdmin });
-  const { data: invoices = [] } = useQuery({ queryKey: ['invoices', tenantId], queryFn: () => tenantQuery('invoices').select('*').match(tenantFilter(), '-created_date'), enabled: hasTenantAccess && (isFinance || isSchoolAdmin) });
-  const { data: employees = [] } = useQuery({ queryKey: ['employees', tenantId], queryFn: () => tenantQuery('employees').select('*').match(tenantFilter(), '-created_date'), enabled: hasTenantAccess && (isHR || isBranchMgr) });
-  const { data: leaveRequests = [] } = useQuery({ queryKey: ['leaveReqDash', tenantId], queryFn: () => tenantQuery('leave_requests').select('*').match(tenantFilter({ status: 'pending' })), enabled: hasTenantAccess && (isHR || isBranchMgr) });
-  const { data: payRuns = [] } = useQuery({ queryKey: ['payRunsDash', tenantId], queryFn: () => tenantQuery('pay_runs').select('*').match(tenantFilter(), '-created_date', 5), enabled: hasTenantAccess && (isHR || isFinance) });
-  const { data: iqamas = [] } = useQuery({ queryKey: ['iqamasDash', tenantId], queryFn: () => tenantQuery('iqama_records').select('*').match(tenantFilter()), enabled: hasTenantAccess && isHR });
-  const { data: violations = [] } = useQuery({ queryKey: ['violationsDash', tenantId], queryFn: () => tenantQuery('govi_violations').select('*').match(tenantFilter({ status: 'open' })), enabled: hasTenantAccess && isHR });
-  const { data: branches = [] } = useQuery({ queryKey: ['branches', tenantId], queryFn: () => tenantQuery('branchs').select('*').match(tenantFilter({ is_active: true })), enabled: hasTenantAccess });
+  const { data: students = [] } = useQuery({ queryKey: ['students', tenantId], queryFn: async () => { const { data } = await tenantQuery('students').select('*').match(tenantFilter()); return data || []; }, enabled: hasTenantAccess && (isSchoolAdmin || userRole === 'parent') });
+  const { data: applications = [] } = useQuery({ queryKey: ['applications', tenantId], queryFn: async () => { const { data } = await tenantQuery('applications').select('*').match(tenantFilter()); return data || []; }, enabled: hasTenantAccess && isSchoolAdmin });
+  const { data: invoices = [] } = useQuery({ queryKey: ['invoices', tenantId], queryFn: async () => { const { data } = await tenantQuery('invoices').select('*').match(tenantFilter()); return data || []; }, enabled: hasTenantAccess && (isFinance || isSchoolAdmin) });
+  const { data: employees = [] } = useQuery({ queryKey: ['employees', tenantId], queryFn: async () => { const { data } = await tenantQuery('employees').select('*').match(tenantFilter()); return data || []; }, enabled: hasTenantAccess && (isHR || isBranchMgr) });
+  const { data: leaveRequests = [] } = useQuery({ queryKey: ['leaveReqDash', tenantId], queryFn: async () => { const { data } = await tenantQuery('leave_requests').select('*').match(tenantFilter({ status: 'pending' })); return data || []; }, enabled: hasTenantAccess && (isHR || isBranchMgr) });
+  const { data: payRuns = [] } = useQuery({ queryKey: ['payRunsDash', tenantId], queryFn: async () => { const { data } = await tenantQuery('pay_runs').select('*').match(tenantFilter()); return data || []; }, enabled: hasTenantAccess && (isHR || isFinance) });
+  const { data: iqamas = [] } = useQuery({ queryKey: ['iqamasDash', tenantId], queryFn: async () => { const { data } = await tenantQuery('iqama_records').select('*').match(tenantFilter()); return data || []; }, enabled: hasTenantAccess && isHR });
+  const { data: violations = [] } = useQuery({ queryKey: ['violationsDash', tenantId], queryFn: async () => { const { data } = await tenantQuery('govi_violations').select('*').match(tenantFilter({ status: 'open' })); return data || []; }, enabled: hasTenantAccess && isHR });
+  const { data: branches = [] } = useQuery({ queryKey: ['branches', tenantId], queryFn: async () => { const { data } = await tenantQuery('branches').select('*').match(tenantFilter({ is_active: true })); return data || []; }, enabled: hasTenantAccess });
 
   const today = new Date();
 

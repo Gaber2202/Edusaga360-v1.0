@@ -42,7 +42,7 @@ export default function HolidayCalendar() {
 
   const { data: _branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => tenantQuery('branchs').select('*').match(tenantFilter()),
+    queryFn: () => tenantQuery('branches').select('*').match(tenantFilter()),
     enabled: hasTenantAccess,
   });
 

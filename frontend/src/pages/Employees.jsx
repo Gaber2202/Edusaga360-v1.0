@@ -94,7 +94,7 @@ export default function Employees() {
 
   const { data: branchesData = [] } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => tenantQuery('branchs').select('*').match(tenantFilter()),
+    queryFn: () => tenantQuery('branches').select('*').match(tenantFilter()),
     enabled: hasTenantAccess,
   });
 
