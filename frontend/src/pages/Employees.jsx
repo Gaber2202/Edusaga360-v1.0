@@ -221,7 +221,6 @@ export default function Employees() {
       status: employee.status || 'active',
       notes: employee.notes || '',
       license_expiry_date: employee.license_expiry_date || '',
-      salary: employee.salary || 0,
       compensation: employee.compensation || {}
     });
     setShowForm(true);
