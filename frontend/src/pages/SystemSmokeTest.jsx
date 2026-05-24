@@ -39,7 +39,7 @@ const SMOKE_TESTS = [
     name: 'Branch Entity',
     nameAr: 'كيان الفرع',
     test: async () => {
-      const branches = await tenantQuery('branchs').select('*').order('-created_date', 1);
+      const branches = await tenantQuery('branches').select('*').order('-created_date', 1);
       return { success: Array.isArray(branches), count: branches.length };
     }
   },

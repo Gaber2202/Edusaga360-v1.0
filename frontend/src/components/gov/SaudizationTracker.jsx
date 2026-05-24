@@ -13,7 +13,7 @@ export default function SaudizationTracker() {
   const { isRTL } = useLanguage();
 
   const { data: employees = [], isLoading: _isLoading } = useQuery({ queryKey: ['employees'], queryFn: () => tenantQuery('employees').select('*').order() });
-  const { data: branches = [] } = useQuery({ queryKey: ['branches'], queryFn: () => tenantQuery('branchs').select('*').match({ is_active: true }) });
+  const { data: branches = [] } = useQuery({ queryKey: ['branches'], queryFn: () => tenantQuery('branches').select('*').match({ is_active: true }) });
 
   const isSaudi = (emp) => emp.nationality === 'Saudi' || emp.nationality === 'سعودي';
 

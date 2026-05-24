@@ -55,7 +55,7 @@ export default function Assets() {
 
   const { data: branchList = [] } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => tenantQuery('branchs').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => tenantQuery('branches').select('*').match(tenantFilter({ is_active: true })),
     enabled: hasTenantAccess,
   });
 

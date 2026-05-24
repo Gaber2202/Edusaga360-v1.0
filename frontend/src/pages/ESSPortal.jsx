@@ -115,7 +115,7 @@ export default function ESSPortal() {
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => tenantQuery('branchs').select('*').match(tenantFilter()),
+    queryFn: () => tenantQuery('branches').select('*').match(tenantFilter()),
     enabled: hasTenantAccess,
   });
 

@@ -75,7 +75,7 @@ export default function TuitionFeesConfiguration() {
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => tenantQuery('branchs').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => tenantQuery('branches').select('*').match(tenantFilter({ is_active: true })),
     enabled: hasTenantAccess,
   });
 

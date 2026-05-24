@@ -77,7 +77,7 @@ export default function StudentDetails({ open, onClose, student: studentProp, on
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => tenantQuery('branchs').select('*').match({ is_active: true }),
+    queryFn: () => tenantQuery('branches').select('*').match({ is_active: true }),
   });
 
   // Enrich student with branch name

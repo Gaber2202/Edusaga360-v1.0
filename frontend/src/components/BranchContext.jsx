@@ -16,10 +16,14 @@ export function BranchProvider({ children }) {
 
   const { data: branches = [], isLoading } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => {
-      if (isPlatformOwner) return tenantQuery('branchs').select('*').match({ is_active: true });
+    queryFn: async () => {
+      if (isPlatformOwner) {
+        const { data } = await tenantQuery('branches').select('*').match({ is_active: true });
+        return data || [];
+      }
       if (!tenantId) return [];
-      return tenantQuery('branchs').select('*').match({ is_active: true, tenant_id: tenantId });
+      const { data } = await tenantQuery('branches').select('*').match({ is_active: true, tenant_id: tenantId });
+      return data || [];
     },
     enabled: isPlatformOwner || !!tenantId,
   });
