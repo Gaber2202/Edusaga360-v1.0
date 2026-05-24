@@ -28,8 +28,25 @@ export function RoleProvider({ children }) {
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) { setLoading(false); return; }
-      const currentUser = { ...authUser, ...authUser.user_metadata, email: authUser.email, id: authUser.id };
-      
+      let currentUser = { ...authUser, ...authUser.user_metadata, email: authUser.email, id: authUser.id };
+
+      // Load application-level user record from the users table
+      const { data: appUsers } = await supabase.from('users').select('*').eq('auth_id', authUser.id).limit(1);
+      if (appUsers && appUsers.length > 0) {
+        const appUser = appUsers[0];
+        currentUser = {
+          ...currentUser,
+          tenant_id: appUser.tenant_id || currentUser.tenant_id,
+          role_id: appUser.role_id || currentUser.role_id,
+          is_platform_owner: appUser.is_platform_owner ?? currentUser.is_platform_owner,
+          branch_id: appUser.branch_id || currentUser.branch_id,
+          _appUserId: appUser.id,
+        };
+        if (appUser.is_platform_owner) {
+          currentUser.role = 'creator';
+        }
+      }
+
       // Check trial expiration
       if (currentUser.is_trial_user && currentUser.trial_expires_date) {
         const expiryDate = new Date(currentUser.trial_expires_date);

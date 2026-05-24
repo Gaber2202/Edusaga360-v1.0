@@ -30,7 +30,6 @@ export default function TenantContextSyncer() {
     const effectiveTenantId = tenant?.id || user?.tenant_id || null;
     const platformOwner = isPlatformOwner(user);
     setTenantContext({ tenantId: effectiveTenantId, isPlatformOwner: platformOwner });
-    setSentryContext({ user, tenantId: effectiveTenantId });
 
     const key = `${platformOwner ? '*' : ''}|${effectiveTenantId || ''}`;
     if (lastKeyRef.current !== null && lastKeyRef.current !== key) {
