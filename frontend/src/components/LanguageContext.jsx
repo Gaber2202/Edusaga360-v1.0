@@ -107,10 +107,6 @@ const translations = {
     // Roles
     admin: 'مدير النظام',
     accountant: 'المحاسب',
-    finance: 'المالية',
-    procurement: 'المشتريات',
-    admissions: 'القبول',
-    collections: 'التحصيل',
     branch_manager: 'مدير الفرع',
     auditor: 'المدقق',
     teacher: 'المعلم',
@@ -158,7 +154,6 @@ const translations = {
     invoice: 'فاتورة',
     invoices: 'الفواتير',
     payment: 'دفعة',
-    payments: 'المدفوعات',
     paid: 'مدفوع',
     unpaid: 'غير مدفوع',
     partial: 'مدفوع جزئياً',
@@ -271,7 +266,6 @@ const translations = {
     paymentGateway: 'بوابة الدفع',
     sisLms: 'نظام إدارة الطلاب',
     identity: 'الهوية',
-    notifications: 'الإشعارات',
     zatca: 'هيئة الزكاة والضريبة',
     
     // Security
@@ -283,7 +277,6 @@ const translations = {
     // Misc
     selectBranch: 'اختر الفرع',
     allBranches: 'جميع الفروع',
-    vat: 'ضريبة القيمة المضافة',
     vatManagement: 'إدارة ضريبة القيمة المضافة',
 
     // HR Extended
@@ -291,7 +284,6 @@ const translations = {
         attendanceDevices: 'أجهزة الحضور',
         ess: 'الخدمة الذاتية',
         systemHealth: 'صحة النظام',
-        invoices: 'الفواتير',
 
         // Phase 2
         crm: 'خدمة العملاء',
@@ -320,7 +312,6 @@ const translations = {
         earnings: 'المكتسبات',
         payslip: 'كشف الراتب',
         loanRequest: 'طلب قرض',
-        installment: 'قسط',
         remainingBalance: 'الرصيد المتبقي',
         disbursement: 'الصرف',
         wpsFile: 'ملف WPS',
@@ -439,9 +430,6 @@ const translations = {
         reconciliationLog: 'سجل التسوية',
         
         // Companies & Subsidiaries
-        companies: 'الشركات',
-        subsidiaries: 'الشركات التابعة',
-        company: 'الشركة',
         subsidiary: 'شركة تابعة',
         companyType: 'نوع الشركة',
         parentCompany: 'الشركة الأم',
@@ -451,7 +439,6 @@ const translations = {
         visaType: 'نوع التأشيرة',
         
         // Student Tags
-        studentTags: 'وسوم الطلاب',
         tags: 'الوسوم',
         tag: 'وسم',
         vip: 'VIP',
@@ -462,11 +449,8 @@ const translations = {
         autoAssignRules: 'قواعد التخصيص التلقائي',
         
         // Bank Management
-        bankManagement: 'إدارة البنوك',
         addBank: 'إضافة بنك',
-        bankAlbilad: 'بنك البلاد',
         supportedFormats: 'الصيغ المدعومة',
-        templateMapping: 'مطابقة القالب',
         
         // Parent Intake Sending
         sendIntakeLink: 'إرسال رابط التسجيل',
@@ -489,7 +473,6 @@ const translations = {
         systemDefault: 'افتراضي',
 
         // ESS Test Mode
-        essTestMode: 'وضع اختبار ESS',
         testModeEnabled: 'وضع الاختبار مفعل',
         testEmployee: 'الموظف التجريبي',
         platformConsole: 'لوحة تحكم المنصة',
@@ -507,7 +490,6 @@ const translations = {
         // Contract statuses
         sent: 'مرسل',
         signed: 'موقع',
-        rejected: 'مرفوض',
         expired: 'منتهي',
         contractTemplates: 'قوالب العقود',
 
@@ -515,7 +497,6 @@ const translations = {
         none: 'لا يوجد',
         sibling: 'خصم الإخوة',
         staff: 'خصم الموظفين',
-        scholarship: 'منحة',
         early_payment: 'دفع مبكر',
         special: 'خصم خاص',
 
@@ -660,10 +641,6 @@ const translations = {
     // Roles
     admin: 'Administrator',
     accountant: 'Accountant',
-    finance: 'Finance',
-    procurement: 'Procurement',
-    admissions: 'Admissions',
-    collections: 'Collections',
     branch_manager: 'Branch Manager',
     auditor: 'Auditor',
     teacher: 'Teacher',
@@ -711,7 +688,6 @@ const translations = {
     invoice: 'Invoice',
     invoices: 'Invoices',
     payment: 'Payment',
-    payments: 'Payments',
     paid: 'Paid',
     unpaid: 'Unpaid',
     partial: 'Partial',
@@ -824,7 +800,6 @@ const translations = {
     paymentGateway: 'Payment Gateway',
     sisLms: 'SIS/LMS',
     identity: 'Identity',
-    notifications: 'Notifications',
     zatca: 'ZATCA',
     
     // Security
@@ -836,7 +811,6 @@ const translations = {
     // Misc
     selectBranch: 'Select Branch',
     allBranches: 'All Branches',
-    vat: 'VAT',
     vatManagement: 'VAT Management',
 
     // HR Extended
@@ -844,7 +818,6 @@ const translations = {
         attendanceDevices: 'Attendance Devices',
         ess: 'Self Service',
         systemHealth: 'System Health',
-        invoices: 'Invoices',
 
         // Phase 2
         crm: 'CRM',
@@ -873,7 +846,6 @@ const translations = {
         earnings: 'Earnings',
         payslip: 'Payslip',
         loanRequest: 'Loan Request',
-        installment: 'Installment',
         remainingBalance: 'Remaining Balance',
         disbursement: 'Disbursement',
         wpsFile: 'WPS File',
@@ -976,7 +948,6 @@ const translations = {
         company: 'Company',
         companyCode: 'Company Code',
         allCompanies: 'All Companies',
-        bulkGeneration: 'Bulk Generation',
 
         // Bank Templates & Management
         bankFileTemplates: 'Bank File Templates',
@@ -993,9 +964,6 @@ const translations = {
         reconciliationLog: 'Reconciliation Log',
 
         // Companies & Subsidiaries
-        companies: 'Companies',
-        subsidiaries: 'Subsidiaries',
-        company: 'Company',
         subsidiary: 'Subsidiary',
         companyType: 'Company Type',
         parentCompany: 'Parent Company',
@@ -1005,7 +973,6 @@ const translations = {
         visaType: 'Visa Type',
 
         // Student Tags
-        studentTags: 'Student Tags',
         tags: 'Tags',
         tag: 'Tag',
         vip: 'VIP',
@@ -1016,11 +983,8 @@ const translations = {
         autoAssignRules: 'Auto-Assign Rules',
 
         // Bank Management
-        bankManagement: 'Bank Management',
         addBank: 'Add Bank',
-        bankAlbilad: 'Bank Albilad',
         supportedFormats: 'Supported Formats',
-        templateMapping: 'Template Mapping',
 
         // Parent Intake Sending
         sendIntakeLink: 'Send Intake Link',
@@ -1035,7 +999,6 @@ const translations = {
         communicationLog: 'Communication Log',
 
         // ESS Test Mode
-        essTestMode: 'ESS Test Mode',
         testModeEnabled: 'Test Mode Enabled',
         testEmployee: 'Test Employee',
         platformConsole: 'Platform Console',
@@ -1060,7 +1023,6 @@ const translations = {
         // Contract statuses
         sent: 'Sent',
         signed: 'Signed',
-        rejected: 'Rejected',
         expired: 'Expired',
         contractTemplates: 'Contract Template',
 
@@ -1068,7 +1030,6 @@ const translations = {
         none: 'None',
         sibling: 'Sibling Discount',
         staff: 'Staff Discount',
-        scholarship: 'Scholarship',
         early_payment: 'Early Payment',
         special: 'Special Discount',
 
@@ -1122,9 +1083,6 @@ const translations = {
         trainingDevelopment: 'Training & Development',
         disciplinaryCases: 'Case Management',
         workforcePlanning: 'Workforce Planning',
-        rolesPermissions: 'Roles & Permissions',
-        trialUsers: 'Trial Users',
-        creator: 'Creator',
         }
         };
 
