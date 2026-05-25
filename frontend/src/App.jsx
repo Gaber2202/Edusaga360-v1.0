@@ -116,6 +116,7 @@ const AuthenticatedApp = () => {
         <LayoutWrapper currentPageName="ClientSubscription"><ClientSubscription /></LayoutWrapper>
       } />
       <Route path="/OnboardingWizard" element={<OnboardingWizard />} />
+      <Route path="/onboarding/:token" element={<OnboardingWizard />} />
       <Route path="/RegistrationWizard" element={<RegistrationWizard />} />
       <Route path="/InstitutionSetup" element={<InstitutionSetup />} />
       <Route path="/register" element={<Register />} />
