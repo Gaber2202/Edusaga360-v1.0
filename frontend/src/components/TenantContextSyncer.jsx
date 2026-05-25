@@ -7,7 +7,7 @@ import { isPlatformOwner } from '../lib/authHelpers';
 
 /**
  * Syncs the React-tree auth state into the module-level tenant context used by
- * the tenant-scoped `base44` client (src/api/base44Client.js).
+ * the tenant-scoped `supabase` client (src/api/supabaseClient.js).
  *
  * Also clears the React-Query cache whenever the effective tenant changes,
  * so a signed-in platform admin switching between tenants (or any transient

@@ -481,7 +481,7 @@ function LayoutContent({ children, currentPageName }) {
           {!sidebarCollapsed && (
                 <div className="flex items-center gap-2">
                   <img 
-                    src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6964bc9bb6c7937565369920/d84349133_EduSaga.png" 
+                    src="/edusaga-logo.svg" 
                     alt="EduSaga Logo" 
                     className="h-8 w-auto"
                   />
@@ -493,7 +493,7 @@ function LayoutContent({ children, currentPageName }) {
               )}
               {sidebarCollapsed && (
                 <img 
-                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6964bc9bb6c7937565369920/d84349133_EduSaga.png" 
+                  src="/edusaga-logo.svg" 
                   alt="EduSaga Logo" 
                   className="h-6 w-auto mx-auto"
                 />
@@ -548,7 +548,7 @@ function LayoutContent({ children, currentPageName }) {
               <div className="h-16 flex items-center px-4 border-b border-slate-200 flex-shrink-0">
                 <div className="flex items-center gap-3">
                   <img 
-                    src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6964bc9bb6c7937565369920/d84349133_EduSaga.png" 
+                    src="/edusaga-logo.svg" 
                     alt="EduSaga Logo" 
                     className="h-10 w-auto"
                   />

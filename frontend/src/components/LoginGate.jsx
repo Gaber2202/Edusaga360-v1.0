@@ -7,7 +7,7 @@ import React, { useState } from 'react';
  * visible "Sign In" link.
  *
  * Note: this component only renders when our React SPA mounts for an
- * unauth user. If Base44's hosted /login page intercepts before the SPA
+ * unauth user. If the platform's hosted /login page intercepts before the SPA
  * mounts (the platform-level signup gate), this component is never seen
  * — that's a Builder-config issue, not a code issue here.
  */
@@ -49,7 +49,7 @@ export default function LoginGate() {
         {/* Logo */}
         <div>
           <img
-            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6964bc9bb6c7937565369920/d84349133_EduSaga.png"
+            src="/edusaga-logo.svg"
             alt="EduSaga 360"
             className="h-14 w-auto mx-auto mb-4"
           />
