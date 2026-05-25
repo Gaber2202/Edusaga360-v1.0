@@ -129,7 +129,7 @@ export default function Register() {
             <CheckCircle className="w-12 h-12 text-emerald-600" />
           </div>
           <img
-            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6964bc9bb6c7937565369920/d84349133_EduSaga.png"
+            src="/edusaga-logo.svg"
             alt="EduSaga"
             className="h-10 w-auto mx-auto"
           />
@@ -169,7 +169,7 @@ export default function Register() {
           {/* Logo */}
           <div className="flex items-center gap-3">
             <img
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6964bc9bb6c7937565369920/d84349133_EduSaga.png"
+              src="/edusaga-logo.svg"
               alt="EduSaga 360"
               className="h-12 w-auto"
             />
@@ -214,7 +214,7 @@ export default function Register() {
           <div className="lg:hidden flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <img
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6964bc9bb6c7937565369920/d84349133_EduSaga.png"
+                src="/edusaga-logo.svg"
                 alt="EduSaga"
                 className="h-8 w-auto"
               />

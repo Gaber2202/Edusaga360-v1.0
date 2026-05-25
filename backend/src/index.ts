@@ -18,19 +18,27 @@ const PORT = process.env.PORT || 3001;
 
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: [
+    process.env.FRONTEND_URL || 'http://localhost:5173',
+    'https://edusaga-360-production.vercel.app',
+    'https://edusaga-360.vercel.app',
+    'https://admin.edusaga360.com',
+    'https://parentportal.edusaga360.com',
+  ].filter(Boolean),
   credentials: true,
 }));
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 
+// Public routes (no auth required)
 app.use('/api/health', healthRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/registration', registrationRouter);
 
+// Authenticated routes
 app.use('/api', authMiddleware, tenantMiddleware);
 app.use('/api/journal-entries', journalEntryRouter);
 app.use('/api/tenant-requests', tenantRequestRouter);
-app.use('/api/registration', registrationRouter);
 
 app.use(
   (

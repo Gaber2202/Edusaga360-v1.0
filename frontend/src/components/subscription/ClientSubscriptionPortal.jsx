@@ -319,6 +319,58 @@ export default function ClientSubscriptionPortal() {
         </CardContent>
       </Card>
 
+      {/* Subscription History */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">
+            {isRTL ? 'سجل الطلبات' : 'Request History'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {[...(upgradeRequests || []), ...(userRequests || [])].length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              <AlertCircle className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+              <p className="text-sm">{isRTL ? 'لا يوجد سجل طلبات بعد' : 'No request history yet'}</p>
+              <p className="text-xs text-slate-400 mt-1">
+                {isRTL ? 'ستظهر هنا طلبات الترقية وإضافة المستخدمين' : 'Upgrade and user requests will appear here'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {[...(upgradeRequests || []), ...(userRequests || [])].map(req => (
+                <div key={req.id} className="flex items-center justify-between bg-slate-50 rounded-lg p-3">
+                  <div>
+                    <p className="text-sm font-medium text-slate-700">
+                      {req.request_type === 'plan_upgrade'
+                        ? (isRTL ? 'طلب ترقية الخطة' : 'Plan Upgrade Request')
+                        : (isRTL ? 'طلب مستخدمين إضافيين' : 'Additional Users Request')}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {req.created_date ? new Date(req.created_date).toLocaleDateString() : '—'}
+                    </p>
+                  </div>
+                  <Badge variant={req.status === 'approved' ? 'default' : req.status === 'pending' ? 'outline' : 'secondary'}>
+                    {req.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Note about billing */}
+      <Card className="border-amber-200 bg-amber-50">
+        <CardContent className="py-4">
+          <p className="text-sm text-amber-800 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            {isRTL
+              ? 'تتم معالجة تغييرات الخطة خلال 24 ساعة. للاستفسارات حول الفواتير تواصل مع info@edusaga360.com'
+              : 'Plan changes are processed within 24 hours. For billing inquiries contact info@edusaga360.com'}
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Upgrade Plan Dialog */}
       <Dialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
         <DialogContent className="max-w-2xl">

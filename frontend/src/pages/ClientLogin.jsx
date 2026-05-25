@@ -4,7 +4,7 @@ import { LogIn, ArrowRight } from 'lucide-react';
 
 /**
  * /client/login — A branded sign-in entry point for existing school admins.
- * Delegates the actual auth to Base44's SSO; we just provide the branded UI.
+ * Delegates the actual auth to the platform's SSO; we just provide the branded UI.
  */
 export default function ClientLogin() {
   const [lang, setLang] = useState(() => {
@@ -48,7 +48,7 @@ export default function ClientLogin() {
           {/* Logo */}
           <div className="space-y-2">
             <img
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6964bc9bb6c7937565369920/d84349133_EduSaga.png"
+              src="/edusaga-logo.svg"
               alt="EduSaga 360"
               className="h-14 w-auto mx-auto"
             />

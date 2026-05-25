@@ -201,7 +201,7 @@ ${ctxJson}`;
       const history = messages.slice(-6).map(m => `${m.role === 'user' ? 'User' : 'YAMEN'}: ${m.content}`).join('\n');
       const fullPrompt = `${systemPrompt}\n\nConversation history:\n${history}\n\nUser: ${text}\n\nYAMEN:`;
 
-      // Use InvokeLLM via Base44 platform (handles auth automatically)
+      // Use InvokeLLM via the platform platform (handles auth automatically)
       const res = await callApi('/api/ai/invoke-llm', {
         prompt: fullPrompt,
       });

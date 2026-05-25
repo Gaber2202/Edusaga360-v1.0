@@ -3,10 +3,10 @@
  *
  * These numbers drive both:
  *   - What the UI renders in subscription / onboarding pages (client)
- *   - What `base44/functions/approveTenantRequest` writes onto a new Tenant record (server)
+ *   - What `the backend/functions/approveTenantRequest` writes onto a new Tenant record (server)
  *
  * Edge functions (Deno) cannot import from `src/`, so they mirror these values in
- * `base44/functions/approveTenantRequest/entry.ts` under a clearly-labeled comment.
+ * `the backend/functions/approveTenantRequest/entry.ts` under a clearly-labeled comment.
  * If you change a limit here, update that file in the same commit.
  */
 

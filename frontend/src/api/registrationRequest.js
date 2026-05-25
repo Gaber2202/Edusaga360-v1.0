@@ -3,7 +3,7 @@ import { callApi } from './supabaseClient';
 export async function submitRegistrationRequest(payload) {
   let data;
   try {
-    data = await callApi('/api/functions/submitRegistrationRequest', payload);
+    data = await callApi('/api/registration/request', payload);
   } catch (e) {
     const err = new Error(e?.message || 'Network error submitting registration');
     err.code = 'NETWORK';

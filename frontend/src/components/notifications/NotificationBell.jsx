@@ -15,7 +15,7 @@ export default function NotificationBell() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const { base44 } = await import('../../api/supabaseClient');
+        const { supabase } = await import('../../api/supabaseClient');
         const currentUser = await supabase.auth.getUser().then(r => r.data?.user);
         setUserEmail(currentUser?.email);
       } catch (_e) {

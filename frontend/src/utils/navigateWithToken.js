@@ -1,5 +1,5 @@
 /**
- * Navigate via full page reload while forwarding the Base44 access token
+ * Navigate via full page reload while forwarding the the platform access token
  * as a URL query parameter.
  *
  * `app-params.js` reads the token once at module load from either the URL

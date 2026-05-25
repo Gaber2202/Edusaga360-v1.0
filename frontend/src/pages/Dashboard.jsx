@@ -31,9 +31,10 @@ export default function Dashboard() {
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const { tenant } = useTenant();
 
-  const isHR = ['admin', 'hr_admin', 'hr_officer'].includes(userRole);
-  const isFinance = ['admin', 'finance', 'accountant'].includes(userRole);
-  const isSchoolAdmin = ['admin', 'admissions', 'branch_manager'].includes(userRole);
+  const isCreator = userRole === 'creator';
+  const isHR = isCreator || ['admin', 'hr_admin', 'hr_officer'].includes(userRole);
+  const isFinance = isCreator || ['admin', 'finance', 'accountant'].includes(userRole);
+  const isSchoolAdmin = isCreator || ['admin', 'admissions', 'branch_manager'].includes(userRole);
   const isBranchMgr = userRole === 'branch_manager';
 
   const { data: students = [] } = useQuery({ queryKey: ['students', tenantId], queryFn: async () => { const { data } = await tenantQuery('students').select('*').match(tenantFilter()); return data || []; }, enabled: hasTenantAccess && (isSchoolAdmin || userRole === 'parent') });
@@ -199,7 +200,7 @@ export default function Dashboard() {
 
       {/* ── ANALYTICS ── */}
       {(isSchoolAdmin || isFinance || isHR) && (
-        <DashboardAnalytics students={students} invoices={invoices} isRTL={isRTL} />
+        <DashboardAnalytics students={students} invoices={invoices} employees={employees} payRuns={payRuns} attendanceRecords={[]} isRTL={isRTL} />
       )}
 
       {/* ── RECENT ACTIVITY ── */}
