@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent } from '../ui/card';
@@ -47,17 +47,17 @@ export default function TuitionAdvanceManagement() {
 
   const { data: advances = [], isLoading } = useQuery({
     queryKey: ['tuitionAdvances', selectedBranchId],
-    queryFn: () => tenantQuery('tuition_advances').select('*').match(branchFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('tuition_advances').select('*').match(branchFilter(), '-created_date')),
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', selectedBranchId],
-    queryFn: () => tenantQuery('employees').select('*').match(branchFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(branchFilter({ status: 'active' }))),
   });
 
   const { data: students = [] } = useQuery({
     queryKey: ['students', selectedBranchId],
-    queryFn: () => tenantQuery('students').select('*').match(branchFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('students').select('*').match(branchFilter({ status: 'active' }))),
   });
 
   const filteredAdvances = filterByBranch(advances).filter(a => {

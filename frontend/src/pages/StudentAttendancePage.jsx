@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
@@ -31,27 +31,27 @@ export default function StudentAttendancePage() {
 
   const { data: students = [] } = useQuery({
     queryKey: ['students', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('students').select('*').match(tenantFilter(branchFilter({ status: 'active' }))),
+    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter(branchFilter({ status: 'active' })))),
     enabled: hasTenantAccess,
   });
 
   const { data: sections = [] } = useQuery({
     queryKey: ['sections', tenantId],
-    queryFn: () => tenantQuery('sections').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('sections').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
   // Attendance for selected date (used by bulk marker)
   const { data: todayAttendance = [], refetch: refetchToday } = useQuery({
     queryKey: ['studentAttendance', selectedDate, tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('student_attendances').select('*').match(tenantFilter(branchFilter({ date: selectedDate }))),
+    queryFn: () => fetchData(tenantQuery('student_attendances').select('*').match(tenantFilter(branchFilter({ date: selectedDate })))),
     enabled: hasTenantAccess,
   });
 
   // All attendance (for absence manager + reports) — last 120 days
   const { data: allAttendance = [], refetch: refetchAll } = useQuery({
     queryKey: ['allStudentAttendance', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('student_attendances').select('*').match(tenantFilter(branchFilter())),
+    queryFn: () => fetchData(tenantQuery('student_attendances').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 

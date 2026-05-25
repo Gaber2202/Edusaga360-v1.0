@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { Button } from '../components/ui/button';
@@ -25,13 +25,13 @@ export default function Admissions() {
 
   const { data: applications = [], isLoading } = useQuery({
     queryKey: ['applications', tenantId],
-    queryFn: () => tenantQuery('applications').select('*').match(tenantFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('applications').select('*').match(tenantFilter(), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => tenantQuery('branches').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('branches').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 

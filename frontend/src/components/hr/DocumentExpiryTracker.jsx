@@ -4,7 +4,7 @@
  */
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import { Badge } from '../ui/badge';
 import { differenceInDays, format } from 'date-fns';
@@ -23,7 +23,7 @@ export default function DocumentExpiryTracker({ isRTL }) {
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ['employees-docs', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
     refetchInterval: 300000, // 5 min refresh
   });

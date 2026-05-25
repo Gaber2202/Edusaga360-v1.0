@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -23,7 +23,7 @@ export default function ESSOnboardingTab({ employee }) {
 
   const { data: onboarding, isLoading } = useQuery({
     queryKey: ['onboarding', employee?.id],
-    queryFn: () => tenantQuery('onboardings').select('*').match({ employee_id: employee?.id }),
+    queryFn: () => fetchData(tenantQuery('onboardings').select('*').match({ employee_id: employee?.id })),
     enabled: !!employee?.id,
     select: (data) => data[0] || null,
   });

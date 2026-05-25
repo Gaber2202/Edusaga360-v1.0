@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
@@ -51,7 +51,7 @@ export default function SalaryComponents() {
 
   const { data: components = [], isLoading: _isLoading } = useQuery({
     queryKey: ['salaryComponents', tenantId],
-    queryFn: () => tenantQuery('salary_components').select('*').order('display_order'),
+    queryFn: () => fetchData(tenantQuery('salary_components').select('*').order('display_order')),
   });
 
   const earnings = components.filter(c => c.component_type === 'earning');

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -36,7 +36,7 @@ export default function BankManagement() {
 
   const { data: banks = [], isLoading } = useQuery({
     queryKey: ['bankTemplates', tenantId],
-    queryFn: () => tenantQuery('bank_templates').select('*').match(tenantFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('bank_templates').select('*').match(tenantFilter(), '-created_date')),
     enabled: hasTenantAccess,
   });
 

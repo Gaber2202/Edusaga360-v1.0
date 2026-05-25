@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '../LanguageContext';
 import { useRole } from '../RoleContext';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -77,7 +77,7 @@ export default function StudentDetails({ open, onClose, student: studentProp, on
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => tenantQuery('branches').select('*').match({ is_active: true }),
+    queryFn: () => fetchData(tenantQuery('branches').select('*').match({ is_active: true })),
   });
 
   // Enrich student with branch name
@@ -89,19 +89,19 @@ export default function StudentDetails({ open, onClose, student: studentProp, on
 
   const { data: guardians = [], isLoading: loadingGuardians } = useQuery({
     queryKey: ['guardians', rawStudent?.id],
-    queryFn: () => tenantQuery('guardians').select('*').match({ student_id: rawStudent?.id }),
+    queryFn: () => fetchData(tenantQuery('guardians').select('*').match({ student_id: rawStudent?.id })),
     enabled: !!rawStudent?.id
   });
 
   const { data: attendanceRecords = [] } = useQuery({
     queryKey: ['studentAttendance', rawStudent?.id],
-    queryFn: () => tenantQuery('attendances').select('*').match({ student_id: rawStudent?.id }, '-date', 30),
+    queryFn: () => fetchData(tenantQuery('attendances').select('*').match({ student_id: rawStudent?.id }, '-date', 30)),
     enabled: !!rawStudent?.id
   });
 
   const { data: invoices = [] } = useQuery({
     queryKey: ['studentInvoices', rawStudent?.id],
-    queryFn: () => tenantQuery('invoices').select('*').match({ student_id: rawStudent?.id }, '-created_date'),
+    queryFn: () => fetchData(tenantQuery('invoices').select('*').match({ student_id: rawStudent?.id }, '-created_date')),
     enabled: !!rawStudent?.id
   });
 

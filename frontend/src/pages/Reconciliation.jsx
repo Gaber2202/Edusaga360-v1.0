@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
@@ -32,13 +32,13 @@ export default function Reconciliation() {
 
   const { data: payments = [], isLoading } = useQuery({
     queryKey: ['payments', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('payments').select('*').match(tenantFilter(branchFilter()), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('payments').select('*').match(tenantFilter(branchFilter()), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: _reconciliations = [] } = useQuery({
     queryKey: ['reconciliations', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('payment_reconciliations').select('*').match(tenantFilter(branchFilter()), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('payment_reconciliations').select('*').match(tenantFilter(branchFilter()), '-created_date')),
     enabled: hasTenantAccess,
   });
 

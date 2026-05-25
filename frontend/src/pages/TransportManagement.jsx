@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { Button } from '../components/ui/button';
@@ -39,31 +39,31 @@ export default function TransportManagement() {
 
   const { data: routes = [], isLoading: routesLoading } = useQuery({
     queryKey: ['busRoutes', tenantId],
-    queryFn: () => tenantQuery('bus_routes').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('bus_routes').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 
   const { data: assignments = [] } = useQuery({
     queryKey: ['busAssignments', tenantId],
-    queryFn: () => tenantQuery('student_bus_assignments').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('student_bus_assignments').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 
   const { data: vehicles = [] } = useQuery({
     queryKey: ['vehicles', tenantId],
-    queryFn: () => tenantQuery('vehicles').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('vehicles').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 
   const { data: students = [] } = useQuery({
     queryKey: ['students', tenantId],
-    queryFn: () => tenantQuery('students').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 

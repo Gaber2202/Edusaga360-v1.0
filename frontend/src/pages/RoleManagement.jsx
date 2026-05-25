@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
@@ -79,7 +79,7 @@ export default function RoleManagement() {
 
   const { data: roles = [], isLoading } = useQuery({
     queryKey: ['roles', tenantId],
-    queryFn: () => tenantQuery('roles').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('roles').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 

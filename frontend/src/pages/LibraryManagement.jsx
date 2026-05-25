@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { Button } from '../components/ui/button';
@@ -51,19 +51,19 @@ export default function LibraryManagement() {
 
   const { data: books = [], isLoading } = useQuery({
     queryKey: ['libraryBooks', tenantId],
-    queryFn: () => tenantQuery('library_books').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('library_books').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 
   const { data: loans = [] } = useQuery({
     queryKey: ['libraryLoans', tenantId],
-    queryFn: () => tenantQuery('library_loans').select('*').match(tenantFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('library_loans').select('*').match(tenantFilter(), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: students = [] } = useQuery({
     queryKey: ['students', tenantId],
-    queryFn: () => tenantQuery('students').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 

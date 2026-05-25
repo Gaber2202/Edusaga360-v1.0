@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { Card, CardContent } from '../components/ui/card';
@@ -51,7 +51,7 @@ export default function RolesPermissions() {
 
   const { data: roles = [], isLoading } = useQuery({
     queryKey: ['roles'],
-    queryFn: () => tenantQuery('roles').select('*').order(),
+    queryFn: () => fetchData(tenantQuery('roles').select('*').order()),
   });
 
   if (!isCreator()) {

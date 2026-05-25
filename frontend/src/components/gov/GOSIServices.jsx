@@ -4,7 +4,7 @@ import ServiceTile from './ServiceTile';
 import ServiceWorkflowDialog from './ServiceWorkflowDialog';
 import { UserPlus, RefreshCw, UserMinus, FileText, BarChart2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import DataTable from '../ui/DataTable';
@@ -43,8 +43,8 @@ export default function GOSIServices() {
   const { isRTL } = useLanguage();
   const [selected, setSelected] = useState(null);
 
-  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => tenantQuery('employees').select('*').order() });
-  const { data: gosiRecords = [], isLoading } = useQuery({ queryKey: ['gosiRecords'], queryFn: () => tenantQuery('gosi_records').select('*').order() });
+  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('*').order()) });
+  const { data: gosiRecords = [], isLoading } = useQuery({ queryKey: ['gosiRecords'], queryFn: () => fetchData(tenantQuery('gosi_records').select('*').order()) });
 
   const enriched = useMemo(() => {
     return employees.map(emp => {

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useLanguage } from '../LanguageContext';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { differenceInDays, parseISO } from 'date-fns';
 import { AlertTriangle, XCircle, Clock, DollarSign } from 'lucide-react';
@@ -13,10 +13,10 @@ export default function GovReports() {
   const { isRTL } = useLanguage();
   const today = new Date();
 
-  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => tenantQuery('employees').select('*').order() });
-  const { data: iqamas = [] } = useQuery({ queryKey: ['iqamas'], queryFn: () => tenantQuery('iqama_records').select('*').order() });
-  const { data: violations = [] } = useQuery({ queryKey: ['violations'], queryFn: () => tenantQuery('govi_violations').select('*').order() });
-  const { data: mudad = [] } = useQuery({ queryKey: ['mudad'], queryFn: () => tenantQuery('mudad_submissions').select('*').order() });
+  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('*').order()) });
+  const { data: iqamas = [] } = useQuery({ queryKey: ['iqamas'], queryFn: () => fetchData(tenantQuery('iqama_records').select('*').order()) });
+  const { data: violations = [] } = useQuery({ queryKey: ['violations'], queryFn: () => fetchData(tenantQuery('govi_violations').select('*').order()) });
+  const { data: mudad = [] } = useQuery({ queryKey: ['mudad'], queryFn: () => fetchData(tenantQuery('mudad_submissions').select('*').order()) });
 
   const stats = useMemo(() => {
     const active = employees.filter(e => e.status === 'active');

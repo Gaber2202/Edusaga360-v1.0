@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { Button } from '../components/ui/button';
@@ -28,19 +28,19 @@ export default function Fees() {
 
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ['invoices', tenantId],
-    queryFn: () => tenantQuery('invoices').select('*').match(tenantFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('invoices').select('*').match(tenantFilter(), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: payments = [] } = useQuery({
     queryKey: ['payments', tenantId],
-    queryFn: () => tenantQuery('payments').select('*').match(tenantFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('payments').select('*').match(tenantFilter(), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: allPaymentLogs = [] } = useQuery({
     queryKey: ['allPaymentLogs', tenantId],
-    queryFn: () => tenantQuery('invoice_payment_logs').select('*').match(tenantFilter(), '-payment_date'),
+    queryFn: () => fetchData(tenantQuery('invoice_payment_logs').select('*').match(tenantFilter(), '-payment_date')),
     enabled: hasTenantAccess,
   });
 

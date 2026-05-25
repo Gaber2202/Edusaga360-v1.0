@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -46,25 +46,25 @@ export default function FinancialReports() {
 
   const { data: invoices = [] } = useQuery({
     queryKey: ['invoices', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('invoices').select('*').match(tenantFilter(branchFilter())),
+    queryFn: () => fetchData(tenantQuery('invoices').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 
   const { data: payments = [] } = useQuery({
     queryKey: ['payments', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('payments').select('*').match(tenantFilter(branchFilter())),
+    queryFn: () => fetchData(tenantQuery('payments').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 
   const { data: journalEntries = [] } = useQuery({
     queryKey: ['journalEntries', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter())),
+    queryFn: () => fetchData(tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 
   const { data: apBills = [] } = useQuery({
     queryKey: ['apBills', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter())),
+    queryFn: () => fetchData(tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 

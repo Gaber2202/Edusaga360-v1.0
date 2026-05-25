@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -28,27 +28,27 @@ export default function PayrollReports() {
 
   const { data: payRuns = [], isLoading: _isLoading } = useQuery({
     queryKey: ['payRuns', selectedBranchId],
-    queryFn: () => tenantQuery('pay_runs').select('*').match(branchFilter(), '-period', 50),
+    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(branchFilter(), '-period', 50)),
   });
 
   const { data: payrollInputs = [] } = useQuery({
     queryKey: ['payrollInputs', selectedBranchId],
-    queryFn: () => tenantQuery('payroll_inputs').select('*').match(branchFilter(), '-period', 500),
+    queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').match(branchFilter(), '-period', 500)),
   });
 
   const { data: loans = [] } = useQuery({
     queryKey: ['employeeLoans', selectedBranchId],
-    queryFn: () => tenantQuery('employee_loans').select('*').match(branchFilter()),
+    queryFn: () => fetchData(tenantQuery('employee_loans').select('*').match(branchFilter())),
   });
 
   const { data: tuitionAdvances = [] } = useQuery({
     queryKey: ['tuitionAdvances', selectedBranchId],
-    queryFn: () => tenantQuery('tuition_advances').select('*').match(branchFilter()),
+    queryFn: () => fetchData(tenantQuery('tuition_advances').select('*').match(branchFilter())),
   });
 
   const { data: gosiRecords = [] } = useQuery({
     queryKey: ['gosiRecords', selectedBranchId],
-    queryFn: () => tenantQuery('gosi_records').select('*').match(branchFilter(), '-period'),
+    queryFn: () => fetchData(tenantQuery('gosi_records').select('*').match(branchFilter(), '-period')),
   });
 
   const filteredPayRuns = filterByBranch(payRuns);

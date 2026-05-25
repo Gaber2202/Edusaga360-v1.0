@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -10,8 +10,8 @@ import { AlertTriangle, CheckCircle } from 'lucide-react';
 export default function GOSIManagement() {
   const { isRTL } = useLanguage();
 
-  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => tenantQuery('employees').select('*').order() });
-  const { data: gosiRecords = [], isLoading } = useQuery({ queryKey: ['gosiRecords'], queryFn: () => tenantQuery('gosi_records').select('*').order() });
+  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('*').order()) });
+  const { data: gosiRecords = [], isLoading } = useQuery({ queryKey: ['gosiRecords'], queryFn: () => fetchData(tenantQuery('gosi_records').select('*').order()) });
 
   const enriched = useMemo(() => {
     return employees.map(emp => {

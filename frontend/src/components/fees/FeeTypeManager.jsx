@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
@@ -33,7 +33,7 @@ export default function FeeTypeManager({ open, onClose }) {
 
   const { data: feeTypes = [], isLoading } = useQuery({
     queryKey: ['feeTypes', tenantId],
-    queryFn: () => tenantQuery('fee_types').select('*').order('display_order'),
+    queryFn: () => fetchData(tenantQuery('fee_types').select('*').order('display_order')),
   });
 
   const handleSave = async () => {

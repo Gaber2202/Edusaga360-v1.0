@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery, callApi } from '../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { sanitizeHtml } from '../lib/sanitize';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -55,34 +55,34 @@ export default function ParentIntake() {
 
   const { data: intakeLink } = useQuery({
     queryKey: ['intakeLink', linkCode],
-    queryFn: () => tenantQuery('parent_intake_links').select('*').match({ link_code: linkCode, is_active: true }),
+    queryFn: () => fetchData(tenantQuery('parent_intake_links').select('*').match({ link_code: linkCode, is_active: true })),
     enabled: !!linkCode,
     select: (data) => data[0]
   });
 
   const { data: _branches = [] } = useQuery({
     queryKey: ['branches'],
-    queryFn: () => tenantQuery('branches').select('*').match({ is_active: true }),
+    queryFn: () => fetchData(tenantQuery('branches').select('*').match({ is_active: true })),
   });
 
   const { data: academicYears = [] } = useQuery({
     queryKey: ['academicYears'],
-    queryFn: () => tenantQuery('academic_years').select('*').match({ is_active: true }),
+    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true })),
   });
 
   const { data: feeStructures = [] } = useQuery({
     queryKey: ['feeStructures'],
-    queryFn: () => tenantQuery('fee_structures').select('*').match({ is_active: true }),
+    queryFn: () => fetchData(tenantQuery('fee_structures').select('*').match({ is_active: true })),
   });
 
   const { data: specialCareFees = [] } = useQuery({
     queryKey: ['specialCareFees'],
-    queryFn: () => tenantQuery('special_care_fees').select('*').match({ is_active: true }),
+    queryFn: () => fetchData(tenantQuery('special_care_fees').select('*').match({ is_active: true })),
   });
 
   const { data: currentTC } = useQuery({
     queryKey: ['currentTC'],
-    queryFn: () => tenantQuery('tc_versions').select('*').match({ is_current: true, applies_to: 'admissions' }),
+    queryFn: () => fetchData(tenantQuery('tc_versions').select('*').match({ is_current: true, applies_to: 'admissions' })),
     select: (data) => data[0]
   });
 

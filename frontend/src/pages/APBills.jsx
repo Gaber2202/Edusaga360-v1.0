@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent } from '../components/ui/card';
@@ -45,19 +45,19 @@ export default function APBills() {
 
   const { data: bills = [], isLoading } = useQuery({
     queryKey: ['apBills', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter()), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter()), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: accounts = [] } = useQuery({
     queryKey: ['chartOfAccounts', tenantId],
-    queryFn: () => tenantQuery('chart_of_accounts').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('chart_of_accounts').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
   const { data: vendors = [] } = useQuery({
     queryKey: ['vendors', tenantId],
-    queryFn: () => tenantQuery('vendors').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('vendors').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 

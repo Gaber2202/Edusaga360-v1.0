@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -56,22 +56,22 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
 
   const { data: students = [] } = useQuery({
     queryKey: ['activeStudents', tenantId],
-    queryFn: () => tenantQuery('students').select('*').match({ status: 'active' }),
+    queryFn: () => fetchData(tenantQuery('students').select('*').match({ status: 'active' })),
   });
 
   const { data: feeStructures = [] } = useQuery({
     queryKey: ['feeStructures', tenantId],
-    queryFn: () => tenantQuery('fee_structures').select('*').match({ is_active: true }),
+    queryFn: () => fetchData(tenantQuery('fee_structures').select('*').match({ is_active: true })),
   });
 
   const { data: bankAccounts = [] } = useQuery({
     queryKey: ['bankAccounts', tenantId],
-    queryFn: () => tenantQuery('school_bank_accounts').select('*').match({ status: 'active' }),
+    queryFn: () => fetchData(tenantQuery('school_bank_accounts').select('*').match({ status: 'active' })),
   });
 
   const { data: feeTypes = [] } = useQuery({
     queryKey: ['feeTypes', tenantId],
-    queryFn: () => tenantQuery('fee_types').select('*').match({ is_active: true }),
+    queryFn: () => fetchData(tenantQuery('fee_types').select('*').match({ is_active: true })),
   });
 
   // CRITICAL FIX: Properly load invoice data when editing

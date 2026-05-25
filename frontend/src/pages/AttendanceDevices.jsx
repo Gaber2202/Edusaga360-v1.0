@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery, callApi } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent } from '../components/ui/card';
@@ -54,19 +54,19 @@ export default function AttendanceDevices() {
 
   const { data: devices = [], isLoading: loadingDevices } = useQuery({
     queryKey: ['attendanceDevices', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('attendance_devices').select('*').match(tenantFilter(branchFilter()), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('attendance_devices').select('*').match(tenantFilter(branchFilter()), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: punchLogs = [], isLoading: loadingLogs } = useQuery({
     queryKey: ['punchLogs', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('punch_logs').select('*').match(tenantFilter(branchFilter()), '-punch_time', 100),
+    queryFn: () => fetchData(tenantQuery('punch_logs').select('*').match(tenantFilter(branchFilter()), '-punch_time', 100)),
     enabled: hasTenantAccess,
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, callApi } from '../../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -23,31 +23,31 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
 
   const { data: trainings = [] } = useQuery({
     queryKey: ['trainings_emp', employee?.id],
-    queryFn: () => tenantQuery('trainings').select('*').order(),
+    queryFn: () => fetchData(tenantQuery('trainings').select('*').order()),
     enabled: !!employee?.id,
   });
 
   const { data: discCases = [] } = useQuery({
     queryKey: ['disc_cases_emp', employee?.id],
-    queryFn: () => tenantQuery('disciplinary_cases').select('*').match({ employee_id: employee?.id }),
+    queryFn: () => fetchData(tenantQuery('disciplinary_cases').select('*').match({ employee_id: employee?.id })),
     enabled: !!employee?.id,
   });
 
   const { data: assetAssignments = [] } = useQuery({
     queryKey: ['asset_assignments_emp', employee?.id],
-    queryFn: () => tenantQuery('asset_assignments').select('*').match({ employee_id: employee?.id }),
+    queryFn: () => fetchData(tenantQuery('asset_assignments').select('*').match({ employee_id: employee?.id })),
     enabled: !!employee?.id,
   });
 
   const { data: contracts = [] } = useQuery({
     queryKey: ['emp_contracts', employee?.id],
-    queryFn: () => tenantQuery('employee_contracts').select('*').match({ employee_id: employee?.id }),
+    queryFn: () => fetchData(tenantQuery('employee_contracts').select('*').match({ employee_id: employee?.id })),
     enabled: !!employee?.id,
   });
 
   const { data: attendance = [] } = useQuery({
     queryKey: ['att_emp', employee?.id],
-    queryFn: () => tenantQuery('employee_attendances').select('*').match({ employee_id: employee?.id }),
+    queryFn: () => fetchData(tenantQuery('employee_attendances').select('*').match({ employee_id: employee?.id })),
     enabled: !!employee?.id,
   });
 

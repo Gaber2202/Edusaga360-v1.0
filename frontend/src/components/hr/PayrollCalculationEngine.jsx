@@ -4,7 +4,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { createJournalEntry } from '../../api/journalEntry';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import { useBranch } from '../BranchContext';
@@ -124,19 +124,19 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
 
   const { data: employees = [] } = useQuery({
     queryKey: ['emp-payroll', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter(branchFilter({ status: 'active' }))),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter(branchFilter({ status: 'active' })))),
     enabled: hasTenantAccess,
   });
 
   const { data: loans = [] } = useQuery({
     queryKey: ['loans-payroll', tenantId],
-    queryFn: () => tenantQuery('employee_loans').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('employee_loans').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 
   const { data: advances = [] } = useQuery({
     queryKey: ['advances-payroll', tenantId],
-    queryFn: () => tenantQuery('tuition_advances').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('tuition_advances').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 

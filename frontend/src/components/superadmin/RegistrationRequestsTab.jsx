@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, callApi } from '../../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -21,7 +21,7 @@ export default function RegistrationRequestsTab() {
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ['registration-requests'],
-    queryFn: () => tenantQuery('registration_requests').select('*').order('-submitted_at'),
+    queryFn: () => fetchData(tenantQuery('registration_requests').select('*').order('-submitted_at')),
   });
 
   const filtered = requests.filter(r => {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
@@ -37,13 +37,13 @@ export default function Depreciation() {
 
   const { data: assets = [], isLoading: loadingAssets } = useQuery({
     queryKey: ['assets', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('fixed_assets').select('*').match(tenantFilter(branchFilter({ status: 'active' }))),
+    queryFn: () => fetchData(tenantQuery('fixed_assets').select('*').match(tenantFilter(branchFilter({ status: 'active' })))),
     enabled: hasTenantAccess,
   });
 
   const { data: depRuns = [], isLoading: loadingRuns } = useQuery({
     queryKey: ['depreciationRuns', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('asset_depreciations').select('*').match(tenantFilter(branchFilter()), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('asset_depreciations').select('*').match(tenantFilter(branchFilter()), '-created_date')),
     enabled: hasTenantAccess,
   });
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery, callApi } from '../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent } from '../components/ui/card';
@@ -51,13 +51,13 @@ export default function OnboardingPage() {
 
   const { data: onboardings = [], isLoading } = useQuery({
     queryKey: ['onboardings', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('onboardings').select('*').match(tenantFilter(branchFilter()), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('onboardings').select('*').match(tenantFilter(branchFilter()), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: hrPolicies = [] } = useQuery({
     queryKey: ['hr_policies_published', tenantId],
-    queryFn: () => tenantQuery('hr_policys').select('*').match({ status: 'published' }),
+    queryFn: () => fetchData(tenantQuery('hr_policys').select('*').match({ status: 'published' })),
     enabled: hasTenantAccess,
   });
 

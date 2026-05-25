@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -20,8 +20,8 @@ export default function ViolationsPenalties() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ violation_type: 'iqama', authority: 'mol', employee_name: '', amount_sar: 0, due_date: '', status: 'open', description: '', reference_number: '' });
 
-  const { data: violations = [], isLoading } = useQuery({ queryKey: ['violations'], queryFn: () => tenantQuery('govi_violations').select('*').order('-created_date') });
-  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => tenantQuery('employees').select('*').order() });
+  const { data: violations = [], isLoading } = useQuery({ queryKey: ['violations'], queryFn: () => fetchData(tenantQuery('govi_violations').select('*').order('-created_date')) });
+  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('*').order()) });
 
   const openViolations = violations.filter(v => v.status === 'open');
   const totalExposure = openViolations.reduce((s, v) => s + (v.amount_sar || 0), 0);

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -31,7 +31,7 @@ export default function CMS() {
   
   const { data: contents = [], isLoading } = useQuery({
     queryKey: ['cmsContent', tenantId],
-    queryFn: () => tenantQuery('cms_contents').select('*').match(tenantFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('cms_contents').select('*').match(tenantFilter(), '-created_date')),
     enabled: hasTenantAccess,
   });
 

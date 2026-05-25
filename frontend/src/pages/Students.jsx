@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { Input } from '../components/ui/input';
@@ -38,7 +38,7 @@ export default function Students() {
 
   const { data: students = [], isLoading } = useQuery({
     queryKey: ['students', tenantId],
-    queryFn: () => tenantQuery('students').select('*').match(tenantFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter(), '-created_date')),
     enabled: hasTenantAccess,
   });
 
@@ -120,7 +120,7 @@ export default function Students() {
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => tenantQuery('branches').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('branches').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 

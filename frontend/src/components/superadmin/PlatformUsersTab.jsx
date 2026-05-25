@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, callApi } from '../../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -55,7 +55,7 @@ export default function PlatformUsersTab({ tenants = [] }) {
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['platform-all-users'],
-    queryFn: () => tenantQuery('users').select('*').order(),
+    queryFn: () => fetchData(tenantQuery('users').select('*').order()),
   });
 
   const tenantMap = Object.fromEntries(tenants.map(t => [t.id, t]));

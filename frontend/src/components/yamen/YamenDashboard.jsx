@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { AlertTriangle, Clock, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
@@ -17,12 +17,12 @@ function riskColor(score) {
 
 export default function YamenDashboard({ isRTL }) {
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
-  const { data: employees = [] } = useQuery({ queryKey: ['employees', tenantId], queryFn: () => tenantQuery('employees').select('*').match(tenantFilter()), enabled: hasTenantAccess });
-  const { data: attendance = [] } = useQuery({ queryKey: ['employeeAttendance', tenantId], queryFn: () => tenantQuery('employee_attendances').select('*').match(tenantFilter(), '-date', 200), enabled: hasTenantAccess });
-  const { data: leaves = [] } = useQuery({ queryKey: ['leaveRequests', tenantId], queryFn: () => tenantQuery('leave_requests').select('*').match(tenantFilter(), '-created_date', 100), enabled: hasTenantAccess });
-  const { data: iqamaRecords = [] } = useQuery({ queryKey: ['iqamaRecords', tenantId], queryFn: () => tenantQuery('iqama_records').select('*').match(tenantFilter()), enabled: hasTenantAccess });
-  const { data: evaluations = [] } = useQuery({ queryKey: ['performanceEvals', tenantId], queryFn: () => tenantQuery('performance_evaluations').select('*').match(tenantFilter(), '-created_date', 100), enabled: hasTenantAccess });
-  const { data: _payrollInputs = [] } = useQuery({ queryKey: ['payrollInputs', tenantId], queryFn: () => tenantQuery('payroll_inputs').select('*').match(tenantFilter(), '-created_date', 200), enabled: hasTenantAccess });
+  const { data: employees = [] } = useQuery({ queryKey: ['employees', tenantId], queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter())), enabled: hasTenantAccess });
+  const { data: attendance = [] } = useQuery({ queryKey: ['employeeAttendance', tenantId], queryFn: () => fetchData(tenantQuery('employee_attendances').select('*').match(tenantFilter(), '-date', 200)), enabled: hasTenantAccess });
+  const { data: leaves = [] } = useQuery({ queryKey: ['leaveRequests', tenantId], queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match(tenantFilter(), '-created_date', 100)), enabled: hasTenantAccess });
+  const { data: iqamaRecords = [] } = useQuery({ queryKey: ['iqamaRecords', tenantId], queryFn: () => fetchData(tenantQuery('iqama_records').select('*').match(tenantFilter())), enabled: hasTenantAccess });
+  const { data: evaluations = [] } = useQuery({ queryKey: ['performanceEvals', tenantId], queryFn: () => fetchData(tenantQuery('performance_evaluations').select('*').match(tenantFilter(), '-created_date', 100)), enabled: hasTenantAccess });
+  const { data: _payrollInputs = [] } = useQuery({ queryKey: ['payrollInputs', tenantId], queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').match(tenantFilter(), '-created_date', 200)), enabled: hasTenantAccess });
 
   const today = new Date();
 

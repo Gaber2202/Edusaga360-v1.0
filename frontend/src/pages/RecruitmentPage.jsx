@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
@@ -87,37 +87,37 @@ export default function RecruitmentPage() {
 
   const { data: recruitments = [], isLoading: loadingRecruitments } = useQuery({
     queryKey: ['recruitments', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('recruitments').select('*').match(tenantFilter(branchFilter()), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('recruitments').select('*').match(tenantFilter(branchFilter()), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: applicants = [], isLoading: loadingApplicants } = useQuery({
     queryKey: ['applicants', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('applicants').select('*').match(tenantFilter(branchFilter()), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('applicants').select('*').match(tenantFilter(branchFilter()), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: departments = [] } = useQuery({
     queryKey: ['departments', tenantId],
-    queryFn: () => tenantQuery('departments').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('departments').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
   const { data: _jobTitles = [] } = useQuery({
     queryKey: ['jobTitles', tenantId],
-    queryFn: () => tenantQuery('job_titles').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('job_titles').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies_rec', tenantId],
-    queryFn: () => tenantQuery('companys').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('companys').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees_active_rec', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 

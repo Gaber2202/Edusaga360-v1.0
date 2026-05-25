@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { tenantQuery, callApi } from '../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useTenant } from '../components/TenantContext';
 import { useRole } from '../components/RoleContext';
@@ -53,7 +53,7 @@ function UsersTab({ isRTL, tenant }) {
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['subscription-users'],
-    queryFn: () => tenantQuery('users').select('*').order(),
+    queryFn: () => fetchData(tenantQuery('users').select('*').order()),
   });
 
   const updateRoleMutation = useMutation({

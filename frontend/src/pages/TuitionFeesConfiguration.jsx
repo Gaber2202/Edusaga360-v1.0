@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -63,31 +63,31 @@ export default function TuitionFeesConfiguration() {
 
   const { data: feeStructures = [], isLoading: loadingFees } = useQuery({
     queryKey: ['feeStructures', tenantId],
-    queryFn: () => tenantQuery('fee_structures').select('*').match(tenantFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('fee_structures').select('*').match(tenantFilter(), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: specialCareFees = [], isLoading: loadingSpecialCare } = useQuery({
     queryKey: ['specialCareFees', tenantId],
-    queryFn: () => tenantQuery('special_care_fees').select('*').match(tenantFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('special_care_fees').select('*').match(tenantFilter(), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => tenantQuery('branches').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('branches').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
   const { data: academicYears = [] } = useQuery({
     queryKey: ['academicYears', tenantId],
-    queryFn: () => tenantQuery('academic_years').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
   const { data: feeTypes = [] } = useQuery({
     queryKey: ['feeTypes', tenantId],
-    queryFn: () => tenantQuery('fee_types').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('fee_types').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
@@ -102,10 +102,10 @@ export default function TuitionFeesConfiguration() {
 
   const { data: sections = [] } = useQuery({
     queryKey: ['sections', tuitionFormData.branch_id],
-    queryFn: () => tenantQuery('sections').select('*').match({ 
+    queryFn: () => fetchData(tenantQuery('sections').select('*').match({ 
       branch_id: tuitionFormData.branch_id,
       is_active: true 
-    }),
+    })),
     enabled: !!tuitionFormData.branch_id,
   });
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { Button } from '../components/ui/button';
@@ -47,25 +47,25 @@ export default function CanteenManagement() {
 
   const { data: menuItems = [], isLoading: _menuLoading } = useQuery({
     queryKey: ['canteenMenu', tenantId],
-    queryFn: () => tenantQuery('canteen_menu_items').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('canteen_menu_items').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 
   const { data: wallets = [] } = useQuery({
     queryKey: ['canteenWallets', tenantId],
-    queryFn: () => tenantQuery('canteen_wallets').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('canteen_wallets').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 
   const { data: transactions = [] } = useQuery({
     queryKey: ['canteenTransactions', tenantId],
-    queryFn: () => tenantQuery('canteen_transactions').select('*').match(tenantFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('canteen_transactions').select('*').match(tenantFilter(), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: students = [] } = useQuery({
     queryKey: ['students', tenantId],
-    queryFn: () => tenantQuery('students').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -20,7 +20,7 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
   // Use live student data from cache so UI auto-refreshes after save
   const { data: liveStudents = [] } = useQuery({
     queryKey: ['students', tenantId],
-    queryFn: () => tenantQuery('students').select('*').order('-created_date'),
+    queryFn: () => fetchData(tenantQuery('students').select('*').order('-created_date')),
     staleTime: 0,
   });
   const liveStudent = liveStudents.find(s => s.id === student?.id) || student;
@@ -41,7 +41,7 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
 
   const { data: academicYears = [] } = useQuery({
     queryKey: ['academicYears', tenantId],
-    queryFn: () => tenantQuery('academic_years').select('*').match({ is_active: true }),
+    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true })),
   });
 
   const { data: grades = [] } = useQuery({
@@ -54,10 +54,10 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
 
   const { data: sections = [] } = useQuery({
     queryKey: ['sections', student?.branch_id],
-    queryFn: () => tenantQuery('sections').select('*').match({ 
+    queryFn: () => fetchData(tenantQuery('sections').select('*').match({ 
       branch_id: student?.branch_id,
       is_active: true 
-    }),
+    })),
     enabled: !!student?.branch_id,
   });
 

@@ -4,7 +4,7 @@ import ServiceTile from './ServiceTile';
 import ServiceWorkflowDialog from './ServiceWorkflowDialog';
 import { Upload, CheckCircle, FileText, BarChart2 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -58,7 +58,7 @@ export default function MudadServices() {
     total_salary: 0, status: 'pending', compliance_percentage: 100, bank_name: 'Al Rajhi Bank', file_format: 'wps', notes: ''
   });
 
-  const { data: submissions = [], isLoading } = useQuery({ queryKey: ['mudad'], queryFn: () => tenantQuery('mudad_submissions').select('*').order('-created_date') });
+  const { data: submissions = [], isLoading } = useQuery({ queryKey: ['mudad'], queryFn: () => fetchData(tenantQuery('mudad_submissions').select('*').order('-created_date')) });
 
   const columns = [
     { header: isRTL ? 'الفترة' : 'Period', cell: r => `${isRTL ? monthsAr[r.period_month - 1] : months[r.period_month - 1]} ${r.period_year}` },

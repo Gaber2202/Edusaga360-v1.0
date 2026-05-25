@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -33,12 +33,12 @@ export default function QiwaContracts() {
 
   const { data: contracts = [], isLoading } = useQuery({
     queryKey: ['hrDocuments_contracts', tenantId],
-    queryFn: () => tenantQuery('employee_documents').select('*').match({ document_type: 'employment_contract' }),
+    queryFn: () => fetchData(tenantQuery('employee_documents').select('*').match({ document_type: 'employment_contract' })),
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees_active', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').match({ status: 'active' }),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match({ status: 'active' })),
   });
 
   const enriched = contracts.map(c => ({

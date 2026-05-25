@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { differenceInDays, parseISO } from 'date-fns';
 import {
@@ -14,14 +14,14 @@ const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'];
 export default function GovComplianceDashboard() {
   const { isRTL } = useLanguage();
 
-  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => tenantQuery('employees').select('*').order() });
-  const { data: iqamas = [] } = useQuery({ queryKey: ['iqamas'], queryFn: () => tenantQuery('iqama_records').select('*').order() });
-  const { data: visas = [] } = useQuery({ queryKey: ['visas'], queryFn: () => tenantQuery('visa_records').select('*').order() });
-  const { data: violations = [] } = useQuery({ queryKey: ['violations'], queryFn: () => tenantQuery('govi_violations').select('*').order() });
-  const { data: govDocs = [] } = useQuery({ queryKey: ['govDocs'], queryFn: () => tenantQuery('gov_documents').select('*').order() });
-  const { data: mudad = [] } = useQuery({ queryKey: ['mudad'], queryFn: () => tenantQuery('mudad_submissions').select('*').order() });
-  const { data: gosiRecords = [] } = useQuery({ queryKey: ['gosiRecords'], queryFn: () => tenantQuery('gosi_records').select('*').order() });
-  const { data: _payRuns = [] } = useQuery({ queryKey: ['payRuns'], queryFn: () => tenantQuery('pay_runs').select('*').order('-created_date', 6) });
+  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('*').order()) });
+  const { data: iqamas = [] } = useQuery({ queryKey: ['iqamas'], queryFn: () => fetchData(tenantQuery('iqama_records').select('*').order()) });
+  const { data: visas = [] } = useQuery({ queryKey: ['visas'], queryFn: () => fetchData(tenantQuery('visa_records').select('*').order()) });
+  const { data: violations = [] } = useQuery({ queryKey: ['violations'], queryFn: () => fetchData(tenantQuery('govi_violations').select('*').order()) });
+  const { data: govDocs = [] } = useQuery({ queryKey: ['govDocs'], queryFn: () => fetchData(tenantQuery('gov_documents').select('*').order()) });
+  const { data: mudad = [] } = useQuery({ queryKey: ['mudad'], queryFn: () => fetchData(tenantQuery('mudad_submissions').select('*').order()) });
+  const { data: gosiRecords = [] } = useQuery({ queryKey: ['gosiRecords'], queryFn: () => fetchData(tenantQuery('gosi_records').select('*').order()) });
+  const { data: _payRuns = [] } = useQuery({ queryKey: ['payRuns'], queryFn: () => fetchData(tenantQuery('pay_runs').select('*').order('-created_date', 6)) });
 
   const today = new Date();
 

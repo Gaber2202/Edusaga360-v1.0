@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
-import { tenantQuery, callApi } from '../../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -45,7 +45,7 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
 
   const { data: academicYears = [] } = useQuery({
     queryKey: ['academicYears', tenantId],
-    queryFn: () => tenantQuery('academic_years').select('*').match({ is_active: true }),
+    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true })),
   });
   const [formData, setFormData] = useState({
     student_id: '',

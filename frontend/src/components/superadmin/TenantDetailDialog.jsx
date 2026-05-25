@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { tenantQuery, callApi } from '../../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
@@ -51,7 +51,7 @@ function TenantUsersTab({ tenant, isRTL }) {
 
   const { data: tenantUsers = [], isLoading } = useQuery({
     queryKey: ['tenant-users', tenant.id],
-    queryFn: () => tenantQuery('users').select('*').match({ tenant_id: tenant.id }),
+    queryFn: () => fetchData(tenantQuery('users').select('*').match({ tenant_id: tenant.id })),
   });
 
   const getRoleLabel = (u) => {

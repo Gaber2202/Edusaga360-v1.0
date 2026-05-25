@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
@@ -33,7 +33,7 @@ export default function FiscalPeriods() {
 
   const { data: periods = [], isLoading } = useQuery({
     queryKey: ['fiscalPeriods', tenantId],
-    queryFn: () => tenantQuery('fiscal_periods').select('*').match(tenantFilter(), '-start_date'),
+    queryFn: () => fetchData(tenantQuery('fiscal_periods').select('*').match(tenantFilter(), '-start_date')),
     enabled: hasTenantAccess,
   });
 

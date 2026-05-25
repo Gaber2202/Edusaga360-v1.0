@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, callApi } from '../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { useBranch } from '../components/BranchContext';
@@ -60,7 +60,7 @@ export default function ESSPortal() {
   // Get employee record linked to current user
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 
@@ -73,61 +73,61 @@ export default function ESSPortal() {
 
   const { data: myRequests = [] } = useQuery({
     queryKey: ['essRequests', currentEmployee?.id],
-    queryFn: () => tenantQuery('ess_requests').select('*').match({ employee_id: currentEmployee?.id }),
+    queryFn: () => fetchData(tenantQuery('ess_requests').select('*').match({ employee_id: currentEmployee?.id })),
     enabled: !!currentEmployee?.id,
   });
 
   const { data: myLeaves = [] } = useQuery({
     queryKey: ['leaveRequests', currentEmployee?.id],
-    queryFn: () => tenantQuery('leave_requests').select('*').match({ employee_id: currentEmployee?.id }),
+    queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match({ employee_id: currentEmployee?.id })),
     enabled: !!currentEmployee?.id,
   });
 
   const { data: myAttendance = [] } = useQuery({
     queryKey: ['employeeAttendance', currentEmployee?.id],
-    queryFn: () => tenantQuery('employee_attendances').select('*').match({ employee_id: currentEmployee?.id }),
+    queryFn: () => fetchData(tenantQuery('employee_attendances').select('*').match({ employee_id: currentEmployee?.id })),
     enabled: !!currentEmployee?.id,
   });
 
   const { data: myViolations = [] } = useQuery({
     queryKey: ['violations', currentEmployee?.id],
-    queryFn: () => tenantQuery('attendance_violations').select('*').match({ employee_id: currentEmployee?.id }),
+    queryFn: () => fetchData(tenantQuery('attendance_violations').select('*').match({ employee_id: currentEmployee?.id })),
     enabled: !!currentEmployee?.id,
   });
 
   const { data: myLoans = [] } = useQuery({
     queryKey: ['employeeLoans', currentEmployee?.id],
-    queryFn: () => tenantQuery('employee_loans').select('*').match({ employee_id: currentEmployee?.id }),
+    queryFn: () => fetchData(tenantQuery('employee_loans').select('*').match({ employee_id: currentEmployee?.id })),
     enabled: !!currentEmployee?.id,
   });
 
   const { data: myTuitionAdvances = [] } = useQuery({
     queryKey: ['tuitionAdvances', currentEmployee?.id],
-    queryFn: () => tenantQuery('tuition_advances').select('*').match({ employee_id: currentEmployee?.id }),
+    queryFn: () => fetchData(tenantQuery('tuition_advances').select('*').match({ employee_id: currentEmployee?.id })),
     enabled: !!currentEmployee?.id,
   });
 
   const { data: myPayslips = [] } = useQuery({
     queryKey: ['payrollInputs', currentEmployee?.id],
-    queryFn: () => tenantQuery('payroll_inputs').select('*').match({ employee_id: currentEmployee?.id }),
+    queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').match({ employee_id: currentEmployee?.id })),
     enabled: !!currentEmployee?.id,
   });
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => tenantQuery('branches').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('branches').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 
   const { data: departments = [] } = useQuery({
     queryKey: ['departments', tenantId],
-    queryFn: () => tenantQuery('departments').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('departments').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
   const { data: jobTitles = [] } = useQuery({
     queryKey: ['jobTitles', tenantId],
-    queryFn: () => tenantQuery('job_titles').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('job_titles').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
@@ -159,7 +159,7 @@ export default function ESSPortal() {
 
   const { data: leaveTypes = [] } = useQuery({
     queryKey: ['leaveTypes', tenantId],
-    queryFn: () => tenantQuery('leave_types').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('leave_types').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 

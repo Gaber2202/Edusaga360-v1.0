@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -30,31 +30,31 @@ export default function ExecutiveDashboard() {
 
   const { data: students = [] } = useQuery({
     queryKey: ['students', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('students').select('*').match(tenantFilter(branchFilter())),
+    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 
   const { data: applications = [] } = useQuery({
     queryKey: ['applications', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('applications').select('*').match(tenantFilter(branchFilter())),
+    queryFn: () => fetchData(tenantQuery('applications').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 
   const { data: invoices = [] } = useQuery({
     queryKey: ['invoices', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('invoices').select('*').match(tenantFilter(branchFilter())),
+    queryFn: () => fetchData(tenantQuery('invoices').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 
   const { data: payments = [] } = useQuery({
     queryKey: ['payments', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('payments').select('*').match(tenantFilter(branchFilter())),
+    queryFn: () => fetchData(tenantQuery('payments').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 
   const { data: _attendance = [] } = useQuery({
     queryKey: ['attendance', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('attendances').select('*').match(tenantFilter(branchFilter())),
+    queryFn: () => fetchData(tenantQuery('attendances').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 

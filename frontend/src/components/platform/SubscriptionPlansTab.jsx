@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -143,7 +143,7 @@ export default function SubscriptionPlansTab({ isRTL }) {
 
   const { data: plans = [], isLoading } = useQuery({
     queryKey: ['subscriptionPlans'],
-    queryFn: () => tenantQuery('subscription_plans').select('*').order('display_order'),
+    queryFn: () => fetchData(tenantQuery('subscription_plans').select('*').order('display_order')),
   });
 
   const [dialogOpen, setDialogOpen] = useState(false);

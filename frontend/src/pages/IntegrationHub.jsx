@@ -8,7 +8,7 @@
 
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { Card } from '../components/ui/card';
@@ -80,7 +80,7 @@ export default function IntegrationHub() {
 
   const { data: logs = [], isLoading, dataUpdatedAt } = useQuery({
     queryKey: ['integrationLogs', tenantId],
-    queryFn: () => tenantQuery('integration_logs').select('*').match(tenantFilter(), '-timestamp', 200),
+    queryFn: () => fetchData(tenantQuery('integration_logs').select('*').match(tenantFilter(), '-timestamp', 200)),
     enabled: hasTenantAccess,
     refetchInterval: 15000, // auto-refresh every 15s
   });

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -39,28 +39,28 @@ export default function SystemHealth() {
 
   const { data: defects = [], isLoading: loadingDefects } = useQuery({
     queryKey: ['systemDefects'],
-    queryFn: () => tenantQuery('system_defects').select('*').order('-created_date'),
+    queryFn: () => fetchData(tenantQuery('system_defects').select('*').order('-created_date')),
   });
 
   const { data: auditLogs = [] } = useQuery({
     queryKey: ['auditLogs'],
-    queryFn: () => tenantQuery('audit_logs').select('*').order('-created_date', 50),
+    queryFn: () => fetchData(tenantQuery('audit_logs').select('*').order('-created_date', 50)),
   });
 
   // Fetch counts for system health overview
   const { data: students = [] } = useQuery({
     queryKey: ['students'],
-    queryFn: () => tenantQuery('students').select('*').order(),
+    queryFn: () => fetchData(tenantQuery('students').select('*').order()),
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => tenantQuery('employees').select('*').order(),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').order()),
   });
 
   const { data: invoices = [] } = useQuery({
     queryKey: ['invoices'],
-    queryFn: () => tenantQuery('invoices').select('*').order(),
+    queryFn: () => fetchData(tenantQuery('invoices').select('*').order()),
   });
 
   const modules = [

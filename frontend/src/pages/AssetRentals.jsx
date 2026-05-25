@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Card } from '../components/ui/card';
@@ -52,25 +52,25 @@ export default function AssetRentals() {
 
   const { data: rentals = [], isLoading } = useQuery({
     queryKey: ['assetRentals', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('asset_rentals').select('*').match(tenantFilter(branchFilter()), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('asset_rentals').select('*').match(tenantFilter(branchFilter()), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: rentableAssets = [] } = useQuery({
     queryKey: ['rentableAssets', tenantId],
-    queryFn: () => tenantQuery('fixed_assets').select('*').match(tenantFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('fixed_assets').select('*').match(tenantFilter(), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: students = [] } = useQuery({
     queryKey: ['activeStudents', tenantId],
-    queryFn: () => tenantQuery('students').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 
   const { data: _vendors = [] } = useQuery({
     queryKey: ['vendors', tenantId],
-    queryFn: () => tenantQuery('vendors').select('*').match(tenantFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('vendors').select('*').match(tenantFilter(), '-created_date')),
     enabled: hasTenantAccess,
   });
 
