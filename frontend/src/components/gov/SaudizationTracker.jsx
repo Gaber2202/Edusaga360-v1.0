@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -12,8 +12,8 @@ const TARGET_PCT = 30;
 export default function SaudizationTracker() {
   const { isRTL } = useLanguage();
 
-  const { data: employees = [], isLoading: _isLoading } = useQuery({ queryKey: ['employees'], queryFn: () => tenantQuery('employees').select('*').order() });
-  const { data: branches = [] } = useQuery({ queryKey: ['branches'], queryFn: () => tenantQuery('branches').select('*').match({ is_active: true }) });
+  const { data: employees = [], isLoading: _isLoading } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('*').order()) });
+  const { data: branches = [] } = useQuery({ queryKey: ['branches'], queryFn: () => fetchData(tenantQuery('branches').select('*').match({ is_active: true })) });
 
   const isSaudi = (emp) => emp.nationality === 'Saudi' || emp.nationality === 'سعودي';
 

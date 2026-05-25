@@ -4,7 +4,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { useBranch } from '../components/BranchContext';
@@ -64,7 +64,7 @@ export default function MonthEndClose() {
 
   const { data: fiscalPeriods = [] } = useQuery({
     queryKey: ['fiscalPeriods', tenantId],
-    queryFn: () => tenantQuery('fiscal_periods').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('fiscal_periods').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 

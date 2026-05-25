@@ -342,14 +342,19 @@ function LayoutContent({ children, currentPageName }) {
     },
   ];
 
+  const isCreatorRole = userRole === 'creator' || userRole === 'admin';
   const filteredNavigation = navigation.filter(item => {
+    if (isCreatorRole) return true;
     if (!item.roles) return true;
     return item.roles.includes(userRole);
   }).map(item => {
     if (item.children) {
       return {
         ...item,
-        children: item.children.filter(child => !child.roles || child.roles.includes(userRole))
+        children: item.children.filter(child => {
+          if (isCreatorRole) return true;
+          return !child.roles || child.roles.includes(userRole);
+        })
       };
     }
     return item;

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { Card } from '../components/ui/card';
@@ -50,13 +50,13 @@ export default function Attendance() {
 
   const { data: students = [], isLoading: loadingStudents } = useQuery({
     queryKey: ['students', tenantId],
-    queryFn: () => tenantQuery('students').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 
   const { data: existingAttendance = [], isLoading: loadingAttendance } = useQuery({
     queryKey: ['attendance', dateStr, tenantId],
-    queryFn: () => tenantQuery('attendances').select('*').match(tenantFilter({ date: dateStr })),
+    queryFn: () => fetchData(tenantQuery('attendances').select('*').match(tenantFilter({ date: dateStr }))),
     enabled: hasTenantAccess,
   });
 

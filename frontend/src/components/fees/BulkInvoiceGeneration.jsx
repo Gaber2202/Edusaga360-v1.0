@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
@@ -57,22 +57,22 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
 
   const { data: students = [] } = useQuery({
     queryKey: ['students', 'active', tenantId],
-    queryFn: () => tenantQuery('students').select('*').match({ status: 'active' }),
+    queryFn: () => fetchData(tenantQuery('students').select('*').match({ status: 'active' })),
   });
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies', tenantId],
-    queryFn: () => tenantQuery('companys').select('*').match({ is_active: true }),
+    queryFn: () => fetchData(tenantQuery('companys').select('*').match({ is_active: true })),
   });
 
   const { data: contracts = [] } = useQuery({
     queryKey: ['contracts', tenantId],
-    queryFn: () => tenantQuery('student_contracts').select('*').order(),
+    queryFn: () => fetchData(tenantQuery('student_contracts').select('*').order()),
   });
 
   const { data: academicYears = [] } = useQuery({
     queryKey: ['academicYears', tenantId],
-    queryFn: () => tenantQuery('academic_years').select('*').match({ is_active: true }),
+    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true })),
   });
 
   const filteredStudents = students.filter(student => {

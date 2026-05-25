@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { Card } from '../components/ui/card';
@@ -20,7 +20,7 @@ export default function FixedIssuesLog() {
 
   const { data: issues = [], isLoading } = useQuery({
     queryKey: ['fixedIssues'],
-    queryFn: () => tenantQuery('fixed_issues').select('*').order('-verified_date'),
+    queryFn: () => fetchData(tenantQuery('fixed_issues').select('*').order('-verified_date')),
     enabled: isAdmin,
   });
 

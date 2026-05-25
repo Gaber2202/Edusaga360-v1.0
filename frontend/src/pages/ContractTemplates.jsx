@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery, callApi } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -279,7 +279,7 @@ export default function ContractTemplates() {
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['contractTemplates', tenantId],
-    queryFn: () => tenantQuery('contract_templates').select('*').match(tenantFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('contract_templates').select('*').match(tenantFilter(), '-created_date')),
     enabled: hasTenantAccess,
   });
 

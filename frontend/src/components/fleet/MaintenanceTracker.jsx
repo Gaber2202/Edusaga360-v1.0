@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent } from '../ui/card';
@@ -36,12 +36,12 @@ export default function MaintenanceTracker() {
 
   const { data: vehicles = [] } = useQuery({
     queryKey: ['vehicles', selectedBranchId],
-    queryFn: () => tenantQuery('vehicles').select('*').match(branchFilter()),
+    queryFn: () => fetchData(tenantQuery('vehicles').select('*').match(branchFilter())),
   });
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ['maintenanceRecords', selectedBranchId],
-    queryFn: () => tenantQuery('maintenance_records').select('*').match(branchFilter(), '-service_date'),
+    queryFn: () => fetchData(tenantQuery('maintenance_records').select('*').match(branchFilter(), '-service_date')),
   });
 
   const filteredRecords = filterByBranch(records);

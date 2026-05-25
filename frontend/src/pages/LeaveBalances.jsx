@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent } from '../components/ui/card';
@@ -28,13 +28,13 @@ export default function LeaveBalances() {
 
   const { data: balances = [], isLoading: loadingBalances } = useQuery({
     queryKey: ['leaveBalances', tenantId],
-    queryFn: () => tenantQuery('leave_balances').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('leave_balances').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 
   const { data: employees = [], isLoading: loadingEmployees } = useQuery({
     queryKey: ['employees', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 

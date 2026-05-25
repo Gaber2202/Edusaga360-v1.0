@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Card } from '../components/ui/card';
@@ -56,7 +56,7 @@ export default function ChartOfAccounts() {
 
   const { data: accounts = [], isLoading } = useQuery({
     queryKey: ['chartOfAccounts', tenantId],
-    queryFn: () => tenantQuery('chart_of_accounts').select('*').match(tenantFilter(), 'account_code'),
+    queryFn: () => fetchData(tenantQuery('chart_of_accounts').select('*').match(tenantFilter(), 'account_code')),
     enabled: hasTenantAccess,
   });
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -40,19 +40,19 @@ export default function ParentIntakeManagement() {
 
   const { data: links = [], isLoading } = useQuery({
     queryKey: ['parentIntakeLinks', tenantId],
-    queryFn: () => tenantQuery('parent_intake_links').select('*').match(tenantFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('parent_intake_links').select('*').match(tenantFilter(), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => tenantQuery('branches').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('branches').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
   const { data: academicYears = [] } = useQuery({
     queryKey: ['academicYears', tenantId],
-    queryFn: () => tenantQuery('academic_years').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 

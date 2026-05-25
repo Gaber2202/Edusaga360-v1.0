@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent } from '../ui/card';
@@ -44,12 +44,12 @@ export default function LoansManagement() {
 
   const { data: loans = [], isLoading } = useQuery({
     queryKey: ['employeeLoans', selectedBranchId],
-    queryFn: () => tenantQuery('employee_loans').select('*').match(branchFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('employee_loans').select('*').match(branchFilter(), '-created_date')),
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', selectedBranchId],
-    queryFn: () => tenantQuery('employees').select('*').match(branchFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(branchFilter({ status: 'active' }))),
   });
 
   const filteredLoans = filterByBranch(loans).filter(l => {

@@ -3,7 +3,7 @@
  */
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -29,7 +29,7 @@ export default function NitaqatDashboard({ isRTL }) {
 
   const { data: employees = [], dataUpdatedAt } = useQuery({
     queryKey: ['employees-nitaqat', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
     refetchInterval: 60000, // refresh every 60 seconds — AC#4
   });

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
@@ -36,13 +36,13 @@ export default function HolidayCalendar() {
 
   const { data: holidays = [], isLoading } = useQuery({
     queryKey: ['holidays', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('holidays').select('*').match(tenantFilter(), '-start_date'),
+    queryFn: () => fetchData(tenantQuery('holidays').select('*').match(tenantFilter(), '-start_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: _branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => tenantQuery('branches').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('branches').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -70,13 +70,13 @@ export default function Integrations() {
 
   const { data: connectors = [], isLoading: _isLoading } = useQuery({
     queryKey: ['connectors', tenantId],
-    queryFn: () => tenantQuery('integration_connectors').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('integration_connectors').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 
   const { data: logs = [] } = useQuery({
     queryKey: ['integrationLogs', showLogs?.id, tenantId],
-    queryFn: () => tenantQuery('integration_logs').select('*').match(tenantFilter({ connector_id: showLogs?.id }), '-created_date', 50),
+    queryFn: () => fetchData(tenantQuery('integration_logs').select('*').match(tenantFilter({ connector_id: showLogs?.id }), '-created_date', 50)),
     enabled: !!showLogs?.id && hasTenantAccess,
   });
 

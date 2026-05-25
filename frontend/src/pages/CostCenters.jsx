@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
@@ -38,13 +38,13 @@ export default function CostCenters() {
 
   const { data: costCenters = [], isLoading } = useQuery({
     queryKey: ['costCenters', tenantId],
-    queryFn: () => tenantQuery('cost_centers').select('*').match(tenantFilter(), 'code'),
+    queryFn: () => fetchData(tenantQuery('cost_centers').select('*').match(tenantFilter(), 'code')),
     enabled: hasTenantAccess,
   });
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => tenantQuery('branches').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('branches').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 

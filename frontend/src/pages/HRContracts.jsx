@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, callApi } from '../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
@@ -50,13 +50,13 @@ export default function HRContracts() {
 
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ['hrDocuments', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('employee_documents').select('*').match(tenantFilter(branchFilter()), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('employee_documents').select('*').match(tenantFilter(branchFilter()), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 

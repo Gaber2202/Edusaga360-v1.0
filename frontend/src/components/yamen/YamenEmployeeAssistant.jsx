@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -14,12 +14,12 @@ export default function YamenEmployeeAssistant({ isRTL, isHRView = false }) {
 
   const { data: auditLogs = [] } = useQuery({
     queryKey: ['yamenLogs', tenantId],
-    queryFn: () => tenantQuery('audit_logs').select('*').match({ entity_type: 'YamenAI' })
+    queryFn: () => fetchData(tenantQuery('audit_logs').select('*').match({ entity_type: 'YamenAI' }))
   });
 
   const { data: _employees = [] } = useQuery({
     queryKey: ['employees', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').order()
+    queryFn: () => fetchData(tenantQuery('employees').select('*').order())
   });
 
   const filtered = auditLogs.filter((l) =>

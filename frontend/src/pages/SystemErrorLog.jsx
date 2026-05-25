@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { Card } from '../components/ui/card';
@@ -27,7 +27,7 @@ export default function SystemErrorLog() {
 
   const { data: errors = [], isLoading, refetch } = useQuery({
     queryKey: ['systemErrors'],
-    queryFn: () => tenantQuery('system_errors').select('*').order('-timestamp'),
+    queryFn: () => fetchData(tenantQuery('system_errors').select('*').order('-timestamp')),
     refetchInterval: 30000, // Auto-refresh every 30 seconds
     enabled: isAdmin,
   });

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
@@ -53,19 +53,19 @@ export default function FleetManagement() {
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ['vehicles', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('vehicles').select('*').match(tenantFilter(branchFilter()), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('vehicles').select('*').match(tenantFilter(branchFilter()), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 
   const { data: _branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => tenantQuery('branches').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('branches').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 

@@ -4,7 +4,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { useBranch } from '../components/BranchContext';
@@ -34,13 +34,13 @@ export default function TrialBalance() {
 
   const { data: accounts = [], isLoading: loadingAccts } = useQuery({
     queryKey: ['coa-tb', tenantId],
-    queryFn: () => tenantQuery('chart_of_accounts').select('*').match(tenantFilter({ is_active: true }), 'account_code'),
+    queryFn: () => fetchData(tenantQuery('chart_of_accounts').select('*').match(tenantFilter({ is_active: true }), 'account_code')),
     enabled: hasTenantAccess,
   });
 
   const { data: journalEntries = [], isLoading: loadingJEs } = useQuery({
     queryKey: ['je-tb', tenantId],
-    queryFn: () => tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter({ status: 'posted' }))),
+    queryFn: () => fetchData(tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter({ status: 'posted' })))),
     enabled: hasTenantAccess,
   });
 

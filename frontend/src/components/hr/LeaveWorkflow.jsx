@@ -4,7 +4,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent } from '../ui/card';
@@ -41,26 +41,26 @@ export default function LeaveWorkflow({ isRTL, viewMode = 'hr' }) {
 
   const { data: leaveRequests = [], isLoading } = useQuery({
     queryKey: ['leaveRequests', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('leave_requests').select('*').match(tenantFilter(branchFilter()), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match(tenantFilter(branchFilter()), '-created_date')),
     enabled: hasTenantAccess,
     refetchInterval: 30000,
   });
 
   const { data: leaveTypes = [] } = useQuery({
     queryKey: ['leaveTypes', tenantId],
-    queryFn: () => tenantQuery('leave_types').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('leave_types').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 
   const { data: leaveBalances = [] } = useQuery({
     queryKey: ['leaveBalances', tenantId],
-    queryFn: () => tenantQuery('leave_balances').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('leave_balances').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 

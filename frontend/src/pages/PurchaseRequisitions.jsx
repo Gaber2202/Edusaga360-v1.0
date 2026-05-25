@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
@@ -42,13 +42,13 @@ export default function PurchaseRequisitions() {
 
   const { data: requisitions = [], isLoading } = useQuery({
     queryKey: ['purchaseRequisitions', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('purchase_requisitions').select('*').match(tenantFilter(branchFilter()), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('purchase_requisitions').select('*').match(tenantFilter(branchFilter()), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: _vendors = [] } = useQuery({
     queryKey: ['vendors', tenantId],
-    queryFn: () => tenantQuery('vendors').select('*').match(tenantFilter({ status: 'approved' })),
+    queryFn: () => fetchData(tenantQuery('vendors').select('*').match(tenantFilter({ status: 'approved' }))),
     enabled: hasTenantAccess,
   });
 

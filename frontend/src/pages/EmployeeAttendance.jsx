@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent } from '../components/ui/card';
@@ -29,19 +29,19 @@ export default function EmployeeAttendance() {
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter(branchFilter({ status: 'active' }))),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter(branchFilter({ status: 'active' })))),
     enabled: hasTenantAccess,
   });
 
   const { data: departments = [] } = useQuery({
     queryKey: ['departments', tenantId],
-    queryFn: () => tenantQuery('departments').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('departments').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
   const { data: attendance = [] } = useQuery({
     queryKey: ['employeeAttendance', selectedDate, tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('employee_attendances').select('*').match(tenantFilter(branchFilter({ date: selectedDate }))),
+    queryFn: () => fetchData(tenantQuery('employee_attendances').select('*').match(tenantFilter(branchFilter({ date: selectedDate })))),
     enabled: hasTenantAccess,
   });
 

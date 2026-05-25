@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { Button } from '../components/ui/button';
@@ -33,7 +33,7 @@ export default function PlatformConsole() {
 
   const { data: tenants = [], isLoading, refetch } = useQuery({
     queryKey: ['tenants'],
-    queryFn: () => tenantQuery('tenants').select('*').order('-created_date'),
+    queryFn: () => fetchData(tenantQuery('tenants').select('*').order('-created_date')),
     enabled: isAuthorized,
   });
 

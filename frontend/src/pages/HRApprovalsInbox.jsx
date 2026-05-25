@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { Card, CardContent } from '../components/ui/card';
@@ -26,12 +26,12 @@ export default function HRApprovalsInbox() {
 
   const { data: leaveRequests = [], isLoading: loadingLeave } = useQuery({
     queryKey: ['leaveRequestsInbox', tenantId],
-    queryFn: () => tenantQuery('leave_requests').select('*').match({ status: 'pending' }),
+    queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match({ status: 'pending' })),
   });
 
   const { data: essRequests = [], isLoading: loadingESS } = useQuery({
     queryKey: ['essRequestsInbox', tenantId],
-    queryFn: () => tenantQuery('ess_requests').select('*').match({ status: 'pending' }),
+    queryFn: () => fetchData(tenantQuery('ess_requests').select('*').match({ status: 'pending' })),
   });
 
   const pendingLeave = leaveRequests.filter(r => ['pending', 'pending_manager', 'pending_hr'].includes(r.status));

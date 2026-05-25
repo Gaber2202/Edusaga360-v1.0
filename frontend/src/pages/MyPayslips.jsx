@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -29,13 +29,13 @@ export default function MyPayslips() {
 
   const { data: payslips = [], isLoading } = useQuery({
     queryKey: ['myPayslips', employee?.id],
-    queryFn: () => tenantQuery('payslip_lines').select('*').match({ employee_id: employee?.id }),
+    queryFn: () => fetchData(tenantQuery('payslip_lines').select('*').match({ employee_id: employee?.id })),
     enabled: !!employee?.id
   });
 
   const { data: deliveries = [] } = useQuery({
     queryKey: ['myPayslipDeliveries', employee?.id],
-    queryFn: () => tenantQuery('payslip_deliverys').select('*').match({ employee_id: employee?.id }),
+    queryFn: () => fetchData(tenantQuery('payslip_deliverys').select('*').match({ employee_id: employee?.id })),
     enabled: !!employee?.id
   });
 

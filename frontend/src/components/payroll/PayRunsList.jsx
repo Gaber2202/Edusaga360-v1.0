@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent } from '../ui/card';
@@ -43,12 +43,12 @@ export default function PayRunsList({ onViewPayRun }) {
 
   const { data: payRuns = [], isLoading } = useQuery({
     queryKey: ['payRuns', selectedBranchId],
-    queryFn: () => tenantQuery('pay_runs').select('*').match(branchFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(branchFilter(), '-created_date')),
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => tenantQuery('employees').select('*').order(), // fetch ALL - filter client-side with fallback
+    queryFn: () => fetchData(tenantQuery('employees').select('*').order()), // fetch ALL - filter client-side with fallback
   });
 
   const filteredPayRuns = selectedBranchId 

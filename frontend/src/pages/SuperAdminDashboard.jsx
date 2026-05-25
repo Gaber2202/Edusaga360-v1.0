@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, callApi } from '../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -30,12 +30,12 @@ export default function SuperAdminDashboard() {
 
   const { data: tenants = [], isLoading } = useQuery({
     queryKey: ['all-tenants'],
-    queryFn: () => tenantQuery('tenants').select('*').order('-created_date'),
+    queryFn: () => fetchData(tenantQuery('tenants').select('*').order('-created_date')),
   });
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['all-users-sa'],
-    queryFn: () => tenantQuery('users').select('*').order(),
+    queryFn: () => fetchData(tenantQuery('users').select('*').order()),
   });
 
   const { data: requestsSummary = {} } = useQuery({

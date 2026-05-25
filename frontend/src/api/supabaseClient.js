@@ -141,6 +141,16 @@ export const storage = {
 };
 
 /**
+ * Helper to extract data array from a Supabase query (for use in React Query queryFn).
+ * Supabase queries resolve to { data, error } — this extracts just the data array.
+ */
+export async function fetchData(query) {
+  const { data, error } = await query;
+  if (error) console.error('Supabase query error:', error);
+  return data || [];
+}
+
+/**
  * Call a backend API endpoint (replaces base44.functions.*).
  */
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';

@@ -4,7 +4,7 @@
  */
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
@@ -62,37 +62,37 @@ export default function FinanceDashboard() {
 
   const { data: journalEntries = [] } = useQuery({
     queryKey: ['je-dashboard', tenantId],
-    queryFn: () => tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter({ status: 'posted' }))),
+    queryFn: () => fetchData(tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter({ status: 'posted' })))),
     enabled: hasTenantAccess,
   });
 
   const { data: invoices = [] } = useQuery({
     queryKey: ['invoices-dashboard', tenantId],
-    queryFn: () => tenantQuery('invoices').select('*').match(tenantFilter(branchFilter())),
+    queryFn: () => fetchData(tenantQuery('invoices').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 
   const { data: payments = [] } = useQuery({
     queryKey: ['payments-dashboard', tenantId],
-    queryFn: () => tenantQuery('payments').select('*').match(tenantFilter(branchFilter())),
+    queryFn: () => fetchData(tenantQuery('payments').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 
   const { data: apBills = [] } = useQuery({
     queryKey: ['apbills-dashboard', tenantId],
-    queryFn: () => tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter())),
+    queryFn: () => fetchData(tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 
   const { data: _accounts = [] } = useQuery({
     queryKey: ['coa-dashboard', tenantId],
-    queryFn: () => tenantQuery('chart_of_accounts').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('chart_of_accounts').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
   const { data: students = [] } = useQuery({
     queryKey: ['students-dashboard', tenantId],
-    queryFn: () => tenantQuery('students').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -47,7 +47,7 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
 
   const { data: payrollInputs = [], isLoading } = useQuery({
     queryKey: ['payrollInputs', payRun.id],
-    queryFn: () => tenantQuery('payroll_inputs').select('*').match({ pay_run_id: payRun.id }),
+    queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').match({ pay_run_id: payRun.id })),
   });
 
   const filteredInputs = payrollInputs.filter(p => 

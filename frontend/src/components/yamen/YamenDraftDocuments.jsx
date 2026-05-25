@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -67,7 +67,7 @@ export default function YamenDraftDocuments({ isRTL }) {
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(1);
 
-  const { data: employees = [] } = useQuery({ queryKey: ['employees', tenantId], queryFn: () => tenantQuery('employees').select('*').match(tenantFilter()), enabled: hasTenantAccess });
+  const { data: employees = [] } = useQuery({ queryKey: ['employees', tenantId], queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter())), enabled: hasTenantAccess });
 
   const emp = employees.find(e => e.id === selectedEmployee);
 

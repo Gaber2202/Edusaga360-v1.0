@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
@@ -61,32 +61,32 @@ export default function Contracts() {
 
   const { data: contracts = [], isLoading } = useQuery({
     queryKey: ['contracts', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('student_contracts').select('*').match(tenantFilter(branchFilter()), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('student_contracts').select('*').match(tenantFilter(branchFilter()), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: students = [] } = useQuery({
     queryKey: ['students', tenantId],
-    queryFn: () => tenantQuery('students').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter({ status: 'active' }))),
     staleTime: 0,
     enabled: hasTenantAccess,
   });
 
   const { data: _feeServices = [] } = useQuery({
     queryKey: ['feeServices', tenantId],
-    queryFn: () => tenantQuery('fee_services').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('fee_services').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
   const { data: templates = [] } = useQuery({
     queryKey: ['contractTemplates', tenantId],
-    queryFn: () => tenantQuery('contract_templates').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('contract_templates').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
   const { data: guardians = [] } = useQuery({
     queryKey: ['guardians', tenantId],
-    queryFn: () => tenantQuery('guardians').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('guardians').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 
@@ -107,13 +107,13 @@ export default function Contracts() {
 
   const { data: academicYears = [] } = useQuery({
     queryKey: ['academicYears', tenantId],
-    queryFn: () => tenantQuery('academic_years').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
   const { data: feeStructures = [] } = useQuery({
     queryKey: ['feeStructures', tenantId],
-    queryFn: () => tenantQuery('fee_structures').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('fee_structures').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 

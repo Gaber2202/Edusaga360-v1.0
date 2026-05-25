@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery, callApi } from '../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -24,19 +24,19 @@ export default function WorkforcePlanning() {
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 
   const { data: departments = [] } = useQuery({
     queryKey: ['departments', tenantId],
-    queryFn: () => tenantQuery('departments').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('departments').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
   const { data: recruitments = [] } = useQuery({
     queryKey: ['recruitments', tenantId],
-    queryFn: () => tenantQuery('recruitments').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('recruitments').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 

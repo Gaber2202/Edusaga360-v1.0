@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -39,25 +39,25 @@ export default function Communications() {
 
   const { data: communications = [], isLoading } = useQuery({
     queryKey: ['communications', tenantId],
-    queryFn: () => tenantQuery('communications').select('*').match(tenantFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('communications').select('*').match(tenantFilter(), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: _students = [] } = useQuery({
     queryKey: ['students', tenantId],
-    queryFn: () => tenantQuery('students').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 
   const { data: _employees = [] } = useQuery({
     queryKey: ['employees', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 
   const { data: _guardians = [] } = useQuery({
     queryKey: ['guardians', tenantId],
-    queryFn: () => tenantQuery('guardians').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('guardians').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import TenantUsageBar from './TenantUsageBar';
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 
@@ -9,7 +9,7 @@ export default function TenantUsageDashboard({ isRTL }) {
 
   const { data: tenants = [], isLoading } = useQuery({
     queryKey: ['tenants-usage'],
-    queryFn: () => tenantQuery('tenants').select('*').order('-updated_date'),
+    queryFn: () => fetchData(tenantQuery('tenants').select('*').order('-updated_date')),
   });
 
   if (isLoading) return <div className="animate-pulse h-40 bg-slate-100 rounded-xl" />;

@@ -6,7 +6,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
 import { Upload, CheckCircle, Clock, AlertTriangle, XCircle, FileText } from 'lucide-react';
-import { supabase, tenantQuery } from '../../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -36,7 +36,7 @@ export default function ServiceWorkflowDialog({ open, onClose, service, isRTL })
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => tenantQuery('employees').select('*').order(),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').order()),
     enabled: open,
   });
 

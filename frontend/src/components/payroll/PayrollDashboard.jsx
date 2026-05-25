@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -36,25 +36,25 @@ export default function PayrollDashboard({ onNavigate }) {
 
   const { data: payRuns = [] } = useQuery({
     queryKey: ['payRuns', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('pay_runs').select('*').match(tenantFilter(branchFilter()), '-created_date', 10),
+    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(tenantFilter(branchFilter()), '-created_date', 10)),
     enabled: hasTenantAccess,
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter(branchFilter({ status: 'active' }))),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter(branchFilter({ status: 'active' })))),
     enabled: hasTenantAccess,
   });
 
   const { data: loans = [] } = useQuery({
     queryKey: ['employeeLoans', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('employee_loans').select('*').match(tenantFilter(branchFilter())),
+    queryFn: () => fetchData(tenantQuery('employee_loans').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 
   const { data: tuitionAdvances = [] } = useQuery({
     queryKey: ['tuitionAdvances', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('tuition_advances').select('*').match(tenantFilter(branchFilter())),
+    queryFn: () => fetchData(tenantQuery('tuition_advances').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 

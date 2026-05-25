@@ -4,7 +4,7 @@
  */
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
@@ -67,25 +67,25 @@ export default function HRManagerDashboard() {
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ['employees-hrdash', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter(branchFilter())),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 
   const { data: leaveRequests = [] } = useQuery({
     queryKey: ['leaves-hrdash', tenantId],
-    queryFn: () => tenantQuery('leave_requests').select('*').match(tenantFilter({ status: 'pending' })),
+    queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match(tenantFilter({ status: 'pending' }))),
     enabled: hasTenantAccess,
   });
 
   const { data: recruitments = [] } = useQuery({
     queryKey: ['recruitment-hrdash', tenantId],
-    queryFn: () => tenantQuery('recruitments').select('*').match(tenantFilter()),
+    queryFn: () => fetchData(tenantQuery('recruitments').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 
   const { data: payRuns = [] } = useQuery({
     queryKey: ['payruns-hrdash', tenantId],
-    queryFn: () => tenantQuery('pay_runs').select('*').match(tenantFilter(), '-created_date', 3),
+    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(tenantFilter(), '-created_date', 3)),
     enabled: hasTenantAccess,
   });
 

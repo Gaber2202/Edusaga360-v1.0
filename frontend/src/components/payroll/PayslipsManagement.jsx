@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, callApi } from '../../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
 import { useRole } from '../RoleContext';
@@ -55,12 +55,12 @@ export default function PayslipsManagement() {
 
   const { data: deliveries = [] } = useQuery({
     queryKey: ['payslipDeliveries'],
-    queryFn: () => tenantQuery('payslip_deliverys').select('*').order('-created_date'),
+    queryFn: () => fetchData(tenantQuery('payslip_deliverys').select('*').order('-created_date')),
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => tenantQuery('employees').select('*').match({ status: 'active' }),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match({ status: 'active' })),
   });
 
   const sendPayslipMutation = useMutation({

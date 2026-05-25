@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -89,12 +89,12 @@ export default function GovIntegrations() {
 
   const { data: connectors = [] } = useQuery({
     queryKey: ['govIntegrations', tenantId],
-    queryFn: () => tenantQuery('integration_connectors').select('*').match({ connector_type: 'government' }),
+    queryFn: () => fetchData(tenantQuery('integration_connectors').select('*').match({ connector_type: 'government' })),
   });
 
   const { data: syncLogs = [] } = useQuery({
     queryKey: ['govSyncLogs', tenantId],
-    queryFn: () => tenantQuery('integration_logs').select('*').order('-created_date', 50),
+    queryFn: () => fetchData(tenantQuery('integration_logs').select('*').order('-created_date', 50)),
   });
 
   const handleConfigure = (integration) => {

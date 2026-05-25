@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -65,27 +65,27 @@ export default function BankExports() {
 
   const { data: exports = [], isLoading } = useQuery({
     queryKey: ['bankExports', selectedBranchId],
-    queryFn: () => tenantQuery('bank_exports').select('*').match(branchFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('bank_exports').select('*').match(branchFilter(), '-created_date')),
   });
 
   const { data: profiles = [] } = useQuery({
     queryKey: ['bankProfiles'],
-    queryFn: () => tenantQuery('bank_export_profiles').select('*').order(),
+    queryFn: () => fetchData(tenantQuery('bank_export_profiles').select('*').order()),
   });
 
   const { data: payRuns = [] } = useQuery({
     queryKey: ['payRuns', selectedBranchId],
-    queryFn: () => tenantQuery('pay_runs').select('*').match(branchFilter(), '-created_date', 50),
+    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(branchFilter(), '-created_date', 50)),
   });
 
   const { data: payrollInputs = [] } = useQuery({
     queryKey: ['payrollInputs'],
-    queryFn: () => tenantQuery('payroll_inputs').select('*').order(),
+    queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').order()),
   });
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
-    queryFn: () => tenantQuery('companys').select('*').match({ is_active: true }),
+    queryFn: () => fetchData(tenantQuery('companys').select('*').match({ is_active: true })),
   });
 
   const filteredExports = filterByBranch(exports);

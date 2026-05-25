@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent } from '../components/ui/card';
@@ -96,19 +96,19 @@ export default function PerformanceEvaluation() {
 
   const { data: evaluations = [], isLoading } = useQuery({
     queryKey: ['performanceEvals', tenantId, selectedBranchId],
-    queryFn: () => tenantQuery('performance_evaluations').select('*').match(tenantFilter(branchFilter()), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('performance_evaluations').select('*').match(tenantFilter(branchFilter()), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 
   const { data: customTemplates = [] } = useQuery({
     queryKey: ['evalTemplates', tenantId],
-    queryFn: () => tenantQuery('eval_criteria_templates').select('*').match(tenantFilter({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('eval_criteria_templates').select('*').match(tenantFilter({ is_active: true }))),
     enabled: hasTenantAccess,
   });
 
@@ -453,7 +453,7 @@ function CriteriaTemplatesTab({ isRTL }) {
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['evalTemplates', tenantId],
-    queryFn: () => tenantQuery('eval_criteria_templates').select('*').order('-created_date'),
+    queryFn: () => fetchData(tenantQuery('eval_criteria_templates').select('*').order('-created_date')),
   });
 
   const totalWeight = form.criteria.reduce((s, c) => s + (Number(c.weight) || 0), 0);
@@ -685,7 +685,7 @@ function WarningsTab({ isRTL, selectedBranchId, filterByBranch, employees }) {
 
   const { data: warnings = [], isLoading } = useQuery({
     queryKey: ['disciplinaryWarnings', tenantId],
-    queryFn: () => tenantQuery('disciplinary_warnings').select('*').order('-created_date'),
+    queryFn: () => fetchData(tenantQuery('disciplinary_warnings').select('*').order('-created_date')),
   });
 
   const filtered = filterByBranch(warnings);

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -39,7 +39,7 @@ export default function TicketDetails() {
 
   const { data: activities = [] } = useQuery({
     queryKey: ['ticketActivities', ticketId],
-    queryFn: () => tenantQuery('ticket_activitys').select('*').match({ ticket_id: ticketId }, '-created_date'),
+    queryFn: () => fetchData(tenantQuery('ticket_activitys').select('*').match({ ticket_id: ticketId }, '-created_date')),
     enabled: !!ticketId
   });
 

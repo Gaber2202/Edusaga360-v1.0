@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -20,8 +20,8 @@ export default function VisaServices() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ employee_id: '', visa_type: 'work', visa_number: '', issue_date: '', expiry_date: '', entry_type: 'single', status: 'active', fee_amount: 0, notes: '' });
 
-  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => tenantQuery('employees').select('*').order() });
-  const { data: visas = [], isLoading } = useQuery({ queryKey: ['visas'], queryFn: () => tenantQuery('visa_records').select('*').order('-created_date') });
+  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('*').order()) });
+  const { data: visas = [], isLoading } = useQuery({ queryKey: ['visas'], queryFn: () => fetchData(tenantQuery('visa_records').select('*').order('-created_date')) });
 
   const today = new Date();
 

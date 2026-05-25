@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent } from '../ui/card';
@@ -38,17 +38,17 @@ export default function TripTracker() {
 
   const { data: vehicles = [] } = useQuery({
     queryKey: ['vehicles', selectedBranchId],
-    queryFn: () => tenantQuery('vehicles').select('*').match(branchFilter()),
+    queryFn: () => fetchData(tenantQuery('vehicles').select('*').match(branchFilter())),
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', selectedBranchId],
-    queryFn: () => tenantQuery('employees').select('*').match(branchFilter()),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(branchFilter())),
   });
 
   const { data: trips = [], isLoading } = useQuery({
     queryKey: ['tripLogs', selectedBranchId],
-    queryFn: () => tenantQuery('trip_logs').select('*').match(branchFilter(), '-trip_date'),
+    queryFn: () => fetchData(tenantQuery('trip_logs').select('*').match(branchFilter(), '-trip_date')),
   });
 
   const filteredTrips = filterByBranch(trips);

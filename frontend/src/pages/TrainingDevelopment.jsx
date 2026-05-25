@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, callApi } from '../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Card } from '../components/ui/card';
@@ -44,13 +44,13 @@ export default function TrainingDevelopment() {
 
   const { data: trainings = [], isLoading } = useQuery({
     queryKey: ['trainings', tenantId],
-    queryFn: () => tenantQuery('trainings').select('*').match(tenantFilter(), '-created_date'),
+    queryFn: () => fetchData(tenantQuery('trainings').select('*').match(tenantFilter(), '-created_date')),
     enabled: hasTenantAccess,
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],
-    queryFn: () => tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' })),
+    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 
