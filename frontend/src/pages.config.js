@@ -79,7 +79,6 @@ import Expenses from './pages/Expenses';
 import Facilities from './pages/Facilities';
 import Fees from './pages/Fees';
 import FiscalPeriods from './pages/FiscalPeriods';
-import FixedIssuesLog from './pages/FixedIssuesLog';
 import FleetManagement from './pages/FleetManagement';
 import GeneralLedger from './pages/GeneralLedger';
 import GovIntegrations from './pages/GovIntegrations';
@@ -123,12 +122,8 @@ import StaffInbox from './pages/StaffInbox';
 import StudentAttendancePage from './pages/StudentAttendancePage';
 import StudentTags from './pages/StudentTags';
 import Students from './pages/Students';
-import SystemErrorLog from './pages/SystemErrorLog';
-import SystemHealth from './pages/SystemHealth';
-import SystemSmokeTest from './pages/SystemSmokeTest';
 import TicketDetails from './pages/TicketDetails';
 import TrainingDevelopment from './pages/TrainingDevelopment';
-import TrialUsers from './pages/TrialUsers';
 import TuitionFeesConfiguration from './pages/TuitionFeesConfiguration';
 import UserManagement from './pages/UserManagement';
 import VATManagement from './pages/VATManagement';
@@ -136,7 +131,6 @@ import Vendors from './pages/Vendors';
 import WorkflowEngine from './pages/WorkflowEngine';
 import WorkforcePlanning from './pages/WorkforcePlanning';
 import YamenAI from './pages/YamenAI';
-import YamenAdminControls from './pages/YamenAdminControls';
 import SchoolClinic from './pages/SchoolClinic';
 import LibraryManagement from './pages/LibraryManagement';
 import CanteenManagement from './pages/CanteenManagement';
@@ -177,7 +171,6 @@ export const PAGES = {
     "Facilities": Facilities,
     "Fees": Fees,
     "FiscalPeriods": FiscalPeriods,
-    "FixedIssuesLog": FixedIssuesLog,
     "FleetManagement": FleetManagement,
     "GeneralLedger": GeneralLedger,
     "GovIntegrations": GovIntegrations,
@@ -221,12 +214,8 @@ export const PAGES = {
     "StudentAttendancePage": StudentAttendancePage,
     "StudentTags": StudentTags,
     "Students": Students,
-    "SystemErrorLog": SystemErrorLog,
-    "SystemHealth": SystemHealth,
-    "SystemSmokeTest": SystemSmokeTest,
     "TicketDetails": TicketDetails,
     "TrainingDevelopment": TrainingDevelopment,
-    "TrialUsers": TrialUsers,
     "TuitionFeesConfiguration": TuitionFeesConfiguration,
     "UserManagement": UserManagement,
     "VATManagement": VATManagement,
@@ -234,7 +223,6 @@ export const PAGES = {
     "WorkflowEngine": WorkflowEngine,
     "WorkforcePlanning": WorkforcePlanning,
     "YamenAI": YamenAI,
-    "YamenAdminControls": YamenAdminControls,
     "SchoolClinic": SchoolClinic,
     "LibraryManagement": LibraryManagement,
     "CanteenManagement": CanteenManagement,

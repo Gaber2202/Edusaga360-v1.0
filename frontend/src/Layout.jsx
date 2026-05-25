@@ -75,7 +75,7 @@ import {
           Monitor,
           Wrench,
           BarChart3,
-          UserCircle,
+
           CheckCircle,
           Scroll,
           Tag,
@@ -245,17 +245,7 @@ function LayoutContent({ children, currentPageName }) {
       { name: 'integrationHub', icon: Zap, page: 'IntegrationHub', roles: ['admin'] },
     ]
     },
-    {
-      name: 'security',
-      icon: Shield,
-      roles: ['admin', 'auditor', 'creator'],
-      children: [
-        { name: 'rolesPermissions', icon: Shield, page: 'RolesPermissions', roles: ['creator'] },
-        { name: 'auditLogs', icon: History, page: 'AuditLogs', roles: ['admin', 'auditor', 'creator'] },
-        { name: 'platformConsole', icon: LayoutDashboard, page: 'PlatformConsole', roles: ['creator'] },
-        { name: 'superAdmin', icon: Shield, page: 'SuperAdminDashboard', roles: ['creator'] },
-        ]
-        },
+
     {
       name: 'fleetManagement',
       icon: Truck,
@@ -315,21 +305,16 @@ function LayoutContent({ children, currentPageName }) {
       page: 'OperationsDashboard',
       roles: ['admin', 'branch_manager', 'crm_agent', 'it_admin', 'facilities_manager']
     },
-    {
-      name: 'parentPortal',
-      icon: UserCircle,
-      page: 'ParentPortal',
-      roles: ['parent']
-    },
+
     {
       name: 'settings',
       icon: Settings,
       roles: ['admin', 'creator'],
       children: [
         { name: 'users', icon: UserCog, page: 'UserManagement', roles: ['admin', 'creator'] },
-        { name: 'roles', icon: Key, page: 'RoleManagement', roles: ['admin', 'creator'] },
+        { name: 'rolesPermissions', icon: Key, page: 'RolesPermissions', roles: ['admin', 'creator'] },
+        { name: 'auditLogs', icon: History, page: 'AuditLogs', roles: ['admin', 'it_user', 'creator'] },
         { name: 'companies', icon: Building2, page: 'Companies', roles: ['admin', 'creator'] },
-        { name: 'subsidiaries', icon: Building2, page: 'Companies', roles: ['admin', 'creator'] },
         { name: 'branches', icon: Building2, page: 'Branches', roles: ['admin', 'creator'] },
         { name: 'notificationSettings', icon: Settings, page: 'NotificationSettings', roles: ['admin', 'creator'] },
       ]

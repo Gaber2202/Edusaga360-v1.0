@@ -21,7 +21,7 @@ import HRManagerDashboard from './pages/HRManagerDashboard';
 import EOSBCalculator from './pages/EOSBCalculator';
 import IntegrationHub from './pages/IntegrationHub';
 import AdminMessaging from './pages/AdminMessaging';
-import DemoDataSeed from './pages/DemoDataSeed';
+
 import InstitutionSetup from './pages/InstitutionSetup';
 import Register from './pages/Register';
 import SetupAccount from './pages/SetupAccount';
@@ -132,7 +132,7 @@ const AuthenticatedApp = () => {
       <Route path="/FinancialStatements" element={<LayoutWrapper currentPageName="FinancialStatements"><FinancialStatements /></LayoutWrapper>} />
       <Route path="/IntegrationHub" element={<LayoutWrapper currentPageName="IntegrationHub"><IntegrationHub /></LayoutWrapper>} />
       <Route path="/AdminMessaging" element={<LayoutWrapper currentPageName="AdminMessaging"><AdminMessaging /></LayoutWrapper>} />
-      <Route path="/DemoDataSeed" element={<LayoutWrapper currentPageName="DemoDataSeed"><DemoDataSeed /></LayoutWrapper>} />
+
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
