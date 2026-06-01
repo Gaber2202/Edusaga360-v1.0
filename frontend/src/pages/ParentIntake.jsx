@@ -275,7 +275,7 @@ export default function ParentIntake() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6964bc9bb6c7937565369920/d84349133_EduSaga.png" 
+              src="/edusaga-logo.svg" 
               alt="EduSaga" 
               className="h-16"
             />

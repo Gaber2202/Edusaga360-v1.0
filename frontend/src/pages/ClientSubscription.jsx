@@ -13,8 +13,7 @@ export default function ClientSubscription() {
     );
   }
 
-  // Only admins can access subscription management
-  if (userRole !== 'admin') {
+  if (!['admin', 'creator'].includes(userRole)) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <p className="text-slate-500">Access restricted to admins</p>

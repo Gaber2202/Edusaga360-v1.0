@@ -151,7 +151,7 @@ export async function fetchData(query) {
 }
 
 /**
- * Call a backend API endpoint (replaces base44.functions.*).
+ * Call a backend API endpoint (replaces supabase.functions.*).
  */
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 

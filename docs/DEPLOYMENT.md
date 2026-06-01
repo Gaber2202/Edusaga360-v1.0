@@ -1,102 +1,118 @@
 # Deployment Guide — EduSaga 360
 
+## Architecture Overview
+
+EduSaga 360 consists of three frontend applications, one backend API, and a Supabase database — all deployed independently:
+
+| Component | Platform | Domain | Auto-deploy Branch |
+|-----------|----------|--------|--------------------|
+| School Staff App | Vercel | edusaga360.com | `main` |
+| Super Admin Portal | Vercel | admin.edusaga360.com | `main` (root: `admin-portal/`) |
+| Parent Portal | Vercel | parentportal.edusaga360.com | `main` (root: `parent-portal/`) |
+| Backend API | Railway | api.edusaga360.com | `main` (root: `backend/`) |
+| Database | Supabase | mhbfvewkjlfmkqdhxpyg.supabase.co | N/A |
+
 ## Prerequisites
 
-1. **Supabase project** — Create at https://supabase.com/dashboard
-2. **Vercel account** — For frontend hosting
-3. **Railway or Render account** — For backend hosting
-4. **Cloudflare R2 or AWS S3** — For file storage
-5. **Stripe account** — For payment processing
-6. **Domain name** — e.g., `app.edusaga360.com`
+1. **Supabase project** — https://supabase.com/dashboard/project/mhbfvewkjlfmkqdhxpyg
+2. **Vercel account** — For all three frontend apps
+3. **Railway account** — For backend API
+4. **Resend account** — For transactional emails (optional, logs to console without)
+5. **Domain** — edusaga360.com with DNS access
 
 ## Step 1: Database Setup (Supabase)
 
-1. Create a new Supabase project
-2. Go to SQL Editor and run `shared/database/schema.sql`
-3. Copy the project URL and anon key from Settings → API
+1. Go to SQL Editor: https://supabase.com/dashboard/project/mhbfvewkjlfmkqdhxpyg/sql
+2. Run `shared/database/schema.sql` (creates all tables with RLS)
+3. Run `shared/database/migrations/001_registration_onboarding.sql` (adds onboarding fields)
 
-## Step 2: Backend Deployment
+## Step 2: Backend Deployment (Railway)
 
-### Railway
-```bash
-# Install Railway CLI
-npm i -g @railway/cli
+Already deployed at: https://edusaga-360-production.up.railway.app
 
-# Login and create project
-railway login
-railway init
-
-# Set environment variables
-railway variables set SUPABASE_URL=<your-supabase-url>
-railway variables set SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
-railway variables set STRIPE_SECRET_KEY=<your-stripe-key>
-railway variables set FRONTEND_URL=https://app.edusaga360.com
-
-# Deploy
-railway up
+Environment variables required:
+```
+SUPABASE_URL=https://mhbfvewkjlfmkqdhxpyg.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<from Supabase Settings → API>
+FRONTEND_URL=https://edusaga-360-production.vercel.app
+API_BASE_URL=https://edusaga-360-production.up.railway.app
+RESEND_API_KEY=<from resend.com/api-keys>
+PORT=3001
+NODE_ENV=production
 ```
 
-### Render
-1. Connect your GitHub repo
-2. Set root directory to `backend`
-3. Build command: `npm ci && npm run build`
-4. Start command: `npm start`
-5. Set environment variables in the Render dashboard
+## Step 3: School Staff App (Vercel)
 
-## Step 3: Frontend Deployment (Vercel)
+Already deployed at: https://edusaga-360-production.vercel.app
 
-1. Connect GitHub repo to Vercel
-2. Set root directory to `frontend`
-3. Add environment variables:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-   - `VITE_API_BASE_URL` (your Railway/Render backend URL)
-   - `VITE_STRIPE_PUBLISHABLE_KEY`
-   - `VITE_SENTRY_DSN` (optional)
-4. Deploy
+Vercel project settings:
+- Root directory: `frontend`
+- Framework: Vite
+- Build command: `npm run build`
 
-## Step 4: DNS Configuration
+Environment variables:
+```
+VITE_SUPABASE_URL=https://mhbfvewkjlfmkqdhxpyg.supabase.co
+VITE_SUPABASE_ANON_KEY=<from Supabase Settings → API>
+VITE_API_BASE_URL=https://edusaga-360-production.up.railway.app
+```
 
-| Record | Type | Value |
-|--------|------|-------|
-| `app.edusaga360.com` | CNAME | `cname.vercel-dns.com` |
-| `api.edusaga360.com` | CNAME | Railway/Render provided domain |
+## Step 4: Super Admin Portal (Vercel — separate project)
 
-## Step 5: File Storage Setup
+Create a **new Vercel project** connected to the same repo:
 
-### Cloudflare R2
-1. Create R2 bucket named `edusaga-360`
-2. Create API token with read/write access
-3. Set env vars: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`
+1. Go to Vercel → New Project → Import `edusaga-360`
+2. Root directory: `admin-portal`
+3. Framework: Vite
+4. Same env vars as Step 3
+5. Custom domain: `admin.edusaga360.com`
 
-### OR AWS S3
-1. Create S3 bucket
-2. Create IAM user with S3 access
-3. Set env vars: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `S3_BUCKET_NAME`
+## Step 5: Parent Portal (Vercel — separate project)
 
-## Step 6: Stripe Configuration
+Create a **new Vercel project** connected to the same repo:
 
-1. Set up webhook endpoint: `https://api.edusaga360.com/api/webhooks/stripe`
-2. Events to subscribe: `payment_intent.succeeded`, `invoice.paid`, `customer.subscription.*`
-3. Copy webhook signing secret to `STRIPE_WEBHOOK_SECRET`
+1. Go to Vercel → New Project → Import `edusaga-360`
+2. Root directory: `parent-portal`
+3. Framework: Vite
+4. Same env vars as Step 3
+5. Custom domain: `parentportal.edusaga360.com`
 
-## Go Live Checklist
+## Step 6: DNS Configuration
 
-- [ ] Database schema applied and seeded with reference data (countries, currencies)
+Add these DNS records to your domain registrar:
+
+| Record | Type | Name | Value |
+|--------|------|------|-------|
+| School Staff App | CNAME | `@` or `www` | `cname.vercel-dns.com` |
+| Super Admin Portal | CNAME | `admin` | `cname.vercel-dns.com` |
+| Parent Portal | CNAME | `parentportal` | `cname.vercel-dns.com` |
+| Backend API | CNAME | `api` | Railway-provided domain |
+
+## Step 7: Email Configuration (Resend)
+
+1. Go to https://resend.com → Sign up
+2. Add domain `edusaga360.com` and verify DNS records
+3. Create API key → copy to Railway `RESEND_API_KEY`
+4. All emails send from `info@edusaga360.com`
+
+## Go-Live Checklist
+
+- [ ] Database schema applied (schema.sql + migrations)
 - [ ] Backend deployed and health check passing (`GET /api/health`)
-- [ ] Frontend deployed and loading correctly
-- [ ] DNS configured and SSL certificates active
-- [ ] Supabase Auth configured (email templates, redirect URLs)
-- [ ] File storage configured and tested
-- [ ] Stripe webhooks configured and tested
-- [ ] Sentry configured for error tracking
+- [ ] School staff app deployed and login working
+- [ ] Super Admin portal deployed as separate Vercel project
+- [ ] Parent portal deployed as separate Vercel project
+- [ ] DNS records configured for all three subdomains
+- [ ] SSL certificates active (auto-provisioned by Vercel)
+- [ ] Supabase Auth redirect URLs configured
+- [ ] Resend API key configured (for registration emails)
 - [ ] All environment variables set in production
+- [ ] Test registration flow end-to-end
+- [ ] Test login with Muhammed@edusaga360.com
 
 ## What to Cancel on Base44
 
 After confirming production is stable:
-
 1. Cancel Base44 subscription
 2. Remove GitHub integration from Base44
-3. Archive the old `EduSaga360/edusaga` repo (do not delete — keep for reference)
-4. Update DNS if any records pointed to Base44
+3. Archive the old `EduSaga360/edusaga` repo (keep for reference)

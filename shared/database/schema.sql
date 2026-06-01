@@ -649,20 +649,27 @@ CREATE TABLE purchase_orders (
 
 CREATE TABLE registration_requests (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  school_name_en TEXT NOT NULL,
+  school_name_en TEXT,
   school_name_ar TEXT,
-  contact_name TEXT NOT NULL,
+  contact_name TEXT,
   contact_email TEXT NOT NULL,
-  contact_phone TEXT NOT NULL,
+  contact_phone TEXT,
   school_type TEXT,
   city TEXT,
   country TEXT DEFAULT 'SA',
   student_count_range TEXT,
   notes TEXT,
-  status TEXT DEFAULT 'pending', -- pending, approved, rejected
+  status TEXT DEFAULT 'pending', -- pending, approved, denied, completed
   reviewed_by UUID,
   reviewed_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  onboarding_token TEXT,
+  token_expires_at TIMESTAMPTZ,
+  tenant_id UUID REFERENCES tenants(id),
+  approved_at TIMESTAMPTZ,
+  denied_at TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  created_date TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE tenant_requests (

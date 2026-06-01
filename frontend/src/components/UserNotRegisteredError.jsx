@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase, tenantQuery } from '../api/supabaseClient';
 
 /**
- * Shown when Base44 returns user_not_registered.
+ * Shown when the platform returns user_not_registered.
  *
  * Single flow:
  * - Check if the user has a pending/approved RegistrationRequest by email.
@@ -56,7 +56,7 @@ export default function UserNotRegisteredError() {
 
   const Logo = () => (
     <img
-      src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6964bc9bb6c7937565369920/d84349133_EduSaga.png"
+      src="/edusaga-logo.svg"
       alt="EduSaga 360"
       className="h-12 w-auto mx-auto"
     />

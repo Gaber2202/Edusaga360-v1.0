@@ -75,7 +75,7 @@ import {
           Monitor,
           Wrench,
           BarChart3,
-          UserCircle,
+
           CheckCircle,
           Scroll,
           Tag,
@@ -245,17 +245,7 @@ function LayoutContent({ children, currentPageName }) {
       { name: 'integrationHub', icon: Zap, page: 'IntegrationHub', roles: ['admin'] },
     ]
     },
-    {
-      name: 'security',
-      icon: Shield,
-      roles: ['admin', 'auditor', 'creator'],
-      children: [
-        { name: 'rolesPermissions', icon: Shield, page: 'RolesPermissions', roles: ['creator'] },
-        { name: 'auditLogs', icon: History, page: 'AuditLogs', roles: ['admin', 'auditor', 'creator'] },
-        { name: 'platformConsole', icon: LayoutDashboard, page: 'PlatformConsole', roles: ['creator'] },
-        { name: 'superAdmin', icon: Shield, page: 'SuperAdminDashboard', roles: ['creator'] },
-        ]
-        },
+
     {
       name: 'fleetManagement',
       icon: Truck,
@@ -315,21 +305,16 @@ function LayoutContent({ children, currentPageName }) {
       page: 'OperationsDashboard',
       roles: ['admin', 'branch_manager', 'crm_agent', 'it_admin', 'facilities_manager']
     },
-    {
-      name: 'parentPortal',
-      icon: UserCircle,
-      page: 'ParentPortal',
-      roles: ['parent']
-    },
+
     {
       name: 'settings',
       icon: Settings,
       roles: ['admin', 'creator'],
       children: [
         { name: 'users', icon: UserCog, page: 'UserManagement', roles: ['admin', 'creator'] },
-        { name: 'roles', icon: Key, page: 'RoleManagement', roles: ['admin', 'creator'] },
+        { name: 'rolesPermissions', icon: Key, page: 'RolesPermissions', roles: ['admin', 'creator'] },
+        { name: 'auditLogs', icon: History, page: 'AuditLogs', roles: ['admin', 'it_user', 'creator'] },
         { name: 'companies', icon: Building2, page: 'Companies', roles: ['admin', 'creator'] },
-        { name: 'subsidiaries', icon: Building2, page: 'Companies', roles: ['admin', 'creator'] },
         { name: 'branches', icon: Building2, page: 'Branches', roles: ['admin', 'creator'] },
         { name: 'notificationSettings', icon: Settings, page: 'NotificationSettings', roles: ['admin', 'creator'] },
       ]
@@ -496,7 +481,7 @@ function LayoutContent({ children, currentPageName }) {
           {!sidebarCollapsed && (
                 <div className="flex items-center gap-2">
                   <img 
-                    src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6964bc9bb6c7937565369920/d84349133_EduSaga.png" 
+                    src="/edusaga-logo.svg" 
                     alt="EduSaga Logo" 
                     className="h-8 w-auto"
                   />
@@ -508,7 +493,7 @@ function LayoutContent({ children, currentPageName }) {
               )}
               {sidebarCollapsed && (
                 <img 
-                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6964bc9bb6c7937565369920/d84349133_EduSaga.png" 
+                  src="/edusaga-logo.svg" 
                   alt="EduSaga Logo" 
                   className="h-6 w-auto mx-auto"
                 />
@@ -563,7 +548,7 @@ function LayoutContent({ children, currentPageName }) {
               <div className="h-16 flex items-center px-4 border-b border-slate-200 flex-shrink-0">
                 <div className="flex items-center gap-3">
                   <img 
-                    src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6964bc9bb6c7937565369920/d84349133_EduSaga.png" 
+                    src="/edusaga-logo.svg" 
                     alt="EduSaga Logo" 
                     className="h-10 w-auto"
                   />

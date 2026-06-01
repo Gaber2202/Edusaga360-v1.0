@@ -3,7 +3,7 @@
  *
  * SINGLE SOURCE OF TRUTH for the "is this caller a platform owner / super admin?"
  * decision. Keep this in sync with the equivalent check inside every edge function
- * under base44/functions (where src/ imports are not available).
+ * under the backend/functions (where src/ imports are not available).
  */
 
 /**

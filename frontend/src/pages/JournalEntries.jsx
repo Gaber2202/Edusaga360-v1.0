@@ -117,7 +117,7 @@ export default function JournalEntries() {
       };
 
       // Server enforces balance, tenant scoping, and forces status='draft'
-      // for user-initiated entries. See base44/functions/createJournalEntry.
+      // for user-initiated entries. See supabase/functions/createJournalEntry.
       const created = await createJournalEntry(data);
       await logAuditEvent({ action: AuditActions.CREATE, entityType: 'JournalEntry', entityId: created.id, newValues: data });
 

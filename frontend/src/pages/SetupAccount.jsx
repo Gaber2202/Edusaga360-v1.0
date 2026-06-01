@@ -34,7 +34,7 @@ import { toast } from 'sonner';
  *   valid      — proceed with the existing sign-in → completeSetupFromToken
  *                flow. Same UI as before.
  *
- * Server-side classification lives in base44/functions/validateSetupToken.
+ * Server-side classification lives in supabase/functions/validateSetupToken.
  */
 
 const COPY = {
@@ -376,7 +376,7 @@ export default function SetupAccount() {
         </button>
 
         <img
-          src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6964bc9bb6c7937565369920/d84349133_EduSaga.png"
+          src="/edusaga-logo.svg"
           alt={t.appName}
           className="h-12 w-auto mx-auto"
         />
