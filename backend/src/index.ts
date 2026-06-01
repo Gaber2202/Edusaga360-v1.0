@@ -10,6 +10,7 @@ import { authRouter } from './routes/auth.js';
 import { journalEntryRouter } from './routes/journalEntries.js';
 import { tenantRequestRouter } from './routes/tenantRequests.js';
 import { registrationRouter } from './routes/registration.js';
+import { aiRouter } from './routes/ai.js';
 
 dotenv.config();
 
@@ -24,6 +25,8 @@ app.use(cors({
     'https://edusaga-360.vercel.app',
     'https://admin.edusaga360.com',
     'https://parentportal.edusaga360.com',
+    'https://edusaga-360-admin-portal.vercel.app',
+    'https://edusaga-360-parent-portal.vercel.app',
   ].filter(Boolean),
   credentials: true,
 }));
@@ -39,6 +42,7 @@ app.use('/api/registration', registrationRouter);
 app.use('/api', authMiddleware, tenantMiddleware);
 app.use('/api/journal-entries', journalEntryRouter);
 app.use('/api/tenant-requests', tenantRequestRouter);
+app.use('/api/ai', aiRouter);
 
 app.use(
   (
