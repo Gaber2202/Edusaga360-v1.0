@@ -39,7 +39,17 @@ API_BASE_URL=https://edusaga-360-production.up.railway.app
 RESEND_API_KEY=<from resend.com/api-keys>
 PORT=3001
 NODE_ENV=production
+GOOGLE_AI_API_KEY=<from Google AI Studio — for Yamen AI>
 ```
+
+### Yamen AI Configuration (LLM)
+
+The backend supports 3 LLM providers for Yamen AI (checked in order):
+1. **Google Gemini** (recommended) — `GOOGLE_AI_API_KEY` — Get from https://aistudio.google.com/apikey
+2. **OpenAI** — `OPENAI_API_KEY`
+3. **Groq** — `GROQ_API_KEY`
+
+If no key is configured, Yamen AI returns a friendly message asking the admin to configure one.
 
 ## Step 3: School Staff App (Vercel)
 
@@ -109,6 +119,24 @@ Add these DNS records to your domain registrar:
 - [ ] All environment variables set in production
 - [ ] Test registration flow end-to-end
 - [ ] Test login with Muhammed@edusaga360.com
+
+## How to Roll Back a Deployment
+
+### Frontend (Vercel)
+1. Go to Vercel project → Deployments
+2. Find the previous working deployment
+3. Click "..." → "Promote to Production"
+4. The previous version is instantly live
+
+### Backend (Railway)
+1. Go to Railway project → Deployments
+2. Click "Rollback" on the previous deployment
+3. The previous version restarts immediately
+
+### Database
+- Database migrations are additive (no destructive changes)
+- If a migration causes issues, revert the specific columns/tables manually via SQL Editor
+- Always backup before running migrations: `pg_dump` from Supabase CLI
 
 ## What to Cancel on Base44
 

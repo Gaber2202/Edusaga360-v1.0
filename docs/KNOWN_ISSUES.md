@@ -1,46 +1,79 @@
-# Known Issues
+# Known Issues — EduSaga 360
 
-> Track known issues, workarounds, and blockers.
+> Last updated: 2026-05-18
 
-## Open Issues
+## Critical
 
-### 1. Admin & Parent portals need separate Vercel deployments
-**Severity**: Low (apps are built and ready)  
-**Impact**: admin.edusaga360.com and parentportal.edusaga360.com not yet live  
-The `admin-portal/` and `parent-portal/` directories need to be deployed as separate Vercel projects with their own custom domains. Code is complete and builds pass.
+_None_
 
-### 2. Email integration requires Resend API key
-**Severity**: Medium  
-**Impact**: Registration approval/denial emails log to console instead of sending  
-The backend registration flow sends bilingual emails (admin notification, welcome, denial) via Resend API. Without `RESEND_API_KEY` in Railway env vars, emails are logged to console but not sent. To fix: sign up at resend.com, verify edusaga360.com domain, add API key to Railway.
+## High
 
-### 3. Database migration needed for onboarding
-**Severity**: Medium  
-**Impact**: Registration onboarding flow won't work without new columns  
-Run `shared/database/migrations/001_registration_onboarding.sql` in Supabase SQL Editor to add onboarding_token, token_expires_at, and other required columns to registration_requests and tenants tables.
+### 1. Yamen AI requires LLM API key
+**Impact**: Yamen AI chat returns a "not configured" message without an API key  
+**Workaround**: Add `GOOGLE_AI_API_KEY` (or `OPENAI_API_KEY` / `GROQ_API_KEY`) to Railway environment variables  
+**Effort**: 5 min — get a free key from https://aistudio.google.com/apikey  
+
+### 2. Custom domains need DNS CNAME records
+**Impact**: `admin.edusaga360.com` and `parentportal.edusaga360.com` not resolving  
+**Workaround**: Use Vercel URLs directly (`edusaga-360-admin-portal.vercel.app`, `edusaga-360-parent-portal.vercel.app`)  
+**Fix**: Add CNAME records pointing to `cname.vercel-dns.com` in DNS provider  
+**Effort**: 10 min  
+
+## Medium
+
+### 3. Modules show empty states without seed data
+**Impact**: New tenants see "No data" in all modules until they add records  
+**Workaround**: Each empty state has an "Add" button or instructions  
+**Note**: This is expected behavior — schools populate data after onboarding  
+
+### 4. Email deliverability not verified for all providers
+**Impact**: Registration emails may land in spam for some email providers  
+**Workaround**: Use Resend domain verification + SPF/DKIM records  
+**Fix**: Verify `edusaga360.com` domain in Resend dashboard and add DNS records  
+**Effort**: 30 min  
+
+### 5. Large bundle size (frontend ~3.8MB gzipped ~992KB)
+**Impact**: Initial load time ~3-4s on slow connections  
+**Workaround**: Vite's code splitting handles most of it  
+**Fix**: Add lazy loading for heavy modules (recharts, jspdf, html2canvas)  
+**Effort**: 2-3 hours  
+
+## Low
+
+### 6. Some bilingual translations are approximate
+**Impact**: A few Arabic labels may not be perfectly localized  
+**Workaround**: Functional — all modules display in both languages  
+**Fix**: Have a native Arabic speaker review LanguageContext translations  
+**Effort**: 4-8 hours  
+
+### 7. Mobile responsive design incomplete for some modules
+**Impact**: Complex table views (payroll, finance) may need horizontal scroll on mobile  
+**Workaround**: Scrollable — all data is accessible  
+**Fix**: Add responsive breakpoints for table-heavy pages  
+**Effort**: 4-6 hours  
 
 ## Resolved Issues
 
 ### Dashboard blank for creator role
 **Resolved in**: Phase 1 (commit d07e68a)  
-Creator role was excluded from isHR/isFinance/isSchoolAdmin checks. Fixed by adding isCreator flag.
+Creator role was excluded from isHR/isFinance/isSchoolAdmin checks.
 
 ### f.map is not a function crash on all pages
 **Resolved in**: PR #15  
-212+ queries returning Supabase `{ data, error }` object instead of data array. Fixed with fetchData() wrapper.
+212+ queries returning Supabase `{ data, error }` object instead of data array.
 
-### 404 on client-side routes
-**Resolved in**: PR #10  
-Added vercel.json with SPA rewrites.
+### Duplicate logos in sidebar
+**Resolved in**: Production Readiness PR  
+SVG file had embedded text duplicating component-level text labels. Fixed to icon-only SVG.
 
-### 43 duplicate key build errors
-**Resolved in**: PR #12  
-Removed duplicate properties in LanguageContext.jsx and Employees.jsx.
+### 43 duplicate key build warnings
+**Resolved in**: PR #11/12  
+Duplicate object properties in LanguageContext.jsx and Employees.jsx.
 
-### SchoolLogin Base44 SSO redirect
-**Resolved in**: commit 840c616  
-handleSignIn() called window.location.href = '/login' (Base44 SSO). Fixed to use Supabase Auth.
+### Admin & Parent portals not deployed
+**Resolved in**: Post-merge deployment  
+Both portals now live on Vercel with custom domain configuration.
 
-### Base44 references in codebase
-**Resolved in**: Phase 8  
-All remaining Base44 references in comments, image URLs, and code removed. Zero Base44 references remaining.
+### Vercel 404 on client-side routes
+**Resolved in**: PR #9/10  
+Added `vercel.json` with SPA rewrite rules.
