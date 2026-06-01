@@ -35,9 +35,7 @@ export default function ParentLayout({ children }) {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-              <GraduationCap className="w-5 h-5 text-white" />
-            </div>
+            <img src="/edusaga-logo.svg" alt="EduSaga 360" className="w-8 h-8" />
             <div>
               <h1 className="text-sm font-bold text-slate-800">EduSaga 360</h1>
               <p className="text-[10px] text-slate-400">Parent Portal</p>

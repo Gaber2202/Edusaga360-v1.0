@@ -11,7 +11,6 @@ import {
 import {
   LayoutDashboard, Building2, Users, CreditCard, Activity,
   Settings, LogOut, Mail, Flag, History, ChevronLeft, ChevronRight,
-  Shield,
 } from 'lucide-react';
 
 const navigation = [
@@ -37,7 +36,7 @@ export default function AdminLayout({ children }) {
     <div className="min-h-screen bg-slate-50 flex">
       <aside className={`bg-slate-900 text-white flex flex-col transition-all duration-200 ${collapsed ? 'w-16' : 'w-60'}`}>
         <div className="flex items-center gap-2 px-4 py-5 border-b border-slate-700">
-          <Shield className="w-7 h-7 text-emerald-400 flex-shrink-0" />
+          <img src="/edusaga-logo.svg" alt="EduSaga" className="w-7 h-7 flex-shrink-0" />
           {!collapsed && (
             <div>
               <h1 className="text-sm font-bold tracking-tight">EduSaga 360</h1>
