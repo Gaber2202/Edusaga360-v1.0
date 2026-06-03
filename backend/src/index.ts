@@ -10,7 +10,10 @@ import { authRouter } from './routes/auth.js';
 import { journalEntryRouter } from './routes/journalEntries.js';
 import { tenantRequestRouter } from './routes/tenantRequests.js';
 import { registrationRouter } from './routes/registration.js';
+
 import { aiRouter } from './routes/ai.js';
+import { feesRouter } from './routes/fees.js';
+import { payrollRouter } from './routes/payroll.js';
 
 dotenv.config();
 
@@ -23,6 +26,7 @@ app.use(cors({
     process.env.FRONTEND_URL || 'http://localhost:5173',
     'https://edusaga-360-production.vercel.app',
     'https://edusaga-360.vercel.app',
+    'https://platform.edusaga360.com',
     'https://admin.edusaga360.com',
     'https://parentportal.edusaga360.com',
     'https://edusaga-360-admin-portal.vercel.app',
@@ -42,7 +46,10 @@ app.use('/api/registration', registrationRouter);
 app.use('/api', authMiddleware, tenantMiddleware);
 app.use('/api/journal-entries', journalEntryRouter);
 app.use('/api/tenant-requests', tenantRequestRouter);
+
 app.use('/api/ai', aiRouter);
+app.use('/api/fees', feesRouter);
+app.use('/api/payroll', payrollRouter);
 
 app.use(
   (
