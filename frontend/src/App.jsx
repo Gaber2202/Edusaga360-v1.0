@@ -54,7 +54,8 @@ const AuthenticatedApp = () => {
       pathname === '/client/login' ||
       pathname === '/school-login' ||
       pathname === '/setup' ||
-      pathname === '/OnboardingWizard';
+      pathname === '/OnboardingWizard' ||
+      pathname.startsWith('/onboarding/'); // /onboarding/:token is unauthenticated
 
     if (authError.type === 'user_not_registered') {
       if (isPublicPath) {
@@ -66,6 +67,7 @@ const AuthenticatedApp = () => {
             <Route path="/school-login" element={<SchoolLogin />} />
             <Route path="/setup" element={<SetupAccount />} />
             <Route path="/OnboardingWizard" element={<OnboardingWizard />} />
+            <Route path="/onboarding/:token" element={<OnboardingWizard />} />
           </Routes>
         );
       }
@@ -80,6 +82,7 @@ const AuthenticatedApp = () => {
             <Route path="/school-login" element={<SchoolLogin />} />
             <Route path="/setup" element={<SetupAccount />} />
             <Route path="/OnboardingWizard" element={<OnboardingWizard />} />
+            <Route path="/onboarding/:token" element={<OnboardingWizard />} />
           </Routes>
         );
       }

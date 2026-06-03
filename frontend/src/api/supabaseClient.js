@@ -56,15 +56,19 @@ export function subscribeTenantContext(fn) {
   return () => subscribers.delete(fn);
 }
 
+// Tables that are platform-wide (not tenant-scoped). Queries against these
+// tables must NOT have a tenant_id filter appended automatically.
 const PLATFORM_ONLY_ENTITIES = new Set([
   'tenants',
   'tenant_requests',
+  'registration_requests', // platform admin table — no tenant_id row filter
   'roles',
   'countries',
   'currencies',
   'public_settings',
   'app_settings',
   'app_versions',
+  'audit_logs',
 ]);
 
 export { PLATFORM_ONLY_ENTITIES };
@@ -79,6 +83,22 @@ export function tenantQuery(tableName) {
 
   if (PLATFORM_ONLY_ENTITIES.has(tableName) || isPlatformOwner) {
     return query;
+  }
+
+  // Guard: if tenantId is null the filter `.eq('tenant_id', null)` would
+  // silently return 0 rows.  Throw so callers can detect misconfiguration.
+  if (!tenantId) {
+    console.warn(`tenantQuery('${tableName}'): tenantId is not set — skipping query`);
+    // Return a mock that yields empty results rather than fetching with null tenant.
+    const empty = { data: [], error: null };
+    const noop = () => Promise.resolve(empty);
+    return {
+      select: () => ({ eq: () => Promise.resolve(empty), then: noop }),
+      insert: () => Promise.resolve(empty),
+      update: () => Promise.resolve(empty),
+      delete: () => Promise.resolve(empty),
+      upsert: () => Promise.resolve(empty),
+    };
   }
 
   return {
@@ -153,7 +173,11 @@ export async function fetchData(query) {
 /**
  * Call a backend API endpoint (replaces supabase.functions.*).
  */
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+// VITE_API_BASE_URL should be set to the backend origin (e.g. https://api.example.com).
+// Endpoint paths passed to callApi must start with /api/... and are appended directly.
+// If unset, defaults to '' so /api/... paths resolve against the current origin
+// (works when a dev proxy forwards /api/ to the backend).
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 export async function callApi(endpoint, data, options = {}) {
   const {

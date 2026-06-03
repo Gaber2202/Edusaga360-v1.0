@@ -17,9 +17,30 @@ CREATE TABLE tenants (
   name_en TEXT NOT NULL,
   name_ar TEXT,
   slug TEXT UNIQUE,
+  tenant_code TEXT UNIQUE,            -- short human-readable code e.g. T-K3F2A
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended', 'trial')),
   plan TEXT DEFAULT 'basic',
+  admin_email TEXT,                   -- primary admin contact email
+  city TEXT,
+  school_type TEXT,                   -- government | private | international
+  trial_end_date DATE,                -- when the trial period expires
+  onboarding_completed BOOLEAN DEFAULT FALSE,
+  logo_url TEXT,
+  academic_year_start DATE,
+  num_grades INTEGER,
+  default_language TEXT DEFAULT 'ar',
+  -- usage counters (updated by triggers or backend jobs)
+  current_employees INTEGER DEFAULT 0,
+  max_employees INTEGER DEFAULT 9999,
+  current_students INTEGER DEFAULT 0,
+  max_students INTEGER DEFAULT 9999,
+  current_branches INTEGER DEFAULT 0,
+  max_branches INTEGER DEFAULT 9999,
+  yamen_ai_used_this_month INTEGER DEFAULT 0,
+  yamen_ai_monthly_limit INTEGER DEFAULT 100,
+  enabled_modules TEXT[] DEFAULT '{}',
   settings JSONB DEFAULT '{}',
+  created_date TIMESTAMPTZ DEFAULT NOW(),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -822,9 +843,39 @@ CREATE POLICY "tenant_isolation" ON journal_entries
   USING (tenant_id = (auth.jwt() ->> 'tenant_id')::UUID)
   WITH CHECK (tenant_id = (auth.jwt() ->> 'tenant_id')::UUID);
 
--- NOTE: Additional RLS policies should be created for ALL tenant-scoped tables.
--- The pattern is the same: match tenant_id from the JWT claim.
--- Service role key bypasses RLS for backend operations.
+-- RLS policies for all remaining tenant-scoped tables.
+-- Pattern: rows are visible/writable only when tenant_id matches the JWT claim.
+-- The service-role key bypasses RLS for backend operations.
+
+DO $$
+DECLARE
+  tbl TEXT;
+  tbls TEXT[] := ARRAY[
+    'guardians','academic_years','grades','sections',
+    'applicants','applications',
+    'chart_of_accounts','fiscal_periods','journal_entry_lines','cost_centers',
+    'fee_types','fee_structures','payments','expenses','vendors',
+    'departments','job_titles','employee_contracts',
+    'leave_types','leave_requests','leave_balances',
+    'pay_runs','payslip_lines','employee_attendance','overtime_requests',
+    'fixed_assets','vehicles','bus_routes','service_tickets',
+    'communications','notifications','contract_templates','student_contracts',
+    'purchase_requisitions','purchase_orders','student_tags','audit_logs'
+  ];
+BEGIN
+  FOREACH tbl IN ARRAY tbls LOOP
+    -- Only create if policy doesn't already exist
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_policies
+      WHERE tablename = tbl AND policyname = 'tenant_isolation'
+    ) THEN
+      EXECUTE format(
+        'CREATE POLICY tenant_isolation ON %I FOR ALL USING (tenant_id = (auth.jwt() ->> ''tenant_id'')::UUID) WITH CHECK (tenant_id = (auth.jwt() ->> ''tenant_id'')::UUID)',
+        tbl
+      );
+    END IF;
+  END LOOP;
+END $$;
 
 -- =============================================================================
 -- INDEXES

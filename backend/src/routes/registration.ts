@@ -217,6 +217,54 @@ registrationRouter.get('/deny/:id', async (req, res) => {
   }
 });
 
+// Resend onboarding link endpoint (called from admin UI)
+registrationRouter.get('/resend/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data: request, error: fetchError } = await supabase
+      .from('registration_requests')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !request) {
+      return res.status(404).send(renderResultPage('Request Not Found', 'This registration request was not found.', false));
+    }
+
+    if (request.status !== 'approved') {
+      return res.status(400).send(renderResultPage('Not Approved', 'This request must be approved before resending the setup link.', false));
+    }
+
+    if (request.status === 'completed') {
+      return res.send(renderResultPage('Already Completed', 'This school has already completed onboarding.', true));
+    }
+
+    // Generate a fresh token with a new 48-hour expiry
+    const newToken = crypto.randomBytes(32).toString('hex');
+    const tokenExpiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+
+    const { error: updateError } = await supabase
+      .from('registration_requests')
+      .update({ onboarding_token: newToken, token_expires_at: tokenExpiresAt })
+      .eq('id', id);
+
+    if (updateError) throw updateError;
+
+    // Reload with fresh token and resend welcome email
+    const updatedRequest = { ...request, onboarding_token: newToken };
+    sendWelcomeEmail(updatedRequest).catch(err => console.error('Failed to resend welcome email:', err));
+
+    res.send(renderResultPage(
+      'Link Resent',
+      `A new onboarding link has been sent to ${request.contact_email}. It is valid for 48 hours.`,
+      true
+    ));
+  } catch (err) {
+    console.error('Resend error:', err);
+    res.status(500).send(renderResultPage('Error', 'An error occurred while resending the link. Please try again.', false));
+  }
+});
+
 // Onboarding token validation
 registrationRouter.get('/onboarding/:token', async (req, res) => {
   try {
@@ -289,17 +337,16 @@ registrationRouter.post('/onboarding/:token/complete', async (req, res) => {
 
     if (authErr) throw authErr;
 
-    // Create user in users table
+    // Create user in users table (schema uses name column, not first_name/last_name)
     await supabase.from('users').insert({
       auth_id: authData.user.id,
       email: request.contact_email,
-      first_name: request.contact_name?.split(' ')[0] || '',
-      last_name: request.contact_name?.split(' ').slice(1).join(' ') || '',
+      name: request.contact_name || '',
       user_role: 'admin',
       role: 'admin',
       tenant_id: request.tenant_id,
-      is_active: true,
-      created_date: new Date().toISOString(),
+      status: 'active',
+      created_at: new Date().toISOString(),
     });
 
     // Update tenant with onboarding data
