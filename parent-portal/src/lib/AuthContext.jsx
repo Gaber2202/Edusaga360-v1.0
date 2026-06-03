@@ -47,7 +47,8 @@ export function AuthProvider({ children }) {
       }
 
       const isParent = appUser.user_role === 'parent' || appUser.role === 'parent';
-      if (!isParent) {
+      const isPlatformOwner = appUser.is_platform_owner === true;
+      if (!isParent && !isPlatformOwner) {
         setAccessDenied(true);
         setLoading(false);
         return;

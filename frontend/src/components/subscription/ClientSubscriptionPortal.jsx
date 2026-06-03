@@ -14,7 +14,7 @@ import { Textarea } from '../ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { toast } from 'sonner';
 import {
-  Crown, Users, Check, AlertCircle, Zap, CheckCircle, Lock, ArrowUpRight, Loader2
+  Crown, Users, Check, AlertCircle, Zap, CheckCircle, Lock, ArrowUpRight, ArrowDownRight, Loader2
 } from 'lucide-react';
 import { PLAN_DEFINITIONS } from '../../hooks/useModuleAccess';
 
@@ -126,8 +126,9 @@ export default function ClientSubscriptionPortal() {
   const currentPlan = PLAN_DEFINITIONS[tenant.plan_code] || PLAN_DEFINITIONS.free_trial;
   const availableUsers = (tenant.max_users || 0) - (tenant.current_users || 0);
 
-  const availableUpgradePlans = Object.entries(PLAN_DEFINITIONS).filter(
-    ([code]) => code !== 'government' && code !== tenant.plan_code
+  const currentTier = currentPlan.tier ?? 0;
+  const availableChangePlans = Object.entries(PLAN_DEFINITIONS).filter(
+    ([code]) => code !== 'government' && code !== 'free_trial' && code !== tenant.plan_code
   );
 
   return (
@@ -153,8 +154,9 @@ export default function ClientSubscriptionPortal() {
               </h2>
               <Badge className="mt-3">
                 {tenant.plan_code === 'enterprise' ? (isRTL ? 'مؤسسات' : 'Enterprise') :
-                 tenant.plan_code === 'startup' ? (isRTL ? 'انطلاق' : 'Startup') :
-                 isRTL ? 'تجربة' : 'Trial'}
+                 tenant.plan_code === 'professional' ? (isRTL ? 'احترافية' : 'Professional') :
+                 tenant.plan_code === 'starter' ? (isRTL ? 'انطلاق' : 'Starter') :
+                 isRTL ? 'تجربة — باقة المؤسسات' : 'Trial — Enterprise Package'}
               </Badge>
             </div>
 
@@ -215,30 +217,30 @@ export default function ClientSubscriptionPortal() {
           </CardContent>
         </Card>
 
-        {/* Upgrade Plan */}
+        {/* Change Plan */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Zap className="w-5 h-5 text-purple-600" />
-              {isRTL ? 'ترقية الخطة' : 'Upgrade Plan'}
+              {isRTL ? 'تغيير الخطة' : 'Change Plan'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-slate-600">
-              {isRTL ? 'انتقل إلى خطة أعلى للحصول على مزايا إضافية' : 'Move to a higher plan for more features'}
+              {isRTL ? 'ترقية أو تخفيض خطتك — تتم الموافقة من قبل المسؤول' : 'Upgrade or downgrade — requires admin approval'}
             </p>
             {pendingUpgrade && (
               <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs">
                 <AlertCircle className="w-4 h-4 text-amber-600" />
                 <span className="text-amber-700">
-                  {isRTL ? 'لديك طلب ترقية قيد الانتظار' : 'You have a pending upgrade request'}
+                  {isRTL ? 'لديك طلب تغيير خطة قيد الانتظار' : 'You have a pending plan change request'}
                 </span>
               </div>
             )}
             <Button
               onClick={() => setUpgradeDialogOpen(true)}
-              disabled={pendingUpgrade || tenant.plan_code === 'enterprise'}
-              variant={pendingUpgrade || tenant.plan_code === 'enterprise' ? 'outline' : 'default'}
+              disabled={!!pendingUpgrade}
+              variant={pendingUpgrade ? 'outline' : 'default'}
               className="w-full"
             >
               <ArrowUpRight className="w-4 h-4 me-1" />
@@ -261,7 +263,7 @@ export default function ClientSubscriptionPortal() {
                   <th className={`text-left py-3 px-3 font-semibold ${isRTL ? 'text-right' : ''}`}>
                     {isRTL ? 'الميزة' : 'Feature'}
                   </th>
-                  {Object.entries(PLAN_DEFINITIONS).slice(0, 3).map(([code, plan]) => (
+                  {Object.entries(PLAN_DEFINITIONS).filter(([c]) => c !== 'government').map(([code, plan]) => (
                     <th key={code} className={`text-center py-3 px-3 font-semibold ${tenant.plan_code === code ? 'bg-blue-50' : ''}`}>
                       {isRTL ? plan.nameAr : plan.nameEn}
                     </th>
@@ -273,7 +275,7 @@ export default function ClientSubscriptionPortal() {
                   <td className={`py-3 px-3 text-slate-600 ${isRTL ? 'text-right' : ''}`}>
                     {isRTL ? 'المستخدمين' : 'Users'}
                   </td>
-                  {Object.entries(PLAN_DEFINITIONS).slice(0, 3).map(([code, plan]) => (
+                  {Object.entries(PLAN_DEFINITIONS).filter(([c]) => c !== 'government').map(([code, plan]) => (
                     <td key={code} className={`text-center py-3 px-3 ${tenant.plan_code === code ? 'bg-blue-50' : ''}`}>
                       {plan.maxUsers}
                     </td>
@@ -283,7 +285,7 @@ export default function ClientSubscriptionPortal() {
                   <td className={`py-3 px-3 text-slate-600 ${isRTL ? 'text-right' : ''}`}>
                     {isRTL ? 'الموظفين' : 'Employees'}
                   </td>
-                  {Object.entries(PLAN_DEFINITIONS).slice(0, 3).map(([code, plan]) => (
+                  {Object.entries(PLAN_DEFINITIONS).filter(([c]) => c !== 'government').map(([code, plan]) => (
                     <td key={code} className={`text-center py-3 px-3 ${tenant.plan_code === code ? 'bg-blue-50' : ''}`}>
                       {plan.maxEmployees}
                     </td>
@@ -293,7 +295,7 @@ export default function ClientSubscriptionPortal() {
                   <td className={`py-3 px-3 text-slate-600 ${isRTL ? 'text-right' : ''}`}>
                     {isRTL ? 'الفروع' : 'Branches'}
                   </td>
-                  {Object.entries(PLAN_DEFINITIONS).slice(0, 3).map(([code, plan]) => (
+                  {Object.entries(PLAN_DEFINITIONS).filter(([c]) => c !== 'government').map(([code, plan]) => (
                     <td key={code} className={`text-center py-3 px-3 ${tenant.plan_code === code ? 'bg-blue-50' : ''}`}>
                       {plan.maxBranches}
                     </td>
@@ -303,7 +305,7 @@ export default function ClientSubscriptionPortal() {
                   <td className={`py-3 px-3 text-slate-600 ${isRTL ? 'text-right' : ''}`}>
                     {isRTL ? 'الذكاء الاصطناعي' : 'AI'}
                   </td>
-                  {Object.entries(PLAN_DEFINITIONS).slice(0, 3).map(([code, plan]) => (
+                  {Object.entries(PLAN_DEFINITIONS).filter(([c]) => c !== 'government').map(([code, plan]) => (
                     <td key={code} className={`text-center py-3 px-3 ${tenant.plan_code === code ? 'bg-blue-50' : ''}`}>
                       {plan.aiEnabled ? (
                         <CheckCircle className="w-5 h-5 text-green-600 mx-auto" />
@@ -381,41 +383,75 @@ export default function ClientSubscriptionPortal() {
             </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            {availableUpgradePlans.map(([code, plan]) => (
-              <Card
-                key={code}
-                className={`cursor-pointer border-2 transition-all ${
-                  selectedPlan === code ? 'border-purple-500 bg-purple-50' : 'border-slate-200 hover:border-purple-300'
-                }`}
-                onClick={() => setSelectedPlan(code)}
-              >
-                <CardContent className="pt-6">
-                  <h3 className="text-lg font-bold text-slate-900">
-                    {isRTL ? plan.nameAr : plan.nameEn}
-                  </h3>
-                  <ul className="space-y-2 mt-4 text-sm text-slate-600">
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-green-600" />
-                      {isRTL ? `${plan.maxUsers} مستخدم` : `${plan.maxUsers} users`}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-green-600" />
-                      {isRTL ? `${plan.maxEmployees} موظف` : `${plan.maxEmployees} employees`}
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-green-600" />
-                      {isRTL ? `${plan.maxBranches} فرع` : `${plan.maxBranches} branches`}
-                    </li>
-                    {plan.aiEnabled && (
+            {availableChangePlans.map(([code, plan]) => {
+              const planTier = plan.tier ?? 0;
+              const isUpgrade = planTier > currentTier;
+              const isDowngrade = planTier < currentTier;
+              return (
+                <Card
+                  key={code}
+                  className={`cursor-pointer border-2 transition-all ${
+                    selectedPlan === code ? 'border-purple-500 bg-purple-50' : 'border-slate-200 hover:border-purple-300'
+                  }`}
+                  onClick={() => setSelectedPlan(code)}
+                >
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-bold text-slate-900">
+                        {isRTL ? plan.nameAr : plan.nameEn}
+                      </h3>
+                      {isUpgrade && (
+                        <Badge className="bg-emerald-100 text-emerald-700">
+                          <ArrowUpRight className="w-3 h-3 me-1" />
+                          {isRTL ? 'ترقية' : 'Upgrade'}
+                        </Badge>
+                      )}
+                      {isDowngrade && (
+                        <Badge variant="outline" className="border-amber-300 text-amber-700">
+                          <ArrowDownRight className="w-3 h-3 me-1" />
+                          {isRTL ? 'تخفيض' : 'Downgrade'}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-500 mb-3">
+                      {plan.priceMonthly > 0
+                        ? `${plan.priceMonthly.toLocaleString()} ${isRTL ? 'ر.س/شهر' : 'SAR/mo'}`
+                        : (isRTL ? 'مجاناً' : 'Free')}
+                    </p>
+                    <ul className="space-y-2 text-sm text-slate-600">
                       <li className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-green-600" />
-                        {isRTL ? 'ذكاء اصطناعي' : 'AI Features'}
+                        {isRTL ? `${plan.maxUsers} مستخدم` : `${plan.maxUsers} users`}
                       </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        {isRTL ? `${plan.maxEmployees} موظف` : `${plan.maxEmployees} employees`}
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        {isRTL ? `${plan.maxBranches} فرع` : `${plan.maxBranches} branches`}
+                      </li>
+                      {plan.aiEnabled ? (
+                        <li className="flex items-center gap-2">
+                          <Check className="w-4 h-4 text-green-600" />
+                          {isRTL ? 'ذكاء اصطناعي' : 'AI Features'}
+                        </li>
+                      ) : (
+                        <li className="flex items-center gap-2 text-slate-400">
+                          <Lock className="w-4 h-4" />
+                          {isRTL ? 'بدون ذكاء اصطناعي' : 'No AI'}
+                        </li>
+                      )}
+                    </ul>
+                    {isDowngrade && (
+                      <p className="mt-3 text-xs text-amber-600 bg-amber-50 rounded p-2">
+                        {isRTL ? 'التخفيض يتطلب موافقة المسؤول وقد يقلل الحدود المتاحة' : 'Downgrade requires admin approval and may reduce limits'}
+                      </p>
                     )}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setUpgradeDialogOpen(false)}>
@@ -426,7 +462,9 @@ export default function ClientSubscriptionPortal() {
               disabled={!selectedPlan || upgradeMutation.isPending}
             >
               {upgradeMutation.isPending && <Loader2 className="w-4 h-4 animate-spin me-2" />}
-              {isRTL ? 'طلب الترقية' : 'Request Upgrade'}
+              {selectedPlan && (PLAN_DEFINITIONS[selectedPlan]?.tier ?? 0) < currentTier
+                ? (isRTL ? 'طلب التخفيض' : 'Request Downgrade')
+                : (isRTL ? 'طلب الترقية' : 'Request Upgrade')}
             </Button>
           </DialogFooter>
         </DialogContent>
