@@ -108,7 +108,8 @@ export default function Register() {
       } else if (e?.code === 'NETWORK') {
         toast.error('تعذر الاتصال بالخادم، حاول مرة أخرى');
       } else {
-        toast.error('حدث خطأ، يرجى المحاولة مرة أخرى');
+        // Surface the real server message so issues are diagnosable.
+        toast.error(e?.message || 'حدث خطأ، يرجى المحاولة مرة أخرى');
       }
     } finally {
       setSubmitting(false);
