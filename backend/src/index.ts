@@ -10,6 +10,7 @@ import { authRouter } from './routes/auth.js';
 import { journalEntryRouter } from './routes/journalEntries.js';
 import { tenantRequestRouter } from './routes/tenantRequests.js';
 import { registrationRouter } from './routes/registration.js';
+import { invoiceRouter } from './routes/invoices.js';
 
 import { aiRouter } from './routes/ai.js';
 import { feesRouter } from './routes/fees.js';
@@ -46,6 +47,7 @@ app.use('/api/registration', registrationRouter);
 app.use('/api', authMiddleware, tenantMiddleware);
 app.use('/api/journal-entries', journalEntryRouter);
 app.use('/api/tenant-requests', tenantRequestRouter);
+app.use('/api/invoices', invoiceRouter);
 
 app.use('/api/ai', aiRouter);
 app.use('/api/fees', feesRouter);
