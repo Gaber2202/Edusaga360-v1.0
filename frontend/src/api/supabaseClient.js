@@ -173,11 +173,9 @@ export async function fetchData(query) {
 /**
  * Call a backend API endpoint (replaces supabase.functions.*).
  */
-// VITE_API_BASE_URL should be set to the backend origin (e.g. https://api.example.com).
-// Endpoint paths passed to callApi must start with /api/... and are appended directly.
-// If unset, defaults to '' so /api/... paths resolve against the current origin
-// (works when a dev proxy forwards /api/ to the backend).
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+// VITE_API_BASE_URL should be set to the backend origin in Vercel env vars.
+// Falls back to the Railway production URL so the app works even without the env var set.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://edusaga-360-production.up.railway.app';
 
 export async function callApi(endpoint, data, options = {}) {
   const {

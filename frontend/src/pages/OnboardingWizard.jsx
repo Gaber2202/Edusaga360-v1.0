@@ -32,7 +32,7 @@ export default function OnboardingWizard() {
 
   const validateToken = async () => {
     try {
-      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://edusaga-360-production.up.railway.app';
       const response = await fetch(`${apiBase}/api/registration/onboarding/${token}`);
       const data = await response.json();
 
@@ -64,7 +64,7 @@ export default function OnboardingWizard() {
 
     setSubmitting(true);
     try {
-      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://edusaga-360-production.up.railway.app';
       const response = await fetch(`${apiBase}/api/registration/onboarding/${token}/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

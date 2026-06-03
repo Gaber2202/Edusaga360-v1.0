@@ -115,7 +115,7 @@ export default function RegistrationRequestsTab() {
     setProcessingId(request.id);
     try {
       // Map UI actions to backend REST endpoints on registrationRouter
-      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://edusaga-360-production.up.railway.app';
       let url;
       if (action === 'approve') {
         url = `${apiBase}/api/registration/approve/${request.id}`;
