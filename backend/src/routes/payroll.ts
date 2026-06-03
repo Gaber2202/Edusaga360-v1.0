@@ -114,7 +114,8 @@ payrollRouter.post('/calculate', async (req: AuthenticatedRequest, res) => {
       empQuery = empQuery.in('id', employee_ids);
     }
 
-    const { data: employees, error: empError } = await empQuery;
+    const { data: rawEmployees, error: empError } = await empQuery;
+    const employees = (rawEmployees ?? []) as any[];
     if (empError) throw empError;
 
     if (!employees || employees.length === 0) {
@@ -266,7 +267,7 @@ payrollRouter.get('/wps-file', async (req: AuthenticatedRequest, res) => {
     const employerId = (tenant.slug ?? tenant_id.replace(/-/g, '').slice(0, 10)).toUpperCase();
 
     // Try to find finalized payslips for the period first
-    const { data: payslips, error: payslipError } = await supabase
+    const { data: rawPayslips, error: payslipError } = await supabase
       .from('payslip_lines')
       .select(
         'employee_id, net_salary, ' +
@@ -285,7 +286,8 @@ payrollRouter.get('/wps-file', async (req: AuthenticatedRequest, res) => {
       net_salary: number;
     }> = [];
 
-    if (!payslipError && payslips && payslips.length > 0) {
+    const payslips = (rawPayslips ?? []) as any[];
+    if (!payslipError && payslips.length > 0) {
       wpsRows = payslips.map((p) => {
         const emp = p.employees as {
           employee_number: string;
@@ -304,7 +306,7 @@ payrollRouter.get('/wps-file', async (req: AuthenticatedRequest, res) => {
       });
     } else {
       // Live calculation from employees table
-      const { data: employees, error: empError } = await supabase
+      const { data: rawEmp2, error: empError } = await supabase
         .from('employees')
         .select(
           'id, employee_number, nationality, basic_salary, ' +
@@ -315,6 +317,7 @@ payrollRouter.get('/wps-file', async (req: AuthenticatedRequest, res) => {
         .eq('status', 'active');
 
       if (empError) throw empError;
+      const employees = (rawEmp2 ?? []) as any[];
 
       wpsRows = (employees ?? []).map((emp) => {
         const basicSalary = Number(emp.basic_salary ?? 0);
