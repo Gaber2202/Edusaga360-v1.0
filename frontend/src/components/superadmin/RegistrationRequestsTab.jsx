@@ -21,14 +21,18 @@ export default function RegistrationRequestsTab() {
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ['registration-requests'],
-    queryFn: () => fetchData(tenantQuery('registration_requests').select('*').order('-submitted_at')),
+    queryFn: () => fetchData(
+      // registration_requests is a platform-level table — bypass tenant filter
+      tenantQuery('registration_requests').select('*').order('created_date', { ascending: false })
+    ),
   });
 
   const filtered = requests.filter(r => {
     const matchSearch = !search ||
-      r.school_name?.toLowerCase().includes(search.toLowerCase()) ||
-      r.email?.toLowerCase().includes(search.toLowerCase()) ||
-      r.full_name?.toLowerCase().includes(search.toLowerCase());
+      // DB columns are: school_name_en, contact_email, contact_name
+      (r.school_name_en || r.school_name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (r.contact_email || r.email || '').toLowerCase().includes(search.toLowerCase()) ||
+      (r.contact_name || r.full_name || '').toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'all' || r.status === statusFilter;
     return matchSearch && matchStatus;
   });
@@ -110,16 +114,28 @@ export default function RegistrationRequestsTab() {
   const handleAction = async (request, action) => {
     setProcessingId(request.id);
     try {
-      const res = await callApi('/api/functions/processRegistrationRequest', {
-        request_id: request.id,
-        action,
-      });
-      const data = res.data || {};
-      if (data.success) {
-        toast.success(successMessageFor(data.action));
+      // Map UI actions to backend REST endpoints on registrationRouter
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      let url;
+      if (action === 'approve') {
+        url = `${apiBase}/api/registration/approve/${request.id}`;
+      } else if (action === 'reject' || action === 'deny') {
+        url = `${apiBase}/api/registration/deny/${request.id}`;
+      } else if (action === 'resend') {
+        url = `${apiBase}/api/registration/resend/${request.id}`;
+      } else {
+        toast.error(`Unknown action: ${action}`);
+        return;
+      }
+
+      const response = await fetch(url, { method: 'GET' });
+      if (response.ok) {
+        const serverAction = action === 'approve' ? 'approved' : action === 'resend' ? 'resent' : 'rejected';
+        toast.success(successMessageFor(serverAction));
         queryClient.invalidateQueries({ queryKey: ['registration-requests'] });
       } else {
-        toast.error(errorMessageFor(data.code) || data.error || 'Unknown error');
+        const text = await response.text().catch(() => '');
+        toast.error(text || `Error ${response.status}`);
       }
     } catch (e) {
       toast.error(e.message);
@@ -214,17 +230,19 @@ export default function RegistrationRequestsTab() {
                       <td className="p-3">
                         <div className="flex items-center gap-2">
                           <School className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                          <p className="font-medium text-slate-900">{r.school_name}</p>
+                          {/* DB column: school_name_en */}
+                          <p className="font-medium text-slate-900">{r.school_name_en || r.school_name || '-'}</p>
                         </div>
                       </td>
                       <td className="p-3">
                         <div className="flex items-center gap-1.5">
                           <User className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                           <div>
-                            <p className="text-sm text-slate-800">{r.full_name}</p>
-                            <p className="text-xs text-slate-400">{r.email}</p>
+                            {/* DB columns: contact_name, contact_email, contact_phone */}
+                            <p className="text-sm text-slate-800">{r.contact_name || r.full_name || '-'}</p>
+                            <p className="text-xs text-slate-400">{r.contact_email || r.email || '-'}</p>
                             <div className="flex items-center gap-1 text-xs text-slate-400">
-                              <Phone className="w-3 h-3" />{r.phone}
+                              <Phone className="w-3 h-3" />{r.contact_phone || r.phone || '-'}
                             </div>
                           </div>
                         </div>
@@ -242,11 +260,13 @@ export default function RegistrationRequestsTab() {
                         )}
                       </td>
                       <td className="p-3">
-                        <p className="text-slate-700">{r.estimated_students || '-'}</p>
-                        {r.how_heard && <p className="text-xs text-slate-400 mt-0.5">{r.how_heard}</p>}
+                        {/* DB column: student_count_range */}
+                        <p className="text-slate-700">{r.student_count_range || r.estimated_students || '-'}</p>
+                        {r.notes && <p className="text-xs text-slate-400 mt-0.5">{r.notes}</p>}
                       </td>
                       <td className="p-3 text-slate-500 text-xs">
-                        {r.submitted_at ? format(new Date(r.submitted_at), 'dd/MM/yyyy HH:mm') : '-'}
+                        {/* DB column: created_date (submitted_at not in schema) */}
+                        {(r.created_date || r.submitted_at) ? format(new Date(r.created_date || r.submitted_at), 'dd/MM/yyyy HH:mm') : '-'}
                       </td>
                       <td className="p-3">
                         <Badge className={statusColors[r.status] || 'bg-slate-100'}>

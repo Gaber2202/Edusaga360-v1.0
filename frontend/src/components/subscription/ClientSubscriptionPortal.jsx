@@ -33,11 +33,11 @@ export default function ClientSubscriptionPortal() {
     queryKey: ['upgrade-requests', tenant?.id],
     queryFn: async () => {
       if (!tenant?.id) return [];
-      const reqs = await tenantQuery('tenant_requests').select('*').match({
+      const { data } = await tenantQuery('tenant_requests').select('*').match({
         tenant_id: tenant.id,
         request_type: 'plan_upgrade'
       });
-      return reqs || [];
+      return data || [];
     },
     enabled: !!tenant?.id,
   });
@@ -47,28 +47,36 @@ export default function ClientSubscriptionPortal() {
     queryKey: ['user-requests', tenant?.id],
     queryFn: async () => {
       if (!tenant?.id) return [];
-      const reqs = await tenantQuery('tenant_requests').select('*').match({
+      const { data } = await tenantQuery('tenant_requests').select('*').match({
         tenant_id: tenant.id,
         request_type: 'additional_users'
       });
-      return reqs || [];
+      return data || [];
     },
     enabled: !!tenant?.id,
   });
 
-  // Upgrade plan mutation
+  const PLAN_ORDER = ['free_trial', 'startup', 'enterprise'];
+
+  // Upgrade or downgrade plan mutation
   const upgradeMutation = useMutation({
     mutationFn: async (planCode) => {
-      return await submitClientTenantRequest({
-        request_type: 'plan_upgrade',
-        requested_plan: planCode,
-      });
+      const currentTier = PLAN_ORDER.indexOf(tenant?.plan_code);
+      const requestedTier = PLAN_ORDER.indexOf(planCode);
+      const request_type = requestedTier >= currentTier ? 'plan_upgrade' : 'plan_downgrade';
+      return await submitClientTenantRequest({ request_type, requested_plan: planCode });
     },
-    onSuccess: () => {
+    onSuccess: (_, planCode) => {
       queryClient.invalidateQueries({ queryKey: ['upgrade-requests'] });
       setUpgradeDialogOpen(false);
       setSelectedPlan(null);
-      toast.success(isRTL ? 'تم إرسال طلب الترقية' : 'Upgrade request submitted');
+      const currentTier = PLAN_ORDER.indexOf(tenant?.plan_code);
+      const requestedTier = PLAN_ORDER.indexOf(planCode);
+      const isDowngrade = requestedTier < currentTier;
+      toast.success(isRTL
+        ? (isDowngrade ? 'تم إرسال طلب التخفيض' : 'تم إرسال طلب الترقية')
+        : (isDowngrade ? 'Downgrade request submitted' : 'Upgrade request submitted')
+      );
     },
     onError: () => {
       toast.error(isRTL ? 'فشل الطلب' : 'Request failed');

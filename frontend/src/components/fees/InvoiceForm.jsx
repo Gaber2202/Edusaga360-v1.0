@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
-import { tenantQuery, fetchData } from '../../api/supabaseClient';
+import { tenantQuery, fetchData, callApi, supabase } from '../../api/supabaseClient';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
-import { Plus, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Loader2, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { logAuditEvent, AuditActions } from '../AuditService';
 import { reportError } from '../../lib/errorReporter';
@@ -38,6 +38,8 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
   const { tenant } = useTenant();
   const { tenantId } = useTenantFilter();
   const [loading, setLoading] = useState(false);
+  const [zatcaData, setZatcaData] = useState(null);
+  const [savedInvoiceId, setSavedInvoiceId] = useState(invoice?.id || null);
   const [formData, setFormData] = useState({
     student_id: '',
     student_name: '',
@@ -251,21 +253,33 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
           });
           data.journal_entry_id = je.id;
 
-          // Create ZATCA invoice record
-          const qrPayload = btoa(unescape(encodeURIComponent(
-            `\x01${data.student_name}\x02${data.vat_number || '300000000000003'}\x03${new Date().toISOString()}\x04${total}\x05${vatAmount}`
-          )));
-          await tenantQuery('zatca_invoices').insert({
-            invoice_id: invoice?.id || invoiceNumber,
-            invoice_number: invoiceNumber,
-            seller_name: 'School',
-            vat_number: '300000000000003',
-            invoice_total: total,
-            vat_amount: vatAmount,
-            qr_code: qrPayload,
-            zatca_status: 'generated',
-            submission_date: new Date().toISOString(),
-          });
+          // Generate ZATCA-compliant QR, UBL XML, hash and store via backend
+          const savedId = invoice?.id || invoiceNumber;
+          try {
+            const zatcaPayload = {
+              invoice_id: savedId,
+              invoice_number: invoiceNumber,
+              issue_date: data.issue_date,
+              subtotal,
+              vat_amount: vatAmount,
+              total_amount: total,
+              student_name: data.student_name,
+              items: data.items,
+              discount_amount: parseFloat(formData.discount_amount) || 0,
+              notes: data.notes,
+            };
+            const zatcaResult = await callApi('/invoices/generate-zatca', zatcaPayload);
+            setZatcaData({ ...zatcaResult, invoiceId: savedId });
+          } catch (zatcaErr) {
+            // ZATCA generation failure is non-fatal — log and continue
+            reportError({
+              error: zatcaErr,
+              module: 'fees',
+              action: 'generate_zatca_invoice',
+              severity: 'medium',
+              context: { invoice_number: invoiceNumber },
+            });
+          }
         } catch (jeErr) {
           reportError({
             error: jeErr,
@@ -279,6 +293,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
 
       if (invoice?.id) {
         await tenantQuery('invoices').update(data);
+        setSavedInvoiceId(invoice.id);
         await logAuditEvent({
           action: AuditActions.UPDATE,
           entityType: 'Invoice',
@@ -290,6 +305,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
         toast.success(isRTL ? 'تم تحديث الفاتورة' : 'Invoice updated');
       } else {
         const created = await tenantQuery('invoices').insert(data);
+        setSavedInvoiceId(created.id);
         await logAuditEvent({
           action: AuditActions.CREATE,
           entityType: 'Invoice',
@@ -307,6 +323,37 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
       toast.error(isRTL ? 'حدث خطأ أثناء الحفظ' : 'Error saving invoice');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadZATCAPDF = async () => {
+    const invoiceId = savedInvoiceId || invoice?.id;
+    if (!invoiceId) {
+      toast.error(isRTL ? 'يرجى حفظ الفاتورة أولاً' : 'Please save the invoice first');
+      return;
+    }
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
+      const response = await fetch(`${apiBase}/invoices/${invoiceId}/download-pdf`, {
+        method: 'GET',
+        headers: {
+          ...(session?.access_token && { Authorization: `Bearer ${session.access_token}` }),
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `zatca-invoice-${invoice?.invoice_number || invoiceId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading ZATCA PDF:', err);
+      toast.error(isRTL ? 'خطأ في تحميل الفاتورة' : 'Error downloading invoice PDF');
     }
   };
 
@@ -553,14 +600,29 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose}>
-              {t('cancel')}
-            </Button>
-            <Button type="submit" disabled={loading} className="bg-slate-900 hover:bg-slate-800">
-              {loading && <Loader2 className="w-4 h-4 animate-spin me-2" />}
-              {t('save')}
-            </Button>
+          <div className="flex justify-between gap-3 pt-4 border-t">
+            <div>
+              {(savedInvoiceId || invoice?.id) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleDownloadZATCAPDF}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  {isRTL ? 'تحميل فاتورة ZATCA (PDF)' : 'Download ZATCA Invoice (PDF)'}
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <Button type="button" variant="outline" onClick={onClose}>
+                {t('cancel')}
+              </Button>
+              <Button type="submit" disabled={loading} className="bg-slate-900 hover:bg-slate-800">
+                {loading && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                {t('save')}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>
