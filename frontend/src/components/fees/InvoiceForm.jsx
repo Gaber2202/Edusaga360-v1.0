@@ -334,7 +334,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
     }
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
+      const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://edusaga-360-production.up.railway.app/api';
       const response = await fetch(`${apiBase}/invoices/${invoiceId}/download-pdf`, {
         method: 'GET',
         headers: {
