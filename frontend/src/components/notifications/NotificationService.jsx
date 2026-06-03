@@ -20,8 +20,7 @@ export const NotificationService = {
    */
   async createNotification({ type, severity = 'info', title_ar, title_en, message_ar, message_en, entity_type, entity_id, link_url, module, metadata = {} }) {
     try {
-      // Create notification record
-      const notification = await tenantQuery('notifications').insert({
+      const { data: notificationData, error: notifError } = await tenantQuery('notifications').insert({
         type,
         severity,
         title_ar,
@@ -34,23 +33,20 @@ export const NotificationService = {
         module,
         metadata,
         created_by: 'system'
-      });
+      }).select().single();
+      if (notifError) throw notifError;
 
-      // Get target roles for this notification type
       const targetRoles = ROLE_TARGETING[type] || [];
 
-      // Fetch all users (filter by role if needed)
-      const allUsers = await tenantQuery('users').select('*').order();
-      
-      // Filter users by role and preferences
+      const { data: allUsers = [] } = await tenantQuery('users').select('*').order('created_at', { ascending: false });
+
       const recipients = [];
       for (const user of allUsers) {
         if (targetRoles.includes(user.role)) {
-          // Check user preferences
           const prefs = await this.getUserPreferences(user.email);
           if (this.shouldReceiveNotification(prefs, module, severity)) {
             recipients.push({
-              notification_id: notification.id,
+              notification_id: notificationData.id,
               user_email: user.email,
               user_role: user.role,
               delivered_at: new Date().toISOString()
@@ -59,12 +55,11 @@ export const NotificationService = {
         }
       }
 
-      // Bulk create recipients
       if (recipients.length > 0) {
         await tenantQuery('notification_recipients').insert(recipients);
       }
 
-      return { success: true, notification, recipients_count: recipients.length };
+      return { success: true, notification: notificationData, recipients_count: recipients.length };
     } catch (error) {
       console.error('Error creating notification:', error);
       return { success: false, error: error.message };
@@ -76,11 +71,8 @@ export const NotificationService = {
    */
   async getUserPreferences(userEmail) {
     try {
-      const prefs = await tenantQuery('notification_preferences').select('*').match({ user_email: userEmail });
-      if (prefs && prefs.length > 0) {
-        return prefs[0];
-      }
-      // Return defaults if not found
+      const { data } = await tenantQuery('notification_preferences').select('*').match({ user_email: userEmail });
+      if (data && data.length > 0) return data[0];
       return {
         contracts_enabled: true,
         finance_enabled: true,
@@ -125,14 +117,18 @@ export const NotificationService = {
    */
   async getUserNotifications(userEmail, unreadOnly = false) {
     try {
-      const recipients = await tenantQuery('notification_recipients').select('*').match({
+      const { data: recipients = [] } = await tenantQuery('notification_recipients').select('*').match({
         user_email: userEmail,
         ...(unreadOnly && { is_read: false })
       });
 
       const notifications = [];
       for (const recipient of recipients) {
-        const notification = await supabase.Notification.get(recipient.notification_id);
+        const { data: notification } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('id', recipient.notification_id)
+          .single();
         if (notification) {
           notifications.push({
             ...notification,
@@ -155,10 +151,11 @@ export const NotificationService = {
    */
   async markAsRead(recipientId) {
     try {
-      await tenantQuery('notification_recipients').update({
-        is_read: true,
-        read_at: new Date().toISOString()
-      });
+      const { error } = await supabase
+        .from('notification_recipients')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('id', recipientId);
+      if (error) throw error;
       return { success: true };
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -171,18 +168,12 @@ export const NotificationService = {
    */
   async markAllAsRead(userEmail) {
     try {
-      const recipients = await tenantQuery('notification_recipients').select('*').match({
-        user_email: userEmail,
-        is_read: false
-      });
-
-      for (const recipient of recipients) {
-        await tenantQuery('notification_recipients').update({
-          is_read: true,
-          read_at: new Date().toISOString()
-        });
-      }
-
+      const { error } = await supabase
+        .from('notification_recipients')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('user_email', userEmail)
+        .eq('is_read', false);
+      if (error) throw error;
       return { success: true };
     } catch (error) {
       console.error('Error marking all as read:', error);
