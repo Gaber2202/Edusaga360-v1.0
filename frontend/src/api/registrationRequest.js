@@ -5,8 +5,28 @@ export async function submitRegistrationRequest(payload) {
   try {
     data = await callApi('/api/registration/request', payload);
   } catch (e) {
-    const err = new Error(e?.message || 'Network error submitting registration');
-    err.code = 'NETWORK';
+    // Only a real transport failure is NETWORK. A 4xx/5xx from the server
+    // carries a status + message we should surface instead of masking it.
+    if (e?.isNetworkError) {
+      const err = new Error(e?.message || 'Network error submitting registration');
+      err.code = 'NETWORK';
+      throw err;
+    }
+    if (e?.status === 409 || e?.body?.error === 'DUPLICATE') {
+      const err = new Error(e?.message || 'Duplicate registration');
+      err.code = 'DUPLICATE';
+      throw err;
+    }
+    if (e?.status === 400) {
+      const err = new Error(e?.message || 'Validation error');
+      err.code = 'VALIDATION';
+      err.field = e?.body?.field;
+      throw err;
+    }
+    // Real server error (500 etc.) — surface the actual message.
+    const err = new Error(e?.message || 'Server error submitting registration');
+    err.code = 'SERVER_ERROR';
+    err.status = e?.status;
     throw err;
   }
   if (!data || data.success !== true) {

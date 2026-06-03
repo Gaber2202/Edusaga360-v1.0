@@ -105,7 +105,8 @@ registrationRouter.post('/request', async (req: Request, res) => {
     });
   } catch (err) {
     console.error('Failed to submit registration:', err);
-    res.status(500).json({ success: false, error: 'SERVER_ERROR', message: 'Failed to submit registration request' });
+    const detail = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ success: false, error: 'SERVER_ERROR', message: `Failed to submit registration request: ${detail}` });
   }
 });
 

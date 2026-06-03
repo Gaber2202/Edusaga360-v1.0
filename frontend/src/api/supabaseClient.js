@@ -182,21 +182,32 @@ export async function callApi(endpoint, data, options = {}) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: options.method || 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(session?.access_token && {
-        Authorization: `Bearer ${session.access_token}`,
-      }),
-      ...options.headers,
-    },
-    body: data ? JSON.stringify(data) : undefined,
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: options.method || 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(session?.access_token && {
+          Authorization: `Bearer ${session.access_token}`,
+        }),
+        ...options.headers,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  } catch (e) {
+    // True transport failure (DNS, CORS preflight blocked, offline).
+    const err = new Error(`Could not reach server at ${API_BASE_URL}: ${e.message}`);
+    err.isNetworkError = true;
+    throw err;
+  }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: response.statusText }));
-    throw new Error(error.message || `API error: ${response.status}`);
+    const body = await response.json().catch(() => ({ message: response.statusText }));
+    const err = new Error(body.message || body.error || `API error: ${response.status}`);
+    err.status = response.status;
+    err.body = body;
+    throw err;
   }
 
   return response.json();
