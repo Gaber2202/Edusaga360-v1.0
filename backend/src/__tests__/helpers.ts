@@ -54,10 +54,16 @@ export function makeReq(overrides: Record<string, unknown> = {}) {
   };
 }
 
-export function makeRes() {
-  const res: Record<string, unknown> = {};
+export interface MockRes {
+  status: ReturnType<typeof vi.fn>;
+  json: ReturnType<typeof vi.fn>;
+  send: ReturnType<typeof vi.fn>;
+}
+
+export function makeRes(): MockRes {
+  const res = {} as MockRes;
   res.status = vi.fn().mockReturnValue(res);
   res.json = vi.fn().mockReturnValue(res);
   res.send = vi.fn().mockReturnValue(res);
-  return res as ReturnType<typeof makeRes>;
+  return res;
 }

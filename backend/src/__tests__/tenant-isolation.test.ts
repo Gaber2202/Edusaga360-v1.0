@@ -23,7 +23,7 @@ function userWith(overrides: Record<string, unknown> = {}) {
 // ── tenantMiddleware unit tests ───────────────────────────────────────────────
 
 describe('tenantMiddleware', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it('returns 401 when req.user is not set (not authenticated)', () => {
     const req = makeReq({ user: undefined });
