@@ -57,8 +57,20 @@ export default function OnboardingWizard() {
       toast.error('كلمات المرور غير متطابقة');
       return;
     }
-    if (password.length < 8) {
-      toast.error('كلمة المرور يجب أن تكون 8 أحرف على الأقل');
+    if (password.length < 10) {
+      toast.error('كلمة المرور يجب أن تكون 10 أحرف على الأقل');
+      return;
+    }
+    if (!/[A-Z]/.test(password)) {
+      toast.error('كلمة المرور يجب أن تحتوي على حرف كبير (A-Z)');
+      return;
+    }
+    if (!/[a-z]/.test(password)) {
+      toast.error('كلمة المرور يجب أن تحتوي على حرف صغير (a-z)');
+      return;
+    }
+    if (!/[0-9]/.test(password)) {
+      toast.error('كلمة المرور يجب أن تحتوي على رقم');
       return;
     }
 
@@ -82,7 +94,8 @@ export default function OnboardingWizard() {
         setCompleted(true);
         setTimeout(() => navigate('/school-login'), 3000);
       } else {
-        toast.error(data.error || 'فشل في إكمال الإعداد');
+        const msg = data.message || (data.errors ? Object.values(data.errors?.fieldErrors || {}).flat().join(' ') : null) || 'فشل في إكمال الإعداد';
+        toast.error(msg);
       }
     } catch (_e) {
       toast.error('خطأ في الاتصال');
@@ -180,7 +193,8 @@ export default function OnboardingWizard() {
               <p className="text-sm text-slate-500">اختر كلمة مرور قوية لحسابك ({request?.contact_email})</p>
               <div>
                 <Label>كلمة المرور</Label>
-                <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="8 أحرف على الأقل" />
+                <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="10 أحرف على الأقل" />
+                <p className="text-xs text-slate-400">10 أحرف على الأقل، تشمل حرفاً كبيراً وحرفاً صغيراً ورقماً</p>
               </div>
               <div>
                 <Label>تأكيد كلمة المرور</Label>
@@ -189,7 +203,7 @@ export default function OnboardingWizard() {
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1" onClick={() => setStep(0)}>رجوع</Button>
                 <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={() => {
-                  if (password.length < 8) { toast.error('8 أحرف على الأقل'); return; }
+                  if (password.length < 10) { toast.error('كلمة المرور يجب أن تكون 10 أحرف على الأقل'); return; }
                   if (password !== confirmPassword) { toast.error('كلمات المرور غير متطابقة'); return; }
                   setStep(2);
                 }}>التالي</Button>
