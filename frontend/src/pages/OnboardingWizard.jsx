@@ -77,16 +77,17 @@ export default function OnboardingWizard() {
     setSubmitting(true);
     try {
       const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://edusaga-360-production.up.railway.app';
+      const body = {
+        password,
+        default_language: defaultLanguage,
+        ...(schoolLogo.trim() ? { school_logo: schoolLogo.trim() } : {}),
+        ...(academicYearStart ? { academic_year_start: academicYearStart } : {}),
+        ...(numGrades ? { num_grades: Number(numGrades) } : {}),
+      };
       const response = await fetch(`${apiBase}/api/registration/onboarding/${token}/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          password,
-          school_logo: schoolLogo,
-          academic_year_start: academicYearStart,
-          num_grades: numGrades,
-          default_language: defaultLanguage,
-        }),
+        body: JSON.stringify(body),
       });
       const data = await response.json();
 
