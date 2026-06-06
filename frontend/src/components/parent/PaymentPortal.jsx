@@ -3,7 +3,6 @@ import { tenantQuery } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useTenant } from '../TenantContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Loader2, CreditCard, Smartphone, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';

@@ -1,5 +1,4 @@
-import { tenantQuery, callApi } from '../../api/supabaseClient';
-import { logAuditEvent, AuditActions } from '../AuditService';
+import { callApi } from '../../api/supabaseClient';
 
 /**
  * WhatsApp Communication Service

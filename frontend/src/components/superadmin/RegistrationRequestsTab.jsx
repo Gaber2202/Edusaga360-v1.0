@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
+import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';

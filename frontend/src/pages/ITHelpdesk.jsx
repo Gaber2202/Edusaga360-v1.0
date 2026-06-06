@@ -37,8 +37,9 @@ export default function ITHelpdesk() {
   const { data: tickets = [], isLoading: ticketsLoading } = useQuery({
     queryKey: ['itTickets', tenantId, selectedBranchId],
     queryFn: async () => {
-      const all = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ ticket_type: 'it_helpdesk' })), '-created_date');
-      return filterByBranch(all);
+      const { data = [], error } = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ ticket_type: 'it_helpdesk' }))).order('created_date', { ascending: false });
+      if (error) throw error;
+      return filterByBranch(data);
     },
     enabled: hasTenantAccess,
   });
@@ -46,8 +47,9 @@ export default function ITHelpdesk() {
   const { data: assets = [], isLoading: assetsLoading } = useQuery({
     queryKey: ['itAssets', tenantId, selectedBranchId],
     queryFn: async () => {
-      const all = await tenantQuery('it_assets').select('*').match(tenantFilter(branchFilter()), '-created_date');
-      return filterByBranch(all);
+      const { data = [], error } = await tenantQuery('it_assets').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false });
+      if (error) throw error;
+      return filterByBranch(data);
     },
     enabled: hasTenantAccess,
   });

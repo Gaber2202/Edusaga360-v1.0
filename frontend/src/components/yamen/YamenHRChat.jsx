@@ -6,7 +6,6 @@ import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
 import { Bot, Send, Loader2, User, Lock, BarChart3, FileText, AlertCircle, Info } from 'lucide-react';
 import { format } from 'date-fns';
-import { calculateAdvancedAnalytics, generatePolicyRecommendations } from './yamenUtils';
 
 async function buildHRContext(isHRMode, userEmail) {
   try {

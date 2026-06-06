@@ -47,17 +47,21 @@ function UsersTab({ isRTL, tenant }) {
   const [search, setSearch] = useState('');
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editUser, setEditUser] = useState(null);
+  const [inviteName, setInviteName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('hr_officer');
   const [inviting, setInviting] = useState(false);
 
+  const isTrial = tenant?.status === 'trial';
+  const maxUsers = tenant?.max_users || 999;
+
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['subscription-users'],
-    queryFn: () => fetchData(tenantQuery('users').select('*').order()),
+    queryFn: () => fetchData(tenantQuery('users').select('*').order('created_date', { ascending: false })),
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: ({ userId, role }) => tenantQuery('users').update({ user_role: role }),
+    mutationFn: ({ userId, role }) => tenantQuery('users').update({ user_role: role }).eq('id', userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription-users'] });
       toast.success(isRTL ? 'تم تحديث الدور' : 'Role updated');
@@ -65,22 +69,42 @@ function UsersTab({ isRTL, tenant }) {
     },
   });
 
+  const atLimit = users.length >= maxUsers;
+
   const handleInvite = async () => {
+    if (!inviteName.trim()) {
+      toast.error(isRTL ? 'الاسم مطلوب' : 'Name is required');
+      return;
+    }
     if (!inviteEmail.trim() || !inviteEmail.includes('@')) {
       toast.error(isRTL ? 'البريد الإلكتروني غير صحيح' : 'Invalid email');
       return;
     }
     setInviting(true);
     try {
-      await callApi('/api/auth/invite', { email: inviteEmail.trim(), role: inviteRole === 'admin' ? 'admin' : 'user' });
-      // Also set user_role on the user record after invite
-      toast.success(isRTL ? `تم إرسال دعوة إلى ${inviteEmail}` : `Invitation sent to ${inviteEmail}`);
+      await callApi('/api/tenant-users/request', {
+        name: inviteName.trim(),
+        email: inviteEmail.trim(),
+        requested_role: inviteRole,
+      });
+      toast.success(
+        isTrial
+          ? (isRTL ? 'تم إرسال طلب إضافة المستخدم للمراجعة' : 'User request submitted for admin review')
+          : (isRTL ? `تم إرسال دعوة إلى ${inviteEmail}` : `Invitation sent to ${inviteEmail}`)
+      );
+      setInviteName('');
       setInviteEmail('');
       setInviteRole('hr_officer');
       setInviteOpen(false);
       queryClient.invalidateQueries({ queryKey: ['subscription-users'] });
     } catch (e) {
-      toast.error(e.message || (isRTL ? 'فشل الإرسال' : 'Failed to invite'));
+      if (e.body?.code === 'LIMIT_REACHED') {
+        toast.error(isRTL ? 'وصلت إلى الحد الأقصى من المستخدمين في الخطة التجريبية' : 'You have reached the maximum users allowed on the trial plan');
+      } else if (e.body?.code === 'DUPLICATE') {
+        toast.error(isRTL ? 'هناك طلب معلق بالفعل لهذا البريد الإلكتروني' : 'A pending request already exists for this email');
+      } else {
+        toast.error(e.message || (isRTL ? 'فشل الإرسال' : 'Failed to submit request'));
+      }
     } finally {
       setInviting(false);
     }
@@ -180,10 +204,36 @@ function UsersTab({ isRTL, tenant }) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="w-5 h-5 text-blue-600" />
-              {isRTL ? 'دعوة مستخدم جديد' : 'Invite New User'}
+              {isRTL ? 'إضافة مستخدم' : 'Add User'}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            {isTrial && atLimit && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-amber-600" />
+                <div>
+                  {isRTL
+                    ? `لقد وصلت إلى الحد الأقصى (${maxUsers} مستخدمين) في الخطة التجريبية. سيُعامَل هذا الطلب كاشتراك مدفوع ويحتاج موافقة الإدارة.`
+                    : `You've reached the trial limit (${maxUsers} users). Adding more users is a paid subscription request that requires admin approval.`}
+                </div>
+              </div>
+            )}
+            {isTrial && !atLimit && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200 text-sm text-blue-800">
+                <Shield className="w-4 h-4 mt-0.5 shrink-0 text-blue-600" />
+                {isRTL
+                  ? `الخطة التجريبية تسمح بـ ${maxUsers} مستخدمين. حاليًا لديك ${users.length}.`
+                  : `Trial plan allows ${maxUsers} users. You currently have ${users.length}.`}
+              </div>
+            )}
+            <div className="space-y-1.5">
+              <Label>{isRTL ? 'الاسم الكامل *' : 'Full Name *'}</Label>
+              <Input
+                placeholder={isRTL ? 'محمد أحمد' : 'John Smith'}
+                value={inviteName}
+                onChange={e => setInviteName(e.target.value)}
+              />
+            </div>
             <div className="space-y-1.5">
               <Label>{isRTL ? 'البريد الإلكتروني *' : 'Email Address *'}</Label>
               <div className="relative">
@@ -217,7 +267,9 @@ function UsersTab({ isRTL, tenant }) {
             <Button variant="outline" onClick={() => setInviteOpen(false)}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
             <Button onClick={handleInvite} disabled={inviting} className="gap-2">
               {inviting && <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-              {isRTL ? 'إرسال الدعوة' : 'Send Invite'}
+              {isTrial && atLimit
+                ? (isRTL ? 'إرسال طلب مدفوع' : 'Submit Paid Request')
+                : (isRTL ? 'إرسال الطلب' : 'Submit Request')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,8 +1,9 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase, fetchData } from '../lib/supabase';
+import { callApi } from '../lib/supabase';
 import { Card, CardContent } from '../components/ui/card';
 import { Building2, Users, CreditCard, Activity } from 'lucide-react';
+import { format } from 'date-fns';
 
 function KPICard({ title, value, icon: Icon, color }) {
   const colors = {
@@ -17,7 +18,7 @@ function KPICard({ title, value, icon: Icon, color }) {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-slate-500">{title}</p>
-            <p className="text-2xl font-bold text-slate-800 mt-1">{value}</p>
+            <p className="text-2xl font-bold text-slate-800 mt-1">{value ?? '—'}</p>
           </div>
           <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colors[color]}`}>
             <Icon className="w-6 h-6" />
@@ -29,20 +30,17 @@ function KPICard({ title, value, icon: Icon, color }) {
 }
 
 export default function Dashboard() {
-  const { data: tenants = [] } = useQuery({
+  const { data: stats } = useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: () => callApi('/api/admin/stats', {}, { method: 'GET' }),
+  });
+
+  const { data: tenantsData } = useQuery({
     queryKey: ['admin-tenants'],
-    queryFn: () => fetchData(supabase.from('tenants').select('*')),
+    queryFn: () => callApi('/api/admin/tenants', {}, { method: 'GET' }),
   });
 
-  const { data: users = [] } = useQuery({
-    queryKey: ['admin-users'],
-    queryFn: () => fetchData(supabase.from('users').select('id, tenant_id, is_active')),
-  });
-
-  const activeTenants = tenants.filter(t => t.status === 'active').length;
-  const trialTenants = tenants.filter(t => t.status === 'trial').length;
-  const totalUsers = users.length;
-  const activeUsers = users.filter(u => u.is_active !== false).length;
+  const tenants = tenantsData?.tenants ?? [];
 
   return (
     <div className="space-y-6">
@@ -52,10 +50,10 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard title="Total Tenants" value={tenants.length} icon={Building2} color="blue" />
-        <KPICard title="Active Tenants" value={activeTenants} icon={Activity} color="emerald" />
-        <KPICard title="Trial Tenants" value={trialTenants} icon={CreditCard} color="amber" />
-        <KPICard title="Total Users" value={totalUsers} icon={Users} color="purple" />
+        <KPICard title="Total Tenants" value={stats?.totalTenants} icon={Building2} color="blue" />
+        <KPICard title="Active Tenants" value={stats?.activeTenants} icon={Activity} color="emerald" />
+        <KPICard title="Trial Tenants" value={stats?.trialTenants} icon={CreditCard} color="amber" />
+        <KPICard title="Total Users" value={stats?.totalUsers} icon={Users} color="purple" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -93,19 +91,21 @@ export default function Dashboard() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-600">Active Users</span>
-                <span className="font-semibold text-slate-800">{activeUsers}</span>
+                <span className="font-semibold text-slate-800">{stats?.activeUsers ?? '—'}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-600">Inactive Users</span>
-                <span className="font-semibold text-slate-800">{totalUsers - activeUsers}</span>
+                <span className="font-semibold text-slate-800">
+                  {stats ? (stats.totalUsers - stats.activeUsers) : '—'}
+                </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600">Pending Tenants</span>
-                <span className="font-semibold text-slate-800">{tenants.filter(t => t.status === 'pending_approval').length}</span>
+                <span className="text-sm text-slate-600">Trial Tenants</span>
+                <span className="font-semibold text-slate-800">{stats?.trialTenants ?? '—'}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600">Suspended Tenants</span>
-                <span className="font-semibold text-slate-800">{tenants.filter(t => t.status === 'suspended').length}</span>
+                <span className="text-sm text-slate-600">Active Tenants</span>
+                <span className="font-semibold text-slate-800">{stats?.activeTenants ?? '—'}</span>
               </div>
             </div>
           </CardContent>

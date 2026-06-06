@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase, fetchData } from '../lib/supabase';
+import { callApi } from '../lib/supabase';
 import { Card, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
@@ -9,15 +9,17 @@ import { Search, Users } from 'lucide-react';
 export default function PlatformUsers() {
   const [search, setSearch] = useState('');
 
-  const { data: users = [], isLoading } = useQuery({
+  const { data: usersData, isLoading } = useQuery({
     queryKey: ['admin-all-users'],
-    queryFn: () => fetchData(supabase.from('users').select('*').order('created_date', { ascending: false })),
+    queryFn: () => callApi('/api/admin/users', {}, { method: 'GET' }),
   });
+  const users = usersData?.users ?? [];
 
-  const { data: tenants = [] } = useQuery({
+  const { data: tenantsData } = useQuery({
     queryKey: ['admin-tenants'],
-    queryFn: () => fetchData(supabase.from('tenants').select('id, name_en, name_ar, tenant_code')),
+    queryFn: () => callApi('/api/admin/tenants', {}, { method: 'GET' }),
   });
+  const tenants = tenantsData?.tenants ?? [];
 
   const tenantMap = Object.fromEntries(tenants.map(t => [t.id, t]));
 

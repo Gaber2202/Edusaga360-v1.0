@@ -1,6 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+import crypto from 'crypto';
+
+// Mirror the HMAC signing used by the registration router so approve/deny
+// links pass the signature check. Uses the same default secret as the route
+// (ADMIN_LINK_SECRET is unset in the test environment).
+const ADMIN_LINK_SECRET = process.env.ADMIN_LINK_SECRET || 'change-me-in-production';
+function sigFor(action: string, id: string): string {
+  return crypto.createHmac('sha256', ADMIN_LINK_SECRET).update(`${action}:${id}`).digest('hex').slice(0, 32);
+}
 
 // ── Mock @supabase/supabase-js ────────────────────────────────────────────────
 // We need fine-grained control per test, so we track calls through a shared ref.
@@ -157,7 +166,7 @@ describe('GET /registration/approve/:id', () => {
       .mockReturnValueOnce(linkQB);   // update registration_requests with tenant_id
 
     const app = makeApp();
-    const res = await request(app).get('/registration/approve/req-valid');
+    const res = await request(app).get(`/registration/approve/req-valid?sig=${sigFor('approve', 'req-valid')}`);
 
     expect(res.status).toBe(200);
     expect(res.text).toContain('Approved');
@@ -168,7 +177,7 @@ describe('GET /registration/approve/:id', () => {
     mockFrom.mockReturnValueOnce(notFoundQB);
 
     const app = makeApp();
-    const res = await request(app).get('/registration/approve/nonexistent-id');
+    const res = await request(app).get(`/registration/approve/nonexistent-id?sig=${sigFor('approve', 'nonexistent-id')}`);
 
     expect(res.status).toBe(404);
     expect(res.text).toContain('Not Found');
@@ -187,7 +196,7 @@ describe('GET /registration/approve/:id', () => {
     mockFrom.mockReturnValueOnce(fetchQB);
 
     const app = makeApp();
-    const res = await request(app).get('/registration/approve/req-already');
+    const res = await request(app).get(`/registration/approve/req-already?sig=${sigFor('approve', 'req-already')}`);
 
     expect(res.status).toBe(200);
     expect(res.text).toContain('Already Approved');
@@ -244,7 +253,7 @@ describe('POST /registration/onboarding/:token/complete', () => {
     const app = makeApp();
     const res = await request(app)
       .post('/registration/onboarding/badtoken/complete')
-      .send({ password: 'Pass123!' });
+      .send({ password: 'SecurePass123!' });
 
     expect(res.status).toBe(404);
     expect(res.body.success).toBe(false);
@@ -266,7 +275,7 @@ describe('POST /registration/onboarding/:token/complete', () => {
     const app = makeApp();
     const res = await request(app)
       .post('/registration/onboarding/pendingtoken/complete')
-      .send({ password: 'Pass123!' });
+      .send({ password: 'SecurePass123!' });
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);

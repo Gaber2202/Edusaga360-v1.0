@@ -64,6 +64,7 @@ export default function HRManagerDashboard() {
   const { isRTL } = useLanguage();
   const { branchFilter } = useBranch();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
+  const [activeTab, setActiveTab] = useState('overview');
   const today = new Date();
 
   const { data: employees = [], isLoading } = useQuery({
@@ -189,8 +190,6 @@ export default function HRManagerDashboard() {
   const PIE_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
   if (isLoading) return <div className="flex items-center justify-center py-16"><RefreshCw className="w-6 h-6 animate-spin text-slate-400" /></div>;
-
-  const [activeTab, setActiveTab] = useState('overview');
 
   return (
     <div className="space-y-5">
