@@ -337,10 +337,15 @@ const OnboardingCompleteSchema = z.object({
     .regex(/[A-Z]/, 'Must contain an uppercase letter')
     .regex(/[a-z]/, 'Must contain a lowercase letter')
     .regex(/[0-9]/, 'Must contain a number'),
-  school_logo: z.string().url().max(500).optional().or(z.literal('')),
-  academic_year_start: z.string().max(20).optional(),
-  num_grades: z.union([z.number().int().min(1).max(30), z.string().regex(/^\d+$/).transform(Number)]).optional(),
-  default_language: z.enum(['ar', 'en']).optional(),
+  // All remaining fields are genuinely optional — accept empty/missing gracefully
+  school_logo: z.string().max(500).optional().transform(v => (v && v.trim()) || undefined),
+  academic_year_start: z.string().max(20).optional().transform(v => v || undefined),
+  num_grades: z.union([
+    z.number().int().min(1).max(30),
+    z.string().regex(/^\d+$/).transform(Number),
+    z.literal('').transform(() => undefined),
+  ]).optional(),
+  default_language: z.enum(['ar', 'en']).default('ar'),
 });
 
 // Onboarding completion
