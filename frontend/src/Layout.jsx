@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { supabase } from './api/supabaseClient';
 import { LanguageProvider, useLanguage } from './components/LanguageContext';
@@ -10,6 +10,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import NotificationBell from './components/notifications/NotificationBell';
 import TenantAccessGate from './components/TenantAccessGate';
 import TenantContextSyncer from './components/TenantContextSyncer';
+import CommandPalette from './components/CommandPalette';
 import { format } from 'date-fns';
 import { Button } from './components/ui/button';
 import { Avatar, AvatarFallback } from './components/ui/avatar';
@@ -47,6 +48,9 @@ import {
           ChevronRight,
           ChevronDown,
           Globe,
+          Sun,
+          Moon,
+          Search,
           Building2,
           Wallet,
           ShoppingCart,
@@ -98,6 +102,14 @@ function LayoutContent({ children, currentPageName }) {
   const { branches, selectedBranchId, selectBranch } = useBranch();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (darkMode) { root.classList.add('dark'); localStorage.setItem('theme', 'dark'); }
+    else { root.classList.remove('dark'); localStorage.setItem('theme', 'light'); }
+  }, [darkMode]);
   const [expandedMenus, setExpandedMenus] = useState({});
 
   const toggleMenu = (menuId) => {
@@ -467,6 +479,21 @@ function LayoutContent({ children, currentPageName }) {
           h3 { font-size: 14px; }
           table { font-size: 12px; }
         }
+        /* Safe area for mobile bottom nav */
+        .safe-area-pb { padding-bottom: env(safe-area-inset-bottom, 0px); }
+        /* Dark mode base */
+        .dark { color-scheme: dark; }
+        .dark body { background: #0f172a; color: #e2e8f0; }
+        /* Print styles */
+        @media print {
+          aside, nav, header, .no-print, [role="navigation"] { display: none !important; }
+          main { padding: 0 !important; overflow: visible !important; }
+          body { background: white !important; color: black !important; }
+          .print-break { page-break-after: always; }
+          table { border-collapse: collapse; width: 100%; }
+          th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: right; }
+          th { background: #f1f5f9; font-weight: 600; }
+        }
       `}</style>
 
       {/* Desktop Sidebar */}
@@ -593,8 +620,18 @@ function LayoutContent({ children, currentPageName }) {
               </div>
             )}
 
+            {/* Cmd+K Search */}
+            <Button variant="ghost" size="icon" onClick={() => setCmdOpen(true)} className="hidden sm:flex text-slate-500 hover:text-slate-900 h-9 w-9" title={isRTL ? 'بحث (Ctrl+K)' : 'Search (Ctrl+K)'}>
+              <Search className="w-4 h-4" />
+            </Button>
+
             {/* Notification Bell */}
             <NotificationBell />
+
+            {/* Dark Mode Toggle */}
+            <Button variant="ghost" size="icon" onClick={() => setDarkMode(d => !d)} className="text-slate-500 hover:text-slate-900 h-9 w-9" title={darkMode ? (isRTL ? 'الوضع النهاري' : 'Light mode') : (isRTL ? 'الوضع الليلي' : 'Dark mode')}>
+              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
 
             {/* Language Toggle */}
             <Button variant="ghost" size="icon" onClick={toggleLanguage} className="text-slate-600 hover:text-slate-900 h-9 w-9">
@@ -652,12 +689,34 @@ function LayoutContent({ children, currentPageName }) {
         )}
 
         {/* Page Content */}
-        <main className="flex-1 w-full p-2 sm:p-4 lg:p-6 bg-slate-50 overflow-hidden overflow-y-auto">
+        <main className="flex-1 w-full p-2 sm:p-4 lg:p-6 bg-slate-50 overflow-hidden overflow-y-auto pb-16 lg:pb-6">
           <div className="w-full h-full">
             <TenantAccessGate>{children}</TenantAccessGate>
           </div>
         </main>
+
+        {/* Mobile Bottom Navigation */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 flex items-center justify-around h-14 px-2 safe-area-pb">
+          {[
+            { icon: LayoutDashboard, page: 'Dashboard', labelAr: 'الرئيسية', label: 'Home' },
+            { icon: Users, page: 'Students', labelAr: 'الطلاب', label: 'Students' },
+            { icon: CreditCard, page: 'Fees', labelAr: 'الرسوم', label: 'Fees' },
+            { icon: Users, page: 'Employees', labelAr: 'الموظفون', label: 'Staff' },
+            { icon: Settings, page: 'Settings', labelAr: 'الإعدادات', label: 'Settings' },
+          ].map(({ icon: Icon, page, label, labelAr }) => {
+            const active = currentPageName === page;
+            return (
+              <Link key={page} to={createPageUrl(page)} className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${active ? 'text-blue-600' : 'text-slate-500'}`}>
+                <Icon className="w-5 h-5" />
+                <span className="text-[10px] font-medium">{isRTL ? labelAr : label}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
+
+      {/* Global Command Palette */}
+      <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
     </div>
   );
 }
