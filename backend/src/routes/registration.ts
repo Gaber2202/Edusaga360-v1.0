@@ -13,24 +13,41 @@ const supabase = createClient(
 const ADMIN_EMAIL = 'info@edusaga360.com';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://edusaga-360-production.vercel.app';
 const API_BASE_URL = process.env.API_BASE_URL || 'https://edusaga-360-production.up.railway.app';
+// Secret used to sign approve/deny links so they can't be forged.
+// Set ADMIN_LINK_SECRET in Railway env vars to a long random string.
+const ADMIN_LINK_SECRET = process.env.ADMIN_LINK_SECRET || 'change-me-in-production';
+
+/** Sign a registration action URL so it can't be guessed or forged. */
+function signAdminAction(action: string, id: string): string {
+  const sig = crypto.createHmac('sha256', ADMIN_LINK_SECRET).update(`${action}:${id}`).digest('hex').slice(0, 32);
+  return `${API_BASE_URL}/api/registration/${action}/${id}?sig=${sig}`;
+}
+
+/** Verify the HMAC signature on an admin action request. */
+function verifyAdminSig(action: string, id: string, sig: string | undefined): boolean {
+  if (!sig) return false;
+  const expected = crypto.createHmac('sha256', ADMIN_LINK_SECRET).update(`${action}:${id}`).digest('hex').slice(0, 32);
+  // Constant-time comparison to prevent timing attacks
+  try { return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)); } catch { return false; }
+}
 
 const RegistrationRequestSchema = z.object({
-  full_name: z.string().min(1).optional(),
-  school_name: z.string().min(1).optional(),
-  school_name_en: z.string().min(1).optional(),
-  school_name_ar: z.string().optional(),
-  contact_name: z.string().min(1).optional(),
-  contact_email: z.string().email().optional(),
-  email: z.string().email().optional(),
-  contact_phone: z.string().optional(),
-  phone: z.string().optional(),
-  school_type: z.string().optional(),
-  city: z.string().optional(),
-  country: z.string().default('SA'),
-  estimated_students: z.string().optional(),
-  student_count_range: z.string().optional(),
-  how_heard: z.string().optional(),
-  notes: z.string().optional(),
+  full_name: z.string().min(1).max(200).optional(),
+  school_name: z.string().min(1).max(200).optional(),
+  school_name_en: z.string().min(1).max(200).optional(),
+  school_name_ar: z.string().max(200).optional(),
+  contact_name: z.string().min(1).max(200).optional(),
+  contact_email: z.string().email().max(254).optional(),
+  email: z.string().email().max(254).optional(),
+  contact_phone: z.string().max(30).optional(),
+  phone: z.string().max(30).optional(),
+  school_type: z.string().max(100).optional(),
+  city: z.string().max(100).optional(),
+  country: z.string().max(10).default('SA'),
+  estimated_students: z.string().max(50).optional(),
+  student_count_range: z.string().max(50).optional(),
+  how_heard: z.string().max(500).optional(),
+  notes: z.string().max(2000).optional(),
 });
 
 registrationRouter.post('/request', async (req: Request, res) => {
@@ -110,10 +127,14 @@ registrationRouter.post('/request', async (req: Request, res) => {
   }
 });
 
-// Approval endpoint (called from email link)
+// Approval endpoint (called from email link — HMAC-signed)
 registrationRouter.get('/approve/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const sig = req.query.sig as string | undefined;
+    if (!verifyAdminSig('approve', id, sig)) {
+      return res.status(403).send(renderResultPage('Forbidden', 'Invalid or missing signature. This link may have been tampered with.', false));
+    }
     const { data: request, error: fetchError } = await supabase
       .from('registration_requests')
       .select('*')
@@ -176,10 +197,14 @@ registrationRouter.get('/approve/:id', async (req, res) => {
   }
 });
 
-// Denial endpoint (called from email link)
+// Denial endpoint (called from email link — HMAC-signed)
 registrationRouter.get('/deny/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const sig = req.query.sig as string | undefined;
+    if (!verifyAdminSig('deny', id, sig)) {
+      return res.status(403).send(renderResultPage('Forbidden', 'Invalid or missing signature. This link may have been tampered with.', false));
+    }
     const { data: request, error: fetchError } = await supabase
       .from('registration_requests')
       .select('*')
@@ -305,11 +330,29 @@ registrationRouter.get('/onboarding/:token', async (req, res) => {
   }
 });
 
+const OnboardingCompleteSchema = z.object({
+  password: z.string()
+    .min(10, 'Password must be at least 10 characters')
+    .max(128, 'Password too long')
+    .regex(/[A-Z]/, 'Must contain an uppercase letter')
+    .regex(/[a-z]/, 'Must contain a lowercase letter')
+    .regex(/[0-9]/, 'Must contain a number'),
+  school_logo: z.string().url().max(500).optional().or(z.literal('')),
+  academic_year_start: z.string().max(20).optional(),
+  num_grades: z.union([z.number().int().min(1).max(30), z.string().regex(/^\d+$/).transform(Number)]).optional(),
+  default_language: z.enum(['ar', 'en']).optional(),
+});
+
 // Onboarding completion
 registrationRouter.post('/onboarding/:token/complete', async (req, res) => {
   try {
     const { token } = req.params;
-    const { password, school_logo, academic_year_start, num_grades, default_language } = req.body;
+
+    const parsed = OnboardingCompleteSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: 'VALIDATION', errors: parsed.error.flatten() });
+    }
+    const { password, school_logo, academic_year_start, num_grades, default_language } = parsed.data;
 
     const { data: request, error: fetchErr } = await supabase
       .from('registration_requests')
@@ -325,14 +368,21 @@ registrationRouter.post('/onboarding/:token/complete', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Request is not approved' });
     }
 
-    // Create auth user
+    // Enforce token expiry on completion (not just on the GET validation step)
+    if (request.token_expires_at && new Date(request.token_expires_at) < new Date()) {
+      return res.status(410).json({ success: false, error: 'TOKEN_EXPIRED', message: 'Onboarding link has expired. Please request a new one.' });
+    }
+
+    // Create auth user — privileged claims go in app_metadata (not user-writable)
     const { data: authData, error: authErr } = await supabase.auth.admin.createUser({
       email: request.contact_email,
       password,
       email_confirm: true,
-      user_metadata: {
-        full_name: request.contact_name,
+      user_metadata: { full_name: request.contact_name },
+      app_metadata: {
         role: 'admin',
+        tenant_id: request.tenant_id,
+        is_platform_owner: false,
       },
     });
 
@@ -378,12 +428,11 @@ registrationRouter.post('/onboarding/:token/complete', async (req, res) => {
 // ── Email helpers ──────────────────────────────────────────────────────────────
 
 async function sendAdminNotification(request: Record<string, string>) {
-  const approveUrl = `${API_BASE_URL}/api/registration/approve/${request.id}`;
-  const denyUrl = `${API_BASE_URL}/api/registration/deny/${request.id}`;
+  // Use HMAC-signed URLs so only the holder of ADMIN_LINK_SECRET can approve/deny
+  const approveUrl = signAdminAction('approve', request.id);
+  const denyUrl = signAdminAction('deny', request.id);
 
-  console.log(`[EMAIL] Admin notification for: ${request.contact_email}`);
-  console.log(`  Approve: ${approveUrl}`);
-  console.log(`  Deny: ${denyUrl}`);
+  console.log(`[EMAIL] Admin notification queued for: ${request.contact_email}`);
 
   // Use Resend/SendGrid if configured
   const resendKey = process.env.RESEND_API_KEY;
@@ -435,8 +484,8 @@ async function sendAdminNotification(request: Record<string, string>) {
 async function sendWelcomeEmail(request: Record<string, string>) {
   const onboardingUrl = `${FRONTEND_URL}/onboarding/${request.onboarding_token}`;
 
-  console.log(`[EMAIL] Welcome email to: ${request.contact_email}`);
-  console.log(`  Onboarding URL: ${onboardingUrl}`);
+  // Do NOT log the onboarding URL — it contains a secret token
+  console.log(`[EMAIL] Welcome email queued for: ${request.contact_email}`);
 
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) return;

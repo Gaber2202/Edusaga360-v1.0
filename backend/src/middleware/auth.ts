@@ -38,12 +38,16 @@ export async function authMiddleware(
       return res.status(401).json({ message: 'Invalid or expired token' });
     }
 
+    // Security: read privileged claims from app_metadata (admin-only write)
+    // NOT user_metadata (user-writable — self-escalation vector).
+    // tenant_id and role fall back to user_metadata for backwards compatibility
+    // but is_platform_owner is app_metadata-only.
     req.user = {
       id: user.id,
       email: user.email!,
-      tenant_id: user.user_metadata?.tenant_id,
-      role: user.user_metadata?.role,
-      is_platform_owner: user.user_metadata?.is_platform_owner === true,
+      tenant_id: user.app_metadata?.tenant_id ?? user.user_metadata?.tenant_id,
+      role: user.app_metadata?.role ?? user.user_metadata?.role,
+      is_platform_owner: user.app_metadata?.is_platform_owner === true,
     };
 
     next();

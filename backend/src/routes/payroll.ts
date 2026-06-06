@@ -366,7 +366,8 @@ payrollRouter.get('/wps-file', async (req: AuthenticatedRequest, res) => {
       return [employerId, row.employee_number, bankCode, iban, amount, 'SAR'].join('|');
     });
 
-    const filename = `WPS_${tenant.slug ?? tenant_id.slice(0, 8)}_${period_start}_${period_end}.txt`;
+    const safeSlug = (tenant.slug ?? tenant_id.slice(0, 8)).replace(/[^a-zA-Z0-9_-]/g, '');
+    const filename = `WPS_${safeSlug}_${period_start}_${period_end}.txt`;
 
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);

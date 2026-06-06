@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { authMiddleware } from './middleware/auth.js';
 import { tenantMiddleware } from './middleware/tenant.js';
@@ -11,7 +12,6 @@ import { journalEntryRouter } from './routes/journalEntries.js';
 import { tenantRequestRouter } from './routes/tenantRequests.js';
 import { registrationRouter } from './routes/registration.js';
 import { invoiceRouter } from './routes/invoices.js';
-
 import { aiRouter } from './routes/ai.js';
 import { feesRouter } from './routes/fees.js';
 import { payrollRouter } from './routes/payroll.js';
@@ -22,36 +22,63 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(helmet());
-app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:5173',
-    'https://edusaga-360-production.vercel.app',
-    'https://edusaga-360.vercel.app',
-    'https://platform.edusaga360.com',
-    'https://admin.edusaga360.com',
-    'https://parentportal.edusaga360.com',
-    'https://edusaga-360-admin-portal.vercel.app',
-    'https://edusaga-360-parent-portal.vercel.app',
-  ].filter(Boolean),
-  credentials: true,
-}));
-app.use(morgan('combined'));
-app.use(express.json({ limit: '10mb' }));
 
-// Public routes (no auth required)
+// CORS — explicit list only, no localhost fallback in production
+const allowedOrigins = [
+  'https://edusaga-360-production.vercel.app',
+  'https://edusaga-360.vercel.app',
+  'https://platform.edusaga360.com',
+  'https://admin.edusaga360.com',
+  'https://parentportal.edusaga360.com',
+  'https://edusaga-360-admin-portal.vercel.app',
+  'https://edusaga-360-parent-portal.vercel.app',
+  ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:5173', 'http://localhost:3000'] : []),
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+].filter(Boolean);
+
+app.use(cors({ origin: allowedOrigins, credentials: true }));
+
+// Structured request logging — strips query strings to avoid leaking tokens
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms', {
+  stream: { write: (msg) => process.stdout.write(msg.replace(/\?[^\s]+/, '?[redacted]')) },
+}));
+
+// Reduce body limit from 10mb to 256kb — enough for any API call
+app.use(express.json({ limit: '256kb' }));
+
+// ── Rate limiting ──────────────────────────────────────────────────────────────
+
+// Strict limit for public registration — prevents spam and email enumeration
+const registrationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'TOO_MANY_REQUESTS', message: 'Too many requests, please try again later.' },
+});
+
+// Moderate global limit for all authenticated API calls
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// ── Public routes (no auth required) ──────────────────────────────────────────
 app.use('/api/health', healthRouter);
 app.use('/api/auth', authRouter);
-app.use('/api/registration', registrationRouter);
+app.use('/api/registration', registrationLimiter, registrationRouter);
 
-// Authenticated routes
-app.use('/api', authMiddleware, tenantMiddleware);
-app.use('/api/journal-entries', journalEntryRouter);
-app.use('/api/tenant-requests', tenantRequestRouter);
-app.use('/api/invoices', invoiceRouter);
-
-app.use('/api/ai', aiRouter);
-app.use('/api/fees', feesRouter);
-app.use('/api/payroll', payrollRouter);
+// ── Authenticated routes — ALL protected by authMiddleware + tenantMiddleware ──
+// IMPORTANT: Register middleware on each router directly.
+// app.use('/api', middleware) does NOT apply to separately mounted routers.
+app.use('/api/journal-entries', apiLimiter, authMiddleware, tenantMiddleware, journalEntryRouter);
+app.use('/api/tenant-requests', apiLimiter, authMiddleware, tenantMiddleware, tenantRequestRouter);
+app.use('/api/invoices',        apiLimiter, authMiddleware, tenantMiddleware, invoiceRouter);
+app.use('/api/fees',            apiLimiter, authMiddleware, tenantMiddleware, feesRouter);
+app.use('/api/payroll',         apiLimiter, authMiddleware, tenantMiddleware, payrollRouter);
+app.use('/api/ai',              apiLimiter, authMiddleware, tenantMiddleware, aiRouter);
 
 app.use(
   (
@@ -60,7 +87,7 @@ app.use(
     res: express.Response,
     _next: express.NextFunction,
   ) => {
-    console.error('Unhandled error:', err);
+    console.error('Unhandled error:', err.message);
     res.status(500).json({ message: 'Internal server error' });
   },
 );
