@@ -40,6 +40,7 @@ export default function UserManagement() {
   const [saving, setSaving] = useState(false);
 
   const [inviteData, setInviteData] = useState({
+    name: '',
     email: '',
     role: 'teacher',
     branch_access: 'single',
@@ -84,47 +85,41 @@ export default function UserManagement() {
       return;
     }
 
+    if (!inviteData.email) {
+      toast.error(isRTL ? 'البريد الإلكتروني مطلوب' : 'Email is required');
+      return;
+    }
+
     setInviting(true);
     try {
-      // Platform role: 'admin' for admin/creator roles, 'user' for everything else
-      const platformRole = (inviteData.role === 'admin' || inviteData.role === 'creator') ? 'admin' : 'user';
-      await callApi('/api/auth/invite', { email: inviteData.email, role: platformRole });
-      
-      // Wait briefly for the user record to be created, then set app-level role
-      // Retry a few times since the record may take a moment to appear
-      let userRecord = null;
-      for (let attempt = 0; attempt < 3; attempt++) {
-        await new Promise(r => setTimeout(r, 1000));
-        const allUsers = await tenantQuery('users').select('*').match({ email: inviteData.email });
-        if (allUsers.length > 0) {
-          userRecord = allUsers[0];
-          break;
-        }
-      }
+      // Submit a user-add request for platform-owner approval. During the trial
+      // each school is capped (default 3 users); the backend enforces the limit.
+      await callApi('/api/tenant-users/request', {
+        name: inviteData.name || inviteData.email,
+        email: inviteData.email,
+        requested_role: inviteData.role,
+      });
 
-      if (userRecord) {
-        const updatePayload = {
-          user_role: inviteData.role,
-          branch_id: inviteData.branch_access === 'single' ? branches[0]?.id : null,
-          tenant_id: tenantId || undefined,
-        };
-        if (inviteData.role === 'parent') {
-          updatePayload.linked_student_ids = inviteData.linked_student_ids;
-        }
-        await tenantQuery('users').update(updatePayload);
-      } else {
-        console.warn('User record not found after invite — user_role will be set on first login');
-      }
+      await logAuditEvent({ action: 'request_user', entityType: 'User', entityId: inviteData.email, newValues: inviteData });
 
-      await logAuditEvent({ action: 'invite_user', entityType: 'User', entityId: inviteData.email, newValues: inviteData });
-      
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['user-requests'] });
       setShowInvite(false);
-      setInviteData({ email: '', role: 'teacher', branch_access: 'single', linked_student_ids: [] });
-      toast.success(isRTL ? 'تم إرسال الدعوة بنجاح' : 'Invitation sent successfully');
+      setInviteData({ name: '', email: '', role: 'teacher', branch_access: 'single', linked_student_ids: [] });
+      toast.success(isRTL
+        ? 'تم إرسال الطلب. ستتم مراجعته من قبل الإدارة وإشعار المستخدم عند الموافقة.'
+        : 'Request submitted. It will be reviewed by the platform and the user notified on approval.');
     } catch (error) {
       console.error('Error:', error);
-      toast.error(isRTL ? 'حدث خطأ' : 'Error occurred');
+      const code = error?.body?.error;
+      if (code === 'LIMIT_REACHED') {
+        toast.error(isRTL
+          ? `وصلت إلى الحد الأقصى لعدد المستخدمين في الفترة التجريبية (${inviteData ? '' : ''}). يرجى الترقية.`
+          : (error.message || 'User limit reached for your trial plan.'));
+      } else if (code === 'DUPLICATE') {
+        toast.error(isRTL ? 'يوجد طلب معلق لهذا البريد بالفعل' : 'A pending request already exists for this email');
+      } else {
+        toast.error(error.message || (isRTL ? 'حدث خطأ' : 'Error occurred'));
+      }
     } finally {
       setInviting(false);
     }
@@ -204,6 +199,15 @@ export default function UserManagement() {
             <DialogTitle>{isRTL ? 'دعوة مستخدم جديد' : 'Invite New User'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-700">
+              {isRTL
+                ? 'سيتم إرسال هذا الطلب للمراجعة من قبل إدارة المنصة. في الفترة التجريبية يُسمح بحد أقصى 3 مستخدمين لكل مدرسة.'
+                : 'This request will be reviewed by the platform team. During the trial each school is limited to 3 users.'}
+            </div>
+            <div className="space-y-2">
+              <Label>{isRTL ? 'الاسم' : 'Full Name'}</Label>
+              <Input value={inviteData.name} onChange={(e) => setInviteData(p => ({...p, name: e.target.value}))} placeholder={isRTL ? 'اسم المستخدم' : 'User full name'} />
+            </div>
             <div className="space-y-2">
               <Label>{t('email')} *</Label>
               <Input type="email" value={inviteData.email} onChange={(e) => setInviteData(p => ({...p, email: e.target.value}))} placeholder="user@school.edu.sa" />
