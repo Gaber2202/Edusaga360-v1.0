@@ -114,73 +114,130 @@ payrollRouter.post('/calculate', async (req: AuthenticatedRequest, res) => {
       empQuery = empQuery.in('id', employee_ids);
     }
 
-    const { data: rawEmployees, error: empError } = await empQuery;
-    const employees = (rawEmployees ?? []) as any[];
-    if (empError) throw empError;
+    // Fetch attendance policy (default) and attendance records for the period — in parallel
+    const [empResult, policyResult, attResult] = await Promise.all([
+      empQuery,
+      supabase
+        .from('attendance_policies')
+        .select('*')
+        .eq('tenant_id', tenant_id)
+        .eq('is_default', true)
+        .maybeSingle(),
+      supabase
+        .from('employee_attendance')
+        .select('employee_id, status, late_minutes, is_excused')
+        .eq('tenant_id', tenant_id)
+        .gte('date', period_start)
+        .lte('date', period_end),
+    ]);
 
+    const employees = (empResult.data ?? []) as any[];
+    if (empResult.error) throw empResult.error;
     if (!employees || employees.length === 0) {
       return res.status(404).json({ error: 'No active employees found', code: 404 });
     }
 
+    // Attendance policy — fall back to KSA defaults if not configured
+    const policy = policyResult.data ?? {
+      working_days_per_month:           26,
+      late_grace_minutes:               15,
+      late_half_day_minutes:            120,
+      late_deduction_factor:            0.5,
+      absent_deduction_factor:          1.0,
+      half_day_deduction_factor:        0.5,
+      max_late_incidents_before_absent: 3,
+    };
+
+    // Group attendance records by employee
+    const attByEmp = new Map<string, any[]>();
+    for (const r of (attResult.data ?? [])) {
+      if (!attByEmp.has(r.employee_id)) attByEmp.set(r.employee_id, []);
+      attByEmp.get(r.employee_id)!.push(r);
+    }
+
     // Build payroll breakdown per employee
     const results = employees.map((emp) => {
-      const basicSalary = Number(emp.basic_salary ?? 0);
-      const housingAllowance = Number(emp.housing_allowance ?? 0);
+      const basicSalary        = Number(emp.basic_salary ?? 0);
+      const housingAllowance   = Number(emp.housing_allowance ?? 0);
       const transportAllowance = Number(emp.transport_allowance ?? 0);
 
-      // Sum other_allowances JSONB object values
       const otherAllowancesObj = emp.other_allowances ?? {};
-      const otherAllowances = Object.values(otherAllowancesObj).reduce(
-        (sum: number, val) => sum + Number(val ?? 0),
-        0,
+      const otherAllowances    = Object.values(otherAllowancesObj).reduce(
+        (sum: number, val) => sum + Number(val ?? 0), 0,
       );
 
-      const grossSalary =
-        basicSalary + housingAllowance + transportAllowance + otherAllowances;
+      const grossSalary = basicSalary + housingAllowance + transportAllowance + otherAllowances;
+      const gosi        = calculateGosiForEmployee(basicSalary, emp.nationality);
 
-      const gosi = calculateGosiForEmployee(basicSalary, emp.nationality);
+      // Attendance-based deductions
+      const dailyRate = Math.round((basicSalary / policy.working_days_per_month) * 100) / 100;
+      let absentDays = 0, lateIncidents = 0, halfDays = 0;
+      for (const r of (attByEmp.get(emp.id) ?? [])) {
+        if (r.is_excused) continue;
+        if (r.status === 'absent')   { absentDays++; }
+        else if (r.status === 'half_day') { halfDays++; }
+        else if (r.status === 'late') {
+          const mins = r.late_minutes ?? 0;
+          if (mins <= policy.late_grace_minutes) continue;
+          if (mins >= policy.late_half_day_minutes) { halfDays++; }
+          else { lateIncidents++; }
+        }
+      }
+      const lateConvertedAbsents = Math.floor(lateIncidents / policy.max_late_incidents_before_absent);
+      const remainingLates       = lateIncidents % policy.max_late_incidents_before_absent;
+      const absenceDeduction  = Math.round((absentDays + lateConvertedAbsents) * dailyRate * policy.absent_deduction_factor * 100) / 100;
+      const halfDayDeduction  = Math.round(halfDays * dailyRate * policy.half_day_deduction_factor * 100) / 100;
+      const lateDeduction     = Math.round(remainingLates * dailyRate * policy.late_deduction_factor * 100) / 100;
+      const attendanceDeduction = absenceDeduction + halfDayDeduction + lateDeduction;
 
-      // Net = gross - employee GOSI deduction
-      // (Other deductions like loans would come from a deductions table in a full implementation)
-      const totalDeductions = gosi.gosi_employee;
-      const netSalary = Math.round((grossSalary - totalDeductions) * 100) / 100;
+      const totalDeductions = Math.round((gosi.gosi_employee + attendanceDeduction) * 100) / 100;
+      const netSalary       = Math.round((grossSalary - totalDeductions) * 100) / 100;
 
       return {
-        employee_id: emp.id,
-        employee_number: emp.employee_number,
-        name_en: emp.name_en,
-        name_ar: emp.name_ar,
-        nationality: emp.nationality,
-        bank_name: emp.bank_name,
-        bank_iban: emp.bank_iban,
+        employee_id:         emp.id,
+        employee_number:     emp.employee_number,
+        name_en:             emp.name_en,
+        name_ar:             emp.name_ar,
+        nationality:         emp.nationality,
+        bank_name:           emp.bank_name,
+        bank_iban:           emp.bank_iban,
         period_start,
         period_end,
-        basic_salary: basicSalary,
-        housing_allowance: housingAllowance,
+        basic_salary:        basicSalary,
+        housing_allowance:   housingAllowance,
         transport_allowance: transportAllowance,
-        other_allowances: otherAllowances,
-        gross_salary: Math.round(grossSalary * 100) / 100,
-        gosi_wage: gosi.gosi_wage,
-        gosi_employee: gosi.gosi_employee,
-        gosi_employer: gosi.gosi_employer,
-        is_saudi: gosi.is_saudi,
-        gosi_rates: gosi.rates,
-        total_deductions: Math.round(totalDeductions * 100) / 100,
-        net_salary: netSalary,
+        other_allowances:    otherAllowances,
+        gross_salary:        Math.round(grossSalary * 100) / 100,
+        gosi_wage:           gosi.gosi_wage,
+        gosi_employee:       gosi.gosi_employee,
+        gosi_employer:       gosi.gosi_employer,
+        is_saudi:            gosi.is_saudi,
+        gosi_rates:          gosi.rates,
+        absence_deduction:   Math.round(attendanceDeduction * 100) / 100,
+        attendance_detail: {
+          absent_days:            absentDays,
+          late_incidents:         lateIncidents,
+          half_days:              halfDays,
+          late_converted_absents: lateConvertedAbsents,
+          daily_rate:             dailyRate,
+        },
+        total_deductions:    totalDeductions,
+        net_salary:          netSalary,
       };
     });
 
     const summary = {
       period_start,
       period_end,
-      employee_count: results.length,
-      total_gross: Math.round(results.reduce((s, r) => s + r.gross_salary, 0) * 100) / 100,
-      total_gosi_employee: Math.round(results.reduce((s, r) => s + r.gosi_employee, 0) * 100) / 100,
-      total_gosi_employer: Math.round(results.reduce((s, r) => s + r.gosi_employer, 0) * 100) / 100,
-      total_net: Math.round(results.reduce((s, r) => s + r.net_salary, 0) * 100) / 100,
+      employee_count:      results.length,
+      total_gross:         Math.round(results.reduce((s, r) => s + r.gross_salary,    0) * 100) / 100,
+      total_gosi_employee: Math.round(results.reduce((s, r) => s + r.gosi_employee,  0) * 100) / 100,
+      total_gosi_employer: Math.round(results.reduce((s, r) => s + r.gosi_employer,  0) * 100) / 100,
+      total_absence_deduction: Math.round(results.reduce((s, r) => s + r.absence_deduction, 0) * 100) / 100,
+      total_net:           Math.round(results.reduce((s, r) => s + r.net_salary,     0) * 100) / 100,
     };
 
-    return res.json({ summary, employees: results });
+    return res.json({ summary, employees: results, policy_applied: !!policyResult.data });
   } catch (err) {
     console.error('Failed to calculate payroll:', err);
     return res.status(500).json({ error: 'Failed to calculate payroll', code: 500 });
