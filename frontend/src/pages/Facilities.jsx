@@ -36,8 +36,9 @@ export default function Facilities() {
   const { data: workOrders = [], isLoading: workOrdersLoading } = useQuery({
     queryKey: ['workOrders', tenantId, selectedBranchId],
     queryFn: async () => {
-      const all = await tenantQuery('work_orders').select('*').match(tenantFilter(branchFilter()), '-created_date');
-      return filterByBranch(all);
+      const { data = [], error } = await tenantQuery('work_orders').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false });
+      if (error) throw error;
+      return filterByBranch(data);
     },
     enabled: hasTenantAccess,
   });
@@ -45,8 +46,9 @@ export default function Facilities() {
   const { data: facilityAssets = [], isLoading: assetsLoading } = useQuery({
     queryKey: ['facilityAssets', tenantId, selectedBranchId],
     queryFn: async () => {
-      const all = await tenantQuery('facility_assets').select('*').match(tenantFilter(branchFilter()), '-created_date');
-      return filterByBranch(all);
+      const { data = [], error } = await tenantQuery('facility_assets').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false });
+      if (error) throw error;
+      return filterByBranch(data);
     },
     enabled: hasTenantAccess,
   });
@@ -54,8 +56,9 @@ export default function Facilities() {
   const { data: spareParts = [], isLoading: partsLoading } = useQuery({
     queryKey: ['spareParts', tenantId, selectedBranchId],
     queryFn: async () => {
-      const all = await tenantQuery('spare_parts').select('*').match(tenantFilter(branchFilter()));
-      return filterByBranch(all);
+      const { data = [], error } = await tenantQuery('spare_parts').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false });
+      if (error) throw error;
+      return filterByBranch(data);
     },
     enabled: hasTenantAccess,
   });

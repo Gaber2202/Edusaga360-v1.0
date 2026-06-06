@@ -38,8 +38,9 @@ export default function CRM() {
   const { data: tickets = [], isLoading: ticketsLoading } = useQuery({
     queryKey: ['serviceTickets', tenantId, selectedBranchId],
     queryFn: async () => {
-      const all = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ ticket_type: 'crm' })), '-created_date');
-      return filterByBranch(all);
+      const { data = [], error } = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ ticket_type: 'crm' }))).order('created_date', { ascending: false });
+      if (error) throw error;
+      return filterByBranch(data);
     },
     enabled: hasTenantAccess,
   });
@@ -47,8 +48,9 @@ export default function CRM() {
   const { data: customers = [], isLoading: customersLoading } = useQuery({
     queryKey: ['customers', tenantId, selectedBranchId],
     queryFn: async () => {
-      const all = await tenantQuery('customers').select('*').match(tenantFilter(branchFilter()), '-created_date');
-      return filterByBranch(all);
+      const { data = [], error } = await tenantQuery('customers').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false });
+      if (error) throw error;
+      return filterByBranch(data);
     },
     enabled: hasTenantAccess,
   });

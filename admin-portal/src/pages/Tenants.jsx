@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, fetchData } from '../lib/supabase';
+import { callApi } from '../lib/supabase';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -25,10 +25,11 @@ export default function Tenants() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedTenant, setSelectedTenant] = useState(null);
 
-  const { data: tenants = [], isLoading } = useQuery({
+  const { data: tenantsData, isLoading } = useQuery({
     queryKey: ['admin-tenants'],
-    queryFn: () => fetchData(supabase.from('tenants').select('*').order('created_date', { ascending: false })),
+    queryFn: () => callApi('/api/admin/tenants', {}, { method: 'GET' }),
   });
+  const tenants = tenantsData?.tenants ?? [];
 
   const filtered = tenants.filter(t => {
     const matchesSearch = !search ||
@@ -42,27 +43,39 @@ export default function Tenants() {
 
   const toggleSuspend = async (tenant) => {
     const newStatus = tenant.status === 'suspended' ? 'active' : 'suspended';
-    await supabase.from('tenants').update({ status: newStatus }).eq('id', tenant.id);
-    queryClient.invalidateQueries({ queryKey: ['admin-tenants'] });
-    toast.success(`Tenant ${newStatus}`);
+    try {
+      await callApi(`/api/admin/tenants/${tenant.id}`, { status: newStatus });
+      queryClient.invalidateQueries({ queryKey: ['admin-tenants'] });
+      toast.success(`Tenant ${newStatus}`);
+    } catch (e) {
+      toast.error(e.message || 'Failed to update');
+    }
   };
 
   const extendTrial = async (tenant) => {
     const currentEnd = tenant.trial_end_date ? new Date(tenant.trial_end_date) : new Date();
     const newEnd = addDays(currentEnd, 14);
-    await supabase.from('tenants').update({
-      trial_end_date: format(newEnd, 'yyyy-MM-dd'),
-      status: 'trial',
-    }).eq('id', tenant.id);
-    queryClient.invalidateQueries({ queryKey: ['admin-tenants'] });
-    toast.success('Trial extended by 14 days');
+    try {
+      await callApi(`/api/admin/tenants/${tenant.id}`, {
+        trial_end_date: format(newEnd, 'yyyy-MM-dd'),
+        status: 'trial',
+      });
+      queryClient.invalidateQueries({ queryKey: ['admin-tenants'] });
+      toast.success('Trial extended by 14 days');
+    } catch (e) {
+      toast.error(e.message || 'Failed to extend');
+    }
   };
 
   const deleteTenant = async (tenant) => {
     if (!confirm(`Delete ${tenant.name_en || tenant.name_ar}? This cannot be undone.`)) return;
-    await supabase.from('tenants').delete().eq('id', tenant.id);
-    queryClient.invalidateQueries({ queryKey: ['admin-tenants'] });
-    toast.success('Tenant deleted');
+    try {
+      await callApi(`/api/admin/tenants/${tenant.id}`, {}, { method: 'DELETE' });
+      queryClient.invalidateQueries({ queryKey: ['admin-tenants'] });
+      toast.success('Tenant deleted');
+    } catch (e) {
+      toast.error(e.message || 'Failed to delete');
+    }
   };
 
   return (
