@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { supabase } from './api/supabaseClient';
 import { LanguageProvider, useLanguage } from './components/LanguageContext';

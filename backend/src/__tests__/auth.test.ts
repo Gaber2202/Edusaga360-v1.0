@@ -109,7 +109,11 @@ describe('authMiddleware', () => {
   });
 
   it('sets is_platform_owner=true for platform owner tokens', async () => {
-    const user = buildUser({ is_platform_owner: true, tenant_id: undefined });
+    // is_platform_owner is read from app_metadata (admin-only) — NOT user_metadata.
+    const user = {
+      ...buildUser({ tenant_id: undefined }),
+      app_metadata: { is_platform_owner: true },
+    };
     mockGetUser.mockResolvedValueOnce({ data: { user }, error: null });
 
     const req = makeReq({ headers: { authorization: 'Bearer platform-token' } });

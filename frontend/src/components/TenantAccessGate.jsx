@@ -4,7 +4,7 @@ import { useRole } from './RoleContext';
 import { useLanguage } from './LanguageContext';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
-import { ShieldAlert, Clock, LogOut, AlertTriangle } from 'lucide-react'; // eslint-disable-line no-unused-vars
+import { ShieldAlert, Clock, LogOut, AlertTriangle } from 'lucide-react';  
 import { DEFAULT_UNASSIGNED_ROLE } from '../lib/authHelpers';
 
 /**
