@@ -2,10 +2,11 @@
  * HR Manager Dashboard — AC#4: Saudization real-time, AC#9: one-click MHRSD report
  * Real-time KPIs covering the full employee lifecycle
  */
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import BenchmarkDashboard from '../components/benchmarks/BenchmarkDashboard';
 import { useBranch } from '../components/BranchContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -189,6 +190,8 @@ export default function HRManagerDashboard() {
 
   if (isLoading) return <div className="flex items-center justify-center py-16"><RefreshCw className="w-6 h-6 animate-spin text-slate-400" /></div>;
 
+  const [activeTab, setActiveTab] = useState('overview');
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -210,6 +213,25 @@ export default function HRManagerDashboard() {
           </Link>
         </div>
       </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-slate-200">
+        {[
+          { key: 'overview', label: isRTL ? 'نظرة عامة' : 'Overview' },
+          { key: 'benchmarks', label: isRTL ? 'المعايير المرجعية' : 'Benchmarks' },
+        ].map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.key ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'benchmarks' && <BenchmarkDashboard />}
+      {activeTab !== 'benchmarks' && <>
 
       {/* Critical alerts */}
       {(kpis.docsExpiredCount > 0 || kpis.nitaqatBand.name === 'Red' || kpis.nitaqatBand.name === 'Yellow') && (
@@ -362,6 +384,7 @@ export default function HRManagerDashboard() {
           </Link>
         ))}
       </div>
+    </>}
     </div>
   );
 }
