@@ -413,6 +413,7 @@ registrationRouter.post('/onboarding/:token/complete', async (req, res) => {
         num_grades: num_grades || null,
         default_language: default_language || 'ar',
         status: 'active',
+        onboarding_completed: true,
       }).eq('id', request.tenant_id);
     }
 

@@ -91,7 +91,7 @@ export default function TenantAccessGate({ children }) {
   // Tenant needs onboarding — force redirect to wizard
   // Allow wizard page, setup page, and logout to pass through
   const currentPath = window.location.pathname;
-  const onboardingExemptPaths = ['/OnboardingWizard', '/setup', '/register', '/InstitutionSetup'];
+  const onboardingExemptPaths = ['/OnboardingWizard', '/onboarding/', '/setup', '/register', '/InstitutionSetup', '/school-login'];
   const isExempt = onboardingExemptPaths.some(p => currentPath.startsWith(p));
   if (needsOnboarding() && !isExempt) {
     window.location.replace('/OnboardingWizard');

@@ -93,7 +93,7 @@ export default function OnboardingWizard() {
 
       if (data.success) {
         setCompleted(true);
-        setTimeout(() => navigate('/school-login'), 3000);
+        setTimeout(() => window.location.replace('/school-login'), 3000);
       } else {
         const msg = data.message || (data.errors ? Object.values(data.errors?.fieldErrors || {}).flat().join(' ') : null) || 'فشل في إكمال الإعداد';
         toast.error(msg);
