@@ -25,13 +25,35 @@ export default function PayslipViewer({ payslip, employee, branch, open, onClose
 
   if (!payslip) return null;
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (securitySettings?.pdf_password_enabled) {
       setShowPasswordNote(true);
       setTimeout(() => setShowPasswordNote(false), 5000);
     }
-    // In production, this would call a backend function to generate PDF with password/watermark
-    toast.success(isRTL ? 'جاري تحميل كشف الراتب...' : 'Downloading payslip...');
+    try {
+      toast.loading(isRTL ? 'جاري إنشاء كشف الراتب...' : 'Generating payslip PDF...');
+      const [month, year] = payslip.period
+        ? payslip.period.split('/').map(Number)
+        : [new Date().getMonth() + 1, new Date().getFullYear()];
+      const blob = await callApi('/api/payroll/payslip-pdf', {
+        payslip_id:   payslip.id,
+        employee_id:  employee.id,
+        period_month: month,
+        period_year:  year,
+      }, { method: 'POST', responseType: 'blob' });
+      const url = URL.createObjectURL(blob);
+      const a   = document.createElement('a');
+      a.href     = url;
+      a.download = `payslip_${employee.employee_id ?? employee.id}_${month}_${year}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.dismiss();
+      toast.success(isRTL ? 'تم تحميل كشف الراتب' : 'Payslip downloaded');
+    } catch (err) {
+      toast.dismiss();
+      toast.error(isRTL ? 'تعذّر إنشاء كشف الراتب' : 'Failed to generate payslip PDF');
+      console.error('Payslip PDF error:', err);
+    }
   };
 
   const handleSendEmail = async () => {

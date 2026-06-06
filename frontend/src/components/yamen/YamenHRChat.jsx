@@ -162,51 +162,20 @@ export default function YamenHRChat({ isRTL, isHRMode }) {
     setLoading(true);
 
     try {
-      const ctx = await buildHRContext(isHRMode, user?.email);
+      // Build conversation history for Claude (last 10 messages, alternating user/assistant)
+      const history = messages
+        .filter(m => !m.error)
+        .slice(-10)
+        .map(m => ({ role: m.role, content: m.content }));
 
-      const uiLang = isRTL ? 'Arabic' : 'English';
-      let ctxJson = JSON.stringify(ctx, null, 2);
-
-      // Add advanced analytics and policy recommendations for HR mode
-      if (isHRMode && !ctx._selfMode && !ctx._error) {
-        const allEmployees = (await tenantQuery('employees').select('*').order('-created_date', 100)) || [];
-        const allViolations = (await tenantQuery('govi_violations').select('*').match({ status: 'open' }).catch(() => [])) || [];
-        const allLeaveRequests = (await tenantQuery('leave_requests').select('*').order('-created_date', 100)) || [];
-        const allAttendance = (await tenantQuery('employee_attendances').select('*').order('-date', 200)) || [];
-
-        const analytics = calculateAdvancedAnalytics(allEmployees, allAttendance, allLeaveRequests, []);
-        const policies = generatePolicyRecommendations(allEmployees, allViolations, allLeaveRequests);
-
-        ctxJson += `\n\nADVANCED ANALYTICS:\n${JSON.stringify(analytics, null, 2)}\n\nPOLICY RECOMMENDATIONS:\n${JSON.stringify(policies, null, 2)}`;
-      }
-
-      const systemPrompt = isHRMode
-        ? `You are YAMEN — the AI HR Companion for EduSaga 360 (Saudi-market HR system).
-Respond in ${uiLang} unless the user writes in a different language, in which case match their language.
-You MUST use the real system data provided below. NEVER invent numbers or names.
-If the user asks about something and the data exists in the context, answer with the actual figures.
-If data for a specific question is missing or empty, clearly say WHAT is missing and HOW to fix it.
-Be concise, professional, and actionable. Use bullet points for lists.
-
-LIVE SYSTEM DATA:
-${ctxJson}`
-        : `You are YAMEN — the Employee Self-Service Assistant for EduSaga 360.
-Respond in ${uiLang} unless the user writes in a different language.
-You can ONLY answer questions about the current employee's own data.
-NEVER reveal other employees' data.
-If the employee record is not found, say: "Your employee profile isn't linked to this account yet. Contact HR."
-Use the data below to answer:
-${ctxJson}`;
-
-      const history = messages.slice(-6).map(m => `${m.role === 'user' ? 'User' : 'YAMEN'}: ${m.content}`).join('\n');
-      const fullPrompt = `${systemPrompt}\n\nConversation history:\n${history}\n\nUser: ${text}\n\nYAMEN:`;
-
-      // Use InvokeLLM via the platform platform (handles auth automatically)
+      // Call backend — Claude handles tool use server-side, no context dump needed
       const res = await callApi('/api/ai/invoke-llm', {
-        prompt: fullPrompt,
+        prompt: text,
+        messages: history,
       });
 
-      setMessages(prev => [...prev, { role: 'assistant', content: res, timestamp: new Date() }]);
+      const responseText = typeof res === 'string' ? res : (res?.response ?? res);
+      setMessages(prev => [...prev, { role: 'assistant', content: responseText, timestamp: new Date(), provider: res?.provider }]);
 
       // Increment usage counter on tenant
       if (tenant?.id) {

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
-import { Bot, AlertTriangle, FileText, BarChart3, MessageSquare, Users, Sparkles, Shield, TrendingDown, Zap, Target, AlertCircle } from 'lucide-react';
+import { callApi } from '../api/supabaseClient';
+import { Bot, AlertTriangle, FileText, BarChart3, MessageSquare, Users, Shield, TrendingDown, Zap, Target, AlertCircle, RefreshCw, CheckCircle2, XCircle, Info } from 'lucide-react';
 import YamenDashboard from '../components/yamen/YamenDashboard';
 import YamenRiskMonitor from '../components/yamen/YamenRiskMonitor';
 import YamenExecutiveReport from '../components/yamen/YamenExecutiveReport';
@@ -14,6 +15,118 @@ import NitaqatDashboard from '../components/hr/NitaqatDashboard';
 import DocumentExpiryTracker from '../components/hr/DocumentExpiryTracker';
 
 const HR_ROLES = ['admin', 'hr_admin', 'hr_officer', 'creator'];
+
+const SEVERITY_CONFIG = {
+  critical: { color: 'bg-red-50 border-red-300 text-red-800',   icon: XCircle,      iconColor: 'text-red-600' },
+  warning:  { color: 'bg-amber-50 border-amber-300 text-amber-800', icon: AlertTriangle, iconColor: 'text-amber-600' },
+  info:     { color: 'bg-blue-50 border-blue-300 text-blue-800', icon: Info,         iconColor: 'text-blue-600' },
+  ok:       { color: 'bg-green-50 border-green-300 text-green-800', icon: CheckCircle2, iconColor: 'text-green-600' },
+};
+
+function CompliancePanel({ isRTL }) {
+  const [data, setData]     = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError]   = useState(null);
+
+  const run = async () => {
+    setLoading(true); setError(null);
+    try {
+      const res = await callApi('/api/ai/compliance-alerts', { days_ahead: 30 });
+      setData(res);
+    } catch (e) {
+      setError(e.message ?? 'Failed to load compliance alerts');
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <div className="space-y-4 mt-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">{isRTL ? 'الامتثال التلقائي' : 'Compliance Autopilot'}</h2>
+          <p className="text-sm text-slate-500">{isRTL ? 'مراجعة فورية لمخاطر الامتثال — إقامات، GOSI، فواتير، إجازات' : 'Instant compliance health check — iqama, GOSI, fees, leave'}</p>
+        </div>
+        <button
+          onClick={run}
+          disabled={loading}
+          className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          {loading ? (isRTL ? 'جاري الفحص...' : 'Checking…') : (isRTL ? 'فحص الآن' : 'Run Check')}
+        </button>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-lg">{error}</div>
+      )}
+
+      {data && (
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {['critical','warning','info','ok'].map(sev => {
+              const count = (data.alerts?.alerts ?? []).filter(a => a.severity === sev).length;
+              const cfg   = SEVERITY_CONFIG[sev];
+              const Icon  = cfg.icon;
+              return (
+                <div key={sev} className={`border rounded-xl p-3 flex items-center gap-3 ${cfg.color}`}>
+                  <Icon className={`w-5 h-5 flex-shrink-0 ${cfg.iconColor}`} />
+                  <div>
+                    <p className="text-xl font-bold leading-none">{count}</p>
+                    <p className="text-xs capitalize mt-0.5">{sev}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="space-y-2">
+            {(data.alerts?.alerts ?? []).map((alert, i) => {
+              const cfg  = SEVERITY_CONFIG[alert.severity] ?? SEVERITY_CONFIG.info;
+              const Icon = cfg.icon;
+              return (
+                <div key={i} className={`border rounded-xl p-4 ${cfg.color}`}>
+                  <div className="flex items-start gap-2">
+                    <Icon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${cfg.iconColor}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{alert.message}</p>
+                      {alert.items && alert.items.length > 0 && (
+                        <ul className="mt-1 space-y-0.5">
+                          {alert.items.slice(0, 5).map((item, j) => (
+                            <li key={j} className="text-xs opacity-80">
+                              {typeof item === 'object' ? `${item.name ?? ''} — ${item.expiry ?? item.id ?? ''}` : String(item)}
+                            </li>
+                          ))}
+                          {alert.items.length > 5 && <li className="text-xs opacity-60">+{alert.items.length - 5} more</li>}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {data.summary && (
+            <div className="bg-slate-50 border rounded-xl p-4">
+              <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">{isRTL ? 'ملخص يامن' : 'YAMEN Summary'}</p>
+              <p className="text-sm text-slate-700 whitespace-pre-line">{data.summary}</p>
+            </div>
+          )}
+
+          <p className="text-xs text-slate-400 text-center">
+            {isRTL ? `آخر فحص: ${data.alerts?.checked_on ?? '—'}` : `Last checked: ${data.alerts?.checked_on ?? '—'}`}
+          </p>
+        </>
+      )}
+
+      {!data && !loading && (
+        <div className="border-2 border-dashed border-slate-200 rounded-xl p-10 text-center text-slate-400">
+          <Shield className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="text-sm">{isRTL ? 'اضغط "فحص الآن" لمراجعة حالة الامتثال' : 'Click "Run Check" to scan for compliance issues'}</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function YamenAI() {
   const { isRTL } = useLanguage();
@@ -30,6 +143,7 @@ export default function YamenAI() {
     { id: 'insights', label: { ar: 'الرؤى المتقدمة', en: 'Advanced Insights' }, icon: TrendingDown },
     { id: 'documents', label: { ar: 'المستندات', en: 'Documents' }, icon: FileText },
     { id: 'processor', label: { ar: 'معالج المستندات', en: 'Doc Processor' }, icon: Zap },
+    { id: 'compliance', label: { ar: 'الامتثال التلقائي', en: 'Compliance' }, icon: Shield },
     { id: 'reports', label: { ar: 'التقارير', en: 'Reports' }, icon: BarChart3 },
     { id: 'chat', label: { ar: 'اسأل يامن', en: 'Ask YAMEN' }, icon: MessageSquare },
     { id: 'employee', label: { ar: 'مساعد الموظف', en: 'Employee View' }, icon: Users },
@@ -128,6 +242,7 @@ export default function YamenAI() {
         {isHRMode && activeTab === 'insights' && <YamenInsightsDashboard isRTL={isRTL} />}
         {isHRMode && activeTab === 'documents' && <YamenDocumentGenerator isRTL={isRTL} />}
         {isHRMode && activeTab === 'processor' && <YamenDocumentProcessor isRTL={isRTL} />}
+        {isHRMode && activeTab === 'compliance' && <CompliancePanel isRTL={isRTL} />}
         {isHRMode && activeTab === 'reports' && <YamenExecutiveReport isRTL={isRTL} />}
         {isHRMode && activeTab === 'employee' && <YamenEmployeeAssistant isRTL={isRTL} isHRView={true} />}
         {activeTab === 'chat' && <YamenHRChat isRTL={isRTL} isHRMode={isHRMode} />}

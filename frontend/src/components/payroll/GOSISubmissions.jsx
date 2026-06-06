@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
+import { supabase, tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent } from '../ui/card';
@@ -238,10 +238,38 @@ export default function GOSISubmissions() {
           <h2 className="text-2xl font-bold">{isRTL ? 'تقديمات GOSI' : 'GOSI Submissions'}</h2>
           <p className="text-slate-500">{isRTL ? 'إدارة ملفات التأمينات الاجتماعية' : 'Manage GOSI submission files'}</p>
         </div>
-        <Button onClick={() => setShowDialog(true)} className="gap-2">
-          <Plus className="w-4 h-4" />
-          {isRTL ? 'إنشاء ملف جديد' : 'Generate New File'}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={async () => {
+              try {
+                const now = new Date();
+                const blob = await callApi(
+                  `/api/benchmarks/gosi-export?month=${now.getMonth() + 1}&year=${now.getFullYear()}`,
+                  {}, { method: 'GET', responseType: 'blob' },
+                );
+                const url = URL.createObjectURL(blob);
+                const a   = document.createElement('a');
+                a.href     = url;
+                a.download = `GOSI_${now.getFullYear()}_${String(now.getMonth() + 1).padStart(2, '0')}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                toast.success(isRTL ? 'تم تحميل ملف GOSI CSV' : 'GOSI CSV downloaded');
+              } catch {
+                toast.error(isRTL ? 'فشل تحميل الملف' : 'Download failed');
+              }
+            }}
+          >
+            <Download className="w-4 h-4" />
+            {isRTL ? 'تصدير CSV للبوابة' : 'Export CSV for Portal'}
+          </Button>
+          <Button onClick={() => setShowDialog(true)} className="gap-2">
+            <Plus className="w-4 h-4" />
+            {isRTL ? 'إنشاء ملف جديد' : 'Generate New File'}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

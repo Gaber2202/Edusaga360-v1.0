@@ -1,4 +1,4 @@
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, callApi } from '../../api/supabaseClient';
 import { logAuditEvent, AuditActions } from '../AuditService';
 
 /**
@@ -194,67 +194,31 @@ export const sendWhatsAppMessage = async ({
   user
 }) => {
   try {
-    // Get template
-    const template = getWhatsAppTemplate(messageType, language);
-    if (!template) {
-      throw new Error('Template not found');
-    }
-    
-    // Replace variables
-    const message = replaceTemplateVariables(template.body, variables);
-    
-    // Open WhatsApp
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
-    
-    // Log communication
-    const communication = await tenantQuery('communications').insert({
-      recipient_type: recipientType,
-      recipient_id: recipientId,
-      recipient_name: recipientName,
-      channel: 'whatsapp',
+    // Map legacy messageType keys to backend template keys
+    const templateKeyMap = {
+      invoice_notification: 'fee_due',
+      payment_reminder: 'fee_overdue',
+      attendance_notification: 'student_absent',
+      payslip_notification: 'payslip_ready',
+      leave_approved: 'leave_approved',
+      leave_rejected: 'leave_rejected',
+      general_announcement: 'announcement',
+      contract_signed: 'contract_signed',
+    };
+    const template_key = templateKeyMap[messageType] ?? messageType;
+
+    // Call the real Infobip backend
+    const result = await callApi('/api/notifications/whatsapp', {
       to: phoneNumber,
-      subject: template.subject,
-      body: message,
-      status: 'sent',
-      sent_date: new Date().toISOString(),
-      message_type: messageType,
-      language: language
+      template_key,
+      variables,
+      language,
+      reference_id: recipientId,
     });
-    
-    // Audit log
-    await logAuditEvent(
-      AuditActions.CREATE,
-      'Communication',
-      communication.id,
-      {
-        action: 'send_whatsapp',
-        recipient_type: recipientType,
-        message_type: messageType,
-        phone: phoneNumber
-      },
-      user
-    );
-    
-    return { success: true, communication };
+
+    return { success: true, message_id: result.message_id };
   } catch (error) {
     console.error('WhatsApp send error:', error);
-    
-    // Log failed attempt
-    await tenantQuery('communications').insert({
-      recipient_type: recipientType,
-      recipient_id: recipientId,
-      recipient_name: recipientName,
-      channel: 'whatsapp',
-      to: phoneNumber,
-      subject: getWhatsAppTemplate(messageType, language)?.subject || 'Message',
-      body: 'Failed to send',
-      status: 'failed',
-      error_message: error.message,
-      message_type: messageType
-    });
-    
     return { success: false, error: error.message };
   }
 };
