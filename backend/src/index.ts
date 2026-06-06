@@ -18,6 +18,7 @@ import { payrollRouter } from './routes/payroll.js';
 import { payslipPdfRouter } from './routes/payslipPdf.js';
 import { attendancePolicyRouter } from './routes/attendancePolicy.js';
 import { leaveRouter } from './routes/leave.js';
+import { notificationsRouter } from './routes/notifications.js';
 
 dotenv.config();
 
@@ -84,6 +85,7 @@ app.use('/api/payroll',             apiLimiter, authMiddleware, tenantMiddleware
 app.use('/api/payroll',             apiLimiter, authMiddleware, tenantMiddleware, payslipPdfRouter);
 app.use('/api/attendance-policy',   apiLimiter, authMiddleware, tenantMiddleware, attendancePolicyRouter);
 app.use('/api/leave',               apiLimiter, authMiddleware, tenantMiddleware, leaveRouter);
+app.use('/api/notifications',       apiLimiter, authMiddleware, tenantMiddleware, notificationsRouter);
 app.use('/api/ai',                  apiLimiter, authMiddleware, tenantMiddleware, aiRouter);
 
 app.use(
