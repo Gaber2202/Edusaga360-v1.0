@@ -9,6 +9,7 @@ import AccessDenied from './pages/AccessDenied';
 import Dashboard from './pages/Dashboard';
 import Tenants from './pages/Tenants';
 import PlatformUsers from './pages/PlatformUsers';
+import UserRequests from './pages/UserRequests';
 import Subscriptions from './pages/Subscriptions';
 import Analytics from './pages/Analytics';
 import EmailTemplates from './pages/EmailTemplates';
@@ -47,6 +48,7 @@ function AppRoutes() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/tenants" element={<Tenants />} />
         <Route path="/users" element={<PlatformUsers />} />
+        <Route path="/user-requests" element={<UserRequests />} />
         <Route path="/subscriptions" element={<Subscriptions />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/email-templates" element={<EmailTemplates />} />

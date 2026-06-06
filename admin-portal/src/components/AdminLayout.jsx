@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import {
-  LayoutDashboard, Building2, Users, CreditCard, Activity,
+  LayoutDashboard, Building2, Users, UserPlus, CreditCard, Activity,
   Settings, LogOut, Mail, Flag, History, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 
@@ -17,6 +17,7 @@ const navigation = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
   { name: 'Tenants', icon: Building2, path: '/tenants' },
   { name: 'Users', icon: Users, path: '/users' },
+  { name: 'User Requests', icon: UserPlus, path: '/user-requests' },
   { name: 'Subscriptions', icon: CreditCard, path: '/subscriptions' },
   { name: 'Analytics', icon: Activity, path: '/analytics' },
   { name: 'Email Templates', icon: Mail, path: '/email-templates' },

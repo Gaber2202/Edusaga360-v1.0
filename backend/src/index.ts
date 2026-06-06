@@ -21,6 +21,7 @@ import { leaveRouter } from './routes/leave.js';
 import { notificationsRouter } from './routes/notifications.js';
 import { benchmarksRouter } from './routes/benchmarks.js';
 import { marketplaceRouter } from './routes/marketplace.js';
+import { tenantUsersRouter } from './routes/tenantUsers.js';
 
 dotenv.config();
 
@@ -90,6 +91,7 @@ app.use('/api/leave',               apiLimiter, authMiddleware, tenantMiddleware
 app.use('/api/notifications',       apiLimiter, authMiddleware, tenantMiddleware, notificationsRouter);
 app.use('/api/benchmarks',          apiLimiter, authMiddleware, tenantMiddleware, benchmarksRouter);
 app.use('/api/marketplace',         apiLimiter, authMiddleware, tenantMiddleware, marketplaceRouter);
+app.use('/api/tenant-users',        apiLimiter, authMiddleware, tenantMiddleware, tenantUsersRouter);
 app.use('/api/ai',                  apiLimiter, authMiddleware, tenantMiddleware, aiRouter);
 
 app.use(

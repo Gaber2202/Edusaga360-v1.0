@@ -92,14 +92,20 @@ export function RoleProvider({ children }) {
       setUser(enrichedUser);
       // Determine effective role: prefer user_role, fallback to platform role mapping.
       // 'user' is a platform-level role, not a valid app-level role for navigation.
-      let roleCode = currentUser.user_role;
+      // Prefer the app-level user_role; fall back to the platform role in
+      // app_metadata (which the backend sets to 'admin' for the school's
+      // registering owner) so the tenant admin is never downgraded just
+      // because the users-table read was blocked by RLS.
+      let roleCode = currentUser.user_role || currentUser.role;
 
       if (!roleCode || !VALID_APP_ROLES.includes(roleCode)) {
         // Platform-level roles that should not be auto-elevated inside a tenant.
         if (isPlatformOwner(currentUser)) {
           roleCode = 'creator';
-        } else if (currentUser.role === 'admin' && !currentUser.tenant_id) {
-          // Admin without tenant — treat as platform admin (can manage tenants).
+        } else if (currentUser.role === 'admin') {
+          // role==='admin' from app_metadata identifies the tenant owner (the
+          // person who registered the school). With a tenant_id they are the
+          // school admin; without one they are a platform admin. Either way → admin.
           roleCode = 'admin';
         } else {
           // Tenant user whose administrator has not assigned an app role yet.

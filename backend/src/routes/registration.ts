@@ -386,6 +386,7 @@ registrationRouter.post('/onboarding/:token/complete', async (req, res) => {
       user_metadata: { full_name: request.contact_name },
       app_metadata: {
         role: 'admin',
+        user_role: 'admin',
         tenant_id: request.tenant_id,
         is_platform_owner: false,
       },
@@ -402,17 +403,26 @@ registrationRouter.post('/onboarding/:token/complete', async (req, res) => {
       role: 'admin',
       tenant_id: request.tenant_id,
       status: 'active',
+      is_trial_user: true,
       created_at: new Date().toISOString(),
     });
 
-    // Update tenant with onboarding data
+    // Update tenant with onboarding data. Keep status as 'trial' (set at
+    // approval, with a 14-day trial_end_date) so the trial is preserved and the
+    // tenant is visible under the "trial" filter in the admin portal. Ensure a
+    // trial window and full module access exist even if approval missed them.
     if (request.tenant_id) {
+      const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       await supabase.from('tenants').update({
         logo_url: school_logo || null,
         academic_year_start: academic_year_start || null,
         num_grades: num_grades || null,
         default_language: default_language || 'ar',
-        status: 'active',
+        status: 'trial',
+        plan: 'trial',
+        trial_end_date: trialEnd,
+        enabled_modules: [],        // empty = all modules enabled during trial
+        max_users: 3,               // trial allows up to 3 users total
         onboarding_completed: true,
       }).eq('id', request.tenant_id);
     }
