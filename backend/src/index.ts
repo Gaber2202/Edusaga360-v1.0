@@ -15,6 +15,7 @@ import { invoiceRouter } from './routes/invoices.js';
 import { aiRouter } from './routes/ai.js';
 import { feesRouter } from './routes/fees.js';
 import { payrollRouter } from './routes/payroll.js';
+import { payslipPdfRouter } from './routes/payslipPdf.js';
 
 dotenv.config();
 
@@ -78,6 +79,7 @@ app.use('/api/tenant-requests', apiLimiter, authMiddleware, tenantMiddleware, te
 app.use('/api/invoices',        apiLimiter, authMiddleware, tenantMiddleware, invoiceRouter);
 app.use('/api/fees',            apiLimiter, authMiddleware, tenantMiddleware, feesRouter);
 app.use('/api/payroll',         apiLimiter, authMiddleware, tenantMiddleware, payrollRouter);
+app.use('/api/payroll',         apiLimiter, authMiddleware, tenantMiddleware, payslipPdfRouter);
 app.use('/api/ai',              apiLimiter, authMiddleware, tenantMiddleware, aiRouter);
 
 app.use(

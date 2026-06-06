@@ -210,5 +210,6 @@ export async function callApi(endpoint, data, options = {}) {
     throw err;
   }
 
+  if (options.responseType === 'blob') return response.blob();
   return response.json();
 }
