@@ -229,12 +229,12 @@ payrollRouter.post('/calculate', async (req: AuthenticatedRequest, res) => {
     const summary = {
       period_start,
       period_end,
-      employee_count:      results.length,
-      total_gross:         Math.round(results.reduce((s, r) => s + r.gross_salary,    0) * 100) / 100,
-      total_gosi_employee: Math.round(results.reduce((s, r) => s + r.gosi_employee,  0) * 100) / 100,
-      total_gosi_employer: Math.round(results.reduce((s, r) => s + r.gosi_employer,  0) * 100) / 100,
-      total_absence_deduction: Math.round(results.reduce((s, r) => s + r.absence_deduction, 0) * 100) / 100,
-      total_net:           Math.round(results.reduce((s, r) => s + r.net_salary,     0) * 100) / 100,
+      employee_count:          results.length,
+      total_gross:             Math.round(results.reduce((s, r) => s + r.gross_salary,       0) * 100) / 100,
+      total_gosi_employee:     Math.round(results.reduce((s, r) => s + r.gosi_employee,     0) * 100) / 100,
+      total_gosi_employer:     Math.round(results.reduce((s, r) => s + r.gosi_employer,     0) * 100) / 100,
+      total_absence_deduction: Math.round(results.reduce((s, r) => s + (r.absence_deduction ?? 0), 0) * 100) / 100,
+      total_net:               Math.round(results.reduce((s, r) => s + r.net_salary,        0) * 100) / 100,
     };
 
     return res.json({ summary, employees: results, policy_applied: !!policyResult.data });
