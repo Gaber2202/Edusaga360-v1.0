@@ -32,14 +32,42 @@ export default function TenantAccessGate({ children }) {
   // Platform owner / creator bypasses all checks
   if (isCreator()) return children;
 
-  // User has no tenant_id — redirect them to the registration page
-  // so they can request a new organization or sign in to an existing one.
+  // User is authenticated but has no resolvable tenant. DO NOT auto-redirect to
+  // /register — that creates an endless sign-in -> register bounce for accounts
+  // whose tenant linkage is missing. Show a clear screen with explicit actions
+  // instead, so the user can retry, register, or sign out.
   const tenantId = tenant?.id || user?.tenant_id;
   if (!tenantId) {
-    if (window.location.pathname !== '/register') {
-      window.location.replace('/register');
-    }
-    return null;
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center p-6">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-8 text-center space-y-4">
+            <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
+              <ShieldAlert className="w-8 h-8 text-amber-600" />
+            </div>
+            <h2 className="text-xl font-bold text-slate-900">
+              {isRTL ? 'لم يتم العثور على مؤسسة مرتبطة' : 'No Linked Organization Found'}
+            </h2>
+            <p className="text-slate-500 text-sm">
+              {isRTL
+                ? 'حسابك غير مرتبط بأي مؤسسة بعد. إذا أكملت الإعداد للتو، أعد تحميل الصفحة. وإلا سجّل مؤسسة جديدة أو تواصل مع الدعم.'
+                : 'Your account is not linked to any organization yet. If you just completed setup, reload the page. Otherwise register a new organization or contact support.'}
+            </p>
+            <div className="flex flex-col gap-2 pt-2">
+              <Button onClick={() => window.location.reload()}>
+                {isRTL ? 'إعادة تحميل' : 'Reload'}
+              </Button>
+              <Button variant="outline" onClick={() => window.location.replace('/register')}>
+                {isRTL ? 'تسجيل مؤسسة جديدة' : 'Register a new organization'}
+              </Button>
+              <Button variant="ghost" onClick={() => import('../api/supabaseClient').then(m => m.supabase.auth.signOut().then(() => window.location.replace('/school-login')))}>
+                {isRTL ? 'تسجيل الخروج' : 'Sign out'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   // Tenant is expired

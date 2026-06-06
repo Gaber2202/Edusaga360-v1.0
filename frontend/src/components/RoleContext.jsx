@@ -43,10 +43,18 @@ export function RoleProvider({ children }) {
         is_platform_owner: appMeta.is_platform_owner ?? false,
       };
 
-      // Load application-level user record from the users table (enrichment only)
-      const { data: appUsers } = await supabase.from('users').select('*').eq('auth_id', authUser.id).limit(1);
-      if (appUsers && appUsers.length > 0) {
-        const appUser = appUsers[0];
+      // Load application-level user record from the users table (enrichment only).
+      // Match by auth_id first; fall back to email in case the row was created
+      // with a mismatched auth_id (legacy/broken accounts).
+      let appUser = null;
+      const byAuthId = await supabase.from('users').select('*').eq('auth_id', authUser.id).limit(1);
+      if (byAuthId.data && byAuthId.data.length > 0) {
+        appUser = byAuthId.data[0];
+      } else if (authUser.email) {
+        const byEmail = await supabase.from('users').select('*').eq('email', authUser.email).limit(1);
+        if (byEmail.data && byEmail.data.length > 0) appUser = byEmail.data[0];
+      }
+      if (appUser) {
         currentUser = {
           ...currentUser,
           tenant_id: currentUser.tenant_id || appUser.tenant_id,
