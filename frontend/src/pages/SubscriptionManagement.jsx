@@ -347,7 +347,8 @@ export default function SubscriptionManagement() {
     );
   }
 
-  const currentPlan = PLAN_DEFINITIONS[tenant.plan_code] || PLAN_DEFINITIONS.free_trial;
+  const planKey = tenant.plan_code || (tenant.plan === 'trial' ? 'free_trial' : tenant.plan);
+  const currentPlan = PLAN_DEFINITIONS[planKey] || PLAN_DEFINITIONS.free_trial;
   const isTrialExpired = tenant.status === 'trial' && tenant.trial_end_date && new Date(tenant.trial_end_date) < new Date();
   const daysLeft = tenant.trial_end_date
     ? Math.max(0, Math.ceil((new Date(tenant.trial_end_date) - new Date()) / (1000 * 60 * 60 * 24)))

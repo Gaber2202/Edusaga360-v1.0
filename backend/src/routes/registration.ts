@@ -169,6 +169,7 @@ registrationRouter.get('/approve/:id', async (req, res) => {
         tenant_code: tenantCode,
         status: 'trial',
         plan: 'trial',
+        plan_code: 'free_trial',
         admin_email: request.contact_email,
         city: request.city,
         school_type: request.school_type,
@@ -420,6 +421,7 @@ registrationRouter.post('/onboarding/:token/complete', async (req, res) => {
         default_language: default_language || 'ar',
         status: 'trial',
         plan: 'trial',
+        plan_code: 'free_trial',
         trial_end_date: trialEnd,
         enabled_modules: [],        // empty = all modules enabled during trial
         max_users: 3,               // trial allows up to 3 users total
