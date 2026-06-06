@@ -28,17 +28,31 @@ export function RoleProvider({ children }) {
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) { setLoading(false); return; }
-      let currentUser = { ...authUser, ...authUser.user_metadata, email: authUser.email, id: authUser.id };
+      // app_metadata is the authoritative, admin-only source for tenant_id/role.
+      // It comes straight from the JWT, so it is always present even when an RLS
+      // policy blocks the users-table read (which previously left tenant_id
+      // undefined and bounced freshly onboarded admins to /register forever).
+      const appMeta = authUser.app_metadata || {};
+      let currentUser = {
+        ...authUser,
+        ...authUser.user_metadata,
+        email: authUser.email,
+        id: authUser.id,
+        tenant_id: appMeta.tenant_id ?? authUser.user_metadata?.tenant_id,
+        role: appMeta.role ?? authUser.user_metadata?.role,
+        is_platform_owner: appMeta.is_platform_owner ?? false,
+      };
 
-      // Load application-level user record from the users table
+      // Load application-level user record from the users table (enrichment only)
       const { data: appUsers } = await supabase.from('users').select('*').eq('auth_id', authUser.id).limit(1);
       if (appUsers && appUsers.length > 0) {
         const appUser = appUsers[0];
         currentUser = {
           ...currentUser,
-          tenant_id: appUser.tenant_id || currentUser.tenant_id,
+          tenant_id: currentUser.tenant_id || appUser.tenant_id,
           role_id: appUser.role_id || currentUser.role_id,
-          is_platform_owner: appUser.is_platform_owner ?? currentUser.is_platform_owner,
+          user_role: appUser.user_role || currentUser.user_role,
+          is_platform_owner: currentUser.is_platform_owner || appUser.is_platform_owner || false,
           branch_id: appUser.branch_id || currentUser.branch_id,
           _appUserId: appUser.id,
         };
