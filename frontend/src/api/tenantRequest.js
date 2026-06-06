@@ -1,11 +1,11 @@
 import { callApi } from './supabaseClient';
 
 export async function submitTenantRequest(payload) {
-  const data = await callApi('/api/functions/submitTenantRequest', payload);
-  if (!data || data.error) {
-    throw new Error(data?.error || 'Failed to submit registration request');
+  const data = await callApi('/api/registration/request', payload);
+  if (!data || data.success === false) {
+    throw new Error(data?.message || data?.error || 'Failed to submit registration request');
   }
-  return { request_number: data.request_number, id: data.id };
+  return { request_id: data.request_id, id: data.request_id };
 }
 
 export async function submitClientTenantRequest(payload) {
