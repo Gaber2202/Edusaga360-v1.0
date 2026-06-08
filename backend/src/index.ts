@@ -23,6 +23,7 @@ import { benchmarksRouter } from './routes/benchmarks.js';
 import { marketplaceRouter } from './routes/marketplace.js';
 import { tenantUsersRouter } from './routes/tenantUsers.js';
 import { adminRouter } from './routes/admin.js';
+import { billingRouter } from './routes/billing.js';
 import { parentsRouter } from './routes/parents.js';
 
 dotenv.config();
@@ -86,6 +87,7 @@ app.use('/api/journal-entries', apiLimiter, authMiddleware, tenantMiddleware, jo
 app.use('/api/tenant-requests', apiLimiter, authMiddleware, tenantMiddleware, tenantRequestRouter);
 app.use('/api/invoices',        apiLimiter, authMiddleware, tenantMiddleware, invoiceRouter);
 app.use('/api/fees',            apiLimiter, authMiddleware, tenantMiddleware, feesRouter);
+app.use('/api/billing',         apiLimiter, authMiddleware, tenantMiddleware, billingRouter);
 app.use('/api/payroll',             apiLimiter, authMiddleware, tenantMiddleware, payrollRouter);
 app.use('/api/payroll',             apiLimiter, authMiddleware, tenantMiddleware, payslipPdfRouter);
 app.use('/api/attendance-policy',   apiLimiter, authMiddleware, tenantMiddleware, attendancePolicyRouter);

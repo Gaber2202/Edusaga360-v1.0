@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { supabase } from './api/supabaseClient';
@@ -48,8 +48,6 @@ import {
           ChevronRight,
           ChevronDown,
           Globe,
-          Sun,
-          Moon,
           Search,
           Building2,
           Wallet,
@@ -103,13 +101,6 @@ function LayoutContent({ children, currentPageName }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
-
-  useEffect(() => {
-    const root = document.documentElement;
-    if (darkMode) { root.classList.add('dark'); localStorage.setItem('theme', 'dark'); }
-    else { root.classList.remove('dark'); localStorage.setItem('theme', 'light'); }
-  }, [darkMode]);
   const [expandedMenus, setExpandedMenus] = useState({});
 
   const toggleMenu = (menuId) => {
@@ -629,10 +620,6 @@ function LayoutContent({ children, currentPageName }) {
             <NotificationBell />
 
             {/* Dark Mode Toggle */}
-            <Button variant="ghost" size="icon" onClick={() => setDarkMode(d => !d)} className="text-slate-500 hover:text-slate-900 h-9 w-9" title={darkMode ? (isRTL ? 'الوضع النهاري' : 'Light mode') : (isRTL ? 'الوضع الليلي' : 'Dark mode')}>
-              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </Button>
-
             {/* Language Toggle */}
             <Button variant="ghost" size="icon" onClick={toggleLanguage} className="text-slate-600 hover:text-slate-900 h-9 w-9">
               <Globe className="w-4 h-4" />

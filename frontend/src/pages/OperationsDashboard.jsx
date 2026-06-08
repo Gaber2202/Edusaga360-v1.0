@@ -24,8 +24,9 @@ export default function OperationsDashboard() {
   const { data: crmTickets = [] } = useQuery({
     queryKey: ['crmTickets', tenantId, selectedBranchId],
     queryFn: async () => {
-      const all = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ ticket_type: 'crm' })));
-      return filterByBranch(all);
+      const { data = [], error } = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ ticket_type: 'crm' })));
+      if (error) throw error;
+      return filterByBranch(data);
     },
     enabled: hasTenantAccess,
   });
@@ -33,8 +34,9 @@ export default function OperationsDashboard() {
   const { data: itTickets = [] } = useQuery({
     queryKey: ['itTickets', tenantId, selectedBranchId],
     queryFn: async () => {
-      const all = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ ticket_type: 'it_helpdesk' })));
-      return filterByBranch(all);
+      const { data = [], error } = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ ticket_type: 'it_helpdesk' })));
+      if (error) throw error;
+      return filterByBranch(data);
     },
     enabled: hasTenantAccess,
   });
@@ -42,8 +44,9 @@ export default function OperationsDashboard() {
   const { data: workOrders = [] } = useQuery({
     queryKey: ['workOrders', tenantId, selectedBranchId],
     queryFn: async () => {
-      const all = await tenantQuery('work_orders').select('*').match(tenantFilter(branchFilter()));
-      return filterByBranch(all);
+      const { data = [], error } = await tenantQuery('work_orders').select('*').match(tenantFilter(branchFilter()));
+      if (error) throw error;
+      return filterByBranch(data);
     },
     enabled: hasTenantAccess,
   });
@@ -51,8 +54,9 @@ export default function OperationsDashboard() {
   const { data: customers = [] } = useQuery({
     queryKey: ['customers', tenantId, selectedBranchId],
     queryFn: async () => {
-      const all = await tenantQuery('customers').select('*').match(tenantFilter(branchFilter()));
-      return filterByBranch(all);
+      const { data = [], error } = await tenantQuery('customers').select('*').match(tenantFilter(branchFilter()));
+      if (error) throw error;
+      return filterByBranch(data);
     },
     enabled: hasTenantAccess,
   });
