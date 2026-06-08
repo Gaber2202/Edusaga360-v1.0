@@ -447,15 +447,30 @@ function PlatformOwnerSubscriptions({ isRTL }) {
 
 export default function SubscriptionManagement() {
   const { isRTL } = useLanguage();
-  const { tenant } = useTenant();
+  const { tenant, tenantLoading } = useTenant();
   const { user: _user, userRole } = useRole();
   const [tab, setTab] = useState('overview');
   
-  // Check if user is a creator (platform admin) or tenant admin
   const isCreator = userRole === 'creator';
 
-  if (!tenant) {
+  if (tenantLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full" />
+      </div>
+    );
+  }
+
+  if (!tenant && isCreator) {
     return <PlatformOwnerSubscriptions isRTL={isRTL} />;
+  }
+
+  if (!tenant) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <p className="text-slate-500">{isRTL ? 'لا توجد معلومات اشتراك' : 'No subscription info available'}</p>
+      </div>
+    );
   }
 
   const currentPlan = PLAN_DEFINITIONS[tenant.plan_code] || PLAN_DEFINITIONS.free_trial;
