@@ -89,16 +89,23 @@ export function tenantQuery(tableName) {
   // silently return 0 rows.  Throw so callers can detect misconfiguration.
   if (!tenantId) {
     console.warn(`tenantQuery('${tableName}'): tenantId is not set — skipping query`);
-    // Return a mock that yields empty results rather than fetching with null tenant.
+    // Return a fully-chainable mock that yields empty results.
+    // Must support every Supabase query-builder method (select, match, order,
+    // eq, in, limit, single, etc.) so callers never hit "X is not a function".
     const empty = { data: [], error: null };
-    const noop = () => Promise.resolve(empty);
-    return {
-      select: () => ({ eq: () => Promise.resolve(empty), then: noop }),
-      insert: () => Promise.resolve(empty),
-      update: () => Promise.resolve(empty),
-      delete: () => Promise.resolve(empty),
-      upsert: () => Promise.resolve(empty),
-    };
+    const emptySingle = { data: null, error: null };
+    function chainable(isSingle = false) {
+      const result = isSingle ? emptySingle : empty;
+      const self = new Proxy({}, {
+        get(_target, prop) {
+          if (prop === 'then') return (resolve) => resolve(result);
+          if (prop === 'single') return () => chainable(true);
+          return () => self;
+        },
+      });
+      return self;
+    }
+    return chainable();
   }
 
   return {
