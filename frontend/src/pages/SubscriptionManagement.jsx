@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
+import { tenantQuery, fetchData, callApi, supabase } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useTenant } from '../components/TenantContext';
 import { useRole } from '../components/RoleContext';
@@ -330,6 +330,121 @@ function UsersTab({ isRTL, tenant }) {
   );
 }
 
+function PlatformOwnerSubscriptions({ isRTL }) {
+  const { data: tenants = [], isLoading } = useQuery({
+    queryKey: ['platform-tenants-subscriptions'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('tenants').select('*').order('created_at', { ascending: false });
+      if (error) return [];
+      return data || [];
+    },
+  });
+
+  const getPlanBadge = (planCode, status) => {
+    if (status === 'trial') return <Badge className="bg-amber-100 text-amber-800">{isRTL ? 'فترة تجريبية' : 'Trial'}</Badge>;
+    const plan = PLAN_DEFINITIONS[planCode];
+    if (!plan) return <Badge variant="secondary">{planCode || '—'}</Badge>;
+    return <Badge className="bg-blue-100 text-blue-800">{isRTL ? plan.nameAr : plan.nameEn}</Badge>;
+  };
+
+  const getDaysLeft = (t) => {
+    if (t.status !== 'trial' || !t.trial_end_date) return null;
+    const days = Math.max(0, Math.ceil((new Date(t.trial_end_date) - new Date()) / (1000 * 60 * 60 * 24)));
+    return days;
+  };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-[50vh]"><p className="text-slate-500">{isRTL ? 'جاري التحميل...' : 'Loading...'}</p></div>;
+  }
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center gap-3">
+        <Crown className="h-6 w-6 text-amber-500" />
+        <h1 className="text-2xl font-bold">{isRTL ? 'إدارة الاشتراكات' : 'Subscription Management'}</h1>
+      </div>
+      <p className="text-slate-500">{isRTL ? 'نظرة عامة على اشتراكات جميع المدارس المسجلة' : 'Overview of subscriptions for all registered schools'}</p>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <Building2 className="h-8 w-8 text-blue-500" />
+              <div>
+                <p className="text-2xl font-bold">{tenants.length}</p>
+                <p className="text-sm text-slate-500">{isRTL ? 'إجمالي المدارس' : 'Total Schools'}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="h-8 w-8 text-green-500" />
+              <div>
+                <p className="text-2xl font-bold">{tenants.filter(t => t.status === 'active').length}</p>
+                <p className="text-sm text-slate-500">{isRTL ? 'نشط' : 'Active'}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-8 w-8 text-amber-500" />
+              <div>
+                <p className="text-2xl font-bold">{tenants.filter(t => t.status === 'trial').length}</p>
+                <p className="text-sm text-slate-500">{isRTL ? 'فترة تجريبية' : 'Trial'}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{isRTL ? 'المدارس والاشتراكات' : 'Schools & Subscriptions'}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {tenants.length === 0 ? (
+            <p className="text-slate-500 text-center py-8">{isRTL ? 'لا توجد مدارس مسجلة بعد' : 'No schools registered yet'}</p>
+          ) : (
+            <div className="space-y-3">
+              {tenants.map(t => {
+                const daysLeft = getDaysLeft(t);
+                return (
+                  <div key={t.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50">
+                    <div className="flex items-center gap-3">
+                      <Building2 className="h-5 w-5 text-slate-400" />
+                      <div>
+                        <p className="font-medium">{isRTL ? (t.name_ar || t.name) : (t.name || t.name_ar)}</p>
+                        <p className="text-sm text-slate-500">{t.city || '—'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {getPlanBadge(t.plan_code, t.status)}
+                      {daysLeft !== null && (
+                        <span className="text-sm text-amber-600">
+                          {daysLeft} {isRTL ? 'يوم متبقي' : 'days left'}
+                        </span>
+                      )}
+                      <Badge variant={t.status === 'active' ? 'default' : 'secondary'}>
+                        {t.status === 'active' ? (isRTL ? 'نشط' : 'Active') :
+                         t.status === 'trial' ? (isRTL ? 'تجريبي' : 'Trial') :
+                         t.status}
+                      </Badge>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function SubscriptionManagement() {
   const { isRTL } = useLanguage();
   const { tenant } = useTenant();
@@ -340,11 +455,7 @@ export default function SubscriptionManagement() {
   const isCreator = userRole === 'creator';
 
   if (!tenant) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <p className="text-slate-500">{isRTL ? 'لا توجد معلومات اشتراك' : 'No subscription info available'}</p>
-      </div>
-    );
+    return <PlatformOwnerSubscriptions isRTL={isRTL} />;
   }
 
   const currentPlan = PLAN_DEFINITIONS[tenant.plan_code] || PLAN_DEFINITIONS.free_trial;
