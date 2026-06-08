@@ -20,11 +20,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
-import { Upload, Loader2 } from 'lucide-react';
+import { Upload, Loader2, UserPlus } from 'lucide-react';
 import { logAuditEvent, AuditActions } from '../AuditService';
 import { NotificationHelper } from '../notifications/NotificationHelper';
 import { toast } from 'sonner';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
+import { useTenant } from '../TenantContext';
+import { Checkbox } from '../ui/checkbox';
 
 const SECTIONS = ['A', 'B', 'C', 'D'];
 
@@ -32,8 +34,10 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
   const { t, isRTL } = useLanguage();
   const { selectedBranchId } = useBranch();
   const { tenantId } = useTenantFilter();
+  const { tenant } = useTenant();
   const [loading, setLoading] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [inviteParent, setInviteParent] = useState(true);
 
   const { data: grades = [] } = useQuery({
     queryKey: ['grades', tenantId],
@@ -65,7 +69,13 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
     medical_notes: '',
     address: '',
     emergency_contact: '',
-    emergency_phone: ''
+    emergency_phone: '',
+    guardian_name_en: '',
+    guardian_name_ar: '',
+    guardian_email: '',
+    guardian_phone: '',
+    guardian_relationship: 'father',
+    guardian_national_id: '',
   });
 
   // CRITICAL FIX: Load student data when editing
@@ -90,10 +100,15 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
         medical_notes: student.medical_notes || '',
         address: student.address || '',
         emergency_contact: student.emergency_contact || '',
-        emergency_phone: student.emergency_phone || ''
+        emergency_phone: student.emergency_phone || '',
+        guardian_name_en: student.guardian_name_en || '',
+        guardian_name_ar: student.guardian_name_ar || '',
+        guardian_email: student.guardian_email || '',
+        guardian_phone: student.guardian_phone || '',
+        guardian_relationship: student.guardian_relationship || 'father',
+        guardian_national_id: student.guardian_national_id || '',
       });
     } else {
-      // Reset form for new student
       setFormData({
         student_id: '',
         name_ar: '',
@@ -112,7 +127,13 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
         medical_notes: '',
         address: '',
         emergency_contact: '',
-        emergency_phone: ''
+        emergency_phone: '',
+        guardian_name_en: '',
+        guardian_name_ar: '',
+        guardian_email: '',
+        guardian_phone: '',
+        guardian_relationship: 'father',
+        guardian_national_id: '',
       });
     }
   }, [student]);
@@ -147,7 +168,8 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
     setLoading(true);
     try {
       const studentId = formData.student_id || `STU-${Date.now().toString(36).toUpperCase()}`;
-      const data = { ...formData, student_id: studentId, branch_id: selectedBranchId || 'all' };
+      const { guardian_name_en, guardian_name_ar, guardian_email, guardian_phone, guardian_relationship, guardian_national_id, ...studentFields } = formData;
+      const data = { ...studentFields, student_id: studentId, branch_id: selectedBranchId || 'all' };
 
       if (student?.id) {
         await tenantQuery('students').update(data);
@@ -173,6 +195,28 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
         // Notify on new enrollment
         if (data.status === 'active') {
           NotificationHelper.notifyStudentEnrollment(created);
+        }
+
+        // Auto-invite parent if guardian email is provided
+        if (inviteParent && guardian_email && tenantId) {
+          try {
+            await callApi('/api/parents/invite', {
+              guardian_name_en: guardian_name_en || formData.emergency_contact || 'Parent',
+              guardian_name_ar: guardian_name_ar || '',
+              guardian_email,
+              guardian_phone: guardian_phone || formData.emergency_phone || '',
+              guardian_relationship: guardian_relationship || 'parent',
+              guardian_national_id: guardian_national_id || '',
+              student_id: created.id || created[0]?.id,
+              student_name: formData.name_en || formData.name_ar,
+              tenant_id: tenantId,
+              school_name: tenant?.name || tenant?.name_en || 'School',
+            });
+            toast.success(isRTL ? 'تم إرسال دعوة لولي الأمر' : 'Parent invitation sent');
+          } catch (err) {
+            console.error('Parent invite failed:', err);
+            toast.error(isRTL ? 'فشل إرسال دعوة ولي الأمر' : 'Failed to send parent invitation');
+          }
         }
         
         toast.success(isRTL ? 'تم إنشاء الطالب بنجاح' : 'Student created successfully');
@@ -364,6 +408,90 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Guardian / Parent Information */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-slate-900 border-b pb-2 flex items-center gap-2">
+              <UserPlus className="w-4 h-4" />
+              {isRTL ? 'بيانات ولي الأمر' : 'Guardian / Parent Information'}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{isRTL ? 'اسم ولي الأمر (إنجليزي)' : 'Guardian Name (English)'} *</Label>
+                <Input
+                  value={formData.guardian_name_en}
+                  onChange={(e) => handleChange('guardian_name_en', e.target.value)}
+                  placeholder={isRTL ? 'الاسم بالإنجليزية' : 'Full name in English'}
+                  dir="ltr"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{isRTL ? 'اسم ولي الأمر (عربي)' : 'Guardian Name (Arabic)'}</Label>
+                <Input
+                  value={formData.guardian_name_ar}
+                  onChange={(e) => handleChange('guardian_name_ar', e.target.value)}
+                  placeholder={isRTL ? 'الاسم بالعربية' : 'Full name in Arabic'}
+                  dir="rtl"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{isRTL ? 'البريد الإلكتروني' : 'Guardian Email'} *</Label>
+                <Input
+                  type="email"
+                  value={formData.guardian_email}
+                  onChange={(e) => handleChange('guardian_email', e.target.value)}
+                  placeholder="parent@example.com"
+                  dir="ltr"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{isRTL ? 'هاتف ولي الأمر' : 'Guardian Phone'}</Label>
+                <Input
+                  type="tel"
+                  value={formData.guardian_phone}
+                  onChange={(e) => handleChange('guardian_phone', e.target.value)}
+                  placeholder="+966 5XX XXX XXXX"
+                  dir="ltr"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{isRTL ? 'صلة القرابة' : 'Relationship'}</Label>
+                <Select value={formData.guardian_relationship} onValueChange={(v) => handleChange('guardian_relationship', v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="father">{isRTL ? 'أب' : 'Father'}</SelectItem>
+                    <SelectItem value="mother">{isRTL ? 'أم' : 'Mother'}</SelectItem>
+                    <SelectItem value="guardian">{isRTL ? 'ولي أمر' : 'Legal Guardian'}</SelectItem>
+                    <SelectItem value="other">{isRTL ? 'أخرى' : 'Other'}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{isRTL ? 'رقم الهوية' : 'National ID'}</Label>
+                <Input
+                  value={formData.guardian_national_id}
+                  onChange={(e) => handleChange('guardian_national_id', e.target.value)}
+                  dir="ltr"
+                />
+              </div>
+            </div>
+            {!student && formData.guardian_email && (
+              <div className="flex items-center gap-2 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                <Checkbox
+                  id="invite-parent"
+                  checked={inviteParent}
+                  onCheckedChange={(checked) => setInviteParent(!!checked)}
+                />
+                <label htmlFor="invite-parent" className="text-sm text-emerald-800 cursor-pointer">
+                  {isRTL
+                    ? 'إرسال دعوة تلقائية لولي الأمر للوصول إلى بوابة ولي الأمر'
+                    : 'Automatically invite parent to access the Parent Portal'}
+                </label>
+              </div>
+            )}
           </div>
 
           {/* Contact & Emergency */}
