@@ -1,9 +1,12 @@
 import React from 'react';
 import { useRole } from '../components/RoleContext';
+import { useTenant } from '../components/TenantContext';
 import ClientSubscriptionPortal from '../components/subscription/ClientSubscriptionPortal';
+import SubscriptionManagement from './SubscriptionManagement';
 
 export default function ClientSubscription() {
   const { userRole, loading } = useRole();
+  const { tenant } = useTenant();
 
   if (loading) {
     return (
@@ -19,6 +22,10 @@ export default function ClientSubscription() {
         <p className="text-slate-500">Access restricted to admins</p>
       </div>
     );
+  }
+
+  if (!tenant && userRole === 'creator') {
+    return <SubscriptionManagement />;
   }
 
   return <ClientSubscriptionPortal />;

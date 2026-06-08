@@ -117,10 +117,11 @@ export const NotificationService = {
    */
   async getUserNotifications(userEmail, unreadOnly = false) {
     try {
-      const { data: recipients = [] } = await tenantQuery('notification_recipients').select('*').match({
+      const res = await tenantQuery('notification_recipients').select('*').match({
         user_email: userEmail,
         ...(unreadOnly && { is_read: false })
       });
+      const recipients = Array.isArray(res?.data) ? res.data : [];
 
       const notifications = [];
       for (const recipient of recipients) {
@@ -140,8 +141,7 @@ export const NotificationService = {
       }
 
       return notifications.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
+    } catch {
       return [];
     }
   },
