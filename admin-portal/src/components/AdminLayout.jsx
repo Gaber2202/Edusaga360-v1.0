@@ -10,14 +10,15 @@ import {
 } from './ui/dropdown-menu';
 import {
   LayoutDashboard, Building2, Users, UserPlus, CreditCard, Activity,
-  Settings, LogOut, Mail, Flag, History, ChevronLeft, ChevronRight,
+  Settings, LogOut, Mail, Flag, History, ChevronLeft, ChevronRight, Send,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
-  { name: 'Tenants', icon: Building2, path: '/tenants' },
+  { name: 'Schools', icon: Building2, path: '/tenants' },
   { name: 'Users', icon: Users, path: '/users' },
   { name: 'User Requests', icon: UserPlus, path: '/user-requests' },
+  { name: 'Invitations', icon: Send, path: '/invitations' },
   { name: 'Subscriptions', icon: CreditCard, path: '/subscriptions' },
   { name: 'Analytics', icon: Activity, path: '/analytics' },
   { name: 'Email Templates', icon: Mail, path: '/email-templates' },
