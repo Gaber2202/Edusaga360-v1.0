@@ -2,7 +2,69 @@ import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import crypto from 'crypto';
+import https from 'https';
 import { AuthenticatedRequest } from '../middleware/auth.js';
+
+async function sendInviteEmail(opts: {
+  infobipKey: string;
+  infobipBase: string;
+  recipient_email: string;
+  recipient_name: string;
+  school_name?: string | null;
+  inviteLink: string;
+  message?: string | null;
+}): Promise<void> {
+  const { infobipKey, infobipBase, recipient_email, recipient_name, school_name, inviteLink, message } = opts;
+  const schoolLine = school_name ? `<p>School: <strong>${school_name}</strong></p>` : '';
+  const customMsg = message ? `<p style="color:#555">${message}</p>` : '';
+  const html = `
+    <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+      <h2 style="color:#059669">You're invited to EduSaga 360</h2>
+      <p>Hi ${recipient_name},</p>
+      ${customMsg}
+      ${schoolLine}
+      <p>Click the button below to set up your school's account and start your free trial:</p>
+      <p style="text-align:center;margin:32px 0">
+        <a href="${inviteLink}" style="background:#059669;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold">
+          Accept Invitation
+        </a>
+      </p>
+      <p style="font-size:12px;color:#999">This link expires in 7 days. If you did not expect this email, you can safely ignore it.</p>
+    </div>`;
+
+  const payload = JSON.stringify({
+    messages: [{
+      from: process.env.INFOBIP_SENDER_EMAIL || 'noreply@edusaga360.com',
+      to: [{ to: recipient_email }],
+      subject: `You're invited to try EduSaga 360`,
+      htmlBody: html,
+    }],
+  });
+
+  await new Promise<void>((resolve, reject) => {
+    const url = new URL(`https://${infobipBase}/email/3/send`);
+    const req = https.request({
+      hostname: url.hostname,
+      path: url.pathname,
+      method: 'POST',
+      headers: {
+        'Authorization': `App ${infobipKey}`,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload),
+      },
+    }, (res) => {
+      let body = '';
+      res.on('data', d => body += d);
+      res.on('end', () => {
+        if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) resolve();
+        else reject(new Error(`Infobip ${res.statusCode}: ${body}`));
+      });
+    });
+    req.on('error', reject);
+    req.write(payload);
+    req.end();
+  });
+}
 
 export const adminRouter = Router();
 
@@ -226,14 +288,25 @@ adminRouter.post('/invitations', async (req: AuthenticatedRequest, res) => {
   const frontendBase = process.env.FRONTEND_URL || 'https://edusaga-360-production.vercel.app';
   const inviteLink = `${frontendBase}/register?invite=${token}`;
 
-  // In production: send via Infobip email — key NEVER hardcoded
-  // const infobipKey = process.env.INFOBIP_API_KEY;
-  // await sendInviteEmail(infobipKey, recipient_email, recipient_name, inviteLink, message);
+  let emailSent = false;
+  const infobipKey = process.env.INFOBIP_API_KEY;
+  const infobipBase = process.env.INFOBIP_BASE_URL;
+  if (infobipKey && infobipBase) {
+    try {
+      await sendInviteEmail({ infobipKey, infobipBase, recipient_email, recipient_name, school_name, inviteLink, message });
+      emailSent = true;
+    } catch (emailErr) {
+      console.error('Infobip send failed:', emailErr);
+    }
+  }
 
   return res.status(201).json({
     invitation: data,
     invite_link: inviteLink,
-    note: 'Invitation created. In production, email is sent via Infobip. Copy the invite_link to send manually.',
+    email_sent: emailSent,
+    note: emailSent
+      ? 'Invitation created and email sent via Infobip.'
+      : 'Invitation created. Configure INFOBIP_API_KEY and INFOBIP_BASE_URL in Railway to auto-send emails.',
   });
 });
 
