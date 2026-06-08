@@ -78,7 +78,7 @@ function UserRow({ user, tenantId, onRefresh }) {
         </span>
       </td>
       <td className="px-4 py-2.5 text-xs text-slate-400">
-        {user.created_at ? format(new Date(user.created_at), 'MMM d, yyyy') : '—'}
+        {user.created_date || user.created_at ? format(new Date(user.created_date || user.created_at), 'MMM d, yyyy') : '—'}
       </td>
       <td className="px-4 py-2.5">
         <div className="flex items-center gap-1 justify-end">

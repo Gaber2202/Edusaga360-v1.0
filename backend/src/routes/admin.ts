@@ -15,22 +15,46 @@ function isPlatformOwner(req: AuthenticatedRequest): boolean {
   return req.user?.is_platform_owner === true;
 }
 
-function forbidden(res: any) {
-  return res.status(403).json({ message: 'Platform owner access required' });
+async function requirePlatformOwner(req: AuthenticatedRequest, res: any): Promise<boolean> {
+  // Primary: JWT app_metadata claim (set by Supabase Auth admin)
+  if (req.user?.is_platform_owner === true) return true;
+
+  // Fallback: check users table directly via service role key
+  // Handles the case where app_metadata hasn't been set yet
+  if (!req.user?.id) { res.status(403).json({ message: 'Platform owner access required' }); return false; }
+
+  const { data } = await supabase
+    .from('users')
+    .select('is_platform_owner, user_role, role')
+    .eq('auth_id', req.user.id)
+    .single();
+
+  const allowed =
+    data?.is_platform_owner === true ||
+    ['edusaga_superadmin', 'edusaga_staff', 'creator'].includes(data?.user_role) ||
+    ['edusaga_superadmin', 'edusaga_staff', 'creator'].includes(data?.role);
+
+  if (!allowed) { res.status(403).json({ message: 'Platform owner access required' }); return false; }
+  return true;
 }
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
 
 adminRouter.get('/stats', async (req: AuthenticatedRequest, res) => {
-  if (!isPlatformOwner(req)) return forbidden(res);
-  const [tenantsRes, usersRes, invitesRes, requestsRes] = await Promise.all([
+  if (!await requirePlatformOwner(req, res)) return;
+  const [tenantsRes, usersRes] = await Promise.all([
     supabase.from('tenants').select('id, status, plan, created_at'),
-    supabase.from('users').select('id, is_active, created_at'),
+    supabase.from('users').select('id, is_active, created_date'),
+  ]);
+  // These tables may not exist yet if migrations haven't run — never crash stats
+  const [invitesRes, requestsRes] = await Promise.allSettled([
     supabase.from('platform_invitations').select('id, status').eq('status', 'pending'),
     supabase.from('tenant_user_requests').select('id, status').eq('status', 'pending'),
   ]);
   const tenants = tenantsRes.data || [];
   const users = usersRes.data || [];
+  const inviteCount = invitesRes.status === 'fulfilled' ? (invitesRes.value.data?.length ?? 0) : 0;
+  const requestCount = requestsRes.status === 'fulfilled' ? (requestsRes.value.data?.length ?? 0) : 0;
 
   // Monthly growth (tenants created last 30 days)
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
@@ -45,15 +69,15 @@ adminRouter.get('/stats', async (req: AuthenticatedRequest, res) => {
     totalUsers: users.length,
     activeUsers: users.filter(u => u.is_active !== false).length,
     newTenantsThisMonth: newThisMonth,
-    pendingInvitations: invitesRes.data?.length ?? 0,
-    pendingUserRequests: requestsRes.data?.length ?? 0,
+    pendingInvitations: inviteCount,
+    pendingUserRequests: requestCount,
   });
 });
 
 // ─── Tenants ──────────────────────────────────────────────────────────────────
 
 adminRouter.get('/tenants', async (req: AuthenticatedRequest, res) => {
-  if (!isPlatformOwner(req)) return forbidden(res);
+  if (!await requirePlatformOwner(req, res)) return;
   const { data, error } = await supabase
     .from('tenants')
     .select('*')
@@ -63,7 +87,7 @@ adminRouter.get('/tenants', async (req: AuthenticatedRequest, res) => {
 });
 
 adminRouter.patch('/tenants/:id', async (req: AuthenticatedRequest, res) => {
-  if (!isPlatformOwner(req)) return forbidden(res);
+  if (!await requirePlatformOwner(req, res)) return;
   const { id } = req.params;
   const allowed = ['status', 'trial_end_date', 'max_users', 'max_students', 'max_employees', 'plan', 'plan_code', 'ai_enabled', 'notes'];
   const updates: Record<string, unknown> = {};
@@ -80,7 +104,7 @@ adminRouter.patch('/tenants/:id', async (req: AuthenticatedRequest, res) => {
 });
 
 adminRouter.delete('/tenants/:id', async (req: AuthenticatedRequest, res) => {
-  if (!isPlatformOwner(req)) return forbidden(res);
+  if (!await requirePlatformOwner(req, res)) return;
   const { id } = req.params;
   const { error } = await supabase.from('tenants').delete().eq('id', id);
   if (error) return res.status(500).json({ message: error.message });
@@ -90,13 +114,13 @@ adminRouter.delete('/tenants/:id', async (req: AuthenticatedRequest, res) => {
 // ─── Users per tenant ─────────────────────────────────────────────────────────
 
 adminRouter.get('/tenants/:id/users', async (req: AuthenticatedRequest, res) => {
-  if (!isPlatformOwner(req)) return forbidden(res);
+  if (!await requirePlatformOwner(req, res)) return;
   const { id } = req.params;
   const { data, error } = await supabase
     .from('users')
-    .select('id, email, first_name, last_name, user_role, is_active, created_at, phone, job_title')
+    .select('id, email, first_name, last_name, user_role, is_active, created_date, phone, job_title')
     .eq('tenant_id', id)
-    .order('created_at', { ascending: false });
+    .order('created_date', { ascending: false });
   if (error) return res.status(500).json({ message: error.message });
   return res.json({ users: data || [] });
 });
@@ -104,12 +128,12 @@ adminRouter.get('/tenants/:id/users', async (req: AuthenticatedRequest, res) => 
 // ─── All users ────────────────────────────────────────────────────────────────
 
 adminRouter.get('/users', async (req: AuthenticatedRequest, res) => {
-  if (!isPlatformOwner(req)) return forbidden(res);
+  if (!await requirePlatformOwner(req, res)) return;
   const { tenant_id } = req.query as Record<string, string>;
   let q = supabase
     .from('users')
-    .select('id, email, first_name, last_name, user_role, is_active, tenant_id, created_at, phone, job_title')
-    .order('created_at', { ascending: false })
+    .select('id, email, first_name, last_name, user_role, is_active, tenant_id, created_date, phone, job_title')
+    .order('created_date', { ascending: false })
     .limit(500);
   if (tenant_id) q = q.eq('tenant_id', tenant_id);
   const { data, error } = await q;
@@ -118,7 +142,7 @@ adminRouter.get('/users', async (req: AuthenticatedRequest, res) => {
 });
 
 adminRouter.patch('/users/:id', async (req: AuthenticatedRequest, res) => {
-  if (!isPlatformOwner(req)) return forbidden(res);
+  if (!await requirePlatformOwner(req, res)) return;
   const { id } = req.params;
   const schema = z.object({
     user_role: z.string().optional(),
@@ -137,7 +161,7 @@ adminRouter.patch('/users/:id', async (req: AuthenticatedRequest, res) => {
 });
 
 adminRouter.delete('/users/:id', async (req: AuthenticatedRequest, res) => {
-  if (!isPlatformOwner(req)) return forbidden(res);
+  if (!await requirePlatformOwner(req, res)) return;
   const { id } = req.params;
   // Deactivate rather than hard-delete to preserve audit trail
   const { data, error } = await supabase
@@ -154,7 +178,7 @@ adminRouter.delete('/users/:id', async (req: AuthenticatedRequest, res) => {
 // Invite a school/person to sign up for a trial — generates a unique link
 
 adminRouter.get('/invitations', async (req: AuthenticatedRequest, res) => {
-  if (!isPlatformOwner(req)) return forbidden(res);
+  if (!await requirePlatformOwner(req, res)) return;
   const { data, error } = await supabase
     .from('platform_invitations')
     .select('*')
@@ -164,7 +188,7 @@ adminRouter.get('/invitations', async (req: AuthenticatedRequest, res) => {
 });
 
 adminRouter.post('/invitations', async (req: AuthenticatedRequest, res) => {
-  if (!isPlatformOwner(req)) return forbidden(res);
+  if (!await requirePlatformOwner(req, res)) return;
   const schema = z.object({
     recipient_email: z.string().email(),
     recipient_name: z.string().min(1),
@@ -214,7 +238,7 @@ adminRouter.post('/invitations', async (req: AuthenticatedRequest, res) => {
 });
 
 adminRouter.patch('/invitations/:id', async (req: AuthenticatedRequest, res) => {
-  if (!isPlatformOwner(req)) return forbidden(res);
+  if (!await requirePlatformOwner(req, res)) return;
   const { id } = req.params;
   const schema = z.object({
     status: z.enum(['pending', 'accepted', 'expired', 'revoked']),
@@ -232,7 +256,7 @@ adminRouter.patch('/invitations/:id', async (req: AuthenticatedRequest, res) => 
 });
 
 adminRouter.delete('/invitations/:id', async (req: AuthenticatedRequest, res) => {
-  if (!isPlatformOwner(req)) return forbidden(res);
+  if (!await requirePlatformOwner(req, res)) return;
   const { id } = req.params;
   const { error } = await supabase.from('platform_invitations').delete().eq('id', id);
   if (error) return res.status(500).json({ message: error.message });
@@ -242,7 +266,7 @@ adminRouter.delete('/invitations/:id', async (req: AuthenticatedRequest, res) =>
 // ─── User requests (platform owner approves/rejects trial user invites) ───────
 
 adminRouter.get('/user-requests', async (req: AuthenticatedRequest, res) => {
-  if (!isPlatformOwner(req)) return forbidden(res);
+  if (!await requirePlatformOwner(req, res)) return;
   const { status } = req.query as Record<string, string>;
   let q = supabase
     .from('tenant_user_requests')
@@ -257,7 +281,7 @@ adminRouter.get('/user-requests', async (req: AuthenticatedRequest, res) => {
 // ─── Audit log ────────────────────────────────────────────────────────────────
 
 adminRouter.get('/audit-log', async (req: AuthenticatedRequest, res) => {
-  if (!isPlatformOwner(req)) return forbidden(res);
+  if (!await requirePlatformOwner(req, res)) return;
   const { tenant_id, limit: limitStr } = req.query as Record<string, string>;
   const limit = Math.min(200, parseInt(limitStr ?? '100', 10));
   let q = supabase
