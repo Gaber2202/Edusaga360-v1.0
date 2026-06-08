@@ -310,6 +310,42 @@ adminRouter.post('/invitations', async (req: AuthenticatedRequest, res) => {
   });
 });
 
+adminRouter.post('/invitations/:id/resend', async (req: AuthenticatedRequest, res) => {
+  if (!await requirePlatformOwner(req, res)) return;
+  const { id } = req.params;
+  const { data: inv, error } = await supabase
+    .from('platform_invitations')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error || !inv) return res.status(404).json({ message: 'Invitation not found' });
+  if (inv.status !== 'pending') return res.status(400).json({ message: 'Can only resend pending invitations' });
+
+  const frontendBase = process.env.FRONTEND_URL || 'https://edusaga-360-production.vercel.app';
+  const inviteLink = `${frontendBase}/register?invite=${inv.token}`;
+
+  let emailSent = false;
+  const infobipKey = process.env.INFOBIP_API_KEY;
+  const infobipBase = process.env.INFOBIP_BASE_URL;
+  if (infobipKey && infobipBase) {
+    try {
+      await sendInviteEmail({
+        infobipKey, infobipBase,
+        recipient_email: inv.recipient_email,
+        recipient_name: inv.recipient_name,
+        school_name: inv.school_name,
+        inviteLink,
+        message: inv.message,
+      });
+      emailSent = true;
+    } catch (emailErr) {
+      console.error('Infobip resend failed:', emailErr);
+    }
+  }
+
+  return res.json({ email_sent: emailSent, invite_link: inviteLink });
+});
+
 adminRouter.patch('/invitations/:id', async (req: AuthenticatedRequest, res) => {
   if (!await requirePlatformOwner(req, res)) return;
   const { id } = req.params;

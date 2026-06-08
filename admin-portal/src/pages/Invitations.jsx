@@ -7,7 +7,7 @@ import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Mail, Plus, Copy, Trash2, X, RefreshCw, Send } from 'lucide-react';
+import { Mail, Plus, Copy, Trash2, X, RefreshCw, Send, RotateCcw } from 'lucide-react';
 
 const STATUS_STYLES = {
   pending: 'bg-blue-100 text-blue-700',
@@ -31,6 +31,7 @@ export default function Invitations() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [sending, setSending] = useState(false);
   const [lastResult, setLastResult] = useState(null);
+  const [resending, setResending] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-invitations'],
@@ -72,6 +73,22 @@ export default function Invitations() {
       toast.success('Invitation revoked');
     } catch (e) {
       toast.error(e.message || 'Failed');
+    }
+  };
+
+  const resend = async (inv) => {
+    setResending(inv.id);
+    try {
+      const res = await callApi(`/api/admin/invitations/${inv.id}/resend`, {}, { method: 'POST' });
+      if (res.email_sent) {
+        toast.success('Invitation resent successfully!');
+      } else {
+        toast.warning('Invitation not resent — check Infobip config in Railway');
+      }
+    } catch (e) {
+      toast.error(e.message || 'Failed to resend');
+    } finally {
+      setResending(null);
     }
   };
 
@@ -241,6 +258,13 @@ export default function Invitations() {
                           copyLink(`${base}/register?invite=${inv.token}`);
                         }}>
                           <Copy className="w-3.5 h-3.5 text-slate-400" />
+                        </Button>
+                      )}
+                      {inv.status === 'pending' && (
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Resend email" onClick={() => resend(inv)} disabled={resending === inv.id}>
+                          {resending === inv.id
+                            ? <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-400" />
+                            : <RotateCcw className="w-3.5 h-3.5 text-blue-400" />}
                         </Button>
                       )}
                       {inv.status === 'pending' && (
