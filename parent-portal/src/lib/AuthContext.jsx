@@ -46,8 +46,9 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      const isParent = appUser.user_role === 'parent' || appUser.role === 'parent';
-      const isPlatformOwner = appUser.is_platform_owner === true;
+      const metaRole = authUser.app_metadata?.role || authUser.user_metadata?.role;
+      const isParent = appUser.user_role === 'parent' || appUser.role === 'parent' || metaRole === 'parent';
+      const isPlatformOwner = appUser.is_platform_owner === true || authUser.app_metadata?.is_platform_owner === true;
       if (!isParent && !isPlatformOwner) {
         setAccessDenied(true);
         setLoading(false);

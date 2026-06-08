@@ -23,6 +23,7 @@ import { benchmarksRouter } from './routes/benchmarks.js';
 import { marketplaceRouter } from './routes/marketplace.js';
 import { tenantUsersRouter } from './routes/tenantUsers.js';
 import { adminRouter } from './routes/admin.js';
+import { parentsRouter } from './routes/parents.js';
 
 dotenv.config();
 
@@ -95,6 +96,7 @@ app.use('/api/marketplace',         apiLimiter, authMiddleware, tenantMiddleware
 app.use('/api/tenant-users',        apiLimiter, authMiddleware, tenantMiddleware, tenantUsersRouter);
 app.use('/api/ai',                  apiLimiter, authMiddleware, tenantMiddleware, aiRouter);
 app.use('/api/admin',               apiLimiter, authMiddleware, adminRouter);
+app.use('/api/parents',             apiLimiter, authMiddleware, tenantMiddleware, parentsRouter);
 
 app.use(
   (
