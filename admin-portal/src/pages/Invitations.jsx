@@ -30,7 +30,7 @@ export default function Invitations() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [sending, setSending] = useState(false);
-  const [lastLink, setLastLink] = useState(null);
+  const [lastResult, setLastResult] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-invitations'],
@@ -49,8 +49,8 @@ export default function Invitations() {
         ...form,
         expires_days: parseInt(form.expires_days),
       });
-      setLastLink(res.invite_link);
-      toast.success('Invitation created');
+      setLastResult({ link: res.invite_link, emailSent: res.email_sent });
+      toast.success(res.email_sent ? 'Invitation created and email sent!' : 'Invitation created');
       setForm(EMPTY_FORM);
       qc.invalidateQueries({ queryKey: ['admin-invitations'] });
     } catch (e) {
@@ -165,16 +165,22 @@ export default function Invitations() {
             </div>
 
             {/* Show invite link after creation */}
-            {lastLink && (
-              <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3">
-                <p className="text-xs font-semibold text-emerald-700 mb-1">Invitation link created — copy and send manually:</p>
+            {lastResult && (
+              <div className={`rounded-lg border p-3 ${lastResult.emailSent ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+                {lastResult.emailSent ? (
+                  <p className="text-xs font-semibold text-emerald-700 mb-1">✅ Email sent via Infobip — link also copied below for your records:</p>
+                ) : (
+                  <p className="text-xs font-semibold text-amber-700 mb-1">Invitation created — copy the link below to send manually:</p>
+                )}
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 text-xs bg-white rounded border border-emerald-200 px-2 py-1.5 truncate text-emerald-800">{lastLink}</code>
-                  <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => copyLink(lastLink)}>
+                  <code className={`flex-1 text-xs bg-white rounded border px-2 py-1.5 truncate ${lastResult.emailSent ? 'border-emerald-200 text-emerald-800' : 'border-amber-200 text-amber-800'}`}>{lastResult.link}</code>
+                  <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => copyLink(lastResult.link)}>
                     <Copy className="w-3.5 h-3.5" /> Copy
                   </Button>
                 </div>
-                <p className="text-xs text-emerald-600 mt-1.5">📧 Production: email is auto-sent via Infobip when INFOBIP_API_KEY is configured in Railway.</p>
+                {!lastResult.emailSent && (
+                  <p className="text-xs text-amber-600 mt-1.5">⚠️ Email not sent — check that INFOBIP_API_KEY, INFOBIP_BASE_URL, and INFOBIP_SENDER_EMAIL are set in Railway.</p>
+                )}
               </div>
             )}
           </CardContent>
