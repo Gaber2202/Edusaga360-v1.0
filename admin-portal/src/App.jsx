@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import Tenants from './pages/Tenants';
 import PlatformUsers from './pages/PlatformUsers';
 import UserRequests from './pages/UserRequests';
+import Invitations from './pages/Invitations';
 import Subscriptions from './pages/Subscriptions';
 import Analytics from './pages/Analytics';
 import EmailTemplates from './pages/EmailTemplates';
@@ -49,6 +50,7 @@ function AppRoutes() {
         <Route path="/tenants" element={<Tenants />} />
         <Route path="/users" element={<PlatformUsers />} />
         <Route path="/user-requests" element={<UserRequests />} />
+        <Route path="/invitations" element={<Invitations />} />
         <Route path="/subscriptions" element={<Subscriptions />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/email-templates" element={<EmailTemplates />} />
