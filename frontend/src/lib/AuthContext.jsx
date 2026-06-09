@@ -58,10 +58,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // ignore — we redirect regardless
+    }
     setUser(null);
     setSession(null);
     setIsAuthenticated(false);
+    // Hard redirect straight to the login screen — no intermediate chooser.
+    window.location.replace('/school-login');
   };
 
   const resetPassword = async (email) => {

@@ -24,6 +24,7 @@ import QuickActionTile from '../components/dashboard/QuickActionTile';
 import DashboardAnalytics from '../components/dashboard/DashboardAnalytics';
 import ActivityPanel from '../components/dashboard/ActivityPanel';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
+import GettingStartedPanel from '../components/dashboard/GettingStartedPanel';
 
 export default function Dashboard() {
   const { t: _t, isRTL } = useLanguage();
@@ -95,6 +96,20 @@ export default function Dashboard() {
     <div className="space-y-6 min-h-full bg-slate-50/60">
       {/* ── HEADER ── */}
       <DashboardHeader user={user} tenant={tenant} isRTL={isRTL} />
+
+      {/* ── FIRST-RUN ONBOARDING (admins only) ── */}
+      {(userRole === 'admin' || isCreator) && (
+        <GettingStartedPanel
+          isRTL={isRTL}
+          tenant={tenant}
+          counts={{
+            students: students.length,
+            employees: employees.length,
+            branches: branches.length,
+            invoices: invoices.length,
+          }}
+        />
+      )}
 
       {/* ── SCHOOL / ADMIN KPIs ── */}
       {isSchoolAdmin && (
