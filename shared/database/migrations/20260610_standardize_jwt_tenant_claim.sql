@@ -8,7 +8,7 @@
 --
 -- Safe to re-run: DROP IF EXISTS before CREATE.
 
-DO $$
+DO $outer$
 DECLARE
   tbl TEXT;
   tables TEXT[] := ARRAY[
@@ -45,20 +45,19 @@ BEGIN
       EXECUTE format('DROP POLICY IF EXISTS tenant_isolation_delete ON public.%I', tbl);
 
       -- Create unified app_metadata-based policy (evaluated once per query via SELECT wrapper)
-      EXECUTE format($$
-        CREATE POLICY tenant_isolation ON public.%I
-          AS PERMISSIVE FOR ALL
-          TO authenticated
-          USING (tenant_id::text = (SELECT auth.jwt() -> 'app_metadata' ->> 'tenant_id'))
-          WITH CHECK (tenant_id::text = (SELECT auth.jwt() -> 'app_metadata' ->> 'tenant_id'))
-      $$, tbl);
+      EXECUTE format(
+        'CREATE POLICY tenant_isolation ON public.%I'
+        || ' AS PERMISSIVE FOR ALL TO authenticated'
+        || ' USING (tenant_id::text = (SELECT auth.jwt() -> ''app_metadata'' ->> ''tenant_id''))'
+        || ' WITH CHECK (tenant_id::text = (SELECT auth.jwt() -> ''app_metadata'' ->> ''tenant_id''))',
+        tbl);
 
     END IF;
   END LOOP;
-END $$;
+END $outer$;
 
 -- Ensure platform_owner_access policies also use app_metadata consistently
-DO $$
+DO $outer$
 DECLARE
   tbl TEXT;
   tables TEXT[] := ARRAY[
@@ -70,13 +69,12 @@ BEGIN
   FOREACH tbl IN ARRAY tables LOOP
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = tbl) THEN
       EXECUTE format('DROP POLICY IF EXISTS platform_owner_access ON public.%I', tbl);
-      EXECUTE format($$
-        CREATE POLICY platform_owner_access ON public.%I
-          AS PERMISSIVE FOR ALL
-          TO authenticated
-          USING ((SELECT (auth.jwt() -> 'app_metadata' ->> 'is_platform_owner')::boolean) = true)
-          WITH CHECK ((SELECT (auth.jwt() -> 'app_metadata' ->> 'is_platform_owner')::boolean) = true)
-      $$, tbl);
+      EXECUTE format(
+        'CREATE POLICY platform_owner_access ON public.%I'
+        || ' AS PERMISSIVE FOR ALL TO authenticated'
+        || ' USING ((SELECT (auth.jwt() -> ''app_metadata'' ->> ''is_platform_owner'')::boolean) = true)'
+        || ' WITH CHECK ((SELECT (auth.jwt() -> ''app_metadata'' ->> ''is_platform_owner'')::boolean) = true)',
+        tbl);
     END IF;
   END LOOP;
-END $$;
+END $outer$;
