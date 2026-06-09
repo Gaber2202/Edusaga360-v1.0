@@ -26,16 +26,10 @@ const sparkColors = {
   red: '#ef4444', purple: '#a855f7', teal: '#14b8a6', slate: '#64748b',
 };
 
-// Generate fake sparkline trend data
-function genSparkline(value, trend) {
-  const base = typeof value === 'number' ? value : 50;
-  return Array.from({ length: 7 }, (_, i) => ({
-    v: Math.max(0, base * (0.7 + 0.1 * i) + (Math.random() - 0.5) * base * 0.15 + (trend > 0 ? i * 2 : -i * 1)),
-  }));
-}
-
-export default function DashboardKPICard({ title, value, sub, icon: Icon, color = 'slate', alert = false, href, trend, trendLabel: _trendLabel, animDelay = 0 }) {
-  const spark = React.useMemo(() => genSparkline(typeof value === 'number' ? value : 50, trend || 0), []);
+export default function DashboardKPICard({ title, value, sub, icon: Icon, color = 'slate', alert = false, href, trend, series, trendLabel: _trendLabel, animDelay = 0 }) {
+  // Real sparkline data passed in from computed tenant metrics. No fabricated data.
+  const spark = Array.isArray(series) ? series : null;
+  const hasSpark = spark && spark.length > 1 && spark.some((p) => (p?.v ?? 0) !== 0);
   const trendPositive = trend > 0;
   const trendNeutral = trend === 0 || trend == null;
 
@@ -69,14 +63,16 @@ export default function DashboardKPICard({ title, value, sub, icon: Icon, color 
       <div className="text-xs text-slate-500 font-semibold leading-tight">{title}</div>
       {sub && <div className="text-xs text-slate-400">{sub}</div>}
 
-      {/* Sparkline */}
-      <div className="h-10 w-full mt-auto">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={spark}>
-            <Line type="monotone" dataKey="v" stroke={sparkColors[color] || '#64748b'} strokeWidth={2} dot={false} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      {/* Sparkline — only rendered when real trend data exists */}
+      {hasSpark && (
+        <div className="h-10 w-full mt-auto">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={spark}>
+              <Line type="monotone" dataKey="v" stroke={sparkColors[color] || '#64748b'} strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 
