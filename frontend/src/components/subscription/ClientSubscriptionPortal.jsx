@@ -56,7 +56,7 @@ export default function ClientSubscriptionPortal() {
     enabled: !!tenant?.id,
   });
 
-  const PLAN_ORDER = ['free_trial', 'startup', 'enterprise'];
+  const PLAN_ORDER = ['free_trial', 'starter', 'growth', 'enterprise'];
 
   // Upgrade or downgrade plan mutation
   const upgradeMutation = useMutation({
@@ -135,8 +135,10 @@ export default function ClientSubscriptionPortal() {
   const availableUsers = (tenant.max_users || 0) - (tenant.current_users || 0);
 
   const currentTier = currentPlan.tier ?? 0;
+  // Only show the 3 published tiers; exclude legacy/internal codes
+  const VISIBLE_PLAN_CODES = ['starter', 'growth', 'enterprise'];
   const availableChangePlans = Object.entries(PLAN_DEFINITIONS).filter(
-    ([code]) => code !== 'government' && code !== 'free_trial' && code !== tenant.plan_code
+    ([code]) => VISIBLE_PLAN_CODES.includes(code) && code !== tenant.plan_code
   );
 
   return (
@@ -268,64 +270,80 @@ export default function ClientSubscriptionPortal() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200">
-                  <th className={`text-left py-3 px-3 font-semibold ${isRTL ? 'text-right' : ''}`}>
-                    {isRTL ? 'الميزة' : 'Feature'}
-                  </th>
-                  {Object.entries(PLAN_DEFINITIONS).filter(([c]) => c !== 'government').map(([code, plan]) => (
-                    <th key={code} className={`text-center py-3 px-3 font-semibold ${tenant.plan_code === code ? 'bg-blue-50' : ''}`}>
-                      {isRTL ? plan.nameAr : plan.nameEn}
+                  <th className={`py-3 px-3 font-semibold text-start text-slate-600 w-40`}>{isRTL ? 'الميزة' : 'Feature'}</th>
+                  {[
+                    { code: 'starter',    label: isRTL ? 'الانطلاق' : 'Starter',    price: '120,000' },
+                    { code: 'growth',     label: isRTL ? 'النمو'     : 'Growth',     price: '190,000' },
+                    { code: 'enterprise', label: isRTL ? 'المؤسسات' : 'Enterprise', price: '342,000' },
+                  ].map(({ code, label: lbl, price }) => (
+                    <th key={code} className={`text-center py-3 px-3 font-semibold ${tenant.plan_code === code ? 'bg-blue-50 text-blue-700' : 'text-slate-700'}`}>
+                      <div>{lbl}</div>
+                      <div className="text-xs font-normal text-slate-400">{price} {isRTL ? 'ر.س/سنة' : 'SAR/yr'}</div>
+                      {tenant.plan_code === code && (
+                        <div className="mt-1 inline-block text-[10px] bg-blue-600 text-white rounded-full px-2 py-0.5">
+                          {isRTL ? 'خطتك' : 'Your plan'}
+                        </div>
+                      )}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody>
-                <tr className="border-b border-slate-100">
-                  <td className={`py-3 px-3 text-slate-600 ${isRTL ? 'text-right' : ''}`}>
-                    {isRTL ? 'المستخدمين' : 'Users'}
-                  </td>
-                  {Object.entries(PLAN_DEFINITIONS).filter(([c]) => c !== 'government').map(([code, plan]) => (
-                    <td key={code} className={`text-center py-3 px-3 ${tenant.plan_code === code ? 'bg-blue-50' : ''}`}>
-                      {plan.maxUsers}
-                    </td>
-                  ))}
-                </tr>
-                <tr className="border-b border-slate-100">
-                  <td className={`py-3 px-3 text-slate-600 ${isRTL ? 'text-right' : ''}`}>
-                    {isRTL ? 'الموظفين' : 'Employees'}
-                  </td>
-                  {Object.entries(PLAN_DEFINITIONS).filter(([c]) => c !== 'government').map(([code, plan]) => (
-                    <td key={code} className={`text-center py-3 px-3 ${tenant.plan_code === code ? 'bg-blue-50' : ''}`}>
-                      {plan.maxEmployees}
-                    </td>
-                  ))}
-                </tr>
-                <tr className="border-b border-slate-100">
-                  <td className={`py-3 px-3 text-slate-600 ${isRTL ? 'text-right' : ''}`}>
-                    {isRTL ? 'الفروع' : 'Branches'}
-                  </td>
-                  {Object.entries(PLAN_DEFINITIONS).filter(([c]) => c !== 'government').map(([code, plan]) => (
-                    <td key={code} className={`text-center py-3 px-3 ${tenant.plan_code === code ? 'bg-blue-50' : ''}`}>
-                      {plan.maxBranches}
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className={`py-3 px-3 text-slate-600 ${isRTL ? 'text-right' : ''}`}>
-                    {isRTL ? 'الذكاء الاصطناعي' : 'AI'}
-                  </td>
-                  {Object.entries(PLAN_DEFINITIONS).filter(([c]) => c !== 'government').map(([code, plan]) => (
-                    <td key={code} className={`text-center py-3 px-3 ${tenant.plan_code === code ? 'bg-blue-50' : ''}`}>
-                      {plan.aiEnabled ? (
-                        <CheckCircle className="w-5 h-5 text-green-600 mx-auto" />
-                      ) : (
-                        <Lock className="w-5 h-5 text-slate-300 mx-auto" />
-                      )}
-                    </td>
-                  ))}
-                </tr>
+              <tbody className="divide-y divide-slate-100">
+                {[
+                  {
+                    label: isRTL ? 'موظفو النظام (مستخدمون كاملون)' : 'Staff users (full access)',
+                    values: ['15', '30', '100'],
+                  },
+                  {
+                    label: isRTL ? 'وصول عام (أولياء / بوابة)' : 'General access (parents/portal)',
+                    values: ['500', '2,000', '6,000'],
+                  },
+                  {
+                    label: isRTL ? 'الفروع' : 'Branches',
+                    values: ['1', 'حتى 3 / Up to 3', 'حتى 10 / Up to 10'],
+                  },
+                  {
+                    label: isRTL ? 'منصة أساسية + أكاديمية' : 'Core Platform + Academic',
+                    values: [true, true, true],
+                  },
+                  {
+                    label: isRTL ? 'الموارد البشرية والرواتب' : 'HR & Payroll',
+                    values: [false, true, true],
+                  },
+                  {
+                    label: isRTL ? 'المالية Standard ERP' : 'Financials Standard ERP',
+                    values: [false, true, true],
+                  },
+                  {
+                    label: isRTL ? 'قدرات الذكاء الاصطناعي' : 'AI Capabilities',
+                    values: [false, isRTL ? 'محدودة (مالية + تنبؤات)' : 'Limited (finance + predictions)', isRTL ? 'حد رمز أعلى' : 'Higher token limit'],
+                  },
+                  {
+                    label: isRTL ? 'الدعم' : 'Support',
+                    values: [isRTL ? 'إضافي' : 'Add-on', isRTL ? 'إضافي' : 'Add-on', isRTL ? 'مخصص + SLA' : 'Dedicated + SLA'],
+                  },
+                ].map((row, i) => (
+                  <tr key={i} className="hover:bg-slate-50">
+                    <td className="py-3 px-3 text-slate-600 text-xs font-medium">{row.label}</td>
+                    {row.values.map((v, j) => {
+                      const codes = ['starter', 'growth', 'enterprise'];
+                      const isActive = tenant.plan_code === codes[j];
+                      return (
+                        <td key={j} className={`text-center py-3 px-3 text-xs ${isActive ? 'bg-blue-50' : ''}`}>
+                          {v === true
+                            ? <CheckCircle className="w-4 h-4 text-emerald-500 mx-auto" />
+                            : v === false
+                              ? <Lock className="w-4 h-4 text-slate-200 mx-auto" />
+                              : <span className="text-slate-700 font-medium">{v}</span>}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
+          <p className="text-xs text-slate-400 mt-3">{isRTL ? '* الأسعار سنوية بالريال السعودي، لا تشمل ضريبة القيمة المضافة.' : '* Prices are annual in SAR, excluding VAT.'}</p>
         </CardContent>
       </Card>
 
@@ -421,35 +439,41 @@ export default function ClientSubscriptionPortal() {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-slate-500 mb-3">
-                      {plan.priceMonthly > 0
-                        ? `${plan.priceMonthly.toLocaleString()} ${isRTL ? 'ر.س/شهر' : 'SAR/mo'}`
-                        : (isRTL ? 'مجاناً' : 'Free')}
+                    <p className="text-sm font-semibold text-slate-700 mb-3">
+                      {plan.priceYearly > 0
+                        ? `${plan.priceYearly.toLocaleString()} ${isRTL ? 'ر.س / سنة' : 'SAR / yr'}`
+                        : (isRTL ? 'حسب الطلب' : 'Custom')}
                     </p>
-                    <ul className="space-y-2 text-sm text-slate-600">
+                    <ul className="space-y-2 text-xs text-slate-600">
                       <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-green-600" />
-                        {isRTL ? `${plan.maxUsers} مستخدم` : `${plan.maxUsers} users`}
+                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        {isRTL ? `${plan.maxEmployees} موظف (مستخدم كامل)` : `${plan.maxEmployees} staff (full users)`}
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-green-600" />
-                        {isRTL ? `${plan.maxEmployees} موظف` : `${plan.maxEmployees} employees`}
+                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        {isRTL ? `${plan.maxUsers.toLocaleString()} وصول عام` : `${plan.maxUsers.toLocaleString()} general access`}
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-green-600" />
-                        {isRTL ? `${plan.maxBranches} فرع` : `${plan.maxBranches} branches`}
+                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        {isRTL ? `حتى ${plan.maxBranches} فرع` : `Up to ${plan.maxBranches} branches`}
                       </li>
                       {plan.aiEnabled ? (
                         <li className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-green-600" />
-                          {isRTL ? 'ذكاء اصطناعي' : 'AI Features'}
+                          <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                          {isRTL ? 'قدرات الذكاء الاصطناعي' : 'AI Capabilities'}
                         </li>
                       ) : (
                         <li className="flex items-center gap-2 text-slate-400">
-                          <Lock className="w-4 h-4" />
+                          <Lock className="w-4 h-4 flex-shrink-0" />
                           {isRTL ? 'بدون ذكاء اصطناعي' : 'No AI'}
                         </li>
                       )}
+                      <li className="flex items-center gap-2 text-slate-500">
+                        <Check className={`w-4 h-4 flex-shrink-0 ${plan.support === 'dedicated' ? 'text-green-600' : 'text-amber-400'}`} />
+                        {plan.support === 'dedicated'
+                          ? (isRTL ? 'دعم مخصص + SLA' : 'Dedicated Support + SLA')
+                          : (isRTL ? 'الدعم كإضافة' : 'Support as add-on')}
+                      </li>
                     </ul>
                     {isDowngrade && (
                       <p className="mt-3 text-xs text-amber-600 bg-amber-50 rounded p-2">
