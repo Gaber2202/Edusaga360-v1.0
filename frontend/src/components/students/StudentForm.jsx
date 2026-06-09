@@ -447,10 +447,10 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label>{tt('هيكل الرسوم', 'Fee Structure')}</Label>
-                    <Select value={formData.fee_structure_id} onValueChange={(v) => set('fee_structure_id', v)}>
+                    <Select value={formData.fee_structure_id || 'none'} onValueChange={(v) => set('fee_structure_id', v === 'none' ? '' : v)}>
                       <SelectTrigger><SelectValue placeholder={tt('اختر الهيكل', 'Select structure')} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">{tt('لا يوجد', 'None')}</SelectItem>
+                        <SelectItem value="none">{tt('لا يوجد', 'None')}</SelectItem>
                         {feeStructures
                           .filter((f) => !f.grade || !formData.grade || f.grade === formData.grade)
                           .map((f) => (
@@ -461,10 +461,10 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
                   </div>
                   <div className="space-y-1.5">
                     <Label>{tt('خطة الدفع', 'Payment Plan')}</Label>
-                    <Select value={formData.payment_plan_id} onValueChange={(v) => set('payment_plan_id', v)}>
+                    <Select value={formData.payment_plan_id || 'none'} onValueChange={(v) => set('payment_plan_id', v === 'none' ? '' : v)}>
                       <SelectTrigger><SelectValue placeholder={tt('اختر الخطة', 'Select plan')} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">{tt('لا يوجد', 'None')}</SelectItem>
+                        <SelectItem value="none">{tt('لا يوجد', 'None')}</SelectItem>
                         {paymentPlans.map((p) => (
                           <SelectItem key={p.id} value={p.id}>{isRTL ? p.name_ar : p.name_en || p.name_ar}</SelectItem>
                         ))}
