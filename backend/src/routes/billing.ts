@@ -1224,10 +1224,17 @@ billingRouter.post('/moyasar/webhook', async (req: AuthenticatedRequest, res: Re
     const newPaid = sar(invoice.paid_amount + amountSAR);
     const newStatus = newPaid >= invoice.total_amount - 0.01 ? 'paid' : 'partial';
 
-    await Promise.all([
-      supabase.from('payments').insert({ tenant_id, invoice_id, amount: amountSAR, method: 'online', reference: payment_id as string, date: new Date().toISOString().split('T')[0], status: 'completed' }),
-      supabase.from('invoices').update({ paid_amount: newPaid, status: newStatus }).eq('id', invoice_id),
-    ]);
+    const { error: pmtErr } = await supabase
+      .from('payments')
+      .insert({ tenant_id, invoice_id, amount: amountSAR, method: 'online', reference: payment_id as string, date: new Date().toISOString().split('T')[0], status: 'completed' });
+
+    // 23505 = unique_violation — payment already recorded, treat as idempotent success
+    if (pmtErr && (pmtErr as any).code !== '23505') throw pmtErr;
+
+    if (!pmtErr) {
+      // Only update invoice totals on first insert (avoid double-counting retries)
+      await supabase.from('invoices').update({ paid_amount: newPaid, status: newStatus }).eq('id', invoice_id);
+    }
 
     return res.json({ received: true });
   } catch (err) {

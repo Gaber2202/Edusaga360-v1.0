@@ -81,20 +81,23 @@ async function requirePlatformOwner(req: AuthenticatedRequest, res: any): Promis
   // Primary: JWT app_metadata claim (set by Supabase Auth admin)
   if (req.user?.is_platform_owner === true) return true;
 
-  // Fallback: check users table directly via service role key
-  // Handles the case where app_metadata hasn't been set yet
+  // Fallback: check users table directly via service role key.
+  // Matches on auth_id (verified JWT sub — never on email or user_metadata).
+  // Any DB error or missing row → DENY (fail-closed).
   if (!req.user?.id) { res.status(403).json({ message: 'Platform owner access required' }); return false; }
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('users')
-    .select('is_platform_owner, user_role, role')
+    .select('is_platform_owner, user_role')
     .eq('auth_id', req.user.id)
     .single();
 
+  // Fail-closed: error, missing row, or no matching flag → deny
+  if (error || !data) { res.status(403).json({ message: 'Platform owner access required' }); return false; }
+
   const allowed =
-    data?.is_platform_owner === true ||
-    ['edusaga_superadmin', 'edusaga_staff', 'creator'].includes(data?.user_role) ||
-    ['edusaga_superadmin', 'edusaga_staff', 'creator'].includes(data?.role);
+    data.is_platform_owner === true ||
+    ['edusaga_superadmin', 'edusaga_staff', 'creator'].includes(data.user_role ?? '');
 
   if (!allowed) { res.status(403).json({ message: 'Platform owner access required' }); return false; }
   return true;
