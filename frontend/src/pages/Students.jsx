@@ -17,9 +17,10 @@ import DataTable from '../components/ui/DataTable';
 import StatusBadge from '../components/ui/StatusBadge';
 import StudentForm from '../components/students/StudentForm';
 import StudentDetails from '../components/students/StudentDetails';
-import { Plus, Search, Filter, Download } from 'lucide-react';
+import { Plus, Search, Filter, Download, Upload } from 'lucide-react';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import StudentImportDialog from '../components/students/StudentImportDialog';
 
 const GRADES = ['KG1', 'KG2', 'KG3', 'Grade1', 'Grade2', 'Grade3', 'Grade4', 'Grade5', 'Grade6', 'Grade7', 'Grade8', 'Grade9', 'Grade10', 'Grade11', 'Grade12'];
 
@@ -30,6 +31,7 @@ export default function Students() {
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   
   const [showForm, setShowForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [viewingStudent, setViewingStudent] = useState(null);
   const [search, setSearch] = useState('');
@@ -218,6 +220,12 @@ export default function Students() {
           setShowForm(true);
         }}
       >
+          {userRole === 'admin' && (
+          <Button variant="outline" onClick={() => setShowImport(true)} className="gap-2">
+            <Upload className="w-4 h-4" />
+            {isRTL ? 'استيراد' : 'Import'}
+          </Button>
+        )}
         <Button variant="outline" onClick={exportToExcel} className="gap-2">
           <Download className="w-4 h-4" />
           {t('export')}
@@ -285,6 +293,13 @@ export default function Students() {
         }}
         onSuccess={handleRefresh}
         student={selectedStudent}
+      />
+
+      {/* Import Dialog */}
+      <StudentImportDialog
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        onSuccess={handleRefresh}
       />
 
       {/* Student Details Dialog */}
