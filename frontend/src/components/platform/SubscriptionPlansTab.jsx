@@ -16,18 +16,19 @@ const PLAN_DEFS = {
     color: 'from-slate-600 to-slate-700',
     badge: 'bg-slate-100 text-slate-700 border-slate-300',
     accent: 'text-slate-600',
-    limits: { users: 500, employees: 50, students: 300, branches: 1 },
+    price: '120,000',
+    limits: { staff: 15, generalAccess: 500, branches: 1 },
     features: [
-      { label: 'Core Modules', included: true },
+      { label: 'Core Platform Licence', included: true },
+      { label: 'Academic & Operations', included: true },
       { label: 'Admissions & Enrollment', included: true },
       { label: 'Student Management', included: true },
-      { label: 'Fee Management', included: true },
+      { label: 'Fee & Billing Management', included: true },
       { label: 'Basic Reports', included: true },
-      { label: 'HR Module', included: false },
-      { label: 'Payroll', included: false },
-      { label: 'Government Relations', included: false },
-      { label: 'Yamen HR AI Assistant', included: false },
-      { label: 'Priority Support', included: false },
+      { label: 'HR & Payroll', included: false },
+      { label: 'Financials Standard ERP', included: false },
+      { label: 'AI Capabilities', included: false },
+      { label: 'Support', included: false, note: 'Add-on' },
     ],
   },
   growth: {
@@ -35,18 +36,19 @@ const PLAN_DEFS = {
     color: 'from-blue-600 to-indigo-700',
     badge: 'bg-blue-100 text-blue-700 border-blue-300',
     accent: 'text-blue-600',
-    limits: { users: 4000, employees: 200, students: 2000, branches: 3 },
+    price: '190,000',
+    limits: { staff: 30, generalAccess: 2000, branches: 3 },
     features: [
-      { label: 'Core Modules', included: true },
+      { label: 'Core Platform Licence', included: true },
+      { label: 'Academic & Operations', included: true },
       { label: 'Admissions & Enrollment', included: true },
       { label: 'Student Management', included: true },
-      { label: 'Fee Management', included: true },
+      { label: 'Fee & Billing Management', included: true },
       { label: 'Advanced Reports', included: true },
-      { label: 'HR Module', included: true },
-      { label: 'Payroll', included: true },
-      { label: 'Government Relations', included: true },
-      { label: 'Yamen HR AI (Limited)', included: true },
-      { label: 'Priority Support', included: false },
+      { label: 'HR & Payroll', included: true },
+      { label: 'Financials Standard ERP', included: true },
+      { label: 'AI — Finance & Predictions (limited tokens)', included: true },
+      { label: 'Support', included: false, note: 'Add-on' },
     ],
   },
   enterprise: {
@@ -54,18 +56,19 @@ const PLAN_DEFS = {
     color: 'from-amber-500 to-orange-600',
     badge: 'bg-amber-100 text-amber-700 border-amber-300',
     accent: 'text-amber-600',
-    limits: { users: '10,000+', employees: '10,000+', students: 'Unlimited', branches: 20 },
+    price: '342,000',
+    limits: { staff: 100, generalAccess: 6000, branches: 10 },
     features: [
-      { label: 'All Modules', included: true },
+      { label: 'All Modules — Full ERP', included: true },
+      { label: 'Academic & Operations', included: true },
       { label: 'Admissions & Enrollment', included: true },
       { label: 'Student Management', included: true },
-      { label: 'Fee Management', included: true },
+      { label: 'Fee & Billing Management', included: true },
       { label: 'Full Analytics & Reports', included: true },
-      { label: 'HR Module', included: true },
-      { label: 'Payroll', included: true },
-      { label: 'Government Relations', included: true },
-      { label: 'Full Yamen HR AI Assistant', included: true },
-      { label: 'Priority Support', included: true },
+      { label: 'HR & Payroll', included: true },
+      { label: 'Financials Standard ERP + Sandbox', included: true },
+      { label: 'AI — Higher Token Limit', included: true },
+      { label: 'Dedicated Support + SLA', included: true },
     ],
   },
 };
@@ -90,18 +93,23 @@ function PlanCard({ plan, def, isRTL, onEdit }) {
 
       </div>
 
+      {/* Price */}
+      <div className="px-5 py-2 bg-slate-50/80 border-b border-slate-100">
+        <p className="text-xs text-slate-500">{label('السعر السنوي (ر.س)', 'Annual price (SAR, excl. VAT)')}</p>
+        <p className="text-lg font-bold text-slate-800">{def.price} <span className="text-xs font-normal text-slate-400">SAR/yr</span></p>
+      </div>
+
       {/* Limits */}
       <div className="px-5 py-3 bg-slate-50 border-b border-slate-100">
         <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
           {[
-            { key: 'users',     label: label('مستخدمون', 'Users')    },
-            { key: 'employees', label: label('موظفون',    'Employees') },
-            { key: 'students',  label: label('طلاب',      'Students')  },
-            { key: 'branches',  label: label('فروع',      'Branches')  },
+            { key: 'staff',         label: label('موظفو النظام', 'Staff users')       },
+            { key: 'generalAccess', label: label('أولياء / بوابة', 'General access')  },
+            { key: 'branches',      label: label('الفروع',        'Branches')          },
           ].map(({ key, label: lbl }) => (
             <div key={key} className="flex items-center justify-between text-xs">
               <span className="text-slate-500">{lbl}</span>
-              <span className="font-semibold text-slate-800">{limits[key]}</span>
+              <span className="font-semibold text-slate-800">{limits[key]?.toLocaleString?.() ?? limits[key]}</span>
             </div>
           ))}
         </div>
@@ -111,12 +119,15 @@ function PlanCard({ plan, def, isRTL, onEdit }) {
       <div className="px-5 py-4 flex-1">
         <ul className="space-y-2">
           {def.features.map((f, i) => (
-            <li key={i} className="flex items-center gap-2 text-sm">
+            <li key={i} className="flex items-start gap-2 text-sm">
               {f.included
-                ? <Check className={`w-4 h-4 flex-shrink-0 ${def.accent}`} />
-                : <X className="w-4 h-4 flex-shrink-0 text-slate-300" />
+                ? <Check className={`w-4 h-4 flex-shrink-0 mt-0.5 ${def.accent}`} />
+                : <X className="w-4 h-4 flex-shrink-0 mt-0.5 text-slate-300" />
               }
-              <span className={f.included ? 'text-slate-700' : 'text-slate-400'}>{f.label}</span>
+              <span className={f.included ? 'text-slate-700' : 'text-slate-400'}>
+                {f.label}
+                {f.note && <span className="ms-1 text-xs text-amber-600">({f.note})</span>}
+              </span>
             </li>
           ))}
         </ul>
