@@ -22,6 +22,7 @@ const translations = {
     assetRentals: 'إيجار الأصول',
     security: 'الأمان',
     auditLogs: 'سجل المراجعة',
+    rolesPermissions: 'الأدوار والصلاحيات',
     notifications: 'الإشعارات',
     notificationCenter: 'مركز الإشعارات',
     notificationPreferences: 'تفضيلات الإشعارات',

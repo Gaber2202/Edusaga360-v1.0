@@ -36,6 +36,28 @@ import { toast } from 'sonner';
 
 
 
+/* ─── Reusable section header (icon chip + title + description) ─── */
+function SectionHeader({ icon: Icon, title, description, color = 'slate' }) {
+  const chips = {
+    slate:  'bg-slate-100 text-slate-600',
+    blue:   'bg-blue-50 text-blue-600',
+    indigo: 'bg-indigo-50 text-indigo-600',
+    emerald:'bg-emerald-50 text-emerald-600',
+    amber:  'bg-amber-50 text-amber-600',
+  };
+  return (
+    <div className="flex items-start gap-3">
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${chips[color]}`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <div>
+        <h3 className="font-semibold text-slate-900 leading-tight">{title}</h3>
+        {description && <p className="text-sm text-slate-500 mt-0.5">{description}</p>}
+      </div>
+    </div>
+  );
+}
+
 /* ─── My Profile Section ─── */
 function MyProfileSection({ isRTL, user }) {
   const qc = useQueryClient();
@@ -295,30 +317,40 @@ export default function Settings() {
         />
 
         <Card className="p-6">
-          <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            <Globe className="w-5 h-5" />
-            {isRTL ? 'اللغة' : 'Language'}
-          </h3>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-600">
-                {isRTL ? 'اللغة الحالية' : 'Current Language'}: {language === 'ar' ? 'العربية' : 'English'}
-              </p>
-            </div>
-            <Button onClick={toggleLanguage} variant="outline">
+          <SectionHeader
+            icon={Globe}
+            color="indigo"
+            title={isRTL ? 'اللغة' : 'Language'}
+            description={isRTL ? 'لغة عرض الواجهة' : 'Interface display language'}
+          />
+          <div className="mt-5 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-sm text-slate-600">
+              {isRTL ? 'اللغة الحالية' : 'Current Language'}:{' '}
+              <span className="font-semibold text-slate-900">{language === 'ar' ? 'العربية' : 'English'}</span>
+            </p>
+            <Button onClick={toggleLanguage} variant="outline" size="sm" className="gap-2">
+              <Globe className="w-3.5 h-3.5" />
               {language === 'ar' ? 'Switch to English' : 'التحويل للعربية'}
             </Button>
           </div>
         </Card>
 
         <Card className="p-6">
-          <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            {isRTL ? 'الملف الشخصي' : 'My Profile'}
-          </h3>
-          <div className="space-y-3 mb-4 text-sm text-slate-500">
-            <p>{isRTL ? 'البريد الإلكتروني' : 'Email'}: <span className="font-medium text-slate-700">{user?.email}</span></p>
-            <p>{isRTL ? 'الدور' : 'Role'}: <span className="font-medium text-slate-700">{t(userRole)}</span></p>
+          <SectionHeader
+            icon={Users}
+            color="blue"
+            title={isRTL ? 'الملف الشخصي' : 'My Profile'}
+            description={isRTL ? 'معلوماتك الشخصية واسم العرض' : 'Your personal information and display name'}
+          />
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+            <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+              <p className="text-xs text-slate-400">{isRTL ? 'البريد الإلكتروني' : 'Email'}</p>
+              <p className="text-sm font-medium text-slate-700 truncate">{user?.email}</p>
+            </div>
+            <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+              <p className="text-xs text-slate-400">{isRTL ? 'الدور' : 'Role'}</p>
+              <p className="text-sm font-medium text-slate-700">{t(userRole)}</p>
+            </div>
           </div>
           <MyProfileSection isRTL={isRTL} user={user} />
         </Card>
@@ -348,39 +380,50 @@ export default function Settings() {
         {/* General Settings */}
         <TabsContent value="general" className="space-y-6">
           <Card className="p-6">
-            <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-              <Globe className="w-5 h-5" />
-              {isRTL ? 'اللغة' : 'Language'}
-            </h3>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-600">
-                  {isRTL ? 'اللغة الحالية' : 'Current Language'}: {language === 'ar' ? 'العربية' : 'English'}
-                </p>
-              </div>
-              <Button onClick={toggleLanguage} variant="outline">
+            <SectionHeader
+              icon={Globe}
+              color="indigo"
+              title={isRTL ? 'اللغة' : 'Language'}
+              description={isRTL ? 'لغة عرض الواجهة' : 'Interface display language'}
+            />
+            <div className="mt-5 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <p className="text-sm text-slate-600">
+                {isRTL ? 'اللغة الحالية' : 'Current Language'}:{' '}
+                <span className="font-semibold text-slate-900">{language === 'ar' ? 'العربية' : 'English'}</span>
+              </p>
+              <Button onClick={toggleLanguage} variant="outline" size="sm" className="gap-2">
+                <Globe className="w-3.5 h-3.5" />
                 {language === 'ar' ? 'Switch to English' : 'التحويل للعربية'}
               </Button>
             </div>
           </Card>
 
           <Card className="p-6">
-            <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              {isRTL ? 'الملف الشخصي' : 'My Profile'}
-            </h3>
-            <div className="text-sm text-slate-500 mb-4">
-              <p>{isRTL ? 'البريد الإلكتروني' : 'Email'}: <span className="font-medium text-slate-700">{user?.email}</span></p>
+            <SectionHeader
+              icon={Users}
+              color="blue"
+              title={isRTL ? 'الملف الشخصي' : 'My Profile'}
+              description={isRTL ? 'معلوماتك الشخصية واسم العرض' : 'Your personal information and display name'}
+            />
+            <div className="mt-5 mb-5">
+              <div className="inline-flex flex-col rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                <p className="text-xs text-slate-400">{isRTL ? 'البريد الإلكتروني' : 'Email'}</p>
+                <p className="text-sm font-medium text-slate-700">{user?.email}</p>
+              </div>
             </div>
             <MyProfileSection isRTL={isRTL} user={user} />
           </Card>
 
           <Card className="p-6">
-            <h3 className="font-semibold text-slate-900 mb-5 flex items-center gap-2">
-              <Building className="w-5 h-5" />
-              {isRTL ? 'معلومات المدرسة' : 'School Information'}
-            </h3>
-            <SchoolInfoSection isRTL={isRTL} />
+            <SectionHeader
+              icon={Building}
+              color="emerald"
+              title={isRTL ? 'معلومات المدرسة' : 'School Information'}
+              description={isRTL ? 'بيانات المدرسة الرسمية والشعار ومعلومات الاتصال' : 'Official school details, logo and contact information'}
+            />
+            <div className="mt-5">
+              <SchoolInfoSection isRTL={isRTL} />
+            </div>
           </Card>
         </TabsContent>
 
@@ -388,11 +431,19 @@ export default function Settings() {
 
         {/* Users */}
         <TabsContent value="users" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold text-slate-900">
-              {isRTL ? 'المستخدمين' : 'Users'}
-            </h3>
-          </div>
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <SectionHeader
+                icon={Users}
+                color="blue"
+                title={isRTL ? 'المستخدمين' : 'Users'}
+                description={isRTL ? 'المستخدمون النشطون في حسابك' : 'Active users in your account'}
+              />
+              <span className="text-sm font-semibold text-slate-700 bg-slate-100 rounded-full px-3 py-1">
+                {users.length}
+              </span>
+            </div>
+          </Card>
 
           <Card className="overflow-hidden">
             <Table>
@@ -405,7 +456,13 @@ export default function Settings() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map(u => (
+                {users.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-10 text-slate-400 text-sm">
+                      {isRTL ? 'لا يوجد مستخدمون' : 'No users found'}
+                    </TableCell>
+                  </TableRow>
+                ) : users.map(u => (
                   <TableRow key={u.id}>
                     <TableCell className="font-medium">{u.full_name}</TableCell>
                     <TableCell>{u.email}</TableCell>
