@@ -348,8 +348,14 @@ function LayoutContent({ children, currentPageName }) {
     return item;
   });
 
-  const handleLogout = () => {
-    supabase.auth.signOut();
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // ignore — redirect regardless of network/session state
+    }
+    // Immediate, clean redirect to the single login screen — no chooser page.
+    window.location.replace('/school-login');
   };
 
   if (loading) {
