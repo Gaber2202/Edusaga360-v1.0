@@ -111,18 +111,31 @@ END $$;
 
 -- ---------------------------------------------------------------------------
 -- 3. Pay run unique constraint (prevent duplicate pay runs — MEDIUM 5D-2)
+--    Base schema uses (month INTEGER, year INTEGER); billing engine migration
+--    may have added a TEXT `period` column. We add the constraint against
+--    whichever columns actually exist.
 -- ---------------------------------------------------------------------------
 DO $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'pay_runs_unique_period_branch'
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'pay_runs' AND column_name = 'period' AND table_schema = 'public'
   ) THEN
-    ALTER TABLE pay_runs
-      ADD CONSTRAINT pay_runs_unique_period_branch
-      UNIQUE (tenant_id, period, branch_id);
-    RAISE NOTICE 'pay_runs unique constraint added.';
+    -- Billing engine schema: period TEXT column exists
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'pay_runs_unique_period_branch') THEN
+      ALTER TABLE pay_runs ADD CONSTRAINT pay_runs_unique_period_branch UNIQUE (tenant_id, period, branch_id);
+      RAISE NOTICE 'pay_runs unique constraint (period) added.';
+    ELSE
+      RAISE NOTICE 'pay_runs unique constraint already exists — skipped.';
+    END IF;
   ELSE
-    RAISE NOTICE 'pay_runs unique constraint already exists — skipped.';
+    -- Base schema: month + year integer columns
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'pay_runs_unique_month_year_branch') THEN
+      ALTER TABLE pay_runs ADD CONSTRAINT pay_runs_unique_month_year_branch UNIQUE (tenant_id, month, year, branch_id);
+      RAISE NOTICE 'pay_runs unique constraint (month+year) added.';
+    ELSE
+      RAISE NOTICE 'pay_runs unique constraint already exists — skipped.';
+    END IF;
   END IF;
 EXCEPTION WHEN others THEN
   RAISE NOTICE 'Could not add pay_runs unique constraint (existing duplicate data?): %', SQLERRM;
@@ -171,7 +184,11 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_user
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'pay_runs' AND table_schema = 'public') THEN
-    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_pay_runs_period ON pay_runs (tenant_id, period, status)';
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'pay_runs' AND column_name = 'period' AND table_schema = 'public') THEN
+      EXECUTE 'CREATE INDEX IF NOT EXISTS idx_pay_runs_period ON pay_runs (tenant_id, period, status)';
+    ELSE
+      EXECUTE 'CREATE INDEX IF NOT EXISTS idx_pay_runs_month_year ON pay_runs (tenant_id, year, month, status)';
+    END IF;
   END IF;
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'payroll_inputs' AND table_schema = 'public') THEN
     EXECUTE 'CREATE INDEX IF NOT EXISTS idx_payroll_inputs_run ON payroll_inputs (pay_run_id, employee_id)';
