@@ -26,6 +26,8 @@ import InstitutionSetup from './pages/InstitutionSetup';
 import Register from './pages/Register';
 import SetupAccount from './pages/SetupAccount';
 import SchoolLogin from './pages/SchoolLogin';
+import { useRole } from './components/RoleContext';
+import { isPlatformOwner } from './lib/authHelpers';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -34,6 +36,13 @@ const MainPage = mainPageKey ? Pages[mainPageKey] : () => <></>;
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
+
+/** Guard that renders children only for platform owners; redirects others to root. */
+const PlatformOwnerRoute = ({ children }) => {
+  const { currentUser } = useRole();
+  if (!isPlatformOwner(currentUser)) return <Navigate to="/" replace />;
+  return children;
+};
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
@@ -109,9 +118,7 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
-      <Route path="/SuperAdminDashboard" element={
-        <LayoutWrapper currentPageName="SuperAdminDashboard"><SuperAdminDashboard /></LayoutWrapper>
-      } />
+      <Route path="/SuperAdminDashboard" element={<PlatformOwnerRoute><LayoutWrapper currentPageName="SuperAdminDashboard"><SuperAdminDashboard /></LayoutWrapper></PlatformOwnerRoute>} />
       <Route path="/SubscriptionManagement" element={
         <LayoutWrapper currentPageName="SubscriptionManagement"><SubscriptionManagement /></LayoutWrapper>
       } />

@@ -654,7 +654,12 @@ billingRouter.get('/invoices/:id', async (req: AuthenticatedRequest, res: Respon
     supabase.from('payments').select('*').eq('invoice_id', id).eq('tenant_id', tenant_id).order('created_at', { ascending: false }),
     supabase.from('invoice_discounts').select('*').eq('invoice_id', id).eq('tenant_id', tenant_id),
     supabase.from('zatca_submissions').select('qr_code, invoice_hash, zatca_status, clearance_number, cleared_at').eq('invoice_id', id).eq('tenant_id', tenant_id).single(),
-    supabase.from('payment_plans').select('*, payment_plan_installments(*)').eq('tenant_id', tenant_id).filter('id', 'in', `(SELECT plan_id FROM payment_plan_installments WHERE invoice_id='${id}' LIMIT 1)`).single(),
+    // Resolve via a separate safe query to avoid SQL injection through the PostgREST filter()
+    // parameter (id comes from req.params and was previously interpolated into a raw subquery).
+    supabase.from('payment_plan_installments').select('plan_id').eq('invoice_id', id).eq('tenant_id', tenant_id).limit(1).single().then(async ({ data: inst }) => {
+      if (!inst?.plan_id) return { data: null };
+      return supabase.from('payment_plans').select('*, payment_plan_installments(*)').eq('id', inst.plan_id).eq('tenant_id', tenant_id).single();
+    }),
   ]);
 
   return res.json({ ...invoice, payments: payments ?? [], discounts: discounts ?? [], zatca: zatcaRow ?? null, payment_plan: plan ?? null });
