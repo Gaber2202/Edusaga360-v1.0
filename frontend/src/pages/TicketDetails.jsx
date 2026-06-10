@@ -39,7 +39,7 @@ export default function TicketDetails() {
 
   const { data: activities = [] } = useQuery({
     queryKey: ['ticketActivities', ticketId],
-    queryFn: () => fetchData(tenantQuery('ticket_activitys').select('*').match({ ticket_id: ticketId }, '-created_date')),
+    queryFn: () => fetchData(tenantQuery('ticket_activitys').select('*').match({ ticket_id: ticketId }).order('created_date', { ascending: false })),
     enabled: !!ticketId
   });
 

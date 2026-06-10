@@ -22,7 +22,7 @@ export default function SecureMessaging({ student }) {
         const msgs = await tenantQuery('messages').select('*').match({
           student_id: student.id,
           tenant_id: tenant?.id
-        }, '-created_at', 50);
+        }).order('created_at', { ascending: false }).limit(50);
         setMessages(msgs || []);
       } catch (error) {
         console.error('Error fetching messages:', error);

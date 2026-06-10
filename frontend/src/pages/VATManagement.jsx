@@ -45,7 +45,7 @@ export default function VATManagement() {
 
   const { data: vatReturns = [], isLoading } = useQuery({
     queryKey: ['vatReturns', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('vat_returns').select('*').match(tenantFilter(branchFilter()), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('vat_returns').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

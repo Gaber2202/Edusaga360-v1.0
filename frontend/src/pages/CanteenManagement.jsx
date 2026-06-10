@@ -59,7 +59,7 @@ export default function CanteenManagement() {
 
   const { data: transactions = [] } = useQuery({
     queryKey: ['canteenTransactions', tenantId],
-    queryFn: () => fetchData(tenantQuery('canteen_transactions').select('*').match(tenantFilter(), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('canteen_transactions').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

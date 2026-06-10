@@ -54,13 +54,13 @@ export default function AttendanceDevices() {
 
   const { data: devices = [], isLoading: loadingDevices } = useQuery({
     queryKey: ['attendanceDevices', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('attendance_devices').select('*').match(tenantFilter(branchFilter()), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('attendance_devices').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
   const { data: punchLogs = [], isLoading: loadingLogs } = useQuery({
     queryKey: ['punchLogs', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('punch_logs').select('*').match(tenantFilter(branchFilter()), '-punch_time', 100)),
+    queryFn: () => fetchData(tenantQuery('punch_logs').select('*').match(tenantFilter(branchFilter())).order('punch_time', { ascending: false }).limit(100)),
     enabled: hasTenantAccess,
   });
 

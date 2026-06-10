@@ -32,13 +32,13 @@ export default function Reconciliation() {
 
   const { data: payments = [], isLoading } = useQuery({
     queryKey: ['payments', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('payments').select('*').match(tenantFilter(branchFilter()), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('payments').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
   const { data: _reconciliations = [] } = useQuery({
     queryKey: ['reconciliations', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('payment_reconciliations').select('*').match(tenantFilter(branchFilter()), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('payment_reconciliations').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

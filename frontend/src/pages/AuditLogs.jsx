@@ -42,9 +42,9 @@ export default function AuditLogs() {
     queryKey: ['auditLogs', tenantId, isSuperAdmin],
     queryFn: async () => {
       if (isSuperAdmin) {
-        return await tenantQuery('audit_logs').select('*').order('-timestamp', FETCH_LIMIT);
+        return await tenantQuery('audit_logs').select('*').order('timestamp', { ascending: false }).limit(FETCH_LIMIT);
       }
-      return await tenantQuery('audit_logs').select('*').match(tenantFilter(), '-timestamp', FETCH_LIMIT);
+      return await tenantQuery('audit_logs').select('*').match(tenantFilter()).order('timestamp', { ascending: false }).limit(FETCH_LIMIT);
     },
     enabled: isSuperAdmin || hasTenantAccess,
   });

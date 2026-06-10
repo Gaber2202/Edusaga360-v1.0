@@ -48,7 +48,7 @@ export default function TripTracker() {
 
   const { data: trips = [], isLoading } = useQuery({
     queryKey: ['tripLogs', selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('trip_logs').select('*').match(branchFilter(), '-trip_date')),
+    queryFn: () => fetchData(tenantQuery('trip_logs').select('*').match(branchFilter()).order('created_date', { ascending: false })),
   });
 
   const filteredTrips = filterByBranch(trips);

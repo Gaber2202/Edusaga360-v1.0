@@ -43,7 +43,7 @@ export default function Overtime() {
 
   const { data: overtimeRequests = [], isLoading } = useQuery({
     queryKey: ['overtimeRequests', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('overtime_requests').select('*').match(tenantFilter(branchFilter()), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('overtime_requests').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

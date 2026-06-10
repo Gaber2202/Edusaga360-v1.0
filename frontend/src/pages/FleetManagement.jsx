@@ -53,7 +53,7 @@ export default function FleetManagement() {
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ['vehicles', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('vehicles').select('*').match(tenantFilter(branchFilter()), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('vehicles').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

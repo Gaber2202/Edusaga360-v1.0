@@ -44,7 +44,7 @@ export default function TrainingDevelopment() {
 
   const { data: trainings = [], isLoading } = useQuery({
     queryKey: ['trainings', tenantId],
-    queryFn: () => fetchData(tenantQuery('trainings').select('*').match(tenantFilter(), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('trainings').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

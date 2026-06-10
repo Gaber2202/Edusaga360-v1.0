@@ -61,7 +61,7 @@ export default function Contracts() {
 
   const { data: contracts = [], isLoading } = useQuery({
     queryKey: ['contracts', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('student_contracts').select('*').match(tenantFilter(branchFilter()), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('student_contracts').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

@@ -51,7 +51,7 @@ export default function OnboardingPage() {
 
   const { data: onboardings = [], isLoading } = useQuery({
     queryKey: ['onboardings', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('onboardings').select('*').match(tenantFilter(branchFilter()), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('onboardings').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

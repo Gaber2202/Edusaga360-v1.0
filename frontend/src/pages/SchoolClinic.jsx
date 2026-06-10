@@ -67,7 +67,7 @@ export default function SchoolClinic() {
 
   const { data: visits = [], isLoading } = useQuery({
     queryKey: ['clinicVisits', tenantId],
-    queryFn: () => fetchData(tenantQuery('clinic_visits').select('*').match(tenantFilter(), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('clinic_visits').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

@@ -76,7 +76,7 @@ export default function Integrations() {
 
   const { data: logs = [] } = useQuery({
     queryKey: ['integrationLogs', showLogs?.id, tenantId],
-    queryFn: () => fetchData(tenantQuery('integration_logs').select('*').match(tenantFilter({ connector_id: showLogs?.id }), '-created_date', 50)),
+    queryFn: () => fetchData(tenantQuery('integration_logs').select('*').match(tenantFilter({ connector_id: showLogs?.id })).order('created_date', { ascending: false }).limit()),
     enabled: !!showLogs?.id && hasTenantAccess,
   });
 

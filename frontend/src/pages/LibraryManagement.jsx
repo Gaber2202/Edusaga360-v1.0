@@ -57,7 +57,7 @@ export default function LibraryManagement() {
 
   const { data: loans = [] } = useQuery({
     queryKey: ['libraryLoans', tenantId],
-    queryFn: () => fetchData(tenantQuery('library_loans').select('*').match(tenantFilter(), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('library_loans').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

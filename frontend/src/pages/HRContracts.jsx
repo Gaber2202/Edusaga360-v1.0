@@ -50,7 +50,7 @@ export default function HRContracts() {
 
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ['hrDocuments', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('employee_documents').select('*').match(tenantFilter(branchFilter()), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('employee_documents').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

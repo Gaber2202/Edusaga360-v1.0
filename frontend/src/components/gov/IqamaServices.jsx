@@ -21,7 +21,7 @@ export default function IqamaServices() {
   const [form, setForm] = useState({ employee_id: '', iqama_number: '', iqama_type: 'work', issue_date: '', expiry_date: '', sponsorship_company_name: '', status: 'active', fee_amount: 0, notes: '' });
 
   const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('*').order()) });
-  const { data: iqamas = [], isLoading } = useQuery({ queryKey: ['iqamas'], queryFn: () => fetchData(tenantQuery('iqama_records').select('*').order('-created_date')) });
+  const { data: iqamas = [], isLoading } = useQuery({ queryKey: ['iqamas'], queryFn: () => fetchData(tenantQuery('iqama_records').select('*').order('created_date', { ascending: false })) });
 
   const today = new Date();
 

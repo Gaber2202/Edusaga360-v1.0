@@ -20,7 +20,7 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
   // Use live student data from cache so UI auto-refreshes after save
   const { data: liveStudents = [] } = useQuery({
     queryKey: ['students', tenantId],
-    queryFn: () => fetchData(tenantQuery('students').select('*').order('-created_date')),
+    queryFn: () => fetchData(tenantQuery('students').select('*').order('created_date', { ascending: false })),
     staleTime: 0,
   });
   const liveStudent = liveStudents.find(s => s.id === student?.id) || student;

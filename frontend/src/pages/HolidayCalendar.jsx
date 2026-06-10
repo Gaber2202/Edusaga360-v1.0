@@ -36,7 +36,7 @@ export default function HolidayCalendar() {
 
   const { data: holidays = [], isLoading } = useQuery({
     queryKey: ['holidays', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('holidays').select('*').match(tenantFilter(), '-start_date')),
+    queryFn: () => fetchData(tenantQuery('holidays').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

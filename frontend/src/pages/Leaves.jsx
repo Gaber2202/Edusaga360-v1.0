@@ -46,7 +46,7 @@ export default function Leaves() {
 
   const { data: leaves = [], isLoading } = useQuery({
     queryKey: ['leaveRequests', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match(tenantFilter(branchFilter()), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

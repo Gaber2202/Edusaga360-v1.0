@@ -21,7 +21,7 @@ export default function VisaServices() {
   const [form, setForm] = useState({ employee_id: '', visa_type: 'work', visa_number: '', issue_date: '', expiry_date: '', entry_type: 'single', status: 'active', fee_amount: 0, notes: '' });
 
   const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('*').order()) });
-  const { data: visas = [], isLoading } = useQuery({ queryKey: ['visas'], queryFn: () => fetchData(tenantQuery('visa_records').select('*').order('-created_date')) });
+  const { data: visas = [], isLoading } = useQuery({ queryKey: ['visas'], queryFn: () => fetchData(tenantQuery('visa_records').select('*').order('created_date', { ascending: false })) });
 
   const today = new Date();
 

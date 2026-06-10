@@ -63,13 +63,13 @@ export default function TuitionFeesConfiguration() {
 
   const { data: feeStructures = [], isLoading: loadingFees } = useQuery({
     queryKey: ['feeStructures', tenantId],
-    queryFn: () => fetchData(tenantQuery('fee_structures').select('*').match(tenantFilter(), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('fee_structures').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
   const { data: specialCareFees = [], isLoading: loadingSpecialCare } = useQuery({
     queryKey: ['specialCareFees', tenantId],
-    queryFn: () => fetchData(tenantQuery('special_care_fees').select('*').match(tenantFilter(), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('special_care_fees').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
