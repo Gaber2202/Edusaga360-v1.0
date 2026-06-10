@@ -225,13 +225,15 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
       const data = {
         ...formData,
         invoice_number: invoiceNumber,
+        date: formData.issue_date,
         subtotal,
         vat_amount: vatAmount,
+        discount_amount: discount,
         total_amount: total,
         paid_amount: formData.paid_amount || 0,
         balance: total - (formData.paid_amount || 0),
         bank_account_details: bankAccountDetails,
-        branch_id: selectedBranchId || 'all'
+        branch_id: selectedBranchId || null
       };
 
       // Auto-create journal entry when invoice is issued
@@ -306,7 +308,8 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
       }
 
       if (invoice?.id) {
-        await tenantQuery('invoices').update(data);
+        const { error: updateErr } = await tenantQuery('invoices').update(data).eq('id', invoice.id);
+        if (updateErr) throw updateErr;
         setSavedInvoiceId(invoice.id);
         await logAuditEvent({
           action: AuditActions.UPDATE,
@@ -318,12 +321,14 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
         });
         toast.success(isRTL ? 'تم تحديث الفاتورة' : 'Invoice updated');
       } else {
-        const created = await tenantQuery('invoices').insert(data);
-        setSavedInvoiceId(created.id);
+        const { data: rows, error: insertErr } = await tenantQuery('invoices').insert(data).select().single();
+        if (insertErr) throw insertErr;
+        const newId = rows?.id;
+        setSavedInvoiceId(newId);
         await logAuditEvent({
           action: AuditActions.CREATE,
           entityType: 'Invoice',
-          entityId: created.id,
+          entityId: newId,
           newValues: data,
           page: 'Fees',
           notes: `Invoice ${invoiceNumber} created for ${formData.student_name}`

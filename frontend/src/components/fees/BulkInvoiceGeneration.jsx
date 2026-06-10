@@ -62,7 +62,7 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies', tenantId],
-    queryFn: () => fetchData(tenantQuery('companys').select('*').match({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('companies').select('id, name_ar, name_en').match({ is_active: true })),
   });
 
   const { data: contracts = [] } = useQuery({
@@ -128,34 +128,38 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
       const createdInvoices = [];
 
       // Create batch record
-      const batch = await tenantQuery('invoice_batchs').insert({
+      const { data: batchRow, error: batchErr } = await tenantQuery('invoice_batches').insert({
         batch_number: batchNumber,
         batch_name: batchName || `Bulk Invoice - ${new Date().toLocaleDateString()}`,
-        created_by: user.full_name,
-        created_by_email: user.email,
+        created_by: user?.user_metadata?.full_name || user?.email,
+        created_by_email: user?.email,
         created_date: new Date().toISOString(),
         criteria: criteria,
         student_count: selectedStudents.length,
         excluded_students: excludedStudents,
         status: 'generated',
         posted_mode: postMode,
-        branch_id: criteria.branch_id || 'all'
-      });
+        branch_id: criteria.branch_id || null
+      }).select().single();
+      if (batchErr) throw batchErr;
+      const batch = batchRow;
 
       // Generate invoices for each student
       for (const student of selectedStudents) {
         const contract = contracts.find(c => c.student_id === student.id && c.status === 'active');
         if (!contract) continue;
 
+        const today = new Date().toISOString().split('T')[0];
         const invoiceData = {
           invoice_number: `INV-${Date.now()}-${student.id.slice(0, 6)}`,
           student_id: student.id,
           student_name: student.name_ar || student.name_en,
           guardian_id: student.guardian_id,
-          branch_id: student.branch_id,
+          branch_id: student.branch_id || null,
           grade: student.grade,
           academic_year: criteria.academic_year,
-          issue_date: new Date().toISOString().split('T')[0],
+          date: today,
+          issue_date: today,
           due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           items: contract.services || [],
           subtotal: contract.total_fees || 0,
@@ -172,18 +176,19 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
         totalVat += invoiceData.vat_amount;
         totalDiscount += invoiceData.discount_amount;
 
-        const invoice = await tenantQuery('invoices').insert(invoiceData);
-        createdInvoices.push(invoice);
+        const { data: inv, error: invErr } = await tenantQuery('invoices').insert(invoiceData).select('id').single();
+        if (invErr) throw invErr;
+        createdInvoices.push(inv);
       }
 
       // Update batch totals
-      await tenantQuery('invoice_batchs').update({
+      await tenantQuery('invoice_batches').update({
         invoice_count: createdInvoices.length,
         total_amount: totalAmount,
         total_vat: totalVat,
         total_discount: totalDiscount,
         net_total: totalAmount + totalVat - totalDiscount
-      });
+      }).eq('id', batch.id);
 
       // Log audit event
       await logAuditEvent({
