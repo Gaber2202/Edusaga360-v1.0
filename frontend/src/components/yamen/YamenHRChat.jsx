@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 async function buildHRContext(isHRMode, userEmail) {
   try {
     const [employees, allLeaves, attendance, iqama, _payroll, leaveBalances, payRuns, gosiRecords, violations, _essRequests] = await Promise.all([
-      tenantQuery('employees').select('*').order('created_date', { ascending: false }).limit(),
+      tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_date').order('created_date', { ascending: false }).limit(),
       tenantQuery('leave_requests').select('*').order('created_date', { ascending: false }).limit(),
       tenantQuery('employee_attendances').select('*').order('created_date', { ascending: false }).limit(),
       tenantQuery('iqama_records').select('*').order(),

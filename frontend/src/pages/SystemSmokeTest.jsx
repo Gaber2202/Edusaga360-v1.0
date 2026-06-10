@@ -31,7 +31,7 @@ const SMOKE_TESTS = [
     name: 'Employee Entity',
     nameAr: 'كيان الموظف',
     test: async () => {
-      const employees = await tenantQuery('employees').select('*').order('created_date', { ascending: false }).limit();
+      const employees = await tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_date').order('created_date', { ascending: false }).limit();
       return { success: Array.isArray(employees), count: employees.length };
     }
   },

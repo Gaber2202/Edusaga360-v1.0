@@ -136,6 +136,9 @@ export function platformQuery(tableName) {
 
 /**
  * File storage helpers using Supabase Storage.
+ * All file access uses signed URLs (private buckets) — never getPublicUrl.
+ * Direct uploads from the client go through the backend /api/files/upload
+ * endpoint which validates file type, size, and generates safe random paths.
  */
 export const storage = {
   async uploadFile(bucket, path, file) {
@@ -146,7 +149,10 @@ export const storage = {
     return data;
   },
 
+  /** @deprecated Use getSignedUrl — files are stored in private buckets. */
   getFileUrl(bucket, path) {
+    // Kept for backward-compat but logs a warning — callers should switch to getSignedUrl.
+    console.warn('[storage.getFileUrl] Public URL access is deprecated. Use getSignedUrl instead.');
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
     return data.publicUrl;
   },
