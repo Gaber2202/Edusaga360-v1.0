@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { AuthenticatedRequest } from '../middleware/auth.js';
+import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/auth.js';
 
 export const journalEntryRouter = Router();
 
@@ -26,7 +26,7 @@ const CreateJournalEntrySchema = z.object({
   fiscal_period_id: z.string().optional(),
 });
 
-journalEntryRouter.post('/', async (req: AuthenticatedRequest, res) => {
+journalEntryRouter.post('/', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res) => {
   try {
     const parsed = CreateJournalEntrySchema.safeParse(req.body);
     if (!parsed.success) {

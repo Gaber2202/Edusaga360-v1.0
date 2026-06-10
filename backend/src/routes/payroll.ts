@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { AuthenticatedRequest } from '../middleware/auth.js';
+import { AuthenticatedRequest, requireRole, PAYROLL_ROLES } from '../middleware/auth.js';
 
 export const payrollRouter = Router();
 
@@ -85,7 +85,7 @@ function calculateGosiForEmployee(
 
 // ─── POST /api/payroll/calculate — Full payroll calculation for a period ──
 
-payrollRouter.post('/calculate', async (req: AuthenticatedRequest, res) => {
+payrollRouter.post('/calculate', requireRole(PAYROLL_ROLES), async (req: AuthenticatedRequest, res) => {
   try {
     const parsed = CalculatePayrollSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -246,7 +246,7 @@ payrollRouter.post('/calculate', async (req: AuthenticatedRequest, res) => {
 
 // ─── POST /api/payroll/gosi-calculate — GOSI-only calculation ─────────────
 
-payrollRouter.post('/gosi-calculate', async (req: AuthenticatedRequest, res) => {
+payrollRouter.post('/gosi-calculate', requireRole(PAYROLL_ROLES), async (req: AuthenticatedRequest, res) => {
   try {
     const parsed = GosiCalculateSchema.safeParse(req.body);
     if (!parsed.success) {

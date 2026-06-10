@@ -18,7 +18,7 @@ import { Router, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import crypto from 'crypto';
-import { AuthenticatedRequest } from '../middleware/auth.js';
+import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/auth.js';
 import {
   generateTLVQR,
   generateUBLXml,
@@ -312,7 +312,7 @@ billingRouter.get('/fee-structures', async (req: AuthenticatedRequest, res: Resp
   return res.json(data);
 });
 
-billingRouter.post('/fee-structures', async (req: AuthenticatedRequest, res: Response) => {
+billingRouter.post('/fee-structures', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
   const tenant_id = req.user!.tenant_id!;
   const schema = z.object({
     academic_year: z.string(),
@@ -352,7 +352,7 @@ billingRouter.get('/discount-rules', async (req: AuthenticatedRequest, res: Resp
   return res.json(data);
 });
 
-billingRouter.post('/discount-rules', async (req: AuthenticatedRequest, res: Response) => {
+billingRouter.post('/discount-rules', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
   const tenant_id = req.user!.tenant_id!;
   const schema = z.object({
     code: z.string().min(1),
@@ -382,7 +382,7 @@ billingRouter.post('/discount-rules', async (req: AuthenticatedRequest, res: Res
 
 // ─── POST /api/billing/invoices — VAT-aware invoice creation ─────────────────
 
-billingRouter.post('/invoices', async (req: AuthenticatedRequest, res: Response) => {
+billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const parsed = CreateInvoiceSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -667,7 +667,7 @@ billingRouter.get('/invoices/:id', async (req: AuthenticatedRequest, res: Respon
 
 // ─── POST /api/billing/invoices/:id/zatca-submit — Submit to ZATCA ───────────
 
-billingRouter.post('/invoices/:id/zatca-submit', async (req: AuthenticatedRequest, res: Response) => {
+billingRouter.post('/invoices/:id/zatca-submit', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const tenant_id = req.user!.tenant_id!;
     const { id } = req.params;
@@ -738,7 +738,7 @@ billingRouter.post('/invoices/:id/zatca-submit', async (req: AuthenticatedReques
 
 // ─── POST /api/billing/invoices/:id/credit-note — Issue credit note ──────────
 
-billingRouter.post('/invoices/:id/credit-note', async (req: AuthenticatedRequest, res: Response) => {
+billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const tenant_id = req.user!.tenant_id!;
     const { id } = req.params;
@@ -969,7 +969,7 @@ async function createInvoiceForStudent(
 
 // ─── POST /api/billing/bulk-invoices — Bulk generation ───────────────────────
 
-billingRouter.post('/bulk-invoices', async (req: AuthenticatedRequest, res: Response) => {
+billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const tenant_id = req.user!.tenant_id!;
     const parsed = BulkInvoiceSchema.safeParse(req.body);
@@ -1045,7 +1045,7 @@ billingRouter.post('/bulk-invoices', async (req: AuthenticatedRequest, res: Resp
 
 // ─── POST /api/billing/dunning/trigger — Smart dunning ────────────────────────
 
-billingRouter.post('/dunning/trigger', async (req: AuthenticatedRequest, res: Response) => {
+billingRouter.post('/dunning/trigger', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const tenant_id = req.user!.tenant_id!;
     const parsed = DunningTriggerSchema.safeParse(req.body);

@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import crypto from 'crypto';
 import https from 'https';
-import { AuthenticatedRequest } from '../middleware/auth.js';
+import { AuthenticatedRequest, authMiddleware } from '../middleware/auth.js';
 
 async function sendInviteEmail(opts: {
   infobipKey: string;
@@ -67,6 +67,10 @@ async function sendInviteEmail(opts: {
 }
 
 export const adminRouter = Router();
+
+// Router-level auth guard — ensures every current and future admin endpoint
+// requires a valid token even if the caller omits it in index.ts.
+adminRouter.use(authMiddleware);
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,

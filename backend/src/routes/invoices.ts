@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { AuthenticatedRequest } from '../middleware/auth.js';
+import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/auth.js';
 import {
   generateTLVQR,
   generateUBLXml,
@@ -61,7 +61,7 @@ async function getTenantData(tenantId: string): Promise<TenantData> {
 // POST /api/invoices/generate-zatca
 // ---------------------------------------------------------------------------
 
-invoiceRouter.post('/generate-zatca', async (req: AuthenticatedRequest, res: Response) => {
+invoiceRouter.post('/generate-zatca', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const parsed = GenerateZATCASchema.safeParse(req.body);
     if (!parsed.success) {
