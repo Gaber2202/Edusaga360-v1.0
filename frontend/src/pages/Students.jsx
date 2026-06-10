@@ -40,7 +40,7 @@ export default function Students() {
 
   const { data: students = [], isLoading } = useQuery({
     queryKey: ['students', tenantId],
-    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter(), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

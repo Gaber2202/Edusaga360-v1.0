@@ -20,7 +20,7 @@ export default function ViolationsPenalties() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ violation_type: 'iqama', authority: 'mol', employee_name: '', amount_sar: 0, due_date: '', status: 'open', description: '', reference_number: '' });
 
-  const { data: violations = [], isLoading } = useQuery({ queryKey: ['violations'], queryFn: () => fetchData(tenantQuery('govi_violations').select('*').order('-created_date')) });
+  const { data: violations = [], isLoading } = useQuery({ queryKey: ['violations'], queryFn: () => fetchData(tenantQuery('govi_violations').select('*').order('created_date', { ascending: false })) });
   const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('*').order()) });
 
   const openViolations = violations.filter(v => v.status === 'open');

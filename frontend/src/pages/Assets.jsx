@@ -61,7 +61,7 @@ export default function Assets() {
 
   const { data: assets = [], isLoading } = useQuery({
     queryKey: ['assets', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('fixed_assets').select('*').match(tenantFilter(branchFilter()), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('fixed_assets').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

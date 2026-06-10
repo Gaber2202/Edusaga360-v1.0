@@ -96,7 +96,7 @@ export default function PerformanceEvaluation() {
 
   const { data: evaluations = [], isLoading } = useQuery({
     queryKey: ['performanceEvals', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('performance_evaluations').select('*').match(tenantFilter(branchFilter()), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('performance_evaluations').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
@@ -453,7 +453,7 @@ function CriteriaTemplatesTab({ isRTL }) {
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['evalTemplates', tenantId],
-    queryFn: () => fetchData(tenantQuery('eval_criteria_templates').select('*').order('-created_date')),
+    queryFn: () => fetchData(tenantQuery('eval_criteria_templates').select('*').order('created_date', { ascending: false })),
   });
 
   const totalWeight = form.criteria.reduce((s, c) => s + (Number(c.weight) || 0), 0);
@@ -685,7 +685,7 @@ function WarningsTab({ isRTL, selectedBranchId, filterByBranch, employees }) {
 
   const { data: warnings = [], isLoading } = useQuery({
     queryKey: ['disciplinaryWarnings', tenantId],
-    queryFn: () => fetchData(tenantQuery('disciplinary_warnings').select('*').order('-created_date')),
+    queryFn: () => fetchData(tenantQuery('disciplinary_warnings').select('*').order('created_date', { ascending: false })),
   });
 
   const filtered = filterByBranch(warnings);

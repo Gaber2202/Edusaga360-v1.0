@@ -50,7 +50,7 @@ export default function Expenses() {
 
   const { data: expenses = [], isLoading } = useQuery({
     queryKey: ['expenses', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('expenses').select('*').match(tenantFilter(branchFilter()), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('expenses').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

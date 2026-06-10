@@ -45,7 +45,7 @@ export default function APBills() {
 
   const { data: bills = [], isLoading } = useQuery({
     queryKey: ['apBills', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter()), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

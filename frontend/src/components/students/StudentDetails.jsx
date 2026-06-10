@@ -95,13 +95,13 @@ export default function StudentDetails({ open, onClose, student: studentProp, on
 
   const { data: attendanceRecords = [] } = useQuery({
     queryKey: ['studentAttendance', rawStudent?.id],
-    queryFn: () => fetchData(tenantQuery('attendances').select('*').match({ student_id: rawStudent?.id }, '-date', 30)),
+    queryFn: () => fetchData(tenantQuery('attendances').select('*').match({ student_id: rawStudent?.id }).order('date', { ascending: false }).limit(30)),
     enabled: !!rawStudent?.id
   });
 
   const { data: invoices = [] } = useQuery({
     queryKey: ['studentInvoices', rawStudent?.id],
-    queryFn: () => fetchData(tenantQuery('invoices').select('*').match({ student_id: rawStudent?.id }, '-created_date')),
+    queryFn: () => fetchData(tenantQuery('invoices').select('*').match({ student_id: rawStudent?.id }).order('created_date', { ascending: false })),
     enabled: !!rawStudent?.id
   });
 

@@ -39,12 +39,12 @@ export default function SystemHealth() {
 
   const { data: defects = [], isLoading: loadingDefects } = useQuery({
     queryKey: ['systemDefects'],
-    queryFn: () => fetchData(tenantQuery('system_defects').select('*').order('-created_date')),
+    queryFn: () => fetchData(tenantQuery('system_defects').select('*').order('created_date', { ascending: false })),
   });
 
   const { data: auditLogs = [] } = useQuery({
     queryKey: ['auditLogs'],
-    queryFn: () => fetchData(tenantQuery('audit_logs').select('*').order('-created_date', 50)),
+    queryFn: () => fetchData(tenantQuery('audit_logs').select('*').order('created_date', { ascending: false }).limit()),
   });
 
   // Fetch counts for system health overview

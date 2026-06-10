@@ -65,13 +65,13 @@ export default function WorkflowEngine() {
 
   const { data: templates = [], isLoading: loadingTemplates } = useQuery({
     queryKey: ['workflowTemplates', tenantId],
-    queryFn: () => fetchData(tenantQuery('workflow_templates').select('*').match(tenantFilter(), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('workflow_templates').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
   const { data: instances = [], isLoading: loadingInstances } = useQuery({
     queryKey: ['workflowInstances', tenantId],
-    queryFn: () => fetchData(tenantQuery('workflow_instances').select('*').match(tenantFilter(), '-created_date', 50)),
+    queryFn: () => fetchData(tenantQuery('workflow_instances').select('*').match(tenantFilter()).order('created_date', { ascending: false }).limit()),
     enabled: hasTenantAccess,
   });
 

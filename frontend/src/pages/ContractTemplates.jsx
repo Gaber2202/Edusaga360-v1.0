@@ -279,7 +279,7 @@ export default function ContractTemplates() {
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['contractTemplates', tenantId],
-    queryFn: () => fetchData(tenantQuery('contract_templates').select('*').match(tenantFilter(), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('contract_templates').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

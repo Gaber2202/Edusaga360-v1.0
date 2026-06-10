@@ -30,7 +30,7 @@ export default function SuperAdminDashboard() {
 
   const { data: tenants = [], isLoading } = useQuery({
     queryKey: ['all-tenants'],
-    queryFn: () => fetchData(tenantQuery('tenants').select('*').order('-created_date')),
+    queryFn: () => fetchData(tenantQuery('tenants').select('*').order('created_date', { ascending: false })),
   });
 
   const { data: allUsers = [] } = useQuery({

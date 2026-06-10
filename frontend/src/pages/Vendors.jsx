@@ -52,7 +52,7 @@ export default function Vendors() {
 
   const { data: vendors = [], isLoading } = useQuery({
     queryKey: ['vendors', tenantId],
-    queryFn: () => fetchData(tenantQuery('vendors').select('*').match(tenantFilter(), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('vendors').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

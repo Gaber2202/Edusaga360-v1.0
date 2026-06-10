@@ -47,7 +47,7 @@ export default function TuitionAdvanceManagement() {
 
   const { data: advances = [], isLoading } = useQuery({
     queryKey: ['tuitionAdvances', selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('tuition_advances').select('*').match(branchFilter(), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('tuition_advances').select('*').match(branchFilter()).order('created_date', { ascending: false })),
   });
 
   const { data: employees = [] } = useQuery({

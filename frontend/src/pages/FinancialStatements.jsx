@@ -59,7 +59,7 @@ export default function FinancialStatements() {
 
   const { data: accounts = [] } = useQuery({
     queryKey: ['coa-fs', tenantId],
-    queryFn: () => fetchData(tenantQuery('chart_of_accounts').select('*').match(tenantFilter({ is_active: true }), 'account_code')),
+    queryFn: () => fetchData(tenantQuery('chart_of_accounts').select('*').match(tenantFilter({ is_active: true })).order('account_code')),
     enabled: hasTenantAccess,
   });
 

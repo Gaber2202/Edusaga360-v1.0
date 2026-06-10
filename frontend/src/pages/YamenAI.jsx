@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { callApi } from '../api/supabaseClient';
-import { Bot, AlertTriangle, FileText, BarChart3, MessageSquare, Users, Shield, TrendingDown, Zap, Target, AlertCircle, RefreshCw, CheckCircle2, XCircle, Info } from 'lucide-react';
+import { Bot, AlertTriangle, FileText, BarChart3, MessageSquare, Users, Shield, TrendingDown, Zap, Target, AlertCircle, RefreshCw, CheckCircle2, XCircle, Info, Sparkles } from 'lucide-react';
 import YamenDashboard from '../components/yamen/YamenDashboard';
 import YamenRiskMonitor from '../components/yamen/YamenRiskMonitor';
 import YamenExecutiveReport from '../components/yamen/YamenExecutiveReport';

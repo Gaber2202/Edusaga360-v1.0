@@ -87,13 +87,13 @@ export default function RecruitmentPage() {
 
   const { data: recruitments = [], isLoading: loadingRecruitments } = useQuery({
     queryKey: ['recruitments', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('recruitments').select('*').match(tenantFilter(branchFilter()), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('recruitments').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
   const { data: applicants = [], isLoading: loadingApplicants } = useQuery({
     queryKey: ['applicants', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('applicants').select('*').match(tenantFilter(branchFilter()), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('applicants').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

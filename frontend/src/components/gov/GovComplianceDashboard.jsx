@@ -21,7 +21,7 @@ export default function GovComplianceDashboard() {
   const { data: govDocs = [] } = useQuery({ queryKey: ['govDocs'], queryFn: () => fetchData(tenantQuery('gov_documents').select('*').order()) });
   const { data: mudad = [] } = useQuery({ queryKey: ['mudad'], queryFn: () => fetchData(tenantQuery('mudad_submissions').select('*').order()) });
   const { data: gosiRecords = [] } = useQuery({ queryKey: ['gosiRecords'], queryFn: () => fetchData(tenantQuery('gosi_records').select('*').order()) });
-  const { data: _payRuns = [] } = useQuery({ queryKey: ['payRuns'], queryFn: () => fetchData(tenantQuery('pay_runs').select('*').order('-created_date', 6)) });
+  const { data: _payRuns = [] } = useQuery({ queryKey: ['payRuns'], queryFn: () => fetchData(tenantQuery('pay_runs').select('*').order('created_date', { ascending: false }).limit()) });
 
   const today = new Date();
 

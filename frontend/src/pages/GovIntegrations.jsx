@@ -94,7 +94,7 @@ export default function GovIntegrations() {
 
   const { data: syncLogs = [] } = useQuery({
     queryKey: ['govSyncLogs', tenantId],
-    queryFn: () => fetchData(tenantQuery('integration_logs').select('*').order('-created_date', 50)),
+    queryFn: () => fetchData(tenantQuery('integration_logs').select('*').order('created_date', { ascending: false }).limit()),
   });
 
   const handleConfigure = (integration) => {

@@ -34,7 +34,7 @@ export default function TrialBalance() {
 
   const { data: accounts = [], isLoading: loadingAccts } = useQuery({
     queryKey: ['coa-tb', tenantId],
-    queryFn: () => fetchData(tenantQuery('chart_of_accounts').select('*').match(tenantFilter({ is_active: true }), 'account_code')),
+    queryFn: () => fetchData(tenantQuery('chart_of_accounts').select('*').match(tenantFilter({ is_active: true })).order('account_code')),
     enabled: hasTenantAccess,
   });
 

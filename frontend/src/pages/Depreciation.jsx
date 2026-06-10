@@ -43,7 +43,7 @@ export default function Depreciation() {
 
   const { data: depRuns = [], isLoading: loadingRuns } = useQuery({
     queryKey: ['depreciationRuns', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('asset_depreciations').select('*').match(tenantFilter(branchFilter()), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('asset_depreciations').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

@@ -36,7 +36,7 @@ export default function PayrollDashboard({ onNavigate }) {
 
   const { data: payRuns = [] } = useQuery({
     queryKey: ['payRuns', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(tenantFilter(branchFilter()), '-created_date', 10)),
+    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false }).limit(10)),
     enabled: hasTenantAccess,
   });
 

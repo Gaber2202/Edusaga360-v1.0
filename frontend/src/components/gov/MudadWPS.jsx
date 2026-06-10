@@ -28,7 +28,7 @@ export default function MudadWPS() {
     total_salary: 0, status: 'pending', compliance_percentage: 100, bank_name: 'Bank Albilad', file_format: 'wps', notes: ''
   });
 
-  const { data: submissions = [], isLoading } = useQuery({ queryKey: ['mudad'], queryFn: () => fetchData(tenantQuery('mudad_submissions').select('*').order('-created_date')) });
+  const { data: submissions = [], isLoading } = useQuery({ queryKey: ['mudad'], queryFn: () => fetchData(tenantQuery('mudad_submissions').select('*').order('created_date', { ascending: false })) });
   const { data: _branches = [] } = useQuery({ queryKey: ['branches'], queryFn: () => fetchData(tenantQuery('branches').select('*').match({ is_active: true })) });
 
   const statusIcon = { pending: <Clock className="w-3 h-3" />, submitted: <CheckCircle className="w-3 h-3" />, accepted: <CheckCircle className="w-3 h-3" />, rejected: <XCircle className="w-3 h-3" />, partial: <Clock className="w-3 h-3" /> };

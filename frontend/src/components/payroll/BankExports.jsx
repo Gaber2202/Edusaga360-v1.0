@@ -65,7 +65,7 @@ export default function BankExports() {
 
   const { data: exports = [], isLoading } = useQuery({
     queryKey: ['bankExports', selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('bank_exports').select('*').match(branchFilter(), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('bank_exports').select('*').match(branchFilter()).order('created_date', { ascending: false })),
   });
 
   const { data: profiles = [] } = useQuery({
@@ -75,7 +75,7 @@ export default function BankExports() {
 
   const { data: payRuns = [] } = useQuery({
     queryKey: ['payRuns', selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(branchFilter(), '-created_date', 50)),
+    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(branchFilter()).order('created_date', { ascending: false })),
   });
 
   const { data: payrollInputs = [] } = useQuery({

@@ -80,7 +80,7 @@ export default function IntegrationHub() {
 
   const { data: logs = [], isLoading, dataUpdatedAt } = useQuery({
     queryKey: ['integrationLogs', tenantId],
-    queryFn: () => fetchData(tenantQuery('integration_logs').select('*').match(tenantFilter(), '-timestamp', 200)),
+    queryFn: () => fetchData(tenantQuery('integration_logs').select('*').match(tenantFilter()).order('created_date', { ascending: false }).limit(200)),
     enabled: hasTenantAccess,
     refetchInterval: 15000, // auto-refresh every 15s
   });

@@ -36,7 +36,7 @@ export default function BankManagement() {
 
   const { data: banks = [], isLoading } = useQuery({
     queryKey: ['bankTemplates', tenantId],
-    queryFn: () => fetchData(tenantQuery('bank_templates').select('*').match(tenantFilter(), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('bank_templates').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

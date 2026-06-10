@@ -39,7 +39,7 @@ export default function Communications() {
 
   const { data: communications = [], isLoading } = useQuery({
     queryKey: ['communications', tenantId],
-    queryFn: () => fetchData(tenantQuery('communications').select('*').match(tenantFilter(), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('communications').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

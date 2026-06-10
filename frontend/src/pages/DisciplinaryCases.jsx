@@ -68,7 +68,7 @@ export default function DisciplinaryCases() {
 
   const { data: cases = [], isLoading } = useQuery({
     queryKey: ['disciplinary_cases', tenantId],
-    queryFn: () => fetchData(tenantQuery('disciplinary_cases').select('*').match(tenantFilter(), '-created_date')),
+    queryFn: () => fetchData(tenantQuery('disciplinary_cases').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

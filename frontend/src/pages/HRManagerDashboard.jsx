@@ -87,7 +87,7 @@ export default function HRManagerDashboard() {
 
   const { data: payRuns = [] } = useQuery({
     queryKey: ['payruns-hrdash', tenantId],
-    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(tenantFilter(), '-created_date', 3)),
+    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(tenantFilter()).order('created_date', { ascending: false }).limit(3)),
     enabled: hasTenantAccess,
   });
 

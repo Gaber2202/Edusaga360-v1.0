@@ -18,11 +18,11 @@ function riskColor(score) {
 export default function YamenDashboard({ isRTL }) {
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const { data: employees = [] } = useQuery({ queryKey: ['employees', tenantId], queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter())), enabled: hasTenantAccess });
-  const { data: attendance = [] } = useQuery({ queryKey: ['employeeAttendance', tenantId], queryFn: () => fetchData(tenantQuery('employee_attendances').select('*').match(tenantFilter(), '-date', 200)), enabled: hasTenantAccess });
-  const { data: leaves = [] } = useQuery({ queryKey: ['leaveRequests', tenantId], queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match(tenantFilter(), '-created_date', 100)), enabled: hasTenantAccess });
+  const { data: attendance = [] } = useQuery({ queryKey: ['employeeAttendance', tenantId], queryFn: () => fetchData(tenantQuery('employee_attendances').select('*').match(tenantFilter()).order('date', { ascending: false }).limit(200)), enabled: hasTenantAccess });
+  const { data: leaves = [] } = useQuery({ queryKey: ['leaveRequests', tenantId], queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match(tenantFilter()).order('created_date', { ascending: false }).limit(100)), enabled: hasTenantAccess });
   const { data: iqamaRecords = [] } = useQuery({ queryKey: ['iqamaRecords', tenantId], queryFn: () => fetchData(tenantQuery('iqama_records').select('*').match(tenantFilter())), enabled: hasTenantAccess });
-  const { data: evaluations = [] } = useQuery({ queryKey: ['performanceEvals', tenantId], queryFn: () => fetchData(tenantQuery('performance_evaluations').select('*').match(tenantFilter(), '-created_date', 100)), enabled: hasTenantAccess });
-  const { data: _payrollInputs = [] } = useQuery({ queryKey: ['payrollInputs', tenantId], queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').match(tenantFilter(), '-created_date', 200)), enabled: hasTenantAccess });
+  const { data: evaluations = [] } = useQuery({ queryKey: ['performanceEvals', tenantId], queryFn: () => fetchData(tenantQuery('performance_evaluations').select('*').match(tenantFilter()).order('created_date', { ascending: false }).limit(100)), enabled: hasTenantAccess });
+  const { data: _payrollInputs = [] } = useQuery({ queryKey: ['payrollInputs', tenantId], queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').match(tenantFilter()).order('created_date', { ascending: false }).limit(200)), enabled: hasTenantAccess });
 
   const today = new Date();
 

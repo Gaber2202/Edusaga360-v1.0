@@ -21,7 +21,7 @@ export default function GovDocuments() {
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ document_type: 'iqama_copy', title: '', employee_id: '', employee_name: '', issue_date: '', expiry_date: '', file_url: '', notes: '' });
 
-  const { data: documents = [], isLoading } = useQuery({ queryKey: ['govDocs'], queryFn: () => fetchData(tenantQuery('gov_documents').select('*').order('-created_date')) });
+  const { data: documents = [], isLoading } = useQuery({ queryKey: ['govDocs'], queryFn: () => fetchData(tenantQuery('gov_documents').select('*').order('created_date', { ascending: false })) });
   const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('*').order()) });
 
   const today = new Date();
