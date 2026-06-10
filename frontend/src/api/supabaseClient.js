@@ -136,6 +136,9 @@ export function platformQuery(tableName) {
 
 /**
  * File storage helpers using Supabase Storage.
+ * All file access uses signed URLs (private buckets) — never getPublicUrl.
+ * Direct uploads from the client go through the backend /api/files/upload
+ * endpoint which validates file type, size, and generates safe random paths.
  */
 export const storage = {
   async uploadFile(bucket, path, file) {
@@ -146,7 +149,10 @@ export const storage = {
     return data;
   },
 
+  /** @deprecated Use getSignedUrl — files are stored in private buckets. */
   getFileUrl(bucket, path) {
+    // Kept for backward-compat but logs a warning — callers should switch to getSignedUrl.
+    console.warn('[storage.getFileUrl] Public URL access is deprecated. Use getSignedUrl instead.');
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
     return data.publicUrl;
   },
@@ -180,9 +186,13 @@ export async function fetchData(query) {
 /**
  * Call a backend API endpoint (replaces supabase.functions.*).
  */
-// VITE_API_BASE_URL should be set to the backend origin in Vercel env vars.
-// Falls back to the Railway production URL so the app works even without the env var set.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://edusaga-360-production.up.railway.app';
+// VITE_API_BASE_URL must be set in Vercel env vars for each environment (dev/staging/prod).
+// No fallback — a missing env var should fail visibly rather than silently route dev/staging
+// traffic to the production Railway instance and cause data contamination.
+if (!import.meta.env.VITE_API_BASE_URL) {
+  console.error('[supabaseClient] VITE_API_BASE_URL is not set. Backend API calls will fail. Set this variable in your .env file or Vercel environment settings.');
+}
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 export async function callApi(endpoint, data, options = {}) {
   const {

@@ -27,8 +27,11 @@ authRouter.get('/me', async (req, res) => {
   res.json({
     id: user.id,
     email: user.email,
-    tenant_id: user.user_metadata?.tenant_id,
-    role: user.user_metadata?.role,
+    // Read privileged claims from app_metadata only (admin-only write).
+    // user_metadata is user-writable and must never be used for auth decisions.
+    tenant_id: user.app_metadata?.tenant_id,
+    role: user.app_metadata?.role,
+    is_platform_owner: user.app_metadata?.is_platform_owner === true,
     name: user.user_metadata?.name,
   });
 });

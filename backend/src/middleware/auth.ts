@@ -38,15 +38,16 @@ export async function authMiddleware(
       return res.status(401).json({ message: 'Invalid or expired token' });
     }
 
-    // Security: read privileged claims from app_metadata (admin-only write)
-    // NOT user_metadata (user-writable — self-escalation vector).
-    // tenant_id and role fall back to user_metadata for backwards compatibility
-    // but is_platform_owner is app_metadata-only.
+    // Security: ALL privileged claims must come from app_metadata (admin-only write).
+    // user_metadata is user-writable via supabase.auth.updateUser() — do NOT use it
+    // for role or tenant_id, as that allows self-escalation (set role='admin' client-side).
+    // The user_metadata fallback has been removed. Any user missing app_metadata claims
+    // needs to be re-onboarded through the admin provisioning flow.
     req.user = {
       id: user.id,
       email: user.email!,
-      tenant_id: user.app_metadata?.tenant_id ?? user.user_metadata?.tenant_id,
-      role: user.app_metadata?.role ?? user.user_metadata?.role,
+      tenant_id: user.app_metadata?.tenant_id,
+      role: user.app_metadata?.role,
       is_platform_owner: user.app_metadata?.is_platform_owner === true,
     };
 
@@ -54,4 +55,23 @@ export async function authMiddleware(
   } catch {
     return res.status(401).json({ message: 'Authentication failed' });
   }
+}
+
+// ── Role sets — mirror frontend/src/lib/authHelpers.js ───────────────────────
+export const HR_ROLES = ['admin', 'hr_head', 'hr_admin', 'hr_officer'];
+export const FINANCE_ROLES = ['admin', 'cfo', 'accountant', 'finance'];
+export const PAYROLL_ROLES = ['admin', 'hr_head', 'hr_admin'];
+
+/**
+ * Middleware factory — deny request with 403 if req.user.role is not in allowedRoles.
+ * Must run after authMiddleware (which populates req.user).
+ */
+export function requireRole(allowedRoles: string[]) {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    const role = req.user?.role;
+    if (!role || !allowedRoles.includes(role)) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+    next();
+  };
 }

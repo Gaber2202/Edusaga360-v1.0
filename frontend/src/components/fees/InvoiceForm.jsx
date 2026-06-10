@@ -179,9 +179,11 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
   };
 
   const vatRate = getVatRate(tenant);
-  const subtotal = formData.items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+  const subtotal = formData.items.reduce((sum, item) => sum + Math.max(0, parseFloat(item.amount) || 0), 0);
   const vatAmount = Math.round(subtotal * vatRate * 100) / 100;
-  const total = subtotal + vatAmount - (parseFloat(formData.discount_amount) || 0);
+  const maxDiscount = subtotal + vatAmount;
+  const discount = Math.min(Math.max(0, parseFloat(formData.discount_amount) || 0), maxDiscount);
+  const total = subtotal + vatAmount - discount;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -190,7 +192,19 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
       alert(isRTL ? 'يرجى اختيار الطالب' : 'Please select a student');
       return;
     }
-    
+    if (subtotal <= 0) {
+      alert(isRTL ? 'يجب أن يكون إجمالي بنود الفاتورة أكبر من صفر' : 'Invoice line items must total more than zero');
+      return;
+    }
+    if (discount > maxDiscount) {
+      alert(isRTL ? 'لا يمكن أن يتجاوز الخصم الإجمالي المستحق' : 'Discount cannot exceed the invoice total');
+      return;
+    }
+    if (formData.issue_date && formData.due_date && formData.due_date < formData.issue_date) {
+      alert(isRTL ? 'تاريخ الاستحقاق يجب أن يكون بعد تاريخ الإصدار' : 'Due date must be on or after the issue date');
+      return;
+    }
+
     setLoading(true);
     try {
       const invoiceNumber = formData.invoice_number || `INV-${Date.now().toString(36).toUpperCase()}`;
@@ -265,7 +279,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
               total_amount: total,
               student_name: data.student_name,
               items: data.items,
-              discount_amount: parseFloat(formData.discount_amount) || 0,
+              discount_amount: discount,
               notes: data.notes,
             };
             const zatcaResult = await callApi('/invoices/generate-zatca', zatcaPayload);
@@ -409,6 +423,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
                 <Input
                   type="date"
                   value={formData.due_date}
+                  min={formData.issue_date}
                   onChange={(e) => handleChange('due_date', e.target.value)}
                 />
               </div>
@@ -454,6 +469,8 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
                     <div className="relative">
                       <Input
                         type="number"
+                        min="0"
+                        step="0.01"
                         placeholder={t('amount')}
                         value={item.amount}
                         onChange={(e) => handleItemChange(index, 'amount', e.target.value)}
@@ -488,6 +505,8 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
                 <div className="relative">
                   <Input
                     type="number"
+                    min="0"
+                    step="0.01"
                     value={formData.discount_amount}
                     onChange={(e) => handleChange('discount_amount', e.target.value)}
                     className="pe-12"

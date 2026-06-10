@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../api/supabaseClient';
+import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useAuth } from '../lib/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -56,6 +57,7 @@ export default function SchoolLogin() {
         setLoading(false);
         return;
       }
+      logAuditEvent({ action: AuditActions.LOGIN, entityType: 'Session', entityId: null });
       window.location.replace('/');
     } catch {
       setAuthFailure(t('حدث خطأ. حاول مرة أخرى.', 'An error occurred. Please try again.'));

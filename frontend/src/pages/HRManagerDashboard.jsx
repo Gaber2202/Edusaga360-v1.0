@@ -69,7 +69,7 @@ export default function HRManagerDashboard() {
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ['employees-hrdash', tenantId],
-    queryFn: () => fetchData(tenantQuery('employees').select('*').match(tenantFilter(branchFilter()))),
+    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_date').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 

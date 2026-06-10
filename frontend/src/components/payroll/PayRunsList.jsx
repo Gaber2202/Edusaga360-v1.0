@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
+import { useRole } from '../RoleContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -21,10 +22,12 @@ import {
   DollarSign,
   AlertTriangle
 } from 'lucide-react';
+import { logAuditEvent, AuditActions } from '../AuditService';
 
 export default function PayRunsList({ onViewPayRun }) {
   const { isRTL } = useLanguage();
   const { selectedBranchId, filterByBranch: _filterByBranch, branchFilter, branches } = useBranch();
+  const { user: currentUser, userRole } = useRole();
   const queryClient = useQueryClient();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -56,6 +59,11 @@ export default function PayRunsList({ onViewPayRun }) {
     : payRuns;
 
   const handleCreatePayRun = async () => {
+    // Only HR admin roles may create pay runs
+    if (!['admin', 'hr_head', 'hr_admin'].includes(currentUser?.role || userRole)) {
+      toast.error(isRTL ? 'ليس لديك صلاحية لإنشاء مسير الرواتب' : 'You do not have permission to create a pay run');
+      return;
+    }
     setCreating(true);
     try {
       const isAllBranches = !newPayRun.branch_id;
@@ -183,6 +191,7 @@ export default function PayRunsList({ onViewPayRun }) {
       await queryClient.invalidateQueries({ queryKey: ['payRuns'] });
       await queryClient.invalidateQueries({ queryKey: ['payrollInputs'] });
       
+      logAuditEvent({ action: AuditActions.PAYROLL_RUN, entityType: 'PayRun', entityId: payRun.id, newValues: { period: newPayRun.period, branch_id: newPayRun.branch_id } });
       toast.success(isRTL ? `تم إنشاء كشف الرواتب لـ ${branchEmployees.length} موظف` : `Pay run created for ${branchEmployees.length} employees`);
       
       setShowCreateDialog(false);

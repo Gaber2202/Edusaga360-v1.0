@@ -43,7 +43,7 @@ export default function JournalEntries() {
 
   const { data: journalEntries = [], isLoading } = useQuery({
     queryKey: ['journalEntries', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false }).limit(200)),
     enabled: hasTenantAccess,
   });
 
@@ -89,6 +89,11 @@ export default function JournalEntries() {
     
     if (!isBalanced) {
       toast.error(isRTL ? 'القيد غير متوازن' : 'Entry is not balanced');
+      return;
+    }
+    const hasNegative = formData.lines.some(l => (parseFloat(l.debit) || 0) < 0 || (parseFloat(l.credit) || 0) < 0);
+    if (hasNegative) {
+      toast.error(isRTL ? 'لا يمكن أن تكون قيم المدين أو الدائن سالبة' : 'Debit and credit amounts cannot be negative');
       return;
     }
 
@@ -286,10 +291,10 @@ export default function JournalEntries() {
                           <Input value={line.description} onChange={(e) => updateLine(idx, 'description', e.target.value)} />
                         </TableCell>
                         <TableCell>
-                          <Input type="number" step="0.01" value={line.debit} onChange={(e) => updateLine(idx, 'debit', e.target.value)} />
+                          <Input type="number" min="0" step="0.01" value={line.debit} onChange={(e) => updateLine(idx, 'debit', e.target.value)} />
                         </TableCell>
                         <TableCell>
-                          <Input type="number" step="0.01" value={line.credit} onChange={(e) => updateLine(idx, 'credit', e.target.value)} />
+                          <Input type="number" min="0" step="0.01" value={line.credit} onChange={(e) => updateLine(idx, 'credit', e.target.value)} />
                         </TableCell>
                         <TableCell>
                           <Button size="icon" variant="ghost" onClick={() => removeLine(idx)} disabled={formData.lines.length === 1}>

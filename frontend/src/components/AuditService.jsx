@@ -1,34 +1,33 @@
-
 import { supabase, tenantQuery } from '../api/supabaseClient';
 
+/**
+ * Write an audit log entry matching the audit_logs schema:
+ *   user_id UUID, action TEXT, entity_type TEXT, entity_id UUID,
+ *   old_values JSONB, new_values JSONB, ip_address TEXT, created_at TIMESTAMPTZ
+ *
+ * IP capture must be done server-side for accuracy; client sets a sentinel so
+ * the backend enrichment job can fill in the real IP from the request context.
+ */
 export async function logAuditEvent({
   action,
   entityType,
-  entityId,
+  entityId = null,
   oldValues = null,
   newValues = null,
-  notes = ''
 }) {
   try {
-    const user = await supabase.auth.getUser().then(r => r.data?.user);
-    
+    const { data: { user } } = await supabase.auth.getUser();
     await tenantQuery('audit_logs').insert({
+      user_id: user?.id ?? null,
       action,
       entity_type: entityType,
       entity_id: entityId,
-      user_email: user?.email || 'system',
-      user_name: user?.full_name || 'System',
-      user_role: user?.user_role || user?.role || 'unknown',
-      branch_id: user?.branch_id,
       old_values: oldValues,
       new_values: newValues,
-      notes,
-      timestamp: new Date().toISOString(),
-      ip_address: 'client',
-      user_agent: navigator.userAgent
+      ip_address: 'client',  // enriched by backend audit job from request headers
     });
   } catch (error) {
-    console.error('Error logging audit event:', error);
+    console.error('Audit log write failed:', error);
   }
 }
 
@@ -42,12 +41,13 @@ export const AuditActions = {
   REFUND: 'refund',
   LOGIN: 'login',
   LOGOUT: 'logout',
-  MFA_VERIFY: 'mfa_verify',
   EXPORT: 'export',
   IMPORT: 'import',
   SEND: 'send',
   GENERATE: 'generate',
-  CONFIGURE: 'configure'
+  CONFIGURE: 'configure',
+  PAYROLL_RUN: 'payroll_run',
+  ROLE_CHANGE: 'role_change',
 };
 
 export default { logAuditEvent, AuditActions };

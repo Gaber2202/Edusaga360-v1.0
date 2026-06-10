@@ -6,6 +6,7 @@ import { Label } from '../ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { Download, Receipt, CheckCircle, AlertCircle } from 'lucide-react';
+import { logAuditEvent, AuditActions } from '../AuditService';
 
 const VAT_RATE = 0.15;
 
@@ -41,6 +42,7 @@ export default function FeesVATReport({ invoices, payments: _payments, isRTL }) 
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = `vat-report-${dateFrom}-${dateTo}.csv`; a.click();
+    logAuditEvent({ action: AuditActions.EXPORT, entityType: 'VATReport', entityId: null, newValues: { format: 'csv', dateFrom, dateTo } });
   };
 
   return (

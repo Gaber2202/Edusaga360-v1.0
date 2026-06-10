@@ -244,10 +244,14 @@ registrationRouter.get('/deny/:id', async (req, res) => {
   }
 });
 
-// Resend onboarding link endpoint (called from admin UI)
+// Resend onboarding link endpoint (called from admin UI — requires valid HMAC sig)
 registrationRouter.get('/resend/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const sig = req.query.sig as string | undefined;
+    if (!verifyAdminSig('resend', id, sig)) {
+      return res.status(403).send(renderResultPage('Forbidden', 'Invalid or missing signature.', false));
+    }
     const { data: request, error: fetchError } = await supabase
       .from('registration_requests')
       .select('*')
