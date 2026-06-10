@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { format, subMonths } from 'date-fns';
 import { toast } from 'sonner';
+import { logAuditEvent, AuditActions } from '../AuditService';
 import MonthPicker from '../ui/MonthPicker';
 import {
   Download,
@@ -152,6 +153,7 @@ export default function PayrollReports() {
     a.download = `Payroll_Report_${selectedPeriod}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    logAuditEvent({ action: AuditActions.EXPORT, entityType: 'PayrollReport', entityId: null, newValues: { format: 'csv', period: selectedPeriod } });
     toast.success(isRTL ? 'تم تصدير التقرير بنجاح' : 'Report exported successfully');
   };
 

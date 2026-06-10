@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
+import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { Card, CardContent } from '../components/ui/card';
@@ -157,6 +158,7 @@ export default function RolesPermissions() {
           user_email: user.email,
           details: `Updated role: ${form.name_en}`
         });
+        logAuditEvent({ action: AuditActions.ROLE_CHANGE, entityType: 'User', entityId: editingRole.id, newValues: { role: form.role_code } });
 
         toast.success(isRTL ? 'تم التحديث بنجاح' : 'Updated successfully');
       } else {
