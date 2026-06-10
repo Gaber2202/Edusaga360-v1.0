@@ -29,6 +29,18 @@ import { filesRouter } from './routes/files.js';
 
 dotenv.config();
 
+// ── Startup environment checks ────────────────────────────────────────────────
+const REQUIRED_ENV = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+const MISSING = REQUIRED_ENV.filter(k => !process.env[k]);
+if (MISSING.length) {
+  console.error(`[startup] FATAL: missing required env vars: ${MISSING.join(', ')}`);
+  process.exit(1);
+}
+if (!process.env.ADMIN_LINK_SECRET || process.env.ADMIN_LINK_SECRET === 'change-me-in-production') {
+  console.error('[startup] FATAL: ADMIN_LINK_SECRET is not set or is using the default value. Set a strong random secret in Railway env vars.');
+  process.exit(1);
+}
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
