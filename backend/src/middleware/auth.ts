@@ -64,10 +64,12 @@ export const PAYROLL_ROLES = ['admin', 'hr_head', 'hr_admin'];
 
 /**
  * Middleware factory — deny request with 403 if req.user.role is not in allowedRoles.
+ * Platform owners bypass role checks (they have full access).
  * Must run after authMiddleware (which populates req.user).
  */
 export function requireRole(allowedRoles: string[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    if (req.user?.is_platform_owner) return next();
     const role = req.user?.role;
     if (!role || !allowedRoles.includes(role)) {
       return res.status(403).json({ error: 'Insufficient permissions' });

@@ -21,7 +21,7 @@ import {
   DialogTitle,
 } from '../ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Upload, Loader2, UserPlus, FileText, Heart, BookOpen, CreditCard, X } from 'lucide-react';
+import { Upload, Loader2, UserPlus, FileText, CreditCard, X } from 'lucide-react';
 import { logAuditEvent, AuditActions } from '../AuditService';
 import { NotificationHelper } from '../notifications/NotificationHelper';
 import { toast } from 'sonner';
