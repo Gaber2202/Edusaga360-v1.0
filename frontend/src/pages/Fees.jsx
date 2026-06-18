@@ -18,7 +18,7 @@ import { supabase } from '../api/supabaseClient';
 // ─── API helpers ───────────────────────────────────────────────────────────────
 
 async function billingGet(path, token) {
-  const base = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  const base = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'https://edusaga-360-production.up.railway.app';
   const r = await fetch(`${base}/api/billing${path}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -27,7 +27,7 @@ async function billingGet(path, token) {
 }
 
 async function billingPost(path, body, token) {
-  const base = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  const base = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'https://edusaga-360-production.up.railway.app';
   const r = await fetch(`${base}/api/billing${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
