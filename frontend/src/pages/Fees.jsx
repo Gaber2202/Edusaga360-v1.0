@@ -18,8 +18,7 @@ import { supabase } from '../api/supabaseClient';
 // ─── API helpers ───────────────────────────────────────────────────────────────
 
 async function billingGet(path, token) {
-  const base = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-  const r = await fetch(`${base}/api/billing${path}`, {
+  const r = await fetch(`/api/billing${path}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!r.ok) throw new Error((await r.json()).error || r.statusText);
@@ -27,8 +26,7 @@ async function billingGet(path, token) {
 }
 
 async function billingPost(path, body, token) {
-  const base = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-  const r = await fetch(`${base}/api/billing${path}`, {
+  const r = await fetch(`/api/billing${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(body),
@@ -827,9 +825,13 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) 
     setLoading(true); setError(null);
     try {
       const body = {
-        ...form,
+        student_id: form.student_id,
+        academic_year: form.academic_year,
         installment_count: parseInt(form.installment_count),
         apply_discounts: true,
+        ...(form.due_date ? { due_date: form.due_date } : {}),
+        ...(form.notes_en ? { notes_en: form.notes_en } : {}),
+        ...(form.notes_ar ? { notes_ar: form.notes_ar } : {}),
         fee_lines: feeLines.map((l) => ({
           ...(l.category_id ? { category_id: l.category_id } : {}),
           description_en: l.description_en || 'Tuition Fee',

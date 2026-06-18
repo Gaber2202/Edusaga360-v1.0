@@ -46,7 +46,7 @@ const PORT = process.env.PORT || 3001;
 
 app.use(helmet());
 
-// CORS — explicit list only, no localhost fallback in production
+// CORS — explicit list + Vercel preview pattern
 const allowedOrigins = [
   'https://edusaga-360-production.vercel.app',
   'https://edusaga-360.vercel.app',
@@ -59,7 +59,17 @@ const allowedOrigins = [
   ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
 ].filter(Boolean);
 
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    // Allow all Vercel preview deployments for EduSaga 360
+    if (/^https:\/\/edusaga-360[a-z0-9-]*\.vercel\.app$/.test(origin)) return callback(null, true);
+    if (/^https:\/\/edusaga-360[a-z0-9-]*-edusaga360s-projects\.vercel\.app$/.test(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
 
 // Structured request logging — strips query strings to avoid leaking tokens
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms', {

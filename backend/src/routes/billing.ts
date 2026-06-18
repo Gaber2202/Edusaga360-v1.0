@@ -456,7 +456,8 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
 
     const tenant_id = await resolveTenantId(req);
     if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
-    const { student_id, academic_year, fee_lines, due_date, apply_discounts: shouldApplyDiscounts, installment_count, notes_ar, notes_en } = parsed.data;
+    const { student_id, academic_year, fee_lines, due_date: rawDueDate, apply_discounts: shouldApplyDiscounts, installment_count, notes_ar, notes_en } = parsed.data;
+    const due_date = rawDueDate && rawDueDate.trim() !== '' ? rawDueDate : null;
 
     // Verify student
     const { data: student, error: studentErr } = await supabase
@@ -560,39 +561,69 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       .single();
     const previous_hash = lastZatca?.invoice_hash ?? '';
 
-    // Insert invoice
+    // Insert invoice — try extended schema first, fall back to base columns
     const studentGrade = (student as Record<string, unknown>).grades
       ? ((student as Record<string, unknown>).grades as Record<string, string>)?.name_en ?? ''
       : '';
-    const { data: invoice, error: invoiceError } = await supabase
+    const notesText = [notes_en, notes_ar].filter(Boolean).join(' | ') || null;
+
+    const extendedPayload = {
+      tenant_id,
+      student_id,
+      invoice_number: invoiceNumber,
+      academic_year,
+      student_name: student.name_en,
+      grade: studentGrade,
+      date: today,
+      issue_date: today,
+      due_date: due_date ?? null,
+      subtotal,
+      discount_amount: totalDiscount,
+      vat_amount: vatAmount,
+      total_amount: totalAmount,
+      balance: totalAmount,
+      paid_amount: 0,
+      status: 'issued',
+      items: enrichedLines,
+      notes: notesText,
+    };
+
+    let invoice: Record<string, unknown>;
+    const { data: extData, error: extError } = await supabase
       .from('invoices')
-      .insert({
+      .insert(extendedPayload)
+      .select()
+      .single();
+
+    if (extError) {
+      // Extended columns may not exist yet — fall back to base schema
+      console.warn('[billing] Extended insert failed, using base schema:', extError.message);
+      const basePayload = {
         tenant_id,
         student_id,
         invoice_number: invoiceNumber,
-        academic_year,
-        student_name: student.name_en,
-        grade: studentGrade,
         date: today,
-        issue_date: today,
         due_date: due_date ?? null,
-        subtotal,
-        discount_amount: totalDiscount,
-        vat_amount: vatAmount,
         total_amount: totalAmount,
-        balance: totalAmount,
         paid_amount: 0,
         status: 'issued',
         items: enrichedLines,
-        notes: [notes_en, notes_ar].filter(Boolean).join(' | ') || null,
-      })
-      .select()
-      .single();
-    if (invoiceError) throw invoiceError;
+        notes: notesText,
+      };
+      const { data: baseData, error: baseError } = await supabase
+        .from('invoices')
+        .insert(basePayload)
+        .select()
+        .single();
+      if (baseError) throw baseError;
+      invoice = baseData as Record<string, unknown>;
+    } else {
+      invoice = extData as Record<string, unknown>;
+    }
 
-    // Record applied discounts
+    // Record applied discounts (best-effort)
     if (discountDetails.length > 0) {
-      await supabase.from('invoice_discounts').insert(
+      const { error: discErr } = await supabase.from('invoice_discounts').insert(
         discountDetails.map((d) => ({
           tenant_id,
           invoice_id: invoice.id,
@@ -603,11 +634,13 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
           amount: d.amount,
         })),
       );
+      if (discErr) console.warn('[billing] discount insert failed:', discErr.message);
     }
 
-    // Log ZATCA submission record (local)
+    // Log ZATCA submission record (best-effort)
     const submissionType = (tenant as Record<string, unknown>).customer_type === 'B2B' ? 'clearance' : 'reporting';
-    const { data: zatcaRecord } = await supabase
+    let zatcaRecord: Record<string, unknown> | null = null;
+    const { data: zatcaData, error: zatcaErr } = await supabase
       .from('zatca_submissions')
       .insert({
         tenant_id,
@@ -622,6 +655,11 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       })
       .select()
       .single();
+    if (zatcaErr) {
+      console.warn('[billing] ZATCA insert failed:', zatcaErr.message);
+    } else {
+      zatcaRecord = zatcaData;
+    }
 
     // Generate installment plan if requested
     let plan = null;
@@ -662,12 +700,16 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       }
     }
 
-    // Double-entry GL journal (best-effort)
-    await postJournal(tenant_id, req.user!.id, invoiceNumber, `Invoice ${invoiceNumber}`, [
-      { account_code: '12', debit: totalAmount, credit: 0, description: `A/R — ${invoiceNumber}` },
-      { account_code: '41', debit: 0, credit: sar(subtotal - totalDiscount), description: `Revenue — ${invoiceNumber}` },
-      { account_code: '24', debit: 0, credit: vatAmount, description: `VAT Payable (15%) — ${invoiceNumber}` },
-    ]);
+    // Double-entry GL journal (best-effort, non-fatal)
+    try {
+      await postJournal(tenant_id, req.user!.id, invoiceNumber, `Invoice ${invoiceNumber}`, [
+        { account_code: '12', debit: totalAmount, credit: 0, description: `A/R — ${invoiceNumber}` },
+        { account_code: '41', debit: 0, credit: sar(subtotal - totalDiscount), description: `Revenue — ${invoiceNumber}` },
+        { account_code: '24', debit: 0, credit: vatAmount, description: `VAT Payable (15%) — ${invoiceNumber}` },
+      ]);
+    } catch (journalErr) {
+      console.warn('[billing] GL journal post failed:', (journalErr as Error).message);
+    }
 
     return res.status(201).json({
       invoice,
