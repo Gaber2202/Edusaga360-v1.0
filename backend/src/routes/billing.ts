@@ -43,6 +43,23 @@ const ZATCA_PROD_URL = 'https://gw-fatoora.zatca.gov.sa/e-invoicing/core';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+/** Resolve tenant_id: use user's own tenant, or for platform owners accept query/header override */
+async function resolveTenantId(req: AuthenticatedRequest): Promise<string | null> {
+  if (req.user!.tenant_id) return req.user!.tenant_id;
+  // Platform owner — check query param or header
+  const override = (req.query.tenant_id as string) || (req.headers['x-tenant-id'] as string);
+  if (override) return override;
+  // Fallback: pick first active tenant
+  const { data } = await supabase
+    .from('tenants')
+    .select('id')
+    .eq('status', 'active')
+    .order('created_at')
+    .limit(1)
+    .single();
+  return data?.id ?? null;
+}
+
 /** Round to 2 decimal places (banker-safe for SAR) */
 function sar(n: number) {
   return Math.round(n * 100) / 100;
@@ -76,10 +93,23 @@ async function findAccount(tenant_id: string, codePrefix: string): Promise<strin
 async function getTenant(tenant_id: string): Promise<TenantData & Record<string, unknown>> {
   const { data } = await supabase
     .from('tenants')
-    .select('id, name, name_ar, vat_number, address, address_ar, phone, email, cr_number')
+    .select('id, name_en, name_ar, admin_email, city, school_type, settings')
     .eq('id', tenant_id)
     .single();
-  return (data as TenantData & Record<string, unknown>) ?? {};
+  if (!data) return {} as TenantData & Record<string, unknown>;
+  // Map to expected TenantData shape for ZATCA
+  const settings = (data.settings as Record<string, string>) ?? {};
+  return {
+    ...data,
+    name: data.name_en,
+    name_ar: data.name_ar ?? data.name_en,
+    vat_number: settings.vat_number ?? '',
+    address: settings.address ?? data.city ?? '',
+    address_ar: settings.address_ar ?? data.city ?? '',
+    phone: settings.phone ?? '',
+    email: data.admin_email ?? '',
+    cr_number: settings.cr_number ?? '',
+  } as TenantData & Record<string, unknown>;
 }
 
 /** Post double-entry journal (best-effort, non-fatal) */
@@ -143,19 +173,19 @@ async function applyDiscounts(
   // Fetch student record for sibling/scholarship checks
   const { data: student } = await supabase
     .from('students')
-    .select('id, scholarship_code, parent_id, grade')
+    .select('id, guardian_id, grade_id')
     .eq('id', student_id)
     .eq('tenant_id', tenant_id)
     .single();
 
-  // Count active siblings from same parent
+  // Count active siblings from same guardian
   let siblingRank = 1;
-  if (student?.parent_id) {
+  if (student?.guardian_id) {
     const { count } = await supabase
       .from('students')
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', tenant_id)
-      .eq('parent_id', student.parent_id)
+      .eq('guardian_id', student.guardian_id)
       .neq('id', student_id)
       .eq('status', 'active');
     siblingRank = (count ?? 0) + 1;
@@ -184,8 +214,8 @@ async function applyDiscounts(
       if (siblingRank < targetRank || siblingRank < minSiblings) continue;
     }
     if (rule.discount_type === 'scholarship') {
-      if (!student?.scholarship_code) continue;
-      if (cond.scholarship_code && cond.scholarship_code !== student.scholarship_code) continue;
+      // scholarship_code not currently stored on student; skip this rule type
+      continue;
     }
 
     // Calculate discount amount
@@ -222,7 +252,7 @@ async function applyDiscounts(
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
 const FeeLineSchema = z.object({
-  category_id: z.string().uuid(),
+  category_id: z.string().uuid().optional(),
   description_en: z.string().min(1),
   description_ar: z.string().min(1),
   amount: z.number().positive(),
@@ -283,10 +313,45 @@ const UpdateInstallmentSchema = z.object({
   amount: z.number().positive().optional(),
 });
 
+// ─── Students lookup (for invoice form) ──────────────────────────────────────
+
+billingRouter.get('/students', async (req: AuthenticatedRequest, res: Response) => {
+  const tenant_id = await resolveTenantId(req);
+  if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
+  const { search, limit: limitParam } = req.query as Record<string, string>;
+  const rowLimit = Math.min(parseInt(limitParam) || 50, 200);
+
+  let q = supabase
+    .from('students')
+    .select('id, name_en, name_ar, student_id, status, grades(name_en, name_ar)')
+    .eq('tenant_id', tenant_id)
+    .eq('status', 'active')
+    .order('name_en')
+    .limit(rowLimit);
+
+  if (search) {
+    q = q.or(`name_en.ilike.%${search}%,name_ar.ilike.%${search}%,student_id.ilike.%${search}%`);
+  }
+
+  const { data, error } = await q;
+  if (error) return res.status(500).json({ error: error.message });
+  // Flatten grade info for frontend convenience
+  const mapped = (data ?? []).map((s: Record<string, unknown>) => ({
+    id: s.id,
+    name_en: s.name_en,
+    name_ar: s.name_ar,
+    student_number: s.student_id || (s.id as string).slice(0, 8),
+    grade: (s.grades as Record<string, string> | null)?.name_en ?? '',
+    status: s.status,
+  }));
+  return res.json(mapped);
+});
+
 // ─── Fee Categories & Structures (read) ──────────────────────────────────────
 
 billingRouter.get('/fee-categories', async (req: AuthenticatedRequest, res: Response) => {
-  const tenant_id = req.user!.tenant_id!;
+  const tenant_id = await resolveTenantId(req);
+  if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
   const { data, error } = await supabase
     .from('fee_categories')
     .select('*')
@@ -294,7 +359,7 @@ billingRouter.get('/fee-categories', async (req: AuthenticatedRequest, res: Resp
     .eq('is_active', true)
     .order('code');
   if (error) return res.status(500).json({ error: error.message });
-  return res.json(data);
+  return res.json(data ?? []);
 });
 
 billingRouter.get('/fee-structures', async (req: AuthenticatedRequest, res: Response) => {
@@ -389,32 +454,35 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       return res.status(400).json({ error: 'Validation failed', errors: parsed.error.flatten() });
     }
 
-    const tenant_id = req.user!.tenant_id!;
+    const tenant_id = await resolveTenantId(req);
+    if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
     const { student_id, academic_year, fee_lines, due_date, apply_discounts: shouldApplyDiscounts, installment_count, notes_ar, notes_en } = parsed.data;
 
     // Verify student
     const { data: student, error: studentErr } = await supabase
       .from('students')
-      .select('id, name_en, name_ar, grade, parent_id')
+      .select('id, name_en, name_ar, grade_id, guardian_id, grades(name_en)')
       .eq('id', student_id)
       .eq('tenant_id', tenant_id)
       .single();
     if (studentErr || !student) return res.status(404).json({ error: 'Student not found' });
 
-    // Fetch fee categories for VAT treatment lookup
-    const categoryIds = [...new Set(fee_lines.map((l) => l.category_id))];
-    const { data: categories } = await supabase
-      .from('fee_categories')
-      .select('id, vat_treatment, name_ar, name_en, code')
-      .in('id', categoryIds)
-      .eq('tenant_id', tenant_id);
-
-    const catMap = Object.fromEntries((categories ?? []).map((c) => [c.id, c]));
+    // Fetch fee categories for VAT treatment lookup (only for lines that have category_id)
+    const categoryIds = [...new Set(fee_lines.map((l) => l.category_id).filter(Boolean))] as string[];
+    let catMap: Record<string, { id: string; vat_treatment: string; name_ar: string; name_en: string; code: string }> = {};
+    if (categoryIds.length > 0) {
+      const { data: categories } = await supabase
+        .from('fee_categories')
+        .select('id, vat_treatment, name_ar, name_en, code')
+        .in('id', categoryIds)
+        .eq('tenant_id', tenant_id);
+      catMap = Object.fromEntries((categories ?? []).map((c) => [c.id, c]));
+    }
 
     // Calculate per-line amounts with correct VAT treatment
     let subtotal = 0;
     const enrichedLines = fee_lines.map((line) => {
-      const cat = catMap[line.category_id];
+      const cat = line.category_id ? catMap[line.category_id] : undefined;
       const lineSubtotal = sar(line.amount * (line.quantity ?? 1));
       const vatTreatment: string = cat?.vat_treatment ?? 'standard';
       const vatRate = vatTreatment === 'standard' ? VAT_RATE_STANDARD : 0;
@@ -422,10 +490,10 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       const total = sar(lineSubtotal + vatAmount);
       subtotal = sar(subtotal + lineSubtotal);
       return {
-        category_id: line.category_id,
+        category_id: line.category_id ?? null,
         description_en: line.description_en,
         description_ar: line.description_ar,
-        category_code: cat?.code,
+        category_code: cat?.code ?? 'MANUAL',
         vat_treatment: vatTreatment,
         quantity: line.quantity ?? 1,
         unit_amount: line.amount,
@@ -493,6 +561,9 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
     const previous_hash = lastZatca?.invoice_hash ?? '';
 
     // Insert invoice
+    const studentGrade = (student as Record<string, unknown>).grades
+      ? ((student as Record<string, unknown>).grades as Record<string, string>)?.name_en ?? ''
+      : '';
     const { data: invoice, error: invoiceError } = await supabase
       .from('invoices')
       .insert({
@@ -500,19 +571,20 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
         student_id,
         invoice_number: invoiceNumber,
         academic_year,
+        student_name: student.name_en,
+        grade: studentGrade,
         date: today,
+        issue_date: today,
         due_date: due_date ?? null,
         subtotal,
         discount_amount: totalDiscount,
         vat_amount: vatAmount,
         total_amount: totalAmount,
+        balance: totalAmount,
         paid_amount: 0,
         status: 'issued',
         items: enrichedLines,
-        notes_ar: notes_ar ?? null,
-        notes_en: notes_en ?? null,
-        qr_code,
-        invoice_hash,
+        notes: [notes_en, notes_ar].filter(Boolean).join(' | ') || null,
       })
       .select()
       .single();
@@ -613,7 +685,8 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
 // ─── GET /api/billing/invoices — List invoices ────────────────────────────────
 
 billingRouter.get('/invoices', async (req: AuthenticatedRequest, res: Response) => {
-  const tenant_id = req.user!.tenant_id!;
+  const tenant_id = await resolveTenantId(req);
+  if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
   const page = Math.max(1, parseInt((req.query.page as string) ?? '1', 10));
   const limit = Math.min(100, Math.max(1, parseInt((req.query.limit as string) ?? '20', 10)));
   const { status, student_id, academic_year, from_date, to_date } = req.query as Record<string, string>;
@@ -990,9 +1063,9 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
     if (!feeStructures?.length) return res.status(400).json({ error: 'No fee structures found for the given criteria' });
 
     // Fetch students
-    let stuQuery = supabase.from('students').select('id, name_en, name_ar, grade, campus_id').eq('tenant_id', tenant_id).eq('status', 'active');
-    if (grade) stuQuery = stuQuery.eq('grade', grade);
-    if (campus_id) stuQuery = stuQuery.eq('campus_id', campus_id);
+    let stuQuery = supabase.from('students').select('id, name_en, name_ar, grade_id, branch_id, grades(name_en)').eq('tenant_id', tenant_id).eq('status', 'active');
+    if (grade) stuQuery = stuQuery.eq('grade_id', grade);
+    if (campus_id) stuQuery = stuQuery.eq('branch_id', campus_id);
     const { data: students } = await stuQuery;
 
     if (!students?.length) return res.status(400).json({ error: 'No active students found' });
@@ -1007,7 +1080,7 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
       .select('student_id')
       .eq('tenant_id', tenant_id)
       .eq('academic_year', academic_year)
-      .neq('invoice_type', 'credit_note');
+      .neq('status', 'cancelled');
     const existingIds = new Set((existing ?? []).map((e) => e.student_id));
 
     let created = 0;
@@ -1017,7 +1090,7 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
     for (const student of students) {
       if (existingIds.has(student.id)) { skipped++; continue; }
       try {
-        const relevant = feeStructures.filter((fs) => !fs.grade || fs.grade === student.grade);
+        const relevant = feeStructures.filter((fs) => !fs.grade || fs.grade === student.grade_id);
         if (!relevant.length) { skipped++; continue; }
 
         const feeLines = relevant.map((fs) => ({
@@ -1251,7 +1324,8 @@ billingRouter.post('/moyasar/webhook', async (req: AuthenticatedRequest, res: Re
 // ─── GET /api/billing/arrears — Aging buckets ────────────────────────────────
 
 billingRouter.get('/arrears', async (req: AuthenticatedRequest, res: Response) => {
-  const tenant_id = req.user!.tenant_id!;
+  const tenant_id = await resolveTenantId(req);
+  if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
   const { academic_year } = req.query as Record<string, string>;
   const today = new Date();
 
@@ -1281,7 +1355,8 @@ billingRouter.get('/arrears', async (req: AuthenticatedRequest, res: Response) =
 // ─── GET /api/billing/vat-report — ZATCA VAT summary ────────────────────────
 
 billingRouter.get('/vat-report', async (req: AuthenticatedRequest, res: Response) => {
-  const tenant_id = req.user!.tenant_id!;
+  const tenant_id = await resolveTenantId(req);
+  if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
   const { from_date, to_date } = req.query as Record<string, string>;
   if (!from_date || !to_date) return res.status(400).json({ error: 'from_date and to_date required' });
 

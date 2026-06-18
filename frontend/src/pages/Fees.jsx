@@ -146,7 +146,7 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
     }
   };
 
-  const canAction = ['admin', 'finance', 'accountant'].includes(userRole);
+  const canAction = ['admin', 'finance', 'accountant', 'creator'].includes(userRole);
 
   return (
     <div className="space-y-4">
@@ -798,17 +798,26 @@ function DashboardTab({ token, isRTL, tenantId }) {
 // ─── New Invoice dialog ────────────────────────────────────────────────────────
 
 function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) {
-  const [form, setForm] = useState({ student_id: '', academic_year: '', due_date: '', installment_count: '1', notes_en: '', notes_ar: '' });
+  const [form, setForm] = useState({ student_id: '', academic_year: '2025-2026', due_date: '', installment_count: '1', notes_en: '', notes_ar: '' });
   const [feeLines, setFeeLines] = useState([{ category_id: '', description_en: '', description_ar: '', amount: '' }]);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [studentSearch, setStudentSearch] = useState('');
+
+  const { data: students = [] } = useQuery({
+    queryKey: ['billing-students', tenantId, studentSearch],
+    queryFn: () => billingGet(`/students?search=${encodeURIComponent(studentSearch)}&limit=50`, token),
+    enabled: !!token && open,
+  });
 
   const { data: categories = [] } = useQuery({
     queryKey: ['fee-categories', tenantId],
     queryFn: () => billingGet('/fee-categories', token),
     enabled: !!token && open,
   });
+
+  const selectedStudent = students.find((s) => s.id === form.student_id);
 
   const addLine = () => setFeeLines((l) => [...l, { category_id: '', description_en: '', description_ar: '', amount: '' }]);
   const removeLine = (i) => setFeeLines((l) => l.filter((_, j) => j !== i));
@@ -821,7 +830,13 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) 
         ...form,
         installment_count: parseInt(form.installment_count),
         apply_discounts: true,
-        fee_lines: feeLines.map((l) => ({ ...l, amount: parseFloat(l.amount), quantity: 1 })),
+        fee_lines: feeLines.map((l) => ({
+          ...(l.category_id ? { category_id: l.category_id } : {}),
+          description_en: l.description_en || 'Tuition Fee',
+          description_ar: l.description_ar || 'رسوم دراسية',
+          amount: parseFloat(l.amount),
+          quantity: 1,
+        })),
       };
       const res = await billingPost('/invoices', body, token);
       setResult(res);
@@ -861,20 +876,56 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) 
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { key: 'student_id', label: isRTL ? 'معرّف الطالب (UUID)' : 'Student ID (UUID)', placeholder: 'xxxxxxxx-xxxx-…' },
-                { key: 'academic_year', label: isRTL ? 'السنة الأكاديمية' : 'Academic Year', placeholder: '2025-2026' },
-                { key: 'due_date', label: isRTL ? 'تاريخ الاستحقاق' : 'Due Date', type: 'date' },
-                { key: 'installment_count', label: isRTL ? 'عدد الأقساط' : 'Installments', type: 'number' },
-              ].map(({ key, label, placeholder, type }) => (
-                <div key={key}>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">{label}</label>
-                  <input type={type || 'text'} className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm" placeholder={placeholder} value={form[key]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} />
+            {/* Student selector */}
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">{isRTL ? 'الطالب' : 'Student'}</label>
+              <input
+                type="text"
+                className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm mb-1"
+                placeholder={isRTL ? 'ابحث باسم الطالب أو الرقم...' : 'Search by student name or number...'}
+                value={studentSearch}
+                onChange={(e) => setStudentSearch(e.target.value)}
+              />
+              {students.length > 0 && !form.student_id && (
+                <div className="border border-slate-200 rounded-md max-h-40 overflow-y-auto bg-white shadow-sm">
+                  {students.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className="w-full text-start px-3 py-2 text-sm hover:bg-blue-50 border-b border-slate-100 last:border-0"
+                      onClick={() => { setForm((f) => ({ ...f, student_id: s.id })); setStudentSearch(isRTL ? s.name_ar : s.name_en); }}
+                    >
+                      <span className="font-medium">{isRTL ? s.name_ar : s.name_en}</span>
+                      <span className="text-slate-400 ms-2 text-xs">{s.grade} • {s.student_number || s.id.slice(0, 8)}</span>
+                    </button>
+                  ))}
                 </div>
-              ))}
+              )}
+              {selectedStudent && (
+                <div className="flex items-center gap-2 mt-1 px-2 py-1.5 bg-blue-50 rounded-md text-xs text-blue-800">
+                  <span className="font-medium">{isRTL ? selectedStudent.name_ar : selectedStudent.name_en}</span>
+                  <span className="text-blue-500">({selectedStudent.grade})</span>
+                  <button type="button" className="ms-auto text-blue-400 hover:text-red-500" onClick={() => { setForm((f) => ({ ...f, student_id: '' })); setStudentSearch(''); }}>×</button>
+                </div>
+              )}
             </div>
 
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">{isRTL ? 'السنة الأكاديمية' : 'Academic Year'}</label>
+                <input type="text" className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm" placeholder="2025-2026" value={form.academic_year} onChange={(e) => setForm((f) => ({ ...f, academic_year: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">{isRTL ? 'تاريخ الاستحقاق' : 'Due Date'}</label>
+                <input type="date" className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm" value={form.due_date} onChange={(e) => setForm((f) => ({ ...f, due_date: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">{isRTL ? 'عدد الأقساط' : 'Installments'}</label>
+                <input type="number" min="1" max="12" className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm" value={form.installment_count} onChange={(e) => setForm((f) => ({ ...f, installment_count: e.target.value }))} />
+              </div>
+            </div>
+
+            {/* Fee lines */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-medium text-slate-700">{isRTL ? 'بنود الرسوم' : 'Fee Lines'}</label>
@@ -889,21 +940,21 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) 
                         updateLine(i, 'category_id', e.target.value);
                         if (cat) { updateLine(i, 'description_en', cat.name_en); updateLine(i, 'description_ar', cat.name_ar); }
                       }}>
-                        <option value="">{isRTL ? 'الفئة' : 'Category'}</option>
-                        {categories.map((c) => <option key={c.id} value={c.id}>{c.code}</option>)}
+                        <option value="">{isRTL ? 'يدوي' : 'Manual'}</option>
+                        {categories.map((c) => <option key={c.id} value={c.id}>{isRTL ? c.name_ar : (c.name_en || c.code)}</option>)}
                       </select>
                     </div>
                     <div className="col-span-3">
-                      <input type="text" className="w-full h-8 rounded-md border border-slate-200 px-2 text-xs" placeholder="Description EN" value={line.description_en} onChange={(e) => updateLine(i, 'description_en', e.target.value)} />
+                      <input type="text" className="w-full h-8 rounded-md border border-slate-200 px-2 text-xs" placeholder={isRTL ? 'الوصف EN' : 'Description EN'} value={line.description_en} onChange={(e) => updateLine(i, 'description_en', e.target.value)} />
                     </div>
                     <div className="col-span-3">
-                      <input type="text" className="w-full h-8 rounded-md border border-slate-200 px-2 text-xs" placeholder="وصف بالعربي" value={line.description_ar} onChange={(e) => updateLine(i, 'description_ar', e.target.value)} />
+                      <input type="text" className="w-full h-8 rounded-md border border-slate-200 px-2 text-xs" placeholder={isRTL ? 'الوصف AR' : 'وصف بالعربي'} value={line.description_ar} onChange={(e) => updateLine(i, 'description_ar', e.target.value)} />
                     </div>
                     <div className="col-span-2">
                       <input type="number" className="w-full h-8 rounded-md border border-slate-200 px-2 text-xs" placeholder="SAR" value={line.amount} onChange={(e) => updateLine(i, 'amount', e.target.value)} />
                     </div>
                     <div className="col-span-1 flex justify-center">
-                      {feeLines.length > 1 && <button onClick={() => removeLine(i)} className="text-slate-400 hover:text-red-500 text-lg leading-none">×</button>}
+                      {feeLines.length > 1 && <button type="button" onClick={() => removeLine(i)} className="text-slate-400 hover:text-red-500 text-lg leading-none">×</button>}
                     </div>
                   </div>
                 ))}
@@ -914,7 +965,7 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) 
 
             <DialogFooter>
               <Button variant="outline" onClick={onClose}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
-              <Button onClick={submit} disabled={loading || !form.student_id || !form.academic_year || feeLines.some((l) => !l.category_id || !l.amount)}>
+              <Button onClick={submit} disabled={loading || !form.student_id || !form.academic_year || feeLines.some((l) => !l.amount || (!l.category_id && !l.description_en))}>
                 {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : (isRTL ? 'إنشاء الفاتورة' : 'Create Invoice')}
               </Button>
             </DialogFooter>
@@ -937,7 +988,7 @@ export default function Fees() {
   const [tab, setTab] = useState('dashboard');
   const [showNewInvoice, setShowNewInvoice] = useState(false);
 
-  const canCreate = ['admin', 'finance', 'accountant'].includes(userRole);
+  const canCreate = ['admin', 'finance', 'accountant', 'creator'].includes(userRole);
 
   const tabs = [
     { id: 'dashboard', ar: 'لوحة التحكم', en: 'Dashboard', icon: BarChart3 },
