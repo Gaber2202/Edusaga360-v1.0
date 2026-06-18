@@ -21,7 +21,7 @@ function makeApp() {
   app.use(express.json());
   // Inject a fake authenticated user so the route doesn't crash on req.user
   app.use((req: express.Request & { user?: unknown }, _res, next) => {
-    req.user = { id: 'user-1', email: 'acc@school.sa', tenant_id: 'tenant-x' };
+    req.user = { id: 'user-1', email: 'acc@school.sa', tenant_id: 'tenant-x', role: 'admin', is_platform_owner: false };
     next();
   });
   app.use('/journal-entries', journalEntryRouter);

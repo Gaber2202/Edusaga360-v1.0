@@ -21,7 +21,7 @@ function buildUser(overrides: Record<string, unknown> = {}) {
   return {
     id: 'user-abc',
     email: 'admin@school.sa',
-    user_metadata: {
+    app_metadata: {
       tenant_id: 'tenant-xyz',
       role: 'admin',
       is_platform_owner: false,
