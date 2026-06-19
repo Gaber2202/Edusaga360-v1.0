@@ -49,7 +49,7 @@ export default function InvoiceDetails() {
   const { data: invoice, isLoading } = useQuery({
     queryKey: ['invoice', invoiceId, tenantId],
     queryFn: async () => {
-      const invoices = await tenantQuery('invoices').select('*').match(tenantFilter());
+      const { data: invoices = [] } = await tenantQuery('invoices').select('*').match(tenantFilter());
       return invoices.find(inv => inv.id === invoiceId);
     },
     enabled: !!invoiceId && hasTenantAccess
@@ -58,7 +58,7 @@ export default function InvoiceDetails() {
   const { data: _payments = [] } = useQuery({
     queryKey: ['payments', invoiceId, tenantId],
     queryFn: async () => {
-      const allPayments = await tenantQuery('payments').select('*').match(tenantFilter()).order('created_date', { ascending: false });
+      const { data: allPayments = [] } = await tenantQuery('payments').select('*').match(tenantFilter()).order('created_date', { ascending: false });
       return allPayments.filter(p => p.invoice_id === invoiceId);
     },
     enabled: !!invoiceId && hasTenantAccess
@@ -67,7 +67,7 @@ export default function InvoiceDetails() {
   const { data: paymentLogs = [] } = useQuery({
     queryKey: ['invoicePaymentLogs', invoiceId, tenantId],
     queryFn: async () => {
-      const allLogs = await tenantQuery('invoice_payment_logs').select('*').match(tenantFilter()).order('created_date', { ascending: false });
+      const { data: allLogs = [] } = await tenantQuery('invoice_payment_logs').select('*').match(tenantFilter()).order('created_date', { ascending: false });
       return allLogs.filter(log => log.invoice_id === invoiceId);
     },
     enabled: !!invoiceId && hasTenantAccess
@@ -77,7 +77,7 @@ export default function InvoiceDetails() {
     queryKey: ['guardian', invoice?.guardian_id, tenantId],
     queryFn: async () => {
       if (!invoice?.guardian_id) return null;
-      const guardians = await tenantQuery('guardians').select('*').match(tenantFilter());
+      const { data: guardians = [] } = await tenantQuery('guardians').select('*').match(tenantFilter());
       return guardians.find(g => g.id === invoice.guardian_id);
     },
     enabled: !!invoice?.guardian_id && hasTenantAccess

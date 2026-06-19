@@ -50,7 +50,7 @@ export default function StaffInbox() {
     setLoading(true);
     try {
       // Fetch messages addressed to this user's role
-      const data = await tenantQuery('messages').select('*').match(tenantFilter({
+      const { data = [] } = await tenantQuery('messages').select('*').match(tenantFilter({
         recipient_role: userRole
       }));
       setMessages(data.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));

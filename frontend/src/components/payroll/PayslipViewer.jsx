@@ -18,7 +18,7 @@ export default function PayslipViewer({ payslip, employee, branch, open, onClose
   const { data: securitySettings } = useQuery({
     queryKey: ['payslipSettings', tenantId],
     queryFn: async () => {
-      const all = await tenantQuery('payslip_settings').select('*').order();
+      const { data: all = [] } = await tenantQuery('payslip_settings').select('*').order();
       return all[0];
     },
   });

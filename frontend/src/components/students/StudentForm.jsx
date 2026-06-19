@@ -152,7 +152,7 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
   const { data: grades = [] } = useQuery({
     queryKey: ['grades', tenantId],
     queryFn: async () => {
-      const data = await tenantQuery('grades').select('*').match({ is_active: true });
+      const { data = [] } = await tenantQuery('grades').select('*').match({ is_active: true });
       return data.sort((a, b) => a.display_order - b.display_order);
     },
   });

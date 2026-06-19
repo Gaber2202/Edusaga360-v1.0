@@ -70,7 +70,7 @@ function TenantUsersTab({ tenant, isRTL }) {
       await callApi('/api/auth/invite', { email: inviteEmail.trim(), role: inviteRole === 'admin' ? 'admin' : 'user' });
       // Give the platform a moment to create the user record, then stamp tenant
       await new Promise(r => setTimeout(r, 1200));
-      const found = await tenantQuery('users').select('*').match({ email: inviteEmail.trim() });
+      const { data: found = [] } = await tenantQuery('users').select('*').match({ email: inviteEmail.trim() });
       if (found.length > 0) {
         await tenantQuery('users').update({
           user_role: inviteRole,

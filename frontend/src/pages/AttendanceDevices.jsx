@@ -202,7 +202,7 @@ export default function AttendanceDevices() {
           const punchTime = format(new Date(log.punch_time), 'HH:mm');
 
           // Check if attendance record exists for this day
-          const existingAttendance = await tenantQuery('employee_attendances').select('*').match({
+          const { data: existingAttendance = [] } = await tenantQuery('employee_attendances').select('*').match({
             employee_id: employee.id,
             date: punchDate
           });

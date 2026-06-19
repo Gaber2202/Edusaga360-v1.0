@@ -175,7 +175,7 @@ export default function TenantFormDialog({ open, onClose, tenant, isRTL }) {
       if (form.admin_email && created?.id) {
         try { await callApi('/api/auth/invite', { email: form.admin_email, role: 'admin' }); setInviteSent(true); } catch (_e) {}
         try {
-          const users = await tenantQuery('users').select('*').match({ email: form.admin_email });
+          const { data: users = [] } = await tenantQuery('users').select('*').match({ email: form.admin_email });
           if (users?.[0]) await tenantQuery('users').update({ tenant_id: created.id, tenant_code: form.tenant_code });
         } catch (_e) {}
       }

@@ -75,7 +75,8 @@ export default function PolicyEditor() {
     queryKey: ['policyVersions', policyId],
     queryFn: async () => {
       if (!policyId) return [];
-      return await tenantQuery('policy_versions').select('*').match({ policy_id: policyId });
+      const { data = [] } = await tenantQuery('policy_versions').select('*').match({ policy_id: policyId });
+      return data;
     },
     enabled: isCompareMode
   });

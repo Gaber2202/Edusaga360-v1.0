@@ -41,10 +41,11 @@ export default function AuditLogs() {
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['auditLogs', tenantId, isSuperAdmin],
     queryFn: async () => {
-      if (isSuperAdmin) {
-        return await tenantQuery('audit_logs').select('*').order('timestamp', { ascending: false }).limit(FETCH_LIMIT);
-      }
-      return await tenantQuery('audit_logs').select('*').match(tenantFilter()).order('timestamp', { ascending: false }).limit(FETCH_LIMIT);
+      const query = isSuperAdmin
+        ? tenantQuery('audit_logs').select('*').order('timestamp', { ascending: false }).limit(FETCH_LIMIT)
+        : tenantQuery('audit_logs').select('*').match(tenantFilter()).order('timestamp', { ascending: false }).limit(FETCH_LIMIT);
+      const { data = [] } = await query;
+      return data;
     },
     enabled: isSuperAdmin || hasTenantAccess,
   });

@@ -78,7 +78,7 @@ export default function PayRunsList({ onViewPayRun }) {
       // globally-selected branch, so query the server directly for the target branch
       // the user picked in the dialog (may differ from selectedBranchId).
       const targetBranchId = newPayRun.branch_id || 'all';
-      const existingForTarget = await tenantQuery('pay_runs').select('*').match({
+      const { data: existingForTarget = [] } = await tenantQuery('pay_runs').select('*').match({
         period: newPayRun.period,
         branch_id: targetBranchId,
       });

@@ -35,7 +35,7 @@ export default function GradeConfiguration() {
   const { data: grades = [], isLoading } = useQuery({
     queryKey: ['grades', tenantId],
     queryFn: async () => {
-      const data = await tenantQuery('grades').select('*').match(tenantFilter());
+      const { data = [] } = await tenantQuery('grades').select('*').match(tenantFilter());
       return data.sort((a, b) => a.display_order - b.display_order);
     },
     enabled: hasTenantAccess,

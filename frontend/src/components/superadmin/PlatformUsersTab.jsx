@@ -116,7 +116,7 @@ export default function PlatformUsersTab({ tenants = [] }) {
 
       // After invite, find the user record and stamp tenant info
       await new Promise(r => setTimeout(r, 1000)); // brief wait for user creation
-      const newUsers = await tenantQuery('users').select('*').match({ email: inviteEmail.trim() });
+      const { data: newUsers = [] } = await tenantQuery('users').select('*').match({ email: inviteEmail.trim() });
       if (newUsers.length > 0) {
         const selectedTenant = tenants.find(t => t.id === inviteTenant);
         await tenantQuery('users').update({

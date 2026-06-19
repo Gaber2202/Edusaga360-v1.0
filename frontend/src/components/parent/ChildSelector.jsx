@@ -20,7 +20,7 @@ export default function ChildSelector({ selectedChildId, onChildChange }) {
         const user = await supabase.auth.getUser().then(r => r.data?.user);
         
         // Fetch students where mother_email matches current user email
-        const studentList = await tenantQuery('students').select('*').match({
+        const { data: studentList = [] } = await tenantQuery('students').select('*').match({
           mother_email: user.email,
           tenant_id: tenant?.id
         });

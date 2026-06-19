@@ -47,7 +47,7 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
   const { data: grades = [] } = useQuery({
     queryKey: ['grades', tenantId],
     queryFn: async () => {
-      const data = await tenantQuery('grades').select('*').match({ is_active: true });
+      const { data = [] } = await tenantQuery('grades').select('*').match({ is_active: true });
       return data.sort((a, b) => a.display_order - b.display_order);
     },
   });
@@ -67,7 +67,7 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
       if (!selectedYearId || !selectedGradeId) return [];
 
       // Fetch all active fee structures for this year+grade (any branch)
-      const allByYearGrade = await tenantQuery('fee_structures').select('*').match({
+      const { data: allByYearGrade = [] } = await tenantQuery('fee_structures').select('*').match({
         academic_year_id: selectedYearId,
         grade_id: selectedGradeId,
         is_active: true

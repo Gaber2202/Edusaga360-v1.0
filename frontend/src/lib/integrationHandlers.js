@@ -19,7 +19,7 @@ import { registerHandler, namedHandler } from './integrationBus';
  * enrollment_confirmed → SIS: auto-create full student profile
  */
 registerHandler('enrollment_confirmed', namedHandler('SIS', async (payload) => {
-  const existing = await tenantQuery('students').select('*').match({ national_id: payload.national_id });
+  const { data: existing = [] } = await tenantQuery('students').select('*').match({ national_id: payload.national_id });
   if (existing.length > 0) return; // idempotent — don't duplicate
 
   await tenantQuery('students').insert({
@@ -45,7 +45,7 @@ registerHandler('enrollment_confirmed', namedHandler('SIS', async (payload) => {
  */
 registerHandler('enrollment_confirmed', namedHandler('Fees', async (payload) => {
   // Find applicable fee structure
-  const feeStructures = await tenantQuery('fee_structures').select('*').match({
+  const { data: feeStructures = [] } = await tenantQuery('fee_structures').select('*').match({
     branch_id: payload.branch_id,
     grade: payload.grade,
     is_active: true,
@@ -98,7 +98,7 @@ registerHandler('enrollment_confirmed', namedHandler('Communications', async (pa
  * enrollment_confirmed → Contracts: auto-populate and send for signing
  */
 registerHandler('enrollment_confirmed', namedHandler('Contracts', async (payload) => {
-  const templates = await tenantQuery('contract_templates').select('*').match({
+  const { data: templates = [] } = await tenantQuery('contract_templates').select('*').match({
     template_type: 'enrollment',
     is_active: true,
   });
@@ -290,7 +290,7 @@ registerHandler('clinic_visit_completed', namedHandler('Attendance', async (payl
   if (payload.outcome !== 'sent_home') return;
 
   const today = new Date().toISOString().split('T')[0];
-  const existing = await tenantQuery('student_attendances').select('*').match({
+  const { data: existing = [] } = await tenantQuery('student_attendances').select('*').match({
     student_id: payload.student_id,
     date: today,
   });
@@ -332,7 +332,7 @@ registerHandler('student_absent', namedHandler('Communications', async (payload)
  */
 registerHandler('monthly_timesheet_locked', namedHandler('Payroll', async (payload) => {
   // Create a PayrollInput seed record for the period if not exists
-  const existing = await tenantQuery('pay_runs').select('*').match({
+  const { data: existing = [] } = await tenantQuery('pay_runs').select('*').match({
     period: payload.period,
     branch_id: payload.branch_id,
     status: 'draft',
@@ -478,7 +478,7 @@ registerHandler('bus_delayed', namedHandler('Attendance', async (payload) => {
 
   const today = new Date().toISOString().split('T')[0];
   for (const studentId of payload.affected_student_ids) {
-    const records = await tenantQuery('student_attendances').select('*').match({
+    const { data: records = [] } = await tenantQuery('student_attendances').select('*').match({
       student_id: studentId,
       date: today,
       status: 'late',
@@ -755,7 +755,7 @@ registerHandler('training_completed', namedHandler('Communications', async (payl
 registerHandler('books_received', namedHandler('Library', async (payload) => {
   // Signal that books need to be cataloged — Library module polls for this
   for (const book of (payload.books || [])) {
-    const existing = await tenantQuery('library_books').select('*').match({ isbn: book.isbn });
+    const { data: existing = [] } = await tenantQuery('library_books').select('*').match({ isbn: book.isbn });
     if (existing.length > 0) {
       await tenantQuery('library_books').update({
         total_copies: (existing[0].total_copies || 1) + (book.quantity || 1),

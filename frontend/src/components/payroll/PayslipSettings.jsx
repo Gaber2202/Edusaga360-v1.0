@@ -46,7 +46,7 @@ export default function PayslipSettings({ open, onClose }) {
   const { data: existingSettings } = useQuery({
     queryKey: ['payslipSettings', tenantId],
     queryFn: async () => {
-      const all = await tenantQuery('payslip_settings').select('*').order();
+      const { data: all = [] } = await tenantQuery('payslip_settings').select('*').order();
       return all[0];
     },
   });

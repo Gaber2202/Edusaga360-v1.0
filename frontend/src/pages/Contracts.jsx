@@ -99,7 +99,7 @@ export default function Contracts() {
   const { data: grades = [] } = useQuery({
     queryKey: ['grades', tenantId],
     queryFn: async () => {
-      const data = await tenantQuery('grades').select('*').match(tenantFilter({ is_active: true }));
+      const { data = [] } = await tenantQuery('grades').select('*').match(tenantFilter({ is_active: true }));
       return data.sort((a, b) => a.display_order - b.display_order);
     },
     enabled: hasTenantAccess,
@@ -140,7 +140,7 @@ export default function Contracts() {
     // ── Priority B: Live lookup in FeeStructure by IDs ───────────────────────
     if (student.academic_year_id && student.grade_id && student.branch_id) {
       try {
-        const liveConfigs = await tenantQuery('fee_structures').select('*').match({
+        const { data: liveConfigs = [] } = await tenantQuery('fee_structures').select('*').match({
           academic_year_id: student.academic_year_id,
           grade_id: student.grade_id,
           branch_id: student.branch_id,
@@ -332,7 +332,7 @@ export default function Contracts() {
 
       // Refetch students to get fresh data
       await queryClient.invalidateQueries({ queryKey: ['students'] });
-      const updatedStudents = await tenantQuery('students').select('*').match({ status: 'active' });
+      const { data: updatedStudents = [] } = await tenantQuery('students').select('*').match({ status: 'active' });
       const updatedStudent = updatedStudents.find(s => s.id === student.id);
 
       toast.success(isRTL ? 'تم تطبيق الرسوم بنجاح ✓' : 'Fees applied successfully ✓');

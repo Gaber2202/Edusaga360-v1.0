@@ -21,7 +21,7 @@ export default function AcademicRecords({ student }) {
         setLoading(true);
 
         // Fetch attendance records
-        const attendanceData = await tenantQuery('attendances').select('*').match({
+        const { data: attendanceData = [] } = await tenantQuery('attendances').select('*').match({
           student_id: student.id,
           tenant_id: tenant?.id
         }).order('date', { ascending: false }).limit(50);
@@ -29,7 +29,7 @@ export default function AcademicRecords({ student }) {
 
         // Fetch student grades if entity exists
         try {
-          const gradeData = await tenantQuery('student_grades').select('*').match({
+          const { data: gradeData = [] } = await tenantQuery('student_grades').select('*').match({
             student_id: student.id,
             tenant_id: tenant?.id
           }).order('created_date', { ascending: false }).limit(20);
