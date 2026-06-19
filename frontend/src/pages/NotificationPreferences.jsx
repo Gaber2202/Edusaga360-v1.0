@@ -27,8 +27,8 @@ export default function NotificationPreferences() {
     
     setLoading(true);
     try {
-      const prefs = await tenantQuery('notification_preferences').select('*').match({ user_email: user.email });
-      
+      const { data: prefs = [] } = await tenantQuery('notification_preferences').select('*').match({ user_email: user.email });
+
       if (prefs && prefs.length > 0) {
         setPreferences(prefs[0]);
       } else {

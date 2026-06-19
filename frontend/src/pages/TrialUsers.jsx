@@ -33,7 +33,8 @@ export default function TrialUsers() {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      return await tenantQuery('users').select('*').order();
+      const { data = [] } = await tenantQuery('users').select('*').order();
+      return data;
     },
     enabled: isCreator()
   });
@@ -80,7 +81,7 @@ export default function TrialUsers() {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Update user with trial settings
-      const allUsers = await tenantQuery('users').select('*').order();
+      const { data: allUsers = [] } = await tenantQuery('users').select('*').order();
       const newUser = allUsers.find(u => u.email === form.email);
 
       if (newUser) {

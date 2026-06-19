@@ -52,7 +52,7 @@ export default function ESSPortal() {
   const { data: essSettings } = useQuery({
     queryKey: ['essSettings'],
     queryFn: async () => {
-      const settings = await tenantQuery('ess_settings').select('*').order();
+      const { data: settings = [] } = await tenantQuery('ess_settings').select('*').order();
       return settings[0] || { test_mode_enabled: false };
     },
   });

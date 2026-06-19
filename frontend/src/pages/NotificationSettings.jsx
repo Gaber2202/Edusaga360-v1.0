@@ -51,7 +51,7 @@ export default function NotificationSettings() {
   const fetchSettings = async () => {
     setLoading(true);
     try {
-      const allSettings = await tenantQuery('notification_settings').select('*').match(tenantFilter());
+      const { data: allSettings = [] } = await tenantQuery('notification_settings').select('*').match(tenantFilter());
       const settingsMap = {};
       
       for (const setting of DEFAULT_SETTINGS) {
@@ -70,7 +70,7 @@ export default function NotificationSettings() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const allSettings = await tenantQuery('notification_settings').select('*').match(tenantFilter());
+      const { data: allSettings = [] } = await tenantQuery('notification_settings').select('*').match(tenantFilter());
       
       for (const setting of DEFAULT_SETTINGS) {
         const existing = allSettings.find(s => s.setting_key === setting.key);

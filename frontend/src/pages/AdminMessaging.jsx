@@ -45,14 +45,14 @@ export default function AdminMessaging() {
     const fetchStudents = async () => {
       try {
         setLoading(true);
-        const studentList = await tenantQuery('students').select('*').match({
+        const { data: studentList = [] } = await tenantQuery('students').select('*').match({
           tenant_id: tenant?.id,
           status: 'active'
         }).order('created_date', { ascending: false }).limit(100);
 
         const enrichedStudents = await Promise.all(
           studentList.map(async (student) => {
-            const guardians = await tenantQuery('guardians').select('*').match({
+            const { data: guardians = [] } = await tenantQuery('guardians').select('*').match({
               student_id: student.id,
               tenant_id: tenant?.id
             });

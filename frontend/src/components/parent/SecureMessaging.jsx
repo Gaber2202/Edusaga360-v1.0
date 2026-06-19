@@ -19,7 +19,7 @@ export default function SecureMessaging({ student }) {
     const fetchMessages = async () => {
       try {
         setLoading(true);
-        const msgs = await tenantQuery('messages').select('*').match({
+        const { data: msgs = [] } = await tenantQuery('messages').select('*').match({
           student_id: student.id,
           tenant_id: tenant?.id
         }).order('created_at', { ascending: false }).limit(50);

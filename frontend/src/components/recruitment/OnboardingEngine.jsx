@@ -41,7 +41,7 @@ export async function triggerOnboardingForEmployee(employee, applicant) {
   // Pull published HR policies from library to auto-assign
   let policyAcks = [];
   try {
-    const publishedPolicies = await tenantQuery('hr_policys').select('*').match({ status: 'published' });
+    const { data: publishedPolicies = [] } = await tenantQuery('hr_policys').select('*').match({ status: 'published' });
     policyAcks = (publishedPolicies || []).map(p => ({
       id: `pol_${p.id}`,
       policy_id: p.id,

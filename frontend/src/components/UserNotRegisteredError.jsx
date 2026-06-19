@@ -21,7 +21,7 @@ export default function UserNotRegisteredError() {
       const user = await supabase.auth.getUser().then(r => r.data?.user);
       if (!user?.email) { window.location.replace('/register'); return; }
 
-      const regs = await tenantQuery('registration_requests').select('*').match({ email: user.email });
+      const { data: regs = [] } = await tenantQuery('registration_requests').select('*').match({ email: user.email });
       if (regs.length > 0) {
         regs.sort((a, b) => new Date(b.submitted_at || b.created_date) - new Date(a.submitted_at || a.created_date));
         const latest = regs[0];

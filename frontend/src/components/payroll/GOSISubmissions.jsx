@@ -49,10 +49,11 @@ export default function GOSISubmissions() {
       // Get payroll data for the period (any status)
       let payrollData = [];
       try {
-        payrollData = await tenantQuery('payroll_inputs').select('*').match({ period: formData.period });
+        const { data = [] } = await tenantQuery('payroll_inputs').select('*').match({ period: formData.period });
+        payrollData = data;
       } catch (_e) {
         // If filter fails, try listing all and filtering client-side
-        const all = await tenantQuery('payroll_inputs').select('*').order();
+        const { data: all = [] } = await tenantQuery('payroll_inputs').select('*').order();
         payrollData = all.filter(p => p.period === formData.period);
       }
 

@@ -21,7 +21,7 @@ export default function ESSSettings() {
   const { data: essSettings, isLoading } = useQuery({
     queryKey: ['essSettings', tenantId],
     queryFn: async () => {
-      const settings = await tenantQuery('ess_settings').select('*').match(tenantFilter());
+      const { data: settings = [] } = await tenantQuery('ess_settings').select('*').match(tenantFilter());
       return settings[0] || { test_mode_enabled: false, test_employee_id: '', test_employee_name: '' };
     },
     enabled: hasTenantAccess,

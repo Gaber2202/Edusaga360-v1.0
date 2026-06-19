@@ -31,7 +31,7 @@ export default function TicketDetails() {
   const { data: ticket, isLoading } = useQuery({
     queryKey: ['ticket', ticketId],
     queryFn: async () => {
-      const tickets = await tenantQuery('service_tickets').select('*').match({ id: ticketId });
+      const { data: tickets = [] } = await tenantQuery('service_tickets').select('*').match({ id: ticketId });
       return tickets[0];
     },
     enabled: !!ticketId

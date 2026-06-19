@@ -21,8 +21,8 @@ export default function AdminRequestsTab({ isRTL }) {
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ['all-requests'],
     queryFn: async () => {
-      const reqs = await tenantQuery('tenant_requests').select('*').order();
-      return reqs || [];
+      const { data: reqs = [] } = await tenantQuery('tenant_requests').select('*').order();
+      return reqs;
     },
   });
 
@@ -39,7 +39,7 @@ export default function AdminRequestsTab({ isRTL }) {
       // If approving users request, update tenant max_users
       const request = requests.find(r => r.id === requestId);
       if (approved && request?.request_type === 'additional_users' && request?.tenant_id) {
-        const tenant = await tenantQuery('tenants').select('*').match({ id: request.tenant_id });
+        const { data: tenant = [] } = await tenantQuery('tenants').select('*').match({ id: request.tenant_id });
         if (tenant && tenant.length > 0) {
           const t = tenant[0];
           await tenantQuery('tenants').update({
@@ -50,7 +50,7 @@ export default function AdminRequestsTab({ isRTL }) {
 
       // If approving plan upgrade, update tenant plan
       if (approved && request?.request_type === 'plan_upgrade' && request?.tenant_id) {
-        const tenant = await tenantQuery('tenants').select('*').match({ id: request.tenant_id });
+        const { data: tenant = [] } = await tenantQuery('tenants').select('*').match({ id: request.tenant_id });
         if (tenant && tenant.length > 0) {
           const t = tenant[0];
           await tenantQuery('tenants').update({

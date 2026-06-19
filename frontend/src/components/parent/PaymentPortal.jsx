@@ -47,7 +47,7 @@ export default function PaymentPortal({ student }) {
       .select('id, invoice_number, academic_year, total_amount, paid_amount, status, due_date, notes')
       .match({ student_id: student.id, tenant_id: tenant.id })
       .order('created_at', { ascending: false })
-      .then(data => setInvoices(data ?? []))
+      .then(({ data }) => setInvoices(data ?? []))
       .catch(err => console.error('Error fetching invoices:', err))
       .finally(() => setLoading(false));
   }, [student?.id, tenant?.id]);
