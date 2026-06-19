@@ -978,6 +978,109 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) 
   );
 }
 
+// ─── Bulk invoice generation dialog (backend-driven, ZATCA + GL aware) ──────────
+
+function BulkGenerateDialog({ open, onClose, token, isRTL, onSuccess }) {
+  const [criteria, setCriteria] = useState({ academic_year: '', grade: '', campus_id: '', due_date: '' });
+  const [preview, setPreview] = useState(null);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const reset = () => { setPreview(null); setResult(null); setError(null); };
+
+  const run = async (dry_run) => {
+    setLoading(true); setError(null);
+    try {
+      const body = { academic_year: criteria.academic_year, dry_run };
+      if (criteria.grade) body.grade = criteria.grade;
+      if (criteria.campus_id) body.campus_id = criteria.campus_id;
+      if (criteria.due_date) body.due_date = criteria.due_date;
+      const res = await billingPost('/bulk-invoices', body, token);
+      if (dry_run) { setPreview(res); setResult(null); }
+      else { setResult(res); onSuccess?.(); }
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); reset(); } }}>
+      <DialogContent className="max-w-lg" dir={isRTL ? 'rtl' : 'ltr'}>
+        <DialogHeader><DialogTitle>{isRTL ? 'إنشاء فواتير جماعية' : 'Bulk Invoice Generation'}</DialogTitle></DialogHeader>
+
+        {result ? (
+          <div className="space-y-3">
+            <div className="rounded-lg bg-green-50 border border-green-200 p-4 text-center">
+              <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              <p className="font-semibold text-green-800">{isRTL ? 'اكتمل الإنشاء الجماعي' : 'Bulk run complete'}</p>
+            </div>
+            <div className="grid grid-cols-3 gap-3 text-center text-sm">
+              <div><div className="text-slate-500 text-xs">{isRTL ? 'تم الإنشاء' : 'Created'}</div><div className="font-bold text-green-700">{result.created}</div></div>
+              <div><div className="text-slate-500 text-xs">{isRTL ? 'تم التخطي' : 'Skipped'}</div><div className="font-bold text-amber-600">{result.skipped}</div></div>
+              <div><div className="text-slate-500 text-xs">{isRTL ? 'فشل' : 'Failed'}</div><div className="font-bold text-red-600">{result.errors?.length ?? 0}</div></div>
+            </div>
+            {result.errors?.length > 0 && (
+              <div className="rounded-lg bg-red-50 border border-red-100 p-3 text-xs text-red-700 max-h-32 overflow-auto">
+                {result.errors.map((e, i) => <div key={i}>{e}</div>)}
+              </div>
+            )}
+            <Button className="w-full" onClick={() => { onClose(); reset(); }}>{isRTL ? 'إغلاق' : 'Close'}</Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">{isRTL ? 'السنة الأكاديمية' : 'Academic Year'} *</label>
+                <input type="text" className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm" placeholder="2025-2026"
+                  value={criteria.academic_year} onChange={(e) => { setCriteria((c) => ({ ...c, academic_year: e.target.value })); setPreview(null); }} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">{isRTL ? 'الصف (اختياري)' : 'Grade (optional)'}</label>
+                <input type="text" className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm" placeholder={isRTL ? 'كل الصفوف' : 'All grades'}
+                  value={criteria.grade} onChange={(e) => { setCriteria((c) => ({ ...c, grade: e.target.value })); setPreview(null); }} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">{isRTL ? 'تاريخ الاستحقاق (اختياري)' : 'Due Date (optional)'}</label>
+                <input type="date" className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm"
+                  value={criteria.due_date} onChange={(e) => setCriteria((c) => ({ ...c, due_date: e.target.value }))} />
+              </div>
+            </div>
+
+            {preview && (
+              <div className="rounded-lg border border-slate-200 p-3 space-y-2">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'سيتم الإنشاء' : 'Will generate'}</span><span className="font-bold text-blue-700">{preview.estimated_invoices}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'القيمة المتوقعة' : 'Est. total'}</span><span className="font-bold text-emerald-700">{sarFmt(preview.estimated_total)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'مفوتر مسبقاً' : 'Already invoiced'}</span><span className="font-medium text-slate-700">{preview.already_invoiced}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'بدون رسوم' : 'No fees'}</span><span className="font-medium text-slate-700">{preview.skipped_no_fees}</span></div>
+                </div>
+                {preview.estimated_invoices === 0 && (
+                  <p className="text-xs text-amber-600">{isRTL ? 'لا يوجد طلاب مؤهلون للإنشاء بهذه المعايير.' : 'No eligible students to invoice for these criteria.'}</p>
+                )}
+              </div>
+            )}
+
+            {error && <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">{error}</div>}
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => run(true)} disabled={loading || !criteria.academic_year}>
+                {loading && !preview ? <RefreshCw className="w-4 h-4 animate-spin" /> : (isRTL ? 'معاينة' : 'Preview')}
+              </Button>
+              <Button onClick={() => run(false)} disabled={loading || !criteria.academic_year || !preview || preview.estimated_invoices === 0}
+                className="bg-blue-600 hover:bg-blue-700 text-white">
+                {loading && preview ? <RefreshCw className="w-4 h-4 animate-spin" /> : (isRTL ? `إنشاء ${preview?.estimated_invoices ?? ''} فاتورة` : `Generate${preview ? ` ${preview.estimated_invoices}` : ''}`)}
+              </Button>
+            </DialogFooter>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Main Fees page ────────────────────────────────────────────────────────────
 
 export default function Fees() {
@@ -989,6 +1092,7 @@ export default function Fees() {
 
   const [tab, setTab] = useState('dashboard');
   const [showNewInvoice, setShowNewInvoice] = useState(false);
+  const [showBulk, setShowBulk] = useState(false);
 
   const canCreate = ['admin', 'finance', 'accountant', 'creator'].includes(userRole);
 
@@ -1018,6 +1122,9 @@ export default function Fees() {
         </div>
         {canCreate && (
           <div className="flex items-center gap-2">
+            <Button onClick={() => setShowBulk(true)} variant="outline" className="h-9 gap-1.5">
+              <FileText className="w-4 h-4" />{isRTL ? 'فواتير جماعية' : 'Bulk Generate'}
+            </Button>
             <Button onClick={() => setShowNewInvoice(true)} className="bg-blue-600 hover:bg-blue-700 text-white h-9 gap-1.5">
               <Plus className="w-4 h-4" />{isRTL ? 'فاتورة جديدة' : 'New Invoice'}
             </Button>
@@ -1057,6 +1164,14 @@ export default function Fees() {
         open={showNewInvoice}
         onClose={() => setShowNewInvoice(false)}
         onSuccess={() => { qc.invalidateQueries({ queryKey: ['billing-invoices'] }); qc.invalidateQueries({ queryKey: ['billing-vat-dash'] }); }}
+        {...sharedProps}
+      />
+
+      {/* Bulk generation dialog */}
+      <BulkGenerateDialog
+        open={showBulk}
+        onClose={() => setShowBulk(false)}
+        onSuccess={() => { qc.invalidateQueries({ queryKey: ['billing-invoices'] }); qc.invalidateQueries({ queryKey: ['billing-arrears'] }); qc.invalidateQueries({ queryKey: ['billing-vat-dash'] }); }}
         {...sharedProps}
       />
     </div>
