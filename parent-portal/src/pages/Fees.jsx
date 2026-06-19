@@ -4,6 +4,7 @@ import { supabase, fetchData } from '../lib/supabase';
 import { useAuth } from '../lib/AuthContext';
 import { downloadInvoicePdf } from '../lib/api';
 import { invoiceBalance, displayStatus, STATUS_LABELS, STATUS_STYLES } from '../lib/invoiceStatus';
+import { useLanguage } from '../lib/LanguageContext';
 import { Card, CardContent } from '../components/ui/card';
 import { CreditCard, Download, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -12,6 +13,7 @@ const sar = (n) => `SAR ${(Number(n) || 0).toLocaleString('en-SA', { minimumFrac
 
 export default function Fees() {
   const { user } = useAuth();
+  const { t, lang } = useLanguage();
   const tenantId = user?.tenant_id;
   const linkedIds = user?.linked_student_ids || [];
   const [downloading, setDownloading] = useState(null);
@@ -52,7 +54,7 @@ export default function Fees() {
     try {
       await downloadInvoicePdf(inv.id, `invoice-${inv.invoice_number || inv.id}.pdf`);
     } catch (e) {
-      toast.error(e.message || 'Could not download the invoice');
+      toast.error(/authoriz/i.test(e?.message || '') ? t('notAuthorizedInvoice') : t('downloadError'));
     } finally {
       setDownloading(null);
     }
@@ -61,10 +63,10 @@ export default function Fees() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold text-slate-800">Fees &amp; Billing</h1>
+        <h1 className="text-2xl font-bold text-slate-800">{t('feesBilling')}</h1>
         {invoices.length > 0 && (
           <div className="text-end">
-            <p className="text-xs text-slate-500">Total Outstanding</p>
+            <p className="text-xs text-slate-500">{t('totalOutstanding')}</p>
             <p className={`text-lg font-bold ${totalOutstanding > 0 ? 'text-red-600' : 'text-green-600'}`}>{sar(totalOutstanding)}</p>
           </div>
         )}
@@ -76,16 +78,16 @@ export default function Fees() {
         <Card>
           <CardContent className="py-12 text-center">
             <AlertCircle className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500">No students are linked to your account yet.</p>
-            <p className="text-xs text-slate-400 mt-1">Contact the school to link your child to your account.</p>
+            <p className="text-slate-500">{t('noStudentsLinkedAccount')}</p>
+            <p className="text-xs text-slate-400 mt-1">{t('contactSchoolLink')}</p>
           </CardContent>
         </Card>
       ) : sorted.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <CreditCard className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500">No invoices yet.</p>
-            <p className="text-xs text-slate-400 mt-1">Invoices issued by the school will appear here.</p>
+            <p className="text-slate-500">{t('noInvoices')}</p>
+            <p className="text-xs text-slate-400 mt-1">{t('invoicesWillAppear')}</p>
           </CardContent>
         </Card>
       ) : (
@@ -94,19 +96,19 @@ export default function Fees() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">Invoice #</th>
-                  <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">Student</th>
-                  <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">Due</th>
-                  <th className="px-4 py-3 text-end text-xs font-semibold text-slate-500 uppercase">Total</th>
-                  <th className="px-4 py-3 text-end text-xs font-semibold text-slate-500 uppercase">Balance</th>
-                  <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-end text-xs font-semibold text-slate-500 uppercase">Invoice</th>
+                  <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">{t('invoiceNo')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">{t('student')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">{t('due')}</th>
+                  <th className="px-4 py-3 text-end text-xs font-semibold text-slate-500 uppercase">{t('total')}</th>
+                  <th className="px-4 py-3 text-end text-xs font-semibold text-slate-500 uppercase">{t('balance')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">{t('status')}</th>
+                  <th className="px-4 py-3 text-end text-xs font-semibold text-slate-500 uppercase">{t('invoice')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {sorted.map((inv) => {
                   const st = displayStatus(inv);
-                  const label = STATUS_LABELS[st]?.en || st;
+                  const label = STATUS_LABELS[st]?.[lang] || STATUS_LABELS[st]?.en || st;
                   return (
                     <tr key={inv.id} className="hover:bg-slate-50">
                       <td className="px-4 py-3 font-mono text-xs text-emerald-700 font-semibold">{inv.invoice_number || inv.id.slice(0, 8)}</td>
