@@ -1112,11 +1112,10 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
 
     if (!students?.length) return res.status(400).json({ error: 'No active students found' });
 
-    if (dry_run) {
-      return res.json({ dry_run: true, student_count: students.length, fee_structures: feeStructures.length, estimated_invoices: students.length });
-    }
-
-    // Skip students who already have invoices for this year
+    // Determine which students already have a (non-cancelled) invoice for this
+    // academic year. The same rule drives both the preview and the real run, so
+    // the preview count matches what will actually be created and re-running is
+    // idempotent (no silent duplicates).
     const { data: existing } = await supabase
       .from('invoices')
       .select('student_id')
@@ -1125,6 +1124,50 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
       .neq('status', 'cancelled');
     const existingIds = new Set((existing ?? []).map((e) => e.student_id));
 
+    // Relevant fee structures + gross total (incl. 15% VAT on standard
+    // categories, mirroring createInvoiceForStudent) for a single student.
+    const planForStudent = (student: { grade_id?: string | null }) => {
+      const relevant = (feeStructures ?? []).filter((fs) => !fs.grade || fs.grade === student.grade_id);
+      let gross = 0;
+      for (const fs of relevant) {
+        const lineSubtotal = sar(fs.amount ?? 0);
+        const treatment = (fs.fee_categories as Record<string, unknown>)?.vat_treatment ?? 'standard';
+        const vatRate = treatment === 'standard' ? VAT_RATE_STANDARD : 0;
+        gross = sar(gross + lineSubtotal + sar(lineSubtotal * vatRate));
+      }
+      return { relevant, gross };
+    };
+
+    if (dry_run) {
+      let eligible = 0;
+      let alreadyInvoiced = 0;
+      let skippedNoFees = 0;
+      let estimatedTotal = 0;
+      const recipients: { student_id: string; name_en?: string; name_ar?: string; amount: number }[] = [];
+
+      for (const student of students) {
+        if (existingIds.has(student.id)) { alreadyInvoiced++; continue; }
+        const { relevant, gross } = planForStudent(student);
+        if (!relevant.length) { skippedNoFees++; continue; }
+        eligible++;
+        estimatedTotal = sar(estimatedTotal + gross);
+        if (recipients.length < 20) {
+          recipients.push({ student_id: student.id, name_en: student.name_en, name_ar: student.name_ar, amount: gross });
+        }
+      }
+
+      return res.json({
+        dry_run: true,
+        student_count: students.length,
+        fee_structures: feeStructures.length,
+        estimated_invoices: eligible,
+        already_invoiced: alreadyInvoiced,
+        skipped_no_fees: skippedNoFees,
+        estimated_total: estimatedTotal,
+        recipients,
+      });
+    }
+
     let created = 0;
     let skipped = 0;
     const errors: string[] = [];
@@ -1132,7 +1175,7 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
     for (const student of students) {
       if (existingIds.has(student.id)) { skipped++; continue; }
       try {
-        const relevant = feeStructures.filter((fs) => !fs.grade || fs.grade === student.grade_id);
+        const { relevant } = planForStudent(student);
         if (!relevant.length) { skipped++; continue; }
 
         const feeLines = relevant.map((fs) => ({

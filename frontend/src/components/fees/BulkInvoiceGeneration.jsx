@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { Loader2, Users, FileText, X } from 'lucide-react';
 import { logAuditEvent } from '../AuditService';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
+import { planBulkInvoices } from '../../lib/bulkInvoicePlan';
 
 export default function BulkInvoiceGeneration({ open, onClose }) {
   const { t, isRTL } = useLanguage();
@@ -73,6 +74,29 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
   const { data: academicYears = [] } = useQuery({
     queryKey: ['academicYears', tenantId],
     queryFn: () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true })),
+  });
+
+  // Existing invoices for the chosen year — drives idempotency so a re-run never
+  // silently duplicates an invoice a student already has.
+  const { data: existingInvoices = [] } = useQuery({
+    queryKey: ['invoices', 'byYear', tenantId, criteria.academic_year],
+    queryFn: () => fetchData(
+      tenantQuery('invoices').select('student_id, academic_year, status').match({ academic_year: criteria.academic_year })
+    ),
+    enabled: !!criteria.academic_year,
+  });
+
+  const alreadyInvoicedIds = existingInvoices
+    .filter((inv) => inv.status !== 'cancelled')
+    .map((inv) => inv.student_id);
+
+  // Single source of truth for who gets invoiced and the run total — shared by
+  // the preview and the actual generation so they can never disagree.
+  const plan = planBulkInvoices({
+    students: selectedStudents,
+    contracts,
+    excludedIds: excludedStudents,
+    alreadyInvoicedIds,
   });
 
   const filteredStudents = students.filter(student => {
@@ -144,11 +168,14 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
       if (batchErr) throw batchErr;
       const batch = batchRow;
 
-      // Generate invoices for each student
-      for (const student of selectedStudents) {
-        const contract = contracts.find(c => c.student_id === student.id && c.status === 'active');
-        if (!contract) continue;
+      // Only create invoices for eligible students — this skips operator-excluded
+      // students, those already invoiced for this academic year (idempotent
+      // re-run), and any without an active contract. Per-student failures are
+      // counted, not fatal, so one bad row doesn't abort the whole batch.
+      const eligibleRows = plan.rows.filter((r) => r.status === 'eligible');
+      let failed = 0;
 
+      for (const { student, contract } of eligibleRows) {
         const today = new Date().toISOString().split('T')[0];
         const invoiceData = {
           invoice_number: `INV-${Date.now()}-${student.id.slice(0, 6)}`,
@@ -172,13 +199,17 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
           batch_number: batchNumber
         };
 
-        totalAmount += invoiceData.subtotal;
-        totalVat += invoiceData.vat_amount;
-        totalDiscount += invoiceData.discount_amount;
-
-        const { data: inv, error: invErr } = await tenantQuery('invoices').insert(invoiceData).select('id').single();
-        if (invErr) throw invErr;
-        createdInvoices.push(inv);
+        try {
+          const { data: inv, error: invErr } = await tenantQuery('invoices').insert(invoiceData).select('id').single();
+          if (invErr) throw invErr;
+          totalAmount += invoiceData.subtotal;
+          totalVat += invoiceData.vat_amount;
+          totalDiscount += invoiceData.discount_amount;
+          createdInvoices.push(inv);
+        } catch (e) {
+          console.error('Invoice creation failed for student', student.id, e);
+          failed++;
+        }
       }
 
       // Update batch totals
@@ -199,7 +230,12 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
       });
 
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      toast.success(isRTL ? `تم إنشاء ${createdInvoices.length} فاتورة` : `${createdInvoices.length} invoices created`);
+      const skippedCount = plan.excluded + plan.alreadyInvoiced + plan.skippedNoContract;
+      toast.success(
+        isRTL
+          ? `تم إنشاء ${createdInvoices.length} فاتورة • تم تخطي ${skippedCount} • فشل ${failed}`
+          : `${createdInvoices.length} created • ${skippedCount} skipped • ${failed} failed`
+      );
       onClose();
       setStep(1);
       setCriteria({
@@ -328,20 +364,29 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
                 <CardTitle className="text-base">{isRTL ? 'ملخص الدفعة' : 'Batch Summary'}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
                   <div>
-                    <p className="text-sm text-slate-500">{isRTL ? 'عدد الطلاب' : 'Students'}</p>
+                    <p className="text-sm text-slate-500">{isRTL ? 'إجمالي المطابقين' : 'Matched'}</p>
                     <p className="text-2xl font-bold">{selectedStudents.length}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">{isRTL ? 'المستبعدين' : 'Excluded'}</p>
-                    <p className="text-2xl font-bold text-red-600">{excludedStudents.length}</p>
+                    <p className="text-sm text-slate-500">{isRTL ? 'الفواتير المتوقعة' : 'Will Generate'}</p>
+                    <p className="text-2xl font-bold text-blue-600">{plan.eligible}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">{isRTL ? 'الفواتير المتوقعة' : 'Expected Invoices'}</p>
-                    <p className="text-2xl font-bold text-blue-600">{selectedStudents.length - excludedStudents.length}</p>
+                    <p className="text-sm text-slate-500">{isRTL ? 'سيتم تخطيهم' : 'Skipped'}</p>
+                    <p className="text-2xl font-bold text-amber-600">{plan.excluded + plan.alreadyInvoiced + plan.skippedNoContract}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">{isRTL ? 'القيمة المتوقعة (شاملة الضريبة)' : 'Est. Total (incl. VAT)'}</p>
+                    <p className="text-2xl font-bold text-emerald-600">{plan.estimatedTotal.toLocaleString()} {t('sar')}</p>
                   </div>
                 </div>
+                <p className="text-xs text-slate-500 mb-4">
+                  {isRTL
+                    ? `مفوتر مسبقاً: ${plan.alreadyInvoiced} • بدون عقد: ${plan.skippedNoContract} • مستبعد: ${plan.excluded}`
+                    : `Already invoiced: ${plan.alreadyInvoiced} • No contract: ${plan.skippedNoContract} • Excluded: ${plan.excluded}`}
+                </p>
                 <div className="space-y-3">
                   <div>
                     <Label>{isRTL ? 'اسم الدفعة' : 'Batch Name'}</Label>
@@ -380,6 +425,7 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
                   {selectedStudents.map(student => {
                     const contract = contracts.find(c => c.student_id === student.id && c.status === 'active');
                     const isExcluded = excludedStudents.includes(student.id);
+                    const alreadyInv = alreadyInvoicedIds.includes(student.id);
                     const tuitionFee = contract?.total_fees || 0;
                     const total = tuitionFee * 1.15 - (contract?.discount_amount || 0);
                     
@@ -404,10 +450,12 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
                         <TableCell className="font-medium">{tuitionFee.toLocaleString()} {t('sar')}</TableCell>
                         <TableCell className="font-semibold text-slate-900">{total.toLocaleString()} {t('sar')}</TableCell>
                         <TableCell>
-                          {!contract ? (
-                            <Badge className="bg-amber-100 text-amber-700">{isRTL ? 'لا يوجد عقد' : 'No Contract'}</Badge>
-                          ) : isExcluded ? (
+                          {isExcluded ? (
                             <Badge className="bg-red-100 text-red-700">{isRTL ? 'مستبعد' : 'Excluded'}</Badge>
+                          ) : alreadyInv ? (
+                            <Badge className="bg-blue-100 text-blue-700">{isRTL ? 'مفوتر مسبقاً' : 'Already Invoiced'}</Badge>
+                          ) : !contract ? (
+                            <Badge className="bg-amber-100 text-amber-700">{isRTL ? 'لا يوجد عقد' : 'No Contract'}</Badge>
                           ) : (
                             <Badge className="bg-emerald-100 text-emerald-700">{isRTL ? 'مؤهل' : 'Eligible'}</Badge>
                           )}
@@ -447,7 +495,7 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
             {isRTL ? 'إلغاء' : 'Cancel'}
           </Button>
           {step === 2 && (
-            <Button onClick={handleGenerate} disabled={generating || selectedStudents.length - excludedStudents.length === 0}>
+            <Button onClick={handleGenerate} disabled={generating || plan.eligible === 0}>
               {generating && <Loader2 className="w-4 h-4 animate-spin me-2" />}
               <FileText className="w-4 h-4 me-2" />
               {isRTL ? 'إنشاء الفواتير' : 'Generate Invoices'}
