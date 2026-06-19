@@ -24,6 +24,7 @@ import { marketplaceRouter } from './routes/marketplace.js';
 import { tenantUsersRouter } from './routes/tenantUsers.js';
 import { adminRouter } from './routes/admin.js';
 import { billingRouter } from './routes/billing.js';
+import { chequeRouter } from './routes/cheques.js';
 import { parentsRouter } from './routes/parents.js';
 import { filesRouter } from './routes/files.js';
 
@@ -111,6 +112,7 @@ app.use('/api/tenant-requests', apiLimiter, authMiddleware, tenantMiddleware, te
 app.use('/api/invoices',        apiLimiter, authMiddleware, tenantMiddleware, invoiceRouter);
 app.use('/api/fees',            apiLimiter, authMiddleware, tenantMiddleware, feesRouter);
 app.use('/api/billing',         apiLimiter, authMiddleware, tenantMiddleware, billingRouter);
+app.use('/api/cheques',         apiLimiter, authMiddleware, tenantMiddleware, chequeRouter);
 app.use('/api/payroll',             apiLimiter, authMiddleware, tenantMiddleware, payrollRouter);
 app.use('/api/payroll',             apiLimiter, authMiddleware, tenantMiddleware, payslipPdfRouter);
 app.use('/api/attendance-policy',   apiLimiter, authMiddleware, tenantMiddleware, attendancePolicyRouter);

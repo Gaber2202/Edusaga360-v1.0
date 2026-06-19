@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
+import { useLanguage } from '../lib/LanguageContext';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import {
   DropdownMenu,
@@ -10,21 +11,22 @@ import {
 } from './ui/dropdown-menu';
 import {
   LayoutDashboard, GraduationCap, ClipboardCheck, CreditCard,
-  MessageSquare, FileText, Bell, LogOut,
+  MessageSquare, FileText, Bell, LogOut, Globe,
 } from 'lucide-react';
 
 const navigation = [
-  { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
-  { name: 'Student Progress', icon: GraduationCap, path: '/progress' },
-  { name: 'Attendance', icon: ClipboardCheck, path: '/attendance' },
-  { name: 'Fees & Billing', icon: CreditCard, path: '/fees' },
-  { name: 'Announcements', icon: Bell, path: '/announcements' },
-  { name: 'Homework', icon: FileText, path: '/homework' },
-  { name: 'Messages', icon: MessageSquare, path: '/messages' },
+  { key: 'dashboard', icon: LayoutDashboard, path: '/' },
+  { key: 'studentProgress', icon: GraduationCap, path: '/progress' },
+  { key: 'attendance', icon: ClipboardCheck, path: '/attendance' },
+  { key: 'feesBilling', icon: CreditCard, path: '/fees' },
+  { key: 'announcements', icon: Bell, path: '/announcements' },
+  { key: 'homework', icon: FileText, path: '/homework' },
+  { key: 'messages', icon: MessageSquare, path: '/messages' },
 ];
 
 export default function ParentLayout({ children }) {
   const { user, logout } = useAuth();
+  const { t, isRTL, toggle } = useLanguage();
   const location = useLocation();
 
   const displayName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.email || '';
@@ -38,31 +40,42 @@ export default function ParentLayout({ children }) {
             <img src="/edusaga-logo.svg" alt="EduSaga 360" className="w-8 h-8" />
             <div>
               <h1 className="text-sm font-bold text-slate-800">EduSaga 360</h1>
-              <p className="text-[10px] text-slate-400">Parent Portal</p>
+              <p className="text-[10px] text-slate-400">{t('parentPortal')}</p>
             </div>
           </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 hover:bg-slate-100 rounded-lg px-2 py-1">
-                <Avatar className="w-8 h-8">
-                  <AvatarFallback className="bg-emerald-600 text-white text-xs">{initials}</AvatarFallback>
-                </Avatar>
-                <span className="text-sm text-slate-700 hidden sm:inline">{displayName}</span>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={logout} className="text-red-600">
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={toggle}
+              className="flex items-center gap-1.5 hover:bg-slate-100 rounded-lg px-2.5 py-1.5 text-sm text-slate-600"
+              aria-label="Toggle language"
+            >
+              <Globe className="w-4 h-4" />
+              <span>{isRTL ? t('switchToEnglish') : t('switchToArabic')}</span>
+            </button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 hover:bg-slate-100 rounded-lg px-2 py-1">
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback className="bg-emerald-600 text-white text-xs">{initials}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm text-slate-700 hidden sm:inline">{displayName}</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={logout} className="text-red-600">
+                  <LogOut className="w-4 h-4 me-2" />
+                  {t('signOut')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
 
       <div className="flex">
-        <nav className="hidden md:block w-56 bg-white border-r border-slate-200 min-h-[calc(100vh-64px)] p-3 space-y-1">
+        <nav className="hidden md:block w-56 bg-white border-e border-slate-200 min-h-[calc(100vh-64px)] p-3 space-y-1">
           {navigation.map(item => {
             const isActive = location.pathname === item.path;
             return (
@@ -76,7 +89,7 @@ export default function ParentLayout({ children }) {
                 }`}
               >
                 <item.icon className={`w-5 h-5 ${isActive ? 'text-emerald-600' : 'text-slate-400'}`} />
-                {item.name}
+                {t(item.key)}
               </Link>
             );
           })}
@@ -97,7 +110,7 @@ export default function ParentLayout({ children }) {
               className={`flex flex-col items-center gap-0.5 px-2 py-1 ${isActive ? 'text-emerald-600' : 'text-slate-400'}`}
             >
               <item.icon className="w-5 h-5" />
-              <span className="text-[10px]">{item.name}</span>
+              <span className="text-[10px]">{t(item.key)}</span>
             </Link>
           );
         })}

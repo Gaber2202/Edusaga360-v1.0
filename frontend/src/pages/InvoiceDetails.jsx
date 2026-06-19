@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { Button } from '../components/ui/button';
@@ -229,6 +229,43 @@ export default function InvoiceDetails() {
     );
     
     toast.success(isRTL ? 'تم تحميل الفاتورة' : 'Invoice downloaded');
+  };
+
+  // Primary download: server-generated, ZATCA-compliant PDF (bilingual EN/AR
+  // with the Fatoora TLV QR code embedded). Falls back to the lightweight
+  // client-side PDF if the backend is unreachable, so a document is always
+  // produced.
+  const handleDownloadPDF = async () => {
+    if (!invoice) return;
+    toast.loading(isRTL ? 'جاري إنشاء الفاتورة...' : 'Generating invoice...');
+    try {
+      const blob = await callApi(
+        `/api/invoices/${invoice.id}/download-pdf`,
+        null,
+        { method: 'GET', responseType: 'blob' }
+      );
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `zatca-invoice-${invoice.invoice_number}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.dismiss();
+      toast.success(isRTL ? 'تم تحميل الفاتورة (متوافقة مع هيئة الزكاة)' : 'ZATCA-compliant invoice downloaded');
+
+      logAuditEvent(
+        AuditActions.EXPORT,
+        'Invoice',
+        invoice.id,
+        { action: 'download_zatca_pdf', invoice_number: invoice.invoice_number },
+        user
+      );
+    } catch (err) {
+      console.error('ZATCA PDF download failed, falling back to client-side PDF:', err);
+      toast.dismiss();
+      // Graceful degradation — still hand the user a printable document offline.
+      generatePDF();
+    }
   };
 
   const handlePrint = () => {
@@ -527,7 +564,7 @@ EduSaga 360
         </Button>
 
         <div className="flex gap-2">
-          <Button variant="outline" onClick={generatePDF} className="gap-2">
+          <Button variant="outline" onClick={handleDownloadPDF} className="gap-2">
             <Download className="w-4 h-4" />
             {isRTL ? 'تحميل' : 'Download'}
           </Button>
