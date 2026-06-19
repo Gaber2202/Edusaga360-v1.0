@@ -29,6 +29,7 @@ import { createJournalEntry } from '../../api/journalEntry';
 import { useTenant } from '../TenantContext';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import { getVatRate } from '../../lib/vatRate';
+import { resolveStudentFees } from '../../lib/resolveStudentFees';
 
 // Fee types are now loaded from the database via FeeType entity
 
@@ -75,6 +76,25 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
     queryKey: ['feeTypes', tenantId],
     queryFn: () => fetchData(tenantQuery('fee_types').select('*').match({ is_active: true })),
   });
+
+  const { data: academicYears = [] } = useQuery({
+    queryKey: ['academicYears', tenantId],
+    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true })),
+  });
+
+  // Default a NEW invoice to the active academic year (instead of a hardcoded
+  // year) once the list loads — without clobbering an explicit user choice.
+  useEffect(() => {
+    if (invoice || academicYears.length === 0) return;
+    const active = academicYears.find((y) => y.is_active) || academicYears[0];
+    const label = active?.year_label || active?.year_code;
+    if (!label) return;
+    setFormData((prev) =>
+      prev.academic_year && prev.academic_year !== '2024-2025'
+        ? prev
+        : { ...prev, academic_year: label }
+    );
+  }, [academicYears, invoice, open]);
 
   // CRITICAL FIX: Properly load invoice data when editing
   useEffect(() => {
@@ -127,22 +147,26 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
         grade: student.grade
       }));
 
-      // Auto-populate fees based on grade
-      const gradeFees = feeStructures.filter(f => 
-        f.grade === student.grade || f.grade === 'all'
-      );
-      if (gradeFees.length > 0) {
-        const items = gradeFees.map(fee => ({
-          description: fee.description_ar || fee.description_en,
-          description_ar: fee.description_ar,
-          amount: fee.amount,
-          fee_type_id: fee.fee_type_id,
-          fee_type_name_ar: fee.fee_type_name_ar,
-          fee_type_name_en: fee.fee_type_name_en
-        }));
+      // Auto-populate fees based on grade + the selected academic year (P1.3).
+      const items = resolveStudentFees({ feeStructures, student, academicYear: formData.academic_year });
+      if (items.length > 0) {
         setFormData(prev => ({ ...prev, items }));
       }
     }
+  };
+
+  // The academic year drives which fee structure applies — re-resolve the line
+  // items for the selected student whenever it changes (P1.3).
+  const handleAcademicYearChange = (value) => {
+    setFormData(prev => {
+      const next = { ...prev, academic_year: value };
+      const student = students.find(s => s.id === prev.student_id);
+      if (student) {
+        const items = resolveStudentFees({ feeStructures, student, academicYear: value });
+        if (items.length > 0) next.items = items;
+      }
+      return next;
+    });
   };
 
   const handleChange = (field, value) => {
@@ -414,6 +438,25 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
               <div className="space-y-2">
                 <Label>{t('grade')}</Label>
                 <Input value={t(formData.grade)} disabled />
+              </div>
+              <div className="space-y-2">
+                <Label>{isRTL ? 'العام الدراسي' : 'Academic Year'}</Label>
+                <Select
+                  value={formData.academic_year}
+                  onValueChange={handleAcademicYearChange}
+                  disabled={!!invoice}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={isRTL ? 'اختر العام الدراسي' : 'Select academic year'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {academicYears.map((y) => (
+                      <SelectItem key={y.id} value={y.year_label || y.year_code}>
+                        {y.year_label || y.year_code}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>{isRTL ? 'تاريخ الإصدار' : 'Issue Date'}</Label>
