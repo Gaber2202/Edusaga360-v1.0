@@ -61,6 +61,7 @@ import Branches from './pages/Branches';
 import CMS from './pages/CMS';
 import CRM from './pages/CRM';
 import ChartOfAccounts from './pages/ChartOfAccounts';
+import ChequeManagement from './pages/ChequeManagement';
 import Collections from './pages/Collections';
 import Communications from './pages/Communications';
 import Companies from './pages/Companies';
@@ -153,6 +154,7 @@ export const PAGES = {
     "CMS": CMS,
     "CRM": CRM,
     "ChartOfAccounts": ChartOfAccounts,
+    "ChequeManagement": ChequeManagement,
     "Collections": Collections,
     "Communications": Communications,
     "Companies": Companies,
