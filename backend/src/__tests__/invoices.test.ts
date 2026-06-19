@@ -25,6 +25,7 @@ const TENANT_ID = 'tenant-A';
 const INVOICE_ID = '22222222-2222-2222-2222-222222222222';
 const FINANCE_USER = { id: 'u1', email: 'fin@school.sa', tenant_id: TENANT_ID, role: 'admin', is_platform_owner: false };
 const TEACHER_USER = { id: 'u2', email: 'teacher@school.sa', tenant_id: TENANT_ID, role: 'teacher', is_platform_owner: false };
+const PARENT_USER = { id: 'auth-parent-1', email: 'parent@home.sa', tenant_id: TENANT_ID, role: 'parent', is_platform_owner: false };
 
 const TENANT_ROW = {
   id: TENANT_ID,
@@ -92,6 +93,31 @@ describe('GET /invoices/:id/download-pdf', () => {
     const res = await request(makeApp()).get(`/invoices/${INVOICE_ID}/download-pdf`);
     expect(res.status).toBe(404);
     expect(res.body.message).toMatch(/not found/i);
+  });
+
+  it('lets a parent download an invoice for their own linked child', async () => {
+    db.setResolver((ctx: QueryContext) => {
+      if (ctx.table === 'tenants') return { data: TENANT_ROW };
+      if (ctx.table === 'invoices') return { data: INVOICE_ROW }; // student_id STU-1
+      if (ctx.table === 'users') return { data: { linked_student_ids: ['STU-1'] } };
+      return { data: null };
+    });
+
+    const res = await request(makeApp(PARENT_USER)).get(`/invoices/${INVOICE_ID}/download-pdf`).buffer(true);
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/pdf');
+  });
+
+  it("blocks a parent from downloading another family's invoice (403)", async () => {
+    db.setResolver((ctx: QueryContext) => {
+      if (ctx.table === 'tenants') return { data: TENANT_ROW };
+      if (ctx.table === 'invoices') return { data: INVOICE_ROW }; // student_id STU-1
+      if (ctx.table === 'users') return { data: { linked_student_ids: ['STU-OTHER'] } };
+      return { data: null };
+    });
+
+    const res = await request(makeApp(PARENT_USER)).get(`/invoices/${INVOICE_ID}/download-pdf`);
+    expect(res.status).toBe(403);
   });
 });
 

@@ -151,6 +151,21 @@ invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Re
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
+    // Parents may only download invoices for their own linked children. (RLS
+    // scopes to the tenant; this narrows a parent to their students so one
+    // family cannot fetch another family's invoice by guessing its id.)
+    if (req.user!.role === 'parent') {
+      const { data: parent } = await supabase
+        .from('users')
+        .select('linked_student_ids')
+        .eq('auth_id', req.user!.id)
+        .single();
+      const linked: string[] = (parent?.linked_student_ids as string[] | null) ?? [];
+      if (!invoiceRow.student_id || !linked.includes(invoiceRow.student_id)) {
+        return res.status(403).json({ message: 'Not authorized to access this invoice' });
+      }
+    }
+
     const tenant = await getTenantData(tenantId);
 
     const invoice: InvoiceData = {
