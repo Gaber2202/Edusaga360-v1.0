@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, callApi } from '../api/supabaseClient';
+import { createPageUrl } from '../utils';
+import { filterSettingsCatalog } from '../lib/settingsSearch';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { useTenant } from '../components/TenantContext';
@@ -9,7 +12,6 @@ import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 
 
 
@@ -24,13 +26,25 @@ import {
 } from '../components/ui/table';
 import PageHeader from '../components/ui/PageHeader';
 import StatusBadge from '../components/ui/StatusBadge';
-import { 
-  Settings as SettingsIcon, 
+import {
   Users,
   Globe,
   Building,
   Save,
-  Upload
+  Upload,
+  Search,
+  ArrowLeft,
+  ChevronRight,
+  GraduationCap,
+  DollarSign,
+  Banknote,
+  CreditCard,
+  BookOpen,
+  CalendarRange,
+  ShieldCheck,
+  Bell,
+  BellRing,
+  UserCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -57,6 +71,48 @@ function SectionHeader({ icon: Icon, title, description, color = 'slate' }) {
     </div>
   );
 }
+
+/* ─── Settings hub catalog (grouped, searchable) ─── */
+const SETTINGS_CATALOG = [
+  {
+    key: 'general', titleEn: 'General', titleAr: 'عام',
+    items: [
+      { key: 'profile', section: 'profile', icon: UserCircle, titleEn: 'My Profile', titleAr: 'الملف الشخصي', descEn: 'Your name and display preferences', descAr: 'اسمك وتفضيلات العرض' },
+      { key: 'school', section: 'school', icon: Building, titleEn: 'School Information', titleAr: 'معلومات المدرسة', descEn: 'School profile, logo and contact details', descAr: 'بيانات المدرسة والشعار ومعلومات الاتصال' },
+      { key: 'language', section: 'language', icon: Globe, titleEn: 'Language & Localization', titleAr: 'اللغة والتعريب', descEn: 'Interface language (English / Arabic)', descAr: 'لغة الواجهة (إنجليزي / عربي)' },
+    ],
+  },
+  {
+    key: 'academic', titleEn: 'Academic', titleAr: 'الأكاديمية',
+    items: [
+      { key: 'grades', page: 'GradeConfiguration', icon: GraduationCap, titleEn: 'Grades & Year Setup', titleAr: 'إعداد الصفوف والسنوات', descEn: 'Grade levels and academic structure', descAr: 'المراحل الدراسية والهيكل الأكاديمي' },
+      { key: 'fees', page: 'TuitionFeesConfiguration', icon: DollarSign, titleEn: 'Fee Structures', titleAr: 'هياكل الرسوم', descEn: 'Tuition and fees per grade and academic year', descAr: 'الرسوم الدراسية لكل صف وعام دراسي' },
+    ],
+  },
+  {
+    key: 'finance', titleEn: 'Finance', titleAr: 'المالية',
+    items: [
+      { key: 'banks', page: 'BankManagement', icon: Banknote, titleEn: 'Payment Methods & Banks', titleAr: 'طرق الدفع والبنوك', descEn: 'Bank accounts and payment options', descAr: 'الحسابات البنكية وخيارات الدفع' },
+      { key: 'cheques', page: 'ChequeManagement', icon: CreditCard, titleEn: 'Cheque Management', titleAr: 'إدارة الشيكات', descEn: 'Post-dated cheque lifecycle', descAr: 'دورة حياة الشيكات الآجلة' },
+      { key: 'coa', page: 'ChartOfAccounts', icon: BookOpen, titleEn: 'Chart of Accounts', titleAr: 'دليل الحسابات', descEn: 'General ledger account structure', descAr: 'هيكل حسابات الأستاذ العام' },
+      { key: 'fiscal', page: 'FiscalPeriods', icon: CalendarRange, titleEn: 'Fiscal Periods', titleAr: 'الفترات المالية', descEn: 'Accounting periods and period close', descAr: 'الفترات المحاسبية وإقفالها' },
+    ],
+  },
+  {
+    key: 'access', titleEn: 'People & Access', titleAr: 'الأشخاص والصلاحيات',
+    items: [
+      { key: 'users', section: 'users', icon: Users, titleEn: 'Users', titleAr: 'المستخدمون', descEn: 'Active users in your account', descAr: 'المستخدمون النشطون في حسابك' },
+      { key: 'roles', page: 'RolesPermissions', icon: ShieldCheck, titleEn: 'Roles & Permissions', titleAr: 'الأدوار والصلاحيات', descEn: 'Access control by role', descAr: 'التحكم في الوصول حسب الدور' },
+    ],
+  },
+  {
+    key: 'notifications', titleEn: 'Notifications', titleAr: 'الإشعارات',
+    items: [
+      { key: 'notif-settings', page: 'NotificationSettings', icon: Bell, titleEn: 'Notification Settings', titleAr: 'إعدادات الإشعارات', descEn: 'School-wide notification rules', descAr: 'قواعد الإشعارات على مستوى المدرسة' },
+      { key: 'notif-prefs', page: 'NotificationPreferences', icon: BellRing, titleEn: 'Notification Preferences', titleAr: 'تفضيلات الإشعارات', descEn: 'Your personal notification channels', descAr: 'قنوات الإشعارات الشخصية' },
+    ],
+  },
+];
 
 /* ─── My Profile Section ─── */
 function MyProfileSection({ isRTL, user }) {
@@ -306,7 +362,9 @@ export default function Settings() {
     enabled: userRole === 'admin' && hasTenantAccess,
   });
 
-
+  const [search, setSearch] = useState('');
+  const [openSection, setOpenSection] = useState(null);
+  const filteredCatalog = useMemo(() => filterSettingsCatalog(SETTINGS_CATALOG, search), [search]);
 
   if (userRole !== 'admin') {
     return (
@@ -358,93 +416,59 @@ export default function Settings() {
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title={t('settings')}
-        subtitle={isRTL ? 'إعدادات النظام' : 'System Settings'}
-      />
+  const inlineSection = (
+    <div className="space-y-4">
+      <Button variant="ghost" size="sm" className="gap-2 -ms-2" onClick={() => setOpenSection(null)}>
+        <ArrowLeft className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
+        {isRTL ? 'كل الإعدادات' : 'All settings'}
+      </Button>
 
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="bg-white border border-slate-200">
-          <TabsTrigger value="general" className="gap-2 data-[state=active]:bg-slate-900 data-[state=active]:text-white">
-            <SettingsIcon className="w-4 h-4" />
-            {isRTL ? 'عام' : 'General'}
-          </TabsTrigger>
-          <TabsTrigger value="users" className="gap-2 data-[state=active]:bg-slate-900 data-[state=active]:text-white">
-            <Users className="w-4 h-4" />
-            {isRTL ? 'المستخدمين' : 'Users'}
-          </TabsTrigger>
-        </TabsList>
+      {openSection === 'language' && (
+        <Card className="p-6">
+          <SectionHeader icon={Globe} color="indigo" title={isRTL ? 'اللغة' : 'Language'} description={isRTL ? 'لغة عرض الواجهة' : 'Interface display language'} />
+          <div className="mt-5 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-sm text-slate-600">
+              {isRTL ? 'اللغة الحالية' : 'Current Language'}:{' '}
+              <span className="font-semibold text-slate-900">{language === 'ar' ? 'العربية' : 'English'}</span>
+            </p>
+            <Button onClick={toggleLanguage} variant="outline" size="sm" className="gap-2">
+              <Globe className="w-3.5 h-3.5" />
+              {language === 'ar' ? 'Switch to English' : 'التحويل للعربية'}
+            </Button>
+          </div>
+        </Card>
+      )}
 
-        {/* General Settings */}
-        <TabsContent value="general" className="space-y-6">
-          <Card className="p-6">
-            <SectionHeader
-              icon={Globe}
-              color="indigo"
-              title={isRTL ? 'اللغة' : 'Language'}
-              description={isRTL ? 'لغة عرض الواجهة' : 'Interface display language'}
-            />
-            <div className="mt-5 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <p className="text-sm text-slate-600">
-                {isRTL ? 'اللغة الحالية' : 'Current Language'}:{' '}
-                <span className="font-semibold text-slate-900">{language === 'ar' ? 'العربية' : 'English'}</span>
-              </p>
-              <Button onClick={toggleLanguage} variant="outline" size="sm" className="gap-2">
-                <Globe className="w-3.5 h-3.5" />
-                {language === 'ar' ? 'Switch to English' : 'التحويل للعربية'}
-              </Button>
+      {openSection === 'profile' && (
+        <Card className="p-6">
+          <SectionHeader icon={Users} color="blue" title={isRTL ? 'الملف الشخصي' : 'My Profile'} description={isRTL ? 'معلوماتك الشخصية واسم العرض' : 'Your personal information and display name'} />
+          <div className="mt-5 mb-5">
+            <div className="inline-flex flex-col rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+              <p className="text-xs text-slate-400">{isRTL ? 'البريد الإلكتروني' : 'Email'}</p>
+              <p className="text-sm font-medium text-slate-700">{user?.email}</p>
             </div>
-          </Card>
+          </div>
+          <MyProfileSection isRTL={isRTL} user={user} />
+        </Card>
+      )}
 
-          <Card className="p-6">
-            <SectionHeader
-              icon={Users}
-              color="blue"
-              title={isRTL ? 'الملف الشخصي' : 'My Profile'}
-              description={isRTL ? 'معلوماتك الشخصية واسم العرض' : 'Your personal information and display name'}
-            />
-            <div className="mt-5 mb-5">
-              <div className="inline-flex flex-col rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
-                <p className="text-xs text-slate-400">{isRTL ? 'البريد الإلكتروني' : 'Email'}</p>
-                <p className="text-sm font-medium text-slate-700">{user?.email}</p>
-              </div>
-            </div>
-            <MyProfileSection isRTL={isRTL} user={user} />
-          </Card>
+      {openSection === 'school' && (
+        <Card className="p-6">
+          <SectionHeader icon={Building} color="emerald" title={isRTL ? 'معلومات المدرسة' : 'School Information'} description={isRTL ? 'بيانات المدرسة الرسمية والشعار ومعلومات الاتصال' : 'Official school details, logo and contact information'} />
+          <div className="mt-5">
+            <SchoolInfoSection isRTL={isRTL} />
+          </div>
+        </Card>
+      )}
 
-          <Card className="p-6">
-            <SectionHeader
-              icon={Building}
-              color="emerald"
-              title={isRTL ? 'معلومات المدرسة' : 'School Information'}
-              description={isRTL ? 'بيانات المدرسة الرسمية والشعار ومعلومات الاتصال' : 'Official school details, logo and contact information'}
-            />
-            <div className="mt-5">
-              <SchoolInfoSection isRTL={isRTL} />
-            </div>
-          </Card>
-        </TabsContent>
-
-
-
-        {/* Users */}
-        <TabsContent value="users" className="space-y-4">
+      {openSection === 'users' && (
+        <div className="space-y-4">
           <Card className="p-6">
             <div className="flex items-center justify-between">
-              <SectionHeader
-                icon={Users}
-                color="blue"
-                title={isRTL ? 'المستخدمين' : 'Users'}
-                description={isRTL ? 'المستخدمون النشطون في حسابك' : 'Active users in your account'}
-              />
-              <span className="text-sm font-semibold text-slate-700 bg-slate-100 rounded-full px-3 py-1">
-                {users.length}
-              </span>
+              <SectionHeader icon={Users} color="blue" title={isRTL ? 'المستخدمين' : 'Users'} description={isRTL ? 'المستخدمون النشطون في حسابك' : 'Active users in your account'} />
+              <span className="text-sm font-semibold text-slate-700 bg-slate-100 rounded-full px-3 py-1">{users.length}</span>
             </div>
           </Card>
-
           <Card className="overflow-hidden">
             <Table>
               <TableHeader>
@@ -475,10 +499,60 @@ export default function Settings() {
               </TableBody>
             </Table>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
+    </div>
+  );
 
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title={t('settings')}
+        subtitle={isRTL ? 'إعدادات النظام' : 'System Settings'}
+      />
 
+      {openSection ? inlineSection : (
+        <>
+          <div className="relative max-w-md">
+            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'end-3' : 'start-3'}`} />
+            <Input
+              className={isRTL ? 'pe-9' : 'ps-9'}
+              placeholder={isRTL ? 'ابحث في الإعدادات...' : 'Search settings...'}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          {filteredCatalog.length === 0 ? (
+            <Card className="p-10 text-center text-slate-400 text-sm">{isRTL ? 'لا توجد إعدادات مطابقة' : 'No matching settings'}</Card>
+          ) : filteredCatalog.map((cat) => (
+            <div key={cat.key} className="space-y-3">
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-1">{isRTL ? cat.titleAr : cat.titleEn}</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {cat.items.map((it) => {
+                  const Tile = (
+                    <div className="h-full flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 hover:border-slate-300 hover:shadow-sm transition-all">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center flex-shrink-0">
+                        <it.icon className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-slate-900 leading-tight">{isRTL ? it.titleAr : it.titleEn}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{isRTL ? it.descAr : it.descEn}</p>
+                      </div>
+                      <ChevronRight className={`w-4 h-4 text-slate-300 ms-auto flex-shrink-0 self-center ${isRTL ? 'rotate-180' : ''}`} />
+                    </div>
+                  );
+                  return it.page ? (
+                    <Link key={it.key} to={createPageUrl(it.page)} className="block">{Tile}</Link>
+                  ) : (
+                    <button key={it.key} type="button" className="block text-start w-full" onClick={() => setOpenSection(it.section)}>{Tile}</button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </>
+      )}
     </div>
   );
 }
