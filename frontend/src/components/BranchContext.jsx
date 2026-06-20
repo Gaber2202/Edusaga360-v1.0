@@ -43,8 +43,9 @@ export function BranchProvider({ children }) {
   const selectedBranch = branches.find(b => b.id === selectedBranchId);
 
   const filterByBranch = (items) => {
-    if (!selectedBranchId) return items;
-    return items.filter(item => item.branch_id === selectedBranchId);
+    const list = Array.isArray(items) ? items : [];
+    if (!selectedBranchId) return list;
+    return list.filter(item => item.branch_id === selectedBranchId);
   };
 
   /**

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { callApi } from '../../api/supabaseClient';
+import { extractAiText } from './yamenUtils';
 import { Button } from '../ui/button';
 import { FileText, Copy, Download, Loader2, CheckCircle } from 'lucide-react';
 import { documentTemplates } from './yamenUtils';
@@ -36,7 +37,7 @@ export default function YamenDocumentGenerator({ isRTL }) {
         model: 'gemini_3_pro',
       });
 
-      setGeneratedDoc(enhanced);
+      setGeneratedDoc(extractAiText(enhanced) || doc);
     } catch (err) {
       console.error('Generation error:', err);
       setGeneratedDoc(doc);

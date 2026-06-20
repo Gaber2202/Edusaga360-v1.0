@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { tenantQuery, callApi } from '../../api/supabaseClient';
+import { extractAiText } from './yamenUtils';
 import { useRole } from '../RoleContext';
 import { useTenant } from '../TenantContext';
 import { Button } from '../ui/button';
@@ -173,7 +174,7 @@ export default function YamenHRChat({ isRTL, isHRMode }) {
         messages: history,
       });
 
-      const responseText = typeof res === 'string' ? res : (res?.response ?? res);
+      const responseText = extractAiText(res) || (isRTL ? 'لم يتم استلام رد' : 'No response received');
       setMessages(prev => [...prev, { role: 'assistant', content: responseText, timestamp: new Date(), provider: res?.provider }]);
 
       // Increment usage counter on tenant

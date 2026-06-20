@@ -149,15 +149,26 @@ registrationRouter.get('/approve/:id', async (req, res) => {
       return res.send(renderResultPage('Already Approved', `${request.school_name_en || request.contact_name} has already been approved.`, true));
     }
 
+    // Mint a fresh onboarding token + 48h expiry at approval time. The original
+    // token's clock started at registration, so a delayed approval would email
+    // an already-expired link (the cause of "invalid/expired" on the welcome
+    // link). Resetting it here guarantees the school gets a full 48 hours.
+    const freshToken = crypto.randomBytes(32).toString('hex');
+    const freshExpiry = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+
     const { error: updateError } = await supabase
       .from('registration_requests')
       .update({
         status: 'approved',
         approved_at: new Date().toISOString(),
+        onboarding_token: freshToken,
+        token_expires_at: freshExpiry,
       })
       .eq('id', id);
 
     if (updateError) throw updateError;
+    request.onboarding_token = freshToken;
+    request.token_expires_at = freshExpiry;
 
     // Create tenant with trial status
     const tenantCode = `T-${Date.now().toString(36).toUpperCase()}`;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery, callApi } from '../api/supabaseClient';
+import { supabase, tenantQuery, callApi, fetchData } from '../api/supabaseClient';
 import { createPageUrl } from '../utils';
 import { filterSettingsCatalog } from '../lib/settingsSearch';
 import { useLanguage } from '../components/LanguageContext';
@@ -355,8 +355,8 @@ export default function Settings() {
   const { data: users = [], isLoading: _loadingUsers } = useQuery({
     queryKey: ['users', tenantId],
     queryFn: () => {
-      if (isPlatformOwner) return tenantQuery('users').select('*').order();
-      if (tenantId) return tenantQuery('users').select('*').match({ tenant_id: tenantId });
+      if (isPlatformOwner) return fetchData(tenantQuery('users').select('*').order());
+      if (tenantId) return fetchData(tenantQuery('users').select('*').match({ tenant_id: tenantId }));
       return [];
     },
     enabled: userRole === 'admin' && hasTenantAccess,

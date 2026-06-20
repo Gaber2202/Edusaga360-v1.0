@@ -8,6 +8,7 @@ import { FileBarChart, RefreshCw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { differenceInDays } from 'date-fns';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
+import { extractAiText, aiErrorMessage } from './yamenUtils';
 
 const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'];
 
@@ -86,8 +87,8 @@ export default function YamenExecutiveReport({ isRTL }) {
       `You are YAMEN, the AI HR Companion for EduSaga. Write a professional weekly executive HR report summary in English.\n\nData:\n- Active employees: ${stats.active}\n- Saudization: ${stats.saudizationPct}%\n- High risk employees: ${stats.highRiskCount}\n- Expired Iqamas: ${stats.expiredIqama}\n- Pending leaves: ${stats.pendingLeaves}\n- Monthly payroll: SAR ${stats.totalPayroll.toLocaleString()}\n- HR Health Score: ${stats.healthScore}%\n\nWrite a 3-paragraph executive summary: overall status, key risks, recommendations. Use only the provided data.`;
 
       const res = await callApi('/api/ai/invoke-llm', { prompt });
-      setAiSummary(res);
-    } catch (e) {toast.error(e.message);} finally
+      setAiSummary(extractAiText(res));
+    } catch (e) {toast.error(aiErrorMessage(e, isRTL));} finally
     {setGenerating(false);}
   };
 

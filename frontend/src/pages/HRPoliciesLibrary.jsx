@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { useNavigate } from 'react-router-dom';
@@ -34,7 +34,7 @@ export default function HRPoliciesLibrary() {
     queryFn: () => {
       const filter = tenantFilter();
       if (selectedBranchId) filter.branch_id = selectedBranchId;
-      return tenantQuery('hr_policys').select('*').match(filter);
+      return fetchData(tenantQuery('hr_policys').select('*').match(filter));
     },
     enabled: hasTenantAccess,
   });

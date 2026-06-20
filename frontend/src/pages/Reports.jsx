@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
-import { callApi } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { useTenantFilter } from '../hooks/useTenantFilter';
+import { buildReport, REPORT_SOURCES } from '../lib/reportBuilders';
+import { buildReportPrintHtml } from '../lib/reportPrint';
+import { buildCsv } from '../lib/csv';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import PageHeader from '../components/ui/PageHeader';
 import ExecutiveDashboard from '../components/reports/ExecutiveDashboard';
@@ -15,85 +19,82 @@ import { toast } from 'sonner';
 
 export default function Reports() {
   const { t, isRTL, language } = useLanguage();
+  const { tenantFilter, hasTenantAccess } = useTenantFilter();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedReport, setSelectedReport] = useState(null);
   const [filters, setFilters] = useState({});
   const [previewData, setPreviewData] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Reports are generated client-side from tenant-scoped data (the previous
+  // /api/functions/generateReport endpoint does not exist on the backend).
+  const fetchDatasets = async (reportId) => {
+    const tables = REPORT_SOURCES[reportId] || [];
+    const datasets = {};
+    for (const table of tables) {
+      let rows = await fetchData(tenantQuery(table).select('*').match(tenantFilter()));
+      if (filters?.status && filters.status !== 'all') {
+        rows = rows.filter((r) => r.status === filters.status);
+      }
+      datasets[table] = rows;
+    }
+    return datasets;
+  };
+
+  const resolveLang = (config) => ((config.language === 'auto' ? language : config.language) === 'ar') || isRTL;
+
   const handlePreview = async (config) => {
+    if (!hasTenantAccess) { toast.error(isRTL ? 'لا توجد صلاحية للوصول' : 'No access'); return; }
     setLoading(true);
     try {
-      const response = await callApi('/api/functions/generateReport', {
-        reportId: config.reportId,
-        format: config.format,
-        filters,
-        language: config.language === 'auto' ? language : config.language,
-        preview: true
-      });
-      
-      if (response.data?.success) {
-        setPreviewData(response.data.data);
-        setSelectedReport(config.reportId);
-        toast.success(isRTL ? 'تم تحميل المعاينة' : 'Preview loaded');
-      }
-    } catch (_error) {
-      toast.error(isRTL ? 'خطأ في المعاينة' : 'Preview error');
+      const datasets = await fetchDatasets(config.reportId);
+      setPreviewData(buildReport(config.reportId, datasets, resolveLang(config)));
+      setSelectedReport(config.reportId);
+      toast.success(isRTL ? 'تم تحميل المعاينة' : 'Preview loaded');
+    } catch (error) {
+      console.error('Report preview error:', error);
+      toast.error(isRTL ? 'تعذّر تحميل المعاينة' : 'Could not load preview');
     } finally {
       setLoading(false);
     }
   };
 
   const handleGenerate = async (config) => {
+    if (!hasTenantAccess) { toast.error(isRTL ? 'لا توجد صلاحية للوصول' : 'No access'); return; }
     setLoading(true);
     try {
-      const response = await callApi('/api/functions/generateReport', {
-        reportId: config.reportId,
-        format: config.format,
-        filters,
-        language: config.language === 'auto' ? language : config.language,
-        preview: false
-      });
+      const useAr = resolveLang(config);
+      const datasets = await fetchDatasets(config.reportId);
+      const built = buildReport(config.reportId, datasets, useAr);
+      const report = AVAILABLE_REPORTS.find((r) => r.id === config.reportId);
+      const title = report ? (useAr ? report.name_ar : report.name_en) : 'report';
 
-      const resData = response.data;
-
-      if (resData?.error) {
-        toast.error(resData.error);
+      if (!built.rows.length) {
+        toast.info(isRTL ? 'لا توجد بيانات لتصديرها' : 'No data to export');
         return;
       }
 
-      if (config.format === 'excel' && resData?.base64) {
-        // Decode base64 to binary blob
-        const binary = atob(resData.base64);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = resData.filename || 'report.xlsx';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        a.remove();
-      } else if (config.format === 'csv' && typeof resData === 'string') {
-        const blob = new Blob([resData], { type: 'text/csv; charset=utf-8' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'report.csv';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        a.remove();
+      if (config.format === 'pdf') {
+        const meta = `${useAr ? 'تاريخ الإنشاء' : 'Generated'}: ${new Date().toLocaleString(useAr ? 'ar' : 'en')} • ${built.rows.length} ${useAr ? 'سجل' : 'records'}`;
+        const html = buildReportPrintHtml({ title, meta, headers: built.headers, rows: built.rows, isRTL: useAr });
+        const w = window.open('', '_blank');
+        if (w) { w.document.write(html); w.document.close(); }
       } else {
-        toast.info(isRTL ? 'لا توجد بيانات لتنزيلها' : 'No data to download');
-        return;
+        // CSV (also covers the Excel option — opens cleanly in Excel).
+        const csv = buildCsv([built.headers, ...built.rows]);
+        const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${String(title || 'report').replace(/\s+/g, '_')}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
       }
 
-      toast.success(isRTL ? 'تم تنزيل التقرير بنجاح' : 'Report downloaded successfully');
-    } catch (_error) {
-      toast.error(isRTL ? 'خطأ في التنزيل' : 'Download error');
+      toast.success(isRTL ? 'تم تصدير التقرير' : 'Report exported');
+    } catch (error) {
+      console.error('Report export error:', error);
+      toast.error(isRTL ? 'تعذّر تصدير التقرير' : 'Could not export report');
     } finally {
       setLoading(false);
     }

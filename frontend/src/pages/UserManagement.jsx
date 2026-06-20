@@ -59,8 +59,8 @@ export default function UserManagement() {
     queryKey: ['users', tenantId],
     queryFn: () => {
       // For tenant users, filter by tenant_id; platform owner sees all
-      if (isPlatformOwner) return tenantQuery('users').select('*').order('created_date', { ascending: false });
-      if (tenantId) return tenantQuery('users').select('*').match({ tenant_id: tenantId }).order('created_date', { ascending: false });
+      if (isPlatformOwner) return fetchData(tenantQuery('users').select('*').order('created_date', { ascending: false }));
+      if (tenantId) return fetchData(tenantQuery('users').select('*').match({ tenant_id: tenantId }).order('created_date', { ascending: false }));
       return [];
     },
     enabled: hasTenantAccess,

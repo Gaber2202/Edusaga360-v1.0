@@ -24,7 +24,7 @@ const FETCH_LIMIT = 1000;
 
 export default function AuditLogs() {
   const { t, isRTL } = useLanguage();
-  const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
+  const { tenantFilter, tenantId } = useTenantFilter();
   const { user: _user, isCreator } = useRole();
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState('all');
@@ -44,10 +44,10 @@ export default function AuditLogs() {
       const query = isSuperAdmin
         ? tenantQuery('audit_logs').select('*').order('timestamp', { ascending: false }).limit(FETCH_LIMIT)
         : tenantQuery('audit_logs').select('*').match(tenantFilter()).order('timestamp', { ascending: false }).limit(FETCH_LIMIT);
-      const { data = [] } = await query;
-      return data;
+      const { data } = await query;
+      return data || [];
     },
-    enabled: isSuperAdmin || hasTenantAccess,
+    enabled: isSuperAdmin,
   });
 
   const filteredLogs = useMemo(() => {
@@ -86,6 +86,19 @@ export default function AuditLogs() {
     const start = (currentPage - 1) * pageSize;
     return filteredLogs.slice(start, start + pageSize);
   }, [filteredLogs, currentPage, pageSize]);
+
+  // Audit logs are restricted to the platform owner / creator only — tenant
+  // clients must not see this page.
+  if (!isSuperAdmin) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title={t('auditLogs')} subtitle={isRTL ? 'سجلات التدقيق' : 'Audit Logs'} />
+        <Card className="p-10 text-center text-slate-500">
+          {isRTL ? 'هذه الصفحة متاحة لمالك المنصة فقط.' : 'This page is available to the platform owner only.'}
+        </Card>
+      </div>
+    );
+  }
 
   const resetFilters = () => {
     setSearch('');

@@ -1,6 +1,36 @@
 // Advanced analytics engine for YAMEN
 import { isExpired, isExpiringWithin, daysUntilExpiry } from '../../lib/dateCompare';
 
+/**
+ * Safely extract the assistant's text from an /api/ai/invoke-llm result.
+ * The endpoint returns `{ response, provider }` on success; rendering that
+ * object directly throws React error #31. Always pass AI results through this
+ * before putting them in state / JSX.
+ */
+export function extractAiText(res) {
+  if (res == null) return '';
+  if (typeof res === 'string') return res;
+  if (typeof res.response === 'string') return res.response;
+  if (res.response != null) {
+    return typeof res.response === 'object' ? JSON.stringify(res.response, null, 2) : String(res.response);
+  }
+  if (typeof res.text === 'string') return res.text;
+  return '';
+}
+
+/**
+ * Turn an AI call failure into a clean, bilingual message. The backend throws
+ * for quota/credit/token exhaustion — surface that as "No AI tokens available"
+ * rather than a raw provider error.
+ */
+export function aiErrorMessage(err, isRTL) {
+  const m = String(err?.message || '').toLowerCase();
+  if (/token|quota|credit|billing|insufficient|429|rate.?limit|exhaust/.test(m)) {
+    return isRTL ? 'لا يوجد رصيد كافٍ من رموز الذكاء الاصطناعي' : 'No AI tokens available';
+  }
+  return isRTL ? 'خدمة الذكاء الاصطناعي غير متاحة حالياً' : 'AI service is currently unavailable';
+}
+
 export function calculateAdvancedAnalytics(employees, attendance, leaveRequests, _payRuns) {
   try {
     const today = new Date();

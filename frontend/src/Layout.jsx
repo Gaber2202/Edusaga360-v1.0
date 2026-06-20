@@ -95,7 +95,7 @@ import {
 
 function LayoutContent({ children, currentPageName }) {
   const { t, isRTL, language: _language, toggleLanguage } = useLanguage();
-  const { user, userRole, canAccess: _canAccess, loading, isTrial } = useRole();
+  const { user, userRole, canAccess: _canAccess, loading, isTrial, isCreator } = useRole();
   const { tenant, isTenantActive, isModuleEnabled: _isModuleEnabled } = useTenant();
   const { branches, selectedBranchId, selectBranch } = useBranch();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -317,7 +317,7 @@ function LayoutContent({ children, currentPageName }) {
       children: [
         { name: 'users', icon: UserCog, page: 'UserManagement', roles: ['admin', 'creator'] },
         { name: 'rolesPermissions', icon: Key, page: 'RolesPermissions', roles: ['admin', 'creator'] },
-        { name: 'auditLogs', icon: History, page: 'AuditLogs', roles: ['admin', 'it_user', 'creator'] },
+        { name: 'auditLogs', icon: History, page: 'AuditLogs', roles: ['creator'], creatorOnly: true },
         { name: 'companies', icon: Building2, page: 'Companies', roles: ['admin', 'creator'] },
         { name: 'branches', icon: Building2, page: 'Branches', roles: ['admin', 'creator'] },
         { name: 'notificationSettings', icon: Settings, page: 'NotificationSettings', roles: ['admin', 'creator'] },
@@ -332,7 +332,12 @@ function LayoutContent({ children, currentPageName }) {
   ];
 
   const isCreatorRole = userRole === 'creator' || userRole === 'admin';
+  // creatorOnly items (e.g. Audit Logs) are visible only to the actual platform
+  // owner/creator — never to tenant admins, even though admins otherwise see all.
+  const isPlatformCreator = typeof isCreator === 'function' ? isCreator() : false;
+  const allowItem = (it) => !it.creatorOnly || isPlatformCreator;
   const filteredNavigation = navigation.filter(item => {
+    if (!allowItem(item)) return false;
     if (isCreatorRole) return true;
     if (!item.roles) return true;
     return item.roles.includes(userRole);
@@ -341,6 +346,7 @@ function LayoutContent({ children, currentPageName }) {
       return {
         ...item,
         children: item.children.filter(child => {
+          if (!allowItem(child)) return false;
           if (isCreatorRole) return true;
           return !child.roles || child.roles.includes(userRole);
         })

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { callApi } from '../../api/supabaseClient';
+import { extractAiText, aiErrorMessage } from './yamenUtils';
 import { Upload, FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function YamenDocumentProcessor({ isRTL }) {
@@ -44,10 +45,13 @@ Respond in JSON format.`;
         },
       });
 
-      setResult(analysisResult);
+      const text = extractAiText(analysisResult);
+      let parsed = null;
+      try { parsed = JSON.parse(text); } catch { parsed = null; }
+      setResult(parsed || { documentType: isRTL ? 'غير محدد' : 'Unknown', extractedData: text ? { raw: text } : {}, verificationStatus: 'review' });
       setSelectedFile(file.name);
     } catch (err) {
-      setError(err.message);
+      setError(aiErrorMessage(err, isRTL));
     } finally {
       setProcessing(false);
     }
