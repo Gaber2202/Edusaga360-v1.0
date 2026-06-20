@@ -5,6 +5,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent } from '../components/ui/card';
 import { toast } from 'sonner';
+import { useAuth } from '../lib/AuthContext';
 import { CheckCircle, Loader2, Clock, AlertCircle, GraduationCap } from 'lucide-react';
 
 const STEPS = ['welcome', 'password', 'school', 'complete'];
@@ -12,6 +13,7 @@ const STEPS = ['welcome', 'password', 'school', 'complete'];
 export default function OnboardingWizard() {
   const { token } = useParams();
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [request, setRequest] = useState(null);
@@ -93,7 +95,17 @@ export default function OnboardingWizard() {
 
       if (data.success) {
         setCompleted(true);
-        setTimeout(() => window.location.replace('/school-login'), 3000);
+        // The backend creates the admin's auth user with the email pre-confirmed,
+        // so sign them in with the password they just set and take them straight
+        // to their new dashboard. If auto sign-in fails for any reason, fall back
+        // to the login page rather than leaving them stuck on the wizard.
+        try {
+          const { error: loginError } = await login(request.contact_email, password);
+          if (loginError) throw loginError;
+          setTimeout(() => window.location.replace('/'), 1500);
+        } catch (_signInErr) {
+          setTimeout(() => window.location.replace('/school-login'), 1500);
+        }
       } else {
         const msg = data.message || (data.errors ? Object.values(data.errors?.fieldErrors || {}).flat().join(' ') : null) || 'فشل في إكمال الإعداد';
         toast.error(msg);
@@ -143,13 +155,14 @@ export default function OnboardingWizard() {
   }
 
   if (completed) {
+    const ar = defaultLanguage !== 'en';
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4" dir="rtl">
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4" dir={ar ? 'rtl' : 'ltr'}>
         <Card className="max-w-md w-full">
           <CardContent className="py-12 text-center">
             <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
-            <h1 className="text-xl font-bold text-slate-800 mb-2">تم الإعداد بنجاح!</h1>
-            <p className="text-slate-500 mb-4">يتم الآن تحويلك إلى صفحة تسجيل الدخول...</p>
+            <h1 className="text-xl font-bold text-slate-800 mb-2">{ar ? 'تم الإعداد بنجاح!' : 'Setup complete!'}</h1>
+            <p className="text-slate-500 mb-4">{ar ? 'يتم الآن تحويلك إلى لوحة التحكم...' : 'Taking you to your dashboard…'}</p>
             <Loader2 className="w-6 h-6 animate-spin text-emerald-500 mx-auto" />
           </CardContent>
         </Card>
