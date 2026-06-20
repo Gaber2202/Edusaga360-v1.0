@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { ticketStatusLabel, priorityLabel, slaLabel, segmentLabel, crmCategoryLabel } from '../lib/crmLabels';
 
 export default function CRM() {
   const { t: _t, isRTL } = useLanguage();
@@ -93,25 +94,25 @@ export default function CRM() {
     { key: 'subject', label: isRTL ? 'الموضوع' : 'Subject' },
     { key: 'customer_name', label: isRTL ? 'العميل' : 'Customer' },
     { key: 'category', label: isRTL ? 'التصنيف' : 'Category', render: (_, row) => (
-      <Badge variant="outline">{row.category}</Badge>
+      <Badge variant="outline">{crmCategoryLabel(row.category, isRTL)}</Badge>
     )},
     { key: 'priority', label: isRTL ? 'الأولوية' : 'Priority', render: (_, row) => {
       const colors = { low: 'bg-gray-100', medium: 'bg-blue-100', high: 'bg-orange-100', critical: 'bg-red-100' };
-      return <Badge className={colors[row.priority]}>{row.priority}</Badge>;
+      return <Badge className={colors[row.priority]}>{priorityLabel(row.priority, isRTL)}</Badge>;
     }},
     { key: 'status', label: isRTL ? 'الحالة' : 'Status', render: (_, row) => {
-      const colors = { 
-        open: 'bg-blue-100 text-blue-800', 
+      const colors = {
+        open: 'bg-blue-100 text-blue-800',
         in_progress: 'bg-yellow-100 text-yellow-800',
         waiting: 'bg-purple-100 text-purple-800',
         resolved: 'bg-green-100 text-green-800',
         closed: 'bg-gray-100 text-gray-800'
       };
-      return <Badge className={colors[row.status] || 'bg-gray-100'}>{row.status}</Badge>;
+      return <Badge className={colors[row.status] || 'bg-gray-100'}>{ticketStatusLabel(row.status, isRTL)}</Badge>;
     }},
     { key: 'sla_status', label: 'SLA', render: (_, row) => {
       const colors = { on_track: 'text-green-600', at_risk: 'text-yellow-600', breached: 'text-red-600' };
-      return <span className={colors[row.sla_status]}>{row.sla_status}</span>;
+      return <span className={colors[row.sla_status]}>{slaLabel(row.sla_status, isRTL)}</span>;
     }},
     { key: 'created_date', label: isRTL ? 'التاريخ' : 'Date', render: (val) => val ? format(new Date(val), 'yyyy-MM-dd') : '-' },
     { key: 'actions', label: '', render: (_, row) => (
@@ -123,12 +124,12 @@ export default function CRM() {
 
   const customerColumns = [
     { key: 'customer_number', label: isRTL ? 'رقم العميل' : 'Customer #' },
-    { key: 'name_ar', label: isRTL ? 'الاسم' : 'Name' },
+    { key: 'name_ar', label: isRTL ? 'الاسم' : 'Name', render: (_, row) => (isRTL ? (row.name_ar || row.name_en) : (row.name_en || row.name_ar)) || '-' },
     { key: 'phone', label: isRTL ? 'الهاتف' : 'Phone' },
     { key: 'email', label: isRTL ? 'البريد' : 'Email' },
     { key: 'segment', label: isRTL ? 'التصنيف' : 'Segment', render: (_, row) => {
       const colors = { prospect: 'bg-blue-100', active: 'bg-green-100', vip: 'bg-purple-100', withdrawn: 'bg-red-100' };
-      return <Badge className={colors[row.segment] || 'bg-gray-100'}>{row.segment}</Badge>;
+      return <Badge className={colors[row.segment] || 'bg-gray-100'}>{segmentLabel(row.segment, isRTL)}</Badge>;
     }},
     { key: 'total_interactions', label: isRTL ? 'التفاعلات' : 'Interactions' },
     { key: 'actions', label: '', render: (_, row) => (
@@ -194,11 +195,11 @@ export default function CRM() {
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
               <TabsTrigger value="tickets">
-                <Ticket className="h-4 w-4 mr-2" />
+                <Ticket className="h-4 w-4 me-2" />
                 {isRTL ? 'التذاكر' : 'Tickets'}
               </TabsTrigger>
               <TabsTrigger value="customers">
-                <Users className="h-4 w-4 mr-2" />
+                <Users className="h-4 w-4 me-2" />
                 {isRTL ? 'العملاء' : 'Customers'}
               </TabsTrigger>
             </TabsList>
@@ -206,12 +207,12 @@ export default function CRM() {
             {/* Filters */}
             <div className="flex flex-wrap gap-4 mb-4">
               <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder={isRTL ? 'بحث...' : 'Search...'}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="ps-10"
                 />
               </div>
               {activeTab === 'tickets' && (

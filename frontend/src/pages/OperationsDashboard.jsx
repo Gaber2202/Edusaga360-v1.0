@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { filterByDateRange } from '../lib/dateRange';
 
 export default function OperationsDashboard() {
   const { isRTL } = useLanguage();
@@ -67,38 +68,45 @@ export default function OperationsDashboard() {
     enabled: hasTenantAccess,
   });
 
+  // Apply the selected reporting window — the date range now actually scopes
+  // every metric and chart below (previously the selector did nothing).
+  const rangeDays = parseInt(dateRange, 10) || 30;
+  const crm = filterByDateRange(crmTickets, rangeDays);
+  const it = filterByDateRange(itTickets, rangeDays);
+  const wos = filterByDateRange(workOrders, rangeDays);
+
   // Calculate metrics
-  const allTickets = [...crmTickets, ...itTickets];
+  const allTickets = [...crm, ...it];
   const openTickets = allTickets.filter(t => t.status === 'open' || t.status === 'in_progress').length;
   const resolvedTickets = allTickets.filter(t => t.status === 'resolved' || t.status === 'closed').length;
   const slaBreached = allTickets.filter(t => t.sla_status === 'breached').length;
-  const avgSatisfaction = allTickets.filter(t => t.satisfaction_rating).reduce((sum, t) => sum + t.satisfaction_rating, 0) / 
+  const avgSatisfaction = allTickets.filter(t => t.satisfaction_rating).reduce((sum, t) => sum + t.satisfaction_rating, 0) /
     (allTickets.filter(t => t.satisfaction_rating).length || 1);
 
-  const openWorkOrders = workOrders.filter(w => w.status === 'pending' || w.status === 'in_progress').length;
-  const completedWorkOrders = workOrders.filter(w => w.status === 'completed').length;
-  const totalMaintenanceCost = workOrders.filter(w => w.status === 'completed').reduce((sum, w) => sum + (w.total_cost || 0), 0);
+  const openWorkOrders = wos.filter(w => w.status === 'pending' || w.status === 'in_progress').length;
+  const completedWorkOrders = wos.filter(w => w.status === 'completed').length;
+  const totalMaintenanceCost = wos.filter(w => w.status === 'completed').reduce((sum, w) => sum + (w.total_cost || 0), 0);
 
   // Chart data
   const ticketsByCategory = [
-    { name: isRTL ? 'أكاديمي' : 'Academic', value: crmTickets.filter(t => t.category === 'academic').length, color: '#3B82F6' },
-    { name: isRTL ? 'مالي' : 'Financial', value: crmTickets.filter(t => t.category === 'financial').length, color: '#10B981' },
-    { name: isRTL ? 'نقل' : 'Transport', value: crmTickets.filter(t => t.category === 'transport').length, color: '#F59E0B' },
-    { name: isRTL ? 'مرافق' : 'Facilities', value: crmTickets.filter(t => t.category === 'facilities').length, color: '#EF4444' },
-    { name: isRTL ? 'تقنية' : 'IT', value: itTickets.length, color: '#8B5CF6' },
+    { name: isRTL ? 'أكاديمي' : 'Academic', value: crm.filter(t => t.category === 'academic').length, color: '#3B82F6' },
+    { name: isRTL ? 'مالي' : 'Financial', value: crm.filter(t => t.category === 'financial').length, color: '#10B981' },
+    { name: isRTL ? 'نقل' : 'Transport', value: crm.filter(t => t.category === 'transport').length, color: '#F59E0B' },
+    { name: isRTL ? 'مرافق' : 'Facilities', value: crm.filter(t => t.category === 'facilities').length, color: '#EF4444' },
+    { name: isRTL ? 'تقنية' : 'IT', value: it.length, color: '#8B5CF6' },
   ].filter(d => d.value > 0);
 
   const itTicketsByType = [
-    { name: isRTL ? 'أجهزة' : 'Hardware', value: itTickets.filter(t => t.category === 'hardware').length },
-    { name: isRTL ? 'برامج' : 'Software', value: itTickets.filter(t => t.category === 'software').length },
-    { name: isRTL ? 'شبكات' : 'Network', value: itTickets.filter(t => t.category === 'network').length },
-    { name: isRTL ? 'صلاحيات' : 'Access', value: itTickets.filter(t => t.category === 'access').length },
+    { name: isRTL ? 'أجهزة' : 'Hardware', value: it.filter(t => t.category === 'hardware').length },
+    { name: isRTL ? 'برامج' : 'Software', value: it.filter(t => t.category === 'software').length },
+    { name: isRTL ? 'شبكات' : 'Network', value: it.filter(t => t.category === 'network').length },
+    { name: isRTL ? 'صلاحيات' : 'Access', value: it.filter(t => t.category === 'access').length },
   ];
 
   const workOrdersByType = [
-    { name: isRTL ? 'وقائية' : 'Preventive', value: workOrders.filter(w => w.work_order_type === 'preventive').length },
-    { name: isRTL ? 'تصحيحية' : 'Corrective', value: workOrders.filter(w => w.work_order_type === 'corrective').length },
-    { name: isRTL ? 'طارئة' : 'Emergency', value: workOrders.filter(w => w.work_order_type === 'emergency').length },
+    { name: isRTL ? 'وقائية' : 'Preventive', value: wos.filter(w => w.work_order_type === 'preventive').length },
+    { name: isRTL ? 'تصحيحية' : 'Corrective', value: wos.filter(w => w.work_order_type === 'corrective').length },
+    { name: isRTL ? 'طارئة' : 'Emergency', value: wos.filter(w => w.work_order_type === 'emergency').length },
   ];
 
   const resolutionRate = allTickets.length > 0 ? Math.round((resolvedTickets / allTickets.length) * 100) : 0;
@@ -297,7 +305,7 @@ export default function OperationsDashboard() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-right py-3 px-4">{isRTL ? 'الفرع' : 'Branch'}</th>
+                    <th className="text-start py-3 px-4">{isRTL ? 'الفرع' : 'Branch'}</th>
                     <th className="text-center py-3 px-4">{isRTL ? 'تذاكر CRM' : 'CRM Tickets'}</th>
                     <th className="text-center py-3 px-4">{isRTL ? 'تذاكر IT' : 'IT Tickets'}</th>
                     <th className="text-center py-3 px-4">{isRTL ? 'أوامر صيانة' : 'Work Orders'}</th>
@@ -306,9 +314,9 @@ export default function OperationsDashboard() {
                 </thead>
                 <tbody>
                   {branches.map(branch => {
-                    const branchCrmTickets = crmTickets.filter(t => t.branch_id === branch.id);
-                    const branchItTickets = itTickets.filter(t => t.branch_id === branch.id);
-                    const branchWOs = workOrders.filter(w => w.branch_id === branch.id);
+                    const branchCrmTickets = crm.filter(t => t.branch_id === branch.id);
+                    const branchItTickets = it.filter(t => t.branch_id === branch.id);
+                    const branchWOs = wos.filter(w => w.branch_id === branch.id);
                     const branchAllTickets = [...branchCrmTickets, ...branchItTickets];
                     const branchResolved = branchAllTickets.filter(t => t.status === 'resolved' || t.status === 'closed').length;
                     const branchResRate = branchAllTickets.length > 0 ? Math.round((branchResolved / branchAllTickets.length) * 100) : 0;
