@@ -31,6 +31,30 @@ function verifyAdminSig(action: string, id: string, sig: string | undefined): bo
   try { return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)); } catch { return false; }
 }
 
+/**
+ * Authorize an admin registration action (approve / deny / resend). Accepts EITHER:
+ *  - a valid HMAC signature — used by the approve/deny links in the admin email, OR
+ *  - an authenticated platform owner / creator session — used by the super-admin
+ *    dashboard, which sends the Supabase access token as a Bearer header.
+ * The signing secret is never exposed to the browser, so the dashboard buttons
+ * (Approve / Deny / Resend) rely on this authenticated path.
+ */
+async function authorizeAdminAction(req: Request, action: string, id: string): Promise<boolean> {
+  if (verifyAdminSig(action, id, req.query.sig as string | undefined)) return true;
+
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser(authHeader.slice(7));
+      if (!error && user) {
+        const meta = user.app_metadata || {};
+        if (meta.is_platform_owner === true || meta.role === 'creator') return true;
+      }
+    } catch { /* fall through to deny */ }
+  }
+  return false;
+}
+
 const RegistrationRequestSchema = z.object({
   full_name: z.string().min(1).max(200).optional(),
   school_name: z.string().min(1).max(200).optional(),
@@ -131,8 +155,7 @@ registrationRouter.post('/request', async (req: Request, res) => {
 registrationRouter.get('/approve/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const sig = req.query.sig as string | undefined;
-    if (!verifyAdminSig('approve', id, sig)) {
+    if (!(await authorizeAdminAction(req, 'approve', id))) {
       return res.status(403).send(renderResultPage('Forbidden', 'Invalid or missing signature. This link may have been tampered with.', false));
     }
     const { data: request, error: fetchError } = await supabase
@@ -213,8 +236,7 @@ registrationRouter.get('/approve/:id', async (req, res) => {
 registrationRouter.get('/deny/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const sig = req.query.sig as string | undefined;
-    if (!verifyAdminSig('deny', id, sig)) {
+    if (!(await authorizeAdminAction(req, 'deny', id))) {
       return res.status(403).send(renderResultPage('Forbidden', 'Invalid or missing signature. This link may have been tampered with.', false));
     }
     const { data: request, error: fetchError } = await supabase
@@ -259,8 +281,7 @@ registrationRouter.get('/deny/:id', async (req, res) => {
 registrationRouter.get('/resend/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const sig = req.query.sig as string | undefined;
-    if (!verifyAdminSig('resend', id, sig)) {
+    if (!(await authorizeAdminAction(req, 'resend', id))) {
       return res.status(403).send(renderResultPage('Forbidden', 'Invalid or missing signature.', false));
     }
     const { data: request, error: fetchError } = await supabase

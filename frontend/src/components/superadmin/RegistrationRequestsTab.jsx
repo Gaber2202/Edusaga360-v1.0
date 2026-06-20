@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, fetchData } from '../../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -128,7 +128,14 @@ export default function RegistrationRequestsTab() {
         return;
       }
 
-      const response = await fetch(url, { method: 'GET' });
+      // These endpoints accept either an HMAC-signed email link or an
+      // authenticated platform-owner session — the dashboard uses the latter,
+      // so send the current access token (without it the backend returns 403).
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+      });
       if (response.ok) {
         const serverAction = action === 'approve' ? 'approved' : action === 'resend' ? 'resent' : 'rejected';
         toast.success(successMessageFor(serverAction));
