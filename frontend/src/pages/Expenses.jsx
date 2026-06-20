@@ -20,11 +20,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useTenantFilter } from '../hooks/useTenantFilter';
-
-const EXPENSE_CATEGORIES = [
-  'travel', 'fuel', 'meals', 'accommodation', 'stationery', 
-  'software', 'training', 'marketing', 'utilities', 'other'
-];
+import { EXPENSE_CATEGORIES, expenseCategoryLabel } from '../lib/expenseCategories';
 
 export default function Expenses() {
   const { t, isRTL } = useLanguage();
@@ -70,6 +66,8 @@ export default function Expenses() {
   const totalPending = currentExpenses.filter(e => e.status === 'pending').reduce((sum, e) => sum + (e.amount || 0), 0);
   const approved = currentExpenses.filter(e => e.status === 'approved').length;
   const totalApproved = currentExpenses.filter(e => e.status === 'approved').reduce((sum, e) => sum + (e.amount || 0), 0);
+  const rejected = currentExpenses.filter(e => e.status === 'rejected').length;
+  const totalRejected = currentExpenses.filter(e => e.status === 'rejected').reduce((sum, e) => sum + (e.amount || 0), 0);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -126,7 +124,7 @@ export default function Expenses() {
         status: 'approved',
         approved_by: user?.email,
         approved_date: format(new Date(), 'yyyy-MM-dd')
-      });
+      }).eq('id', expense.id);
       await logAuditEvent({ action: 'APPROVE', entityType: 'Expense', entityId: expense.id });
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       toast.success(isRTL ? 'تم الاعتماد' : 'Approved');
@@ -141,7 +139,7 @@ export default function Expenses() {
         status: 'rejected',
         approved_by: user?.email,
         approved_date: format(new Date(), 'yyyy-MM-dd')
-      });
+      }).eq('id', expense.id);
       await logAuditEvent({ action: 'REJECT', entityType: 'Expense', entityId: expense.id });
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       toast.success(isRTL ? 'تم الرفض' : 'Rejected');
@@ -166,16 +164,7 @@ export default function Expenses() {
     { header: isRTL ? 'الرقم' : 'Number', cell: (row) => <span className="font-mono text-sm">{row.expense_number}</span> },
     { header: isRTL ? 'التاريخ' : 'Date', cell: (row) => format(new Date(row.expense_date), 'dd/MM/yyyy') },
     { header: isRTL ? 'الموظف' : 'Employee', accessorKey: 'employee_name' },
-    { header: isRTL ? 'الفئة' : 'Category', cell: (row) => {
-      const labels = {
-        travel: isRTL ? 'سفر' : 'Travel',
-        fuel: isRTL ? 'وقود' : 'Fuel',
-        meals: isRTL ? 'وجبات' : 'Meals',
-        accommodation: isRTL ? 'إقامة' : 'Accommodation',
-        other: isRTL ? 'أخرى' : 'Other'
-      };
-      return labels[row.category] || row.category;
-    }},
+    { header: isRTL ? 'الفئة' : 'Category', cell: (row) => expenseCategoryLabel(row.category, isRTL) },
     { header: isRTL ? 'المبلغ' : 'Amount', cell: (row) => `${row.amount?.toLocaleString()} ${t('sar')}` },
     { header: t('status'), cell: (row) => <StatusBadge status={row.status} /> },
     { header: t('actions'), cell: (row) => (
@@ -215,6 +204,7 @@ export default function Expenses() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard title={isRTL ? 'معلقة' : 'Pending'} value={pendingApproval} subtitle={`${totalPending.toLocaleString()} ${t('sar')}`} icon={Receipt} iconClassName="bg-amber-50" />
         <StatCard title={isRTL ? 'معتمدة' : 'Approved'} value={approved} subtitle={`${totalApproved.toLocaleString()} ${t('sar')}`} icon={CheckCircle} iconClassName="bg-emerald-50" />
+        <StatCard title={isRTL ? 'مرفوضة' : 'Rejected'} value={rejected} subtitle={`${totalRejected.toLocaleString()} ${t('sar')}`} icon={XCircle} iconClassName="bg-red-50" />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -248,18 +238,7 @@ export default function Expenses() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {EXPENSE_CATEGORIES.map(cat => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat === 'travel' && (isRTL ? 'سفر' : 'Travel')}
-                        {cat === 'fuel' && (isRTL ? 'وقود' : 'Fuel')}
-                        {cat === 'meals' && (isRTL ? 'وجبات' : 'Meals')}
-                        {cat === 'accommodation' && (isRTL ? 'إقامة' : 'Accommodation')}
-                        {cat === 'stationery' && (isRTL ? 'قرطاسية' : 'Stationery')}
-                        {cat === 'software' && (isRTL ? 'برمجيات' : 'Software')}
-                        {cat === 'training' && (isRTL ? 'تدريب' : 'Training')}
-                        {cat === 'marketing' && (isRTL ? 'تسويق' : 'Marketing')}
-                        {cat === 'utilities' && (isRTL ? 'خدمات' : 'Utilities')}
-                        {cat === 'other' && (isRTL ? 'أخرى' : 'Other')}
-                      </SelectItem>
+                      <SelectItem key={cat} value={cat}>{expenseCategoryLabel(cat, isRTL)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
