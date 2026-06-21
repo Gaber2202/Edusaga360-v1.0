@@ -10,8 +10,9 @@ import {
 import {
   Plus, BarChart3, List, AlertTriangle, Receipt, Settings,
   Percent, CreditCard, Send, RefreshCw, CheckCircle,
-  Clock, TrendingUp, FileText, Zap,
+  Clock, TrendingUp, FileText, Zap, Eye, Download,
 } from 'lucide-react';
+import { createPageUrl } from '../utils';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { supabase } from '../api/supabaseClient';
 
@@ -182,18 +183,23 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
               <th className="px-4 py-3 text-end text-xs font-semibold text-slate-500 uppercase tracking-wide">{isRTL ? 'المتبقي' : 'Balance'}</th>
               <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase tracking-wide">{isRTL ? 'الحالة' : 'Status'}</th>
               <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase tracking-wide">ZATCA</th>
+              <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase tracking-wide">{isRTL ? 'إجراءات' : 'Actions'}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {isLoading ? (
-              <tr><td colSpan={8} className="py-12 text-center text-slate-400">{isRTL ? 'جاري التحميل…' : 'Loading…'}</td></tr>
+              <tr><td colSpan={9} className="py-12 text-center text-slate-400">{isRTL ? 'جاري التحميل…' : 'Loading…'}</td></tr>
             ) : invoices.length === 0 ? (
-              <tr><td colSpan={8} className="py-12 text-center text-slate-400">{isRTL ? 'لا توجد فواتير' : 'No invoices found'}</td></tr>
+              <tr><td colSpan={9} className="py-12 text-center text-slate-400">{isRTL ? 'لا توجد فواتير' : 'No invoices found'}</td></tr>
             ) : invoices.map((inv) => {
               const balance = (inv.total_amount ?? 0) - (inv.paid_amount ?? 0);
               const student = inv.students;
               return (
-                <tr key={inv.id} className="hover:bg-slate-50 transition-colors">
+                <tr
+                  key={inv.id}
+                  className="hover:bg-slate-50 transition-colors cursor-pointer"
+                  onClick={() => { window.location.href = createPageUrl('InvoiceDetails') + '?id=' + inv.id; }}
+                >
                   <td className="px-4 py-3 font-mono text-xs text-blue-700 font-semibold">{inv.invoice_number}</td>
                   <td className="px-4 py-3">
                     <div className="font-medium text-slate-800 text-xs">{isRTL ? (student?.name_ar || student?.name_en) : (student?.name_en || student?.name_ar)}</div>
@@ -210,6 +216,40 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
                     {inv.qr_code
                       ? <span className="flex items-center gap-1 text-xs text-green-600"><CheckCircle className="w-3.5 h-3.5" />{isRTL ? 'معتمد' : 'QR OK'}</span>
                       : <span className="flex items-center gap-1 text-xs text-slate-400"><Clock className="w-3.5 h-3.5" />{isRTL ? 'معلق' : 'Pending'}</span>}
+                  </td>
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-1">
+                      <button
+                        className="p-1 rounded hover:bg-blue-50 text-blue-600"
+                        title={isRTL ? 'عرض الفاتورة' : 'View Invoice'}
+                        onClick={() => { window.location.href = createPageUrl('InvoiceDetails') + '?id=' + inv.id; }}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        className="p-1 rounded hover:bg-green-50 text-green-600"
+                        title={isRTL ? 'تحميل PDF' : 'Download PDF'}
+                        onClick={async () => {
+                          try {
+                            const r = await fetch(`/api/invoices/${inv.id}/download-pdf`, {
+                              headers: { Authorization: `Bearer ${token}` },
+                            });
+                            if (!r.ok) throw new Error('Download failed');
+                            const blob = await r.blob();
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `invoice-${inv.invoice_number}.pdf`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          } catch {
+                            window.location.href = createPageUrl('InvoiceDetails') + '?id=' + inv.id;
+                          }
+                        }}
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
@@ -762,7 +802,11 @@ function DashboardTab({ token, isRTL, tenantId }) {
           <CardHeader className="pb-2"><CardTitle className="text-sm">{isRTL ? 'أحدث الفواتير' : 'Recent Invoices'}</CardTitle></CardHeader>
           <CardContent className="divide-y divide-slate-100">
             {invoiceData.data.map((inv) => (
-              <div key={inv.id} className="flex items-center justify-between py-2">
+              <div
+                key={inv.id}
+                className="flex items-center justify-between py-2 cursor-pointer hover:bg-slate-50 rounded px-1 -mx-1 transition-colors"
+                onClick={() => { window.location.href = createPageUrl('InvoiceDetails') + '?id=' + inv.id; }}
+              >
                 <div>
                   <div className="text-xs font-mono text-blue-700">{inv.invoice_number}</div>
                   <div className="text-xs text-slate-500">{isRTL ? inv.students?.name_ar : inv.students?.name_en}</div>
