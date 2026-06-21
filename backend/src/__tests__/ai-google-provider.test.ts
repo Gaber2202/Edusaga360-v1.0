@@ -39,9 +39,9 @@ beforeEach(() => {
 });
 
 describe('Yamen AI — Google Gemini activation', () => {
-  it('reports google as the active provider when GOOGLE_AI_API_KEY is set', async () => {
+  it('reports gemini with tool use as the active provider when GOOGLE_AI_API_KEY is set', async () => {
     const res = await request(makeApp()).get('/ai/tools');
     expect(res.status).toBe(200);
-    expect(res.body.provider).toMatch(/google/);
+    expect(res.body.provider).toMatch(/gemini.*tool use/);
   });
 });

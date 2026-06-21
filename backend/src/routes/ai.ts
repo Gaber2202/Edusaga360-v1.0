@@ -396,15 +396,86 @@ async function callClaudeWithTools(
   return 'Reached maximum tool call iterations.';
 }
 
-// ─── Fallback: text-only providers ────────────────────────────────────────────
+// ─── Gemini with tool use (function calling) ─────────────────────────────────
+
+const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY;
+const GOOGLE_AI_MODEL   = process.env.GOOGLE_AI_MODEL || 'gemini-2.0-flash';
+
+function geminiToolDeclarations() {
+  return TOOLS.map((t) => ({
+    name: t.name,
+    description: t.description,
+    parameters: t.input_schema,
+  }));
+}
+
+async function callGeminiWithTools(
+  messages: Message[],
+  tenantId: string,
+  systemPrompt: string,
+): Promise<string> {
+  if (!GOOGLE_AI_API_KEY) throw new Error('GOOGLE_AI_API_KEY not set');
+
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GOOGLE_AI_MODEL}:generateContent?key=${GOOGLE_AI_API_KEY}`;
+
+  // Convert our Message[] to Gemini contents format
+  const contents: Array<{ role: string; parts: unknown[] }> = messages.map((m) => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: typeof m.content === 'string' ? [{ text: m.content }] : (m.content as unknown[]),
+  }));
+
+  for (let iter = 0; iter < 8; iter++) {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents,
+        tools: [{ function_declarations: geminiToolDeclarations() }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Gemini API error (${res.status}): ${err.slice(0, 300)}`);
+    }
+
+    const data = await res.json() as any;
+    const candidate = data.candidates?.[0];
+    if (!candidate) return 'No response from Gemini.';
+
+    const parts = candidate.content?.parts ?? [];
+
+    // Check for function calls
+    const fnCalls = parts.filter((p: any) => p.functionCall);
+    if (fnCalls.length === 0) {
+      // Final text response
+      const textPart = parts.find((p: any) => p.text);
+      return textPart?.text ?? 'No response generated.';
+    }
+
+    // Execute tool calls and feed results back
+    const fnResponseParts: unknown[] = [];
+    for (const part of fnCalls) {
+      const { name, args } = part.functionCall;
+      const result = await runTool(name, args ?? {}, tenantId);
+      fnResponseParts.push({
+        functionResponse: { name, response: result },
+      });
+    }
+
+    // Append model turn (with function calls) + user turn (with results)
+    contents.push({ role: 'model', parts });
+    contents.push({ role: 'user', parts: fnResponseParts });
+  }
+
+  return 'Reached maximum tool call iterations.';
+}
+
+// ─── Other fallback providers (text-only) ─────────────────────────────────────
 
 function getFallbackProvider() {
-  if (process.env.GOOGLE_AI_API_KEY) {
-    // Model is overridable via GOOGLE_AI_MODEL so it can be upgraded without a
-    // code change (defaults to a fast, capable Gemini flash model).
-    const model = process.env.GOOGLE_AI_MODEL || 'gemini-2.0-flash';
-    return { name: 'google', apiKey: process.env.GOOGLE_AI_API_KEY, endpoint: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, model };
-  }
   if (process.env.OPENAI_API_KEY) {
     return { name: 'openai', apiKey: process.env.OPENAI_API_KEY, endpoint: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini' };
   }
@@ -415,15 +486,6 @@ function getFallbackProvider() {
 }
 
 async function callFallback(provider: NonNullable<ReturnType<typeof getFallbackProvider>>, prompt: string): Promise<string> {
-  if (provider.name === 'google') {
-    const res = await fetch(`${provider.endpoint}?key=${provider.apiKey}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.7, maxOutputTokens: 2048 } }),
-    });
-    if (!res.ok) throw new Error(`Google AI error (${res.status})`);
-    const data = await res.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'No response.';
-  }
   const res = await fetch(provider.endpoint, {
     method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${provider.apiKey}` },
     body: JSON.stringify({ model: provider.model, messages: [{ role: 'user', content: prompt }], temperature: 0.7, max_tokens: 2048 }),
@@ -489,7 +551,18 @@ aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) =>
       }
     }
 
-    // Fallback to text-only provider (no tool use — include prompt only)
+    // Try Gemini with function calling (full tool support)
+    if (GOOGLE_AI_API_KEY) {
+      try {
+        const response = await callGeminiWithTools(history, tenant_id, SYSTEM_PROMPT);
+        return res.json({ response, provider: 'gemini' });
+      } catch (geminiErr: unknown) {
+        const msg = geminiErr instanceof Error ? geminiErr.message : String(geminiErr);
+        console.warn('Gemini failed, falling back:', msg);
+      }
+    }
+
+    // Last-resort: text-only provider (no tool use)
     const fallback = getFallbackProvider();
     if (!fallback) {
       return res.json({
@@ -517,18 +590,21 @@ aiRouter.post('/compliance-alerts', async (req: AuthenticatedRequest, res: Respo
 
     const alerts = await runTool('get_compliance_alerts', { days_ahead }, tenant_id);
 
-    // If Claude is configured, generate a natural language summary too
+    // Generate a natural language summary using the best available provider
     let summary: string | null = null;
+    const summaryMessages: Message[] = [{
+      role: 'user',
+      content: `Based on these compliance alerts for our school, write a short executive summary (3-5 bullet points) in Arabic. Be direct about critical items first:\n\n${JSON.stringify(alerts, null, 2)}`,
+    }];
     if (CLAUDE_API_KEY) {
       try {
-        const messages: Message[] = [{
-          role: 'user',
-          content: `Based on these compliance alerts for our school, write a short executive summary (3-5 bullet points) in Arabic. Be direct about critical items first:\n\n${JSON.stringify(alerts, null, 2)}`,
-        }];
-        summary = await callClaudeWithTools(messages, tenant_id, SYSTEM_PROMPT);
-      } catch {
-        // summary stays null
-      }
+        summary = await callClaudeWithTools(summaryMessages, tenant_id, SYSTEM_PROMPT);
+      } catch { /* fall through */ }
+    }
+    if (!summary && GOOGLE_AI_API_KEY) {
+      try {
+        summary = await callGeminiWithTools(summaryMessages, tenant_id, SYSTEM_PROMPT);
+      } catch { /* summary stays null */ }
     }
 
     return res.json({ alerts, summary });
@@ -544,6 +620,6 @@ aiRouter.post('/compliance-alerts', async (req: AuthenticatedRequest, res: Respo
 aiRouter.get('/tools', (_req: AuthenticatedRequest, res: Response) => {
   return res.json({
     tools: TOOLS.map((t) => ({ name: t.name, description: t.description })),
-    provider: CLAUDE_API_KEY ? 'claude (tool use enabled)' : (getFallbackProvider()?.name ?? 'none'),
+    provider: CLAUDE_API_KEY ? 'claude (tool use enabled)' : GOOGLE_AI_API_KEY ? 'gemini (tool use enabled)' : (getFallbackProvider()?.name ?? 'none'),
   });
 });
