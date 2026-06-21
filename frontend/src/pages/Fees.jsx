@@ -46,7 +46,7 @@ function useToken() {
 
 // ─── SAR formatter ─────────────────────────────────────────────────────────────
 
-const sarFmt = (n) => `SAR ${(n ?? 0).toLocaleString('en-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const sarFmt = (n) => `SAR ${(Number(n) || 0).toLocaleString('en-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 // ─── Status badge ──────────────────────────────────────────────────────────────
 
@@ -130,8 +130,12 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
   const { data: allInvoices = [], isLoading } = useQuery({
     queryKey: ['invoices-list', tenantId, filters.status],
     queryFn: () => fetchData(
+      // Select only invoice columns — the previous students(...) embed referenced
+      // students.grade, which doesn't exist (the column is grade_id), so PostgREST
+      // rejected the whole query and the list came back empty. The invoice already
+      // carries denormalized student_name + grade, so no join is needed.
       tenantQuery('invoices')
-        .select('*, students(id, name_en, name_ar, student_id, grade)')
+        .select('*')
         .match(tenantFilter(filters.status ? { status: filters.status } : {}))
         .order('created_at', { ascending: false })
         .limit(500)
@@ -203,8 +207,7 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
             ) : invoices.length === 0 ? (
               <tr><td colSpan={9} className="py-12 text-center text-slate-400">{isRTL ? 'لا توجد فواتير' : 'No invoices found'}</td></tr>
             ) : invoices.map((inv) => {
-              const balance = (inv.total_amount ?? 0) - (inv.paid_amount ?? 0);
-              const student = inv.students;
+              const balance = (Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0);
               return (
                 <tr
                   key={inv.id}
@@ -213,8 +216,8 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
                 >
                   <td className="px-4 py-3 font-mono text-xs text-blue-700 font-semibold">{inv.invoice_number}</td>
                   <td className="px-4 py-3">
-                    <div className="font-medium text-slate-800 text-xs">{isRTL ? (student?.name_ar || student?.name_en) : (student?.name_en || student?.name_ar)}</div>
-                    {student?.grade && <div className="text-xs text-slate-400">{isRTL ? 'الصف' : 'Grade'} {student.grade}</div>}
+                    <div className="font-medium text-slate-800 text-xs">{inv.student_name || '—'}</div>
+                    {inv.grade && <div className="text-xs text-slate-400">{isRTL ? 'الصف' : 'Grade'} {inv.grade}</div>}
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-500">{inv.date}</td>
                   <td className="px-4 py-3 text-xs text-slate-500">{inv.due_date || '—'}</td>
