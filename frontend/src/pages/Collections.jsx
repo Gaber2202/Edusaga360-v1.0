@@ -15,7 +15,8 @@ import PageHeader from '../components/ui/PageHeader';
 import DataTable from '../components/ui/DataTable';
 import StatusBadge from '../components/ui/StatusBadge';
 import StatCard from '../components/ui/StatCard';
-import { Search, DollarSign, CreditCard, Banknote, CheckCircle, Loader2 } from 'lucide-react';
+import { Search, DollarSign, CreditCard, Banknote, CheckCircle, Loader2, Eye } from 'lucide-react';
+import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
@@ -214,12 +215,18 @@ export default function Collections() {
     { header: t('dueDate'), cell: (row) => row.due_date ? format(new Date(row.due_date), 'dd/MM/yyyy') : '-' },
     { header: t('status'), cell: (row) => <StatusBadge status={row.status} /> },
     { header: t('actions'), cell: (row) => (
-      row.status !== 'paid' && row.status !== 'cancelled' && (
-        <Button size="sm" onClick={() => openPaymentDialog(row)} className="bg-emerald-600 hover:bg-emerald-700">
-          <CreditCard className="w-4 h-4 me-1" />
-          {isRTL ? 'تحصيل' : 'Collect'}
+      <div className="flex items-center gap-2">
+        <Button size="sm" variant="outline" onClick={() => { window.location.href = createPageUrl('InvoiceDetails') + '?id=' + row.id; }}>
+          <Eye className="w-4 h-4 me-1" />
+          {isRTL ? 'عرض' : 'View'}
         </Button>
-      )
+        {row.status !== 'paid' && row.status !== 'cancelled' && (
+          <Button size="sm" onClick={() => openPaymentDialog(row)} className="bg-emerald-600 hover:bg-emerald-700">
+            <CreditCard className="w-4 h-4 me-1" />
+            {isRTL ? 'تحصيل' : 'Collect'}
+          </Button>
+        )}
+      </div>
     )}
   ];
 
