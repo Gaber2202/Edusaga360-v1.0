@@ -34,6 +34,7 @@ import jsPDF from 'jspdf';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import WhatsAppButton from '../components/communications/WhatsAppButton';
 import { WhatsAppMessageTypes } from '../components/communications/WhatsAppService';
+import { money, itemAmount, itemDesc, fmtDate } from '../lib/invoiceFormat';
 
 export default function InvoiceDetails() {
   const { t, isRTL } = useLanguage();
@@ -99,8 +100,8 @@ export default function InvoiceDetails() {
     // Invoice Details
     doc.setFontSize(12);
     doc.text(`Invoice #: ${invoice.invoice_number}`, 20, 50);
-    doc.text(`Date: ${format(new Date(invoice.issue_date), 'dd/MM/yyyy')}`, 20, 57);
-    doc.text(`Due Date: ${format(new Date(invoice.due_date), 'dd/MM/yyyy')}`, 20, 64);
+    doc.text(`Date: ${fmtDate(invoice.issue_date)}`, 20, 57);
+    doc.text(`Due Date: ${fmtDate(invoice.due_date)}`, 20, 64);
     
     // Student Info
     doc.text(`Student: ${invoice.student_name}`, 20, 78);
@@ -116,8 +117,8 @@ export default function InvoiceDetails() {
     // Items
     let y = 110;
     invoice.items?.forEach(item => {
-      doc.text(item.description_ar || item.description, 22, y);
-      doc.text(item.amount.toLocaleString(), 160, y);
+      doc.text(itemDesc(item, isRTL), 22, y);
+      doc.text(money(itemAmount(item)), 160, y);
       y += 7;
     });
     
@@ -193,28 +194,28 @@ export default function InvoiceDetails() {
     y += 8;
     doc.setFontSize(11);
     doc.text('Subtotal:', 140, y);
-    doc.text(`${invoice.subtotal?.toLocaleString()} SAR`, 160, y);
-    
-    if (invoice.discount_amount > 0) {
+    doc.text(`${money(invoice.subtotal)} SAR`, 160, y);
+
+    if (Number(invoice.discount_amount) > 0) {
       y += 7;
       doc.text('Discount:', 140, y);
-      doc.text(`-${invoice.discount_amount.toLocaleString()} SAR`, 160, y);
+      doc.text(`-${money(invoice.discount_amount)} SAR`, 160, y);
     }
-    
+
     y += 7;
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
     doc.text('Total:', 140, y);
-    doc.text(`${invoice.total_amount.toLocaleString()} SAR`, 160, y);
-    
+    doc.text(`${money(invoice.total_amount)} SAR`, 160, y);
+
     y += 7;
     doc.text('Paid:', 140, y);
-    doc.text(`${(invoice.paid_amount || 0).toLocaleString()} SAR`, 160, y);
-    
+    doc.text(`${money(invoice.paid_amount)} SAR`, 160, y);
+
     y += 7;
-    const balance = invoice.total_amount - (invoice.paid_amount || 0);
+    const balance = Number(invoice.total_amount || 0) - Number(invoice.paid_amount || 0);
     doc.text('Balance:', 140, y);
-    doc.text(`${balance.toLocaleString()} SAR`, 160, y);
+    doc.text(`${money(balance)} SAR`, 160, y);
     
     // Save
     doc.save(`Invoice_${invoice.invoice_number}.pdf`);
@@ -302,8 +303,8 @@ export default function InvoiceDetails() {
           <div class="details-grid">
             <div>
               <p><strong>Invoice #:</strong> ${invoice.invoice_number}</p>
-              <p><strong>Date:</strong> ${format(new Date(invoice.issue_date), 'dd/MM/yyyy')}</p>
-              <p><strong>Due Date:</strong> ${format(new Date(invoice.due_date), 'dd/MM/yyyy')}</p>
+              <p><strong>Date:</strong> ${fmtDate(invoice.issue_date)}</p>
+              <p><strong>Due Date:</strong> ${fmtDate(invoice.due_date)}</p>
             </div>
             <div>
               <p><strong>Student:</strong> ${invoice.student_name}</p>
@@ -324,9 +325,9 @@ export default function InvoiceDetails() {
           <tbody>
             ${invoice.items?.map(item => `
               <tr>
-                <td>${item.description_ar || item.description}</td>
-                <td>${item.fee_type}</td>
-                <td style="text-align: right;">${item.amount.toLocaleString()}</td>
+                <td>${itemDesc(item, isRTL)}</td>
+                <td>${item.fee_type || item.category_code || ''}</td>
+                <td style="text-align: right;">${money(itemAmount(item))}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -377,25 +378,25 @@ export default function InvoiceDetails() {
         <div class="total-section">
           <div class="total-row">
             <span>Subtotal:</span>
-            <span>${invoice.subtotal?.toLocaleString()} SAR</span>
+            <span>${money(invoice.subtotal)} SAR</span>
           </div>
-          ${invoice.discount_amount > 0 ? `
+          ${Number(invoice.discount_amount) > 0 ? `
             <div class="total-row">
               <span>Discount:</span>
-              <span>-${invoice.discount_amount.toLocaleString()} SAR</span>
+              <span>-${money(invoice.discount_amount)} SAR</span>
             </div>
           ` : ''}
           <div class="total-row grand">
             <span>Total:</span>
-            <span>${invoice.total_amount.toLocaleString()} SAR</span>
+            <span>${money(invoice.total_amount)} SAR</span>
           </div>
           <div class="total-row">
             <span>Paid:</span>
-            <span>${(invoice.paid_amount || 0).toLocaleString()} SAR</span>
+            <span>${money(invoice.paid_amount)} SAR</span>
           </div>
           <div class="total-row grand">
             <span>Balance:</span>
-            <span>${(invoice.total_amount - (invoice.paid_amount || 0)).toLocaleString()} SAR</span>
+            <span>${money(Number(invoice.total_amount || 0) - Number(invoice.paid_amount || 0))} SAR</span>
           </div>
         </div>
         
@@ -428,9 +429,9 @@ Dear Parent,
 Please find attached the invoice details for ${invoice.student_name}.
 
 Invoice Number: ${invoice.invoice_number}
-Amount: ${invoice.total_amount.toLocaleString()} SAR
-Due Date: ${format(new Date(invoice.due_date), 'dd/MM/yyyy')}
-Balance: ${(invoice.total_amount - (invoice.paid_amount || 0)).toLocaleString()} SAR
+Amount: ${money(invoice.total_amount)} SAR
+Due Date: ${fmtDate(invoice.due_date)}
+Balance: ${money(Number(invoice.total_amount || 0) - Number(invoice.paid_amount || 0))} SAR
 
 Thank you,
 EduSaga 360
@@ -452,7 +453,7 @@ EduSaga 360
   const _shareViaWhatsApp = () => {
     if (!invoice) return;
     
-    const message = `*Invoice ${invoice.invoice_number}*\n\nStudent: ${invoice.student_name}\nAmount: ${invoice.total_amount.toLocaleString()} SAR\nDue Date: ${format(new Date(invoice.due_date), 'dd/MM/yyyy')}\nBalance: ${(invoice.total_amount - (invoice.paid_amount || 0)).toLocaleString()} SAR`;
+    const message = `*Invoice ${invoice.invoice_number}*\n\nStudent: ${invoice.student_name}\nAmount: ${money(invoice.total_amount)} SAR\nDue Date: ${fmtDate(invoice.due_date)}\nBalance: ${money(Number(invoice.total_amount || 0) - Number(invoice.paid_amount || 0))} SAR`;
     
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
     
@@ -505,7 +506,7 @@ EduSaga 360
     );
   }
 
-  const balance = invoice.total_amount - (invoice.paid_amount || 0);
+  const balance = Number(invoice.total_amount || 0) - Number(invoice.paid_amount || 0);
 
   const getPaymentMethodIcon = (method) => {
     switch (method) {
@@ -586,8 +587,8 @@ EduSaga 360
               variables={{
                 student_name: invoice.student_name,
                 invoice_number: invoice.invoice_number,
-                amount: invoice.total_amount.toLocaleString(),
-                due_date: format(new Date(invoice.due_date), 'dd/MM/yyyy'),
+                amount: money(invoice.total_amount),
+                due_date: fmtDate(invoice.due_date),
                 payment_link: window.location.origin
               }}
             />
@@ -604,7 +605,7 @@ EduSaga 360
                 {isRTL ? 'فاتورة رقم' : 'Invoice'} #{invoice.invoice_number}
               </CardTitle>
               <p className="text-sm text-slate-600 mt-1">
-                {isRTL ? 'تاريخ الإصدار' : 'Issue Date'}: {format(new Date(invoice.issue_date), 'dd/MM/yyyy')}
+                {isRTL ? 'تاريخ الإصدار' : 'Issue Date'}: {fmtDate(invoice.issue_date)}
               </p>
             </div>
             <Badge 
@@ -643,7 +644,7 @@ EduSaga 360
             </div>
             <div>
               <h3 className="text-sm font-semibold text-slate-500 mb-2">{isRTL ? 'تفاصيل الدفع' : 'Payment Details'}</h3>
-              <p className="text-slate-600">{t('dueDate')}: {format(new Date(invoice.due_date), 'dd/MM/yyyy')}</p>
+              <p className="text-slate-600">{t('dueDate')}: {fmtDate(invoice.due_date)}</p>
               {invoice.preferred_payment_method && (
                 <div className="mt-2">
                   <p className="text-xs text-slate-500">{isRTL ? 'طريقة الدفع المفضلة' : 'Preferred Payment Method'}:</p>
@@ -667,10 +668,10 @@ EduSaga 360
               {invoice.items?.map((item, idx) => (
                 <div key={idx} className="flex justify-between items-center py-2 border-b border-slate-100">
                   <div>
-                    <p className="font-medium">{item.description_ar || item.description}</p>
-                    <p className="text-sm text-slate-500">{item.fee_type}</p>
+                    <p className="font-medium">{itemDesc(item, isRTL)}</p>
+                    <p className="text-sm text-slate-500">{item.fee_type || item.category_code || ''}</p>
                   </div>
-                  <p className="font-semibold">{item.amount.toLocaleString()} {t('sar')}</p>
+                  <p className="font-semibold">{money(itemAmount(item))} {t('sar')}</p>
                 </div>
               ))}
             </div>
@@ -697,21 +698,21 @@ EduSaga 360
           <div className="space-y-2">
             <div className="flex justify-between text-slate-600">
               <span>{isRTL ? 'المجموع الفرعي' : 'Subtotal'}</span>
-              <span>{invoice.subtotal?.toLocaleString()} {t('sar')}</span>
+              <span>{money(invoice.subtotal)} {t('sar')}</span>
             </div>
-            {invoice.discount_amount > 0 && (
+            {Number(invoice.discount_amount) > 0 && (
               <div className="flex justify-between text-red-600">
                 <span>{t('discount')}</span>
-                <span>-{invoice.discount_amount.toLocaleString()} {t('sar')}</span>
+                <span>-{money(invoice.discount_amount)} {t('sar')}</span>
               </div>
             )}
             <div className="flex justify-between text-xl font-bold pt-2 border-t">
               <span>{t('total')}</span>
-              <span>{invoice.total_amount.toLocaleString()} {t('sar')}</span>
+              <span>{money(invoice.total_amount)} {t('sar')}</span>
             </div>
             <div className="flex justify-between text-emerald-600">
               <span>{t('paid')}</span>
-              <span>{(invoice.paid_amount || 0).toLocaleString()} {t('sar')}</span>
+              <span>{money(invoice.paid_amount)} {t('sar')}</span>
             </div>
             {paymentLogs.length > 0 && (
               <div className="flex justify-between items-center text-sm text-slate-600 pt-2 border-t border-slate-100">
@@ -728,7 +729,7 @@ EduSaga 360
             )}
             <div className="flex justify-between text-xl font-bold text-red-600 pt-2 border-t">
               <span>{isRTL ? 'المتبقي' : 'Balance'}</span>
-              <span>{balance.toLocaleString()} {t('sar')}</span>
+              <span>{money(balance)} {t('sar')}</span>
             </div>
           </div>
           </TabsContent>
@@ -739,19 +740,19 @@ EduSaga 360
               <Card>
                 <CardContent className="p-4">
                   <p className="text-sm text-slate-500">{isRTL ? 'إجمالي الفاتورة' : 'Total Invoice'}</p>
-                  <p className="text-2xl font-bold">{invoice.total_amount.toLocaleString()} {t('sar')}</p>
+                  <p className="text-2xl font-bold">{money(invoice.total_amount)} {t('sar')}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
                   <p className="text-sm text-slate-500">{isRTL ? 'المدفوع' : 'Paid to Date'}</p>
-                  <p className="text-2xl font-bold text-emerald-600">{(invoice.paid_amount || 0).toLocaleString()} {t('sar')}</p>
+                  <p className="text-2xl font-bold text-emerald-600">{money(invoice.paid_amount)} {t('sar')}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
                   <p className="text-sm text-slate-500">{isRTL ? 'الرصيد المتبقي' : 'Remaining Balance'}</p>
-                  <p className="text-2xl font-bold text-red-600">{balance.toLocaleString()} {t('sar')}</p>
+                  <p className="text-2xl font-bold text-red-600">{money(balance)} {t('sar')}</p>
                 </CardContent>
               </Card>
             </div>
