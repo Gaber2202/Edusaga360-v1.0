@@ -400,7 +400,10 @@ async function callClaudeWithTools(
 
 function getFallbackProvider() {
   if (process.env.GOOGLE_AI_API_KEY) {
-    return { name: 'google', apiKey: process.env.GOOGLE_AI_API_KEY, endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', model: 'gemini-2.0-flash' };
+    // Model is overridable via GOOGLE_AI_MODEL so it can be upgraded without a
+    // code change (defaults to a fast, capable Gemini flash model).
+    const model = process.env.GOOGLE_AI_MODEL || 'gemini-2.0-flash';
+    return { name: 'google', apiKey: process.env.GOOGLE_AI_API_KEY, endpoint: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, model };
   }
   if (process.env.OPENAI_API_KEY) {
     return { name: 'openai', apiKey: process.env.OPENAI_API_KEY, endpoint: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini' };
@@ -491,8 +494,8 @@ aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) =>
     if (!fallback) {
       return res.json({
         response:
-          'خدمة الذكاء الاصطناعي غير مُفعّلة. أضف ANTHROPIC_API_KEY إلى Railway.\n\n' +
-          'AI service not configured. Add ANTHROPIC_API_KEY to Railway environment variables.',
+          'خدمة الذكاء الاصطناعي غير مُفعّلة. أضف GOOGLE_AI_API_KEY (أو ANTHROPIC_API_KEY) إلى متغيّرات البيئة في الخادم (Railway).\n\n' +
+          'AI service not configured. Add GOOGLE_AI_API_KEY (or ANTHROPIC_API_KEY) to the backend (Railway) environment variables.',
       });
     }
     const response = await callFallback(fallback, `${SYSTEM_PROMPT}\n\nUser: ${prompt}`);
