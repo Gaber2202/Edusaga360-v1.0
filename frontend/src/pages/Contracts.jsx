@@ -210,7 +210,8 @@ export default function Contracts() {
     // Always fetch a live copy to get the latest applied_fee_breakdown
     let freshStudents;
     try {
-      freshStudents = await tenantQuery('students').select('*').match({ status: 'active' });
+      const { data: freshStudentRows = [] } = await tenantQuery('students').select('*').match({ status: 'active' });
+      freshStudents = freshStudentRows;
       if (freshStudents?.length) {
         queryClient.setQueryData(['students'], freshStudents);
       }
