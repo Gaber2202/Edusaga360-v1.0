@@ -16,7 +16,7 @@ import { DEFAULT_UNASSIGNED_ROLE } from '../lib/authHelpers';
  * Platform owners (creators) bypass this gate entirely.
  */
 export default function TenantAccessGate({ children }) {
-  const { tenant, tenantLoading, isTenantActive, isTrialExpired, needsOnboarding } = useTenant();
+  const { tenant, tenantLoading, isTenantActive, isTrialExpired } = useTenant();
   const { user, userRole, isCreator, loading: roleLoading } = useRole();
   const { isRTL } = useLanguage();
 
@@ -116,15 +116,12 @@ export default function TenantAccessGate({ children }) {
     );
   }
 
-  // Tenant needs onboarding — force redirect to wizard
-  // Allow wizard page, setup page, and logout to pass through
-  const currentPath = window.location.pathname;
-  const onboardingExemptPaths = ['/OnboardingWizard', '/onboarding/', '/setup', '/register', '/InstitutionSetup', '/school-login'];
-  const isExempt = onboardingExemptPaths.some(p => currentPath.startsWith(p));
-  if (needsOnboarding() && !isExempt) {
-    window.location.replace('/OnboardingWizard');
-    return null;
-  }
+  // NOTE: we intentionally do NOT redirect a signed-in user to the registration
+  // OnboardingWizard. That page is token-based (pre-account setup) and a logged-in
+  // tenant admin has, by definition, already completed it — so redirecting there
+  // only produces a tokenless "invalid link" dead-end. `onboarding_completed` is
+  // set at completion; if it is ever false for an authenticated admin it's a data
+  // anomaly, and trapping them helps no one. Let them into their (functional) tenant.
 
   // User has a tenant but no app role assigned yet — show a clear message instead of
   // silently letting them into the app with an elevated default role.

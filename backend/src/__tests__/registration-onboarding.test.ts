@@ -87,6 +87,32 @@ describe('POST /onboarding/:token/complete — completion', () => {
     expect('onboarding_token' in payload).toBe(false); // token kept alive
   });
 
+  it('provisions using ONLY real columns and sets onboarding_completed (guards the silent-failure bug)', async () => {
+    db.setResolver((ctx: QueryContext) =>
+      ctx.table === 'registration_requests' && ctx.single
+        ? { data: { id: 'r1', status: 'approved', contact_email: 'a@x.sa', contact_name: 'A', tenant_id: 't1', token_expires_at: future } }
+        : {});
+    db.auth.admin.createUser.mockResolvedValue({ data: { user: { id: 'auth-1' } }, error: null });
+
+    const res = await request(app()).post(`/api/registration/onboarding/${TOKEN}/complete`).send(body);
+    expect(res.status).toBe(200);
+
+    // users insert must use user_role (real column) and never role / is_trial_user,
+    // which don't exist and made PostgREST reject the whole insert silently.
+    const userInsert = db.filtersFor('users').find((c) => c.op === 'insert');
+    const userPayload = (userInsert?.payload ?? {}) as Record<string, unknown>;
+    expect(userPayload.user_role).toBe('admin');
+    expect('role' in userPayload).toBe(false);
+    expect('is_trial_user' in userPayload).toBe(false);
+
+    // tenants update must set onboarding_completed and omit the non-existent
+    // max_users column (its presence previously failed the whole update).
+    const tenantUpdate = db.filtersFor('tenants').find((c) => c.op === 'update');
+    const tenantPayload = (tenantUpdate?.payload ?? {}) as Record<string, unknown>;
+    expect(tenantPayload.onboarding_completed).toBe(true);
+    expect('max_users' in tenantPayload).toBe(false);
+  });
+
   it('is idempotent — a second completion returns success, not an error', async () => {
     db.setResolver(() => ({ data: { id: 'r1', status: 'completed', token_expires_at: future } }));
     const res = await request(app()).post(`/api/registration/onboarding/${TOKEN}/complete`).send(body);

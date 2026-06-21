@@ -443,18 +443,20 @@ registrationRouter.post('/onboarding/:token/complete', async (req, res) => {
 
     if (authErr) throw authErr;
 
-    // Create user in users table (schema uses name column, not first_name/last_name)
-    await supabase.from('users').insert({
+    // Create the tenant admin in the users table. IMPORTANT: only real columns.
+    // The table has `user_role` (NOT `role`) and has no `is_trial_user` column —
+    // writing unknown columns makes PostgREST reject the whole insert, which used
+    // to fail silently and leave the school with no user row.
+    const { error: userInsertErr } = await supabase.from('users').insert({
       auth_id: authData.user.id,
       email: request.contact_email,
       name: request.contact_name || '',
       user_role: 'admin',
-      role: 'admin',
       tenant_id: request.tenant_id,
       status: 'active',
-      is_trial_user: true,
       created_at: new Date().toISOString(),
     });
+    if (userInsertErr) console.error('Onboarding: failed to create users row:', userInsertErr.message);
 
     // Update tenant with onboarding data. Keep status as 'trial' (set at
     // approval, with a 14-day trial_end_date) so the trial is preserved and the
@@ -462,7 +464,11 @@ registrationRouter.post('/onboarding/:token/complete', async (req, res) => {
     // trial window and full module access exist even if approval missed them.
     if (request.tenant_id) {
       const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      await supabase.from('tenants').update({
+      // IMPORTANT: only real columns. `max_users` does NOT exist on tenants —
+      // including it made the ENTIRE update fail silently, leaving
+      // onboarding_completed=false, which then trapped the admin in the
+      // onboarding redirect ("invalid link") and blocked every module.
+      const { error: tenantUpdateErr } = await supabase.from('tenants').update({
         logo_url: school_logo || null,
         academic_year_start: academic_year_start || null,
         num_grades: num_grades || null,
@@ -472,9 +478,10 @@ registrationRouter.post('/onboarding/:token/complete', async (req, res) => {
         plan_code: 'free_trial',
         trial_end_date: trialEnd,
         enabled_modules: [],        // empty = all modules enabled during trial
-        max_users: 3,               // trial allows up to 3 users total
         onboarding_completed: true,
       }).eq('id', request.tenant_id);
+      // onboarding_completed is essential — surface failures instead of hiding them.
+      if (tenantUpdateErr) console.error('Onboarding: failed to update tenant:', tenantUpdateErr.message);
     }
 
     // Mark request as completed. Keep the onboarding_token so a later revisit of
