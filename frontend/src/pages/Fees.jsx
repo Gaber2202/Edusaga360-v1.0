@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { createPageUrl } from '../utils';
 import { useTenantFilter } from '../hooks/useTenantFilter';
-import { supabase } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 
 // ─── API helpers ───────────────────────────────────────────────────────────────
 
@@ -119,25 +119,36 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
   const [dunningLoading, setDunningLoading] = useState(false);
   const [dunningResult, setDunningResult] = useState(null);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['billing-invoices', tenantId, filters],
-    queryFn: () => {
-      const params = new URLSearchParams({ page: String(filters.page), limit: '20' });
-      if (filters.status) params.set('status', filters.status);
-      return billingGet(`/invoices?${params}`, token);
-    },
-    enabled: !!token,
+  const { tenantFilter, hasTenantAccess } = useTenantFilter();
+  const PAGE_SIZE = 20;
+
+  // Load invoices directly from Supabase (RLS-scoped) instead of via the billing
+  // backend. The backend list resolved the wrong tenant for a platform owner
+  // (it falls back to "first active tenant"), which showed an empty list even
+  // when invoices existed. Reading through tenantFilter shows this tenant's
+  // invoices (or all of them for the platform owner) and survives a backend outage.
+  const { data: allInvoices = [], isLoading } = useQuery({
+    queryKey: ['invoices-list', tenantId, filters.status],
+    queryFn: () => fetchData(
+      tenantQuery('invoices')
+        .select('*, students(id, name_en, name_ar, student_id, grade)')
+        .match(tenantFilter(filters.status ? { status: filters.status } : {}))
+        .order('created_at', { ascending: false })
+        .limit(500)
+    ),
+    enabled: hasTenantAccess,
   });
 
-  const invoices = data?.data ?? [];
-  const pagination = data?.pagination ?? {};
+  const total = allInvoices.length;
+  const invoices = allInvoices.slice((filters.page - 1) * PAGE_SIZE, filters.page * PAGE_SIZE);
+  const pagination = { page: filters.page, limit: PAGE_SIZE, total, pages: Math.ceil(total / PAGE_SIZE) };
 
   const triggerDunning = async (dry_run) => {
     setDunningLoading(true);
     try {
       const result = await billingPost('/dunning/trigger', { dry_run, channel: 'whatsapp' }, token);
       setDunningResult(result);
-      if (!dry_run) qc.invalidateQueries({ queryKey: ['billing-invoices'] });
+      if (!dry_run) qc.invalidateQueries({ queryKey: ['invoices-list'] });
     } catch (e) {
       setDunningResult({ error: e.message });
     } finally {
