@@ -109,7 +109,7 @@ export default function HRDemoDataSeeder({ isRTL }) {
       // Departments
       let deptCount = 0;
       for (const dept of DEPARTMENTS) {
-        await tenantQuery('departments').insert({ ...dept, tenant_id: tenantId }).catch(() => {});
+        try { await tenantQuery('departments').insert({ ...dept, tenant_id: tenantId }); } catch { /* ignore duplicates */ }
         deptCount++;
       }
       log.push({ label: isRTL ? 'الأقسام' : 'Departments', count: deptCount });
@@ -117,7 +117,7 @@ export default function HRDemoDataSeeder({ isRTL }) {
       // Job Titles
       let jtCount = 0;
       for (const jt of JOB_TITLES) {
-        await tenantQuery('job_titles').insert({ ...jt, tenant_id: tenantId }).catch(() => {});
+        try { await tenantQuery('job_titles').insert({ ...jt, tenant_id: tenantId }); } catch { /* ignore duplicates */ }
         jtCount++;
       }
       log.push({ label: isRTL ? 'المسميات الوظيفية' : 'Job Titles', count: jtCount });
@@ -125,7 +125,7 @@ export default function HRDemoDataSeeder({ isRTL }) {
       // Leave Types
       let ltCount = 0;
       for (const lt of LEAVE_TYPES) {
-        await tenantQuery('leave_types').insert({ ...lt, tenant_id: tenantId }).catch(() => {});
+        try { await tenantQuery('leave_types').insert({ ...lt, tenant_id: tenantId }); } catch { /* ignore duplicates */ }
         ltCount++;
       }
       log.push({ label: isRTL ? 'أنواع الإجازات' : 'Leave Types', count: ltCount });
@@ -133,13 +133,13 @@ export default function HRDemoDataSeeder({ isRTL }) {
       // Salary Components
       let scCount = 0;
       for (const sc of SALARY_COMPONENTS) {
-        await tenantQuery('salary_components').insert({ ...sc, tenant_id: tenantId }).catch(() => {});
+        try { await tenantQuery('salary_components').insert({ ...sc, tenant_id: tenantId }); } catch { /* ignore duplicates */ }
         scCount++;
       }
       log.push({ label: isRTL ? 'مكونات الراتب' : 'Salary Components', count: scCount });
 
       // Payslip Settings (single record)
-      await tenantQuery('payslip_settings').insert({ ...PAYSLIP_SETTINGS, tenant_id: tenantId }).catch(() => {});
+      try { await tenantQuery('payslip_settings').insert({ ...PAYSLIP_SETTINGS, tenant_id: tenantId }); } catch { /* ignore duplicates */ }
       log.push({ label: isRTL ? 'إعدادات قسيمة الراتب' : 'Payslip Settings', count: 1 });
 
       setResults(log);

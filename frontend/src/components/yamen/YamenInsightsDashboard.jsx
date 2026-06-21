@@ -34,12 +34,12 @@ export default function YamenInsightsDashboard({ isRTL }) {
 
   const { data: evaluations } = useQuery({
     queryKey: ['yamen-evaluations', tenantId],
-    queryFn: () => fetchData(tenantQuery('performance_evaluations').select('*').order('created_date', { ascending: false }).limit().catch(() => [])),
+    queryFn: () => fetchData(tenantQuery('performance_evaluations').select('*').order('created_date', { ascending: false }).limit()).catch(() => []),
   });
 
   const { data: payRuns } = useQuery({
     queryKey: ['yamen-payroll', tenantId],
-    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').order('created_date', { ascending: false }).limit().catch(() => [])),
+    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').order('created_date', { ascending: false }).limit()).catch(() => []),
   });
 
   if (!employees || !attendance || !leaveRequests) return <div className="text-slate-400 text-sm">{isRTL ? 'جاري التحميل...' : 'Loading...'}</div>;

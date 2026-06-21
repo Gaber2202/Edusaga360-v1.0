@@ -39,14 +39,14 @@ export default function ReportFilters({ reportId: _reportId, filters, onChange }
   const fetchFilterData = async () => {
     try {
       const tf = tenantFilter();
-      const [gradesData, companiesData, yearsData] = await Promise.all([
-        tenantQuery('grades').select('*').match(tf).catch(() => []),
-        tenantQuery('companys').select('*').match(tf).catch(() => []),
-        tenantQuery('academic_years').select('*').match(tf).catch(() => [])
+      const [gradesRes, companiesRes, yearsRes] = await Promise.all([
+        Promise.resolve(tenantQuery('grades').select('*').match(tf)).catch(() => ({ data: [] })),
+        Promise.resolve(tenantQuery('companys').select('*').match(tf)).catch(() => ({ data: [] })),
+        Promise.resolve(tenantQuery('academic_years').select('*').match(tf)).catch(() => ({ data: [] }))
       ]);
-      setGrades(gradesData);
-      setCompanies(companiesData);
-      setAcademicYears(yearsData);
+      setGrades(gradesRes?.data || []);
+      setCompanies(companiesRes?.data || []);
+      setAcademicYears(yearsRes?.data || []);
     } catch (error) {
       console.error('Error fetching filter data:', error);
     }
