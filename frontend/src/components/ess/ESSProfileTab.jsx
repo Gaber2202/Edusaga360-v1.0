@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
+import { extractAiText } from '../yamen/yamenUtils';
 import { useLanguage } from '../LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -78,7 +79,7 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
     
     Provide: risk score (Low/Medium/High), key alerts, and recommendations. If data is insufficient, state what is missing.`;
     const res = await callApi('/api/ai/invoke-llm', { prompt });
-    setAiInsight(res);
+    setAiInsight(extractAiText(res));
     setLoadingAI(false);
   };
 

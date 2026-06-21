@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { callApi } from '../../api/supabaseClient';
+import { extractAiText } from '../yamen/yamenUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Bot, Loader2 } from 'lucide-react';
@@ -89,7 +90,7 @@ export default function YamenHRInsights({ module, data = {}, isRTL }) {
     setLoading(true);
     setInsight('');
     const res = await callApi('/api/ai/invoke-llm', { prompt });
-    setInsight(res);
+    setInsight(extractAiText(res));
     setLoading(false);
   };
 

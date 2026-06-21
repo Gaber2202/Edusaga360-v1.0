@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
+import { extractAiText } from '../components/yamen/yamenUtils';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent } from '../components/ui/card';
@@ -93,7 +94,7 @@ Provide:
 
 Respond in both Arabic and English. Be specific and actionable.`;
     const res = await callApi('/api/ai/invoke-llm', { prompt });
-    setAiInsight(res);
+    setAiInsight(extractAiText(res));
     setLoadingAI(false);
   };
 

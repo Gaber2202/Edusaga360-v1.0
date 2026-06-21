@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, callApi } from '../../api/supabaseClient';
+import { extractAiText } from '../yamen/yamenUtils';
 import { useLanguage } from '../LanguageContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -231,7 +232,7 @@ Provide:
 
 Respond in both Arabic and English. Be concise and specific.`;
     const res = await callApi('/api/ai/invoke-llm', { prompt });
-    setAiSuggestion(res);
+    setAiSuggestion(extractAiText(res));
     setLoadingAI(false);
   };
 

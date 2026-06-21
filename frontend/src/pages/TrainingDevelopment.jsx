@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
+import { extractAiText } from '../components/yamen/yamenUtils';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Card } from '../components/ui/card';
@@ -109,7 +110,7 @@ export default function TrainingDevelopment() {
     - Mandatory trainings: ${trainings.filter(t => t.is_mandatory).length}
     Provide a brief executive summary with risks and recommendations. If data is missing or insufficient, say so clearly.`;
     const res = await callApi('/api/ai/invoke-llm', { prompt });
-    setAiInsight(res);
+    setAiInsight(extractAiText(res));
     setLoadingAI(false);
   };
 

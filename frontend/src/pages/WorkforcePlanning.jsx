@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
+import { extractAiText } from '../components/yamen/yamenUtils';
 import { useLanguage } from '../components/LanguageContext';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -93,7 +94,7 @@ export default function WorkforcePlanning() {
     
     Respond in both Arabic and English. If data is insufficient, clearly state what's missing.`;
     const res = await callApi('/api/ai/invoke-llm', { prompt });
-    setAiInsight(res);
+    setAiInsight(extractAiText(res));
     setLoadingAI(false);
   };
 

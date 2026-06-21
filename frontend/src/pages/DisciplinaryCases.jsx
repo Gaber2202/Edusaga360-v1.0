@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
+import { extractAiText } from '../components/yamen/yamenUtils';
 import { useLanguage } from '../components/LanguageContext';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -136,7 +137,7 @@ export default function DisciplinaryCases() {
     - Repeat offenders (employees with 2+ cases): ${Object.values(cases.reduce((acc, c) => { acc[c.employee_id] = (acc[c.employee_id] || 0) + 1; return acc; }, {})).filter(v => v >= 2).length}
     Provide insights on patterns, risk indicators, and recommended actions in both Arabic and English.`;
     const res = await callApi('/api/ai/invoke-llm', { prompt });
-    setAiInsight(res);
+    setAiInsight(extractAiText(res));
     setLoadingAI(false);
   };
 
