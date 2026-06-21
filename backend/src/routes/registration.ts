@@ -342,6 +342,12 @@ registrationRouter.get('/onboarding/:token', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Invalid onboarding token' });
     }
 
+    // The account was already set up with this link. Tell the client explicitly
+    // so it can send them to sign in instead of showing a scary "invalid link".
+    if (request.status === 'completed') {
+      return res.status(409).json({ success: false, error: 'ALREADY_COMPLETED', message: 'This school account has already been set up. Please sign in.' });
+    }
+
     if (request.status !== 'approved') {
       return res.status(400).json({ success: false, error: 'Request is not approved' });
     }
@@ -406,6 +412,12 @@ registrationRouter.post('/onboarding/:token/complete', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Invalid token' });
     }
 
+    // Idempotent: if setup already finished, report success so a double submit
+    // (or a retried request) signs the admin in instead of erroring.
+    if (request.status === 'completed') {
+      return res.json({ success: true, alreadyCompleted: true });
+    }
+
     if (request.status !== 'approved') {
       return res.status(400).json({ success: false, error: 'Request is not approved' });
     }
@@ -465,11 +477,12 @@ registrationRouter.post('/onboarding/:token/complete', async (req, res) => {
       }).eq('id', request.tenant_id);
     }
 
-    // Mark request as completed
+    // Mark request as completed. Keep the onboarding_token so a later revisit of
+    // the link resolves to ALREADY_COMPLETED (and the admin is sent to sign in)
+    // rather than a 404 "invalid link". The status check above prevents reuse.
     await supabase.from('registration_requests').update({
       status: 'completed',
       completed_at: new Date().toISOString(),
-      onboarding_token: null,
     }).eq('id', request.id);
 
     res.json({ success: true, redirect_url: FRONTEND_URL });

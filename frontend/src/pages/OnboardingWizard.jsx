@@ -32,6 +32,16 @@ export default function OnboardingWizard() {
     validateToken();
   }, [token]);
 
+  // If the link belongs to an account that's already set up, forward them to
+  // sign in (the login page itself redirects to the dashboard when a session
+  // already exists) instead of leaving them on a dead "invalid link" screen.
+  useEffect(() => {
+    if (error === 'already') {
+      const tmr = setTimeout(() => window.location.replace('/school-login'), 2500);
+      return () => clearTimeout(tmr);
+    }
+  }, [error]);
+
   const validateToken = async () => {
     try {
       const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://edusaga-360-production.up.railway.app';
@@ -41,6 +51,8 @@ export default function OnboardingWizard() {
       if (!response.ok || !data.success) {
         if (data.error === 'TOKEN_EXPIRED') {
           setError('expired');
+        } else if (data.error === 'ALREADY_COMPLETED') {
+          setError('already');
         } else {
           setError('invalid');
         }
@@ -134,6 +146,22 @@ export default function OnboardingWizard() {
             <h1 className="text-xl font-bold text-slate-800 mb-2">انتهت صلاحية الرابط</h1>
             <p className="text-slate-500 mb-4">هذا الرابط انتهت صلاحيته. يمكنك طلب رابط جديد عبر التواصل مع فريقنا.</p>
             <a href="mailto:info@edusaga360.com" className="text-emerald-600 font-medium hover:underline">info@edusaga360.com</a>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error === 'already') {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4" dir="rtl">
+        <Card className="max-w-md w-full">
+          <CardContent className="py-12 text-center">
+            <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
+            <h1 className="text-xl font-bold text-slate-800 mb-2">تم إعداد حسابك بالفعل</h1>
+            <p className="text-slate-500 mb-4">حساب مدرستك جاهز للاستخدام. يتم تحويلك إلى تسجيل الدخول…</p>
+            <Loader2 className="w-6 h-6 animate-spin text-emerald-500 mx-auto" />
+            <a href="/school-login" className="block mt-4 text-emerald-600 font-medium hover:underline">تسجيل الدخول الآن</a>
           </CardContent>
         </Card>
       </div>
