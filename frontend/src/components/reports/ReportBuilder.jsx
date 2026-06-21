@@ -74,11 +74,11 @@ export default function ReportBuilder() {
       
       switch (reportType) {
         case 'students':
-          data = await tenantQuery('students').select('*').match(tenantFilter());
+          ({ data = [] } = await tenantQuery('students').select('*').match(tenantFilter()));
           break;
         case 'invoices':
         case 'ar_aging':
-          data = await tenantQuery('invoices').select('*').match(tenantFilter());
+          ({ data = [] } = await tenantQuery('invoices').select('*').match(tenantFilter()));
           if (reportType === 'ar_aging') {
             const today = new Date();
             data = data.filter(inv => inv.status !== 'paid').map(inv => {
@@ -94,13 +94,13 @@ export default function ReportBuilder() {
           break;
         case 'payments':
         case 'collections':
-          data = await tenantQuery('payments').select('*').match(tenantFilter());
+          ({ data = [] } = await tenantQuery('payments').select('*').match(tenantFilter()));
           break;
         case 'applications':
-          data = await tenantQuery('applications').select('*').match(tenantFilter());
+          ({ data = [] } = await tenantQuery('applications').select('*').match(tenantFilter()));
           break;
         case 'attendance':
-          data = await tenantQuery('attendances').select('*').match(tenantFilter());
+          ({ data = [] } = await tenantQuery('attendances').select('*').match(tenantFilter()));
           break;
       }
 
