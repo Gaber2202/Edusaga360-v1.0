@@ -177,15 +177,16 @@ export default function YamenHRChat({ isRTL, isHRMode }) {
       const responseText = extractAiText(res) || (isRTL ? 'لم يتم استلام رد' : 'No response received');
       setMessages(prev => [...prev, { role: 'assistant', content: responseText, timestamp: new Date(), provider: res?.provider }]);
 
-      // Increment usage counter on tenant
+      // Increment usage counter on tenant (Promise.resolve wraps the
+      // Supabase thenable so .catch() is available)
       if (tenant?.id) {
-        tenantQuery('tenants').update({
+        Promise.resolve(tenantQuery('tenants').update({
           yamen_ai_used_this_month: (tenant.yamen_ai_used_this_month || 0) + 1,
-        }).catch(() => {});
+        })).catch(() => {});
       }
 
       // Log interaction
-      tenantQuery('audit_logs').insert({
+      Promise.resolve(tenantQuery('audit_logs').insert({
         action: 'generate',
         entity_type: 'YamenAI',
         entity_id: 'chat',
@@ -194,7 +195,7 @@ export default function YamenHRChat({ isRTL, isHRMode }) {
         user_role: isHRMode ? 'hr' : 'employee',
         notes: `Q: ${text.slice(0, 100)}`,
         timestamp: new Date().toISOString(),
-      }).catch(() => {});
+      })).catch(() => {});
     } catch (e) {
       const errMsg = e?.message || e?.toString() || '';
       let friendlyError;
