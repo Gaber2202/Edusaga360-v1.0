@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import PageHeader from '../components/ui/PageHeader';
-import { Plus, AlertTriangle, CheckCircle2, Clock, Loader2, ArrowLeft, XCircle, Copy, MoveUp, MoveDown } from 'lucide-react';
+import { Plus, AlertTriangle, CheckCircle2, Clock, Loader2, ArrowLeft, XCircle, Copy, MoveUp, MoveDown, BarChart3, Users } from 'lucide-react';
 import MonthPicker from '../components/ui/MonthPicker';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -204,10 +204,21 @@ export default function PerformanceEvaluation() {
         onAction={() => { setForm(emptyForm()); setShowDialog(true); }}
       />
 
+      {/* KPI Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'إجمالي التقييمات' : 'Total Evals'}</p><p className="text-2xl font-bold">{evaluations.length}</p></Card>
+        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'مكتملة' : 'Completed'}</p><p className="text-2xl font-bold text-emerald-600">{evaluations.filter(e => e.status === 'completed').length}</p></Card>
+        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'قيد المراجعة' : 'In Review'}</p><p className="text-2xl font-bold text-amber-600">{evaluations.filter(e => ['submitted','reviewed'].includes(e.status)).length}</p></Card>
+        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'متوسط الدرجات' : 'Avg Score'}</p><p className="text-2xl font-bold text-blue-600">{evaluations.length > 0 ? Math.round(evaluations.reduce((s, e) => s + (e.total_score || 0), 0) / evaluations.length) : 0}%</p></Card>
+        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'أداء ممتاز' : 'Outstanding'}</p><p className="text-2xl font-bold text-purple-600">{evaluations.filter(e => e.rating === 'outstanding' || e.rating === 'exceeds_expectations').length}</p></Card>
+      </div>
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="evaluations">{isRTL ? 'التقييمات' : 'Evaluations'}</TabsTrigger>
+          <TabsTrigger value="360feedback" className="gap-1"><Users className="w-4 h-4" />{isRTL ? 'تقييم 360°' : '360° Feedback'}</TabsTrigger>
           <TabsTrigger value="templates">{isRTL ? 'قوالب المعايير' : 'Criteria Templates'}</TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-1"><BarChart3 className="w-4 h-4" />{isRTL ? 'تحليلات الأداء' : 'Analytics'}</TabsTrigger>
           <TabsTrigger value="warnings">{isRTL ? 'الإنذارات' : 'Warnings'}</TabsTrigger>
         </TabsList>
 
@@ -265,8 +276,126 @@ export default function PerformanceEvaluation() {
           </Card>
         </TabsContent>
 
+        {/* 360-Degree Feedback Tab */}
+        <TabsContent value="360feedback" className="mt-4 space-y-4">
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center"><Users className="w-5 h-5 text-blue-600" /></div>
+              <div>
+                <h3 className="font-semibold">{isRTL ? 'تقييم 360 درجة' : '360-Degree Feedback'}</h3>
+                <p className="text-sm text-slate-500">{isRTL ? 'تقييم ذاتي، من الأقران، المرؤوسين، والمدير' : 'Self, peer, upward, and manager evaluations'}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <Card className="p-4 bg-blue-50 border-blue-200">
+                <p className="text-sm text-blue-700 font-medium">{isRTL ? 'تقييم ذاتي' : 'Self Assessment'}</p>
+                <p className="text-xs text-blue-500 mt-1">{isRTL ? 'الموظف يقيّم نفسه' : 'Employee evaluates themselves'}</p>
+              </Card>
+              <Card className="p-4 bg-emerald-50 border-emerald-200">
+                <p className="text-sm text-emerald-700 font-medium">{isRTL ? 'تقييم الأقران' : 'Peer Review'}</p>
+                <p className="text-xs text-emerald-500 mt-1">{isRTL ? 'زملاء العمل يقيّمون بعضهم' : 'Colleagues evaluate each other'}</p>
+              </Card>
+              <Card className="p-4 bg-purple-50 border-purple-200">
+                <p className="text-sm text-purple-700 font-medium">{isRTL ? 'تقييم تصاعدي' : 'Upward Review'}</p>
+                <p className="text-xs text-purple-500 mt-1">{isRTL ? 'تقييم المرؤوسين للمدير' : 'Subordinates evaluate manager'}</p>
+              </Card>
+              <Card className="p-4 bg-amber-50 border-amber-200">
+                <p className="text-sm text-amber-700 font-medium">{isRTL ? 'تقييم المدير' : 'Manager Review'}</p>
+                <p className="text-xs text-amber-500 mt-1">{isRTL ? 'المدير المباشر يقيّم الموظف' : 'Direct manager evaluates employee'}</p>
+              </Card>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{isRTL ? 'الموظف' : 'Employee'}</TableHead>
+                  <TableHead>{isRTL ? 'ذاتي' : 'Self'}</TableHead>
+                  <TableHead>{isRTL ? 'أقران' : 'Peers'}</TableHead>
+                  <TableHead>{isRTL ? 'تصاعدي' : 'Upward'}</TableHead>
+                  <TableHead>{isRTL ? 'مدير' : 'Manager'}</TableHead>
+                  <TableHead>{isRTL ? 'المتوسط' : 'Average'}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {employees.slice(0, 10).map(emp => {
+                  const empEvals = evaluations.filter(e => e.employee_id === emp.id && e.status === 'completed');
+                  const avgScore = empEvals.length > 0 ? Math.round(empEvals.reduce((s, e) => s + (e.total_score || 0), 0) / empEvals.length) : null;
+                  return (
+                    <TableRow key={emp.id}>
+                      <TableCell className="font-medium">{emp.name_ar || emp.name_en}</TableCell>
+                      <TableCell><Badge variant="outline">{isRTL ? 'في الانتظار' : 'Pending'}</Badge></TableCell>
+                      <TableCell><Badge variant="outline">{isRTL ? 'في الانتظار' : 'Pending'}</Badge></TableCell>
+                      <TableCell><Badge variant="outline">{isRTL ? 'في الانتظار' : 'Pending'}</Badge></TableCell>
+                      <TableCell>{avgScore !== null ? <span className="font-bold text-blue-600">{avgScore}%</span> : <Badge variant="outline">{isRTL ? 'في الانتظار' : 'Pending'}</Badge>}</TableCell>
+                      <TableCell>{avgScore !== null ? <Badge className="bg-blue-100 text-blue-700">{avgScore}%</Badge> : '-'}</TableCell>
+                    </TableRow>
+                  );
+                })}
+                {employees.length === 0 && (
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-slate-400">{isRTL ? 'لا توجد بيانات' : 'No data'}</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="templates" className="mt-4">
           <CriteriaTemplatesTab isRTL={isRTL} />
+        </TabsContent>
+
+        {/* Performance Analytics Dashboard */}
+        <TabsContent value="analytics" className="mt-4 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-6">
+              <h4 className="font-semibold mb-4">{isRTL ? 'توزيع التقييمات' : 'Rating Distribution'}</h4>
+              <div className="space-y-3">
+                {['outstanding', 'exceeds_expectations', 'meets_expectations', 'needs_improvement', 'unsatisfactory'].map(rating => {
+                  const count = evaluations.filter(e => e.rating === rating).length;
+                  const pct = evaluations.length > 0 ? Math.round((count / evaluations.length) * 100) : 0;
+                  const colors = { outstanding: 'bg-purple-500', exceeds_expectations: 'bg-blue-500', meets_expectations: 'bg-emerald-500', needs_improvement: 'bg-amber-500', unsatisfactory: 'bg-red-500' };
+                  return (
+                    <div key={rating} className="flex items-center gap-3">
+                      <span className="text-sm w-40 truncate">{rating.replace(/_/g, ' ')}</span>
+                      <div className="flex-1 bg-slate-100 rounded-full h-4">
+                        <div className={`${colors[rating]} h-4 rounded-full transition-all`} style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="text-sm font-medium w-12 text-end">{count} ({pct}%)</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+            <Card className="p-6">
+              <h4 className="font-semibold mb-4">{isRTL ? 'الموظفون الأعلى أداءً' : 'Top Performers'}</h4>
+              <div className="space-y-2">
+                {evaluations.filter(e => e.status === 'completed').sort((a, b) => (b.total_score || 0) - (a.total_score || 0)).slice(0, 8).map((ev, i) => (
+                  <div key={ev.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">{i+1}</span>
+                      <span className="text-sm font-medium">{ev.employee_name}</span>
+                    </div>
+                    <Badge className={ev.total_score >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}>{ev.total_score}%</Badge>
+                  </div>
+                ))}
+                {evaluations.filter(e => e.status === 'completed').length === 0 && (
+                  <p className="text-center text-slate-400 py-4">{isRTL ? 'لا توجد تقييمات مكتملة' : 'No completed evaluations'}</p>
+                )}
+              </div>
+            </Card>
+            <Card className="p-6 md:col-span-2">
+              <h4 className="font-semibold mb-4">{isRTL ? 'حالة سير العمل التلقائي' : 'Automated Workflow Status'}</h4>
+              <div className="grid grid-cols-5 gap-2">
+                {['draft', 'submitted', 'reviewed', 'approved', 'completed'].map(status => {
+                  const count = evaluations.filter(e => e.status === status).length;
+                  return (
+                    <div key={status} className="text-center p-3 rounded-lg bg-slate-50 border">
+                      <Badge className={STATUS_COLORS[status]}>{isRTL ? STATUS_LABELS[status]?.ar : STATUS_LABELS[status]?.en}</Badge>
+                      <p className="text-2xl font-bold mt-2">{count}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="warnings" className="mt-4">

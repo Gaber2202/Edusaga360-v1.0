@@ -91,6 +91,8 @@ import {
           Route,
           UtensilsCrossed,
           Zap,
+          Megaphone,
+          Plane,
           } from 'lucide-react';
 
 function LayoutContent({ children, currentPageName }) {
@@ -171,6 +173,10 @@ function LayoutContent({ children, currentPageName }) {
         { name: 'disciplinaryCases', icon: Shield, page: 'DisciplinaryCases', roles: ['admin', 'hr_admin', 'hr_officer'] },
         { name: 'workforcePlanning', icon: BarChart3, page: 'WorkforcePlanning', roles: ['admin', 'hr_admin', 'finance', 'branch_manager'] },
         { name: 'workflowEngine', icon: GitBranch, page: 'WorkflowEngine', roles: ['admin', 'creator'] },
+        { name: 'engagement', icon: Megaphone, page: 'Engagement', roles: ['admin', 'hr_admin', 'hr_officer'] },
+        { name: 'expenses', icon: Receipt, page: 'Expenses', roles: ['admin', 'finance', 'hr_admin', 'branch_manager', 'accountant', 'teacher', 'hr_officer'] },
+        { name: 'corporateCards', icon: CreditCard, page: 'CorporateCards', roles: ['admin', 'hr_admin', 'finance'] },
+        { name: 'businessTravel', icon: Plane, page: 'BusinessTravel', roles: ['admin', 'hr_admin', 'finance', 'hr_officer', 'branch_manager'] },
         ]
         },
     {
@@ -277,12 +283,7 @@ function LayoutContent({ children, currentPageName }) {
       page: 'CanteenManagement',
       roles: ['admin', 'finance', 'branch_manager']
     },
-    { 
-      name: 'expenses', 
-      icon: Receipt, 
-      page: 'Expenses',
-      roles: ['admin', 'finance', 'hr_admin', 'branch_manager', 'accountant', 'teacher', 'hr_officer']
-    },
+    // Expenses moved into HR module — keeping this comment for route compatibility
     // Phase 2 - Service & Operations
     {
       name: 'crm',

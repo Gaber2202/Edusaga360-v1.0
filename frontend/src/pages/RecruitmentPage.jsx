@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, fetchData } from '../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
+import { extractAiText } from '../components/yamen/yamenUtils';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
@@ -11,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
+import { Card } from '../components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import PageHeader from '../components/ui/PageHeader';
 import DataTable from '../components/ui/DataTable';
 import StatusBadge from '../components/ui/StatusBadge';
@@ -18,7 +21,8 @@ import { toast } from 'sonner';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { 
   Plus, Search, Eye, UserPlus, Briefcase, Users, 
-  CheckCircle, XCircle, Loader2, Bot
+  CheckCircle, XCircle, Loader2, Bot, Globe, CalendarDays,
+  Database, Sparkles, Video
 } from 'lucide-react';
 import RecruitmentPipeline from '../components/hr/RecruitmentPipeline';
 import YamenHRInsights from '../components/hr/YamenHRInsights';
@@ -39,6 +43,12 @@ export default function RecruitmentPage() {
   const [editingRequest, setEditingRequest] = useState(null);
   const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);
+  const [aiShortlisting, setAiShortlisting] = useState(false);
+  const [aiRankings, setAiRankings] = useState([]);
+  const [showInterviewScheduler, setShowInterviewScheduler] = useState(null);
+  const [interviewForm, setInterviewForm] = useState({ date: '', time: '', platform: 'google_meet', interviewer_name: '', notes: '' });
+  const [showCareersPortal, setShowCareersPortal] = useState(false);
+  const [showApplicationForm, setShowApplicationForm] = useState(null);
 
   const [requestForm, setRequestForm] = useState({
     branch_id: '',
@@ -120,6 +130,103 @@ export default function RecruitmentPage() {
     queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_date').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
+
+  const { data: interviews = [] } = useQuery({
+    queryKey: ['recruitment_interviews', tenantId],
+    queryFn: () => fetchData(tenantQuery('recruitment_interviews').select('*').match(tenantFilter()).order('interview_date', { ascending: true })),
+    enabled: hasTenantAccess,
+  });
+
+  const { data: careerPostings = [] } = useQuery({
+    queryKey: ['career_postings', tenantId],
+    queryFn: () => fetchData(tenantQuery('career_postings').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
+    enabled: hasTenantAccess,
+  });
+
+  const handleAIShortlist = async (recruitmentId) => {
+    setAiShortlisting(true);
+    try {
+      const rec = recruitments.find(r => r.id === recruitmentId);
+      const relevantApplicants = applicants.filter(a => a.recruitment_id === recruitmentId);
+      const prompt = `You are Yamen AI, an HR assistant for a Saudi school. Analyze these applicants for the position "${rec?.position_name}" and rank them. Requirements: ${rec?.required_qualifications || 'N/A'}. Job description: ${rec?.job_description || 'N/A'}.\n\nApplicants:\n${relevantApplicants.map((a, i) => `${i+1}. ${a.full_name_ar} (${a.full_name_en}) - Education: ${a.education_level}, Experience: ${a.years_of_experience} years, Specialization: ${a.specialization}, Expected Salary: ${a.expected_salary} SAR, Interview Scores: Tech=${a.interview_technical_score}/10 Comm=${a.interview_communication_score}/10 Culture=${a.interview_culture_score}/10`).join('\n')}\n\nProvide a ranked list with AI score (0-100) and reasoning for each. Format as JSON array: [{"name":"...","score":85,"reasoning":"..."}]. Also provide Arabic summary.`;
+      const res = await callApi('/api/ai/invoke-llm', { prompt });
+      const text = extractAiText(res);
+      try {
+        const jsonMatch = text.match(/\[[\s\S]*?\]/);
+        if (jsonMatch) setAiRankings(JSON.parse(jsonMatch[0]));
+      } catch (_) {
+        setAiRankings([{ name: 'AI Analysis', score: 0, reasoning: text }]);
+      }
+      toast.success(isRTL ? 'تم تحليل المتقدمين بنجاح' : 'Applicants analyzed successfully');
+    } catch (error) {
+      toast.error(isRTL ? 'فشل التحليل الذكي' : 'AI analysis failed');
+    } finally {
+      setAiShortlisting(false);
+    }
+  };
+
+  const handleScheduleInterview = async (applicant) => {
+    if (!interviewForm.date || !interviewForm.time) {
+      toast.error(isRTL ? 'يرجى تحديد التاريخ والوقت' : 'Please select date and time');
+      return;
+    }
+    setSaving(true);
+    try {
+      const data = {
+        applicant_id: applicant.id,
+        applicant_name: applicant.full_name_ar,
+        recruitment_id: applicant.recruitment_id,
+        interview_date: interviewForm.date,
+        interview_time: interviewForm.time,
+        platform: interviewForm.platform,
+        interviewer_name: interviewForm.interviewer_name,
+        notes: interviewForm.notes,
+        status: 'scheduled',
+        meeting_link: interviewForm.platform === 'google_meet' ? `https://meet.google.com/new` : interviewForm.platform === 'zoom' ? 'https://zoom.us/j/new' : ''
+      };
+      await tenantQuery('recruitment_interviews').insert(data);
+      await tenantQuery('applicants').update({ status: 'interview_scheduled' }).eq('id', applicant.id);
+      queryClient.invalidateQueries({ queryKey: ['recruitment_interviews'] });
+      queryClient.invalidateQueries({ queryKey: ['applicants'] });
+      setShowInterviewScheduler(null);
+      setInterviewForm({ date: '', time: '', platform: 'google_meet', interviewer_name: '', notes: '' });
+      toast.success(isRTL ? 'تم جدولة المقابلة' : 'Interview scheduled');
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePublishCareerPosting = async (recruitment) => {
+    setSaving(true);
+    try {
+      const data = {
+        recruitment_id: recruitment.id,
+        title_ar: recruitment.position_name,
+        title_en: recruitment.position_name,
+        description_ar: recruitment.job_description || '',
+        description_en: recruitment.job_description || '',
+        requirements: recruitment.required_qualifications || '',
+        employment_type: recruitment.employment_type,
+        department_id: recruitment.department_id,
+        branch_id: recruitment.branch_id,
+        salary_range_min: recruitment.salary_range_min,
+        salary_range_max: recruitment.salary_range_max,
+        is_published: true,
+        published_date: new Date().toISOString(),
+        application_deadline: null,
+        status: 'active'
+      };
+      await tenantQuery('career_postings').insert(data);
+      queryClient.invalidateQueries({ queryKey: ['career_postings'] });
+      toast.success(isRTL ? 'تم نشر الوظيفة في بوابة التوظيف' : 'Job published to careers portal');
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const filteredRecruitments = filterByBranch(recruitments).filter(r => 
     r.position_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -346,6 +453,22 @@ export default function RecruitmentPage() {
             <Bot className="w-4 h-4" />
             Yamen AI
           </TabsTrigger>
+          <TabsTrigger value="ai_shortlist" className="gap-2">
+            <Sparkles className="w-4 h-4" />
+            {isRTL ? 'الفرز الذكي' : 'AI Shortlist'}
+          </TabsTrigger>
+          <TabsTrigger value="careers" className="gap-2">
+            <Globe className="w-4 h-4" />
+            {isRTL ? 'بوابة التوظيف' : 'Careers Portal'}
+          </TabsTrigger>
+          <TabsTrigger value="interviews" className="gap-2">
+            <CalendarDays className="w-4 h-4" />
+            {isRTL ? 'المقابلات' : 'Interviews'}
+          </TabsTrigger>
+          <TabsTrigger value="candidate_db" className="gap-2">
+            <Database className="w-4 h-4" />
+            {isRTL ? 'قاعدة المرشحين' : 'Candidate DB'}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="requests" className="space-y-4">
@@ -404,6 +527,206 @@ export default function RecruitmentPage() {
             }}
             isRTL={isRTL}
           />
+        </TabsContent>
+
+        {/* AI-Powered Candidate Shortlisting */}
+        <TabsContent value="ai_shortlist" className="space-y-4">
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-900">{isRTL ? 'الفرز الذكي للمرشحين — Yamen AI' : 'AI Candidate Shortlisting — Yamen AI'}</h3>
+                <p className="text-sm text-slate-500">{isRTL ? 'تحليل السيرة الذاتية وتصنيف المتقدمين تلقائياً' : 'CV parsing & automatic applicant ranking'}</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {recruitments.filter(r => r.status === 'approved').map(r => (
+                <Button key={r.id} variant="outline" size="sm" onClick={() => handleAIShortlist(r.id)} disabled={aiShortlisting} className="gap-2">
+                  {aiShortlisting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {r.position_name}
+                </Button>
+              ))}
+              {recruitments.filter(r => r.status === 'approved').length === 0 && (
+                <p className="text-sm text-slate-400">{isRTL ? 'لا توجد طلبات توظيف معتمدة للتحليل' : 'No approved requisitions to analyze'}</p>
+              )}
+            </div>
+            {aiRankings.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm">{isRTL ? 'نتائج التصنيف الذكي' : 'AI Rankings'}</h4>
+                {aiRankings.map((r, i) => (
+                  <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                      <span className="font-bold text-purple-700">#{i+1}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{r.name}</span>
+                        <Badge className="bg-purple-100 text-purple-700">{r.score}/100</Badge>
+                      </div>
+                      <p className="text-sm text-slate-600 mt-1">{r.reasoning}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </TabsContent>
+
+        {/* Branded Careers Portal */}
+        <TabsContent value="careers" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="font-semibold text-lg">{isRTL ? 'بوابة التوظيف العامة' : 'Public Careers Portal'}</h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'وظائف منشورة' : 'Published Jobs'}</p><p className="text-2xl font-bold text-blue-600">{careerPostings.filter(p => p.is_published).length}</p></Card>
+            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'طلبات التوظيف المعتمدة' : 'Approved Requisitions'}</p><p className="text-2xl font-bold text-emerald-600">{recruitments.filter(r => r.status === 'approved').length}</p></Card>
+          </div>
+          <Card className="p-4">
+            <h4 className="font-semibold mb-3">{isRTL ? 'وظائف قابلة للنشر' : 'Jobs Ready to Publish'}</h4>
+            <div className="space-y-2">
+              {recruitments.filter(r => r.status === 'approved').map(r => {
+                const isPublished = careerPostings.some(p => p.recruitment_id === r.id && p.is_published);
+                return (
+                  <div key={r.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border">
+                    <div>
+                      <p className="font-medium">{r.position_name}</p>
+                      <p className="text-sm text-slate-500">{r.request_number} — {r.employment_type}</p>
+                    </div>
+                    {isPublished ? (
+                      <Badge className="bg-emerald-100 text-emerald-700">{isRTL ? 'منشور' : 'Published'}</Badge>
+                    ) : (
+                      <Button size="sm" onClick={() => handlePublishCareerPosting(r)} disabled={saving} className="gap-2">
+                        <Globe className="w-4 h-4" />{isRTL ? 'نشر' : 'Publish'}
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+              {recruitments.filter(r => r.status === 'approved').length === 0 && (
+                <p className="text-center text-slate-400 py-4">{isRTL ? 'لا توجد وظائف معتمدة' : 'No approved positions'}</p>
+              )}
+            </div>
+          </Card>
+          {careerPostings.length > 0 && (
+            <Card className="p-4">
+              <h4 className="font-semibold mb-3">{isRTL ? 'الوظائف المنشورة' : 'Published Listings'}</h4>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{isRTL ? 'الوظيفة' : 'Position'}</TableHead>
+                    <TableHead>{isRTL ? 'النوع' : 'Type'}</TableHead>
+                    <TableHead>{isRTL ? 'تاريخ النشر' : 'Published Date'}</TableHead>
+                    <TableHead>{isRTL ? 'الحالة' : 'Status'}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {careerPostings.map(p => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium">{isRTL ? p.title_ar : p.title_en}</TableCell>
+                      <TableCell><Badge variant="outline">{p.employment_type}</Badge></TableCell>
+                      <TableCell>{p.published_date ? new Date(p.published_date).toLocaleDateString() : '-'}</TableCell>
+                      <TableCell><StatusBadge status={p.status} /></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Interview Scheduling */}
+        <TabsContent value="interviews" className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'مقابلات مجدولة' : 'Scheduled'}</p><p className="text-2xl font-bold text-blue-600">{interviews.filter(i => i.status === 'scheduled').length}</p></Card>
+            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'مكتملة' : 'Completed'}</p><p className="text-2xl font-bold text-emerald-600">{interviews.filter(i => i.status === 'completed').length}</p></Card>
+          </div>
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{isRTL ? 'المرشح' : 'Candidate'}</TableHead>
+                  <TableHead>{isRTL ? 'التاريخ' : 'Date'}</TableHead>
+                  <TableHead>{isRTL ? 'الوقت' : 'Time'}</TableHead>
+                  <TableHead>{isRTL ? 'المنصة' : 'Platform'}</TableHead>
+                  <TableHead>{isRTL ? 'المقابل' : 'Interviewer'}</TableHead>
+                  <TableHead>{isRTL ? 'الحالة' : 'Status'}</TableHead>
+                  <TableHead>{isRTL ? 'الرابط' : 'Link'}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {interviews.length === 0 ? (
+                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-slate-400">{isRTL ? 'لا توجد مقابلات' : 'No interviews scheduled'}</TableCell></TableRow>
+                ) : interviews.map(i => (
+                  <TableRow key={i.id}>
+                    <TableCell className="font-medium">{i.applicant_name}</TableCell>
+                    <TableCell>{i.interview_date}</TableCell>
+                    <TableCell>{i.interview_time}</TableCell>
+                    <TableCell><Badge variant="outline">{i.platform === 'google_meet' ? 'Google Meet' : i.platform === 'zoom' ? 'Zoom' : i.platform === 'outlook' ? 'Outlook' : isRTL ? 'حضوري' : 'In-Person'}</Badge></TableCell>
+                    <TableCell>{i.interviewer_name || '-'}</TableCell>
+                    <TableCell><StatusBadge status={i.status} /></TableCell>
+                    <TableCell>{i.meeting_link ? <a href={i.meeting_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-sm"><Video className="w-4 h-4 inline me-1" />{isRTL ? 'انضم' : 'Join'}</a> : '-'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+          <div className="mt-4">
+            <h4 className="font-semibold mb-3">{isRTL ? 'مرشحون بانتظار جدولة مقابلة' : 'Candidates Awaiting Interview'}</h4>
+            <div className="space-y-2">
+              {applicants.filter(a => a.status === 'screening' || a.status === 'applied').map(a => (
+                <div key={a.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border">
+                  <div><p className="font-medium">{a.full_name_ar}</p><p className="text-sm text-slate-500">{a.email}</p></div>
+                  <Button size="sm" onClick={() => setShowInterviewScheduler(a)} className="gap-2">
+                    <CalendarDays className="w-4 h-4" />{isRTL ? 'جدولة' : 'Schedule'}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Centralized Candidate Database */}
+        <TabsContent value="candidate_db" className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'إجمالي المرشحين' : 'Total Candidates'}</p><p className="text-2xl font-bold">{applicants.length}</p></Card>
+            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'مقبولين' : 'Applied'}</p><p className="text-2xl font-bold text-blue-600">{applicants.filter(a => a.status === 'applied').length}</p></Card>
+            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'تمت المقابلة' : 'Interviewed'}</p><p className="text-2xl font-bold text-amber-600">{applicants.filter(a => a.status === 'interviewed').length}</p></Card>
+            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'عرض وظيفي' : 'Offered'}</p><p className="text-2xl font-bold text-emerald-600">{applicants.filter(a => a.status === 'offered').length}</p></Card>
+            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'تم التوظيف' : 'Hired'}</p><p className="text-2xl font-bold text-purple-600">{applicants.filter(a => a.status === 'hired').length}</p></Card>
+          </div>
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{isRTL ? 'الاسم' : 'Name'}</TableHead>
+                  <TableHead>{isRTL ? 'البريد' : 'Email'}</TableHead>
+                  <TableHead>{isRTL ? 'التخصص' : 'Specialization'}</TableHead>
+                  <TableHead>{isRTL ? 'الخبرة' : 'Experience'}</TableHead>
+                  <TableHead>{isRTL ? 'الراتب المتوقع' : 'Expected Salary'}</TableHead>
+                  <TableHead>{isRTL ? 'الحالة' : 'Status'}</TableHead>
+                  <TableHead>{isRTL ? 'تقييم AI' : 'AI Score'}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {applicants.map(a => {
+                  const avgScore = ((a.interview_technical_score || 0) + (a.interview_communication_score || 0) + (a.interview_culture_score || 0)) / 3;
+                  return (
+                    <TableRow key={a.id} className="cursor-pointer hover:bg-slate-50" onClick={() => setShowApplicantDetails(a)}>
+                      <TableCell><div><p className="font-medium">{a.full_name_ar}</p><p className="text-xs text-slate-500">{a.full_name_en}</p></div></TableCell>
+                      <TableCell className="text-sm">{a.email}</TableCell>
+                      <TableCell>{a.specialization || '-'}</TableCell>
+                      <TableCell>{a.years_of_experience || 0} {isRTL ? 'سنة' : 'yr'}</TableCell>
+                      <TableCell>{a.expected_salary?.toLocaleString() || '-'} {isRTL ? 'ر.س' : 'SAR'}</TableCell>
+                      <TableCell><StatusBadge status={a.status} /></TableCell>
+                      <TableCell>{avgScore > 0 ? <Badge className={avgScore >= 7 ? 'bg-emerald-100 text-emerald-700' : avgScore >= 5 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}>{avgScore.toFixed(1)}/10</Badge> : '-'}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Card>
         </TabsContent>
       </Tabs>
 
@@ -750,6 +1073,56 @@ export default function RecruitmentPage() {
                 </div>
               )}
             </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Interview Scheduling Dialog */}
+      {showInterviewScheduler && (
+        <Dialog open={!!showInterviewScheduler} onOpenChange={() => setShowInterviewScheduler(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>{isRTL ? 'جدولة مقابلة' : 'Schedule Interview'} — {showInterviewScheduler.full_name_ar}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>{isRTL ? 'التاريخ' : 'Date'} *</Label>
+                  <Input type="date" value={interviewForm.date} onChange={(e) => setInterviewForm(p => ({...p, date: e.target.value}))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>{isRTL ? 'الوقت' : 'Time'} *</Label>
+                  <Input type="time" value={interviewForm.time} onChange={(e) => setInterviewForm(p => ({...p, time: e.target.value}))} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>{isRTL ? 'المنصة' : 'Platform'}</Label>
+                <Select value={interviewForm.platform} onValueChange={(v) => setInterviewForm(p => ({...p, platform: v}))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="google_meet">Google Meet</SelectItem>
+                    <SelectItem value="zoom">Zoom</SelectItem>
+                    <SelectItem value="outlook">Microsoft Outlook/Teams</SelectItem>
+                    <SelectItem value="in_person">{isRTL ? 'حضوري' : 'In-Person'}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{isRTL ? 'اسم المقابِل' : 'Interviewer Name'}</Label>
+                <Input value={interviewForm.interviewer_name} onChange={(e) => setInterviewForm(p => ({...p, interviewer_name: e.target.value}))} />
+              </div>
+              <div className="space-y-2">
+                <Label>{isRTL ? 'ملاحظات' : 'Notes'}</Label>
+                <Textarea value={interviewForm.notes} onChange={(e) => setInterviewForm(p => ({...p, notes: e.target.value}))} rows={2} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowInterviewScheduler(null)}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
+              <Button onClick={() => handleScheduleInterview(showInterviewScheduler)} disabled={saving}>
+                {saving && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                {isRTL ? 'جدولة المقابلة' : 'Schedule Interview'}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       )}

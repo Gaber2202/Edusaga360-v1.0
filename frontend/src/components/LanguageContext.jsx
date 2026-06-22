@@ -67,6 +67,10 @@ const translations = {
     eosb: 'مكافأة نهاية الخدمة',
     governmentRelations: 'العلاقات الحكومية',
     hrApprovalsInbox: 'صندوق الموافقات',
+    engagement: 'التفاعل والمشاركة',
+    corporateCards: 'البطاقات المؤسسية',
+    businessTravel: 'سفر العمل',
+    expenses: 'المصروفات',
     
     // Common
     save: 'حفظ',
@@ -602,6 +606,10 @@ const translations = {
     archiveAndDocuments: 'Archive and Documents',
     assetAssignments: 'Asset Assignments',
     assetRentals: 'Asset Rentals',
+    engagement: 'Engagement',
+    corporateCards: 'Corporate Cards',
+    businessTravel: 'Business Travel',
+    expenses: 'Expenses',
     
     // Common
     save: 'Save',
