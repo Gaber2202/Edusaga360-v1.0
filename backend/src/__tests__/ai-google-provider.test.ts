@@ -44,4 +44,18 @@ describe('Yamen AI — Google Gemini activation', () => {
     expect(res.status).toBe(200);
     expect(res.body.provider).toMatch(/gemini.*tool use/);
   });
+
+  it('also accepts GEMINI_API_KEY as an alias', async () => {
+    const original = process.env.GOOGLE_AI_API_KEY;
+    delete process.env.GOOGLE_AI_API_KEY;
+    process.env.GEMINI_API_KEY = 'test-alias-key';
+    try {
+      const res = await request(makeApp()).get('/ai/tools');
+      expect(res.status).toBe(200);
+      expect(res.body.provider).toMatch(/gemini.*tool use/);
+    } finally {
+      process.env.GOOGLE_AI_API_KEY = original;
+      delete process.env.GEMINI_API_KEY;
+    }
+  });
 });
