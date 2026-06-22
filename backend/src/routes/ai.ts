@@ -11,10 +11,12 @@ const supabase = createClient(
 );
 
 // ─── Model config ─────────────────────────────────────────────────────────────
-// Claude is primary for tool use. Other providers used as fallback (text-only).
+// Gemini is the primary provider for all users. Claude is a fallback.
 
-const CLAUDE_API_KEY = process.env.ANTHROPIC_API_KEY;
-const CLAUDE_MODEL   = 'claude-sonnet-4-6';
+const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY;
+const GOOGLE_AI_MODEL   = process.env.GOOGLE_AI_MODEL || 'gemini-2.0-flash';
+const CLAUDE_API_KEY    = process.env.ANTHROPIC_API_KEY;
+const CLAUDE_MODEL      = 'claude-sonnet-4-6';
 
 // ─── Tool definitions (Claude tool_use format) ───────────────────────────────
 
@@ -398,9 +400,6 @@ async function callClaudeWithTools(
 
 // ─── Gemini with tool use (function calling) ─────────────────────────────────
 
-const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY;
-const GOOGLE_AI_MODEL   = process.env.GOOGLE_AI_MODEL || 'gemini-2.0-flash';
-
 function geminiToolDeclarations() {
   return TOOLS.map((t) => ({
     name: t.name,
@@ -540,18 +539,7 @@ aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) =>
     const history: Message[] = (messages ?? []).map((m) => ({ role: m.role, content: m.content }));
     history.push({ role: 'user', content: prompt });
 
-    // Try Claude first (has tool use)
-    if (CLAUDE_API_KEY) {
-      try {
-        const response = await callClaudeWithTools(history, tenant_id, SYSTEM_PROMPT);
-        return res.json({ response, provider: 'claude' });
-      } catch (claudeErr: unknown) {
-        const msg = claudeErr instanceof Error ? claudeErr.message : String(claudeErr);
-        console.warn('Claude failed, falling back:', msg);
-      }
-    }
-
-    // Try Gemini with function calling (full tool support)
+    // Try Gemini first (primary provider, full tool support)
     if (GOOGLE_AI_API_KEY) {
       try {
         const response = await callGeminiWithTools(history, tenant_id, SYSTEM_PROMPT);
@@ -562,13 +550,24 @@ aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) =>
       }
     }
 
+    // Try Claude as fallback (tool use capable)
+    if (CLAUDE_API_KEY) {
+      try {
+        const response = await callClaudeWithTools(history, tenant_id, SYSTEM_PROMPT);
+        return res.json({ response, provider: 'claude' });
+      } catch (claudeErr: unknown) {
+        const msg = claudeErr instanceof Error ? claudeErr.message : String(claudeErr);
+        console.warn('Claude failed, falling back:', msg);
+      }
+    }
+
     // Last-resort: text-only provider (no tool use)
     const fallback = getFallbackProvider();
     if (!fallback) {
       return res.json({
         response:
-          'خدمة الذكاء الاصطناعي غير مُفعّلة. أضف GOOGLE_AI_API_KEY (أو ANTHROPIC_API_KEY) إلى متغيّرات البيئة في الخادم (Railway).\n\n' +
-          'AI service not configured. Add GOOGLE_AI_API_KEY (or ANTHROPIC_API_KEY) to the backend (Railway) environment variables.',
+          'خدمة الذكاء الاصطناعي غير مُفعّلة. أضف GOOGLE_AI_API_KEY إلى متغيّرات البيئة في الخادم (Railway).\n\n' +
+          'AI service not configured. Add GOOGLE_AI_API_KEY to the backend (Railway) environment variables.',
       });
     }
     const response = await callFallback(fallback, `${SYSTEM_PROMPT}\n\nUser: ${prompt}`);
@@ -596,14 +595,14 @@ aiRouter.post('/compliance-alerts', async (req: AuthenticatedRequest, res: Respo
       role: 'user',
       content: `Based on these compliance alerts for our school, write a short executive summary (3-5 bullet points) in Arabic. Be direct about critical items first:\n\n${JSON.stringify(alerts, null, 2)}`,
     }];
-    if (CLAUDE_API_KEY) {
-      try {
-        summary = await callClaudeWithTools(summaryMessages, tenant_id, SYSTEM_PROMPT);
-      } catch { /* fall through */ }
-    }
-    if (!summary && GOOGLE_AI_API_KEY) {
+    if (GOOGLE_AI_API_KEY) {
       try {
         summary = await callGeminiWithTools(summaryMessages, tenant_id, SYSTEM_PROMPT);
+      } catch { /* fall through */ }
+    }
+    if (!summary && CLAUDE_API_KEY) {
+      try {
+        summary = await callClaudeWithTools(summaryMessages, tenant_id, SYSTEM_PROMPT);
       } catch { /* summary stays null */ }
     }
 
@@ -620,6 +619,6 @@ aiRouter.post('/compliance-alerts', async (req: AuthenticatedRequest, res: Respo
 aiRouter.get('/tools', (_req: AuthenticatedRequest, res: Response) => {
   return res.json({
     tools: TOOLS.map((t) => ({ name: t.name, description: t.description })),
-    provider: CLAUDE_API_KEY ? 'claude (tool use enabled)' : GOOGLE_AI_API_KEY ? 'gemini (tool use enabled)' : (getFallbackProvider()?.name ?? 'none'),
+    provider: GOOGLE_AI_API_KEY ? 'gemini (tool use enabled)' : CLAUDE_API_KEY ? 'claude (tool use enabled)' : (getFallbackProvider()?.name ?? 'none'),
   });
 });

@@ -107,7 +107,7 @@ describe('POST /ai/invoke-llm (chat mode, no provider configured)', () => {
       .send({ prompt: 'How many employees do we have?' });
 
     expect(res.status).toBe(200);
-    expect(res.body.response).toContain('ANTHROPIC_API_KEY');
+    expect(res.body.response).toContain('GOOGLE_AI_API_KEY');
     // The message includes Arabic guidance for the school admin.
     expect(res.body.response).toMatch(/الذكاء الاصطناعي/);
   });
