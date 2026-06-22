@@ -65,7 +65,9 @@ import ChequeManagement from './pages/ChequeManagement';
 import Collections from './pages/Collections';
 import Communications from './pages/Communications';
 import Companies from './pages/Companies';
+import BusinessTravel from './pages/BusinessTravel';
 import ContractTemplates from './pages/ContractTemplates';
+import CorporateCards from './pages/CorporateCards';
 import Contracts from './pages/Contracts';
 import CostCenters from './pages/CostCenters';
 import Dashboard from './pages/Dashboard';
@@ -75,6 +77,7 @@ import EOSBCalculator from './pages/EOSBCalculator';
 import ESSPortal from './pages/ESSPortal';
 import ESSSettings from './pages/ESSSettings';
 import EmployeeAttendance from './pages/EmployeeAttendance';
+import Engagement from './pages/Engagement';
 import Employees from './pages/Employees';
 import Expenses from './pages/Expenses';
 import Facilities from './pages/Facilities';
@@ -158,7 +161,9 @@ export const PAGES = {
     "Collections": Collections,
     "Communications": Communications,
     "Companies": Companies,
+    "BusinessTravel": BusinessTravel,
     "ContractTemplates": ContractTemplates,
+    "CorporateCards": CorporateCards,
     "Contracts": Contracts,
     "CostCenters": CostCenters,
     "Dashboard": Dashboard,
@@ -168,6 +173,7 @@ export const PAGES = {
     "ESSPortal": ESSPortal,
     "ESSSettings": ESSSettings,
     "EmployeeAttendance": EmployeeAttendance,
+    "Engagement": Engagement,
     "Employees": Employees,
     "Expenses": Expenses,
     "Facilities": Facilities,
