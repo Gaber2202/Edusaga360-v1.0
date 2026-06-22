@@ -44,3 +44,10 @@ export async function callApi(path, body = {}, options = {}) {
   }
   return json;
 }
+
+/** GET helper that serialises a params object into a query string (skips empty values). */
+export async function apiGet(path, params) {
+  const entries = Object.entries(params || {}).filter(([, v]) => v != null && v !== '');
+  const qs = entries.length ? `?${new URLSearchParams(entries).toString()}` : '';
+  return callApi(`${path}${qs}`, {}, { method: 'GET' });
+}

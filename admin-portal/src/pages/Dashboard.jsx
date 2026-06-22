@@ -3,9 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { callApi } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Building2, Users, TrendingUp, Clock, UserPlus, Mail, AlertCircle } from 'lucide-react';
+import { Building2, Users, TrendingUp, Clock, UserPlus, Mail, AlertCircle, DollarSign, Sparkles, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
+import { formatMoney, planLabel } from '../lib/plans';
 
 function KPI({ title, value, sub, icon: Icon, color, to }) {
   const colors = {
@@ -64,13 +65,27 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KPI title="Total Schools" value={stats?.totalTenants} sub={`+${stats?.newTenantsThisMonth ?? 0} this month`} icon={Building2} color="blue" to="/tenants" />
         <KPI title="Active Schools" value={stats?.activeTenants} icon={TrendingUp} color="emerald" to="/tenants" />
-        <KPI title="On Trial" value={stats?.trialTenants} icon={Clock} color="amber" to="/tenants" />
+        <KPI title="On Trial" value={stats?.trialTenants} icon={Clock} color="amber" to="/trials" />
         <KPI title="Total Users" value={stats?.totalUsers} sub={`${stats?.activeUsers ?? 0} active`} icon={Users} color="purple" to="/users" />
       </div>
 
+      {/* Revenue & conversion KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KPI title="MRR" value={formatMoney(stats?.mrr ?? 0)} sub={`${formatMoney(stats?.arr ?? 0)} ARR`} icon={DollarSign} color="emerald" to="/subscriptions" />
+        <KPI title="Trials Expiring ≤7d" value={stats?.trialsExpiringSoon ?? 0} sub={`${stats?.trialsExpired ?? 0} expired`} icon={Zap} color="red" to="/trials" />
+        <KPI title="Converted This Month" value={stats?.conversionsThisMonth ?? 0} icon={Sparkles} color="emerald" to="/trials" />
+        <KPI title="Pending Actions" value={(stats?.pendingUserRequests ?? 0) + (stats?.pendingTenants ?? 0) + (stats?.pendingInvitations ?? 0)} icon={AlertCircle} color="amber" to="/user-requests" />
+      </div>
+
       {/* Alert row */}
-      {((stats?.pendingUserRequests ?? 0) > 0 || (stats?.pendingInvitations ?? 0) > 0 || (stats?.pendingTenants ?? 0) > 0) && (
+      {((stats?.pendingUserRequests ?? 0) > 0 || (stats?.pendingInvitations ?? 0) > 0 || (stats?.pendingTenants ?? 0) > 0 || (stats?.trialsExpiringSoon ?? 0) > 0) && (
         <div className="flex gap-3 flex-wrap">
+          {(stats?.trialsExpiringSoon ?? 0) > 0 && (
+            <Link to="/trials" className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2 text-sm text-red-700 hover:bg-red-100">
+              <Zap className="w-4 h-4" />
+              {stats.trialsExpiringSoon} trial{stats.trialsExpiringSoon > 1 ? 's' : ''} expiring within 7 days
+            </Link>
+          )}
           {(stats?.pendingTenants ?? 0) > 0 && (
             <Link to="/tenants" className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 text-sm text-blue-700 hover:bg-blue-100">
               <AlertCircle className="w-4 h-4" />
@@ -119,7 +134,7 @@ export default function Dashboard() {
                       <p className="text-sm font-medium text-slate-800">{t.name_en || t.name_ar}</p>
                       <p className="text-xs text-slate-400">{t.admin_email || t.tenant_code}</p>
                     </td>
-                    <td className="px-5 py-3 text-xs text-slate-600 capitalize">{t.plan_code || t.plan || 'trial'}</td>
+                    <td className="px-5 py-3 text-xs text-slate-600">{planLabel(t.plan_code || t.plan)}</td>
                     <td className="px-5 py-3">
                       <Badge className={`text-xs ${STATUS_STYLES[t.status] || 'bg-slate-100 text-slate-700'}`}>
                         {t.status}
