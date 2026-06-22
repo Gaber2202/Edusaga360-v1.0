@@ -152,12 +152,18 @@ tenantUsersRouter.post('/requests/:id/approve', async (req: AuthenticatedRequest
       email: reqRow.email,
       name: reqRow.name || '',
       user_role: reqRow.requested_role,
-      role: reqRow.requested_role === 'admin' ? 'admin' : 'user',
       tenant_id: reqRow.tenant_id,
       status: 'active',
       is_trial_user: true,
-      created_at: new Date().toISOString(),
+      invited_by: req.user!.id,
     });
+
+    // Keep the tenant's live seat counter in sync.
+    {
+      const { count } = await supabase.from('users')
+        .select('id', { count: 'exact', head: true }).eq('tenant_id', reqRow.tenant_id);
+      await supabase.from('tenants').update({ current_users: count ?? 0 }).eq('id', reqRow.tenant_id);
+    }
 
     // Send a password-reset email so the new user can set their own password.
     await supabase.auth.resetPasswordForEmail(reqRow.email, {

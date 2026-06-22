@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import AccessDenied from './pages/AccessDenied';
 import Dashboard from './pages/Dashboard';
 import Tenants from './pages/Tenants';
+import Trials from './pages/Trials';
 import PlatformUsers from './pages/PlatformUsers';
 import UserRequests from './pages/UserRequests';
 import Invitations from './pages/Invitations';
@@ -48,6 +49,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/tenants" element={<Tenants />} />
+        <Route path="/trials" element={<Trials />} />
         <Route path="/users" element={<PlatformUsers />} />
         <Route path="/user-requests" element={<UserRequests />} />
         <Route path="/invitations" element={<Invitations />} />
