@@ -44,11 +44,12 @@ GOOGLE_AI_API_KEY=<from Google AI Studio — for Yamen AI>
 
 ### Yamen AI Configuration (LLM)
 
-The backend supports 3 LLM providers for Yamen AI (checked in order):
-1. **Google Gemini** (recommended) — `GOOGLE_AI_API_KEY` — Get from https://aistudio.google.com/apikey
-2. **OpenAI** — `OPENAI_API_KEY`
-3. **Groq** — `GROQ_API_KEY`
+The backend tries LLM providers in this order:
+1. **Google Gemini** (primary — full tool use) — `GOOGLE_AI_API_KEY` — Get from https://aistudio.google.com/apikey
+2. **Anthropic Claude** (fallback — full tool use) — `ANTHROPIC_API_KEY`
+3. **OpenAI / Groq** (last resort — text only, no tool use) — `OPENAI_API_KEY` or `GROQ_API_KEY`
 
+Set `GOOGLE_AI_API_KEY` on Railway to enable Yamen AI for all users.
 If no key is configured, Yamen AI returns a friendly message asking the admin to configure one.
 
 ## Step 3: School Staff App (Vercel)
