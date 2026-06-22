@@ -503,6 +503,32 @@ async function callFallback(provider: NonNullable<ReturnType<typeof getFallbackP
   return data.choices?.[0]?.message?.content ?? 'No response.';
 }
 
+// ─── Live provider probe (diagnostics) ────────────────────────────────────────
+// Minimal generateContent call to verify the Gemini key/model/region actually
+// work. Returns Google's verbatim error (the key value is never included) so a
+// failure such as an unsupported server region or an invalid key is immediately
+// visible — without anyone needing to read the Railway logs.
+
+async function probeGemini(): Promise<{ ok: boolean; status: number; error?: string }> {
+  const key = getGeminiKey();
+  if (!key) return { ok: false, status: 0, error: 'no Gemini key detected' };
+  try {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${getGeminiModel()}:generateContent?key=${key}`;
+    const r = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: 'ping' }] }],
+        generationConfig: { maxOutputTokens: 1 },
+      }),
+    });
+    if (!r.ok) return { ok: false, status: r.status, error: (await r.text()).slice(0, 500) };
+    return { ok: true, status: r.status };
+  } catch (e) {
+    return { ok: false, status: 0, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 // ─── Request schema ───────────────────────────────────────────────────────────
 
 const InvokeLLMSchema = z.object({
@@ -548,6 +574,27 @@ aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) =>
     const history: Message[] = (messages ?? []).map((m) => ({ role: m.role, content: m.content }));
     history.push({ role: 'user', content: prompt });
 
+    // Collect per-provider errors so a configured-but-failing provider is never
+    // misreported as "not configured". That conflation is the bug that made this
+    // look unfixable: a GOOGLE_AI_API_KEY that *is* set but whose Gemini call
+    // fails (invalid/restricted key, unsupported server region, quota, wrong
+    // model) fell through to the "add the key" message — so the key kept getting
+    // re-added while the real error stayed buried in the logs.
+    const providerErrors: string[] = [];
+    const fallback = getFallbackProvider();
+    const anyProviderConfigured = !!getGeminiKey() || !!getClaudeKey() || !!fallback;
+
+    // Genuine no-provider case — the ONLY situation that warrants the
+    // "add GOOGLE_AI_API_KEY" guidance.
+    if (!anyProviderConfigured) {
+      return res.json({
+        provider: 'none',
+        response:
+          'خدمة الذكاء الاصطناعي غير مُفعّلة. أضف GOOGLE_AI_API_KEY إلى متغيّرات البيئة في الخادم (Railway).\n\n' +
+          'AI service not configured. Add GOOGLE_AI_API_KEY to the backend (Railway) environment variables.',
+      });
+    }
+
     // Try Gemini first (primary provider, full tool support)
     if (getGeminiKey()) {
       try {
@@ -555,7 +602,8 @@ aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) =>
         return res.json({ response, provider: 'gemini' });
       } catch (geminiErr: unknown) {
         const msg = geminiErr instanceof Error ? geminiErr.message : String(geminiErr);
-        console.warn('Gemini failed, falling back:', msg);
+        console.warn('[ai] Gemini failed:', msg);
+        providerErrors.push(`gemini: ${msg}`);
       }
     }
 
@@ -566,21 +614,37 @@ aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) =>
         return res.json({ response, provider: 'claude' });
       } catch (claudeErr: unknown) {
         const msg = claudeErr instanceof Error ? claudeErr.message : String(claudeErr);
-        console.warn('Claude failed, falling back:', msg);
+        console.warn('[ai] Claude failed:', msg);
+        providerErrors.push(`claude: ${msg}`);
       }
     }
 
     // Last-resort: text-only provider (no tool use)
-    const fallback = getFallbackProvider();
-    if (!fallback) {
-      return res.json({
-        response:
-          'خدمة الذكاء الاصطناعي غير مُفعّلة. أضف GOOGLE_AI_API_KEY إلى متغيّرات البيئة في الخادم (Railway).\n\n' +
-          'AI service not configured. Add GOOGLE_AI_API_KEY to the backend (Railway) environment variables.',
-      });
+    if (fallback) {
+      try {
+        const response = await callFallback(fallback, `${SYSTEM_PROMPT}\n\nUser: ${prompt}`);
+        return res.json({ response, provider: fallback.name });
+      } catch (fbErr: unknown) {
+        const msg = fbErr instanceof Error ? fbErr.message : String(fbErr);
+        console.warn(`[ai] ${fallback.name} failed:`, msg);
+        providerErrors.push(`${fallback.name}: ${msg}`);
+      }
     }
-    const response = await callFallback(fallback, `${SYSTEM_PROMPT}\n\nUser: ${prompt}`);
-    return res.json({ response, provider: fallback.name });
+
+    // A provider WAS configured but every attempt failed. Surface the real
+    // cause (e.g. "User location is not supported for the API use") instead of
+    // the misleading "not configured" message, and point at the live self-test.
+    const detail = providerErrors.join(' | ') || 'unknown provider error';
+    console.error('[ai] all configured providers failed:', detail);
+    return res.json({
+      provider: 'error',
+      detail,
+      response:
+        'تعذّر تشغيل مزوّد الذكاء الاصطناعي رغم ضبط المفتاح. السبب الفعلي:\n' + detail + '\n\n' +
+        'The AI provider is configured but the request failed. Actual cause:\n' + detail + '\n\n' +
+        'افحص المفتاح وتوفّر واجهة Gemini في منطقة الخادم عبر: GET /api/ai/diagnostics\n' +
+        'Check the key and Gemini API availability in the server region via: GET /api/ai/diagnostics',
+    });
 
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown AI error';
@@ -630,4 +694,32 @@ aiRouter.get('/tools', (_req: AuthenticatedRequest, res: Response) => {
     tools: TOOLS.map((t) => ({ name: t.name, description: t.description })),
     provider: getGeminiKey() ? 'gemini (tool use enabled)' : getClaudeKey() ? 'claude (tool use enabled)' : (getFallbackProvider()?.name ?? 'none'),
   });
+});
+
+// ─── GET /api/ai/diagnostics — live provider self-test ───────────────────────
+// Answers "why is Yamen AI failing?" without reading Railway logs: reports which
+// key is detected (never the value), the model, and the verbatim result of a
+// minimal live Gemini call — so region/key/model/quota errors are visible
+// directly. This is the endpoint to hit when the chat says the provider failed.
+
+aiRouter.get('/diagnostics', async (_req: AuthenticatedRequest, res: Response) => {
+  const geminiKeySource = process.env.GOOGLE_AI_API_KEY ? 'GOOGLE_AI_API_KEY'
+    : process.env.GEMINI_API_KEY ? 'GEMINI_API_KEY'
+    : process.env.Gemini_EduSaga360 ? 'Gemini_EduSaga360'
+    : null;
+
+  const detected = {
+    gemini: !!getGeminiKey(),
+    gemini_key_source: geminiKeySource,
+    gemini_model: getGeminiModel(),
+    claude: !!getClaudeKey(),
+    openai: !!process.env.OPENAI_API_KEY,
+    groq: !!process.env.GROQ_API_KEY,
+  };
+
+  const geminiProbe = getGeminiKey()
+    ? await probeGemini()
+    : { skipped: true, reason: 'no Gemini key detected' };
+
+  return res.json({ detected, geminiProbe });
 });
