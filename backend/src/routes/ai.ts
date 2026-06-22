@@ -12,11 +12,13 @@ const supabase = createClient(
 
 // ─── Model config ─────────────────────────────────────────────────────────────
 // Gemini is the primary provider for all users. Claude is a fallback.
+// Env vars are read per-request so Railway variable changes take effect without
+// a full redeploy. Accepts GEMINI_API_KEY as an alias for GOOGLE_AI_API_KEY.
 
-const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY;
-const GOOGLE_AI_MODEL   = process.env.GOOGLE_AI_MODEL || 'gemini-2.0-flash';
-const CLAUDE_API_KEY    = process.env.ANTHROPIC_API_KEY;
-const CLAUDE_MODEL      = 'claude-sonnet-4-6';
+function getGeminiKey()  { return process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || ''; }
+function getGeminiModel() { return process.env.GOOGLE_AI_MODEL || 'gemini-2.0-flash'; }
+function getClaudeKey()  { return process.env.ANTHROPIC_API_KEY || ''; }
+const CLAUDE_MODEL = 'claude-sonnet-4-6';
 
 // ─── Tool definitions (Claude tool_use format) ───────────────────────────────
 
@@ -332,7 +334,8 @@ async function callClaudeWithTools(
   tenantId: string,
   systemPrompt: string,
 ): Promise<string> {
-  if (!CLAUDE_API_KEY) throw new Error('ANTHROPIC_API_KEY not set');
+  const claudeKey = getClaudeKey();
+  if (!claudeKey) throw new Error('ANTHROPIC_API_KEY not set');
 
   let currentMessages = [...messages];
 
@@ -341,7 +344,7 @@ async function callClaudeWithTools(
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'x-api-key':         CLAUDE_API_KEY,
+        'x-api-key':         claudeKey,
         'anthropic-version': '2023-06-01',
         'content-type':      'application/json',
       },
@@ -413,9 +416,10 @@ async function callGeminiWithTools(
   tenantId: string,
   systemPrompt: string,
 ): Promise<string> {
-  if (!GOOGLE_AI_API_KEY) throw new Error('GOOGLE_AI_API_KEY not set');
+  const geminiKey = getGeminiKey();
+  if (!geminiKey) throw new Error('GOOGLE_AI_API_KEY not set');
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GOOGLE_AI_MODEL}:generateContent?key=${GOOGLE_AI_API_KEY}`;
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${getGeminiModel()}:generateContent?key=${geminiKey}`;
 
   // Convert our Message[] to Gemini contents format
   const contents: Array<{ role: string; parts: unknown[] }> = messages.map((m) => ({
@@ -540,7 +544,7 @@ aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) =>
     history.push({ role: 'user', content: prompt });
 
     // Try Gemini first (primary provider, full tool support)
-    if (GOOGLE_AI_API_KEY) {
+    if (getGeminiKey()) {
       try {
         const response = await callGeminiWithTools(history, tenant_id, SYSTEM_PROMPT);
         return res.json({ response, provider: 'gemini' });
@@ -551,7 +555,7 @@ aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) =>
     }
 
     // Try Claude as fallback (tool use capable)
-    if (CLAUDE_API_KEY) {
+    if (getClaudeKey()) {
       try {
         const response = await callClaudeWithTools(history, tenant_id, SYSTEM_PROMPT);
         return res.json({ response, provider: 'claude' });
@@ -595,12 +599,12 @@ aiRouter.post('/compliance-alerts', async (req: AuthenticatedRequest, res: Respo
       role: 'user',
       content: `Based on these compliance alerts for our school, write a short executive summary (3-5 bullet points) in Arabic. Be direct about critical items first:\n\n${JSON.stringify(alerts, null, 2)}`,
     }];
-    if (GOOGLE_AI_API_KEY) {
+    if (getGeminiKey()) {
       try {
         summary = await callGeminiWithTools(summaryMessages, tenant_id, SYSTEM_PROMPT);
       } catch { /* fall through */ }
     }
-    if (!summary && CLAUDE_API_KEY) {
+    if (!summary && getClaudeKey()) {
       try {
         summary = await callClaudeWithTools(summaryMessages, tenant_id, SYSTEM_PROMPT);
       } catch { /* summary stays null */ }
@@ -619,6 +623,6 @@ aiRouter.post('/compliance-alerts', async (req: AuthenticatedRequest, res: Respo
 aiRouter.get('/tools', (_req: AuthenticatedRequest, res: Response) => {
   return res.json({
     tools: TOOLS.map((t) => ({ name: t.name, description: t.description })),
-    provider: GOOGLE_AI_API_KEY ? 'gemini (tool use enabled)' : CLAUDE_API_KEY ? 'claude (tool use enabled)' : (getFallbackProvider()?.name ?? 'none'),
+    provider: getGeminiKey() ? 'gemini (tool use enabled)' : getClaudeKey() ? 'claude (tool use enabled)' : (getFallbackProvider()?.name ?? 'none'),
   });
 });
