@@ -13,9 +13,14 @@ const supabase = createClient(
 // ─── Model config ─────────────────────────────────────────────────────────────
 // Gemini is the primary provider for all users. Claude is a fallback.
 // Env vars are read per-request so Railway variable changes take effect without
-// a full redeploy. Accepts GEMINI_API_KEY as an alias for GOOGLE_AI_API_KEY.
+// a full redeploy. Accepts common aliases for the Gemini key.
 
-function getGeminiKey()  { return process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || ''; }
+function getGeminiKey() {
+  return process.env.GOOGLE_AI_API_KEY
+    || process.env.GEMINI_API_KEY
+    || process.env.Gemini_EduSaga360
+    || '';
+}
 function getGeminiModel() { return process.env.GOOGLE_AI_MODEL || 'gemini-2.0-flash'; }
 function getClaudeKey()  { return process.env.ANTHROPIC_API_KEY || ''; }
 const CLAUDE_MODEL = 'claude-sonnet-4-6';
