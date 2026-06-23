@@ -59,11 +59,10 @@ describe('Yamen AI — Google Gemini activation', () => {
     }
   });
 
-  // Regression: a configured-but-failing Gemini key (bad key, unsupported
-  // region, quota, wrong model) must surface the REAL cause — not the
-  // misleading "add GOOGLE_AI_API_KEY" message that masked this for four
-  // prior fix attempts.
-  it('surfaces the real provider error instead of "add the key" when Gemini is configured but fails', async () => {
+  // Regression: a configured-but-failing Gemini key must NOT be reported as
+  // "add GOOGLE_AI_API_KEY" (the bug that masked this for four prior attempts).
+  // The user sees a short friendly message; the raw cause stays in `detail`.
+  it('shows a friendly message (not "add the key" / not a raw blob) when Gemini fails', async () => {
     const fetchMock = vi.fn(async () => ({
       ok: false,
       status: 400,
@@ -77,12 +76,38 @@ describe('Yamen AI — Google Gemini activation', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.provider).toBe('error');
-      // Real cause is surfaced to the user…
-      expect(res.body.response).toContain('User location is not supported');
+      expect(res.body.error_type).toBe('region_unsupported');
+      // Raw cause retained for diagnostics…
       expect(res.body.detail).toContain('User location is not supported');
-      // …and the misleading "add the key" instruction is gone.
+      // …but the user sees a short friendly message, not the raw blob or "add key".
+      expect(res.body.response).not.toContain('User location is not supported');
       expect(res.body.response).not.toContain('Add GOOGLE_AI_API_KEY');
+      expect(res.body.response).toMatch(/region|منطقة/);
       expect(fetchMock).toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  // The user's real case: depleted Gemini billing → 429 RESOURCE_EXHAUSTED.
+  it('maps a 429 quota error to a short "tokens exceeded" message', async () => {
+    const raw = JSON.stringify({ error: { code: 429, message: 'Your prepayment credits are depleted.', status: 'RESOURCE_EXHAUSTED' } });
+    const fetchMock = vi.fn(async () => ({ ok: false, status: 429, text: async () => raw }));
+    vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
+    try {
+      const res = await request(makeApp())
+        .post('/ai/invoke-llm')
+        .send({ prompt: 'فحص الموظفين' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.provider).toBe('error');
+      expect(res.body.error_type).toBe('quota_exceeded');
+      // Short, human message — Arabic + English, no raw JSON blob.
+      expect(res.body.response).toMatch(/exceeded|تجاوز|الرصيد/);
+      expect(res.body.response).not.toContain('RESOURCE_EXHAUSTED');
+      expect(res.body.response).not.toContain('{');
+      // Raw cause still available to developers via `detail`.
+      expect(res.body.detail).toContain('RESOURCE_EXHAUSTED');
     } finally {
       vi.unstubAllGlobals();
     }
@@ -99,11 +124,14 @@ describe('Yamen AI — Google Gemini activation', () => {
       const res = await request(makeApp()).get('/ai/diagnostics');
       expect(res.status).toBe(200);
       expect(res.body.detected.gemini).toBe(true);
+      expect(res.body.detected.active).toBe('gemini');
       expect(res.body.detected.gemini_key_source).toBe('GOOGLE_AI_API_KEY');
       expect(res.body.detected.gemini_model).toBe('gemini-2.0-flash');
-      expect(res.body.geminiProbe.ok).toBe(false);
-      expect(res.body.geminiProbe.status).toBe(400);
-      expect(res.body.geminiProbe.error).toContain('API_KEY_INVALID');
+      // The live probe targets whichever provider is active (gemini here).
+      expect(res.body.probe.provider).toBe('gemini');
+      expect(res.body.probe.ok).toBe(false);
+      expect(res.body.probe.status).toBe(400);
+      expect(res.body.probe.error).toContain('API_KEY_INVALID');
     } finally {
       vi.unstubAllGlobals();
     }

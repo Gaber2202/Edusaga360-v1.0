@@ -10,23 +10,31 @@ _None_
 
 ### 1. Yamen AI requires a working LLM API key
 **Impact**: Yamen AI chat returns a "not configured" message when no provider key is set  
-**Workaround**: Add `GOOGLE_AI_API_KEY` (or `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GROQ_API_KEY`) to Railway environment variables  
-**Effort**: 5 min — get a free key from https://aistudio.google.com/apikey  
+**Workaround**: Add one provider key to the **correct Railway service + environment**: `GROQ_API_KEY` (free, region-safe — https://console.groq.com), `GOOGLE_AI_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY`  
+**Effort**: 5 min  
 
-**If the key is already set and chat still fails:** the key is configured but the
-provider call is failing. Yamen now returns the *actual* cause (it no longer
-masks this as "not configured"). Hit **`GET /api/ai/diagnostics`** (authenticated)
-to see which key is detected and Google's verbatim error from a live probe.
-Common causes:
-- **Unsupported server region** — the free Gemini API (`generativelanguage.googleapis.com`)
-  is not available in every region; a Railway region Google doesn't serve returns
-  `User location is not supported for the API use`. Fix: set `ANTHROPIC_API_KEY`
-  or `OPENAI_API_KEY` as a fallback (both are already wired in), or route Gemini
-  through a supported region/Vertex AI.
-- **Invalid/restricted key** — `API_KEY_INVALID`; regenerate at https://aistudio.google.com/apikey
-  and ensure the Generative Language API is enabled with no referrer/IP restriction.
-- **Wrong model** — set `GOOGLE_AI_MODEL` to a model your key can access (default `gemini-2.0-flash`).
-- **Quota exhausted** — `RESOURCE_EXHAUSTED` / HTTP 429; wait or raise the quota.  
+Providers auto-detect in order Gemini → Claude → Groq → OpenAI (all support full
+tool use). Pin one with `AI_PROVIDER=gemini|claude|groq|openai`.
+
+**Diagnosing "not configured" / failures — two distinct cases:**
+
+1. **Backend sees no key (`ai_provider: none`).** Check `GET /api/health` (public).
+   If it says `none`, the variable isn't reaching the running process. The most
+   common cause (and the real one we hit in production) is **Railway env scoping**:
+   the key was added to the wrong **environment** or **service**. It must live on
+   the service that owns the backend domain, in the deployed environment. A key in
+   another environment reads as `none` no matter how many times it's re-added.
+
+2. **Key is detected but the call fails.** Yamen now returns the *actual* cause
+   (it no longer masks this as "not configured"). Hit **`GET /api/ai/diagnostics`**
+   (authenticated) for a live probe with the provider's verbatim error. Common:
+   - **Unsupported server region** — the free Gemini API isn't available in every
+     region; an unsupported host returns `User location is not supported for the
+     API use`. Fix: switch to **Groq** (`AI_PROVIDER=groq` + `GROQ_API_KEY`) — free
+     and region-agnostic — or Claude/OpenAI.
+   - **Invalid/restricted key** — `API_KEY_INVALID` / `401`; regenerate the key.
+   - **Wrong model** — set the provider's `*_MODEL` var to one the key can access.
+   - **Quota exhausted** — `RESOURCE_EXHAUSTED` / HTTP 429; wait or raise the quota.  
 
 ### 2. Custom domains need DNS CNAME records
 **Impact**: `admin.edusaga360.com` and `parentportal.edusaga360.com` not resolving  

@@ -11,9 +11,10 @@ const supabase = createClient(
 );
 
 // ─── Model config ─────────────────────────────────────────────────────────────
-// Gemini is the primary provider for all users. Claude is a fallback.
-// Env vars are read per-request so Railway variable changes take effect without
-// a full redeploy. Accepts common aliases for the Gemini key.
+// Providers are auto-detected in priority order (Gemini → Claude → Groq →
+// OpenAI), or pinned explicitly with AI_PROVIDER. Env vars are read per-request
+// so Railway variable changes take effect without a code change. All four
+// providers support full tool use (live school-data queries).
 
 function getGeminiKey() {
   return process.env.GOOGLE_AI_API_KEY
@@ -24,6 +25,68 @@ function getGeminiKey() {
 function getGeminiModel() { return process.env.GOOGLE_AI_MODEL || 'gemini-2.0-flash'; }
 function getClaudeKey()  { return process.env.ANTHROPIC_API_KEY || ''; }
 const CLAUDE_MODEL = 'claude-sonnet-4-6';
+
+// OpenAI-compatible providers (Groq, OpenAI, OpenRouter, Together, DeepSeek, …)
+// all speak the same chat-completions + tool-calling format, so one code path
+// serves them. Model and base URL have sane defaults but are overridable.
+interface OpenAICompatConfig { name: string; apiKey: string; baseUrl: string; model: string }
+
+function getGroqKey()   { return process.env.GROQ_API_KEY || ''; }
+function getOpenAIKey() { return process.env.OPENAI_API_KEY || ''; }
+
+function getGroqConfig(): OpenAICompatConfig | null {
+  const apiKey = getGroqKey();
+  if (!apiKey) return null;
+  return {
+    name: 'groq',
+    apiKey,
+    baseUrl: process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1',
+    model:   process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+  };
+}
+function getOpenAIConfig(): OpenAICompatConfig | null {
+  const apiKey = getOpenAIKey();
+  if (!apiKey) return null;
+  return {
+    name: 'openai',
+    apiKey,
+    baseUrl: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+    model:   process.env.OPENAI_MODEL || 'gpt-4o-mini',
+  };
+}
+
+const KNOWN_PROVIDERS = ['gemini', 'claude', 'groq', 'openai'] as const;
+type ProviderName = (typeof KNOWN_PROVIDERS)[number];
+
+// Optional explicit provider override — set AI_PROVIDER=groq to pin Groq without
+// removing the Gemini key. When unset, providers are auto-detected.
+function getForcedProvider() { return (process.env.AI_PROVIDER || '').trim().toLowerCase(); }
+
+function providerConfigured(p: string): boolean {
+  switch (p) {
+    case 'gemini': return !!getGeminiKey();
+    case 'claude': return !!getClaudeKey();
+    case 'groq':   return !!getGroqKey();
+    case 'openai': return !!getOpenAIKey();
+    default:       return false;
+  }
+}
+
+// The provider that will actually serve a request (honours AI_PROVIDER), or
+// 'none' / a "(key missing)" marker for diagnostics.
+function activeProviderName(): string {
+  const forced = getForcedProvider();
+  if (forced) return providerConfigured(forced) ? forced : `${forced} (key missing)`;
+  return KNOWN_PROVIDERS.find(providerConfigured) ?? 'none';
+}
+
+function envVarFor(p: string): string {
+  return p === 'gemini' ? 'GOOGLE_AI_API_KEY'
+    : p === 'claude' ? 'ANTHROPIC_API_KEY'
+    : p === 'groq' ? 'GROQ_API_KEY'
+    : p === 'openai' ? 'OPENAI_API_KEY'
+    : 'AI_PROVIDER';
+}
 
 // ─── Tool definitions (Claude tool_use format) ───────────────────────────────
 
@@ -481,26 +544,69 @@ async function callGeminiWithTools(
   return 'Reached maximum tool call iterations.';
 }
 
-// ─── Other fallback providers (text-only) ─────────────────────────────────────
+// ─── OpenAI-compatible providers with tool use (Groq, OpenAI, OpenRouter, …) ───
 
-function getFallbackProvider() {
-  if (process.env.OPENAI_API_KEY) {
-    return { name: 'openai', apiKey: process.env.OPENAI_API_KEY, endpoint: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini' };
-  }
-  if (process.env.GROQ_API_KEY) {
-    return { name: 'groq', apiKey: process.env.GROQ_API_KEY, endpoint: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.3-70b-versatile' };
-  }
-  return null;
+function openAIToolDeclarations() {
+  return TOOLS.map((t) => ({
+    type: 'function',
+    function: { name: t.name, description: t.description, parameters: t.input_schema },
+  }));
 }
 
-async function callFallback(provider: NonNullable<ReturnType<typeof getFallbackProvider>>, prompt: string): Promise<string> {
-  const res = await fetch(provider.endpoint, {
-    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${provider.apiKey}` },
-    body: JSON.stringify({ model: provider.model, messages: [{ role: 'user', content: prompt }], temperature: 0.7, max_tokens: 2048 }),
-  });
-  if (!res.ok) throw new Error(`AI API error (${res.status})`);
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content ?? 'No response.';
+async function callOpenAICompatibleWithTools(
+  messages: Message[],
+  tenantId: string,
+  systemPrompt: string,
+  cfg: OpenAICompatConfig,
+): Promise<string> {
+  // Build OpenAI-style message list (system + history).
+  const oaMessages: any[] = [
+    { role: 'system', content: systemPrompt },
+    ...messages.map((m) => ({
+      role: m.role,
+      content: typeof m.content === 'string' ? m.content : JSON.stringify(m.content),
+    })),
+  ];
+
+  // Agentic loop — the model may call tools in sequence before answering.
+  for (let iter = 0; iter < 8; iter++) {
+    const res = await fetch(`${cfg.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.apiKey}` },
+      body: JSON.stringify({
+        model: cfg.model,
+        messages: oaMessages,
+        tools: openAIToolDeclarations(),
+        temperature: 0.7,
+        max_tokens: 4096,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`${cfg.name} API error (${res.status}): ${err.slice(0, 300)}`);
+    }
+
+    const data = await res.json() as any;
+    const message = data.choices?.[0]?.message;
+    if (!message) return 'No response generated.';
+
+    const toolCalls = message.tool_calls as any[] | undefined;
+    if (!toolCalls || toolCalls.length === 0) {
+      return message.content ?? 'No response generated.';
+    }
+
+    // Execute tool calls and feed the results back.
+    oaMessages.push(message);
+    for (const tc of toolCalls) {
+      let args: Record<string, unknown> = {};
+      try { args = JSON.parse(tc.function?.arguments || '{}'); } catch { /* leave empty */ }
+      const result = await runTool(tc.function?.name, args, tenantId);
+      oaMessages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify(result) });
+    }
+  }
+
+  return 'Reached maximum tool call iterations.';
 }
 
 // ─── Live provider probe (diagnostics) ────────────────────────────────────────
@@ -527,6 +633,102 @@ async function probeGemini(): Promise<{ ok: boolean; status: number; error?: str
   } catch (e) {
     return { ok: false, status: 0, error: e instanceof Error ? e.message : String(e) };
   }
+}
+
+// Minimal chat-completions call to verify an OpenAI-compatible key/model/endpoint.
+async function probeOpenAICompatible(cfg: OpenAICompatConfig): Promise<{ ok: boolean; status: number; error?: string }> {
+  try {
+    const r = await fetch(`${cfg.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.apiKey}` },
+      body: JSON.stringify({ model: cfg.model, messages: [{ role: 'user', content: 'ping' }], max_tokens: 1 }),
+    });
+    if (!r.ok) return { ok: false, status: r.status, error: (await r.text()).slice(0, 500) };
+    return { ok: true, status: r.status };
+  } catch (e) {
+    return { ok: false, status: 0, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+// Probe whichever provider would actually serve a request.
+async function probeActiveProvider(): Promise<Record<string, unknown>> {
+  const forced = getForcedProvider();
+  const provider = forced || KNOWN_PROVIDERS.find(providerConfigured);
+  if (!provider) return { skipped: true, reason: 'no provider configured' };
+  if (!providerConfigured(provider)) {
+    return { provider, skipped: true, reason: `${envVarFor(provider)} not set` };
+  }
+  if (provider === 'gemini') return { provider, ...(await probeGemini()) };
+  if (provider === 'claude') return { provider, skipped: true, reason: 'no lightweight probe; sent on first chat' };
+  const cfg = provider === 'groq' ? getGroqConfig() : provider === 'openai' ? getOpenAIConfig() : null;
+  if (!cfg) return { provider, skipped: true, reason: 'unknown provider' };
+  return { provider, ...(await probeOpenAICompatible(cfg)) };
+}
+
+// ─── Provider resolution ──────────────────────────────────────────────────────
+// Ordered list of providers to attempt for a request, honouring AI_PROVIDER.
+
+interface ProviderRunner { name: string; run: () => Promise<string> }
+
+function resolveProviders(messages: Message[], tenantId: string): ProviderRunner[] {
+  const make: Record<ProviderName, () => ProviderRunner | null> = {
+    gemini: () => getGeminiKey() ? { name: 'gemini', run: () => callGeminiWithTools(messages, tenantId, SYSTEM_PROMPT) } : null,
+    claude: () => getClaudeKey() ? { name: 'claude', run: () => callClaudeWithTools(messages, tenantId, SYSTEM_PROMPT) } : null,
+    groq:   () => { const c = getGroqConfig();   return c ? { name: 'groq',   run: () => callOpenAICompatibleWithTools(messages, tenantId, SYSTEM_PROMPT, c) } : null; },
+    openai: () => { const c = getOpenAIConfig(); return c ? { name: 'openai', run: () => callOpenAICompatibleWithTools(messages, tenantId, SYSTEM_PROMPT, c) } : null; },
+  };
+  const forced = getForcedProvider();
+  const order: string[] = forced ? [forced] : [...KNOWN_PROVIDERS];
+  return order
+    .map((k) => (KNOWN_PROVIDERS.includes(k as ProviderName) ? make[k as ProviderName]() : null))
+    .filter((r): r is ProviderRunner => r !== null);
+}
+
+// ─── Friendly error mapping ───────────────────────────────────────────────────
+// The raw provider error is great for diagnostics but not for a school admin in
+// chat. Map it to a short bilingual message; the raw text is still returned in
+// `detail` (and logged) for debugging.
+
+function friendlyProviderError(detail: string): { type: string; message: string } {
+  const d = detail.toLowerCase();
+  if (/429|resource_exhausted|quota|rate.?limit|credit|billing|insufficient|exhaust|deplet|out of/.test(d)) {
+    return {
+      type: 'quota_exceeded',
+      message:
+        'تم تجاوز الحد المسموح لرموز الذكاء الاصطناعي (انتهى الرصيد). يرجى مراجعة الفوترة أو الحصة لدى مزوّد الخدمة.\n' +
+        'AI token limit exceeded — the provider\'s credits/quota are depleted. Please check its billing or quota.',
+    };
+  }
+  if (/401|403|api_key_invalid|invalid.?api.?key|unauthorized|permission|forbidden/.test(d)) {
+    return {
+      type: 'invalid_key',
+      message:
+        'مفتاح الذكاء الاصطناعي غير صالح أو غير مُصرّح به. يرجى تحديث المفتاح في إعدادات الخادم.\n' +
+        'The AI key is invalid or unauthorized. Please update it in the server settings.',
+    };
+  }
+  if (/location is not supported|user location|not available in your|unsupported_country|\bregion\b/.test(d)) {
+    return {
+      type: 'region_unsupported',
+      message:
+        'خدمة الذكاء الاصطناعي غير متاحة في منطقة الخادم الحالية. يُنصح بالتبديل إلى مزوّد آخر (مثل Groq).\n' +
+        'The AI service is not available in the server\'s region. Consider switching providers (e.g. Groq).',
+    };
+  }
+  if (/not found|\b404\b|model/.test(d)) {
+    return {
+      type: 'model_unavailable',
+      message:
+        'النموذج المحدد للذكاء الاصطناعي غير متاح. يرجى ضبط نموذج صحيح في إعدادات الخادم.\n' +
+        'The configured AI model is unavailable. Please set a valid model in the server settings.',
+    };
+  }
+  return {
+    type: 'unavailable',
+    message:
+      'خدمة الذكاء الاصطناعي غير متاحة حالياً. يرجى المحاولة لاحقاً.\n' +
+      'The AI service is temporarily unavailable. Please try again later.',
+  };
 }
 
 // ─── Request schema ───────────────────────────────────────────────────────────
@@ -574,76 +776,66 @@ aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) =>
     const history: Message[] = (messages ?? []).map((m) => ({ role: m.role, content: m.content }));
     history.push({ role: 'user', content: prompt });
 
-    // Collect per-provider errors so a configured-but-failing provider is never
-    // misreported as "not configured". That conflation is the bug that made this
-    // look unfixable: a GOOGLE_AI_API_KEY that *is* set but whose Gemini call
-    // fails (invalid/restricted key, unsupported server region, quota, wrong
-    // model) fell through to the "add the key" message — so the key kept getting
-    // re-added while the real error stayed buried in the logs.
-    const providerErrors: string[] = [];
-    const fallback = getFallbackProvider();
-    const anyProviderConfigured = !!getGeminiKey() || !!getClaudeKey() || !!fallback;
-
-    // Genuine no-provider case — the ONLY situation that warrants the
-    // "add GOOGLE_AI_API_KEY" guidance.
-    if (!anyProviderConfigured) {
+    // Misconfigured AI_PROVIDER override — name the exact problem.
+    const forced = getForcedProvider();
+    if (forced && !KNOWN_PROVIDERS.includes(forced as ProviderName)) {
       return res.json({
-        provider: 'none',
+        provider: 'misconfigured',
         response:
-          'خدمة الذكاء الاصطناعي غير مُفعّلة. أضف GOOGLE_AI_API_KEY إلى متغيّرات البيئة في الخادم (Railway).\n\n' +
-          'AI service not configured. Add GOOGLE_AI_API_KEY to the backend (Railway) environment variables.',
+          `AI_PROVIDER="${forced}" غير معروف. القيم المدعومة: ${KNOWN_PROVIDERS.join(', ')}.\n\n` +
+          `Unknown AI_PROVIDER="${forced}". Supported values: ${KNOWN_PROVIDERS.join(', ')}.`,
+      });
+    }
+    if (forced && KNOWN_PROVIDERS.includes(forced as ProviderName) && !providerConfigured(forced)) {
+      return res.json({
+        provider: 'misconfigured',
+        response:
+          `AI_PROVIDER=${forced} لكن ${envVarFor(forced)} غير مضبوط في الخادم (Railway).\n\n` +
+          `AI_PROVIDER=${forced} but ${envVarFor(forced)} is not set on the backend (Railway).`,
       });
     }
 
-    // Try Gemini first (primary provider, full tool support)
-    if (getGeminiKey()) {
+    // Ordered providers to attempt (honours AI_PROVIDER; all support tool use).
+    const runners = resolveProviders(history, tenant_id);
+
+    // Genuine no-provider case — the ONLY situation that warrants "add a key".
+    if (runners.length === 0) {
+      return res.json({
+        provider: 'none',
+        response:
+          'خدمة الذكاء الاصطناعي غير مُفعّلة. أضف مفتاح مزوّد إلى متغيّرات البيئة في الخادم (Railway): ' +
+          'GROQ_API_KEY (مجاني من console.groq.com) أو GOOGLE_AI_API_KEY أو ANTHROPIC_API_KEY.\n\n' +
+          'AI service not configured. Add a provider key to the backend (Railway) environment: ' +
+          'GROQ_API_KEY (free at console.groq.com), GOOGLE_AI_API_KEY, or ANTHROPIC_API_KEY.',
+      });
+    }
+
+    // Try each configured provider; collect the real error from any that fail so
+    // a configured-but-failing provider is never misreported as "not configured"
+    // (the bug that made this look unfixable — the real cause stayed in the logs).
+    const providerErrors: string[] = [];
+    for (const runner of runners) {
       try {
-        const response = await callGeminiWithTools(history, tenant_id, SYSTEM_PROMPT);
-        return res.json({ response, provider: 'gemini' });
-      } catch (geminiErr: unknown) {
-        const msg = geminiErr instanceof Error ? geminiErr.message : String(geminiErr);
-        console.warn('[ai] Gemini failed:', msg);
-        providerErrors.push(`gemini: ${msg}`);
+        const response = await runner.run();
+        return res.json({ response, provider: runner.name });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(`[ai] ${runner.name} failed:`, msg);
+        providerErrors.push(`${runner.name}: ${msg}`);
       }
     }
 
-    // Try Claude as fallback (tool use capable)
-    if (getClaudeKey()) {
-      try {
-        const response = await callClaudeWithTools(history, tenant_id, SYSTEM_PROMPT);
-        return res.json({ response, provider: 'claude' });
-      } catch (claudeErr: unknown) {
-        const msg = claudeErr instanceof Error ? claudeErr.message : String(claudeErr);
-        console.warn('[ai] Claude failed:', msg);
-        providerErrors.push(`claude: ${msg}`);
-      }
-    }
-
-    // Last-resort: text-only provider (no tool use)
-    if (fallback) {
-      try {
-        const response = await callFallback(fallback, `${SYSTEM_PROMPT}\n\nUser: ${prompt}`);
-        return res.json({ response, provider: fallback.name });
-      } catch (fbErr: unknown) {
-        const msg = fbErr instanceof Error ? fbErr.message : String(fbErr);
-        console.warn(`[ai] ${fallback.name} failed:`, msg);
-        providerErrors.push(`${fallback.name}: ${msg}`);
-      }
-    }
-
-    // A provider WAS configured but every attempt failed. Surface the real
-    // cause (e.g. "User location is not supported for the API use") instead of
-    // the misleading "not configured" message, and point at the live self-test.
+    // A provider WAS configured but every attempt failed. Show the user a short,
+    // friendly message (the raw cause stays in `detail` + the logs for debugging,
+    // and in GET /api/ai/diagnostics) rather than a raw provider error blob.
     const detail = providerErrors.join(' | ') || 'unknown provider error';
     console.error('[ai] all configured providers failed:', detail);
+    const friendly = friendlyProviderError(detail);
     return res.json({
       provider: 'error',
+      error_type: friendly.type,
       detail,
-      response:
-        'تعذّر تشغيل مزوّد الذكاء الاصطناعي رغم ضبط المفتاح. السبب الفعلي:\n' + detail + '\n\n' +
-        'The AI provider is configured but the request failed. Actual cause:\n' + detail + '\n\n' +
-        'افحص المفتاح وتوفّر واجهة Gemini في منطقة الخادم عبر: GET /api/ai/diagnostics\n' +
-        'Check the key and Gemini API availability in the server region via: GET /api/ai/diagnostics',
+      response: friendly.message,
     });
 
   } catch (err: unknown) {
@@ -662,21 +854,15 @@ aiRouter.post('/compliance-alerts', async (req: AuthenticatedRequest, res: Respo
 
     const alerts = await runTool('get_compliance_alerts', { days_ahead }, tenant_id);
 
-    // Generate a natural language summary using the best available provider
+    // Generate a natural language summary using the active provider (any of
+    // Gemini / Claude / Groq / OpenAI). Summary stays null if none succeed.
     let summary: string | null = null;
     const summaryMessages: Message[] = [{
       role: 'user',
       content: `Based on these compliance alerts for our school, write a short executive summary (3-5 bullet points) in Arabic. Be direct about critical items first:\n\n${JSON.stringify(alerts, null, 2)}`,
     }];
-    if (getGeminiKey()) {
-      try {
-        summary = await callGeminiWithTools(summaryMessages, tenant_id, SYSTEM_PROMPT);
-      } catch { /* fall through */ }
-    }
-    if (!summary && getClaudeKey()) {
-      try {
-        summary = await callClaudeWithTools(summaryMessages, tenant_id, SYSTEM_PROMPT);
-      } catch { /* summary stays null */ }
+    for (const runner of resolveProviders(summaryMessages, tenant_id)) {
+      try { summary = await runner.run(); break; } catch { /* try next provider */ }
     }
 
     return res.json({ alerts, summary });
@@ -690,17 +876,18 @@ aiRouter.post('/compliance-alerts', async (req: AuthenticatedRequest, res: Respo
 // ─── GET /api/ai/tools — list available tools ────────────────────────────────
 
 aiRouter.get('/tools', (_req: AuthenticatedRequest, res: Response) => {
+  const active = activeProviderName();
   return res.json({
     tools: TOOLS.map((t) => ({ name: t.name, description: t.description })),
-    provider: getGeminiKey() ? 'gemini (tool use enabled)' : getClaudeKey() ? 'claude (tool use enabled)' : (getFallbackProvider()?.name ?? 'none'),
+    provider: active === 'none' ? 'none' : `${active} (tool use enabled)`,
   });
 });
 
 // ─── GET /api/ai/diagnostics — live provider self-test ───────────────────────
-// Answers "why is Yamen AI failing?" without reading Railway logs: reports which
-// key is detected (never the value), the model, and the verbatim result of a
-// minimal live Gemini call — so region/key/model/quota errors are visible
-// directly. This is the endpoint to hit when the chat says the provider failed.
+// Answers "why is Yamen AI failing?" without reading Railway logs: reports the
+// active provider, which keys are detected (never the value), the models, and
+// the verbatim result of a minimal live call to the active provider — so
+// region/key/model/quota errors are visible directly.
 
 aiRouter.get('/diagnostics', async (_req: AuthenticatedRequest, res: Response) => {
   const geminiKeySource = process.env.GOOGLE_AI_API_KEY ? 'GOOGLE_AI_API_KEY'
@@ -709,17 +896,20 @@ aiRouter.get('/diagnostics', async (_req: AuthenticatedRequest, res: Response) =
     : null;
 
   const detected = {
+    ai_provider_override: getForcedProvider() || null,
+    active: activeProviderName(),
     gemini: !!getGeminiKey(),
     gemini_key_source: geminiKeySource,
     gemini_model: getGeminiModel(),
     claude: !!getClaudeKey(),
-    openai: !!process.env.OPENAI_API_KEY,
-    groq: !!process.env.GROQ_API_KEY,
+    groq: !!getGroqKey(),
+    groq_model: getGroqConfig()?.model ?? null,
+    openai: !!getOpenAIKey(),
+    openai_model: getOpenAIConfig()?.model ?? null,
   };
 
-  const geminiProbe = getGeminiKey()
-    ? await probeGemini()
-    : { skipped: true, reason: 'no Gemini key detected' };
+  // Live probe of whichever provider would actually serve a request.
+  const probe = await probeActiveProvider();
 
-  return res.json({ detected, geminiProbe });
+  return res.json({ detected, probe });
 });
