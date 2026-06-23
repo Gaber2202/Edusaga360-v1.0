@@ -106,8 +106,17 @@ export default function PlatformUsers() {
   const resetPassword = (user) =>
     act(user, 'reset password', async () => {
       const res = await callApi(`/api/admin/users/${user.id}/reset-password`, { _: 1 });
-      if (res.action_link) { await navigator.clipboard.writeText(res.action_link).catch(() => {}); toast.success('Reset link copied' + (res.email_sent ? ' & emailed' : '')); }
-      else toast.success(res.email_sent ? 'Reset email sent' : 'Reset link generated');
+      if (res.action_link) {
+        const copied = await navigator.clipboard.writeText(res.action_link).then(() => true).catch(() => false);
+        const headline = copied
+          ? 'Reset link copied' + (res.email_sent ? ' & emailed' : '')
+          : (res.email_sent ? 'Reset link emailed' : 'Reset link ready');
+        // Surface the link in the toast too, so it can be grabbed manually
+        // whenever the clipboard API is unavailable (e.g. insecure context).
+        toast.success(headline, { description: res.action_link, duration: 12000 });
+      } else {
+        toast.success(res.email_sent ? 'Reset email sent' : 'Reset link generated');
+      }
     });
 
   const magicLink = (user) =>

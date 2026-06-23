@@ -2,69 +2,8 @@ import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import crypto from 'crypto';
-import https from 'https';
 import { AuthenticatedRequest, authMiddleware } from '../middleware/auth.js';
-
-async function sendInviteEmail(opts: {
-  infobipKey: string;
-  infobipBase: string;
-  recipient_email: string;
-  recipient_name: string;
-  school_name?: string | null;
-  inviteLink: string;
-  message?: string | null;
-}): Promise<void> {
-  const { infobipKey, infobipBase, recipient_email, recipient_name, school_name, inviteLink, message } = opts;
-  const schoolLine = school_name ? `<p>School: <strong>${school_name}</strong></p>` : '';
-  const customMsg = message ? `<p style="color:#555">${message}</p>` : '';
-  const html = `
-    <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
-      <h2 style="color:#059669">You're invited to EduSaga 360</h2>
-      <p>Hi ${recipient_name},</p>
-      ${customMsg}
-      ${schoolLine}
-      <p>Click the button below to set up your school's account and start your free trial:</p>
-      <p style="text-align:center;margin:32px 0">
-        <a href="${inviteLink}" style="background:#059669;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold">
-          Accept Invitation
-        </a>
-      </p>
-      <p style="font-size:12px;color:#999">This link expires in 7 days. If you did not expect this email, you can safely ignore it.</p>
-    </div>`;
-
-  const payload = JSON.stringify({
-    messages: [{
-      from: process.env.INFOBIP_SENDER_EMAIL || 'noreply@edusaga360.com',
-      to: [{ to: recipient_email }],
-      subject: `You're invited to try EduSaga 360`,
-      htmlBody: html,
-    }],
-  });
-
-  await new Promise<void>((resolve, reject) => {
-    const url = new URL(`https://${infobipBase}/email/3/send`);
-    const req = https.request({
-      hostname: url.hostname,
-      path: url.pathname,
-      method: 'POST',
-      headers: {
-        'Authorization': `App ${infobipKey}`,
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(payload),
-      },
-    }, (res) => {
-      let body = '';
-      res.on('data', d => body += d);
-      res.on('end', () => {
-        if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) resolve();
-        else reject(new Error(`Infobip ${res.statusCode}: ${body}`));
-      });
-    });
-    req.on('error', reject);
-    req.write(payload);
-    req.end();
-  });
-}
+import { getInfobipConfig, sendInviteEmail, sendPasswordResetEmail } from '../services/email.js';
 
 export const adminRouter = Router();
 
@@ -536,15 +475,22 @@ adminRouter.post('/users', async (req: AuthenticatedRequest, res) => {
   let inviteSent = false;
   let actionLink: string | null = null;
   if (send_invite) {
+    // Generate ONE recovery link (a single valid token) and email that exact
+    // link via Infobip. We deliberately do not also call resetPasswordForEmail:
+    // it would mint a competing token and invalidate the action_link returned
+    // below — leaving both the email and the copyable link dead.
     const { data: linkData } = await supabase.auth.admin.generateLink({
       type: 'recovery',
       email,
       options: { redirectTo: `${FRONTEND_URL}/reset-password` },
     }).catch(() => ({ data: null } as any));
     actionLink = (linkData as any)?.properties?.action_link ?? null;
-    await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${FRONTEND_URL}/reset-password` })
-      .then(() => { inviteSent = true; })
-      .catch((e) => console.error('invite email failed:', e));
+    const infobip = getInfobipConfig();
+    if (actionLink && infobip) {
+      await sendPasswordResetEmail({ ...infobip, recipient_email: email, recipient_name: name, actionLink, isInvite: true })
+        .then(() => { inviteSent = true; })
+        .catch((e) => console.error('invite email failed:', e));
+    }
   }
 
   await writeAudit(req, { action: 'user.create', target_type: 'user', target_id: created.id, target_label: email, tenant_id, metadata: { user_role } });
@@ -622,20 +568,31 @@ adminRouter.post('/users/:id/suspend', async (req: AuthenticatedRequest, res) =>
   return setUserStatus(req, res, String(req.params.id), 'suspended');
 });
 
-// Send a password-reset email and return a copyable link for manual delivery.
+// Generate a single-use password-reset link, email it (when Infobip is
+// configured), and always return that SAME link so the admin has a reliable
+// copyable fallback to share manually. We must not also call
+// resetPasswordForEmail — a second token would invalidate this one.
 adminRouter.post('/users/:id/reset-password', async (req: AuthenticatedRequest, res) => {
   if (!await requirePlatformOwner(req, res)) return;
   const id = String(req.params.id);
-  const { data: user } = await supabase.from('users').select('email, tenant_id').eq('id', id).single();
+  const { data: user } = await supabase.from('users').select('email, name, tenant_id').eq('id', id).single();
   if (!user?.email) return res.status(404).json({ message: 'User not found' });
+
   const { data: linkData } = await supabase.auth.admin.generateLink({
     type: 'recovery', email: user.email, options: { redirectTo: `${FRONTEND_URL}/reset-password` },
   }).catch(() => ({ data: null } as any));
+  const actionLink = (linkData as any)?.properties?.action_link ?? null;
+
   let emailSent = false;
-  await supabase.auth.resetPasswordForEmail(user.email, { redirectTo: `${FRONTEND_URL}/reset-password` })
-    .then(() => { emailSent = true; }).catch(() => {});
+  const infobip = getInfobipConfig();
+  if (actionLink && infobip) {
+    await sendPasswordResetEmail({ ...infobip, recipient_email: user.email, recipient_name: user.name, actionLink })
+      .then(() => { emailSent = true; })
+      .catch((e) => console.error('reset email send failed:', e));
+  }
+
   await writeAudit(req, { action: 'user.reset_password', target_type: 'user', target_id: id, target_label: user.email, tenant_id: user.tenant_id });
-  return res.json({ email_sent: emailSent, action_link: (linkData as any)?.properties?.action_link ?? null });
+  return res.json({ email_sent: emailSent, action_link: actionLink });
 });
 
 // Generate a one-time magic sign-in link (support / "log in as") — platform owner only.

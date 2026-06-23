@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
+import rateLimit from 'express-rate-limit';
+import { z } from 'zod';
+import { getInfobipConfig, sendPasswordResetEmail } from '../services/email.js';
 
 export const authRouter = Router();
 
@@ -7,6 +10,18 @@ const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
+
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://edusaga-360-production.vercel.app';
+
+// Strict limiter for the public, unauthenticated reset endpoint — throttles
+// both abuse and email-enumeration probing.
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many reset requests. Please try again in a few minutes.' },
+});
 
 authRouter.get('/me', async (req, res) => {
   const authHeader = req.headers.authorization;
@@ -34,4 +49,42 @@ authRouter.get('/me', async (req, res) => {
     is_platform_owner: user.app_metadata?.is_platform_owner === true,
     name: user.user_metadata?.name,
   });
+});
+
+/**
+ * Public, self-service password reset.
+ *
+ * Generates one recovery link and emails it via Infobip when configured,
+ * otherwise falls back to Supabase's built-in recovery email. Always responds
+ * 200 with a generic body so the endpoint can't be used to discover which
+ * emails are registered (anti-enumeration).
+ */
+authRouter.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
+  const parsed = z.object({ email: z.string().email() }).safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: 'A valid email is required' });
+
+  const email = parsed.data.email.toLowerCase();
+  const redirectTo = `${FRONTEND_URL}/reset-password`;
+
+  try {
+    const infobip = getInfobipConfig();
+    if (infobip) {
+      // Preferred path: mint one recovery token and email THAT exact link.
+      const { data: linkData } = await supabase.auth.admin.generateLink({
+        type: 'recovery', email, options: { redirectTo },
+      }).catch(() => ({ data: null } as any));
+      const actionLink = (linkData as any)?.properties?.action_link ?? null;
+      if (actionLink) {
+        await sendPasswordResetEmail({ ...infobip, recipient_email: email, actionLink })
+          .catch((e) => console.error('forgot-password email failed:', e));
+      }
+    } else {
+      // Fallback: Supabase's built-in recovery email (requires SMTP configured).
+      await supabase.auth.resetPasswordForEmail(email, { redirectTo }).catch(() => {});
+    }
+  } catch (e) {
+    console.error('forgot-password error:', e);
+  }
+
+  return res.json({ ok: true });
 });

@@ -150,6 +150,12 @@ export default function SchoolLogin() {
               {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
             </div>
 
+            <div className="flex justify-end -mt-1">
+              <a href="/forgot-password" className="text-xs text-blue-600 hover:text-blue-700 hover:underline">
+                {t('نسيت كلمة المرور؟', 'Forgot password?')}
+              </a>
+            </div>
+
             {authFailure && (
               <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 text-center">
                 {authFailure}

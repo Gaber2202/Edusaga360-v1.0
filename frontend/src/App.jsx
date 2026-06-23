@@ -26,6 +26,8 @@ import InstitutionSetup from './pages/InstitutionSetup';
 import Register from './pages/Register';
 import SetupAccount from './pages/SetupAccount';
 import SchoolLogin from './pages/SchoolLogin';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import { useRole } from './components/RoleContext';
 import { isPlatformOwner } from './lib/authHelpers';
 
@@ -62,6 +64,8 @@ const AuthenticatedApp = () => {
       pathname === '/register' ||
       pathname === '/client/login' ||
       pathname === '/school-login' ||
+      pathname === '/forgot-password' ||
+      pathname === '/reset-password' ||
       pathname === '/setup' ||
       pathname === '/OnboardingWizard' ||
       pathname.startsWith('/onboarding/'); // /onboarding/:token is unauthenticated
@@ -74,6 +78,8 @@ const AuthenticatedApp = () => {
             <Route path="/register" element={<Register />} />
             <Route path="/client/login" element={<Navigate to="/school-login" replace />} />
             <Route path="/school-login" element={<SchoolLogin />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/setup" element={<SetupAccount />} />
             <Route path="/OnboardingWizard" element={<OnboardingWizard />} />
             <Route path="/onboarding/:token" element={<OnboardingWizard />} />
@@ -89,6 +95,8 @@ const AuthenticatedApp = () => {
             <Route path="/register" element={<Register />} />
             <Route path="/client/login" element={<Navigate to="/school-login" replace />} />
             <Route path="/school-login" element={<SchoolLogin />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/setup" element={<SetupAccount />} />
             <Route path="/OnboardingWizard" element={<OnboardingWizard />} />
             <Route path="/onboarding/:token" element={<OnboardingWizard />} />
@@ -133,6 +141,8 @@ const AuthenticatedApp = () => {
       <Route path="/login" element={<Navigate to="/school-login" replace />} />
       <Route path="/client/login" element={<Navigate to="/school-login" replace />} />
       <Route path="/school-login" element={<SchoolLogin />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/setup" element={<SetupAccount />} />
       <Route path="/ParentSignContract" element={<ParentSignContractPage />} />
       <Route path="/HRManagerDashboard" element={<LayoutWrapper currentPageName="HRManagerDashboard"><HRManagerDashboard /></LayoutWrapper>} />

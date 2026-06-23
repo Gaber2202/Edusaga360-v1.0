@@ -1,5 +1,5 @@
 import { createContext, useState, useContext, useEffect } from 'react';
-import { supabase } from '../api/supabaseClient';
+import { supabase, callApi } from '../api/supabaseClient';
 
 const AuthContext = createContext();
 
@@ -70,10 +70,16 @@ export const AuthProvider = ({ children }) => {
     window.location.replace('/school-login');
   };
 
+  // Request a reset link. Routes through the backend so delivery uses the same
+  // reliable channel as admin-initiated resets (Infobip, with a Supabase SMTP
+  // fallback). The endpoint always succeeds to avoid leaking which emails exist.
   const resetPassword = async (email) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
+    await callApi('/api/auth/forgot-password', { email });
+  };
+
+  // Set a new password for the currently-authenticated (recovery) session.
+  const updatePassword = async (newPassword) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) throw error;
   };
 
@@ -88,6 +94,7 @@ export const AuthProvider = ({ children }) => {
     signUp,
     logout,
     resetPassword,
+    updatePassword,
     navigateToLogin: () => window.location.replace('/school-login'),
   };
 
