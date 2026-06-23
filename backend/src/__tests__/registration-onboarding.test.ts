@@ -121,3 +121,37 @@ describe('POST /onboarding/:token/complete — completion', () => {
     expect(db.auth.admin.createUser).not.toHaveBeenCalled();
   });
 });
+
+describe('POST /onboarding/:token/resend — self-service renewal', () => {
+  it('renews the expiry on the SAME token for an approved link', async () => {
+    db.setResolver((ctx: QueryContext) =>
+      ctx.table === 'registration_requests' && ctx.single
+        ? { data: { id: 'r1', status: 'approved', contact_email: 'a@x.sa', contact_name: 'A', onboarding_token: TOKEN, token_expires_at: past } }
+        : {});
+
+    const res = await request(app()).post(`/api/registration/onboarding/${TOKEN}/resend`);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+
+    const update = db.filtersFor('registration_requests').find((c) => c.op === 'update');
+    const payload = (update?.payload ?? {}) as Record<string, unknown>;
+    expect(new Date(payload.token_expires_at as string).getTime()).toBeGreaterThan(Date.now());
+    expect('onboarding_token' in payload).toBe(false); // same token reused → idempotent retries
+  });
+
+  it('does not renew a completed request (generic success, no write)', async () => {
+    db.setResolver(() => ({ data: { id: 'r1', status: 'completed', onboarding_token: TOKEN, token_expires_at: past } }));
+    const res = await request(app()).post(`/api/registration/onboarding/${TOKEN}/resend`);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(db.filtersFor('registration_requests').some((c) => c.op === 'update')).toBe(false);
+  });
+
+  it('responds generically for an unknown token (no leak, no write)', async () => {
+    db.setResolver(() => ({ data: null }));
+    const res = await request(app()).post(`/api/registration/onboarding/${TOKEN}/resend`);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(db.filtersFor('registration_requests').some((c) => c.op === 'update')).toBe(false);
+  });
+});

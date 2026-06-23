@@ -20,6 +20,7 @@ export default function OnboardingWizard() {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [renewing, setRenewing] = useState(false);
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -63,6 +64,29 @@ export default function OnboardingWizard() {
       setError('network');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Self-service: renew an expired link and drop straight back into setup.
+  // The backend refreshes this token's expiry (and re-emails it), so we can
+  // simply re-validate and continue — no support email or new link needed.
+  const requestNewLink = async () => {
+    setRenewing(true);
+    try {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://edusaga-360-production.up.railway.app';
+      const response = await fetch(`${apiBase}/api/registration/onboarding/${token}/resend`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!response.ok) throw new Error('renew failed');
+      toast.success('تم تجديد الرابط وإرساله إلى بريدك الإلكتروني');
+      setError(null);
+      setLoading(true);
+      await validateToken();
+    } catch {
+      toast.error('تعذّر تجديد الرابط. يرجى التواصل مع الدعم.');
+    } finally {
+      setRenewing(false);
     }
   };
 
@@ -144,8 +168,13 @@ export default function OnboardingWizard() {
           <CardContent className="py-12 text-center">
             <Clock className="w-16 h-16 text-amber-500 mx-auto mb-4" />
             <h1 className="text-xl font-bold text-slate-800 mb-2">انتهت صلاحية الرابط</h1>
-            <p className="text-slate-500 mb-4">هذا الرابط انتهت صلاحيته. يمكنك طلب رابط جديد عبر التواصل مع فريقنا.</p>
-            <a href="mailto:info@edusaga360.com" className="text-emerald-600 font-medium hover:underline">info@edusaga360.com</a>
+            <p className="text-slate-500 mb-5">انتهت صلاحية رابط الإعداد. اطلب رابطًا جديدًا للمتابعة — سنرسله إلى بريدك الإلكتروني ويمكنك إكمال الإعداد مباشرةً.</p>
+            <Button onClick={requestNewLink} disabled={renewing} className="w-full bg-emerald-600 hover:bg-emerald-700 mb-4">
+              {renewing
+                ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> جاري التجديد...</span>
+                : 'طلب رابط جديد'}
+            </Button>
+            <p className="text-xs text-slate-400">تحتاج مساعدة؟ <a href="mailto:info@edusaga360.com" className="text-emerald-600 font-medium hover:underline">info@edusaga360.com</a></p>
           </CardContent>
         </Card>
       </div>

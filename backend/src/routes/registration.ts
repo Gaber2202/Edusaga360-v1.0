@@ -13,6 +13,12 @@ const supabase = createClient(
 const ADMIN_EMAIL = 'info@edusaga360.com';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://edusaga-360-production.vercel.app';
 const API_BASE_URL = process.env.API_BASE_URL || 'https://edusaga-360-production.up.railway.app';
+// Onboarding setup links live for 7 days. 48h proved too short — approvals often
+// land a day or two after registration, and schools rarely finish setup the same
+// hour, so every pending school was hitting an expired link.
+const ONBOARDING_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const newOnboardingToken = () => crypto.randomBytes(32).toString('hex');
+const onboardingTokenExpiry = () => new Date(Date.now() + ONBOARDING_TOKEN_TTL_MS).toISOString();
 // Secret used to sign approve/deny links so they can't be forged.
 // Set ADMIN_LINK_SECRET in Railway env vars to a long random string.
 const ADMIN_LINK_SECRET = process.env.ADMIN_LINK_SECRET || 'change-me-in-production';
@@ -111,8 +117,8 @@ registrationRouter.post('/request', async (req: Request, res) => {
       });
     }
 
-    const onboardingToken = crypto.randomBytes(32).toString('hex');
-    const tokenExpiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+    const onboardingToken = newOnboardingToken();
+    const tokenExpiresAt = onboardingTokenExpiry();
 
     const { data: request, error } = await supabase
       .from('registration_requests')
@@ -172,12 +178,12 @@ registrationRouter.get('/approve/:id', async (req, res) => {
       return res.send(renderResultPage('Already Approved', `${request.school_name_en || request.contact_name} has already been approved.`, true));
     }
 
-    // Mint a fresh onboarding token + 48h expiry at approval time. The original
+    // Mint a fresh onboarding token + expiry at approval time. The original
     // token's clock started at registration, so a delayed approval would email
     // an already-expired link (the cause of "invalid/expired" on the welcome
-    // link). Resetting it here guarantees the school gets a full 48 hours.
-    const freshToken = crypto.randomBytes(32).toString('hex');
-    const freshExpiry = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+    // link). Resetting it here guarantees the school gets the full window.
+    const freshToken = newOnboardingToken();
+    const freshExpiry = onboardingTokenExpiry();
 
     const { error: updateError } = await supabase
       .from('registration_requests')
@@ -302,9 +308,9 @@ registrationRouter.get('/resend/:id', async (req, res) => {
       return res.send(renderResultPage('Already Completed', 'This school has already completed onboarding.', true));
     }
 
-    // Generate a fresh token with a new 48-hour expiry
-    const newToken = crypto.randomBytes(32).toString('hex');
-    const tokenExpiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+    // Generate a fresh token with a new expiry
+    const newToken = newOnboardingToken();
+    const tokenExpiresAt = onboardingTokenExpiry();
 
     const { error: updateError } = await supabase
       .from('registration_requests')
@@ -319,7 +325,7 @@ registrationRouter.get('/resend/:id', async (req, res) => {
 
     res.send(renderResultPage(
       'Link Resent',
-      `A new onboarding link has been sent to ${request.contact_email}. It is valid for 48 hours.`,
+      `A new onboarding link has been sent to ${request.contact_email}. It is valid for 7 days.`,
       true
     ));
   } catch (err) {
@@ -370,6 +376,41 @@ registrationRouter.get('/onboarding/:token', async (req, res) => {
   } catch (err) {
     console.error('Onboarding token error:', err);
     res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// Self-service link renewal. A user who lands on an expired setup link can get a
+// working one without contacting support. Keyed on the token they already hold
+// (proof they were the intended recipient): we renew that SAME token's expiry —
+// so the link in their browser AND inbox works again, and repeat clicks are
+// idempotent — then re-deliver it by email. Responds generically to avoid
+// leaking token validity. Throttled by the router-level registrationLimiter.
+registrationRouter.post('/onboarding/:token/resend', async (req, res) => {
+  const generic = { success: true, message: 'If this setup link is recognized, it has been renewed and re-sent to the school’s contact email.' };
+  try {
+    const { token } = req.params;
+    const { data: request } = await supabase
+      .from('registration_requests')
+      .select('*')
+      .eq('onboarding_token', token)
+      .single();
+
+    // Only renew an approved, not-yet-completed request.
+    if (request && request.status === 'approved') {
+      const { error: updateError } = await supabase
+        .from('registration_requests')
+        .update({ token_expires_at: onboardingTokenExpiry() })
+        .eq('id', request.id)
+        .eq('status', 'approved');
+      if (!updateError) {
+        sendWelcomeEmail(request).catch(err => console.error('Failed to resend onboarding email:', err));
+      }
+    }
+
+    return res.json(generic);
+  } catch (err) {
+    console.error('Onboarding self-resend error:', err);
+    return res.json(generic);
   }
 });
 
@@ -582,7 +623,7 @@ async function sendWelcomeEmail(request: Record<string, string>) {
           <a href="${onboardingUrl}" style="display: inline-block; background: #10b981; color: white; padding: 14px 40px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px;">إعداد الحساب</a>
         </div>
         <p style="color: #94a3b8; font-size: 12px; text-align: center;">
-          هذا الرابط صالح لمدة 48 ساعة. في حال انتهاء صلاحيته، يمكنك طلب رابط جديد.
+          هذا الرابط صالح لمدة 7 أيام. في حال انتهاء صلاحيته، يمكنك طلب رابط جديد من صفحة الإعداد.
         </p>
       </div>
       <div style="text-align: center; padding: 16px; color: #94a3b8; font-size: 11px; border-radius: 0 0 12px 12px; background: #f1f5f9;">
