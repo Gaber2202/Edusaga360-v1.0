@@ -684,6 +684,53 @@ function resolveProviders(messages: Message[], tenantId: string): ProviderRunner
     .filter((r): r is ProviderRunner => r !== null);
 }
 
+// ─── Friendly error mapping ───────────────────────────────────────────────────
+// The raw provider error is great for diagnostics but not for a school admin in
+// chat. Map it to a short bilingual message; the raw text is still returned in
+// `detail` (and logged) for debugging.
+
+function friendlyProviderError(detail: string): { type: string; message: string } {
+  const d = detail.toLowerCase();
+  if (/429|resource_exhausted|quota|rate.?limit|credit|billing|insufficient|exhaust|deplet|out of/.test(d)) {
+    return {
+      type: 'quota_exceeded',
+      message:
+        'تم تجاوز الحد المسموح لرموز الذكاء الاصطناعي (انتهى الرصيد). يرجى مراجعة الفوترة أو الحصة لدى مزوّد الخدمة.\n' +
+        'AI token limit exceeded — the provider\'s credits/quota are depleted. Please check its billing or quota.',
+    };
+  }
+  if (/401|403|api_key_invalid|invalid.?api.?key|unauthorized|permission|forbidden/.test(d)) {
+    return {
+      type: 'invalid_key',
+      message:
+        'مفتاح الذكاء الاصطناعي غير صالح أو غير مُصرّح به. يرجى تحديث المفتاح في إعدادات الخادم.\n' +
+        'The AI key is invalid or unauthorized. Please update it in the server settings.',
+    };
+  }
+  if (/location is not supported|user location|not available in your|unsupported_country|\bregion\b/.test(d)) {
+    return {
+      type: 'region_unsupported',
+      message:
+        'خدمة الذكاء الاصطناعي غير متاحة في منطقة الخادم الحالية. يُنصح بالتبديل إلى مزوّد آخر (مثل Groq).\n' +
+        'The AI service is not available in the server\'s region. Consider switching providers (e.g. Groq).',
+    };
+  }
+  if (/not found|\b404\b|model/.test(d)) {
+    return {
+      type: 'model_unavailable',
+      message:
+        'النموذج المحدد للذكاء الاصطناعي غير متاح. يرجى ضبط نموذج صحيح في إعدادات الخادم.\n' +
+        'The configured AI model is unavailable. Please set a valid model in the server settings.',
+    };
+  }
+  return {
+    type: 'unavailable',
+    message:
+      'خدمة الذكاء الاصطناعي غير متاحة حالياً. يرجى المحاولة لاحقاً.\n' +
+      'The AI service is temporarily unavailable. Please try again later.',
+  };
+}
+
 // ─── Request schema ───────────────────────────────────────────────────────────
 
 const InvokeLLMSchema = z.object({
@@ -778,19 +825,17 @@ aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) =>
       }
     }
 
-    // A provider WAS configured but every attempt failed. Surface the real cause
-    // (e.g. "User location is not supported", "model not found", "401") instead
-    // of the misleading "not configured" message, and point at the self-test.
+    // A provider WAS configured but every attempt failed. Show the user a short,
+    // friendly message (the raw cause stays in `detail` + the logs for debugging,
+    // and in GET /api/ai/diagnostics) rather than a raw provider error blob.
     const detail = providerErrors.join(' | ') || 'unknown provider error';
     console.error('[ai] all configured providers failed:', detail);
+    const friendly = friendlyProviderError(detail);
     return res.json({
       provider: 'error',
+      error_type: friendly.type,
       detail,
-      response:
-        'تعذّر تشغيل مزوّد الذكاء الاصطناعي رغم ضبط المفتاح. السبب الفعلي:\n' + detail + '\n\n' +
-        'The AI provider is configured but the request failed. Actual cause:\n' + detail + '\n\n' +
-        'افحص الحالة عبر: GET /api/ai/diagnostics\n' +
-        'Check status via: GET /api/ai/diagnostics',
+      response: friendly.message,
     });
 
   } catch (err: unknown) {

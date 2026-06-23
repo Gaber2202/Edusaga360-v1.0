@@ -115,7 +115,7 @@ describe('Yamen AI — Groq provider', () => {
     }
   });
 
-  it('surfaces the real Groq error instead of "not configured" when the call fails', async () => {
+  it('shows a friendly key-error message (raw cause kept in detail) when Groq rejects the key', async () => {
     const fetchMock = vi.fn(async () => ({
       ok: false,
       status: 401,
@@ -130,8 +130,10 @@ describe('Yamen AI — Groq provider', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.provider).toBe('error');
-      expect(res.body.response).toContain('Invalid API Key');
+      expect(res.body.error_type).toBe('invalid_key');
+      expect(res.body.response).toMatch(/invalid|unauthorized|غير صالح/);
       expect(res.body.response).not.toContain('not configured');
+      expect(res.body.detail).toContain('Invalid API Key');
     } finally {
       vi.unstubAllGlobals();
     }
