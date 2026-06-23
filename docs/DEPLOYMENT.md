@@ -44,13 +44,21 @@ GOOGLE_AI_API_KEY=<from Google AI Studio — for Yamen AI>
 
 ### Yamen AI Configuration (LLM)
 
-The backend tries LLM providers in this order:
-1. **Google Gemini** (primary — full tool use) — `GOOGLE_AI_API_KEY` — Get from https://aistudio.google.com/apikey
-2. **Anthropic Claude** (fallback — full tool use) — `ANTHROPIC_API_KEY`
-3. **OpenAI / Groq** (last resort — text only, no tool use) — `OPENAI_API_KEY` or `GROQ_API_KEY`
+The backend auto-detects an LLM provider in this order (**all support full tool use** — live school-data queries):
+1. **Google Gemini** — `GOOGLE_AI_API_KEY` — https://aistudio.google.com/apikey (free tier; can be region-restricted on some hosts)
+2. **Anthropic Claude** — `ANTHROPIC_API_KEY`
+3. **Groq** — `GROQ_API_KEY` — https://console.groq.com (**recommended free, region-safe option**); model via `GROQ_MODEL` (default `llama-3.3-70b-versatile`)
+4. **OpenAI / OpenAI-compatible** — `OPENAI_API_KEY` (+ optional `OPENAI_BASE_URL`, `OPENAI_MODEL`) — works with OpenRouter, Together, DeepSeek, etc.
 
-Set `GOOGLE_AI_API_KEY` on Railway to enable Yamen AI for all users.
-If no key is configured, Yamen AI returns a friendly message asking the admin to configure one.
+**Pin a provider explicitly:** set `AI_PROVIDER` to `gemini` | `claude` | `groq` | `openai` to use that one regardless of which other keys exist (e.g. `AI_PROVIDER=groq` to switch off Google without deleting the Gemini key).
+
+Set at least one key on Railway to enable Yamen AI. If none is configured, Yamen returns a friendly message asking the admin to add one.
+
+**Troubleshooting:**
+- `GET /api/health` → `ai_provider` shows the detected/active provider (or `none`). Public, no login.
+- `GET /api/ai/diagnostics` (authenticated) → which keys are detected (never the value), the models, and a **live probe** of the active provider returning the provider's verbatim error (region/key/model/quota). This is the endpoint to hit when chat reports a provider failure.
+
+> Note: env vars are scoped per Railway **service** and per **environment**. Make sure the key is on the service that owns the `api`/backend domain and in the environment that's deployed — a key in the wrong environment reads as `none`.
 
 ## Step 3: School Staff App (Vercel)
 

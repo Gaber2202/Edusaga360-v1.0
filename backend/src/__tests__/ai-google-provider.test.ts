@@ -99,11 +99,14 @@ describe('Yamen AI — Google Gemini activation', () => {
       const res = await request(makeApp()).get('/ai/diagnostics');
       expect(res.status).toBe(200);
       expect(res.body.detected.gemini).toBe(true);
+      expect(res.body.detected.active).toBe('gemini');
       expect(res.body.detected.gemini_key_source).toBe('GOOGLE_AI_API_KEY');
       expect(res.body.detected.gemini_model).toBe('gemini-2.0-flash');
-      expect(res.body.geminiProbe.ok).toBe(false);
-      expect(res.body.geminiProbe.status).toBe(400);
-      expect(res.body.geminiProbe.error).toContain('API_KEY_INVALID');
+      // The live probe targets whichever provider is active (gemini here).
+      expect(res.body.probe.provider).toBe('gemini');
+      expect(res.body.probe.ok).toBe(false);
+      expect(res.body.probe.status).toBe(400);
+      expect(res.body.probe.error).toContain('API_KEY_INVALID');
     } finally {
       vi.unstubAllGlobals();
     }
