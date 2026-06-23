@@ -1,5 +1,45 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 38 38" fill="none">
-  <rect x="2" y="2" width="34" height="34" rx="8" fill="#10b981"/>
-  <path d="M12 24V14l5 3.5L22 14v10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M12 19h10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+<!-- EduSaga 360 brand mark: a phoenix rising from an open book beneath a guiding star. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="EduSaga 360">
+  <defs>
+    <linearGradient id="bookL" x1="6" y1="40" x2="32" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22c55e"/>
+      <stop offset="1" stop-color="#0ea5e9"/>
+    </linearGradient>
+    <linearGradient id="bookR" x1="58" y1="40" x2="32" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#facc15"/>
+      <stop offset="1" stop-color="#f97316"/>
+    </linearGradient>
+    <linearGradient id="wing" x1="28" y1="44" x2="56" y2="14" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7c3aed"/>
+      <stop offset="0.3" stop-color="#c026d3"/>
+      <stop offset="0.5" stop-color="#ec4899"/>
+      <stop offset="0.72" stop-color="#f97316"/>
+      <stop offset="1" stop-color="#facc15"/>
+    </linearGradient>
+    <linearGradient id="neck" x1="26" y1="48" x2="36" y2="14" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6d28d9"/>
+      <stop offset="1" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="star" x1="44" y1="2" x2="50" y2="16" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fde047"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Open book -->
+  <path d="M32 48 C 23 43, 15 42, 8 43 L 6 51 C 15 51, 24 52, 32 55 Z" fill="url(#bookL)"/>
+  <path d="M32 48 C 41 43, 49 42, 56 43 L 58 51 C 49 51, 40 52, 32 55 Z" fill="url(#bookR)"/>
+  <path d="M30 50 C 23 46, 16 45, 10 46" stroke="#ffffff" stroke-opacity="0.45" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M34 50 C 41 46, 48 45, 54 46" stroke="#ffffff" stroke-opacity="0.45" stroke-width="1" fill="none" stroke-linecap="round"/>
+
+  <!-- Phoenix wing (rainbow flame feathers) -->
+  <path d="M30 41 C 30 32, 30 24, 34 18 L 40 15 Q 41 18 41 21 L 47 16 Q 47 20 47 23 L 53 21 Q 52 25 51 28 L 56 32 Q 50 33 46 35 C 41 37, 35 38, 30 42 Z" fill="url(#wing)"/>
+
+  <!-- Phoenix neck + head -->
+  <path d="M31 47 C 27 40, 25 31, 28 24 C 29 21, 31 19, 33 19 C 35 19, 36 21, 35 23 C 33 28, 33 38, 34 47 Z" fill="url(#neck)"/>
+  <path d="M29 21 L 23 18 L 30 23 Z" fill="#f59e0b"/>
+  <circle cx="31.5" cy="21" r="0.9" fill="#ffffff"/>
+
+  <!-- Star -->
+  <path d="M47 2 L 49 9 L 56 11 L 49 13 L 47 20 L 45 13 L 38 11 L 45 9 Z" fill="url(#star)"/>
 </svg>
