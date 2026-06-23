@@ -329,7 +329,6 @@ const translations = {
         
         // Fleet & Expenses
         fleetManagement: 'إدارة الأسطول',
-        expenses: 'المصروفات',
         hrContracts: 'العقود',
         govIntegrations: 'التكاملات الحكومية',
 
@@ -868,7 +867,6 @@ const translations = {
 
         // Fleet & Expenses
         fleetManagement: 'Fleet Management',
-        expenses: 'Expenses',
         hrContracts: 'Contracts',
         govIntegrations: 'Government Integrations',
 
