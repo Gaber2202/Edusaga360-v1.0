@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { AuthenticatedRequest, authMiddleware } from '../middleware/auth.js';
-import { getInfobipConfig, sendInviteEmail, sendPasswordResetEmail } from '../services/email.js';
+import { isEmailConfigured, sendInviteEmail, sendPasswordResetEmail } from '../services/email.js';
 
 export const adminRouter = Router();
 
@@ -485,9 +485,8 @@ adminRouter.post('/users', async (req: AuthenticatedRequest, res) => {
       options: { redirectTo: `${FRONTEND_URL}/reset-password` },
     }).catch(() => ({ data: null } as any));
     actionLink = (linkData as any)?.properties?.action_link ?? null;
-    const infobip = getInfobipConfig();
-    if (actionLink && infobip) {
-      await sendPasswordResetEmail({ ...infobip, recipient_email: email, recipient_name: name, actionLink, isInvite: true })
+    if (actionLink && isEmailConfigured()) {
+      await sendPasswordResetEmail({ recipient_email: email, recipient_name: name, actionLink, isInvite: true })
         .then(() => { inviteSent = true; })
         .catch((e) => console.error('invite email failed:', e));
     }
@@ -584,9 +583,8 @@ adminRouter.post('/users/:id/reset-password', async (req: AuthenticatedRequest, 
   const actionLink = (linkData as any)?.properties?.action_link ?? null;
 
   let emailSent = false;
-  const infobip = getInfobipConfig();
-  if (actionLink && infobip) {
-    await sendPasswordResetEmail({ ...infobip, recipient_email: user.email, recipient_name: user.name, actionLink })
+  if (actionLink && isEmailConfigured()) {
+    await sendPasswordResetEmail({ recipient_email: user.email, recipient_name: user.name, actionLink })
       .then(() => { emailSent = true; })
       .catch((e) => console.error('reset email send failed:', e));
   }
@@ -722,11 +720,9 @@ adminRouter.post('/invitations', async (req: AuthenticatedRequest, res) => {
   const inviteLink = `${FRONTEND_URL}/register?invite=${token}`;
 
   let emailSent = false;
-  const infobipKey = process.env.INFOBIP_API_KEY;
-  const infobipBase = process.env.INFOBIP_BASE_URL;
-  if (infobipKey && infobipBase) {
+  if (isEmailConfigured()) {
     try {
-      await sendInviteEmail({ infobipKey, infobipBase, recipient_email, recipient_name, school_name, inviteLink, message });
+      await sendInviteEmail({ recipient_email, recipient_name, school_name, inviteLink, message });
       emailSent = true;
     } catch (emailErr) {
       console.error('Infobip send failed:', emailErr);
@@ -758,12 +754,9 @@ adminRouter.post('/invitations/:id/resend', async (req: AuthenticatedRequest, re
   const inviteLink = `${FRONTEND_URL}/register?invite=${inv.token}`;
 
   let emailSent = false;
-  const infobipKey = process.env.INFOBIP_API_KEY;
-  const infobipBase = process.env.INFOBIP_BASE_URL;
-  if (infobipKey && infobipBase) {
+  if (isEmailConfigured()) {
     try {
       await sendInviteEmail({
-        infobipKey, infobipBase,
         recipient_email: inv.recipient_email,
         recipient_name: inv.recipient_name,
         school_name: inv.school_name,

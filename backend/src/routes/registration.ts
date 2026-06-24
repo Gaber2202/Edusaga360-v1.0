@@ -2,6 +2,7 @@ import { Router, Request } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import crypto from 'crypto';
+import { sendEmail } from '../services/email.js';
 
 export const registrationRouter = Router();
 
@@ -549,13 +550,6 @@ async function sendAdminNotification(request: Record<string, string>) {
 
   console.log(`[EMAIL] Admin notification queued for: ${request.contact_email}`);
 
-  // Use Resend/SendGrid if configured
-  const resendKey = process.env.RESEND_API_KEY;
-  if (!resendKey) {
-    console.log('[EMAIL] No RESEND_API_KEY configured, skipping email send');
-    return;
-  }
-
   const html = `
     <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; max-width: 600px; margin: auto; padding: 24px;">
       <div style="background: #0f172a; color: white; padding: 24px; border-radius: 12px 12px 0 0; text-align: center;">
@@ -584,15 +578,10 @@ async function sendAdminNotification(request: Record<string, string>) {
     </div>
   `;
 
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: `EduSaga 360 <${ADMIN_EMAIL}>`,
-      to: [ADMIN_EMAIL],
-      subject: `طلب تسجيل جديد — ${request.school_name_en || request.contact_name}`,
-      html,
-    }),
+  await sendEmail({
+    to: ADMIN_EMAIL,
+    subject: `طلب تسجيل جديد — ${request.school_name_en || request.contact_name}`,
+    html,
   });
 }
 
@@ -601,9 +590,6 @@ async function sendWelcomeEmail(request: Record<string, string>) {
 
   // Do NOT log the onboarding URL — it contains a secret token
   console.log(`[EMAIL] Welcome email queued for: ${request.contact_email}`);
-
-  const resendKey = process.env.RESEND_API_KEY;
-  if (!resendKey) return;
 
   const html = `
     <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; max-width: 600px; margin: auto; padding: 24px;">
@@ -632,23 +618,15 @@ async function sendWelcomeEmail(request: Record<string, string>) {
     </div>
   `;
 
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: `EduSaga 360 <${ADMIN_EMAIL}>`,
-      to: [request.contact_email],
-      subject: 'مرحباً بك في EduSaga 360 — أكمل إعداد حسابك',
-      html,
-    }),
+  await sendEmail({
+    to: request.contact_email,
+    subject: 'مرحباً بك في EduSaga 360 — أكمل إعداد حسابك',
+    html,
   });
 }
 
 async function sendDenialEmail(request: Record<string, string>) {
   console.log(`[EMAIL] Denial email to: ${request.contact_email}`);
-
-  const resendKey = process.env.RESEND_API_KEY;
-  if (!resendKey) return;
 
   const html = `
     <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; max-width: 600px; margin: auto; padding: 24px;">
@@ -670,15 +648,10 @@ async function sendDenialEmail(request: Record<string, string>) {
     </div>
   `;
 
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: `EduSaga 360 <${ADMIN_EMAIL}>`,
-      to: [request.contact_email],
-      subject: 'تحديث بخصوص طلبك — EduSaga 360',
-      html,
-    }),
+  await sendEmail({
+    to: request.contact_email,
+    subject: 'تحديث بخصوص طلبك — EduSaga 360',
+    html,
   });
 }
 

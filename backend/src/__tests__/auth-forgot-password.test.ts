@@ -31,13 +31,13 @@ vi.mock('@supabase/supabase-js', () => ({
   }),
 }));
 
-const getInfobipConfig = vi.fn();
+const isEmailConfigured = vi.fn();
 const sendPasswordResetEmail = vi.fn();
 vi.mock('../services/email.js', () => ({
-  getInfobipConfig: () => getInfobipConfig(),
+  isEmailConfigured: () => isEmailConfigured(),
   sendPasswordResetEmail: (...args: unknown[]) => sendPasswordResetEmail(...args),
   sendInviteEmail: vi.fn(),
-  sendInfobipEmail: vi.fn(),
+  sendEmail: vi.fn(),
 }));
 
 const { authRouter } = await import('../routes/auth.js');
@@ -61,7 +61,7 @@ describe('POST /api/auth/forgot-password', () => {
   });
 
   it('generates one link and emails it via Infobip without a colliding token', async () => {
-    getInfobipConfig.mockReturnValue({ infobipKey: 'k', infobipBase: 'b' });
+    isEmailConfigured.mockReturnValue(true);
     generateLink.mockResolvedValue({ data: { properties: { action_link: 'https://reset.link/abc' } } });
     sendPasswordResetEmail.mockResolvedValue(undefined);
 
@@ -79,7 +79,7 @@ describe('POST /api/auth/forgot-password', () => {
   });
 
   it('falls back to Supabase recovery email when Infobip is not configured', async () => {
-    getInfobipConfig.mockReturnValue(null);
+    isEmailConfigured.mockReturnValue(false);
     resetPasswordForEmail.mockResolvedValue({ data: {}, error: null });
 
     const res = await request(makeApp()).post('/api/auth/forgot-password').send({ email: 'user@school.sa' });
@@ -94,7 +94,7 @@ describe('POST /api/auth/forgot-password', () => {
   });
 
   it('still returns 200 for an unknown email (anti-enumeration)', async () => {
-    getInfobipConfig.mockReturnValue({ infobipKey: 'k', infobipBase: 'b' });
+    isEmailConfigured.mockReturnValue(true);
     generateLink.mockResolvedValue({ data: null }); // user not found → no link
 
     const res = await request(makeApp()).post('/api/auth/forgot-password').send({ email: 'ghost@nowhere.sa' });

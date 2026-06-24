@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import crypto from 'crypto';
+import { sendEmail, isEmailConfigured } from '../services/email.js';
 
 export const parentsRouter = Router();
 
@@ -11,7 +12,6 @@ const supabase = createClient(
 );
 
 const PARENT_PORTAL_URL = process.env.PARENT_PORTAL_URL || 'https://edusaga-360-parent-portal.vercel.app';
-const ADMIN_EMAIL = 'info@edusaga360.com';
 
 const InviteParentSchema = z.object({
   guardian_name_en: z.string().min(1).max(200),
@@ -175,7 +175,7 @@ parentsRouter.post('/invite', async (req, res) => {
         console.error('Magic link generation error:', linkError);
       }
 
-      // Send custom invitation email via Resend
+      // Send custom invitation email via Infobip
       const inviteToken = linkData?.properties?.hashed_token;
       await sendParentInviteEmail({
         email: d.guardian_email,
@@ -238,9 +238,8 @@ async function sendParentInviteEmail(opts: {
 }) {
   console.log(`[EMAIL] Parent invite for: ${opts.email}`);
 
-  const resendKey = process.env.RESEND_API_KEY;
-  if (!resendKey) {
-    console.log('[EMAIL] No RESEND_API_KEY configured, skipping email send');
+  if (!isEmailConfigured()) {
+    console.log('[EMAIL] Infobip not configured, skipping email send');
     console.log(`[EMAIL] Temp password for ${opts.email}: ${opts.tempPassword}`);
     console.log(`[EMAIL] Portal URL: ${opts.portalUrl}`);
     return;
@@ -305,15 +304,10 @@ async function sendParentInviteEmail(opts: {
   `;
 
   try {
-    await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: `EduSaga 360 <${ADMIN_EMAIL}>`,
-        to: [opts.email],
-        subject: `${opts.schoolName} — Parent Portal Access | بوابة ولي الأمر`,
-        html,
-      }),
+    await sendEmail({
+      to: opts.email,
+      subject: `${opts.schoolName} — Parent Portal Access | بوابة ولي الأمر`,
+      html,
     });
     console.log(`[EMAIL] Parent invite sent to: ${opts.email}`);
   } catch (err) {
