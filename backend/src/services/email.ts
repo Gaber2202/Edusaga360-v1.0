@@ -1,82 +1,122 @@
-import https from 'https';
-
 /**
- * Transactional email helpers built on Infobip's Email API.
+ * Transactional email — Infobip Email API (V4).
  *
- * All outbound mail in the platform flows through here so we have a single,
- * SMTP-independent channel. Callers pass a fully-built link/token; these
- * helpers never mint Supabase recovery tokens themselves (that's the caller's
- * job) — which keeps the emailed link and any copyable fallback in sync on the
- * SAME token.
+ * Every outbound transactional email in the platform flows through `sendEmail`
+ * here so we have a single, SMTP-independent channel with one place to handle
+ * authentication, sender formatting, and error logging.
+ *
+ * Endpoint:  POST {INFOBIP_BASE_URL}/email/4/messages
+ * Auth:      Authorization: App {INFOBIP_API_KEY}   (scheme is "App", NOT "Bearer")
+ *
+ * Configured via Railway env vars:
+ *   INFOBIP_BASE_URL      e.g. https://55e51x.api.infobip.com
+ *   INFOBIP_API_KEY       (secret)
+ *   INFOBIP_SENDER_EMAIL  e.g. noreply@edusaga360.com
+ *
+ * The higher-level helpers (sendInviteEmail / sendPasswordResetEmail) never mint
+ * Supabase recovery tokens themselves — the caller passes a fully-built link so
+ * the emailed link and any copyable fallback stay on the SAME token.
  */
 
-export interface InfobipConfig {
-  infobipKey: string;
-  infobipBase: string;
+/** True when the Infobip env vars needed to send are present. */
+export function isEmailConfigured(): boolean {
+  return !!(process.env.INFOBIP_API_KEY && process.env.INFOBIP_BASE_URL);
 }
 
-/** Returns Infobip credentials from the environment, or null when not configured. */
-export function getInfobipConfig(): InfobipConfig | null {
-  const infobipKey = process.env.INFOBIP_API_KEY;
-  const infobipBase = process.env.INFOBIP_BASE_URL;
-  if (!infobipKey || !infobipBase) return null;
-  return { infobipKey, infobipBase };
+/** Resolve the "sender" field, adding a friendly name when only a bare address is set. */
+function resolveSender(): string {
+  const raw = process.env.INFOBIP_SENDER_EMAIL || 'noreply@edusaga360.com';
+  // Already in "Name <addr>" form? Leave as-is. Otherwise wrap with a display name.
+  return raw.includes('<') ? raw : `EduSaga 360 <${raw}>`;
 }
 
-/** Low-level send. Resolves on a 2xx from Infobip, rejects otherwise. */
-export async function sendInfobipEmail(opts: {
-  infobipKey: string;
-  infobipBase: string;
-  recipient_email: string;
+export interface SendEmailInput {
+  to: string;
   subject: string;
   html: string;
-}): Promise<void> {
-  const { infobipKey, infobipBase, recipient_email, subject, html } = opts;
-  const payload = JSON.stringify({
-    messages: [{
-      from: process.env.INFOBIP_SENDER_EMAIL || 'noreply@edusaga360.com',
-      to: [{ to: recipient_email }],
-      subject,
-      htmlBody: html,
-    }],
+}
+
+/**
+ * Core sender. Sends one transactional email via Infobip's V4 messages API.
+ *
+ * - Resolves on the Infobip acknowledgement (status PENDING_ENROUTE + messageId);
+ *   final delivery status arrives later via delivery-report webhooks, not here.
+ * - Throws on a non-2xx response, logging the status + body so failures surface
+ *   in Railway deploy logs.
+ * - When Infobip is not configured, logs a warning and resolves to null instead
+ *   of throwing, so local/dev/test environments don't break on missing secrets.
+ */
+export async function sendEmail({ to, subject, html }: SendEmailInput): Promise<unknown> {
+  const baseUrl = process.env.INFOBIP_BASE_URL;
+  const apiKey = process.env.INFOBIP_API_KEY;
+
+  if (!baseUrl || !apiKey) {
+    console.warn(
+      `[EMAIL] Infobip not configured (INFOBIP_API_KEY / INFOBIP_BASE_URL missing) — skipping email to ${to} ("${subject}")`,
+    );
+    return null;
+  }
+
+  const endpoint = `${baseUrl.replace(/\/+$/, '')}/email/4/messages`;
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Authorization': `App ${apiKey}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      messages: [
+        {
+          sender: resolveSender(),
+          destinations: [{ to: [{ destination: to }] }],
+          content: { subject, html },
+        },
+      ],
+    }),
   });
 
-  await new Promise<void>((resolve, reject) => {
-    const url = new URL(`https://${infobipBase}/email/3/send`);
-    const req = https.request({
-      hostname: url.hostname,
-      path: url.pathname,
-      method: 'POST',
-      headers: {
-        'Authorization': `App ${infobipKey}`,
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(payload),
-      },
-    }, (res) => {
-      let body = '';
-      res.on('data', d => body += d);
-      res.on('end', () => {
-        if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) resolve();
-        else reject(new Error(`Infobip ${res.statusCode}: ${body}`));
-      });
-    });
-    req.on('error', reject);
-    req.write(payload);
-    req.end();
-  });
+  const text = await res.text();
+  if (!res.ok) {
+    console.error(`[EMAIL] Infobip send failed for ${to} ("${subject}"): ${res.status} ${text}`);
+    throw new Error(`Infobip email failed: ${res.status} ${text}`);
+  }
+
+  console.log(`[EMAIL] Infobip accepted email to ${to} ("${subject}"): ${res.status} ${text}`);
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
 }
+
+/** Simple password-reset helper (link already generated by the caller). */
+export const sendPasswordReset = (to: string, resetLink: string) =>
+  sendEmail({
+    to,
+    subject: 'Reset your EduSaga 360 password',
+    html: `<p>Click the link below to reset your password:</p>
+           <p><a href="${resetLink}">Reset Password</a></p>
+           <p>If you didn't request this, you can safely ignore this email.</p>`,
+  });
+
+/** Simple welcome helper. */
+export const sendWelcome = (to: string, name: string) =>
+  sendEmail({
+    to,
+    subject: 'Welcome to EduSaga 360',
+    html: `<p>Hi ${name}, welcome to EduSaga 360! We're glad to have you on board.</p>`,
+  });
 
 /** School-onboarding invitation (register a new school + start trial). */
 export async function sendInviteEmail(opts: {
-  infobipKey: string;
-  infobipBase: string;
   recipient_email: string;
   recipient_name: string;
   school_name?: string | null;
   inviteLink: string;
   message?: string | null;
-}): Promise<void> {
-  const { infobipKey, infobipBase, recipient_email, recipient_name, school_name, inviteLink, message } = opts;
+}): Promise<unknown> {
+  const { recipient_email, recipient_name, school_name, inviteLink, message } = opts;
   const schoolLine = school_name ? `<p>School: <strong>${school_name}</strong></p>` : '';
   const customMsg = message ? `<p style="color:#555">${message}</p>` : '';
   const html = `
@@ -94,7 +134,7 @@ export async function sendInviteEmail(opts: {
       <p style="font-size:12px;color:#999">This link expires in 7 days. If you did not expect this email, you can safely ignore it.</p>
     </div>`;
 
-  await sendInfobipEmail({ infobipKey, infobipBase, recipient_email, subject: `You're invited to try EduSaga 360`, html });
+  return sendEmail({ to: recipient_email, subject: `You're invited to try EduSaga 360`, html });
 }
 
 /**
@@ -105,15 +145,13 @@ export async function sendInviteEmail(opts: {
  * emailed link and any copyable fallback share one — and only one — valid token.
  */
 export async function sendPasswordResetEmail(opts: {
-  infobipKey: string;
-  infobipBase: string;
   recipient_email: string;
   recipient_name?: string | null;
   actionLink: string;
   /** When true, phrases the email as a first-time "set your password" invite. */
   isInvite?: boolean;
-}): Promise<void> {
-  const { infobipKey, infobipBase, recipient_email, recipient_name, actionLink, isInvite } = opts;
+}): Promise<unknown> {
+  const { recipient_email, recipient_name, actionLink, isInvite } = opts;
   const name = recipient_name || 'there';
   const heading = isInvite ? 'Set up your EduSaga 360 password' : 'Reset your EduSaga 360 password';
   const intro = isInvite
@@ -133,10 +171,8 @@ export async function sendPasswordResetEmail(opts: {
       <p style="font-size:12px;color:#999">This link can only be used once and expires shortly. If you didn't request this, you can safely ignore this email and your password will stay the same.</p>
     </div>`;
 
-  await sendInfobipEmail({
-    infobipKey,
-    infobipBase,
-    recipient_email,
+  return sendEmail({
+    to: recipient_email,
     subject: isInvite ? 'Set up your EduSaga 360 account' : 'Reset your EduSaga 360 password',
     html,
   });

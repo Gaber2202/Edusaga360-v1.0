@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
-import { getInfobipConfig, sendPasswordResetEmail } from '../services/email.js';
+import { isEmailConfigured, sendPasswordResetEmail } from '../services/email.js';
 
 export const authRouter = Router();
 
@@ -67,15 +67,14 @@ authRouter.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
   const redirectTo = `${FRONTEND_URL}/reset-password`;
 
   try {
-    const infobip = getInfobipConfig();
-    if (infobip) {
+    if (isEmailConfigured()) {
       // Preferred path: mint one recovery token and email THAT exact link.
       const { data: linkData } = await supabase.auth.admin.generateLink({
         type: 'recovery', email, options: { redirectTo },
       }).catch(() => ({ data: null } as any));
       const actionLink = (linkData as any)?.properties?.action_link ?? null;
       if (actionLink) {
-        await sendPasswordResetEmail({ ...infobip, recipient_email: email, actionLink })
+        await sendPasswordResetEmail({ recipient_email: email, actionLink })
           .catch((e) => console.error('forgot-password email failed:', e));
       }
     } else {
