@@ -93,6 +93,7 @@ import {
           Zap,
           Megaphone,
           Plane,
+          Crown,
           } from 'lucide-react';
 
 function LayoutContent({ children, currentPageName }) {
@@ -116,8 +117,14 @@ function LayoutContent({ children, currentPageName }) {
       page: 'Dashboard',
       roles: ['admin', 'finance', 'procurement', 'admissions', 'collections', 'branch_manager', 'auditor', 'teacher', 'parent', 'accountant', 'hr_admin', 'hr_officer']
     },
-    { 
-      name: 'admissions', 
+    {
+      name: 'executiveCommandCenter',
+      icon: Crown,
+      page: 'ExecutiveCommandCenter',
+      roles: ['admin', 'creator', 'ceo', 'cfo', 'coo', 'chro']
+    },
+    {
+      name: 'admissions',
       icon: GraduationCap,
       roles: ['admin', 'admissions', 'branch_manager'],
       children: [

@@ -74,6 +74,7 @@ import Dashboard from './pages/Dashboard';
 import Depreciation from './pages/Depreciation';
 import DisciplinaryCases from './pages/DisciplinaryCases';
 import EOSBCalculator from './pages/EOSBCalculator';
+import ExecutiveCommandCenter from './pages/ExecutiveCommandCenter';
 import ESSPortal from './pages/ESSPortal';
 import ESSSettings from './pages/ESSSettings';
 import EmployeeAttendance from './pages/EmployeeAttendance';
@@ -170,6 +171,7 @@ export const PAGES = {
     "Depreciation": Depreciation,
     "DisciplinaryCases": DisciplinaryCases,
     "EOSBCalculator": EOSBCalculator,
+    "ExecutiveCommandCenter": ExecutiveCommandCenter,
     "ESSPortal": ESSPortal,
     "ESSSettings": ESSSettings,
     "EmployeeAttendance": EmployeeAttendance,

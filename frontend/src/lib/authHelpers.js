@@ -32,6 +32,8 @@ export const VALID_APP_ROLES = [
   'creator',
   'ceo',
   'cfo',
+  'coo',
+  'chro',
   'hr_head',
   'it_user',
   'accountant',
