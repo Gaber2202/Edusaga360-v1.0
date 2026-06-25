@@ -34,7 +34,7 @@ interface OpenAICompatConfig { name: string; apiKey: string; baseUrl: string; mo
 function getGroqKey()   { return process.env.GROQ_API_KEY || ''; }
 function getOpenAIKey() { return process.env.OPENAI_API_KEY || ''; }
 
-function getGroqConfig(): OpenAICompatConfig | null {
+export function getGroqConfig(): OpenAICompatConfig | null {
   const apiKey = getGroqKey();
   if (!apiKey) return null;
   return {
@@ -44,7 +44,7 @@ function getGroqConfig(): OpenAICompatConfig | null {
     model:   process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
   };
 }
-function getOpenAIConfig(): OpenAICompatConfig | null {
+export function getOpenAIConfig(): OpenAICompatConfig | null {
   const apiKey = getOpenAIKey();
   if (!apiKey) return null;
   return {
@@ -395,9 +395,9 @@ async function runTool(name: string, input: Record<string, unknown>, tenantId: s
 
 // ─── Claude with tool use ─────────────────────────────────────────────────────
 
-interface Message { role: 'user' | 'assistant'; content: string | unknown[] }
+export interface Message { role: 'user' | 'assistant'; content: string | unknown[] }
 
-async function callClaudeWithTools(
+export async function callClaudeWithTools(
   messages: Message[],
   tenantId: string,
   systemPrompt: string,
@@ -479,7 +479,7 @@ function geminiToolDeclarations() {
   }));
 }
 
-async function callGeminiWithTools(
+export async function callGeminiWithTools(
   messages: Message[],
   tenantId: string,
   systemPrompt: string,
@@ -553,7 +553,7 @@ function openAIToolDeclarations() {
   }));
 }
 
-async function callOpenAICompatibleWithTools(
+export async function callOpenAICompatibleWithTools(
   messages: Message[],
   tenantId: string,
   systemPrompt: string,
@@ -668,9 +668,9 @@ async function probeActiveProvider(): Promise<Record<string, unknown>> {
 // ─── Provider resolution ──────────────────────────────────────────────────────
 // Ordered list of providers to attempt for a request, honouring AI_PROVIDER.
 
-interface ProviderRunner { name: string; run: () => Promise<string> }
+export interface ProviderRunner { name: string; run: () => Promise<string> }
 
-function resolveProviders(messages: Message[], tenantId: string): ProviderRunner[] {
+export function resolveProviders(messages: Message[], tenantId: string): ProviderRunner[] {
   const make: Record<ProviderName, () => ProviderRunner | null> = {
     gemini: () => getGeminiKey() ? { name: 'gemini', run: () => callGeminiWithTools(messages, tenantId, SYSTEM_PROMPT) } : null,
     claude: () => getClaudeKey() ? { name: 'claude', run: () => callClaudeWithTools(messages, tenantId, SYSTEM_PROMPT) } : null,
@@ -689,7 +689,7 @@ function resolveProviders(messages: Message[], tenantId: string): ProviderRunner
 // chat. Map it to a short bilingual message; the raw text is still returned in
 // `detail` (and logged) for debugging.
 
-function friendlyProviderError(detail: string): { type: string; message: string } {
+export function friendlyProviderError(detail: string): { type: string; message: string } {
   const d = detail.toLowerCase();
   if (/429|resource_exhausted|quota|rate.?limit|credit|billing|insufficient|exhaust|deplet|out of/.test(d)) {
     return {

@@ -144,6 +144,8 @@ export function RoleProvider({ children }) {
       admin: ['all'], creator: ['all'],
       ceo: ['view', 'approve_strategic'],
       cfo: ['view', 'export', 'approve_finance', 'post', 'reverse', 'view_salary_amounts', 'view_finance_amounts'],
+      coo: ['view'],
+      chro: ['view', 'view_salary_amounts'],
       hr_head: ['create', 'edit', 'delete', 'approve', 'export', 'send', 'view_salary_amounts'],
       it_user: ['view', 'manage_users', 'view_logs'],
       accountant: ['create', 'edit', 'view', 'export', 'view_finance_amounts'],
@@ -165,8 +167,10 @@ export function RoleProvider({ children }) {
     if (roleData?.module_access?.[module] === true) return true;
     const moduleAccess = {
       admin: ['all'], creator: ['all'],
-      ceo: ['dashboard', 'reports', 'audit_logs'],
-      cfo: ['dashboard', 'fees', 'finance', 'procurement', 'assets', 'payroll', 'reports'],
+      ceo: ['dashboard', 'reports', 'audit_logs', 'executive'],
+      cfo: ['dashboard', 'fees', 'finance', 'procurement', 'assets', 'payroll', 'reports', 'executive'],
+      coo: ['dashboard', 'reports', 'executive'],
+      chro: ['dashboard', 'employees', 'employee_attendance', 'leaves', 'payroll', 'reports', 'executive'],
       hr_head: ['dashboard', 'hr', 'employees', 'employee_attendance', 'leaves', 'overtime', 'payroll', 'eosb', 'reports', 'settings'],
       it_user: ['dashboard', 'settings', 'integrations', 'security', 'audit_logs'],
       accountant: ['dashboard', 'students', 'fees', 'finance', 'reports'],
