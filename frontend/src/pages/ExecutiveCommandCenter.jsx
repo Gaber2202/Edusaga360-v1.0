@@ -47,16 +47,17 @@ function ScoreBar({ label, value }) {
   );
 }
 
-function TrafficLight({ label, status }) {
+function TrafficLight({ label, signal }) {
+  const color = signal?.color || 'unknown';
   const cfg = {
     green: { Icon: ShieldCheck, cls: 'text-emerald-600 bg-emerald-50' },
     yellow: { Icon: ShieldAlert, cls: 'text-amber-600 bg-amber-50' },
     red: { Icon: ShieldX, cls: 'text-red-600 bg-red-50' },
     unknown: { Icon: ShieldAlert, cls: 'text-slate-400 bg-slate-50' },
-  }[status || 'unknown'];
+  }[color];
   const { Icon, cls } = cfg;
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg border border-slate-100">
+    <div className="flex items-center gap-3 p-3 rounded-lg border border-slate-100" title={signal?.message || undefined}>
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${cls}`}>
         <Icon className="w-5 h-5" />
       </div>
@@ -431,9 +432,9 @@ function CFODashboard({ data, isRTL, t }) {
         <CardHeader><CardTitle className="text-base">{t('complianceTrafficLights')}</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <TrafficLight label="ZATCA / VAT" status={compliance_traffic_lights.zatca_vat} isRTL={isRTL} />
-            <TrafficLight label="WPS / Mudad" status={compliance_traffic_lights.wps_mudad} isRTL={isRTL} />
-            <TrafficLight label="GOSI" status={compliance_traffic_lights.gosi} isRTL={isRTL} />
+            <TrafficLight label="ZATCA / VAT" signal={compliance_traffic_lights.zatca_vat} />
+            <TrafficLight label="WPS / Mudad" signal={compliance_traffic_lights.wps_mudad} />
+            <TrafficLight label="GOSI" signal={compliance_traffic_lights.gosi} />
           </div>
         </CardContent>
       </Card>
@@ -667,15 +668,21 @@ function CHRODashboard({ data, isRTL, t }) {
         <CardHeader><CardTitle className="text-base">{t('payrollGovCompliance')}</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <TrafficLight label="WPS / Mudad" status={payroll_gov_compliance.wps_mudad} isRTL={isRTL} />
-            <TrafficLight label="GOSI" status={payroll_gov_compliance.gosi} isRTL={isRTL} />
-            <TrafficLight label="Qiwa" status={payroll_gov_compliance.qiwa} isRTL={isRTL} />
+            <TrafficLight label="WPS / Mudad" signal={payroll_gov_compliance.wps_mudad} />
+            <TrafficLight label="GOSI" signal={payroll_gov_compliance.gosi} />
+            <TrafficLight label="Qiwa" signal={payroll_gov_compliance.qiwa} />
           </div>
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <StatCard title={t('openRoles')} value={fmtNumber(open_roles.count, isRTL)} icon={Building2} iconClassName="bg-blue-50" />
+        <StatCard
+          title={t('openRoles')}
+          value={fmtNumber(open_roles.count, isRTL)}
+          subtitle={<DataQualityNote quality={open_roles.count_data_quality} isRTL={isRTL} />}
+          icon={Building2}
+          iconClassName="bg-blue-50"
+        />
         <StatCard
           title={t('timeToFill')}
           value={open_roles.avg_time_to_fill_days !== null ? `${fmtNumber(open_roles.avg_time_to_fill_days, isRTL)} ${isRTL ? 'يوم' : 'days'}` : '—'}
