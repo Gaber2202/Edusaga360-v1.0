@@ -150,36 +150,42 @@ async function getCollections(tenant_id: string) {
   return { total_invoiced: totalInvoiced, total_collected: totalCollected, collection_rate: round2(collectionRate * 100), score, rows };
 }
 
-// Compliance sub-score: overdue invoices + expiring iqamas + latest gov-filing
-// statuses (ZATCA/VAT, WPS/Mudad, GOSI, Qiwa). Starts at 100, deducts penalties.
+// Matches the is-Saudi convention used elsewhere (payroll.ts, benchmarks.ts) —
+// there is no boolean is_saudi column, only the free-text nationality field.
+function isSaudi(nationality: string | null | undefined): boolean {
+  return /^(saudi|saudi arabia|sa|سعودي)$/i.test((nationality ?? '').trim());
+}
+
+function notTrackedSignal(message: string) {
+  return { color: 'unknown' as const, status: 'not_tracked' as const, message };
+}
+
+// Compliance sub-score: overdue invoices + expiring iqamas + latest ZATCA
+// e-invoicing submission status. Starts at 100, deducts penalties for the
+// signals we can actually measure.
+// TODO: WPS/Mudad and Qiwa have no dedicated filing-status tables in this
+// schema yet, and GOSI is computed live per payroll run rather than stored
+// as a filing record — those three traffic lights report not_tracked
+// instead of querying tables that don't exist.
 async function getComplianceSignals(tenant_id: string) {
   const cutoff30 = daysAgoStr(-30); // 30 days ahead
   const today = todayStr();
 
-  const [overdueRes, iqamaRes, vatRes, mudadRes, gosiRes, qiwaRes] = await Promise.all([
+  const [overdueRes, iqamaRes, zatcaRes] = await Promise.all([
     supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('tenant_id', tenant_id).neq('status', 'paid').lte('due_date', today).not('due_date', 'is', null),
     supabase.from('employees').select('id', { count: 'exact', head: true }).eq('tenant_id', tenant_id).eq('status', 'active').lte('iqama_expiry', cutoff30).not('iqama_expiry', 'is', null),
-    supabase.from('vat_returns').select('status, return_number, period_end').eq('tenant_id', tenant_id).order('period_end', { ascending: false }).limit(1),
-    supabase.from('mudad_submissions').select('status, compliance_percentage, period_year, period_month').eq('tenant_id', tenant_id).order('period_year', { ascending: false }).order('period_month', { ascending: false }).limit(1),
-    supabase.from('gosi_records').select('status, generated_date').eq('tenant_id', tenant_id).order('generated_date', { ascending: false }).limit(1),
-    supabase.from('employee_documents').select('qiwa_status', { count: 'exact' }).eq('tenant_id', tenant_id).eq('document_type', 'employment_contract'),
+    supabase.from('zatca_submissions').select('zatca_status, submitted_at').eq('tenant_id', tenant_id).order('submitted_at', { ascending: false }).limit(1),
   ]);
 
   const overdueCount = overdueRes.count ?? 0;
   const iqamaExpiringCount = iqamaRes.count ?? 0;
-  const vat = vatRes.data?.[0] ?? null;
-  const wps = mudadRes.data?.[0] ?? null;
-  const gosi = gosiRes.data?.[0] ?? null;
-  const qiwaRows = (qiwaRes.data ?? []) as { qiwa_status?: string }[];
-  const qiwaSubmitted = qiwaRows.filter((r) => r.qiwa_status === 'submitted' || r.qiwa_status === 'verified').length;
-  const qiwaCompliancePct = qiwaRows.length > 0 ? round2((qiwaSubmitted / qiwaRows.length) * 100) : null;
+  const zatca = zatcaRes.data?.[0] ?? null;
+  const zatcaColor = !zatca ? 'unknown' : ['cleared', 'reported'].includes(zatca.zatca_status) ? 'green' : ['pending', 'generated'].includes(zatca.zatca_status) ? 'yellow' : 'red';
 
   let penalty = 0;
   penalty += Math.min(40, overdueCount * 2);
   penalty += Math.min(30, iqamaExpiringCount * 3);
-  if (vat && vat.status !== 'accepted') penalty += 10;
-  if (wps && Number(wps.compliance_percentage ?? 0) < 90) penalty += 10;
-  if (gosi && gosi.status !== 'submitted' && gosi.status !== 'accepted') penalty += 10;
+  if (zatcaColor === 'red') penalty += 10;
 
   const score = clamp(Math.round(100 - penalty));
 
@@ -187,28 +193,23 @@ async function getComplianceSignals(tenant_id: string) {
     score,
     overdue_invoices: overdueCount,
     iqama_expiring_30d: iqamaExpiringCount,
-    zatca_vat: vat ? { status: vat.status, reference: vat.return_number, period_end: vat.period_end } : { status: 'no_filing', message: 'No vat_returns row found for this tenant yet.' },
-    wps_mudad: wps ? { status: wps.status, compliance_percentage: wps.compliance_percentage, period: `${wps.period_year}-${String(wps.period_month).padStart(2, '0')}` } : { status: 'no_filing', message: 'No mudad_submissions row found for this tenant yet.' },
-    gosi: gosi ? { status: gosi.status, generated_date: gosi.generated_date } : { status: 'no_filing', message: 'No gosi_records row found for this tenant yet.' },
-    qiwa: qiwaCompliancePct !== null ? { compliance_percentage: qiwaCompliancePct, contracts_tracked: qiwaRows.length } : { status: 'no_data', message: 'No employee_documents rows of type employment_contract found.' },
+    zatca_vat: zatca
+      ? { color: zatcaColor, status: zatca.zatca_status, submitted_at: zatca.submitted_at }
+      : notTrackedSignal('No zatca_submissions row found for this tenant yet.'),
+    wps_mudad: notTrackedSignal('No WPS/Mudad filing-status table exists yet.'),
+    gosi: notTrackedSignal('GOSI is computed per payroll run, not stored as a filing record.'),
+    qiwa: notTrackedSignal('No Qiwa contract-status table exists yet.'),
   };
 }
 
-// Retention sub-score: employees whose end_date fell in the trailing 12 months,
-// vs current active headcount. This is an ESTIMATE — there is no dedicated
-// "termination reason/voluntary vs involuntary" field to refine it further.
+// Retention sub-score: employees has no termination/separation date column,
+// so a true 12-month retention rate cannot be computed from this schema yet.
+// Only active_headcount is real; the rest is null + a neutral fallback score
+// so the Vitality Index composite isn't skewed by a fabricated number.
 async function getRetention(tenant_id: string) {
-  const since = daysAgoStr(365);
-  const [activeRes, separatedRes] = await Promise.all([
-    supabase.from('employees').select('id', { count: 'exact', head: true }).eq('tenant_id', tenant_id).eq('status', 'active'),
-    supabase.from('employees').select('id', { count: 'exact', head: true }).eq('tenant_id', tenant_id).gte('end_date', since).not('end_date', 'is', null),
-  ]);
+  const activeRes = await supabase.from('employees').select('id', { count: 'exact', head: true }).eq('tenant_id', tenant_id).eq('status', 'active');
   const active = activeRes.count ?? 0;
-  const separated = separatedRes.count ?? 0;
-  const base = active + separated;
-  const retentionRate = base > 0 ? 1 - separated / base : 1;
-  const score = clamp(Math.round(retentionRate * 100));
-  return { active_headcount: active, separations_12mo: separated, retention_rate: round2(retentionRate * 100), score, data_quality: 'estimated' as const };
+  return { active_headcount: active, separations_12mo: null, retention_rate: null, score: 50, data_quality: 'not_tracked' as const };
 }
 
 async function getVitalityWeights(tenant_id: string) {
@@ -411,7 +412,7 @@ execRouter.get('/coo', requireExecAccess('coo'), async (req: AuthenticatedReques
     const [sectionsRes, studentsRes, employeesRes, applicantsRes, applicationsRes] = await Promise.all([
       supabase.from('sections').select('branch_id, capacity').eq('tenant_id', tenant_id),
       supabase.from('students').select('id, branch_id').eq('tenant_id', tenant_id).eq('status', 'active'),
-      supabase.from('employees').select('job_title').eq('tenant_id', tenant_id).eq('status', 'active'),
+      supabase.from('employees').select('job_title_id, job_titles(name_en, name_ar)').eq('tenant_id', tenant_id).eq('status', 'active'),
       supabase.from('applicants').select('id, status').eq('tenant_id', tenant_id),
       supabase.from('applications').select('id, stage, decision').eq('tenant_id', tenant_id),
     ]);
@@ -451,9 +452,13 @@ execRouter.get('/coo', requireExecAccess('coo'), async (req: AuthenticatedReques
     const totalEnrolled = students.length;
 
     // Student-teacher ratio is a BEST-EFFORT proxy (no `is_teacher` flag exists on
-    // employees/job_titles) — matches employees whose job_title looks like a
+    // employees/job_titles) — matches employees whose job title looks like a
     // teaching role. Flagged as an estimate, never presented as exact.
-    const teacherCount = (employees as any[]).filter((e) => /teach|معلم/i.test(e.job_title ?? '')).length;
+    const teacherCount = (employees as any[]).filter((e) => {
+      const jt = e.job_titles;
+      const name = `${jt?.name_en ?? ''} ${jt?.name_ar ?? ''}`;
+      return /teach|معلم/i.test(name);
+    }).length;
     const studentTeacherRatio = teacherCount > 0 ? round2(totalEnrolled / teacherCount) : null;
 
     const admissionsFunnel = {
@@ -496,17 +501,16 @@ execRouter.get('/chro', requireExecAccess('chro'), async (req: AuthenticatedRequ
   if (!tenant_id) return res.status(400).json({ error: 'No tenant context' });
 
   try {
-    const [employeesRes, departmentsRes, compliance, retention, postingsRes] = await Promise.all([
-      supabase.from('employees').select('id, status, is_saudi, nationality, gender, department_id, end_date').eq('tenant_id', tenant_id),
+    const [employeesRes, departmentsRes, compliance, retention] = await Promise.all([
+      supabase.from('employees').select('id, status, nationality, gender, department_id').eq('tenant_id', tenant_id),
       supabase.from('departments').select('id, name_en, name_ar').eq('tenant_id', tenant_id),
       getComplianceSignals(tenant_id),
       getRetention(tenant_id),
-      supabase.from('career_postings').select('id, status, is_published, application_deadline').eq('tenant_id', tenant_id),
     ]);
 
     const employees = employeesRes.data ?? [];
     const active = employees.filter((e: any) => e.status === 'active');
-    const saudiCount = active.filter((e: any) => e.is_saudi === true).length;
+    const saudiCount = active.filter((e: any) => isSaudi(e.nationality)).length;
     const saudizationPct = active.length > 0 ? round2((saudiCount / active.length) * 100) : 0;
 
     // Nitaqat banding — simplified default thresholds (documented here, not a
@@ -538,10 +542,6 @@ execRouter.get('/chro', requireExecAccess('chro'), async (req: AuthenticatedRequ
       return acc;
     }, {});
 
-    const postings = postingsRes.data ?? [];
-    const today = todayStr();
-    const openRoles = postings.filter((p: any) => p.is_published && (!p.application_deadline || p.application_deadline >= today)).length;
-
     await writeExecAudit(req, 'exec_dashboard_view', { persona: 'chro' });
 
     res.json({
@@ -559,9 +559,10 @@ execRouter.get('/chro', requireExecAccess('chro'), async (req: AuthenticatedRequ
         qiwa: compliance.qiwa,
       },
       open_roles: {
-        count: openRoles,
-        // TODO: career_postings has no linkage to the employees row that
-        // eventually fills the role, so time-to-fill cannot be computed yet.
+        // TODO: no career_postings/job-requisitions table exists in the schema
+        // yet, so open-role count and time-to-fill cannot be computed.
+        count: null,
+        count_data_quality: 'not_tracked',
         avg_time_to_fill_days: null,
         time_to_fill_data_quality: 'not_tracked',
       },
