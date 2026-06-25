@@ -27,7 +27,7 @@ export default function SystemErrorLog() {
 
   const { data: errors = [], isLoading, refetch } = useQuery({
     queryKey: ['systemErrors'],
-    queryFn: () => fetchData(tenantQuery('system_errors').select('*').order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('system_errors').select('*').order('created_at', { ascending: false })),
     refetchInterval: 30000, // Auto-refresh every 30 seconds
     enabled: isAdmin,
   });

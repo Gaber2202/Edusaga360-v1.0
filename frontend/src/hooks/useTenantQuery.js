@@ -11,7 +11,7 @@ import { useRole } from '../components/RoleContext';
  * Usage:
  *   const { data, isLoading } = useTenantQuery('employees', 'Employee', { status: 'active' });
  */
-export function useTenantQuery(queryKey, entityName, filters = {}, sortBy = '-created_date', limit) {
+export function useTenantQuery(queryKey, entityName, filters = {}, sortBy = '-created_at', limit) {
   const { tenant } = useTenant();
   const { user, isCreator } = useRole();
 

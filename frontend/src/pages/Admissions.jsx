@@ -25,7 +25,7 @@ export default function Admissions() {
 
   const { data: applications = [], isLoading } = useQuery({
     queryKey: ['applications', tenantId],
-    queryFn: () => fetchData(tenantQuery('applications').select('*').match(tenantFilter()).order('created_date', { ascending: false }).limit(200)),
+    queryFn: () => fetchData(tenantQuery('applications').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit(200)),
     enabled: hasTenantAccess,
   });
 

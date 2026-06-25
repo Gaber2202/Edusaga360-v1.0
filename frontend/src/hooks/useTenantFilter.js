@@ -23,7 +23,7 @@ export function useTenantFilter() {
     return { ...additionalFilters, tenant_id: tenantId };
   };
 
-  const useTenantQuery = (queryKey, entityName, filters = {}, sort = '-created_date', limit = undefined, enabled = true) => {
+  const useTenantQuery = (queryKey, entityName, filters = {}, sort = '-created_at', limit = undefined, enabled = true) => {
     const filter = tenantFilter(filters);
     const hasTenantAccess = isPlatformOwner || !!tenantId;
 

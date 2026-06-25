@@ -23,7 +23,7 @@ const SMOKE_TESTS = [
     name: 'Student Entity',
     nameAr: 'كيان الطالب',
     test: async () => {
-      const { data: students = [] } = await tenantQuery('students').select('*').order('created_date', { ascending: false }).limit();
+      const { data: students = [] } = await tenantQuery('students').select('*').order('created_at', { ascending: false }).limit();
       return { success: Array.isArray(students), count: students.length };
     }
   },
@@ -31,7 +31,7 @@ const SMOKE_TESTS = [
     name: 'Employee Entity',
     nameAr: 'كيان الموظف',
     test: async () => {
-      const { data: employees = [] } = await tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_date').order('created_date', { ascending: false }).limit();
+      const { data: employees = [] } = await tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').order('created_at', { ascending: false }).limit();
       return { success: Array.isArray(employees), count: employees.length };
     }
   },
@@ -39,7 +39,7 @@ const SMOKE_TESTS = [
     name: 'Branch Entity',
     nameAr: 'كيان الفرع',
     test: async () => {
-      const { data: branches = [] } = await tenantQuery('branches').select('*').order('created_date', { ascending: false }).limit();
+      const { data: branches = [] } = await tenantQuery('branches').select('*').order('created_at', { ascending: false }).limit();
       return { success: Array.isArray(branches), count: branches.length };
     }
   },
@@ -47,7 +47,7 @@ const SMOKE_TESTS = [
     name: 'Error Logging',
     nameAr: 'تسجيل الأخطاء',
     test: async () => {
-      const { data: errors = [] } = await tenantQuery('system_errors').select('*').order('created_date', { ascending: false }).limit();
+      const { data: errors = [] } = await tenantQuery('system_errors').select('*').order('created_at', { ascending: false }).limit();
       return { success: Array.isArray(errors) };
     }
   },

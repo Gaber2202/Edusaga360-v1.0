@@ -30,7 +30,7 @@ export default function GOSISubmissions() {
 
   const { data: submissions = [], isLoading } = useQuery({
     queryKey: ['gosiSubmissions', selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('gosi_records').select('*').match(branchFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('gosi_records').select('*').match(branchFilter()).order('created_at', { ascending: false })),
   });
 
   const { data: employees = [] } = useQuery({

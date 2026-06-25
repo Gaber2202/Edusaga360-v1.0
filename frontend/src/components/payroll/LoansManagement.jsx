@@ -44,7 +44,7 @@ export default function LoansManagement() {
 
   const { data: loans = [], isLoading } = useQuery({
     queryKey: ['employeeLoans', selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('employee_loans').select('*').match(branchFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('employee_loans').select('*').match(branchFilter()).order('created_at', { ascending: false })),
   });
 
   const { data: employees = [] } = useQuery({

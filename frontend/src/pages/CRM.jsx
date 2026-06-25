@@ -39,7 +39,7 @@ export default function CRM() {
   const { data: tickets = [], isLoading: ticketsLoading } = useQuery({
     queryKey: ['serviceTickets', tenantId, selectedBranchId],
     queryFn: async () => {
-      const { data = [], error } = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ ticket_type: 'crm' }))).order('created_date', { ascending: false });
+      const { data = [], error } = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ ticket_type: 'crm' }))).order('created_at', { ascending: false });
       if (error) throw error;
       return filterByBranch(data);
     },
@@ -49,7 +49,7 @@ export default function CRM() {
   const { data: customers = [], isLoading: customersLoading } = useQuery({
     queryKey: ['customers', tenantId, selectedBranchId],
     queryFn: async () => {
-      const { data = [], error } = await tenantQuery('customers').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false });
+      const { data = [], error } = await tenantQuery('customers').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false });
       if (error) throw error;
       return filterByBranch(data);
     },
@@ -114,7 +114,7 @@ export default function CRM() {
       const colors = { on_track: 'text-green-600', at_risk: 'text-yellow-600', breached: 'text-red-600' };
       return <span className={colors[row.sla_status]}>{slaLabel(row.sla_status, isRTL)}</span>;
     }},
-    { key: 'created_date', label: isRTL ? 'التاريخ' : 'Date', render: (val) => val ? format(new Date(val), 'yyyy-MM-dd') : '-' },
+    { key: 'created_at', label: isRTL ? 'التاريخ' : 'Date', render: (val) => val ? format(new Date(val), 'yyyy-MM-dd') : '-' },
     { key: 'actions', label: '', render: (_, row) => (
       <Link to={createPageUrl(`TicketDetails?id=${row.id}`)}>
         <Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button>

@@ -15,8 +15,8 @@ export default function FeesVATReport({ invoices, payments: _payments, isRTL }) 
   const [dateTo, setDateTo] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
 
   const filteredInvoices = invoices.filter(inv => {
-    if (!inv.issue_date && !inv.created_date) return false;
-    const d = new Date(inv.issue_date || inv.created_date);
+    if (!inv.issue_date && !inv.created_at) return false;
+    const d = new Date(inv.issue_date || inv.created_at);
     return d >= new Date(dateFrom) && d <= new Date(dateTo);
   }).filter(inv => !['draft','cancelled'].includes(inv.status));
 
@@ -32,7 +32,7 @@ export default function FeesVATReport({ invoices, payments: _payments, isRTL }) 
       const vat = inv.vat_amount || (inv.total_amount||0) * VAT_RATE / (1 + VAT_RATE);
       return [
         inv.invoice_number, inv.student_name,
-        inv.issue_date || inv.created_date?.slice(0,10),
+        inv.issue_date || inv.created_at?.slice(0,10),
         exVAT.toFixed(2), vat.toFixed(2), (inv.total_amount||0).toFixed(2),
         inv.status
       ];
@@ -131,7 +131,7 @@ export default function FeesVATReport({ invoices, payments: _payments, isRTL }) 
                     <TableRow key={inv.id}>
                       <TableCell><span className="font-mono text-xs">{inv.invoice_number}</span></TableCell>
                       <TableCell><span className="text-sm">{inv.student_name}</span></TableCell>
-                      <TableCell><span className="text-xs text-slate-500">{(inv.issue_date || inv.created_date?.slice(0,10)) || '-'}</span></TableCell>
+                      <TableCell><span className="text-xs text-slate-500">{(inv.issue_date || inv.created_at?.slice(0,10)) || '-'}</span></TableCell>
                       <TableCell className="text-end text-sm">{exVAT.toLocaleString('en', {maximumFractionDigits:2})}</TableCell>
                       <TableCell className="text-end text-sm text-blue-600">{vat.toLocaleString('en', {maximumFractionDigits:2})}</TableCell>
                       <TableCell className="text-end font-semibold text-sm">{(inv.total_amount||0).toLocaleString('en', {maximumFractionDigits:2})}</TableCell>

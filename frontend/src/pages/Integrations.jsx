@@ -76,7 +76,7 @@ export default function Integrations() {
 
   const { data: logs = [] } = useQuery({
     queryKey: ['integrationLogs', showLogs?.id, tenantId],
-    queryFn: () => fetchData(tenantQuery('integration_logs').select('*').match(tenantFilter({ connector_id: showLogs?.id })).order('created_date', { ascending: false }).limit()),
+    queryFn: () => fetchData(tenantQuery('integration_logs').select('*').match(tenantFilter({ connector_id: showLogs?.id })).order('created_at', { ascending: false }).limit()),
     enabled: !!showLogs?.id && hasTenantAccess,
   });
 
@@ -254,7 +254,7 @@ export default function Integrations() {
                       <TableCell>{log.connector_type}</TableCell>
                       <TableCell>{log.operation}</TableCell>
                       <TableCell><StatusBadge status={log.status} /></TableCell>
-                      <TableCell className="text-sm">{log.created_date ? format(new Date(log.created_date), 'dd/MM/yyyy HH:mm') : '-'}</TableCell>
+                      <TableCell className="text-sm">{log.created_at ? format(new Date(log.created_at), 'dd/MM/yyyy HH:mm') : '-'}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -347,7 +347,7 @@ export default function Integrations() {
                   <TableCell>{log.direction === 'inbound' ? '←' : '→'}</TableCell>
                   <TableCell><StatusBadge status={log.status} /></TableCell>
                   <TableCell>{log.duration_ms ? `${log.duration_ms}ms` : '-'}</TableCell>
-                  <TableCell className="text-sm">{log.created_date ? format(new Date(log.created_date), 'dd/MM HH:mm:ss') : '-'}</TableCell>
+                  <TableCell className="text-sm">{log.created_at ? format(new Date(log.created_at), 'dd/MM HH:mm:ss') : '-'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

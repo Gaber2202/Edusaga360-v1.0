@@ -96,13 +96,13 @@ export default function PerformanceEvaluation() {
 
   const { data: evaluations = [], isLoading } = useQuery({
     queryKey: ['performanceEvals', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('performance_evaluations').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('performance_evaluations').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],
-    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_date').match(tenantFilter({ status: 'active' }))),
+    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 
@@ -582,7 +582,7 @@ function CriteriaTemplatesTab({ isRTL }) {
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['evalTemplates', tenantId],
-    queryFn: () => fetchData(tenantQuery('eval_criteria_templates').select('*').order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('eval_criteria_templates').select('*').order('created_at', { ascending: false })),
   });
 
   const totalWeight = form.criteria.reduce((s, c) => s + (Number(c.weight) || 0), 0);
@@ -814,7 +814,7 @@ function WarningsTab({ isRTL, selectedBranchId, filterByBranch, employees }) {
 
   const { data: warnings = [], isLoading } = useQuery({
     queryKey: ['disciplinaryWarnings', tenantId],
-    queryFn: () => fetchData(tenantQuery('disciplinary_warnings').select('*').order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('disciplinary_warnings').select('*').order('created_at', { ascending: false })),
   });
 
   const filtered = filterByBranch(warnings);

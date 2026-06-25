@@ -140,7 +140,7 @@ export const NotificationService = {
         }
       }
 
-      return notifications.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      return notifications.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     } catch {
       return [];
     }

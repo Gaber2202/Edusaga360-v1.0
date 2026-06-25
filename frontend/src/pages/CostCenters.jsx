@@ -38,7 +38,7 @@ export default function CostCenters() {
 
   const { data: costCenters = [], isLoading } = useQuery({
     queryKey: ['costCenters', tenantId],
-    queryFn: () => fetchData(tenantQuery('cost_centers').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('cost_centers').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

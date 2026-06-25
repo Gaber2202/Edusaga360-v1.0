@@ -52,9 +52,12 @@ export default function ExecutiveDashboard() {
     enabled: hasTenantAccess,
   });
 
-  const { data: _attendance = [] } = useQuery({
-    queryKey: ['attendance', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('attendances').select('*').match(tenantFilter(branchFilter()))),
+  // NOTE: there is no student-attendance table in the schema (only staff
+  // `employee_attendance`), so the old `attendances` query was a guaranteed 404.
+  // We load `grades` instead to resolve students' grade_id → grade name.
+  const { data: grades = [] } = useQuery({
+    queryKey: ['grades', tenantId],
+    queryFn: () => fetchData(tenantQuery('grades').select('id, name_en, name_ar, level')),
     enabled: hasTenantAccess,
   });
 
@@ -67,14 +70,18 @@ export default function ExecutiveDashboard() {
   // Calculate KPIs
   const activeStudents = filteredStudents.filter(s => s.status === 'active').length;
   const totalBilled = filteredInvoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
-  const totalCollected = filteredPayments.filter(p => p.status === 'completed').reduce((sum, p) => sum + (p.amount || 0), 0);
+  // `paid_amount` on invoices is the authoritative collected figure (the
+  // payments table mirrors it but can be empty). Sum it for a reliable rate.
+  const totalCollected = filteredInvoices.reduce((sum, inv) => sum + (inv.paid_amount || 0), 0);
   const collectionRate = totalBilled > 0 ? ((totalCollected / totalBilled) * 100).toFixed(1) : 0;
-  
-  const pendingApplications = filteredApplications.filter(a => ['submitted', 'under_review'].includes(a.status)).length;
-  const acceptedApplications = filteredApplications.filter(a => a.status === 'accepted').length;
+
+  // applications has `stage` (pipeline position) + `decision` (outcome), not `status`.
+  const pendingApplications = filteredApplications.filter(a => !a.decision).length;
+  const acceptedApplications = filteredApplications.filter(a => a.decision === 'accepted').length;
   const conversionRate = filteredApplications.length > 0 ? ((acceptedApplications / filteredApplications.length) * 100).toFixed(1) : 0;
 
-  const overdueInvoices = filteredInvoices.filter(inv => inv.status === 'overdue').length;
+  // No 'overdue' status value exists; derive it from due_date vs today instead.
+  const overdueInvoices = filteredInvoices.filter(inv => inv.status !== 'paid' && inv.due_date && new Date(inv.due_date) < new Date()).length;
   const failedPayments = filteredPayments.filter(p => p.status === 'failed').length;
 
   // Enrollment trends data (last 6 months)
@@ -88,7 +95,7 @@ export default function ExecutiveDashboard() {
       month: format(month, 'MMM'),
       enrolled: monthStudents.length,
       applications: filteredApplications.filter(a => {
-        const created = a.created_date ? new Date(a.created_date) : null;
+        const created = a.created_at ? new Date(a.created_at) : null;
         return created && created.getMonth() === month.getMonth() && created.getFullYear() === month.getFullYear();
       }).length
     };
@@ -98,7 +105,7 @@ export default function ExecutiveDashboard() {
   const collectionTrends = Array.from({ length: 6 }, (_, i) => {
     const month = subMonths(new Date(), 5 - i);
     const monthPayments = filteredPayments.filter(p => {
-      const payDate = p.payment_date ? new Date(p.payment_date) : null;
+      const payDate = p.date ? new Date(p.date) : null;
       return payDate && payDate.getMonth() === month.getMonth() && payDate.getFullYear() === month.getFullYear();
     });
     const monthInvoices = filteredInvoices.filter(inv => {
@@ -108,7 +115,7 @@ export default function ExecutiveDashboard() {
     return {
       month: format(month, 'MMM'),
       billed: monthInvoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0) / 1000,
-      collected: monthPayments.filter(p => p.status === 'completed').reduce((sum, p) => sum + (p.amount || 0), 0) / 1000
+      collected: monthPayments.reduce((sum, p) => sum + (p.amount || 0), 0) / 1000
     };
   });
 
@@ -136,16 +143,19 @@ export default function ExecutiveDashboard() {
     }).length, color: '#7f1d1d' }
   ];
 
-  // Grade distribution
-  const gradeDistribution = ['KG1', 'KG2', 'KG3', 'Grade1', 'Grade2', 'Grade3', 'Grade4', 'Grade5', 'Grade6'].map(grade => ({
-    name: t(grade),
-    students: filteredStudents.filter(s => s.grade === grade && s.status === 'active').length
-  }));
+  // Grade distribution — students reference grades via `grade_id` (FK), not a
+  // free-text `grade`. Build the distribution from the real grades list.
+  const gradeDistribution = [...grades]
+    .sort((a, b) => (a.level ?? 0) - (b.level ?? 0))
+    .map(g => ({
+      name: isRTL ? (g.name_ar || g.name_en) : (g.name_en || g.name_ar),
+      students: filteredStudents.filter(s => s.grade_id === g.id && s.status === 'active').length
+    }));
 
-  // Payment methods
+  // Payment methods — the real column is `method`, not `payment_method`.
   const paymentMethods = ['cash', 'mada', 'visa', 'bank_transfer', 'sadad'].map(method => ({
     name: t(method) || method,
-    value: filteredPayments.filter(p => p.payment_method === method && p.status === 'completed').length
+    value: filteredPayments.filter(p => p.method === method).length
   })).filter(m => m.value > 0);
 
   const downloadPDF = () => {

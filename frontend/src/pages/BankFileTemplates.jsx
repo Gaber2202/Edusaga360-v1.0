@@ -44,7 +44,7 @@ export default function BankFileTemplates() {
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['bankFileTemplates', tenantId],
-    queryFn: () => fetchData(tenantQuery('bank_file_templates').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('bank_file_templates').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

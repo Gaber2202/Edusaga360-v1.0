@@ -101,7 +101,7 @@ export default function StudentDetails({ open, onClose, student: studentProp, on
 
   const { data: invoices = [] } = useQuery({
     queryKey: ['studentInvoices', rawStudent?.id],
-    queryFn: () => fetchData(tenantQuery('invoices').select('*').match({ student_id: rawStudent?.id }).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('invoices').select('*').match({ student_id: rawStudent?.id }).order('created_at', { ascending: false })),
     enabled: !!rawStudent?.id
   });
 

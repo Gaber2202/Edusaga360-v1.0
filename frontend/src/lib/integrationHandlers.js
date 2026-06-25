@@ -116,7 +116,7 @@ registerHandler('enrollment_confirmed', namedHandler('Contracts', async (payload
     grade: payload.grade,
     status: 'pending_signature',
     created_from_event: 'enrollment_confirmed',
-    created_date: new Date().toISOString(),
+    created_at: new Date().toISOString(),
   });
 }));
 

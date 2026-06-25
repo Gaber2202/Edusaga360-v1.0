@@ -41,7 +41,7 @@ export default function BusinessTravel() {
 
   const { data: travelRequests = [], isLoading } = useQuery({
     queryKey: ['travel_requests', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('travel_requests').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('travel_requests').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

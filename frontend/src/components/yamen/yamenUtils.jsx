@@ -150,7 +150,7 @@ export function predictChurnRisk(employees, attendance, leaveRequests, evaluatio
     let churnScore = 0;
     
     const empLeaves = leaveRequests.filter(l => l.employee_id === emp.id);
-    const recentLeaveRequests = empLeaves.filter(l => new Date(l.created_date) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length;
+    const recentLeaveRequests = empLeaves.filter(l => new Date(l.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length;
     if (recentLeaveRequests > 3) churnScore += 25;
     
     const empEval = evaluations.find(e => e.employee_id === emp.id);

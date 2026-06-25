@@ -52,13 +52,13 @@ export default function AssetRentals() {
 
   const { data: rentals = [], isLoading } = useQuery({
     queryKey: ['assetRentals', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('asset_rentals').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('asset_rentals').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
   const { data: rentableAssets = [] } = useQuery({
     queryKey: ['rentableAssets', tenantId],
-    queryFn: () => fetchData(tenantQuery('fixed_assets').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('fixed_assets').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
@@ -70,7 +70,7 @@ export default function AssetRentals() {
 
   const { data: _vendors = [] } = useQuery({
     queryKey: ['vendors', tenantId],
-    queryFn: () => fetchData(tenantQuery('vendors').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('vendors').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

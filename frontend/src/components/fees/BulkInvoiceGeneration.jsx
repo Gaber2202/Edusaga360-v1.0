@@ -157,7 +157,7 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
         batch_name: batchName || `Bulk Invoice - ${new Date().toLocaleDateString()}`,
         created_by: user?.user_metadata?.full_name || user?.email,
         created_by_email: user?.email,
-        created_date: new Date().toISOString(),
+        created_at: new Date().toISOString(),
         criteria: criteria,
         student_count: selectedStudents.length,
         excluded_students: excludedStudents,

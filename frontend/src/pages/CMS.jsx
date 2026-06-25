@@ -31,7 +31,7 @@ export default function CMS() {
   
   const { data: contents = [], isLoading } = useQuery({
     queryKey: ['cmsContent', tenantId],
-    queryFn: () => fetchData(tenantQuery('cms_contents').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('cms_contents').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

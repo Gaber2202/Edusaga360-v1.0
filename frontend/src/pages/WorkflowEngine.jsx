@@ -65,13 +65,13 @@ export default function WorkflowEngine() {
 
   const { data: templates = [], isLoading: loadingTemplates } = useQuery({
     queryKey: ['workflowTemplates', tenantId],
-    queryFn: () => fetchData(tenantQuery('workflow_templates').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('workflow_templates').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
   const { data: instances = [], isLoading: loadingInstances } = useQuery({
     queryKey: ['workflowInstances', tenantId],
-    queryFn: () => fetchData(tenantQuery('workflow_instances').select('*').match(tenantFilter()).order('created_date', { ascending: false }).limit()),
+    queryFn: () => fetchData(tenantQuery('workflow_instances').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit()),
     enabled: hasTenantAccess,
   });
 
@@ -227,7 +227,7 @@ export default function WorkflowEngine() {
                     <TableCell>{isRTL ? inst.current_stage_name_ar : inst.current_stage_name_en}</TableCell>
                     <TableCell>{inst.current_approver_role || inst.current_approver_email || '—'}</TableCell>
                     <TableCell><Badge className={STATUS_COLORS[inst.status] || 'bg-slate-100 text-slate-700'}>{inst.status}</Badge></TableCell>
-                    <TableCell className="text-sm text-slate-500">{inst.created_date ? format(new Date(inst.created_date), 'dd/MM/yyyy') : '—'}</TableCell>
+                    <TableCell className="text-sm text-slate-500">{inst.created_at ? format(new Date(inst.created_at), 'dd/MM/yyyy') : '—'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

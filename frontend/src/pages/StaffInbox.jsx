@@ -53,7 +53,7 @@ export default function StaffInbox() {
       const { data = [] } = await tenantQuery('messages').select('*').match(tenantFilter({
         recipient_role: userRole
       }));
-      setMessages(data.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
+      setMessages(data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
     } catch (error) {
       console.error('Error fetching messages:', error);
     } finally {
@@ -176,7 +176,7 @@ export default function StaffInbox() {
                       <span>•</span>
                       <span>{msg.student_name}</span>
                       <span>•</span>
-                      <span>{format(new Date(msg.created_date), 'dd/MM/yyyy')}</span>
+                      <span>{format(new Date(msg.created_at), 'dd/MM/yyyy')}</span>
                     </div>
                   </div>
                 </div>
@@ -200,7 +200,7 @@ export default function StaffInbox() {
               </div>
               <p className="text-sm text-slate-900">{selectedMessage?.message_body}</p>
               <div className="text-xs text-slate-500 mt-2">
-                {selectedMessage?.created_date && format(new Date(selectedMessage.created_date), 'dd/MM/yyyy h:mm a')}
+                {selectedMessage?.created_at && format(new Date(selectedMessage.created_at), 'dd/MM/yyyy h:mm a')}
               </div>
             </div>
 

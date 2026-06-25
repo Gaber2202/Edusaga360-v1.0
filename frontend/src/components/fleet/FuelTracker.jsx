@@ -40,7 +40,7 @@ export default function FuelTracker() {
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ['fuelRecords', selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('fuel_records').select('*').match(branchFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('fuel_records').select('*').match(branchFilter()).order('created_at', { ascending: false })),
   });
 
   const filteredRecords = filterByBranch(records);

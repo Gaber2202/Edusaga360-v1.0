@@ -48,14 +48,14 @@ export default function PayslipsManagement() {
   const { data: payslips = [], isLoading } = useQuery({
     queryKey: ['payslipLines', selectedBranchId],
     queryFn: async () => {
-      const { data: all = [] } = await tenantQuery('payslip_lines').select('*').match(branchFilter()).order('created_date', { ascending: false });
+      const { data: all = [] } = await tenantQuery('payslip_lines').select('*').match(branchFilter()).order('created_at', { ascending: false });
       return filterByBranch(all);
     },
   });
 
   const { data: deliveries = [] } = useQuery({
     queryKey: ['payslipDeliveries'],
-    queryFn: () => fetchData(tenantQuery('payslip_deliverys').select('*').order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('payslip_deliverys').select('*').order('created_at', { ascending: false })),
   });
 
   const { data: employees = [] } = useQuery({

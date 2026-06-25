@@ -120,7 +120,7 @@ export default function AdmissionsListView({ applications, loading, branches: _b
                 </TableRow>
               ) : (
                 filtered.map(app => {
-                  const days = differenceInDays(new Date(), new Date(app.created_date));
+                  const days = differenceInDays(new Date(), new Date(app.created_at));
                   const isOverdue = days > 30;
                   return (
                     <TableRow key={app.id} className="cursor-pointer hover:bg-slate-50" onClick={() => onView(app)}>
@@ -140,7 +140,7 @@ export default function AdmissionsListView({ applications, loading, branches: _b
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-slate-500">
-                          {app.created_date ? format(new Date(app.created_date), 'dd/MM/yy') : '-'}
+                          {app.created_at ? format(new Date(app.created_at), 'dd/MM/yy') : '-'}
                         </span>
                       </TableCell>
                       <TableCell>

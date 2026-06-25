@@ -94,7 +94,7 @@ export default function GovIntegrations() {
 
   const { data: syncLogs = [] } = useQuery({
     queryKey: ['govSyncLogs', tenantId],
-    queryFn: () => fetchData(tenantQuery('integration_logs').select('*').order('created_date', { ascending: false }).limit()),
+    queryFn: () => fetchData(tenantQuery('integration_logs').select('*').order('created_at', { ascending: false }).limit()),
   });
 
   const handleConfigure = (integration) => {
@@ -286,7 +286,7 @@ export default function GovIntegrations() {
                         </div>
                       </div>
                       <div className="text-sm text-slate-500">
-                        {format(new Date(log.created_date), 'dd/MM/yyyy HH:mm')}
+                        {format(new Date(log.created_at), 'dd/MM/yyyy HH:mm')}
                       </div>
                     </div>
                   ))}

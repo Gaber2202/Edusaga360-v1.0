@@ -20,8 +20,8 @@ export default function VisaServices() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ employee_id: '', visa_type: 'work', visa_number: '', issue_date: '', expiry_date: '', entry_type: 'single', status: 'active', fee_amount: 0, notes: '' });
 
-  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_date').order()) });
-  const { data: visas = [], isLoading } = useQuery({ queryKey: ['visas'], queryFn: () => fetchData(tenantQuery('visa_records').select('*').order('created_date', { ascending: false })) });
+  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').order()) });
+  const { data: visas = [], isLoading } = useQuery({ queryKey: ['visas'], queryFn: () => fetchData(tenantQuery('visa_records').select('*').order('created_at', { ascending: false })) });
 
   const today = new Date();
 
