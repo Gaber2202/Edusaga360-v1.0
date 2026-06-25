@@ -238,7 +238,7 @@ export default function PlatformUsersTab({ tenants = [] }) {
                         )}
                       </td>
                       <td className="p-3 text-xs text-slate-500">
-                        {u.created_date ? format(new Date(u.created_date), 'dd/MM/yyyy') : '—'}
+                        {u.created_at ? format(new Date(u.created_at), 'dd/MM/yyyy') : '—'}
                       </td>
                       <td className="p-3">
                         {!isCreator && (

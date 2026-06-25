@@ -69,7 +69,7 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
   if (!application) return null;
 
   const canManage = ['admin', 'admissions', 'branch_manager'].includes(userRole);
-  const days = differenceInDays(new Date(), new Date(application.created_date));
+  const days = differenceInDays(new Date(), new Date(application.created_at));
 
   const handleStageChange = async () => {
     if (!newStatus) return;

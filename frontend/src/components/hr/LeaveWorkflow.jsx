@@ -41,7 +41,7 @@ export default function LeaveWorkflow({ isRTL, viewMode = 'hr' }) {
 
   const { data: leaveRequests = [], isLoading } = useQuery({
     queryKey: ['leaveRequests', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
     refetchInterval: 30000,
   });
@@ -54,7 +54,7 @@ export default function LeaveWorkflow({ isRTL, viewMode = 'hr' }) {
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],
-    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_date').match(tenantFilter({ status: 'active' }))),
+    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 

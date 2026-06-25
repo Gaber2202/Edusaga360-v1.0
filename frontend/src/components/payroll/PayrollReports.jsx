@@ -29,12 +29,12 @@ export default function PayrollReports() {
 
   const { data: payRuns = [], isLoading: _isLoading } = useQuery({
     queryKey: ['payRuns', selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(branchFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(branchFilter()).order('created_at', { ascending: false })),
   });
 
   const { data: payrollInputs = [] } = useQuery({
     queryKey: ['payrollInputs', selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').match(branchFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').match(branchFilter()).order('created_at', { ascending: false })),
   });
 
   const { data: loans = [] } = useQuery({
@@ -49,7 +49,7 @@ export default function PayrollReports() {
 
   const { data: gosiRecords = [] } = useQuery({
     queryKey: ['gosiRecords', selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('gosi_records').select('*').match(branchFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('gosi_records').select('*').match(branchFilter()).order('created_at', { ascending: false })),
   });
 
   const filteredPayRuns = filterByBranch(payRuns);

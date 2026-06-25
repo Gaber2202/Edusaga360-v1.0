@@ -32,7 +32,7 @@ export default function AcademicRecords({ student }) {
           const { data: gradeData = [] } = await tenantQuery('student_grades').select('*').match({
             student_id: student.id,
             tenant_id: tenant?.id
-          }).order('created_date', { ascending: false }).limit(20);
+          }).order('created_at', { ascending: false }).limit(20);
           setGrades(gradeData || []);
         } catch {
           // StudentGrade entity might not exist
@@ -189,7 +189,7 @@ export default function AcademicRecords({ student }) {
                     <p className="text-sm text-slate-600 mt-2">{grade.teacher_notes}</p>
                   )}
                   <p className="text-xs text-slate-500 mt-1">
-                    {new Date(grade.created_date).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}
+                    {new Date(grade.created_at).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}
                   </p>
                 </div>
               ))}

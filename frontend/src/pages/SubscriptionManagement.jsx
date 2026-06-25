@@ -57,7 +57,7 @@ function UsersTab({ isRTL, tenant }) {
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['subscription-users'],
-    queryFn: () => fetchData(tenantQuery('users').select('*').order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('users').select('*').order('created_at', { ascending: false })),
   });
 
   const updateRoleMutation = useMutation({
@@ -176,7 +176,7 @@ function UsersTab({ isRTL, tenant }) {
                   <div className="flex items-center gap-2 shrink-0">
                     <Badge className={`text-xs ${getRoleBadge(u)}`}>{getRoleLabel(u)}</Badge>
                     <p className="text-xs text-slate-400 hidden sm:block">
-                      {u.created_date ? format(new Date(u.created_date), 'dd/MM/yyyy') : '—'}
+                      {u.created_at ? format(new Date(u.created_at), 'dd/MM/yyyy') : '—'}
                     </p>
                     <Button
                       variant="ghost"

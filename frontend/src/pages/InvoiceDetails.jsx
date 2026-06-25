@@ -59,7 +59,7 @@ export default function InvoiceDetails() {
   const { data: _payments = [] } = useQuery({
     queryKey: ['payments', invoiceId, tenantId],
     queryFn: async () => {
-      const { data: allPayments = [] } = await tenantQuery('payments').select('*').match(tenantFilter()).order('created_date', { ascending: false });
+      const { data: allPayments = [] } = await tenantQuery('payments').select('*').match(tenantFilter()).order('created_at', { ascending: false });
       return allPayments.filter(p => p.invoice_id === invoiceId);
     },
     enabled: !!invoiceId && hasTenantAccess
@@ -68,7 +68,7 @@ export default function InvoiceDetails() {
   const { data: paymentLogs = [] } = useQuery({
     queryKey: ['invoicePaymentLogs', invoiceId, tenantId],
     queryFn: async () => {
-      const { data: allLogs = [] } = await tenantQuery('invoice_payment_logs').select('*').match(tenantFilter()).order('created_date', { ascending: false });
+      const { data: allLogs = [] } = await tenantQuery('invoice_payment_logs').select('*').match(tenantFilter()).order('created_at', { ascending: false });
       return allLogs.filter(log => log.invoice_id === invoiceId);
     },
     enabled: !!invoiceId && hasTenantAccess

@@ -55,13 +55,13 @@ export default function Engagement() {
 
   const { data: announcements = [], isLoading: loadingAnnouncements } = useQuery({
     queryKey: ['announcements', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('announcements').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('announcements').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
   const { data: surveys = [] } = useQuery({
     queryKey: ['employee_surveys', tenantId],
-    queryFn: () => fetchData(tenantQuery('employee_surveys').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('employee_surveys').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
@@ -198,7 +198,7 @@ export default function Engagement() {
                     <h3 className="font-semibold text-lg">{isRTL ? ann.title_ar : ann.title_en || ann.title_ar}</h3>
                     <p className="text-sm text-slate-600 mt-1 line-clamp-2">{isRTL ? ann.body_ar : ann.body_en || ann.body_ar}</p>
                     <div className="flex items-center gap-4 mt-3 text-sm text-slate-400">
-                      <span>{ann.created_date ? format(new Date(ann.created_date), 'dd/MM/yyyy') : ''}</span>
+                      <span>{ann.created_at ? format(new Date(ann.created_at), 'dd/MM/yyyy') : ''}</span>
                       {ann.allow_reactions && <span className="flex items-center gap-1"><ThumbsUp className="w-3 h-3" />{ann.reactions?.likes || 0}</span>}
                       {ann.allow_comments && <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" />{ann.comments_count || 0}</span>}
                     </div>

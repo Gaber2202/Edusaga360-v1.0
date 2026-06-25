@@ -2,7 +2,7 @@
  * Real-data metric helpers for the dashboard.
  *
  * These replace the previous fake/random sparklines. Every series and trend is
- * derived from actual tenant records (by their created_date / date field), so
+ * derived from actual tenant records (by their created_at / date field), so
  * what a prospect sees in a demo is truthful.
  */
 
@@ -19,7 +19,7 @@ function toDate(value) {
  * Returns { series: [{v}], trend } where trend is the % change of the most
  * recent period versus the one before it.
  */
-export function countSeries(records = [], dateField = 'created_date', buckets = 8) {
+export function countSeries(records = [], dateField = 'created_at', buckets = 8) {
   const now = Date.now();
   const counts = new Array(buckets).fill(0);
 
@@ -39,7 +39,7 @@ export function countSeries(records = [], dateField = 'created_date', buckets = 
  * Bucket a numeric amount across the last `buckets` weekly periods.
  * `amountFn` extracts the numeric value from each record.
  */
-export function amountSeries(records = [], amountFn = (r) => r.amount || 0, dateField = 'created_date', buckets = 8) {
+export function amountSeries(records = [], amountFn = (r) => r.amount || 0, dateField = 'created_at', buckets = 8) {
   const now = Date.now();
   const sums = new Array(buckets).fill(0);
 
@@ -59,7 +59,7 @@ export function amountSeries(records = [], amountFn = (r) => r.amount || 0, date
  * Cumulative running total over weekly buckets — useful for "total" KPIs
  * (e.g. active students) where you want an always-growing line.
  */
-export function cumulativeSeries(records = [], dateField = 'created_date', buckets = 8) {
+export function cumulativeSeries(records = [], dateField = 'created_at', buckets = 8) {
   const { series } = countSeries(records, dateField, buckets);
   let running = 0;
   const cum = series.map((p) => { running += p.v; return { v: running }; });
@@ -76,7 +76,7 @@ function periodTrend(arr) {
 }
 
 /** Count records created in the last `days` days. */
-export function countSince(records = [], days = 30, dateField = 'created_date') {
+export function countSince(records = [], days = 30, dateField = 'created_at') {
   const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
   return records.filter((r) => {
     const d = toDate(r?.[dateField]);

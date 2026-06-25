@@ -45,7 +45,7 @@ export default function Companies() {
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ['companies', tenantId],
-    queryFn: () => fetchData(tenantQuery('companys').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('companys').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

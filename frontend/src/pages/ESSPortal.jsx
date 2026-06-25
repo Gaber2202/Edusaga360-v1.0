@@ -60,7 +60,7 @@ export default function ESSPortal() {
   // Get employee record linked to current user
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],
-    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_date').match(tenantFilter())),
+    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 
@@ -733,7 +733,7 @@ export default function ESSPortal() {
                       <div>
                         <p className="font-medium">{requestTypeLabels[req.request_type]}</p>
                         <p className="text-sm text-slate-500">
-                          {format(new Date(req.created_date), 'dd/MM/yyyy')}
+                          {format(new Date(req.created_at), 'dd/MM/yyyy')}
                           {req.amount > 0 && <span className="mx-2">• {req.amount.toLocaleString()} {t('sar')}</span>}
                         </p>
                       </div>

@@ -97,13 +97,13 @@ export default function RecruitmentPage() {
 
   const { data: recruitments = [], isLoading: loadingRecruitments } = useQuery({
     queryKey: ['recruitments', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('recruitments').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('recruitments').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
   const { data: applicants = [], isLoading: loadingApplicants } = useQuery({
     queryKey: ['applicants', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('applicants').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('applicants').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
@@ -127,7 +127,7 @@ export default function RecruitmentPage() {
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees_active_rec', tenantId],
-    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_date').match(tenantFilter({ status: 'active' }))),
+    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 
@@ -139,7 +139,7 @@ export default function RecruitmentPage() {
 
   const { data: careerPostings = [] } = useQuery({
     queryKey: ['career_postings', tenantId],
-    queryFn: () => fetchData(tenantQuery('career_postings').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('career_postings').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

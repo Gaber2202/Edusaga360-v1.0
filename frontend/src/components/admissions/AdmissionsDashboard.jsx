@@ -26,9 +26,9 @@ export default function AdmissionsDashboard({ applications, branches: _branches 
   const pending = applications.filter(a => ['submitted','pending','under_review'].includes(a.status)).length;
   const acceptanceRate = total > 0 ? Math.round((accepted + enrolled) / total * 100) : 0;
   const avgDays = applications.length > 0
-    ? Math.round(applications.reduce((s,a) => s + differenceInDays(new Date(), new Date(a.created_date)), 0) / applications.length)
+    ? Math.round(applications.reduce((s,a) => s + differenceInDays(new Date(), new Date(a.created_at)), 0) / applications.length)
     : 0;
-  const overdueCount = applications.filter(a => differenceInDays(new Date(), new Date(a.updated_date || a.created_date)) > 7 && !['enrolled','rejected'].includes(a.status)).length;
+  const overdueCount = applications.filter(a => differenceInDays(new Date(), new Date(a.updated_date || a.created_at)) > 7 && !['enrolled','rejected'].includes(a.status)).length;
 
   // By stage funnel data
   const funnelData = STAGE_ORDER.map(stage => {

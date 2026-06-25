@@ -21,7 +21,7 @@ export default function MyPayslips() {
   const { data: employee } = useQuery({
     queryKey: ['myEmployee', user?.email],
     queryFn: async () => {
-      const { data: employees = [] } = await tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_date').match({ email: user?.email });
+      const { data: employees = [] } = await tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').match({ email: user?.email });
       return employees[0];
     },
     enabled: !!user?.email

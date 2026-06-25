@@ -35,7 +35,7 @@ const FIELD_OPTIONS = {
   students: ['student_id', 'name_ar', 'name_en', 'grade', 'section', 'status', 'enrollment_date', 'nationality', 'gender'],
   invoices: ['invoice_number', 'student_name', 'grade', 'total_amount', 'paid_amount', 'balance', 'status', 'due_date', 'issue_date'],
   payments: ['payment_number', 'student_name', 'amount', 'payment_method', 'payment_date', 'status', 'reference_number'],
-  applications: ['application_number', 'student_name_ar', 'applying_for_grade', 'status', 'guardian_name_ar', 'guardian_phone', 'created_date'],
+  applications: ['application_number', 'student_name_ar', 'applying_for_grade', 'status', 'guardian_name_ar', 'guardian_phone', 'created_at'],
   attendance: ['student_name', 'date', 'status', 'grade', 'section'],
   ar_aging: ['invoice_number', 'student_name', 'total_amount', 'balance', 'due_date', 'days_overdue', 'aging_bucket'],
   collections: ['payment_date', 'student_name', 'amount', 'payment_method', 'status'],
@@ -116,13 +116,13 @@ export default function ReportBuilder() {
       }
       if (filters.date_from) {
         data = data.filter(item => {
-          const dateField = item.payment_date || item.issue_date || item.enrollment_date || item.date || item.created_date;
+          const dateField = item.payment_date || item.issue_date || item.enrollment_date || item.date || item.created_at;
           return dateField && new Date(dateField) >= new Date(filters.date_from);
         });
       }
       if (filters.date_to) {
         data = data.filter(item => {
-          const dateField = item.payment_date || item.issue_date || item.enrollment_date || item.date || item.created_date;
+          const dateField = item.payment_date || item.issue_date || item.enrollment_date || item.date || item.created_at;
           return dateField && new Date(dateField) <= new Date(filters.date_to);
         });
       }

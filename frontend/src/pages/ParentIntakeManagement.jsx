@@ -40,7 +40,7 @@ export default function ParentIntakeManagement() {
 
   const { data: links = [], isLoading } = useQuery({
     queryKey: ['parentIntakeLinks', tenantId],
-    queryFn: () => fetchData(tenantQuery('parent_intake_links').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('parent_intake_links').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
@@ -74,7 +74,7 @@ export default function ParentIntakeManagement() {
         link_code: linkCode,
         link_url: linkUrl,
         created_by: editingLink ? undefined : user.email,
-        created_date: editingLink ? undefined : new Date().toISOString()
+        created_at: editingLink ? undefined : new Date().toISOString()
       };
 
       if (editingLink) {

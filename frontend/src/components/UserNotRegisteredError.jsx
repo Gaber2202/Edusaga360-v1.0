@@ -23,7 +23,7 @@ export default function UserNotRegisteredError() {
 
       const { data: regs = [] } = await tenantQuery('registration_requests').select('*').match({ email: user.email });
       if (regs.length > 0) {
-        regs.sort((a, b) => new Date(b.submitted_at || b.created_date) - new Date(a.submitted_at || a.created_date));
+        regs.sort((a, b) => new Date(b.submitted_at || b.created_at) - new Date(a.submitted_at || a.created_at));
         const latest = regs[0];
 
         if (latest.status === 'pending') {

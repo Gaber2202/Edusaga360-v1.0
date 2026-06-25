@@ -39,12 +39,12 @@ export default function SystemHealth() {
 
   const { data: defects = [], isLoading: loadingDefects } = useQuery({
     queryKey: ['systemDefects'],
-    queryFn: () => fetchData(tenantQuery('system_defects').select('*').order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('system_defects').select('*').order('created_at', { ascending: false })),
   });
 
   const { data: auditLogs = [] } = useQuery({
     queryKey: ['auditLogs'],
-    queryFn: () => fetchData(tenantQuery('audit_logs').select('*').order('created_date', { ascending: false }).limit()),
+    queryFn: () => fetchData(tenantQuery('audit_logs').select('*').order('created_at', { ascending: false }).limit()),
   });
 
   // Fetch counts for system health overview
@@ -55,7 +55,7 @@ export default function SystemHealth() {
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_date').order()),
+    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').order()),
   });
 
   const { data: invoices = [] } = useQuery({
@@ -228,7 +228,7 @@ export default function SystemHealth() {
               </div>
               <div>
                 <p className="text-sm text-slate-500">{isRTL ? 'آخر نشاط' : 'Last Activity'}</p>
-                <p className="text-sm font-medium">{auditLogs[0] ? format(new Date(auditLogs[0].created_date), 'HH:mm') : '-'}</p>
+                <p className="text-sm font-medium">{auditLogs[0] ? format(new Date(auditLogs[0].created_at), 'HH:mm') : '-'}</p>
               </div>
             </div>
           </CardContent>
@@ -324,7 +324,7 @@ export default function SystemHealth() {
                         <Badge variant="outline">{log.action}</Badge>
                         <span className="text-sm">{log.entity_type}</span>
                       </div>
-                      <span className="text-xs text-slate-500">{format(new Date(log.created_date), 'dd/MM HH:mm')}</span>
+                      <span className="text-xs text-slate-500">{format(new Date(log.created_at), 'dd/MM HH:mm')}</span>
                     </div>
                   ))}
                 </div>

@@ -23,7 +23,7 @@ const GRADES = ['KG1','KG2','KG3','Grade1','Grade2','Grade3','Grade4','Grade5','
 function AppCard({ app, stage, onView, isRTL }) {
   const daysSince = app.updated_date
     ? differenceInDays(new Date(), new Date(app.updated_date))
-    : differenceInDays(new Date(), new Date(app.created_date));
+    : differenceInDays(new Date(), new Date(app.created_at));
   const isOverdue = daysSince > stage.sla;
 
   return (

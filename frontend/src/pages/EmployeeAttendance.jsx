@@ -29,7 +29,7 @@ export default function EmployeeAttendance() {
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_date').match(tenantFilter(branchFilter({ status: 'active' })))),
+    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').match(tenantFilter(branchFilter({ status: 'active' })))),
     enabled: hasTenantAccess,
   });
 

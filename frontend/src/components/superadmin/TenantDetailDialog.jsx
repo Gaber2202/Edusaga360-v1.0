@@ -364,7 +364,7 @@ export default function TenantDetailDialog({ tenant, users, open, onClose, onUpd
               <div><span className="text-slate-500">{isRTL ? 'البريد' : 'Email'}:</span> <span className="font-medium">{tenant.admin_email || '-'}</span></div>
               <div><span className="text-slate-500">{isRTL ? 'الهاتف' : 'Phone'}:</span> <span>{tenant.phone || '-'}</span></div>
               <div><span className="text-slate-500">{isRTL ? 'المدينة' : 'City'}:</span> <span>{tenant.city || '-'}</span></div>
-              <div><span className="text-slate-500">{isRTL ? 'تاريخ الإنشاء' : 'Created'}:</span> <span>{tenant.created_date ? format(new Date(tenant.created_date), 'dd/MM/yyyy') : '-'}</span></div>
+              <div><span className="text-slate-500">{isRTL ? 'تاريخ الإنشاء' : 'Created'}:</span> <span>{tenant.created_at ? format(new Date(tenant.created_at), 'dd/MM/yyyy') : '-'}</span></div>
               {tenant.trial_end_date && (
                 <div className="col-span-2">
                   <span className="text-slate-500">{isRTL ? 'انتهاء التجربة' : 'Trial Ends'}:</span>

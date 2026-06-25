@@ -46,7 +46,7 @@ export default function PayRunsList({ onViewPayRun }) {
 
   const { data: payRuns = [], isLoading } = useQuery({
     queryKey: ['payRuns', selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(branchFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(branchFilter()).order('created_at', { ascending: false })),
   });
 
   const { data: employees = [] } = useQuery({

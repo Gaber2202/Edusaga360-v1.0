@@ -21,7 +21,7 @@ export default function PayRunWorkflowStepper({ payRun }) {
   const getStageInfo = (stageKey) => {
     const history = payRun.stage_history?.find(h => h.to_stage === stageKey);
     return {
-      timestamp: history?.timestamp || (stageKey === 'draft' ? payRun.created_date : null),
+      timestamp: history?.timestamp || (stageKey === 'draft' ? payRun.created_at : null),
       user: history?.done_by || (stageKey === 'draft' ? payRun.created_by : null)
     };
   };

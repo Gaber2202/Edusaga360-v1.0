@@ -42,7 +42,7 @@ export default function PurchaseRequisitions() {
 
   const { data: requisitions = [], isLoading } = useQuery({
     queryKey: ['purchaseRequisitions', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('purchase_requisitions').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('purchase_requisitions').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

@@ -33,7 +33,7 @@ export default function PlatformConsole() {
 
   const { data: tenants = [], isLoading, refetch } = useQuery({
     queryKey: ['tenants'],
-    queryFn: () => fetchData(tenantQuery('tenants').select('*').order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('tenants').select('*').order('created_at', { ascending: false })),
     enabled: isAuthorized,
   });
 

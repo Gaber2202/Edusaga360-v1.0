@@ -374,7 +374,7 @@ export default function ClientSubscriptionPortal() {
                         : (isRTL ? 'طلب مستخدمين إضافيين' : 'Additional Users Request')}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {req.created_date ? new Date(req.created_date).toLocaleDateString() : '—'}
+                      {req.created_at ? new Date(req.created_at).toLocaleDateString() : '—'}
                     </p>
                   </div>
                   <Badge variant={req.status === 'approved' ? 'default' : req.status === 'pending' ? 'outline' : 'secondary'}>

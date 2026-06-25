@@ -20,7 +20,7 @@ export default function FixedIssuesLog() {
 
   const { data: issues = [], isLoading } = useQuery({
     queryKey: ['fixedIssues'],
-    queryFn: () => fetchData(tenantQuery('fixed_issues').select('*').order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('fixed_issues').select('*').order('created_at', { ascending: false })),
     enabled: isAdmin,
   });
 

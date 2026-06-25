@@ -94,7 +94,7 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
 
   const dept = departments?.find(d => d.id === employee?.department_id);
   const branch = branches?.find(b => b.id === employee?.branch_id);
-  const latestContract = contracts.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0];
+  const latestContract = contracts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
 
   return (
     <div className="space-y-6">

@@ -36,7 +36,7 @@ export default function CorporateCards() {
 
   const { data: cards = [], isLoading } = useQuery({
     queryKey: ['corporate_cards', tenantId],
-    queryFn: () => fetchData(tenantQuery('corporate_cards').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('corporate_cards').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

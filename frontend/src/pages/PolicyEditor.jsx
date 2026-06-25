@@ -170,7 +170,7 @@ export default function PolicyEditor() {
                 <div className="flex items-center justify-between mb-4">
                   <Badge>{version.version_number}</Badge>
                   <span className="text-xs text-slate-500">
-                    {version.created_date ? new Date(version.created_date).toLocaleDateString() : ''}
+                    {version.created_at ? new Date(version.created_at).toLocaleDateString() : ''}
                   </span>
                 </div>
                 <h4 className="font-medium mb-2">{isRTL ? version.title_ar : version.title_en}</h4>

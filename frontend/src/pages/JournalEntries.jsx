@@ -43,7 +43,7 @@ export default function JournalEntries() {
 
   const { data: journalEntries = [], isLoading } = useQuery({
     queryKey: ['journalEntries', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false }).limit(200)),
+    queryFn: () => fetchData(tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false }).limit(200)),
     enabled: hasTenantAccess,
   });
 

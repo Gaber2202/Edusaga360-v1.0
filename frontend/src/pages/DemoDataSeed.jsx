@@ -32,7 +32,7 @@ export default function DemoDataSeed() {
         const me = await supabase.auth.getUser().then(r => r.data?.user);
         setUser(me);
         if (isPlatformOwner(me)) {
-          const all = await supabase.from('tenants').select('*').order('created_date', { ascending: false }).limit();
+          const all = await supabase.from('tenants').select('*').order('created_at', { ascending: false }).limit();
           setTenants(all || []);
         }
       } finally {

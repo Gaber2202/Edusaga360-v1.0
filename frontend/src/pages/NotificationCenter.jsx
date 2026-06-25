@@ -216,7 +216,7 @@ export default function NotificationCenter() {
                             {isRTL ? notification.message_ar : notification.message_en}
                           </p>
                           <div className="flex items-center gap-3 text-xs text-slate-500">
-                            <span>{format(new Date(notification.created_date), 'MMM d, yyyy h:mm a')}</span>
+                            <span>{format(new Date(notification.created_at), 'MMM d, yyyy h:mm a')}</span>
                             <span>•</span>
                             <span className="capitalize">{isRTL ? {
                               contracts: 'العقود',

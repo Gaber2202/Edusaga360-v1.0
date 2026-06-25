@@ -69,7 +69,7 @@ export default function HRManagerDashboard() {
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ['employees-hrdash', tenantId],
-    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_date').match(tenantFilter(branchFilter()))),
+    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 
@@ -87,7 +87,7 @@ export default function HRManagerDashboard() {
 
   const { data: payRuns = [] } = useQuery({
     queryKey: ['payruns-hrdash', tenantId],
-    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(tenantFilter()).order('created_date', { ascending: false }).limit(3)),
+    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit(3)),
     enabled: hasTenantAccess,
   });
 

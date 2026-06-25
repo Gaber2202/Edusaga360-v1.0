@@ -41,7 +41,7 @@ export default function MaintenanceTracker() {
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ['maintenanceRecords', selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('maintenance_records').select('*').match(branchFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('maintenance_records').select('*').match(branchFilter()).order('created_at', { ascending: false })),
   });
 
   const filteredRecords = filterByBranch(records);

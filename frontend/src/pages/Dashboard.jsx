@@ -134,7 +134,7 @@ export default function Dashboard() {
     const todayAttendance = attendance.filter((a) => (a.date || a.attendance_date || '').startsWith(todayStr));
     const presentToday = todayAttendance.filter((a) => a.status === 'present').length;
     const absentToday = todayAttendance.filter((a) => a.status === 'absent').length;
-    const recentAnnouncements = [...announcements].sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0)).slice(0, 4);
+    const recentAnnouncements = [...announcements].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)).slice(0, 4);
 
     return (
       <div className="space-y-6">

@@ -53,7 +53,7 @@ export default function Refunds() {
 
   const { data: refunds = [], isLoading } = useQuery({
     queryKey: ['refundRequests', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('refund_requests').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('refund_requests').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

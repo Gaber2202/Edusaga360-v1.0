@@ -58,13 +58,13 @@ export default function Collections() {
 
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ['invoices', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('invoices').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('invoices').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
   const { data: payments = [] } = useQuery({
     queryKey: ['payments', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('payments').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('payments').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

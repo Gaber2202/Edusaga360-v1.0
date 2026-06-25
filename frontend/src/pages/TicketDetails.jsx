@@ -39,7 +39,7 @@ export default function TicketDetails() {
 
   const { data: activities = [] } = useQuery({
     queryKey: ['ticketActivities', ticketId],
-    queryFn: () => fetchData(tenantQuery('ticket_activitys').select('*').match({ ticket_id: ticketId }).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('ticket_activitys').select('*').match({ ticket_id: ticketId }).order('created_at', { ascending: false })),
     enabled: !!ticketId
   });
 
@@ -156,7 +156,7 @@ export default function TicketDetails() {
                       <div className="flex justify-between items-start">
                         <span className="font-medium">{activity.performed_by_name || activity.performed_by}</span>
                         <span className="text-sm text-gray-500">
-                          {activity.created_date && format(new Date(activity.created_date), 'yyyy-MM-dd HH:mm')}
+                          {activity.created_at && format(new Date(activity.created_at), 'yyyy-MM-dd HH:mm')}
                         </span>
                       </div>
                       {activity.activity_type === 'status_change' && (
@@ -224,7 +224,7 @@ export default function TicketDetails() {
               </div>
               <div>
                 <Label className="text-gray-500">{isRTL ? 'تاريخ الإنشاء' : 'Created'}</Label>
-                <p>{ticket.created_date && format(new Date(ticket.created_date), 'yyyy-MM-dd HH:mm')}</p>
+                <p>{ticket.created_at && format(new Date(ticket.created_at), 'yyyy-MM-dd HH:mm')}</p>
               </div>
               {ticket.sla_due_date && (
                 <div>

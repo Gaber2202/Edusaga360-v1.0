@@ -23,7 +23,7 @@ export default function RegistrationRequestsTab() {
     queryKey: ['registration-requests'],
     queryFn: () => fetchData(
       // registration_requests is a platform-level table — bypass tenant filter
-      tenantQuery('registration_requests').select('*').order('created_date', { ascending: false })
+      tenantQuery('registration_requests').select('*').order('created_at', { ascending: false })
     ),
   });
 
@@ -272,8 +272,8 @@ export default function RegistrationRequestsTab() {
                         {r.notes && <p className="text-xs text-slate-400 mt-0.5">{r.notes}</p>}
                       </td>
                       <td className="p-3 text-slate-500 text-xs">
-                        {/* DB column: created_date (submitted_at not in schema) */}
-                        {(r.created_date || r.submitted_at) ? format(new Date(r.created_date || r.submitted_at), 'dd/MM/yyyy HH:mm') : '-'}
+                        {/* DB column: created_at (submitted_at not in schema) */}
+                        {(r.created_at || r.submitted_at) ? format(new Date(r.created_at || r.submitted_at), 'dd/MM/yyyy HH:mm') : '-'}
                       </td>
                       <td className="p-3">
                         <Badge className={statusColors[r.status] || 'bg-slate-100'}>

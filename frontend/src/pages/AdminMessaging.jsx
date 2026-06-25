@@ -48,7 +48,7 @@ export default function AdminMessaging() {
         const { data: studentList = [] } = await tenantQuery('students').select('*').match({
           tenant_id: tenant?.id,
           status: 'active'
-        }).order('created_date', { ascending: false }).limit(100);
+        }).order('created_at', { ascending: false }).limit(100);
 
         const enrichedStudents = await Promise.all(
           studentList.map(async (student) => {

@@ -9,7 +9,7 @@ export default function TenantUsageDashboard({ isRTL }) {
 
   const { data: tenants = [], isLoading } = useQuery({
     queryKey: ['tenants-usage'],
-    queryFn: () => fetchData(tenantQuery('tenants').select('*').order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('tenants').select('*').order('created_at', { ascending: false })),
   });
 
   if (isLoading) return <div className="animate-pulse h-40 bg-slate-100 rounded-xl" />;

@@ -26,11 +26,11 @@ export default function YamenRiskMonitor({ isRTL }) {
   const [riskFilter, setRiskFilter] = useState('all');
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
 
-  const { data: employees = [] } = useQuery({ queryKey: ['employees', tenantId], queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_date').match(tenantFilter())), enabled: hasTenantAccess });
+  const { data: employees = [] } = useQuery({ queryKey: ['employees', tenantId], queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').match(tenantFilter())), enabled: hasTenantAccess });
   const { data: attendance = [] } = useQuery({ queryKey: ['employeeAttendance', tenantId], queryFn: () => fetchData(tenantQuery('employee_attendances').select('*').match(tenantFilter()).order('date', { ascending: false }).limit(300)), enabled: hasTenantAccess });
   const { data: iqamaRecords = [] } = useQuery({ queryKey: ['iqamaRecords', tenantId], queryFn: () => fetchData(tenantQuery('iqama_records').select('*').match(tenantFilter())), enabled: hasTenantAccess });
   const { data: evaluations = [] } = useQuery({ queryKey: ['performanceEvals', tenantId], queryFn: () => fetchData(tenantQuery('performance_evaluations').select('*').match(tenantFilter())), enabled: hasTenantAccess });
-  const { data: leaves = [] } = useQuery({ queryKey: ['leaveRequests', tenantId], queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match(tenantFilter()).order('created_date', { ascending: false }).limit(200)), enabled: hasTenantAccess });
+  const { data: leaves = [] } = useQuery({ queryKey: ['leaveRequests', tenantId], queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit(200)), enabled: hasTenantAccess });
 
   const today = new Date();
 
@@ -64,7 +64,7 @@ export default function YamenRiskMonitor({ isRTL }) {
       }
 
       // Leave abuse: >3 requests in last 3 months
-      const recentLeaves = leaves.filter(l => l.employee_id === emp.id && l.status === 'approved' && l.created_date && differenceInDays(today, new Date(l.created_date)) <= 90);
+      const recentLeaves = leaves.filter(l => l.employee_id === emp.id && l.status === 'approved' && l.created_at && differenceInDays(today, new Date(l.created_at)) <= 90);
       const leaveRisk = recentLeaves.length > 3 ? Math.min(80, recentLeaves.length * 15) : 0;
 
       const overall = Math.round(attRisk * 0.3 + compRisk * 0.25 + payRisk * 0.15 + perfRisk * 0.2 + leaveRisk * 0.1);

@@ -143,7 +143,7 @@ export default function TenantRequestReviewDialog({ request, open, onClose, onUp
               <Calendar className="w-4 h-4 text-slate-400" />
               <div>
                 <p className="text-xs text-slate-500">{isRTL ? 'تاريخ التقديم' : 'Submitted'}</p>
-                <p className="font-medium">{request.created_date ? format(new Date(request.created_date), 'dd/MM/yyyy HH:mm') : '-'}</p>
+                <p className="font-medium">{request.created_at ? format(new Date(request.created_at), 'dd/MM/yyyy HH:mm') : '-'}</p>
               </div>
             </div>
           </div>

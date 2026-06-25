@@ -47,7 +47,7 @@ export default function PurchaseOrders() {
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['purchaseOrders', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('purchase_orders').select('*').match(tenantFilter(branchFilter())).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('purchase_orders').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

@@ -56,7 +56,7 @@ export default function ChartOfAccounts() {
 
   const { data: accounts = [], isLoading } = useQuery({
     queryKey: ['chartOfAccounts', tenantId],
-    queryFn: () => fetchData(tenantQuery('chart_of_accounts').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('chart_of_accounts').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

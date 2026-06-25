@@ -111,7 +111,7 @@ export default function HRApprovalsInbox() {
               <p className="text-sm text-emerald-600 font-medium">{item.amount?.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p>
             )}
             <p className="text-xs text-slate-400 mt-1">
-              {isRTL ? 'مقدم في:' : 'Submitted:'} {item.submitted_date ? format(new Date(item.submitted_date), 'dd/MM/yyyy HH:mm') : item.created_date ? format(new Date(item.created_date), 'dd/MM/yyyy') : '—'}
+              {isRTL ? 'مقدم في:' : 'Submitted:'} {item.submitted_date ? format(new Date(item.submitted_date), 'dd/MM/yyyy HH:mm') : item.created_at ? format(new Date(item.created_at), 'dd/MM/yyyy') : '—'}
             </p>
           </div>
           <div className="flex gap-2 flex-shrink-0">

@@ -33,7 +33,7 @@ export default function FiscalPeriods() {
 
   const { data: periods = [], isLoading } = useQuery({
     queryKey: ['fiscalPeriods', tenantId],
-    queryFn: () => fetchData(tenantQuery('fiscal_periods').select('*').match(tenantFilter()).order('created_date', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('fiscal_periods').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

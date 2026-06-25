@@ -58,7 +58,7 @@ export default function ConvertToEmployee({ applicant, recruitment, employees, o
       applicant_id: applicant?.id,
       recruitment_id: recruitment?.id,
       applicant_number: applicant?.applicant_number,
-      applied_date: applicant?.created_date,
+      applied_date: applicant?.created_at,
       offer_status: applicant?.offer_status,
       interview_scores: {
         technical: applicant?.interview_technical_score,
