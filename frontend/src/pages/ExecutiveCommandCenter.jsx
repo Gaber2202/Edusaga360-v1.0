@@ -89,6 +89,10 @@ export default function ExecutiveCommandCenter() {
   const [accessLoading, setAccessLoading] = useState(true);
   const [persona, setPersona] = useState(null);
 
+  const [tenants, setTenants] = useState([]);
+  const [tenantsLoading, setTenantsLoading] = useState(false);
+  const [selectedTenantId, setSelectedTenantId] = useState(null);
+
   const [dashboard, setDashboard] = useState(null);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState(false);
@@ -96,6 +100,8 @@ export default function ExecutiveCommandCenter() {
   const [brief, setBrief] = useState(null);
   const [briefLoading, setBriefLoading] = useState(false);
   const [briefRefreshing, setBriefRefreshing] = useState(false);
+
+  const requiresTenantSelection = !!access?.requiresTenantSelection;
 
   const loadAccess = useCallback(async () => {
     setAccessLoading(true);
@@ -114,12 +120,37 @@ export default function ExecutiveCommandCenter() {
 
   useEffect(() => { loadAccess(); }, [loadAccess]);
 
+  // Platform owners have no tenant of their own — they must pick a school
+  // before any dashboard data can be loaded.
+  useEffect(() => {
+    if (!requiresTenantSelection) return;
+    let active = true;
+    setTenantsLoading(true);
+    callApi('/api/exec/tenants', null, { method: 'GET' })
+      .then((res) => {
+        if (!active) return;
+        const list = res.tenants || [];
+        setTenants(list);
+        if (list.length > 0) setSelectedTenantId(list[0].id);
+      })
+      .catch(() => {
+        if (active) toast.error(isRTL ? 'فشل تحميل قائمة المدارس' : 'Failed to load schools list');
+      })
+      .finally(() => { if (active) setTenantsLoading(false); });
+    return () => { active = false; };
+  }, [requiresTenantSelection, isRTL]);
+
+  const tenantQS = useCallback((sep = '?') => (
+    requiresTenantSelection && selectedTenantId ? `${sep}tenant_id=${encodeURIComponent(selectedTenantId)}` : ''
+  ), [requiresTenantSelection, selectedTenantId]);
+
   const loadDashboard = useCallback(async (p) => {
     if (!p) return;
+    if (requiresTenantSelection && !selectedTenantId) return;
     setDashboardLoading(true);
     setDashboardError(false);
     try {
-      const res = await callApi(`/api/exec/${p}`, null, { method: 'GET' });
+      const res = await callApi(`/api/exec/${p}${tenantQS()}`, null, { method: 'GET' });
       setDashboard(res);
     } catch (err) {
       setDashboardError(true);
@@ -132,28 +163,29 @@ export default function ExecutiveCommandCenter() {
     } finally {
       setDashboardLoading(false);
     }
-  }, [isRTL]);
+  }, [isRTL, requiresTenantSelection, selectedTenantId, tenantQS]);
 
-  useEffect(() => { if (persona) loadDashboard(persona); }, [persona, loadDashboard]);
+  useEffect(() => { if (persona) loadDashboard(persona); }, [persona, selectedTenantId, loadDashboard]);
 
   const loadBrief = useCallback(async () => {
+    if (requiresTenantSelection && !selectedTenantId) return;
     setBriefLoading(true);
     try {
-      const res = await callApi('/api/exec/ceo/brief', null, { method: 'GET' });
+      const res = await callApi(`/api/exec/ceo/brief${tenantQS()}`, null, { method: 'GET' });
       setBrief(res);
     } catch {
       setBrief(null);
     } finally {
       setBriefLoading(false);
     }
-  }, []);
+  }, [requiresTenantSelection, selectedTenantId, tenantQS]);
 
-  useEffect(() => { if (persona === 'ceo') loadBrief(); }, [persona, loadBrief]);
+  useEffect(() => { if (persona === 'ceo') loadBrief(); }, [persona, selectedTenantId, loadBrief]);
 
   const refreshBrief = async () => {
     setBriefRefreshing(true);
     try {
-      const res = await callApi('/api/exec/ceo/brief/refresh', {}, { method: 'POST' });
+      const res = await callApi(`/api/exec/ceo/brief/refresh${tenantQS()}`, {}, { method: 'POST' });
       setBrief(res);
       toast.success(isRTL ? 'تم تحديث الموجز' : 'Brief refreshed');
     } catch {
@@ -195,30 +227,51 @@ export default function ExecutiveCommandCenter() {
           </div>
         </div>
 
-        {showSwitcher && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-500">{t('switchPersona')}</span>
-            <Select value={persona || undefined} onValueChange={setPersona}>
-              <SelectTrigger className="w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {availablePersonas.map((p) => (
-                  <SelectItem key={p} value={p}>{p.toUpperCase()}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {requiresTenantSelection && (
+            <>
+              <span className="text-sm text-slate-500">{isRTL ? 'المدرسة' : 'School'}</span>
+              <Select value={selectedTenantId || undefined} onValueChange={setSelectedTenantId} disabled={tenantsLoading || tenants.length === 0}>
+                <SelectTrigger className="w-56">
+                  <SelectValue placeholder={tenantsLoading ? (isRTL ? 'جارٍ التحميل...' : 'Loading...') : undefined} />
+                </SelectTrigger>
+                <SelectContent>
+                  {tenants.map((tn) => (
+                    <SelectItem key={tn.id} value={tn.id}>{isRTL ? (tn.name_ar || tn.name_en) : (tn.name_en || tn.name_ar)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
+          {showSwitcher && (
+            <>
+              <span className="text-sm text-slate-500">{t('switchPersona')}</span>
+              <Select value={persona || undefined} onValueChange={setPersona}>
+                <SelectTrigger className="w-44">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availablePersonas.map((p) => (
+                    <SelectItem key={p} value={p}>{p.toUpperCase()}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
+        </div>
       </div>
 
-      {dashboardLoading && (
+      {requiresTenantSelection && !tenantsLoading && tenants.length === 0 && (
+        <EmptyState isRTL={isRTL} message={isRTL ? 'لا توجد مدارس متاحة' : 'No schools available'} />
+      )}
+
+      {(!requiresTenantSelection || selectedTenantId) && dashboardLoading && (
         <div className="flex items-center justify-center h-64">
           <RefreshCw className="w-6 h-6 animate-spin text-slate-400" />
         </div>
       )}
 
-      {!dashboardLoading && dashboardError && (
+      {(!requiresTenantSelection || selectedTenantId) && !dashboardLoading && dashboardError && (
         <EmptyState isRTL={isRTL} message={isRTL ? 'تعذر تحميل لوحة البيانات' : 'Could not load this dashboard'} />
       )}
 

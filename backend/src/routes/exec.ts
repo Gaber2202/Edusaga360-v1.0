@@ -24,6 +24,19 @@ const daysAgoStr = (days: number) => new Date(Date.now() - days * DAY_MS).toISOS
 const clamp = (n: number, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, n));
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+// Platform owners have no tenant_id of their own (they oversee every tenant),
+// so they must explicitly pick which school's dashboard to view via ?tenant_id=.
+// Regular tenant users always use their own JWT-issued tenant_id — the query
+// param is never honored for them, so a tenant user can never view another
+// tenant's data by tampering with the query string.
+function resolveTenantId(req: AuthenticatedRequest): string | null {
+  if (req.user?.is_platform_owner) {
+    const q = req.query.tenant_id;
+    return typeof q === 'string' && q.length > 0 ? q : null;
+  }
+  return req.user?.tenant_id ?? null;
+}
+
 // ─── Audit trail — every dashboard view / persona switch / access grant ─────
 // Writes to the existing tenant-scoped audit_logs table (see
 // frontend/src/components/AuditService.jsx for the matching client-side
@@ -32,10 +45,11 @@ async function writeExecAudit(
   req: AuthenticatedRequest,
   action: string,
   newValues: Record<string, unknown>,
+  tenantId?: string | null,
 ): Promise<void> {
   try {
     await supabase.from('audit_logs').insert({
-      tenant_id: req.user?.tenant_id ?? null,
+      tenant_id: tenantId ?? req.user?.tenant_id ?? null,
       user_id: req.user?.id ?? null,
       action,
       entity_type: 'exec_dashboard',
@@ -50,7 +64,25 @@ async function writeExecAudit(
 // ─── GET /api/exec/access — which personas can the caller view? ────────────
 execRouter.get('/access', async (req: AuthenticatedRequest, res: Response) => {
   const result = await getAccessiblePersonas(req.user);
-  res.json(result);
+  res.json({
+    ...result,
+    // Platform owners have no tenant of their own — the frontend must show a
+    // school picker before it can load any persona dashboard.
+    requiresTenantSelection: !!req.user?.is_platform_owner && !req.user?.tenant_id,
+  });
+});
+
+// ─── GET /api/exec/tenants — platform-owner only: schools to view ──────────
+execRouter.get('/tenants', async (req: AuthenticatedRequest, res: Response) => {
+  if (!req.user?.is_platform_owner) {
+    return res.status(403).json({ error: 'Platform owner only' });
+  }
+  const { data, error } = await supabase
+    .from('tenants')
+    .select('id, name_en, name_ar')
+    .order('name_en');
+  if (error) return res.status(500).json({ error: 'Failed to load tenants' });
+  res.json({ tenants: data ?? [] });
 });
 
 // ─── POST /api/exec/access — admin-only grant/revoke of a persona ──────────
@@ -64,7 +96,7 @@ execRouter.post('/access', async (req: AuthenticatedRequest, res: Response) => {
   if (!hasImplicitViewAll(req.user)) {
     return res.status(403).json({ error: 'Insufficient permissions', code: 'EXEC_ACCESS_DENIED' });
   }
-  const tenant_id = req.user!.tenant_id;
+  const tenant_id = resolveTenantId(req);
   if (!tenant_id) return res.status(400).json({ error: 'No tenant context' });
 
   const parsed = GrantAccessSchema.safeParse(req.body);
@@ -88,7 +120,7 @@ execRouter.post('/access', async (req: AuthenticatedRequest, res: Response) => {
     if (error) return res.status(500).json({ error: error.message });
   }
 
-  await writeExecAudit(req, `exec_access_${action}`, { user_id, persona });
+  await writeExecAudit(req, `exec_access_${action}`, { user_id, persona }, tenant_id);
   res.json({ success: true });
 });
 
@@ -267,7 +299,7 @@ async function getBranches(tenant_id: string) {
 
 // ─── GET /api/exec/ceo ───────────────────────────────────────────────────────
 execRouter.get('/ceo', requireExecAccess('ceo'), async (req: AuthenticatedRequest, res: Response) => {
-  const tenant_id = req.user!.tenant_id;
+  const tenant_id = resolveTenantId(req);
   if (!tenant_id) return res.status(400).json({ error: 'No tenant context' });
 
   try {
@@ -297,7 +329,7 @@ execRouter.get('/ceo', requireExecAccess('ceo'), async (req: AuthenticatedReques
       strategicAlerts.push({ severity: 'high', category: 'growth', message_en: `Enrollment declined ${Math.abs(growth.growth_rate ?? 0)}% year-over-year.`, message_ar: `انخفض عدد الطلاب المسجلين ${Math.abs(growth.growth_rate ?? 0)}٪ على أساس سنوي.` });
     }
 
-    await writeExecAudit(req, 'exec_dashboard_view', { persona: 'ceo' });
+    await writeExecAudit(req, 'exec_dashboard_view', { persona: 'ceo' }, tenant_id);
 
     res.json({
       vitality,
@@ -315,7 +347,7 @@ execRouter.get('/ceo', requireExecAccess('ceo'), async (req: AuthenticatedReques
 
 // ─── GET /api/exec/cfo ───────────────────────────────────────────────────────
 execRouter.get('/cfo', requireExecAccess('cfo'), async (req: AuthenticatedRequest, res: Response) => {
-  const tenant_id = req.user!.tenant_id;
+  const tenant_id = resolveTenantId(req);
   if (!tenant_id) return res.status(400).json({ error: 'No tenant context' });
 
   try {
@@ -379,7 +411,7 @@ execRouter.get('/cfo', requireExecAccess('cfo'), async (req: AuthenticatedReques
       months.push({ label: key, revenue: rev, ebitda: round2(rev - exp) });
     }
 
-    await writeExecAudit(req, 'exec_dashboard_view', { persona: 'cfo' });
+    await writeExecAudit(req, 'exec_dashboard_view', { persona: 'cfo' }, tenant_id);
 
     res.json({
       kpis: { revenue: financials.revenue, ebitda: financials.ebitda, margin_pct: financials.margin, cash_collected_30d: cash30d, dso_days: dso },
@@ -404,7 +436,7 @@ execRouter.get('/cfo', requireExecAccess('cfo'), async (req: AuthenticatedReques
 
 // ─── GET /api/exec/coo ───────────────────────────────────────────────────────
 execRouter.get('/coo', requireExecAccess('coo'), async (req: AuthenticatedRequest, res: Response) => {
-  const tenant_id = req.user!.tenant_id;
+  const tenant_id = resolveTenantId(req);
   if (!tenant_id) return res.status(400).json({ error: 'No tenant context' });
 
   try {
@@ -473,7 +505,7 @@ execRouter.get('/coo', requireExecAccess('coo'), async (req: AuthenticatedReques
       ).map(([stage, count]) => ({ stage, count })),
     };
 
-    await writeExecAudit(req, 'exec_dashboard_view', { persona: 'coo' });
+    await writeExecAudit(req, 'exec_dashboard_view', { persona: 'coo' }, tenant_id);
 
     res.json({
       kpis: {
@@ -497,7 +529,7 @@ execRouter.get('/coo', requireExecAccess('coo'), async (req: AuthenticatedReques
 
 // ─── GET /api/exec/chro ──────────────────────────────────────────────────────
 execRouter.get('/chro', requireExecAccess('chro'), async (req: AuthenticatedRequest, res: Response) => {
-  const tenant_id = req.user!.tenant_id;
+  const tenant_id = resolveTenantId(req);
   if (!tenant_id) return res.status(400).json({ error: 'No tenant context' });
 
   try {
@@ -542,7 +574,7 @@ execRouter.get('/chro', requireExecAccess('chro'), async (req: AuthenticatedRequ
       return acc;
     }, {});
 
-    await writeExecAudit(req, 'exec_dashboard_view', { persona: 'chro' });
+    await writeExecAudit(req, 'exec_dashboard_view', { persona: 'chro' }, tenant_id);
 
     res.json({
       kpis: {
@@ -654,7 +686,7 @@ async function generateAndCacheBrief(tenant_id: string, period: string, generate
 }
 
 execRouter.get('/ceo/brief', requireExecAccess('ceo'), async (req: AuthenticatedRequest, res: Response) => {
-  const tenant_id = req.user!.tenant_id;
+  const tenant_id = resolveTenantId(req);
   if (!tenant_id) return res.status(400).json({ error: 'No tenant context' });
   const period = (req.query.period as string) || currentPeriod();
 
@@ -672,14 +704,14 @@ execRouter.get('/ceo/brief', requireExecAccess('ceo'), async (req: Authenticated
 });
 
 execRouter.post('/ceo/brief/refresh', requireExecAccess('ceo'), async (req: AuthenticatedRequest, res: Response) => {
-  const tenant_id = req.user!.tenant_id;
+  const tenant_id = resolveTenantId(req);
   if (!tenant_id) return res.status(400).json({ error: 'No tenant context' });
   const period = (req.body?.period as string) || currentPeriod();
 
   try {
     const brief = await generateAndCacheBrief(tenant_id, period, req.user!.id);
     if (!brief) return res.status(503).json({ error: 'No AI provider available to generate the board brief' });
-    await writeExecAudit(req, 'exec_brief_refresh', { period });
+    await writeExecAudit(req, 'exec_brief_refresh', { period }, tenant_id);
     res.json(brief);
   } catch (err) {
     console.error('Board brief refresh error:', err);
