@@ -270,3 +270,38 @@ export async function uploadFileApi(file) {
 
   return response.json();
 }
+
+/**
+ * Re-mint a fresh signed URL for a previously uploaded file path.
+ * Signed URLs returned by uploadFileApi expire after ~1 hour, so the canonical
+ * thing to persist is the `path`; call this to view the file later.
+ * Returns the signed URL string.
+ */
+export async function getSignedUrlApi(path) {
+  if (!path) throw new Error('getSignedUrlApi: path is required');
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/files/sign?path=${encodeURIComponent(path)}`,
+    {
+      headers: {
+        ...(session?.access_token && {
+          Authorization: `Bearer ${session.access_token}`,
+        }),
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({ message: response.statusText }));
+    const err = new Error(body.message || body.error || `Sign error: ${response.status}`);
+    err.status = response.status;
+    throw err;
+  }
+
+  const data = await response.json();
+  return data.signedUrl;
+}
