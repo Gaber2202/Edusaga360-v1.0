@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import PRActions from '../components/procurement/PRActions';
+import AttachmentUploader from '../components/ui/AttachmentUploader';
 import jsPDF from 'jspdf';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 
@@ -37,6 +38,7 @@ export default function PurchaseRequisitions() {
     required_date: '',
     purpose: '',
     notes: '',
+    attachments: [],
     items: [{ description: '', quantity: 1, estimated_price: 0 }]
   });
 
@@ -104,6 +106,7 @@ export default function PurchaseRequisitions() {
         required_date: formData.required_date,
         purpose: formData.purpose,
         notes: formData.notes,
+        attachments: formData.attachments,
         items: formData.items.map((item, idx) => ({
           ...item,
           line_number: idx + 1,
@@ -249,6 +252,7 @@ export default function PurchaseRequisitions() {
       required_date: pr.required_date || '',
       purpose: pr.purpose || '',
       notes: pr.notes || '',
+      attachments: pr.attachments || [],
       items: pr.items && pr.items.length > 0 ? pr.items : [{ description: '', quantity: 1, estimated_price: 0 }]
     });
     setShowForm(true);
@@ -260,6 +264,7 @@ export default function PurchaseRequisitions() {
       required_date: '',
       purpose: '',
       notes: '',
+      attachments: [],
       items: [{ description: '', quantity: 1, estimated_price: 0 }]
     });
   };
@@ -379,6 +384,15 @@ export default function PurchaseRequisitions() {
             <div className="space-y-2">
               <Label>{t('notes')}</Label>
               <Textarea value={formData.notes} onChange={(e) => setFormData(p => ({...p, notes: e.target.value}))} rows={2} />
+            </div>
+
+            <div className="space-y-2">
+              <Label>{isRTL ? 'المرفقات' : 'Attachments'}</Label>
+              <AttachmentUploader
+                attachments={formData.attachments}
+                onChange={(atts) => setFormData(p => ({...p, attachments: atts}))}
+                compact
+              />
             </div>
           </div>
           <DialogFooter>
