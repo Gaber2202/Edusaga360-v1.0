@@ -280,6 +280,10 @@ CREATE TABLE fee_types (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- NOTE: This original (Base44) shape was reconciled in migration
+-- 20260629_fee_structures_reconcile.sql — `academic_year` is now TEXT, `name` is
+-- nullable, and the billing-engine + config-UI columns were added (Option A1).
+-- See that migration for the canonical column set.
 CREATE TABLE fee_structures (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id UUID NOT NULL REFERENCES tenants(id),

@@ -20,7 +20,7 @@
 
 | ID | Severity | Finding | Status |
 |----|----------|---------|--------|
-| 1A-01 | CRITICAL | Duplicate `fee_structures` table — billing engine schema silently skipped | Open |
+| 1A-01 | CRITICAL | Duplicate `fee_structures` table — billing engine schema silently skipped | FIXED |
 | 1C-01 | CRITICAL | `users` table had no RLS — all user records exposed cross-tenant | FIXED |
 | 1C-02 | CRITICAL | `tenants` table had no RLS — plan limits writable by any tenant user | FIXED |
 | 1B-01 | CRITICAL | `users.tenant_id` nullable — no NOT NULL constraint | Open |
@@ -111,17 +111,24 @@
 
 | Severity | Found | Fixed | Open |
 |----------|-------|-------|------|
-| CRITICAL | 8 | 5 | 3 |
+| CRITICAL | 8 | 6 | 2 |
 | HIGH | 18 | 12 | 6 |
 | MEDIUM | 17 | 5 | 12 |
 | LOW | 5 | 0 | 5 |
-| **Total** | **48** | **22** | **26** |
+| **Total** | **48** | **23** | **25** |
 
 > **Update 2026-06-29:** File-upload security cluster closed — `4B-1` (server-side
 > `/api/files/upload` with magic-byte + size validation), `4B-3`, `4B-4`, and
 > `4B-2` (signed URLs + `tenant-files` bucket RLS policies, migration
 > `20260629_tenant_files_bucket_rls.sql`). Platform-owner uploads and HEIC/CSV
 > types also fixed.
+>
+> **Update 2026-06-29 (2):** `1A-01` closed — `fee_structures` schema drift
+> reconciled (Option A1 superset) in migration `20260629_fee_structures_reconcile.sql`:
+> `academic_year` uuid→text, `name` made nullable, and the union of billing-engine +
+> config-UI columns added so inserts/reads stop failing. Also created the missing
+> `special_care_fees` table (same drift class) with tenant RLS, and fixed
+> `StudentForm` to read the populated `fee_type_name_*` label columns.
 
 ---
 
@@ -129,6 +136,6 @@
 
 1. **PII encryption** — pgcrypto / Supabase Vault for `national_id`, `iqama_number`, `passport_number`, `bank_iban`
 2. **`users.tenant_id` NOT NULL** — backfill nulls then enforce constraint
-3. **Duplicate `fee_structures`** — reconcile schema conflict in new migration
 
 ✅ ~~**File upload endpoint** — create `/api/files/upload` with server-side validation~~ — done 2026-06-29.
+✅ ~~**Duplicate `fee_structures`** — reconcile schema conflict in new migration~~ — done 2026-06-29.
