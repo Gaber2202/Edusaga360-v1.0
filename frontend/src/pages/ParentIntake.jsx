@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
+import { tenantQuery, fetchData, uploadFileApi } from '../api/supabaseClient';
 import { sanitizeHtml } from '../lib/sanitize';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -192,10 +192,10 @@ export default function ParentIntake() {
 
     for (const file of files) {
       try {
-        const { file_url } = await callApi('/api/files/upload', { file });
+        const result = await uploadFileApi(file);
         uploadedDocs.push({
           name: file.name,
-          url: file_url,
+          url: result.signedUrl || result.path,
           type: file.type,
           uploaded_date: new Date().toISOString()
         });

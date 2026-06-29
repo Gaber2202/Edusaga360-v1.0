@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, callApi } from '../../api/supabaseClient';
+import { tenantQuery, uploadFileApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useRole } from '../RoleContext';
 import { Button } from '../ui/button';
@@ -88,8 +88,8 @@ export default function PaymentLogForm({ open, onClose, invoice }) {
 
     setUploading(true);
     try {
-      const { file_url } = await callApi('/api/files/upload', { file });
-      setFormData(prev => ({ ...prev, attachment_url: file_url }));
+      const result = await uploadFileApi(file);
+      setFormData(prev => ({ ...prev, attachment_url: result.signedUrl || result.path }));
       toast.success(isRTL ? 'تم رفع الملف' : 'File uploaded');
     } catch (error) {
       console.error('Upload error:', error);

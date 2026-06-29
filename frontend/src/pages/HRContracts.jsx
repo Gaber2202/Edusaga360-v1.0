@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
+import { tenantQuery, fetchData, callApi, uploadFileApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
@@ -78,8 +78,8 @@ export default function HRContracts() {
 
     setUploading(true);
     try {
-      const { file_url } = await callApi('/api/files/upload', { file });
-      setFormData(p => ({ ...p, document_url: file_url }));
+      const result = await uploadFileApi(file);
+      setFormData(p => ({ ...p, document_url: result.signedUrl || result.path }));
       toast.success(isRTL ? 'تم رفع المستند' : 'Document uploaded');
     } catch (error) {
       console.error('Error:', error);

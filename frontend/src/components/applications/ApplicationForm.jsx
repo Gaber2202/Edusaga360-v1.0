@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../LanguageContext';
-import { tenantQuery, callApi } from '../../api/supabaseClient';
+import { tenantQuery, uploadFileApi } from '../../api/supabaseClient';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -114,10 +114,10 @@ export default function ApplicationForm({ open, onClose, onSuccess, application 
 
     setUploadingDoc(true);
     try {
-      const { file_url } = await callApi('/api/files/upload', { file });
+      const result = await uploadFileApi(file);
       const newDoc = {
         name: file.name,
-        url: file_url,
+        url: result.signedUrl || result.path,
         type: file.type
       };
       setFormData(prev => ({

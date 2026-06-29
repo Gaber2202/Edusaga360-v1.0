@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery, callApi, fetchData } from '../api/supabaseClient';
+import { supabase, tenantQuery, callApi, fetchData, uploadFileApi } from '../api/supabaseClient';
 import { createPageUrl } from '../utils';
 import { filterSettingsCatalog } from '../lib/settingsSearch';
 import { useLanguage } from '../components/LanguageContext';
@@ -259,8 +259,8 @@ function SchoolInfoSection({ isRTL }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const { file_url } = await callApi('/api/files/upload', { file });
-    set('logo_url', file_url);
+    const result = await uploadFileApi(file);
+    set('logo_url', result.signedUrl || result.path);
     setUploading(false);
   };
 

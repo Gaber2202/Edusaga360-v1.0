@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { callApi } from '../../api/supabaseClient';
+import { callApi, uploadFileApi } from '../../api/supabaseClient';
 import { extractAiText, aiErrorMessage } from './yamenUtils';
 import { Upload, FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
@@ -19,7 +19,8 @@ export default function YamenDocumentProcessor({ isRTL }) {
 
     try {
       // Upload file
-      const { file_url } = await callApi('/api/files/upload', { file });
+      const uploadResult = await uploadFileApi(file);
+      const file_url = uploadResult.signedUrl || uploadResult.path;
 
       // Process with Gemini vision
       const visionPrompt = `Analyze this HR document image and extract:

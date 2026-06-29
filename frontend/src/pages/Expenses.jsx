@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
+import { tenantQuery, fetchData, uploadFileApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { useBranch } from '../components/BranchContext';
@@ -75,8 +75,8 @@ export default function Expenses() {
 
     setUploading(true);
     try {
-      const { file_url } = await callApi('/api/files/upload', { file });
-      setFormData(p => ({ ...p, receipt_url: file_url }));
+      const result = await uploadFileApi(file);
+      setFormData(p => ({ ...p, receipt_url: result.signedUrl || result.path }));
       toast.success(isRTL ? 'تم رفع الإيصال' : 'Receipt uploaded');
     } catch (error) {
       console.error('Error:', error);

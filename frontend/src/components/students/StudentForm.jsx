@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
-import { tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
+import { tenantQuery, fetchData, callApi, uploadFileApi } from '../../api/supabaseClient';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -96,8 +96,8 @@ function DocUploadField({ label, value, onChange, isRTL }) {
     if (!file) return;
     setUploading(true);
     try {
-      const { file_url } = await callApi('/api/files/upload', { file });
-      onChange(file_url);
+      const result = await uploadFileApi(file);
+      onChange(result.signedUrl || result.path);
       toast.success(isRTL ? 'تم رفع الملف' : 'File uploaded');
     } catch {
       toast.error(isRTL ? 'فشل رفع الملف' : 'Upload failed');
@@ -187,8 +187,8 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
     if (!file) return;
     setUploadingPhoto(true);
     try {
-      const { file_url } = await callApi('/api/files/upload', { file });
-      set('photo_url', file_url);
+      const result = await uploadFileApi(file);
+      set('photo_url', result.signedUrl || result.path);
     } catch {
       toast.error(tt('فشل رفع الصورة', 'Photo upload failed'));
     } finally {
