@@ -111,11 +111,11 @@
 
 | Severity | Found | Fixed | Open |
 |----------|-------|-------|------|
-| CRITICAL | 8 | 6 | 2 |
+| CRITICAL | 8 | 5 | 3 |
 | HIGH | 18 | 12 | 6 |
 | MEDIUM | 17 | 5 | 12 |
 | LOW | 5 | 0 | 5 |
-| **Total** | **48** | **23** | **25** |
+| **Total** | **48** | **22** | **26** |
 
 > **Update 2026-06-29:** File-upload security cluster closed — `4B-1` (server-side
 > `/api/files/upload` with magic-byte + size validation), `4B-3`, `4B-4`, and
