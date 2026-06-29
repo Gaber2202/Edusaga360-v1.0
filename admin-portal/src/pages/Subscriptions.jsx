@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { callApi } from '../lib/supabase';
 import { PLAN_COLORS, STATUS_COLORS, planLabel, formatMoney, PLANS } from '../lib/plans';
 import ConvertToPaidDialog from '../components/ConvertToPaidDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { Textarea } from '../components/ui/textarea';
 import { format } from 'date-fns';
-import { DollarSign, TrendingUp, Users, CreditCard, Sparkles } from 'lucide-react';
+import { DollarSign, TrendingUp, Users, CreditCard, Sparkles, CheckCircle, XCircle, FileText, ExternalLink } from 'lucide-react';
 
 function KPI({ label, value, sub, icon: Icon, color }) {
   const colors = { emerald: 'bg-emerald-50 text-emerald-600', blue: 'bg-najdi-50 text-najdi-700', purple: 'bg-purple-50 text-purple-600', amber: 'bg-amber-50 text-amber-600' };
@@ -23,6 +25,9 @@ function KPI({ label, value, sub, icon: Icon, color }) {
 
 export default function Subscriptions() {
   const [convertTenant, setConvertTenant] = useState(null);
+  const [rejectDialogOrder, setRejectDialogOrder] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const queryClient = useQueryClient();
 
   const { data: tenantsData, isLoading } = useQuery({
     queryKey: ['admin-tenants'],
@@ -31,6 +36,35 @@ export default function Subscriptions() {
   const { data: stats } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: () => callApi('/api/admin/stats', {}, { method: 'GET' }),
+  });
+
+  // Subscription orders pending verification
+  const { data: pendingOrders = [] } = useQuery({
+    queryKey: ['pending-subscription-orders'],
+    queryFn: async () => {
+      // The admin fetches all subscription orders across tenants
+      const result = await callApi('/api/subscription/orders', {}, { method: 'GET' });
+      return (Array.isArray(result) ? result : []).filter(o =>
+        ['pending_payment', 'awaiting_verification'].includes(o.status)
+      );
+    },
+  });
+
+  const verifyMutation = useMutation({
+    mutationFn: (orderId) => callApi(`/api/subscription/orders/${orderId}/verify`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pending-subscription-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-tenants'] });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: ({ orderId, reason }) => callApi(`/api/subscription/orders/${orderId}/reject`, { reason }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pending-subscription-orders'] });
+      setRejectDialogOrder(null);
+      setRejectReason('');
+    },
   });
 
   const tenants = tenantsData?.tenants ?? [];
@@ -80,6 +114,108 @@ export default function Subscriptions() {
           ))}
         </CardContent>
       </Card>
+
+      {/* Pending Payment Orders */}
+      {pendingOrders.length > 0 && (
+        <Card className="border-amber-200 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <FileText className="w-4 h-4 text-amber-600" />
+              Payment Orders Awaiting Action ({pendingOrders.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <table className="w-full text-sm">
+              <thead className="bg-amber-50 text-xs text-muted-foreground uppercase tracking-wide border-y border-amber-200">
+                <tr>
+                  {['Tenant', 'Type', 'Amount (SAR)', 'Method', 'Status', 'Date', 'Proof', 'Actions'].map(h => (
+                    <th key={h} className="text-left px-4 py-2.5">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-amber-100">
+                {pendingOrders.map(order => {
+                  const tenant = tenants.find(t => t.id === order.tenant_id);
+                  return (
+                    <tr key={order.id} className="hover:bg-amber-50/50">
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-ink">{tenant?.name_en || order.tenant_id?.slice(0, 8)}</p>
+                      </td>
+                      <td className="px-4 py-3 text-xs">
+                        {order.order_type === 'plan_upgrade'
+                          ? <Badge className="bg-purple-100 text-purple-800">Upgrade → {order.plan_code}</Badge>
+                          : <Badge className="bg-blue-100 text-blue-800">+{order.additional_seats} seats</Badge>}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-ink">{formatMoney(order.total_amount || 0)}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground capitalize">{(order.payment_method || '').replace('_', ' ')}</td>
+                      <td className="px-4 py-3">
+                        <Badge className={order.status === 'awaiting_verification' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}>
+                          {order.status?.replace(/_/g, ' ')}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {order.created_at ? format(new Date(order.created_at), 'MMM d, yyyy') : '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {order.proof_url ? (
+                          <a href={order.proof_url} target="_blank" rel="noopener noreferrer" className="text-najdi-700 hover:underline text-xs flex items-center gap-1">
+                            <ExternalLink className="w-3 h-3" /> View
+                          </a>
+                        ) : <span className="text-xs text-muted-foreground">—</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        {order.status === 'awaiting_verification' && (
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                              disabled={verifyMutation.isPending}
+                              onClick={() => verifyMutation.mutate(order.id)}
+                            >
+                              <CheckCircle className="w-3 h-3" /> Verify
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs gap-1 border-red-300 text-red-700 hover:bg-red-50"
+                              onClick={() => setRejectDialogOrder(order)}
+                            >
+                              <XCircle className="w-3 h-3" /> Reject
+                            </Button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Reject Dialog */}
+      <Dialog open={!!rejectDialogOrder} onOpenChange={(v) => { if (!v) { setRejectDialogOrder(null); setRejectReason(''); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Reject Payment</DialogTitle>
+          </DialogHeader>
+          <div className="py-3 space-y-3">
+            <p className="text-sm text-muted-foreground">Provide a reason for rejecting this payment proof:</p>
+            <Textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="e.g. Amount does not match, unclear receipt..." rows={3} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setRejectDialogOrder(null); setRejectReason(''); }}>Cancel</Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={rejectMutation.isPending}
+              onClick={() => rejectMutation.mutate({ orderId: rejectDialogOrder?.id, reason: rejectReason })}
+            >
+              Reject
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Billing table */}
       <Card className="border-0 shadow-sm overflow-hidden">

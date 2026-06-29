@@ -28,6 +28,7 @@ import { chequeRouter } from './routes/cheques.js';
 import { parentsRouter } from './routes/parents.js';
 import { filesRouter } from './routes/files.js';
 import { execRouter } from './routes/exec.js';
+import { subscriptionRouter } from './routes/subscription.js';
 
 dotenv.config();
 
@@ -127,6 +128,7 @@ app.use('/api/admin',               apiLimiter, authMiddleware, adminRouter);
 app.use('/api/parents',             apiLimiter, authMiddleware, tenantMiddleware, parentsRouter);
 app.use('/api/files',               apiLimiter, authMiddleware, tenantMiddleware, filesRouter);
 app.use('/api/exec',                apiLimiter, authMiddleware, tenantMiddleware, execRouter);
+app.use('/api/subscription',        apiLimiter, authMiddleware, tenantMiddleware, subscriptionRouter);
 
 app.use(
   (
