@@ -55,7 +55,7 @@ export default function LinkedStudentsPicker({ studentIds = [], onChange, studen
 
       {/* Search & Add */}
       <div className="relative">
-        <Search className="absolute start-2.5 top-2.5 w-4 h-4 text-slate-400" />
+        <Search className="absolute start-2.5 top-2.5 w-4 h-4 text-muted-foreground" />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -67,7 +67,7 @@ export default function LinkedStudentsPicker({ studentIds = [], onChange, studen
       {search && (
         <ScrollArea className="max-h-40 border rounded-lg">
           {filteredStudents.length === 0 ? (
-            <p className="p-3 text-sm text-slate-500 text-center">
+            <p className="p-3 text-sm text-muted-foreground text-center">
               {isRTL ? 'لا توجد نتائج' : 'No results'}
             </p>
           ) : (
@@ -76,10 +76,10 @@ export default function LinkedStudentsPicker({ studentIds = [], onChange, studen
                 <button
                   key={s.id}
                   onClick={() => addStudent(s.id)}
-                  className="w-full text-start px-3 py-2 text-sm rounded hover:bg-slate-100 flex justify-between items-center"
+                  className="w-full text-start px-3 py-2 text-sm rounded hover:bg-sand-alt flex justify-between items-center"
                 >
                   <span>{isRTL ? s.name_ar : (s.name_en || s.name_ar)}</span>
-                  <span className="text-xs text-slate-400">{s.grade} {s.section && `- ${s.section}`}</span>
+                  <span className="text-xs text-muted-foreground">{s.grade} {s.section && `- ${s.section}`}</span>
                 </button>
               ))}
             </div>

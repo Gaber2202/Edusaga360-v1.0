@@ -276,13 +276,13 @@ export default function ESSPortal() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
         <AlertTriangle className="w-16 h-16 text-amber-500 mb-4" />
-        <h2 className="text-xl font-semibold text-slate-900 mb-2">
+        <h2 className="text-xl font-semibold text-ink mb-2">
           {isRTL ? 'لم يتم ربط حسابك بسجل موظف' : 'Your account is not linked to an employee record'}
         </h2>
-        <p className="text-slate-500 mb-6">
+        <p className="text-muted-foreground mb-6">
           {isRTL ? 'يرجى اختيار سجل الموظف الخاص بك' : 'Please select your employee record'}
         </p>
-        <Button onClick={() => setShowLinkDialog(true)} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={() => setShowLinkDialog(true)} className="bg-najdi-700 hover:bg-najdi-900">
           <User className="w-4 h-4 me-2" />
           {isRTL ? 'ربط حساب الموظف' : 'Link Employee Account'}
         </Button>
@@ -294,8 +294,8 @@ export default function ESSPortal() {
               <DialogTitle>{isRTL ? 'ربط حساب الموظف' : 'Link Employee Account'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <div className="bg-blue-50 p-3 rounded-lg">
-                <p className="text-sm text-slate-600">{isRTL ? 'البريد الإلكتروني:' : 'Email:'}</p>
+              <div className="bg-najdi-50 p-3 rounded-lg">
+                <p className="text-sm text-muted-foreground">{isRTL ? 'البريد الإلكتروني:' : 'Email:'}</p>
                 <p className="font-medium">{user?.email}</p>
               </div>
               <div className="space-y-2">
@@ -313,7 +313,7 @@ export default function ESSPortal() {
                   </SelectContent>
                 </Select>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 {isRTL 
                   ? 'سيتم ربط هذا الحساب بسجل الموظف المختار' 
                   : 'This account will be linked to the selected employee record'}
@@ -339,10 +339,10 @@ export default function ESSPortal() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl font-bold text-ink">
             {isRTL ? 'بوابة الخدمة الذاتية' : 'Employee Self-Service Portal'}
           </h1>
-          <p className="text-slate-500">
+          <p className="text-muted-foreground">
             {isRTL ? `مرحباً، ${currentEmployee.name_ar}` : `Welcome, ${currentEmployee.name_en || currentEmployee.name_ar}`}
           </p>
           {essSettings?.test_mode_enabled && (
@@ -361,7 +361,7 @@ export default function ESSPortal() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => openRequestDialog('leave')}>
-              <Calendar className="w-5 h-5 text-blue-600" />
+              <Calendar className="w-5 h-5 text-najdi-700" />
               <span className="text-sm">{isRTL ? 'طلب إجازة' : 'Request Leave'}</span>
             </Button>
             <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => openRequestDialog('salary_advance')}>
@@ -398,11 +398,11 @@ export default function ESSPortal() {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Calendar className="w-6 h-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-najdi-50 rounded-full flex items-center justify-center">
+                    <Calendar className="w-6 h-6 text-najdi-700" />
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">{isRTL ? 'رصيد الإجازات' : 'Leave Balance'}</p>
+                    <p className="text-sm text-muted-foreground">{isRTL ? 'رصيد الإجازات' : 'Leave Balance'}</p>
                     <p className="text-2xl font-bold">{currentEmployee.leave_balance || 21} {isRTL ? 'يوم' : 'days'}</p>
                   </div>
                 </div>
@@ -415,7 +415,7 @@ export default function ESSPortal() {
                     <Clock className="w-6 h-6 text-amber-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">{isRTL ? 'طلبات معلقة' : 'Pending Requests'}</p>
+                    <p className="text-sm text-muted-foreground">{isRTL ? 'طلبات معلقة' : 'Pending Requests'}</p>
                     <p className="text-2xl font-bold">{myRequests.filter(r => r.status === 'pending').length + myLeaves.filter(l => l.status === 'pending').length}</p>
                   </div>
                 </div>
@@ -428,7 +428,7 @@ export default function ESSPortal() {
                     <AlertTriangle className="w-6 h-6 text-red-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">{isRTL ? 'المخالفات' : 'Violations'}</p>
+                    <p className="text-sm text-muted-foreground">{isRTL ? 'المخالفات' : 'Violations'}</p>
                     <p className="text-2xl font-bold">{myViolations.filter(v => v.status === 'pending').length}</p>
                   </div>
                 </div>
@@ -443,14 +443,14 @@ export default function ESSPortal() {
             </CardHeader>
             <CardContent>
               {myAttendance.length === 0 ? (
-                <p className="text-slate-500 text-center py-4">{isRTL ? 'لا توجد سجلات' : 'No records'}</p>
+                <p className="text-muted-foreground text-center py-4">{isRTL ? 'لا توجد سجلات' : 'No records'}</p>
               ) : (
                 <div className="space-y-2">
                   {myAttendance.slice(0, 5).map(att => (
-                    <div key={att.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                    <div key={att.id} className="flex items-center justify-between p-3 bg-sand rounded-lg">
                       <div>
                         <p className="font-medium">{format(new Date(att.date), 'dd/MM/yyyy')}</p>
-                        <p className="text-sm text-slate-500">{att.check_in || '-'} - {att.check_out || '-'}</p>
+                        <p className="text-sm text-muted-foreground">{att.check_in || '-'} - {att.check_out || '-'}</p>
                       </div>
                       <StatusBadge status={att.status} />
                     </div>
@@ -469,18 +469,18 @@ export default function ESSPortal() {
             </CardHeader>
             <CardContent>
               {myPayslips.length === 0 ? (
-                <p className="text-slate-500 text-center py-4">{isRTL ? 'لا توجد كشوف رواتب' : 'No payslips available'}</p>
+                <p className="text-muted-foreground text-center py-4">{isRTL ? 'لا توجد كشوف رواتب' : 'No payslips available'}</p>
               ) : (
                 <div className="space-y-3">
                   {myPayslips.sort((a, b) => b.period.localeCompare(a.period)).slice(0, 12).map(payslip => (
-                    <div key={payslip.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                    <div key={payslip.id} className="flex items-center justify-between p-4 bg-sand rounded-lg">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
                           <DollarSign className="w-5 h-5 text-emerald-600" />
                         </div>
                         <div>
                           <p className="font-medium">{payslip.period}</p>
-                          <p className="text-sm text-slate-500">
+                          <p className="text-sm text-muted-foreground">
                             {isRTL ? 'الإجمالي:' : 'Gross:'} {payslip.gross_salary?.toLocaleString()} | {isRTL ? 'الصافي:' : 'Net:'} {payslip.net_salary?.toLocaleString()}
                           </p>
                         </div>
@@ -594,11 +594,11 @@ export default function ESSPortal() {
               </CardHeader>
               <CardContent>
                 {myLoans.length === 0 ? (
-                  <p className="text-slate-500 text-center py-4">{isRTL ? 'لا توجد قروض' : 'No loans'}</p>
+                  <p className="text-muted-foreground text-center py-4">{isRTL ? 'لا توجد قروض' : 'No loans'}</p>
                 ) : (
                   <div className="space-y-3">
                     {myLoans.map(loan => (
-                      <div key={loan.id} className="p-3 bg-slate-50 rounded-lg">
+                      <div key={loan.id} className="p-3 bg-sand rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-medium">{loan.loan_number}</span>
                           <Badge className={loan.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
@@ -607,19 +607,19 @@ export default function ESSPortal() {
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           <div>
-                            <span className="text-slate-500">{isRTL ? 'المبلغ:' : 'Amount:'}</span>
+                            <span className="text-muted-foreground">{isRTL ? 'المبلغ:' : 'Amount:'}</span>
                             <span className="font-medium ms-1">{loan.loan_amount?.toLocaleString()}</span>
                           </div>
                           <div>
-                            <span className="text-slate-500">{isRTL ? 'المتبقي:' : 'Balance:'}</span>
+                            <span className="text-muted-foreground">{isRTL ? 'المتبقي:' : 'Balance:'}</span>
                             <span className="font-medium ms-1">{loan.remaining_balance?.toLocaleString()}</span>
                           </div>
                           <div>
-                            <span className="text-slate-500">{isRTL ? 'القسط:' : 'Installment:'}</span>
+                            <span className="text-muted-foreground">{isRTL ? 'القسط:' : 'Installment:'}</span>
                             <span className="font-medium ms-1">{loan.installment_amount?.toLocaleString()}</span>
                           </div>
                           <div>
-                            <span className="text-slate-500">{isRTL ? 'الأقساط:' : 'Payments:'}</span>
+                            <span className="text-muted-foreground">{isRTL ? 'الأقساط:' : 'Payments:'}</span>
                             <span className="font-medium ms-1">{loan.installments_paid || 0}/{loan.installment_count}</span>
                           </div>
                         </div>
@@ -640,15 +640,15 @@ export default function ESSPortal() {
               </CardHeader>
               <CardContent>
                 {myTuitionAdvances.length === 0 ? (
-                  <p className="text-slate-500 text-center py-4">{isRTL ? 'لا توجد سلف رسوم' : 'No tuition advances'}</p>
+                  <p className="text-muted-foreground text-center py-4">{isRTL ? 'لا توجد سلف رسوم' : 'No tuition advances'}</p>
                 ) : (
                   <div className="space-y-3">
                     {myTuitionAdvances.map(advance => (
-                      <div key={advance.id} className="p-3 bg-slate-50 rounded-lg">
+                      <div key={advance.id} className="p-3 bg-sand rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <div>
                             <span className="font-medium">{advance.student_name}</span>
-                            <span className="text-xs text-slate-500 ms-2">({advance.academic_year})</span>
+                            <span className="text-xs text-muted-foreground ms-2">({advance.academic_year})</span>
                           </div>
                           <Badge className={advance.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
                             {advance.status === 'active' ? (isRTL ? 'نشط' : 'Active') : (isRTL ? 'معلق' : 'Pending')}
@@ -656,19 +656,19 @@ export default function ESSPortal() {
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           <div>
-                            <span className="text-slate-500">{isRTL ? 'المبلغ:' : 'Amount:'}</span>
+                            <span className="text-muted-foreground">{isRTL ? 'المبلغ:' : 'Amount:'}</span>
                             <span className="font-medium ms-1">{advance.advance_amount?.toLocaleString()}</span>
                           </div>
                           <div>
-                            <span className="text-slate-500">{isRTL ? 'المتبقي:' : 'Balance:'}</span>
+                            <span className="text-muted-foreground">{isRTL ? 'المتبقي:' : 'Balance:'}</span>
                             <span className="font-medium ms-1">{advance.remaining_balance?.toLocaleString()}</span>
                           </div>
                           <div>
-                            <span className="text-slate-500">{isRTL ? 'القسط:' : 'Installment:'}</span>
+                            <span className="text-muted-foreground">{isRTL ? 'القسط:' : 'Installment:'}</span>
                             <span className="font-medium ms-1">{advance.installment_amount?.toLocaleString()}</span>
                           </div>
                           <div>
-                            <span className="text-slate-500">{isRTL ? 'الأقساط:' : 'Payments:'}</span>
+                            <span className="text-muted-foreground">{isRTL ? 'الأقساط:' : 'Payments:'}</span>
                             <span className="font-medium ms-1">{advance.installments_paid || 0}/{advance.installment_count}</span>
                           </div>
                         </div>
@@ -697,14 +697,14 @@ export default function ESSPortal() {
             </CardHeader>
             <CardContent>
               {myLeaves.length === 0 ? (
-                <p className="text-slate-500 text-center py-4">{isRTL ? 'لا توجد طلبات' : 'No requests'}</p>
+                <p className="text-muted-foreground text-center py-4">{isRTL ? 'لا توجد طلبات' : 'No requests'}</p>
               ) : (
                 <div className="space-y-2">
                   {myLeaves.map(leave => (
-                    <div key={leave.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                    <div key={leave.id} className="flex items-center justify-between p-3 bg-sand rounded-lg">
                       <div>
                         <p className="font-medium">{leave.leave_type_name}</p>
-                        <p className="text-sm text-slate-500">
+                        <p className="text-sm text-muted-foreground">
                           {format(new Date(leave.start_date), 'dd/MM/yyyy')} - {format(new Date(leave.end_date), 'dd/MM/yyyy')}
                           <span className="mx-2">•</span>
                           {leave.total_days} {isRTL ? 'يوم' : 'days'}
@@ -725,14 +725,14 @@ export default function ESSPortal() {
             </CardHeader>
             <CardContent>
               {myRequests.length === 0 ? (
-                <p className="text-slate-500 text-center py-4">{isRTL ? 'لا توجد طلبات' : 'No requests'}</p>
+                <p className="text-muted-foreground text-center py-4">{isRTL ? 'لا توجد طلبات' : 'No requests'}</p>
               ) : (
                 <div className="space-y-2">
                   {myRequests.map(req => (
-                    <div key={req.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                    <div key={req.id} className="flex items-center justify-between p-3 bg-sand rounded-lg">
                       <div>
                         <p className="font-medium">{requestTypeLabels[req.request_type]}</p>
-                        <p className="text-sm text-slate-500">
+                        <p className="text-sm text-muted-foreground">
                           {format(new Date(req.created_at), 'dd/MM/yyyy')}
                           {req.amount > 0 && <span className="mx-2">• {req.amount.toLocaleString()} {t('sar')}</span>}
                         </p>
@@ -754,7 +754,7 @@ export default function ESSPortal() {
             </CardHeader>
             <CardContent>
               {myAttendance.length === 0 ? (
-                <p className="text-slate-500 text-center py-4">{isRTL ? 'لا توجد سجلات' : 'No records'}</p>
+                <p className="text-muted-foreground text-center py-4">{isRTL ? 'لا توجد سجلات' : 'No records'}</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -794,7 +794,7 @@ export default function ESSPortal() {
                     <div key={vio.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
                       <div>
                         <p className="font-medium">{vio.violation_type}</p>
-                        <p className="text-sm text-slate-500">{format(new Date(vio.violation_date), 'dd/MM/yyyy')}</p>
+                        <p className="text-sm text-muted-foreground">{format(new Date(vio.violation_date), 'dd/MM/yyyy')}</p>
                       </div>
                       <StatusBadge status={vio.status} />
                     </div>
@@ -830,34 +830,34 @@ export default function ESSPortal() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <Label className="text-slate-500">{isRTL ? 'الرقم الوظيفي' : 'Employee ID'}</Label>
+                    <Label className="text-muted-foreground">{isRTL ? 'الرقم الوظيفي' : 'Employee ID'}</Label>
                     <p className="font-medium">{currentEmployee.employee_id}</p>
                   </div>
                   <div>
-                    <Label className="text-slate-500">{isRTL ? 'الاسم' : 'Name'}</Label>
+                    <Label className="text-muted-foreground">{isRTL ? 'الاسم' : 'Name'}</Label>
                     <p className="font-medium">{currentEmployee.name_ar}</p>
-                    {currentEmployee.name_en && <p className="text-sm text-slate-500">{currentEmployee.name_en}</p>}
+                    {currentEmployee.name_en && <p className="text-sm text-muted-foreground">{currentEmployee.name_en}</p>}
                   </div>
                   <div>
-                    <Label className="text-slate-500">{t('email')}</Label>
+                    <Label className="text-muted-foreground">{t('email')}</Label>
                     <p>{currentEmployee.email || '-'}</p>
                   </div>
                   <div>
-                    <Label className="text-slate-500">{t('phone')}</Label>
+                    <Label className="text-muted-foreground">{t('phone')}</Label>
                     <p>{currentEmployee.phone || '-'}</p>
                   </div>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <Label className="text-slate-500">{t('nationalId')}</Label>
+                    <Label className="text-muted-foreground">{t('nationalId')}</Label>
                     <p>{currentEmployee.national_id || '-'}</p>
                   </div>
                   <div>
-                    <Label className="text-slate-500">{isRTL ? 'تاريخ التعيين' : 'Hire Date'}</Label>
+                    <Label className="text-muted-foreground">{isRTL ? 'تاريخ التعيين' : 'Hire Date'}</Label>
                     <p>{currentEmployee.hire_date ? format(new Date(currentEmployee.hire_date), 'dd/MM/yyyy') : '-'}</p>
                   </div>
                   <div>
-                    <Label className="text-slate-500">{isRTL ? 'نوع التوظيف' : 'Employment Type'}</Label>
+                    <Label className="text-muted-foreground">{isRTL ? 'نوع التوظيف' : 'Employment Type'}</Label>
                     <p>{currentEmployee.employment_type || '-'}</p>
                   </div>
                 </div>

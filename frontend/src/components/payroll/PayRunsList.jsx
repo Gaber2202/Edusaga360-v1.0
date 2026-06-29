@@ -215,8 +215,8 @@ export default function PayRunsList({ onViewPayRun }) {
   };
 
   const statusColors = {
-    draft: 'bg-slate-100 text-slate-700',
-    calculated: 'bg-blue-100 text-blue-700',
+    draft: 'bg-sand-alt text-ink',
+    calculated: 'bg-najdi-50 text-najdi-900',
     review: 'bg-amber-100 text-amber-700',
     approved: 'bg-purple-100 text-purple-700',
     exported: 'bg-indigo-100 text-indigo-700',
@@ -239,7 +239,7 @@ export default function PayRunsList({ onViewPayRun }) {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-xl font-semibold">{isRTL ? 'كشوفات الرواتب' : 'Pay Runs'}</h2>
-          <p className="text-sm text-slate-500">{isRTL ? 'إدارة دورات الرواتب الشهرية' : 'Manage monthly payroll cycles'}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'إدارة دورات الرواتب الشهرية' : 'Manage monthly payroll cycles'}</p>
         </div>
         <Button onClick={() => setShowCreateDialog(true)}>
           <Plus className="w-4 h-4 me-2" />
@@ -249,15 +249,15 @@ export default function PayRunsList({ onViewPayRun }) {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       ) : filteredPayRuns.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-            <Calendar className="w-8 h-8 text-slate-400" />
+          <div className="w-16 h-16 bg-sand-alt rounded-full flex items-center justify-center mb-4">
+            <Calendar className="w-8 h-8 text-muted-foreground" />
           </div>
-          <p className="text-slate-600 font-medium">{isRTL ? 'لا توجد كشوفات رواتب' : 'No pay runs yet'}</p>
-          <p className="text-sm text-slate-400 mt-1">{isRTL ? 'أنشئ كشف رواتب جديداً للبدء' : 'Create a new pay run to get started'}</p>
+          <p className="text-muted-foreground font-medium">{isRTL ? 'لا توجد كشوفات رواتب' : 'No pay runs yet'}</p>
+          <p className="text-sm text-muted-foreground mt-1">{isRTL ? 'أنشئ كشف رواتب جديداً للبدء' : 'Create a new pay run to get started'}</p>
           <Button className="mt-4" onClick={() => setShowCreateDialog(true)}>
             <Plus className="w-4 h-4 me-2" />
             {isRTL ? 'كشف رواتب جديد' : 'New Pay Run'}
@@ -271,40 +271,40 @@ export default function PayRunsList({ onViewPayRun }) {
               <div
                 key={run.id}
                 onClick={() => onViewPayRun(run)}
-                className="bg-white border border-slate-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
+                className="bg-white border border-border rounded-xl p-5 hover:border-najdi-100 hover:shadow-md transition-all cursor-pointer group"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-                      <DollarSign className="w-6 h-6 text-blue-600" />
+                    <div className="w-12 h-12 rounded-xl bg-najdi-50 flex items-center justify-center flex-shrink-0">
+                      <DollarSign className="w-6 h-6 text-najdi-700" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="font-semibold text-slate-900">{run.pay_run_number || run.period}</p>
+                        <p className="font-semibold text-ink">{run.pay_run_number || run.period}</p>
                         <Badge className={`text-xs ${statusColors[stage]}`}>
                           {isRTL ? statusLabels[stage]?.ar : statusLabels[stage]?.en}
                         </Badge>
                       </div>
-                      <p className="text-sm text-slate-500 mt-0.5">{run.branch_name} • {run.period}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">{run.branch_name} • {run.period}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-8">
                     <div className="text-center hidden md:block">
-                      <p className="text-xs text-slate-400">{isRTL ? 'الموظفون' : 'Employees'}</p>
+                      <p className="text-xs text-muted-foreground">{isRTL ? 'الموظفون' : 'Employees'}</p>
                       <div className="flex items-center gap-1 justify-center mt-0.5">
-                        <Users className="w-4 h-4 text-slate-400" />
-                        <span className="font-semibold text-slate-700">{run.employee_count || 0}</span>
+                        <Users className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-semibold text-ink">{run.employee_count || 0}</span>
                       </div>
                     </div>
                     <div className="text-center hidden lg:block">
-                      <p className="text-xs text-slate-400">{isRTL ? 'الإجمالي' : 'Gross'}</p>
-                      <p className="font-semibold text-slate-700 mt-0.5">{(run.total_earnings || 0).toLocaleString()} <span className="text-xs font-normal text-slate-400">{isRTL ? 'ر.س' : 'SAR'}</span></p>
+                      <p className="text-xs text-muted-foreground">{isRTL ? 'الإجمالي' : 'Gross'}</p>
+                      <p className="font-semibold text-ink mt-0.5">{(run.total_earnings || 0).toLocaleString()} <span className="text-xs font-normal text-muted-foreground">{isRTL ? 'ر.س' : 'SAR'}</span></p>
                     </div>
                     <div className="text-center">
-                      <p className="text-xs text-slate-400">{isRTL ? 'الصافي' : 'Net'}</p>
-                      <p className="font-bold text-emerald-600 mt-0.5">{(run.net_payroll || 0).toLocaleString()} <span className="text-xs font-normal text-slate-400">{isRTL ? 'ر.س' : 'SAR'}</span></p>
+                      <p className="text-xs text-muted-foreground">{isRTL ? 'الصافي' : 'Net'}</p>
+                      <p className="font-bold text-emerald-600 mt-0.5">{(run.net_payroll || 0).toLocaleString()} <span className="text-xs font-normal text-muted-foreground">{isRTL ? 'ر.س' : 'SAR'}</span></p>
                     </div>
-                    <Eye className="w-5 h-5 text-slate-300 group-hover:text-blue-500 transition-colors" />
+                    <Eye className="w-5 h-5 text-muted-foreground group-hover:text-najdi-500 transition-colors" />
                   </div>
                 </div>
               </div>
@@ -358,7 +358,7 @@ export default function PayRunsList({ onViewPayRun }) {
                 <Card>
                   <CardContent className="p-4 space-y-2">
                     <div className="flex justify-between items-center">
-                      <p className="text-sm text-slate-500">{isRTL ? 'الموظفون المؤهلون' : 'Eligible Employees'}</p>
+                      <p className="text-sm text-muted-foreground">{isRTL ? 'الموظفون المؤهلون' : 'Eligible Employees'}</p>
                       <p className="text-2xl font-bold text-emerald-500">{matched.length}</p>
                     </div>
                     {matched.length === 0 && (
@@ -379,7 +379,7 @@ export default function PayRunsList({ onViewPayRun }) {
                         </p>
                       </div>
                     )}
-                    <p className="text-xs text-slate-400">{isRTL ? 'سيتم تضمينهم جميعاً في كشف الرواتب' : 'All will be included in pay run'}</p>
+                    <p className="text-xs text-muted-foreground">{isRTL ? 'سيتم تضمينهم جميعاً في كشف الرواتب' : 'All will be included in pay run'}</p>
                   </CardContent>
                 </Card>
               );

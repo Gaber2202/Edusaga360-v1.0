@@ -146,14 +146,14 @@ export default function TrialUsers() {
         }}
       />
 
-      <Card className="bg-blue-50 border-blue-200">
+      <Card className="bg-najdi-50 border-najdi-100">
         <CardContent className="p-4 flex items-start gap-3">
-          <TestTube className="w-5 h-5 text-blue-600 mt-0.5" />
+          <TestTube className="w-5 h-5 text-najdi-700 mt-0.5" />
           <div>
-            <p className="font-medium text-blue-900">
+            <p className="font-medium text-najdi-900">
               {isRTL ? 'كيف تعمل الحسابات التجريبية؟' : 'How Trial Accounts Work'}
             </p>
-            <p className="text-sm text-blue-700 mt-1">
+            <p className="text-sm text-najdi-900 mt-1">
               {isRTL 
                 ? 'يمكن للمستخدمين التجريبيين استكشاف النظام بأمان مع وصول محدود. لا يمكنهم حذف البيانات الأساسية. منحهم فترة صلاحية لضمان الأمان.'
                 : 'Trial users can explore the system safely with restricted access. They cannot delete core data. Set expiry dates for security.'}
@@ -183,7 +183,7 @@ export default function TrialUsers() {
               </TableRow>
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-slate-400">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   {isRTL ? 'لا يوجد مستخدمون تجريبيون' : 'No trial users found'}
                 </TableCell>
               </TableRow>
@@ -223,7 +223,7 @@ export default function TrialUsers() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <TestTube className="w-5 h-5 text-blue-600" />
+              <TestTube className="w-5 h-5 text-najdi-700" />
               {isRTL ? 'إنشاء مستخدم تجريبي' : 'Create Trial User'}
             </DialogTitle>
           </DialogHeader>
@@ -265,7 +265,7 @@ export default function TrialUsers() {
                 value={form.trial_days}
                 onChange={(e) => setForm({...form, trial_days: parseInt(e.target.value) || 14})}
               />
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 {isRTL 
                   ? `الصلاحية حتى: ${format(addDays(new Date(), form.trial_days), 'dd/MM/yyyy')}`
                   : `Expires on: ${format(addDays(new Date(), form.trial_days), 'dd/MM/yyyy')}`}
@@ -276,7 +276,7 @@ export default function TrialUsers() {
             <Button variant="outline" onClick={() => setShowDialog(false)}>
               {isRTL ? 'إلغاء' : 'Cancel'}
             </Button>
-            <Button onClick={handleCreateTrialUser} disabled={creating} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleCreateTrialUser} disabled={creating} className="bg-najdi-700 hover:bg-najdi-900">
               {creating && <Loader2 className="w-4 h-4 animate-spin me-2" />}
               <Mail className="w-4 h-4 me-2" />
               {isRTL ? 'إنشاء وإرسال دعوة' : 'Create & Send Invite'}

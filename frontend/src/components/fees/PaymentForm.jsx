@@ -169,25 +169,25 @@ export default function PaymentForm({ open, onClose, onSuccess, invoice }) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Invoice Info */}
-          <div className="bg-slate-50 rounded-lg p-4 space-y-2">
+          <div className="bg-sand rounded-lg p-4 space-y-2">
             <div className="flex justify-between">
-              <span className="text-slate-500">{isRTL ? 'رقم الفاتورة' : 'Invoice'}</span>
+              <span className="text-muted-foreground">{isRTL ? 'رقم الفاتورة' : 'Invoice'}</span>
               <span className="font-medium">{invoice.invoice_number}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">{t('studentName')}</span>
+              <span className="text-muted-foreground">{t('studentName')}</span>
               <span className="font-medium">{invoice.student_name}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">{t('total')}</span>
+              <span className="text-muted-foreground">{t('total')}</span>
               <span className="font-medium">{invoice.total_amount?.toLocaleString()} {t('sar')}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">{t('paid')}</span>
+              <span className="text-muted-foreground">{t('paid')}</span>
               <span className="font-medium text-emerald-600">{(invoice.paid_amount || 0).toLocaleString()} {t('sar')}</span>
             </div>
             <div className="flex justify-between border-t pt-2">
-              <span className="text-slate-500">{isRTL ? 'المتبقي' : 'Remaining'}</span>
+              <span className="text-muted-foreground">{isRTL ? 'المتبقي' : 'Remaining'}</span>
               <span className="font-bold text-red-600">{remaining.toLocaleString()} {t('sar')}</span>
             </div>
           </div>
@@ -204,7 +204,7 @@ export default function PaymentForm({ open, onClose, onSuccess, invoice }) {
                 required
                 className="pe-12"
               />
-              <span className="absolute top-1/2 -translate-y-1/2 end-3 text-slate-500 text-sm">
+              <span className="absolute top-1/2 -translate-y-1/2 end-3 text-muted-foreground text-sm">
                 {t('sar')}
               </span>
             </div>

@@ -488,8 +488,8 @@ EduSaga 360
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-slate-300 border-t-slate-900 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-600">{t('loading')}</p>
+          <div className="w-16 h-16 border-4 border-border border-t-najdi-900 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">{t('loading')}</p>
         </div>
       </div>
     );
@@ -499,8 +499,8 @@ EduSaga 360
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-600">{isRTL ? 'لم يتم العثور على الفاتورة' : 'Invoice not found'}</p>
+          <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">{isRTL ? 'لم يتم العثور على الفاتورة' : 'Invoice not found'}</p>
         </div>
       </div>
     );
@@ -537,7 +537,7 @@ EduSaga 360
       case 'recorded': return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'reversed': return 'bg-red-100 text-red-800 border-red-200';
       case 'failed': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-slate-100 text-slate-800 border-slate-200';
+      default: return 'bg-sand-alt text-ink border-border';
     }
   };
 
@@ -598,13 +598,13 @@ EduSaga 360
 
       {/* Invoice Card */}
       <Card>
-        <CardHeader className="bg-slate-50">
+        <CardHeader className="bg-sand">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-2xl">
                 {isRTL ? 'فاتورة رقم' : 'Invoice'} #{invoice.invoice_number}
               </CardTitle>
-              <p className="text-sm text-slate-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {isRTL ? 'تاريخ الإصدار' : 'Issue Date'}: {fmtDate(invoice.issue_date)}
               </p>
             </div>
@@ -613,7 +613,7 @@ EduSaga 360
                 invoice.status === 'paid' ? 'bg-emerald-100 text-emerald-800' :
                 invoice.status === 'partial' ? 'bg-amber-100 text-amber-800' :
                 invoice.status === 'overdue' ? 'bg-red-100 text-red-800' :
-                'bg-slate-100 text-slate-800'
+                'bg-sand-alt text-ink'
               }
             >
               {t(invoice.status)}
@@ -623,11 +623,11 @@ EduSaga 360
 
         <Tabs defaultValue="details" className="w-full">
           <TabsList className="w-full justify-start border-b rounded-none bg-transparent p-0 h-auto">
-            <TabsTrigger value="details" className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent">
+            <TabsTrigger value="details" className="rounded-none border-b-2 border-transparent data-[state=active]:border-najdi-900 data-[state=active]:bg-transparent">
               <FileText className="w-4 h-4 me-2" />
               {isRTL ? 'تفاصيل الفاتورة' : 'Invoice Details'}
             </TabsTrigger>
-            <TabsTrigger value="payments" className="rounded-none border-b-2 border-transparent data-[state=active]:border-slate-900 data-[state=active]:bg-transparent">
+            <TabsTrigger value="payments" className="rounded-none border-b-2 border-transparent data-[state=active]:border-najdi-900 data-[state=active]:bg-transparent">
               <CreditCard className="w-4 h-4 me-2" />
               {isRTL ? 'طرق الدفع وسجل السداد' : 'Payment Methods & History'}
             </TabsTrigger>
@@ -637,17 +637,17 @@ EduSaga 360
           {/* Student Info */}
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <h3 className="text-sm font-semibold text-slate-500 mb-2">{isRTL ? 'بيانات الطالب' : 'Student Details'}</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground mb-2">{isRTL ? 'بيانات الطالب' : 'Student Details'}</h3>
               <p className="font-semibold text-lg">{invoice.student_name}</p>
-              <p className="text-slate-600">{t(invoice.grade)}</p>
-              <p className="text-slate-600">{invoice.academic_year}</p>
+              <p className="text-muted-foreground">{t(invoice.grade)}</p>
+              <p className="text-muted-foreground">{invoice.academic_year}</p>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-slate-500 mb-2">{isRTL ? 'تفاصيل الدفع' : 'Payment Details'}</h3>
-              <p className="text-slate-600">{t('dueDate')}: {fmtDate(invoice.due_date)}</p>
+              <h3 className="text-sm font-semibold text-muted-foreground mb-2">{isRTL ? 'تفاصيل الدفع' : 'Payment Details'}</h3>
+              <p className="text-muted-foreground">{t('dueDate')}: {fmtDate(invoice.due_date)}</p>
               {invoice.preferred_payment_method && (
                 <div className="mt-2">
-                  <p className="text-xs text-slate-500">{isRTL ? 'طريقة الدفع المفضلة' : 'Preferred Payment Method'}:</p>
+                  <p className="text-xs text-muted-foreground">{isRTL ? 'طريقة الدفع المفضلة' : 'Preferred Payment Method'}:</p>
                   <Badge variant="outline" className={`mt-1 ${invoice.preferred_payment_method === 'tamara' ? 'border-purple-300 bg-purple-50 text-purple-700' : ''}`}>
                     {invoice.preferred_payment_method === 'credit_card' && (isRTL ? 'بطاقة ائتمان' : 'Credit Card')}
                     {invoice.preferred_payment_method === 'bank_transfer' && (isRTL ? 'تحويل بنكي' : 'Bank Transfer')}
@@ -666,10 +666,10 @@ EduSaga 360
             <h3 className="font-semibold mb-4">{isRTL ? 'بنود الفاتورة' : 'Invoice Items'}</h3>
             <div className="space-y-2">
               {invoice.items?.map((item, idx) => (
-                <div key={idx} className="flex justify-between items-center py-2 border-b border-slate-100">
+                <div key={idx} className="flex justify-between items-center py-2 border-b border-border">
                   <div>
                     <p className="font-medium">{itemDesc(item, isRTL)}</p>
-                    <p className="text-sm text-slate-500">{item.fee_type || item.category_code || ''}</p>
+                    <p className="text-sm text-muted-foreground">{item.fee_type || item.category_code || ''}</p>
                   </div>
                   <p className="font-semibold">{money(itemAmount(item))} {t('sar')}</p>
                 </div>
@@ -682,12 +682,12 @@ EduSaga 360
           {/* Bank Account Details */}
           {invoice.preferred_payment_method === 'bank_transfer' && invoice.bank_account_details && (
             <>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-semibold mb-2 text-blue-900">{isRTL ? 'تفاصيل التحويل البنكي' : 'Bank Transfer Details'}</h3>
+              <div className="bg-najdi-50 border border-najdi-100 rounded-lg p-4">
+                <h3 className="font-semibold mb-2 text-najdi-900">{isRTL ? 'تفاصيل التحويل البنكي' : 'Bank Transfer Details'}</h3>
                 <div className="space-y-1 text-sm">
-                  <p><span className="text-slate-600">{isRTL ? 'اسم البنك' : 'Bank Name'}:</span> <span className="font-medium">{invoice.bank_account_details.bank_name}</span></p>
-                  <p><span className="text-slate-600">{isRTL ? 'اسم الحساب' : 'Account Name'}:</span> <span className="font-medium">{invoice.bank_account_details.account_name}</span></p>
-                  <p><span className="text-slate-600">{isRTL ? 'رقم الآيبان' : 'IBAN'}:</span> <span className="font-mono font-medium">{invoice.bank_account_details.iban}</span></p>
+                  <p><span className="text-muted-foreground">{isRTL ? 'اسم البنك' : 'Bank Name'}:</span> <span className="font-medium">{invoice.bank_account_details.bank_name}</span></p>
+                  <p><span className="text-muted-foreground">{isRTL ? 'اسم الحساب' : 'Account Name'}:</span> <span className="font-medium">{invoice.bank_account_details.account_name}</span></p>
+                  <p><span className="text-muted-foreground">{isRTL ? 'رقم الآيبان' : 'IBAN'}:</span> <span className="font-mono font-medium">{invoice.bank_account_details.iban}</span></p>
                 </div>
               </div>
               <Separator />
@@ -696,7 +696,7 @@ EduSaga 360
 
           {/* Total Section */}
           <div className="space-y-2">
-            <div className="flex justify-between text-slate-600">
+            <div className="flex justify-between text-muted-foreground">
               <span>{isRTL ? 'المجموع الفرعي' : 'Subtotal'}</span>
               <span>{money(invoice.subtotal)} {t('sar')}</span>
             </div>
@@ -715,11 +715,11 @@ EduSaga 360
               <span>{money(invoice.paid_amount)} {t('sar')}</span>
             </div>
             {paymentLogs.length > 0 && (
-              <div className="flex justify-between items-center text-sm text-slate-600 pt-2 border-t border-slate-100">
+              <div className="flex justify-between items-center text-sm text-muted-foreground pt-2 border-t border-border">
                 <span>{isRTL ? 'تم الدفع بواسطة' : 'Paid via'}:</span>
                 <div className="flex gap-2 flex-wrap justify-end">
                   {[...new Set(paymentLogs.filter(log => log.status !== 'reversed').map(log => log.payment_method))].map((method, idx) => (
-                    <Badge key={idx} variant="outline" className="gap-1.5 bg-slate-50">
+                    <Badge key={idx} variant="outline" className="gap-1.5 bg-sand">
                       {getPaymentMethodIcon(method)}
                       {getPaymentMethodText(method)}
                     </Badge>
@@ -739,19 +739,19 @@ EduSaga 360
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card>
                 <CardContent className="p-4">
-                  <p className="text-sm text-slate-500">{isRTL ? 'إجمالي الفاتورة' : 'Total Invoice'}</p>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الفاتورة' : 'Total Invoice'}</p>
                   <p className="text-2xl font-bold">{money(invoice.total_amount)} {t('sar')}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
-                  <p className="text-sm text-slate-500">{isRTL ? 'المدفوع' : 'Paid to Date'}</p>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'المدفوع' : 'Paid to Date'}</p>
                   <p className="text-2xl font-bold text-emerald-600">{money(invoice.paid_amount)} {t('sar')}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
-                  <p className="text-sm text-slate-500">{isRTL ? 'الرصيد المتبقي' : 'Remaining Balance'}</p>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'الرصيد المتبقي' : 'Remaining Balance'}</p>
                   <p className="text-2xl font-bold text-red-600">{money(balance)} {t('sar')}</p>
                 </CardContent>
               </Card>
@@ -772,8 +772,8 @@ EduSaga 360
               </CardHeader>
               <CardContent>
                 {paymentLogs.length === 0 ? (
-                  <div className="text-center py-12 text-slate-500">
-                    <Clock className="w-16 h-16 mx-auto mb-3 text-slate-300" />
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Clock className="w-16 h-16 mx-auto mb-3 text-muted-foreground" />
                     <p className="text-lg font-medium">{isRTL ? 'لا توجد دفعات مسجلة' : 'No payments recorded yet'}</p>
                     <p className="text-sm mt-1">{isRTL ? 'سيتم عرض سجل الدفعات هنا' : 'Payment history will appear here'}</p>
                   </div>
@@ -803,10 +803,10 @@ EduSaga 360
                             <TableRow key={log.id} className={log.status === 'reversed' ? 'opacity-50' : ''}>
                               <TableCell>
                                 <div className="flex items-center gap-2">
-                                  <Calendar className="w-4 h-4 text-slate-400" />
+                                  <Calendar className="w-4 h-4 text-muted-foreground" />
                                   <div>
                                     <p className="font-medium text-sm">{format(new Date(log.payment_date), 'dd/MM/yyyy')}</p>
-                                    <p className="text-xs text-slate-500">{format(new Date(log.payment_date), 'HH:mm')}</p>
+                                    <p className="text-xs text-muted-foreground">{format(new Date(log.payment_date), 'HH:mm')}</p>
                                   </div>
                                 </div>
                               </TableCell>
@@ -838,20 +838,20 @@ EduSaga 360
                                 </span>
                               </TableCell>
                               <TableCell>
-                                <span className="font-medium text-slate-700">
+                                <span className="font-medium text-ink">
                                   {remainingAfter.toLocaleString()} {t('sar')}
                                 </span>
                               </TableCell>
                               <TableCell>
                                 {log.reference_number ? (
-                                  <span className="text-xs font-mono bg-slate-100 px-2 py-1 rounded">{log.reference_number}</span>
+                                  <span className="text-xs font-mono bg-sand-alt px-2 py-1 rounded">{log.reference_number}</span>
                                 ) : (
-                                  <span className="text-slate-400 text-sm">-</span>
+                                  <span className="text-muted-foreground text-sm">-</span>
                                 )}
                               </TableCell>
                               <TableCell>
                                 <p className="text-sm">{log.collected_by}</p>
-                                {log.notes && <p className="text-xs text-slate-500 mt-1">{log.notes}</p>}
+                                {log.notes && <p className="text-xs text-muted-foreground mt-1">{log.notes}</p>}
                               </TableCell>
                               <TableCell>
                                 <Badge variant="outline" className={getStatusColor(log.status)}>
@@ -864,13 +864,13 @@ EduSaga 360
                                     href={log.attachment_url} 
                                     target="_blank" 
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm"
+                                    className="flex items-center gap-1 text-najdi-700 hover:text-najdi-900 text-sm"
                                   >
                                     <ExternalLink className="w-3 h-3" />
                                     {isRTL ? 'عرض' : 'View'}
                                   </a>
                                 ) : (
-                                  <span className="text-slate-400 text-sm">-</span>
+                                  <span className="text-muted-foreground text-sm">-</span>
                                 )}
                               </TableCell>
                             </TableRow>
@@ -913,7 +913,7 @@ EduSaga 360
           <div className="flex items-center justify-between">
             <CardTitle>{isRTL ? 'سجل المدفوعات' : 'Payments Log'}</CardTitle>
             {balance > 0 && (userRole === 'admin' || userRole === 'accountant') && (
-              <Button onClick={() => setShowPaymentLogForm(true)} className="gap-2 bg-slate-900">
+              <Button onClick={() => setShowPaymentLogForm(true)} className="gap-2 bg-najdi-900">
                 <CreditCard className="w-4 h-4" />
                 {isRTL ? 'تسجيل دفعة' : 'Record Payment'}
               </Button>
@@ -922,8 +922,8 @@ EduSaga 360
         </CardHeader>
         <CardContent>
           {paymentLogs.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">
-              <Clock className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+            <div className="text-center py-8 text-muted-foreground">
+              <Clock className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
               <p>{isRTL ? 'لا توجد دفعات مسجلة' : 'No payments recorded yet'}</p>
             </div>
           ) : (
@@ -934,7 +934,7 @@ EduSaga 360
                   className={`p-4 rounded-lg border ${
                     log.status === 'reversed' ? 'bg-red-50 border-red-200' :
                     log.status === 'reconciled' ? 'bg-emerald-50 border-emerald-200' :
-                    'bg-slate-50 border-slate-200'
+                    'bg-sand border-border'
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -942,17 +942,17 @@ EduSaga 360
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                         log.status === 'reversed' ? 'bg-red-100' :
                         log.status === 'reconciled' ? 'bg-emerald-100' :
-                        'bg-slate-200'
+                        'bg-sand-alt'
                       }`}>
                         <CheckCircle2 className={`w-5 h-5 ${
                           log.status === 'reversed' ? 'text-red-600' :
                           log.status === 'reconciled' ? 'text-emerald-600' :
-                          'text-slate-600'
+                          'text-muted-foreground'
                         }`} />
                       </div>
                       <div>
                         <p className="font-semibold">{log.amount.toLocaleString()} {t('sar')}</p>
-                        <p className="text-sm text-slate-600">
+                        <p className="text-sm text-muted-foreground">
                           {log.payment_method === 'credit_card' && (isRTL ? 'بطاقة ائتمان' : 'Credit Card')}
                           {log.payment_method === 'bank_transfer' && (isRTL ? 'تحويل بنكي' : 'Bank Transfer')}
                           {log.payment_method === 'cash' && (isRTL ? 'نقداً' : 'Cash')}
@@ -960,13 +960,13 @@ EduSaga 360
                           {log.payment_method === 'other' && (isRTL ? 'أخرى' : 'Other')}
                           {log.reference_number && ` - ${isRTL ? 'رقم المرجع' : 'Ref'}: ${log.reference_number}`}
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-muted-foreground">
                           {format(new Date(log.payment_date), 'dd/MM/yyyy HH:mm')}
                           {log.collected_by && ` • ${isRTL ? 'بواسطة' : 'by'} ${log.collected_by}`}
                         </p>
-                        {log.notes && <p className="text-xs text-slate-600 mt-1">{log.notes}</p>}
+                        {log.notes && <p className="text-xs text-muted-foreground mt-1">{log.notes}</p>}
                         {log.attachment_url && (
-                          <a href={log.attachment_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline mt-1 inline-block">
+                          <a href={log.attachment_url} target="_blank" rel="noopener noreferrer" className="text-xs text-najdi-700 hover:underline mt-1 inline-block">
                             {isRTL ? 'عرض المرفق' : 'View Attachment'}
                           </a>
                         )}
@@ -975,7 +975,7 @@ EduSaga 360
                     <Badge variant="outline" className={
                       log.status === 'reversed' ? 'bg-red-100 text-red-700 border-red-300' :
                       log.status === 'reconciled' ? 'bg-emerald-100 text-emerald-700 border-emerald-300' :
-                      'bg-slate-100 text-slate-700 border-slate-300'
+                      'bg-sand-alt text-ink border-border'
                     }>
                       {log.status === 'recorded' && (isRTL ? 'مسجل' : 'Recorded')}
                       {log.status === 'reconciled' && (isRTL ? 'تمت المطابقة' : 'Reconciled')}

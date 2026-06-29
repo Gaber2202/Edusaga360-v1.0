@@ -110,14 +110,14 @@ function DocUploadField({ label, value, onChange, isRTL }) {
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 min-w-0">
-        <Label className="text-xs text-slate-600 mb-1 block">{label}</Label>
+        <Label className="text-xs text-muted-foreground mb-1 block">{label}</Label>
         {value ? (
           <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs">
             <FileText className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
             <a href={value} target="_blank" rel="noreferrer" className="text-emerald-700 font-medium truncate hover:underline">
               {isRTL ? 'عرض الملف' : 'View file'}
             </a>
-            <button type="button" onClick={() => onChange('')} className="ms-auto text-slate-400 hover:text-red-500">
+            <button type="button" onClick={() => onChange('')} className="ms-auto text-muted-foreground hover:text-red-500">
               <X className="w-3 h-3" />
             </button>
           </div>
@@ -126,7 +126,7 @@ function DocUploadField({ label, value, onChange, isRTL }) {
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="w-full flex items-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 py-1.5 text-xs text-slate-500 hover:border-blue-400 hover:text-blue-600 transition-colors"
+            className="w-full flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-1.5 text-xs text-muted-foreground hover:border-najdi-500 hover:text-najdi-700 transition-colors"
           >
             {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
             {isRTL ? 'رفع ملف' : 'Upload file'}
@@ -284,12 +284,12 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
           {/* Photo */}
           <div className="flex justify-center pb-2">
             <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-slate-200">
+              <div className="w-24 h-24 rounded-full bg-sand-alt flex items-center justify-center overflow-hidden border-2 border-border">
                 {formData.photo_url
                   ? <img src={formData.photo_url} alt="Student" className="w-full h-full object-cover" />
-                  : <span className="text-3xl text-slate-400">{formData.name_ar?.[0] || '?'}</span>}
+                  : <span className="text-3xl text-muted-foreground">{formData.name_ar?.[0] || '?'}</span>}
               </div>
-              <label className="absolute bottom-0 end-0 w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center cursor-pointer hover:bg-slate-800 transition-colors">
+              <label className="absolute bottom-0 end-0 w-8 h-8 bg-najdi-900 rounded-full flex items-center justify-center cursor-pointer hover:bg-najdi-900 transition-colors">
                 <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" disabled={uploadingPhoto} />
                 {uploadingPhoto ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Upload className="w-4 h-4 text-white" />}
               </label>
@@ -439,8 +439,8 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
               </div>
 
               {/* Billing preferences */}
-              <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 space-y-3">
-                <h4 className="font-semibold text-blue-900 text-sm flex items-center gap-2">
+              <div className="rounded-xl border border-najdi-100 bg-najdi-50/60 p-4 space-y-3">
+                <h4 className="font-semibold text-najdi-900 text-sm flex items-center gap-2">
                   <CreditCard className="w-4 h-4" />
                   {tt('تفضيلات الفواتير والرسوم', 'Billing & Fee Preferences')}
                 </h4>
@@ -482,8 +482,8 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
             {/* ── Guardian ── */}
             <TabsContent value="guardian" className="space-y-4 pt-4">
               <div className="space-y-3">
-                <h4 className="font-semibold text-slate-800 flex items-center gap-2 text-sm">
-                  <UserPlus className="w-4 h-4 text-blue-500" />
+                <h4 className="font-semibold text-ink flex items-center gap-2 text-sm">
+                  <UserPlus className="w-4 h-4 text-najdi-500" />
                   {tt('ولي الأمر الأول', 'Primary Guardian')}
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -536,7 +536,7 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
               </div>
 
               <div className="border-t pt-4 space-y-3">
-                <h4 className="font-semibold text-slate-800 flex items-center gap-2 text-sm">
+                <h4 className="font-semibold text-ink flex items-center gap-2 text-sm">
                   <UserPlus className="w-4 h-4 text-purple-500" />
                   {tt('ولي الأمر الثاني (اختياري)', 'Secondary Guardian (Optional)')}
                 </h4>
@@ -573,7 +573,7 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
               </div>
 
               <div className="border-t pt-4 space-y-3">
-                <h4 className="font-semibold text-slate-800 text-sm">{tt('اتصال الطوارئ', 'Emergency Contact')}</h4>
+                <h4 className="font-semibold text-ink text-sm">{tt('اتصال الطوارئ', 'Emergency Contact')}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label>{tt('الاسم', 'Name')}</Label>
@@ -620,7 +620,7 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
 
             {/* ── Documents ── */}
             <TabsContent value="docs" className="space-y-5 pt-4">
-              <p className="text-xs text-slate-500">{tt('ارفع صور أو ملفات PDF للوثائق الرسمية. كل الملفات مشفرة ومخزنة بأمان.', 'Upload photos or PDFs of official documents. All files are encrypted and stored securely.')}</p>
+              <p className="text-xs text-muted-foreground">{tt('ارفع صور أو ملفات PDF للوثائق الرسمية. كل الملفات مشفرة ومخزنة بأمان.', 'Upload photos or PDFs of official documents. All files are encrypted and stored securely.')}</p>
               <div className="grid grid-cols-1 gap-4">
                 <DocUploadField
                   label={tt('صورة شخصية (رسمية)', 'Student Photo (Official)')}
@@ -664,7 +664,7 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
 
           <div className="flex justify-end gap-3 pt-4 border-t mt-4">
             <Button type="button" variant="outline" onClick={onClose}>{t('cancel')}</Button>
-            <Button type="submit" disabled={loading} className="bg-slate-900 hover:bg-slate-800 gap-2">
+            <Button type="submit" disabled={loading} className="bg-najdi-900 hover:bg-najdi-900 gap-2">
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {t('save')}
             </Button>

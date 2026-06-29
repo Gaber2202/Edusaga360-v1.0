@@ -20,13 +20,13 @@ import { toast } from 'sonner';
 const OPEN_STATES = ['received', 'pending_deposit', 'deposited'];
 
 const STATUS_META = {
-  received: { ar: 'مستلم', en: 'Received', cls: 'bg-slate-100 text-slate-700' },
+  received: { ar: 'مستلم', en: 'Received', cls: 'bg-sand-alt text-ink' },
   pending_deposit: { ar: 'بانتظار الإيداع', en: 'Pending Deposit', cls: 'bg-amber-100 text-amber-700' },
-  deposited: { ar: 'مودع', en: 'Deposited', cls: 'bg-blue-100 text-blue-700' },
+  deposited: { ar: 'مودع', en: 'Deposited', cls: 'bg-najdi-50 text-najdi-900' },
   cleared: { ar: 'محصّل', en: 'Cleared', cls: 'bg-emerald-100 text-emerald-700' },
   bounced: { ar: 'مرتجع', en: 'Bounced', cls: 'bg-red-100 text-red-700' },
   reconciled: { ar: 'مسوّى', en: 'Reconciled', cls: 'bg-emerald-100 text-emerald-800' },
-  cancelled: { ar: 'ملغي', en: 'Cancelled', cls: 'bg-slate-100 text-slate-500' },
+  cancelled: { ar: 'ملغي', en: 'Cancelled', cls: 'bg-sand-alt text-muted-foreground' },
 };
 
 // Mirrors backend services/chequeLifecycle.ts — UI only offers legal moves.
@@ -154,7 +154,7 @@ export default function ChequeManagement() {
   };
 
   const statusBadge = (s) => {
-    const m = STATUS_META[s] || { ar: s, en: s, cls: 'bg-slate-100 text-slate-700' };
+    const m = STATUS_META[s] || { ar: s, en: s, cls: 'bg-sand-alt text-ink' };
     return <Badge className={m.cls}>{tt(m.ar, m.en)}</Badge>;
   };
 
@@ -171,7 +171,7 @@ export default function ChequeManagement() {
             <Banknote className="w-6 h-6" />
             {tt('إدارة الشيكات', 'Cheque Management')}
           </h1>
-          <p className="text-sm text-slate-500">{tt('تتبع دورة حياة الشيكات والشيكات الآجلة', 'Track cheque lifecycle and post-dated cheques (PDCs)')}</p>
+          <p className="text-sm text-muted-foreground">{tt('تتبع دورة حياة الشيكات والشيكات الآجلة', 'Track cheque lifecycle and post-dated cheques (PDCs)')}</p>
         </div>
         <Button onClick={() => setShowCreate(true)} className="gap-2">
           <Plus className="w-4 h-4" />
@@ -204,9 +204,9 @@ export default function ChequeManagement() {
         </CardHeader>
         <CardContent className="overflow-x-auto">
           {isLoading ? (
-            <div className="py-12 text-center text-slate-400"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div>
+            <div className="py-12 text-center text-muted-foreground"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div>
           ) : visible.length === 0 ? (
-            <div className="py-12 text-center text-slate-400">{tt('لا توجد شيكات', 'No cheques')}</div>
+            <div className="py-12 text-center text-muted-foreground">{tt('لا توجد شيكات', 'No cheques')}</div>
           ) : (
             <Table>
               <TableHeader>

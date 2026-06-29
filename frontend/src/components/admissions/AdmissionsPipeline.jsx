@@ -6,8 +6,8 @@ import { differenceInDays } from 'date-fns';
 import { Search, AlertTriangle, Clock, User, ChevronRight } from 'lucide-react';
 
 const PIPELINE_STAGES = [
-  { key: 'inquiry',       label_ar: 'استفسار',             label_en: 'Inquiry',             color: 'bg-slate-100 border-slate-300',   badge: 'bg-slate-200 text-slate-700',  sla: 2  },
-  { key: 'submitted',     label_ar: 'مقدَّم',               label_en: 'Submitted',            color: 'bg-blue-50 border-blue-200',      badge: 'bg-blue-100 text-blue-700',    sla: 3  },
+  { key: 'inquiry',       label_ar: 'استفسار',             label_en: 'Inquiry',             color: 'bg-sand-alt border-border',   badge: 'bg-sand-alt text-ink',  sla: 2  },
+  { key: 'submitted',     label_ar: 'مقدَّم',               label_en: 'Submitted',            color: 'bg-najdi-50 border-najdi-100',      badge: 'bg-najdi-50 text-najdi-900',    sla: 3  },
   { key: 'under_review',  label_ar: 'مراجعة الوثائق',       label_en: 'Docs Review',          color: 'bg-yellow-50 border-yellow-200',  badge: 'bg-yellow-100 text-yellow-700',sla: 3  },
   { key: 'assessment',    label_ar: 'الاختبار',             label_en: 'Assessment',           color: 'bg-purple-50 border-purple-200',  badge: 'bg-purple-100 text-purple-700',sla: 5  },
   { key: 'interview',     label_ar: 'مقابلة',               label_en: 'Interview',            color: 'bg-indigo-50 border-indigo-200',  badge: 'bg-indigo-100 text-indigo-700',sla: 5  },
@@ -29,7 +29,7 @@ function AppCard({ app, stage, onView, isRTL }) {
   return (
     <div
       onClick={() => onView(app)}
-      className={`bg-white border rounded-lg p-3 cursor-pointer hover:shadow-md transition-all group ${isOverdue ? 'border-red-300 ring-1 ring-red-200' : 'border-slate-200'}`}
+      className={`bg-white border rounded-lg p-3 cursor-pointer hover:shadow-md transition-all group ${isOverdue ? 'border-red-300 ring-1 ring-red-200' : 'border-border'}`}
     >
       {isOverdue && (
         <div className="flex items-center gap-1 text-red-500 text-xs mb-2 font-medium">
@@ -39,21 +39,21 @@ function AppCard({ app, stage, onView, isRTL }) {
       )}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-slate-800 text-sm truncate">{app.student_name_ar}</p>
-          {app.student_name_en && <p className="text-xs text-slate-400 truncate">{app.student_name_en}</p>}
+          <p className="font-semibold text-ink text-sm truncate">{app.student_name_ar}</p>
+          {app.student_name_en && <p className="text-xs text-muted-foreground truncate">{app.student_name_en}</p>}
         </div>
-        <ChevronRight className="w-3 h-3 text-slate-300 flex-shrink-0 mt-1 group-hover:text-slate-600 transition-colors" />
+        <ChevronRight className="w-3 h-3 text-muted-foreground flex-shrink-0 mt-1 group-hover:text-muted-foreground transition-colors" />
       </div>
       <div className="mt-2 flex items-center justify-between gap-2 flex-wrap">
-        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium">{app.applying_for_grade}</span>
+        <span className="text-xs bg-sand-alt text-muted-foreground px-2 py-0.5 rounded font-medium">{app.applying_for_grade}</span>
         {app.application_number && (
-          <span className="text-xs text-slate-400 font-mono">{app.application_number}</span>
+          <span className="text-xs text-muted-foreground font-mono">{app.application_number}</span>
         )}
       </div>
       {app.guardian_phone && (
-        <p className="text-xs text-slate-400 mt-1">{app.guardian_phone}</p>
+        <p className="text-xs text-muted-foreground mt-1">{app.guardian_phone}</p>
       )}
-      <div className="mt-2 flex items-center gap-1 text-slate-400">
+      <div className="mt-2 flex items-center gap-1 text-muted-foreground">
         <Clock className="w-3 h-3" />
         <span className="text-xs">{daysSince === 0 ? (isRTL ? 'اليوم' : 'Today') : `${daysSince}${isRTL ? ' يوم' : 'd'}`}</span>
         {app.assigned_reviewer && (
@@ -98,7 +98,7 @@ export default function AdmissionsPipeline({ applications, loading, branches: _b
       {/* Filters */}
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 min-w-48">
-          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
           <Input
             placeholder={isRTL ? 'بحث...' : 'Search...'}
             value={search}
@@ -115,7 +115,7 @@ export default function AdmissionsPipeline({ applications, loading, branches: _b
             {GRADES.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
           </SelectContent>
         </Select>
-        <div className="text-xs text-slate-500 flex items-center">
+        <div className="text-xs text-muted-foreground flex items-center">
           {isRTL ? `${filtered.length} طلب` : `${filtered.length} applications`}
         </div>
       </div>
@@ -123,7 +123,7 @@ export default function AdmissionsPipeline({ applications, loading, branches: _b
       {/* Kanban Board */}
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-najdi-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <div className="overflow-x-auto pb-4">
@@ -134,20 +134,20 @@ export default function AdmissionsPipeline({ applications, loading, branches: _b
                 <div key={stage.key} className={`flex-shrink-0 w-56 rounded-xl border-2 ${stage.color}`}>
                   <div className="p-3 border-b border-current/10">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-sm text-slate-700">
+                      <span className="font-semibold text-sm text-ink">
                         {isRTL ? stage.label_ar : stage.label_en}
                       </span>
                       <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${stage.badge}`}>
                         {stageApps.length}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {isRTL ? `SLA: ${stage.sla} أيام` : `SLA: ${stage.sla}d`}
                     </p>
                   </div>
                   <div className="p-2 space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto">
                     {stageApps.length === 0 ? (
-                      <div className="text-center py-6 text-slate-300 text-xs">
+                      <div className="text-center py-6 text-muted-foreground text-xs">
                         {isRTL ? 'لا يوجد' : 'Empty'}
                       </div>
                     ) : (

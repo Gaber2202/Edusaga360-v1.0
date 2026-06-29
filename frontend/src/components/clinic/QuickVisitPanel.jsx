@@ -26,7 +26,7 @@ const OUTCOMES = [
   { value: 'sent_home', ar: 'أُرسل للمنزل', en: 'Sent Home', color: 'bg-amber-500' },
   { value: 'referred_to_hospital', ar: 'إحالة للمستشفى', en: 'Refer to Hospital', color: 'bg-orange-500' },
   { value: 'ambulance_called', ar: 'طلب إسعاف', en: 'Ambulance', color: 'bg-red-600' },
-  { value: 'parent_called', ar: 'تم الاتصال بولي الأمر', en: 'Parent Called', color: 'bg-blue-500' },
+  { value: 'parent_called', ar: 'تم الاتصال بولي الأمر', en: 'Parent Called', color: 'bg-najdi-500' },
 ];
 
 const COMMON_MEDS = ['Paracetamol 500mg', 'Ibuprofen 200mg', 'Antihistamine', 'Saline drops', 'Bandage'];
@@ -106,7 +106,7 @@ export default function QuickVisitPanel({ students, healthRecords, getTenantIdFo
           <CheckCircle className="w-8 h-8 text-green-600" />
         </div>
         <p className="text-lg font-semibold text-green-700">{isRTL ? 'تم الحفظ!' : 'Saved!'}</p>
-        <p className="text-sm text-slate-500">{isRTL ? 'جاهز للزيارة التالية...' : 'Ready for next visit...'}</p>
+        <p className="text-sm text-muted-foreground">{isRTL ? 'جاهز للزيارة التالية...' : 'Ready for next visit...'}</p>
       </div>
     );
   }
@@ -116,14 +116,14 @@ export default function QuickVisitPanel({ students, healthRecords, getTenantIdFo
       {/* Progress dots */}
       <div className="flex items-center gap-2 justify-center">
         {[1, 2, 3].map(s => (
-          <div key={s} className={`h-2 rounded-full transition-all ${s === step ? 'w-8 bg-red-500' : s < step ? 'w-2 bg-green-400' : 'w-2 bg-slate-200'}`} />
+          <div key={s} className={`h-2 rounded-full transition-all ${s === step ? 'w-8 bg-red-500' : s < step ? 'w-2 bg-green-400' : 'w-2 bg-sand-alt'}`} />
         ))}
       </div>
 
       {/* STEP 1: Student lookup */}
       {step === 1 && (
         <div className="space-y-3">
-          <p className="text-sm font-medium text-slate-600 text-center">{isRTL ? 'ابحث عن الطالب بالاسم أو الرقم' : 'Search student by name or ID'}</p>
+          <p className="text-sm font-medium text-muted-foreground text-center">{isRTL ? 'ابحث عن الطالب بالاسم أو الرقم' : 'Search student by name or ID'}</p>
           <div className="relative">
             <Input
               ref={searchRef}
@@ -140,16 +140,16 @@ export default function QuickVisitPanel({ students, healthRecords, getTenantIdFo
                 <button key={s.id} onClick={() => selectStudent(s)}
                   className="w-full flex items-center justify-between px-4 py-3 hover:bg-red-50 border-b last:border-0 transition-colors text-start">
                   <div>
-                    <p className="font-semibold text-slate-800">{s.name_ar}</p>
-                    <p className="text-xs text-slate-400">{s.grade} {s.section ? `· ${s.section}` : ''}</p>
+                    <p className="font-semibold text-ink">{s.name_ar}</p>
+                    <p className="text-xs text-muted-foreground">{s.grade} {s.section ? `· ${s.section}` : ''}</p>
                   </div>
-                  <div className="text-xs text-slate-400 font-mono">{s.student_id}</div>
+                  <div className="text-xs text-muted-foreground font-mono">{s.student_id}</div>
                 </button>
               ))}
             </div>
           )}
           {studentSearch.length > 1 && filteredStudents.length === 0 && (
-            <p className="text-center text-slate-400 text-sm py-4">{isRTL ? 'لا نتائج' : 'No results'}</p>
+            <p className="text-center text-muted-foreground text-sm py-4">{isRTL ? 'لا نتائج' : 'No results'}</p>
           )}
         </div>
       )}
@@ -187,11 +187,11 @@ export default function QuickVisitPanel({ students, healthRecords, getTenantIdFo
 
           {/* Complaint grid */}
           <div>
-            <p className="text-xs font-medium text-slate-500 mb-2">{isRTL ? 'نوع الشكوى' : 'Complaint'}</p>
+            <p className="text-xs font-medium text-muted-foreground mb-2">{isRTL ? 'نوع الشكوى' : 'Complaint'}</p>
             <div className="grid grid-cols-4 gap-2">
               {COMPLAINTS.map(c => (
                 <button key={c.value} onClick={() => setComplaint(c.value)}
-                  className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ${complaint === c.value ? 'border-red-500 bg-red-50' : 'border-slate-200 hover:border-slate-300'}`}>
+                  className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ${complaint === c.value ? 'border-red-500 bg-red-50' : 'border-border hover:border-border'}`}>
                   <span className="text-xl">{c.emoji}</span>
                   <span className="text-xs font-medium leading-tight text-center">{isRTL ? c.ar : c.en}</span>
                 </button>
@@ -202,7 +202,7 @@ export default function QuickVisitPanel({ students, healthRecords, getTenantIdFo
           {/* Temperature */}
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <p className="text-xs font-medium text-slate-500 mb-1">{isRTL ? 'الحرارة °C' : 'Temp °C'}</p>
+              <p className="text-xs font-medium text-muted-foreground mb-1">{isRTL ? 'الحرارة °C' : 'Temp °C'}</p>
               <Input type="number" step="0.1" min="35" max="42" value={temp} onChange={e => setTemp(e.target.value)} placeholder="37.0" className="h-10" />
             </div>
             {temp && (
@@ -214,11 +214,11 @@ export default function QuickVisitPanel({ students, healthRecords, getTenantIdFo
 
           {/* Medication */}
           <div>
-            <p className="text-xs font-medium text-slate-500 mb-1">{isRTL ? 'الدواء (اختياري)' : 'Medication (optional)'}</p>
+            <p className="text-xs font-medium text-muted-foreground mb-1">{isRTL ? 'الدواء (اختياري)' : 'Medication (optional)'}</p>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {COMMON_MEDS.map(m => (
                 <button key={m} onClick={() => setMed(m)}
-                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${med === m ? 'bg-slate-700 text-white border-slate-700' : 'border-slate-300 hover:bg-slate-50'}`}>
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${med === m ? 'bg-ink text-white border-najdi-900' : 'border-border hover:bg-sand'}`}>
                   {m}
                 </button>
               ))}
@@ -239,11 +239,11 @@ export default function QuickVisitPanel({ students, healthRecords, getTenantIdFo
       {step === 3 && (
         <div className="space-y-4">
           <div>
-            <p className="text-xs font-medium text-slate-500 mb-2">{isRTL ? 'نتيجة الزيارة' : 'Visit Outcome'}</p>
+            <p className="text-xs font-medium text-muted-foreground mb-2">{isRTL ? 'نتيجة الزيارة' : 'Visit Outcome'}</p>
             <div className="grid grid-cols-1 gap-2">
               {OUTCOMES.map(o => (
                 <button key={o.value} onClick={() => { setOutcome(o.value); if (o.value !== 'returned_to_class') setNotifyParent(true); }}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${outcome === o.value ? 'border-slate-700 bg-slate-50' : 'border-slate-200 hover:border-slate-300'}`}>
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${outcome === o.value ? 'border-najdi-900 bg-sand' : 'border-border hover:border-border'}`}>
                   <div className={`w-3 h-3 rounded-full ${o.color}`} />
                   <span className="font-medium text-sm">{isRTL ? o.ar : o.en}</span>
                   {outcome === o.value && <CheckCircle className="w-4 h-4 text-green-500 ms-auto" />}
@@ -253,16 +253,16 @@ export default function QuickVisitPanel({ students, healthRecords, getTenantIdFo
           </div>
 
           {/* Parent notification toggle */}
-          <div className={`flex items-center justify-between p-4 rounded-xl border-2 transition-colors ${notifyParent ? 'border-blue-400 bg-blue-50' : 'border-slate-200'}`}>
+          <div className={`flex items-center justify-between p-4 rounded-xl border-2 transition-colors ${notifyParent ? 'border-najdi-500 bg-najdi-50' : 'border-border'}`}>
             <div className="flex items-center gap-2">
-              <Phone className="w-5 h-5 text-blue-500" />
+              <Phone className="w-5 h-5 text-najdi-500" />
               <div>
                 <p className="font-medium text-sm">{isRTL ? 'إشعار ولي الأمر' : 'Notify Parent'}</p>
-                <p className="text-xs text-slate-500">{isRTL ? 'تسجيل الاتصال بولي الأمر' : 'Log parent contact'}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'تسجيل الاتصال بولي الأمر' : 'Log parent contact'}</p>
               </div>
             </div>
             <button onClick={() => setNotifyParent(n => !n)}
-              className={`w-12 h-6 rounded-full transition-colors relative ${notifyParent ? 'bg-blue-500' : 'bg-slate-300'}`}>
+              className={`w-12 h-6 rounded-full transition-colors relative ${notifyParent ? 'bg-najdi-500' : 'bg-sand-alt'}`}>
               <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${notifyParent ? 'left-6' : 'left-0.5'}`} />
             </button>
           </div>

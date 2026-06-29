@@ -120,12 +120,12 @@ export default function ReportSelector({ onGenerate, onPreview, loading }) {
 
         {/* Report Description */}
         {currentReport && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-slate-700">
+          <div className="bg-najdi-50 border border-najdi-100 rounded-lg p-4">
+            <p className="text-sm text-ink">
               <strong>{isRTL ? 'الفئة:' : 'Category:'}</strong>{' '}
               {t(currentReport.category)}
             </p>
-            <p className="text-xs text-slate-600 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {isRTL 
                 ? 'سيتم تطبيق الفلاتر المحددة على هذا التقرير' 
                 : 'Selected filters will be applied to this report'}

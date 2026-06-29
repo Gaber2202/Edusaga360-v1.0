@@ -146,15 +146,15 @@ export default function AttendanceReports({ attendanceRecords, students }) {
                 {reportStudents.map((s, i) => {
                   const rec = rangeRecords.find(r => r.student_id === s.id && r.date === fromDate);
                   const status = rec?.status || 'not_marked';
-                  const statusColor = { present: 'text-green-600', absent: 'text-red-600', late: 'text-amber-600', excused: 'text-blue-600', not_marked: 'text-slate-300' }[status];
+                  const statusColor = { present: 'text-green-600', absent: 'text-red-600', late: 'text-amber-600', excused: 'text-najdi-700', not_marked: 'text-muted-foreground' }[status];
                   return (
                     <TableRow key={s.id}>
-                      <TableCell className="text-slate-400 text-xs">{i + 1}</TableCell>
+                      <TableCell className="text-muted-foreground text-xs">{i + 1}</TableCell>
                       <TableCell><p className="font-medium text-sm">{s.name_ar}</p></TableCell>
                       <TableCell className="text-sm">{t(s.grade)}</TableCell>
-                      <TableCell className="text-sm text-slate-500">{s.section || '—'}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{s.section || '—'}</TableCell>
                       <TableCell><span className={`font-semibold text-sm ${statusColor}`}>{isRTL ? { present: 'حاضر', absent: 'غائب', late: 'متأخر', excused: 'بعذر', not_marked: 'لم يُسجَّل' }[status] : status}</span></TableCell>
-                      <TableCell className="text-xs text-slate-400">{rec?.check_in_time || '—'}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{rec?.check_in_time || '—'}</TableCell>
                     </TableRow>
                   );
                 })}
@@ -183,17 +183,17 @@ export default function AttendanceReports({ attendanceRecords, students }) {
               <TableBody>
                 {studentSummaries.sort((a, b) => a.pct - b.pct).map(s => (
                   <TableRow key={s.id} className={s.pct < 80 ? 'bg-red-50/30' : ''}>
-                    <TableCell><p className="font-medium text-sm">{s.name_ar}</p><p className="text-xs text-slate-400">{s.grade}</p></TableCell>
+                    <TableCell><p className="font-medium text-sm">{s.name_ar}</p><p className="text-xs text-muted-foreground">{s.grade}</p></TableCell>
                     <TableCell className="text-center text-green-600 font-semibold">{s.present}</TableCell>
                     <TableCell className="text-center text-red-600 font-semibold">{s.absent}</TableCell>
                     <TableCell className="text-center text-amber-600">{s.late}</TableCell>
-                    <TableCell className="text-center text-blue-600">{s.excused}</TableCell>
+                    <TableCell className="text-center text-najdi-700">{s.excused}</TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center gap-2 justify-center">
-                        <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="w-16 h-2 bg-sand-alt rounded-full overflow-hidden">
                           <div className={`h-full rounded-full ${s.pct >= 90 ? 'bg-green-500' : s.pct >= 80 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${s.pct}%` }} />
                         </div>
-                        <span className={`font-bold text-sm ${s.pct < 80 ? 'text-red-600' : 'text-slate-700'}`}>{s.pct}%</span>
+                        <span className={`font-bold text-sm ${s.pct < 80 ? 'text-red-600' : 'text-ink'}`}>{s.pct}%</span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -212,19 +212,19 @@ export default function AttendanceReports({ attendanceRecords, students }) {
             <div className="space-y-3">
               {gradeSummaries.sort((a, b) => a.pct - b.pct).map(g => (
                 <div key={g.grade} className="flex items-center gap-3">
-                  <span className="w-20 text-sm font-medium text-slate-700 flex-shrink-0">{t(g.grade)}</span>
-                  <div className="flex-1 h-6 bg-slate-100 rounded-full overflow-hidden">
+                  <span className="w-20 text-sm font-medium text-ink flex-shrink-0">{t(g.grade)}</span>
+                  <div className="flex-1 h-6 bg-sand-alt rounded-full overflow-hidden">
                     <div className={`h-full rounded-full flex items-center ps-2 transition-all ${g.pct >= 90 ? 'bg-green-400' : g.pct >= 80 ? 'bg-amber-400' : 'bg-red-400'}`}
                       style={{ width: `${g.pct}%` }}>
                       {g.pct > 30 && <span className="text-xs text-white font-bold">{g.pct}%</span>}
                     </div>
                   </div>
-                  <div className="text-xs text-slate-500 flex-shrink-0 w-28 text-end">
+                  <div className="text-xs text-muted-foreground flex-shrink-0 w-28 text-end">
                     {g.present}/{g.total} {isRTL ? 'حاضر' : 'present'}
                   </div>
                 </div>
               ))}
-              {gradeSummaries.length === 0 && <p className="text-slate-400 text-sm text-center py-6">{isRTL ? 'لا بيانات' : 'No data'}</p>}
+              {gradeSummaries.length === 0 && <p className="text-muted-foreground text-sm text-center py-6">{isRTL ? 'لا بيانات' : 'No data'}</p>}
             </div>
           </CardContent>
         </Card>
@@ -265,7 +265,7 @@ export default function AttendanceReports({ attendanceRecords, students }) {
                   </TableRow>
                 ))}
                 {studentSummaries.filter(s => s.pct < 80).length === 0 && (
-                  <TableRow><TableCell colSpan={5} className="text-center py-8 text-slate-400">{isRTL ? 'لا طلاب بغياب مزمن في هذه الفترة' : 'No chronic absenteeism in this period'}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">{isRTL ? 'لا طلاب بغياب مزمن في هذه الفترة' : 'No chronic absenteeism in this period'}</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -280,7 +280,7 @@ export default function AttendanceReports({ attendanceRecords, students }) {
             <CardTitle className="text-sm">{isRTL ? 'تقرير الحضور — صيغة نظام نور' : 'Attendance Report — NOOR System Format'}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="p-4 bg-slate-50 rounded-xl text-xs font-mono space-y-2 text-slate-700 border">
+            <div className="p-4 bg-sand rounded-xl text-xs font-mono space-y-2 text-ink border">
               <p className="font-bold">{isRTL ? '# تقرير الحضور - نظام نور - وزارة التعليم' : '# NOOR SYSTEM ATTENDANCE EXPORT'}</p>
               <p>SCHOOL_CODE: [SCHOOL_CODE]</p>
               <p>ACADEMIC_YEAR: {new Date().getFullYear()}</p>

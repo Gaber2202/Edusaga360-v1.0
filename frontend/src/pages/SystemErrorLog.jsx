@@ -35,13 +35,13 @@ export default function SystemErrorLog() {
   // Admin only
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-sand flex items-center justify-center">
         <Card className="max-w-md w-full p-6">
           <div className="flex items-center gap-3 mb-4">
             <AlertTriangle className="w-6 h-6 text-red-600" />
             <h2 className="text-lg font-semibold">{isRTL ? 'غير مصرح' : 'Unauthorized'}</h2>
           </div>
-          <p className="text-slate-600">
+          <p className="text-muted-foreground">
             {isRTL ? 'هذه الصفحة متاحة للمسؤولين فقط.' : 'This page is available for administrators only.'}
           </p>
         </Card>
@@ -100,7 +100,7 @@ export default function SystemErrorLog() {
       cell: (row) => (
         <div>
           <p className="font-mono text-sm">{row.error_id}</p>
-          <p className="text-xs text-slate-500 mt-1">{format(new Date(row.timestamp), 'PPpp')}</p>
+          <p className="text-xs text-muted-foreground mt-1">{format(new Date(row.timestamp), 'PPpp')}</p>
         </div>
       )
     },
@@ -109,7 +109,7 @@ export default function SystemErrorLog() {
       cell: (row) => (
         <div className="max-w-xs">
           <p className="text-sm truncate">{row.error_message}</p>
-          <p className="text-xs text-slate-500 mt-1">{row.page}</p>
+          <p className="text-xs text-muted-foreground mt-1">{row.page}</p>
         </div>
       )
     },
@@ -118,7 +118,7 @@ export default function SystemErrorLog() {
       cell: (row) => (
         <div>
           <p className="text-sm">{row.user_name || '-'}</p>
-          <p className="text-xs text-slate-500">{row.user_email}</p>
+          <p className="text-xs text-muted-foreground">{row.user_email}</p>
         </div>
       )
     },
@@ -129,7 +129,7 @@ export default function SystemErrorLog() {
           critical: 'bg-red-100 text-red-800',
           high: 'bg-orange-100 text-orange-800',
           medium: 'bg-yellow-100 text-yellow-800',
-          low: 'bg-blue-100 text-blue-800'
+          low: 'bg-najdi-50 text-najdi-900'
         };
         return (
           <span className={`px-2 py-1 rounded text-xs font-semibold ${colors[row.severity] || colors.medium}`}>
@@ -166,20 +166,20 @@ export default function SystemErrorLog() {
       {/* Error Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4">
-          <div className="text-xs text-slate-500 mb-1">{isRTL ? 'حرجة' : 'Critical'}</div>
+          <div className="text-xs text-muted-foreground mb-1">{isRTL ? 'حرجة' : 'Critical'}</div>
           <div className="text-2xl font-bold text-red-600">{errorStats.critical}</div>
         </Card>
         <Card className="p-4">
-          <div className="text-xs text-slate-500 mb-1">{isRTL ? 'عالية' : 'High'}</div>
+          <div className="text-xs text-muted-foreground mb-1">{isRTL ? 'عالية' : 'High'}</div>
           <div className="text-2xl font-bold text-orange-600">{errorStats.high}</div>
         </Card>
         <Card className="p-4">
-          <div className="text-xs text-slate-500 mb-1">{isRTL ? 'متوسطة' : 'Medium'}</div>
+          <div className="text-xs text-muted-foreground mb-1">{isRTL ? 'متوسطة' : 'Medium'}</div>
           <div className="text-2xl font-bold text-yellow-600">{errorStats.medium}</div>
         </Card>
         <Card className="p-4">
-          <div className="text-xs text-slate-500 mb-1">{isRTL ? 'جديدة' : 'New'}</div>
-          <div className="text-2xl font-bold text-slate-900">{errorStats.new}</div>
+          <div className="text-xs text-muted-foreground mb-1">{isRTL ? 'جديدة' : 'New'}</div>
+          <div className="text-2xl font-bold text-ink">{errorStats.new}</div>
         </Card>
       </div>
 
@@ -234,8 +234,8 @@ export default function SystemErrorLog() {
 
       {/* Error Summary */}
       {filteredErrors.length > 0 && (
-        <div className="bg-slate-50 p-4 rounded-lg border">
-          <p className="text-sm text-slate-600">
+        <div className="bg-sand p-4 rounded-lg border">
+          <p className="text-sm text-muted-foreground">
             {isRTL 
               ? `عرض ${filteredErrors.length} من أصل ${errors.length} سجل خطأ`
               : `Showing ${filteredErrors.length} of ${errors.length} error records`}

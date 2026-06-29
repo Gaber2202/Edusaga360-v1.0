@@ -99,7 +99,7 @@ export default function NotificationCenter() {
       case 'warning':
         return <AlertTriangle className="w-5 h-5 text-amber-600" />;
       default:
-        return <Info className="w-5 h-5 text-blue-600" />;
+        return <Info className="w-5 h-5 text-najdi-700" />;
     }
   };
 
@@ -110,7 +110,7 @@ export default function NotificationCenter() {
       case 'warning':
         return 'border-amber-200 bg-amber-50';
       default:
-        return 'border-blue-200 bg-blue-50';
+        return 'border-najdi-100 bg-najdi-50';
     }
   };
 
@@ -131,7 +131,7 @@ export default function NotificationCenter() {
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
-              <Search className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'right-3' : 'left-3'} w-4 h-4 text-slate-400`} />
+              <Search className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'right-3' : 'left-3'} w-4 h-4 text-muted-foreground`} />
               <Input
                 placeholder={isRTL ? 'بحث...' : 'Search...'}
                 value={searchTerm}
@@ -182,14 +182,14 @@ export default function NotificationCenter() {
           {loading ? (
             <Card>
               <CardContent className="py-12 text-center">
-                <div className="animate-spin w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full mx-auto" />
+                <div className="animate-spin w-8 h-8 border-4 border-najdi-900 border-t-transparent rounded-full mx-auto" />
               </CardContent>
             </Card>
           ) : filteredNotifications.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
-                <Bell className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500">
+                <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
                   {isRTL ? 'لا توجد إشعارات حتى الآن.' : 'No notifications yet.'}
                 </p>
               </CardContent>
@@ -199,7 +199,7 @@ export default function NotificationCenter() {
               <Card
                 key={notification.id}
                 className={`cursor-pointer transition-all hover:shadow-md border-l-4 ${getSeverityColor(notification.severity)} ${
-                  !notification.is_read ? 'bg-white' : 'bg-slate-50 opacity-75'
+                  !notification.is_read ? 'bg-white' : 'bg-sand opacity-75'
                 }`}
                 onClick={() => handleNotificationClick(notification)}
               >
@@ -209,13 +209,13 @@ export default function NotificationCenter() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
-                          <h3 className={`font-semibold text-slate-900 mb-1 ${!notification.is_read ? '' : 'opacity-70'}`}>
+                          <h3 className={`font-semibold text-ink mb-1 ${!notification.is_read ? '' : 'opacity-70'}`}>
                             {isRTL ? notification.title_ar : notification.title_en}
                           </h3>
-                          <p className={`text-sm text-slate-600 mb-2 ${!notification.is_read ? '' : 'opacity-70'}`}>
+                          <p className={`text-sm text-muted-foreground mb-2 ${!notification.is_read ? '' : 'opacity-70'}`}>
                             {isRTL ? notification.message_ar : notification.message_en}
                           </p>
-                          <div className="flex items-center gap-3 text-xs text-slate-500">
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
                             <span>{format(new Date(notification.created_at), 'MMM d, yyyy h:mm a')}</span>
                             <span>•</span>
                             <span className="capitalize">{isRTL ? {
@@ -228,11 +228,11 @@ export default function NotificationCenter() {
                           </div>
                         </div>
                         {!notification.is_read && (
-                          <div className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0 mt-2" />
+                          <div className="w-2 h-2 rounded-full bg-najdi-700 flex-shrink-0 mt-2" />
                         )}
                       </div>
                       {notification.link_url && (
-                        <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-blue-600">
+                        <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-najdi-700">
                           {isRTL ? 'فتح' : 'Open'}
                           <ExternalLink className="w-3 h-3 ms-1" />
                         </Button>

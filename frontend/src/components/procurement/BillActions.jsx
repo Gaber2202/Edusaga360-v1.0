@@ -39,7 +39,7 @@ export default function BillActions({
         </Button>
       )}
       {(bill.status === 'approved' || bill.status === 'partial') && (
-        <Button size="sm" onClick={() => onPay(bill)} className="bg-blue-600 hover:bg-blue-700">
+        <Button size="sm" onClick={() => onPay(bill)} className="bg-najdi-700 hover:bg-najdi-900">
           <CreditCard className="w-4 h-4 me-1" />
           {isRTL ? 'دفع' : 'Pay'}
         </Button>

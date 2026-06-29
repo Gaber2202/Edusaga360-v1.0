@@ -136,13 +136,13 @@ export default function SuperAdminDashboard() {
     active: 'bg-emerald-100 text-emerald-700',
     expired: 'bg-orange-100 text-orange-700',
     past_due: 'bg-red-100 text-red-700',
-    suspended: 'bg-slate-200 text-slate-600',
+    suspended: 'bg-sand-alt text-muted-foreground',
     cancelled: 'bg-red-200 text-red-800',
   };
 
   const planColors = {
-    free_trial: 'bg-slate-100 text-slate-600',
-    startup: 'bg-blue-100 text-blue-700',
+    free_trial: 'bg-sand-alt text-muted-foreground',
+    startup: 'bg-najdi-50 text-najdi-900',
     enterprise: 'bg-purple-100 text-purple-700',
     government: 'bg-green-100 text-green-700',
   };
@@ -151,11 +151,11 @@ export default function SuperAdminDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Shield className="w-6 h-6 text-blue-600" />
+          <h1 className="text-2xl font-bold text-ink flex items-center gap-2">
+            <Shield className="w-6 h-6 text-najdi-700" />
             {isRTL ? 'لوحة تحكم المنصة' : 'Super Admin Dashboard'}
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {isRTL ? 'إدارة المؤسسات والاشتراكات' : 'Manage tenants and subscriptions'}
           </p>
         </div>
@@ -168,7 +168,7 @@ export default function SuperAdminDashboard() {
       {/* Platform KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         {[
-          { label: isRTL ? 'المؤسسات' : 'Tenants', value: totalTenants, icon: Building2, color: 'text-blue-600' },
+          { label: isRTL ? 'المؤسسات' : 'Tenants', value: totalTenants, icon: Building2, color: 'text-najdi-700' },
           { label: isRTL ? 'نشط' : 'Active', value: activeTenants, icon: Activity, color: 'text-emerald-600' },
           { label: isRTL ? 'تجريبي' : 'Trial', value: trialTenants, icon: Calendar, color: 'text-amber-600' },
           { label: isRTL ? 'طلبات الاشتراك' : 'Subscription Requests', value: pendingRequestsCount, icon: Clock, color: 'text-red-600' },
@@ -180,8 +180,8 @@ export default function SuperAdminDashboard() {
               <div className="flex items-center gap-3">
                 <stat.icon className={`w-8 h-8 ${stat.color}`} />
                 <div>
-                  <p className="text-xs text-slate-500">{stat.label}</p>
-                  <p className="text-xl font-bold text-slate-900">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  <p className="text-xl font-bold text-ink">{stat.value}</p>
                 </div>
               </div>
             </CardContent>
@@ -207,7 +207,7 @@ export default function SuperAdminDashboard() {
           <TabsTrigger value="users" className="gap-2">
             <Users className="w-4 h-4" />
             {isRTL ? 'المستخدمون' : 'Users'}
-            <Badge className="bg-slate-200 text-slate-700 text-xs px-1.5 py-0 ms-1">{allUsers.length}</Badge>
+            <Badge className="bg-sand-alt text-ink text-xs px-1.5 py-0 ms-1">{allUsers.length}</Badge>
           </TabsTrigger>
         </TabsList>
         <TabsContent value="requests">
@@ -221,7 +221,7 @@ export default function SuperAdminDashboard() {
       {/* Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-3 items-center">
         <div className="relative flex-1 max-w-md">
-          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
           <Input
             placeholder={isRTL ? 'بحث بالاسم أو الكود أو البريد...' : 'Search by name, code, or email...'}
             value={search}
@@ -255,46 +255,46 @@ export default function SuperAdminDashboard() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-50 border-b">
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'المؤسسة' : 'Tenant'}</th>
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'الخطة' : 'Plan'}</th>
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'الحالة' : 'Status'}</th>
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'المستخدمين' : 'Users'}</th>
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'المشرف' : 'Admin'}</th>
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'الإجراءات' : 'Actions'}</th>
+                <tr className="bg-sand border-b">
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'المؤسسة' : 'Tenant'}</th>
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'الخطة' : 'Plan'}</th>
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'الحالة' : 'Status'}</th>
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'المستخدمين' : 'Users'}</th>
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'المشرف' : 'Admin'}</th>
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'الإجراءات' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
-                  <tr><td colSpan={6} className="p-8 text-center text-slate-400">{isRTL ? 'جاري التحميل...' : 'Loading...'}</td></tr>
+                  <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">{isRTL ? 'جاري التحميل...' : 'Loading...'}</td></tr>
                 ) : filteredTenants.length === 0 ? (
-                  <tr><td colSpan={6} className="p-8 text-center text-slate-400">{isRTL ? 'لا توجد مؤسسات' : 'No tenants'}</td></tr>
+                  <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">{isRTL ? 'لا توجد مؤسسات' : 'No tenants'}</td></tr>
                 ) : filteredTenants.map(tenant => {
                   const tenantUsers = allUsers.filter(u => u.tenant_id === tenant.id);
                   return (
-                    <tr key={tenant.id} className="border-b hover:bg-slate-50 transition-colors">
+                    <tr key={tenant.id} className="border-b hover:bg-sand transition-colors">
                       <td className="p-3">
                         <div>
-                          <p className="font-medium text-slate-900">{isRTL ? tenant.name_ar : tenant.name_en}</p>
-                          <p className="text-xs text-slate-400 font-mono">{tenant.tenant_code}</p>
+                          <p className="font-medium text-ink">{isRTL ? tenant.name_ar : tenant.name_en}</p>
+                          <p className="text-xs text-muted-foreground font-mono">{tenant.tenant_code}</p>
                         </div>
                       </td>
                       <td className="p-3">
-                        <Badge className={planColors[tenant.plan_code] || 'bg-slate-100'}>
+                        <Badge className={planColors[tenant.plan_code] || 'bg-sand-alt'}>
                           {tenant.plan_code === 'free_trial' ? (isRTL ? 'تجربة مجانية' : 'Free Trial') :
                            tenant.plan_code === 'startup' ? (isRTL ? 'انطلاق' : 'Startup') :
                            isRTL ? 'مؤسسات' : 'Enterprise'}
                         </Badge>
                       </td>
                       <td className="p-3">
-                        <Badge className={statusColors[tenant.status] || 'bg-slate-100'}>
+                        <Badge className={statusColors[tenant.status] || 'bg-sand-alt'}>
                           {tenant.status === 'trial' ? (isRTL ? 'تجريبي' : 'Trial') :
                            tenant.status === 'active' ? (isRTL ? 'نشط' : 'Active') :
                            tenant.status === 'suspended' ? (isRTL ? 'موقوف' : 'Suspended') :
                            tenant.status}
                         </Badge>
                         {tenant.status === 'trial' && tenant.trial_end_date && (
-                          <p className="text-xs text-slate-400 mt-1">
+                          <p className="text-xs text-muted-foreground mt-1">
                             {isRTL ? 'ينتهي: ' : 'Ends: '}{format(new Date(tenant.trial_end_date), 'dd/MM/yyyy')}
                           </p>
                         )}

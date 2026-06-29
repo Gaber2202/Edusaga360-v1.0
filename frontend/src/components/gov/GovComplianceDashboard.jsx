@@ -91,25 +91,25 @@ export default function GovComplianceDashboard() {
   filter((d) => d.value > 0);
 
   const kpiCards = [
-  { icon: Users, label: isRTL ? 'إجمالي الموظفين' : 'Total Employees', value: kpis.totalEmp, color: 'text-slate-700', bg: 'bg-white' },
+  { icon: Users, label: isRTL ? 'إجمالي الموظفين' : 'Total Employees', value: kpis.totalEmp, color: 'text-ink', bg: 'bg-white' },
   { icon: Shield, label: isRTL ? 'نسبة السعودة' : 'Saudization %', value: `${kpis.saudizationPct}%`, color: kpis.saudizationPct >= 30 ? 'text-emerald-600' : 'text-red-500', bg: 'bg-white' },
-  { icon: Clock, label: isRTL ? 'إقامات تنتهي (60 يوم)' : 'Iqamas Expiring (60d)', value: kpis.iqamasExpiring60, color: kpis.iqamasExpiring60 > 5 ? 'text-amber-600' : 'text-slate-700', bg: 'bg-white' },
-  { icon: FileText, label: isRTL ? 'تأشيرات تنتهي' : 'Visas Expiring', value: kpis.visasExpiring, color: kpis.visasExpiring > 3 ? 'text-amber-600' : 'text-slate-700', bg: 'bg-white' },
-  { icon: AlertTriangle, label: isRTL ? 'تناقضات غوزي' : 'GOSI Mismatches', value: kpis.gosiMismatches, color: kpis.gosiMismatches > 0 ? 'text-red-500' : 'text-slate-700', bg: 'bg-white' },
+  { icon: Clock, label: isRTL ? 'إقامات تنتهي (60 يوم)' : 'Iqamas Expiring (60d)', value: kpis.iqamasExpiring60, color: kpis.iqamasExpiring60 > 5 ? 'text-amber-600' : 'text-ink', bg: 'bg-white' },
+  { icon: FileText, label: isRTL ? 'تأشيرات تنتهي' : 'Visas Expiring', value: kpis.visasExpiring, color: kpis.visasExpiring > 3 ? 'text-amber-600' : 'text-ink', bg: 'bg-white' },
+  { icon: AlertTriangle, label: isRTL ? 'تناقضات غوزي' : 'GOSI Mismatches', value: kpis.gosiMismatches, color: kpis.gosiMismatches > 0 ? 'text-red-500' : 'text-ink', bg: 'bg-white' },
   { icon: TrendingUp, label: isRTL ? 'امتثال WPS %' : 'WPS Compliance %', value: `${kpis.wpsPct}%`, color: kpis.wpsPct >= 90 ? 'text-emerald-600' : 'text-red-500', bg: 'bg-white' },
-  { icon: DollarSign, label: isRTL ? 'قيمة المخالفات المفتوحة' : 'Open Violations (SAR)', value: kpis.totalViolationSAR.toLocaleString(), color: kpis.totalViolationSAR > 0 ? 'text-red-500' : 'text-slate-700', bg: 'bg-white' },
-  { icon: FileText, label: isRTL ? 'مستندات تنتهي' : 'Expiring Documents', value: kpis.expiringDocs, color: kpis.expiringDocs > 0 ? 'text-amber-600' : 'text-slate-700', bg: 'bg-white' }];
+  { icon: DollarSign, label: isRTL ? 'قيمة المخالفات المفتوحة' : 'Open Violations (SAR)', value: kpis.totalViolationSAR.toLocaleString(), color: kpis.totalViolationSAR > 0 ? 'text-red-500' : 'text-ink', bg: 'bg-white' },
+  { icon: FileText, label: isRTL ? 'مستندات تنتهي' : 'Expiring Documents', value: kpis.expiringDocs, color: kpis.expiringDocs > 0 ? 'text-amber-600' : 'text-ink', bg: 'bg-white' }];
 
 
   return (
-    <div className="bg-slate-50 p-6 rounded-xl space-y-6 min-h-screen">
+    <div className="bg-sand p-6 rounded-xl space-y-6 min-h-screen">
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {kpiCards.map((kpi, i) =>
-        <div key={i} className={`rounded-xl p-4 border border-slate-200 ${kpi.bg} shadow-sm`}>
+        <div key={i} className={`rounded-xl p-4 border border-border ${kpi.bg} shadow-sm`}>
             <div className="flex items-center gap-2 mb-2">
               <kpi.icon className={`w-4 h-4 ${kpi.color}`} />
-              <span className="text-slate-500 text-xs font-medium">{kpi.label}</span>
+              <span className="text-muted-foreground text-xs font-medium">{kpi.label}</span>
             </div>
             <div className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</div>
           </div>
@@ -120,8 +120,8 @@ export default function GovComplianceDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* Risk Meter */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center justify-center">
-          <h3 className="text-slate-700 font-semibold mb-4">{isRTL ? 'مؤشر الامتثال' : 'Compliance Risk Score'}</h3>
+        <div className="bg-white p-6 rounded-xl border border-border shadow-sm flex flex-col items-center justify-center">
+          <h3 className="text-ink font-semibold mb-4">{isRTL ? 'مؤشر الامتثال' : 'Compliance Risk Score'}</h3>
           <div className="relative w-36 h-36">
             <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
               <circle cx="60" cy="60" r="50" fill="none" stroke="#1e293b" strokeWidth="12" />
@@ -130,7 +130,7 @@ export default function GovComplianceDashboard() {
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-3xl font-bold" style={{ color: riskColor }}>{riskScore}</span>
-              <span className="text-slate-400 text-xs">{isRTL ? 'من 100' : '/ 100'}</span>
+              <span className="text-muted-foreground text-xs">{isRTL ? 'من 100' : '/ 100'}</span>
             </div>
           </div>
           <div className="mt-3 px-4 py-1 rounded-full text-sm font-semibold" style={{ backgroundColor: riskColor + '20', color: riskColor }}>
@@ -138,7 +138,7 @@ export default function GovComplianceDashboard() {
           </div>
           <div className="mt-4 space-y-1 w-full">
             {[{ label: isRTL ? 'جيد' : 'Good', min: 75, color: '#10b981' }, { label: isRTL ? 'تحذير' : 'Warning', min: 50, color: '#f59e0b' }, { label: isRTL ? 'خطر' : 'Critical', min: 0, color: '#ef4444' }].map((r) =>
-            <div key={r.label} className="flex items-center gap-2 text-xs text-slate-500">
+            <div key={r.label} className="flex items-center gap-2 text-xs text-muted-foreground">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: r.color }} />
                 <span>{r.label}: {r.min}+</span>
               </div>
@@ -147,8 +147,8 @@ export default function GovComplianceDashboard() {
         </div>
 
         {/* Saudization Chart */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-          <h3 className="text-slate-700 font-semibold mb-4">{isRTL ? 'نسبة التوطين' : 'Saudization Breakdown'}</h3>
+        <div className="bg-white p-6 rounded-xl border border-border shadow-sm">
+          <h3 className="text-ink font-semibold mb-4">{isRTL ? 'نسبة التوطين' : 'Saudization Breakdown'}</h3>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie data={saudizationData} cx="50%" cy="45%" innerRadius={45} outerRadius={70} dataKey="value" label={false} labelLine={false}>
@@ -156,7 +156,7 @@ export default function GovComplianceDashboard() {
                 <Cell fill="#94a3b8" />
               </Pie>
               <Tooltip formatter={(v) => `${v}%`} />
-              <Legend formatter={(value) => <span className="text-xs text-slate-600">{value}</span>} />
+              <Legend formatter={(value) => <span className="text-xs text-muted-foreground">{value}</span>} />
             </PieChart>
           </ResponsiveContainer>
           <div className="flex justify-between mt-2">
@@ -166,8 +166,8 @@ export default function GovComplianceDashboard() {
         </div>
 
         {/* Violations Breakdown */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-          <h3 className="text-slate-700 font-semibold mb-4">{isRTL ? 'المخالفات حسب النوع' : 'Violations by Type'}</h3>
+        <div className="bg-white p-6 rounded-xl border border-border shadow-sm">
+          <h3 className="text-ink font-semibold mb-4">{isRTL ? 'المخالفات حسب النوع' : 'Violations by Type'}</h3>
           {violationData.length > 0 ?
           <ResponsiveContainer width="100%" height={200}>
               <PieChart>
@@ -175,11 +175,11 @@ export default function GovComplianceDashboard() {
                   {violationData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
                 <Tooltip />
-                <Legend formatter={(value) => <span className="text-xs text-slate-600">{value}</span>} />
+                <Legend formatter={(value) => <span className="text-xs text-muted-foreground">{value}</span>} />
               </PieChart>
             </ResponsiveContainer> :
 
-          <div className="flex flex-col items-center justify-center h-40 text-slate-500">
+          <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
               <CheckCircle className="w-10 h-10 text-emerald-600 mb-2" />
               <span className="text-sm">{isRTL ? 'لا توجد مخالفات مفتوحة' : 'No open violations'}</span>
             </div>
@@ -188,14 +188,14 @@ export default function GovComplianceDashboard() {
       </div>
 
       {/* Action Center */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-        <h3 className="text-slate-700 font-semibold mb-4">{isRTL ? 'مركز الإجراءات' : 'Action Center'}</h3>
+      <div className="bg-white p-6 rounded-xl border border-border shadow-sm">
+        <h3 className="text-ink font-semibold mb-4">{isRTL ? 'مركز الإجراءات' : 'Action Center'}</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-          { label: isRTL ? 'تجديد الإقامات' : 'Renew Iqamas', count: kpis.iqamasExpiring60, color: 'border-slate-200 text-amber-600 hover:bg-amber-50' },
-          { label: isRTL ? 'تصحيح التأمينات' : 'Fix GOSI Issues', count: kpis.gosiMismatches, color: 'border-slate-200 text-red-500 hover:bg-red-50' },
-          { label: isRTL ? 'رفع ملف الأجور' : 'Submit Mudad', count: null, color: 'border-slate-200 text-slate-600 hover:bg-slate-50' },
-          { label: isRTL ? 'معالجة المخالفات' : 'Resolve Violations', count: kpis.openViolationsCount, color: 'border-slate-200 text-slate-600 hover:bg-slate-50' }].
+          { label: isRTL ? 'تجديد الإقامات' : 'Renew Iqamas', count: kpis.iqamasExpiring60, color: 'border-border text-amber-600 hover:bg-amber-50' },
+          { label: isRTL ? 'تصحيح التأمينات' : 'Fix GOSI Issues', count: kpis.gosiMismatches, color: 'border-border text-red-500 hover:bg-red-50' },
+          { label: isRTL ? 'رفع ملف الأجور' : 'Submit Mudad', count: null, color: 'border-border text-muted-foreground hover:bg-sand' },
+          { label: isRTL ? 'معالجة المخالفات' : 'Resolve Violations', count: kpis.openViolationsCount, color: 'border-border text-muted-foreground hover:bg-sand' }].
           map((action, i) =>
           <div key={i} className={`border rounded-lg p-4 cursor-pointer transition-all bg-white ${action.color}`}>
               <div className="text-sm font-medium">{action.label}</div>

@@ -38,10 +38,10 @@ export default function NotificationSettings() {
   // Only Creator/Admin can access
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-sand flex items-center justify-center">
         <Card className="max-w-md w-full p-6">
           <div className="text-center">
-            <p className="text-slate-600">{isRTL ? 'غير مصرح' : 'Unauthorized'}</p>
+            <p className="text-muted-foreground">{isRTL ? 'غير مصرح' : 'Unauthorized'}</p>
           </div>
         </Card>
       </div>
@@ -102,7 +102,7 @@ export default function NotificationSettings() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-900" />
+        <Loader2 className="w-8 h-8 animate-spin text-ink" />
       </div>
     );
   }
@@ -126,7 +126,7 @@ export default function NotificationSettings() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               <div className="space-y-2 md:col-span-2">
                 <Label>{isRTL ? 'تجديد العقود (أيام قبل انتهاء الصلاحية)' : 'Contract Renewals (days before expiry)'}</Label>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   {isRTL ? 'إرسال إشعار عندما يقترب موعد تجديد العقد' : 'Send notification when contract renewal is approaching'}
                 </p>
               </div>
@@ -141,7 +141,7 @@ export default function NotificationSettings() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               <div className="space-y-2 md:col-span-2">
                 <Label>{isRTL ? 'الفواتير القريبة من الاستحقاق (أيام قبل)' : 'Invoices Due Soon (days before)'}</Label>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   {isRTL ? 'إرسال إشعار عندما تقترب الفاتورة من موعد الاستحقاق' : 'Send notification when invoice is approaching due date'}
                 </p>
               </div>
@@ -156,7 +156,7 @@ export default function NotificationSettings() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               <div className="space-y-2 md:col-span-2">
                 <Label>{isRTL ? 'الفواتير المتأخرة (أيام بعد الاستحقاق)' : 'Invoices Overdue (days after due)'}</Label>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   {isRTL ? 'إرسال إشعار عندما تتأخر الفاتورة' : 'Send notification when invoice becomes overdue'}
                 </p>
               </div>
@@ -171,7 +171,7 @@ export default function NotificationSettings() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               <div className="space-y-2 md:col-span-2">
                 <Label>{isRTL ? 'عتبة الأخطاء المتكررة (عدد الأخطاء)' : 'Error Burst Threshold (number of errors)'}</Label>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   {isRTL ? 'عدد الأخطاء لإرسال تنبيه حرج' : 'Number of errors to trigger critical alert'}
                 </p>
               </div>
@@ -186,7 +186,7 @@ export default function NotificationSettings() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               <div className="space-y-2 md:col-span-2">
                 <Label>{isRTL ? 'نافذة الأخطاء المتكررة (دقائق)' : 'Error Burst Window (minutes)'}</Label>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   {isRTL ? 'الإطار الزمني لاكتشاف الأخطاء المتكررة' : 'Time window for error burst detection'}
                 </p>
               </div>
@@ -202,7 +202,7 @@ export default function NotificationSettings() {
       </Card>
 
       <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={saving} className="gap-2 bg-slate-900 hover:bg-slate-800">
+        <Button onClick={handleSave} disabled={saving} className="gap-2 bg-najdi-900 hover:bg-najdi-900">
           {saving && <Loader2 className="w-4 h-4 animate-spin" />}
           <Save className="w-4 h-4" />
           {isRTL ? 'حفظ الإعدادات' : 'Save Settings'}

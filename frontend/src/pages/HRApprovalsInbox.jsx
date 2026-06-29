@@ -91,8 +91,8 @@ export default function HRApprovalsInbox() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-slate-900">{item.employee_name}</span>
-              <Badge className="bg-blue-100 text-blue-700 text-xs">
+              <span className="font-semibold text-ink">{item.employee_name}</span>
+              <Badge className="bg-najdi-50 text-najdi-900 text-xs">
                 {type === 'leave' ? (item.leave_type_name || typeLabels.leave) : typeLabels[item.request_type] || item.request_type}
               </Badge>
               {hasMissingManager && (
@@ -102,7 +102,7 @@ export default function HRApprovalsInbox() {
                 </Badge>
               )}
             </div>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {type === 'leave'
                 ? `${item.start_date} → ${item.end_date} (${item.total_days} ${isRTL ? 'يوم' : 'days'})`
                 : item.reason}
@@ -110,7 +110,7 @@ export default function HRApprovalsInbox() {
             {item.amount > 0 && (
               <p className="text-sm text-emerald-600 font-medium">{item.amount?.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p>
             )}
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {isRTL ? 'مقدم في:' : 'Submitted:'} {item.submitted_date ? format(new Date(item.submitted_date), 'dd/MM/yyyy HH:mm') : item.created_at ? format(new Date(item.created_at), 'dd/MM/yyyy') : '—'}
             </p>
           </div>
@@ -144,14 +144,14 @@ export default function HRApprovalsInbox() {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="border-najdi-100 bg-najdi-50">
           <CardContent className="p-4 flex items-center gap-3">
-            <AlertTriangle className="w-8 h-8 text-blue-600" />
+            <AlertTriangle className="w-8 h-8 text-najdi-700" />
             <div>
-              <div className="text-2xl font-bold text-blue-700">
+              <div className="text-2xl font-bold text-najdi-900">
                 {[...pendingLeave, ...pendingESS].filter(r => r.routing_note?.includes('Manager Missing')).length}
               </div>
-              <div className="text-sm text-blue-600">{isRTL ? 'بدون مدير مباشر' : 'No Line Manager'}</div>
+              <div className="text-sm text-najdi-700">{isRTL ? 'بدون مدير مباشر' : 'No Line Manager'}</div>
             </div>
           </CardContent>
         </Card>
@@ -171,9 +171,9 @@ export default function HRApprovalsInbox() {
 
         <TabsContent value="leave" className="space-y-3 mt-4">
           {loadingLeave ? (
-            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
+            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
           ) : pendingLeave.length === 0 ? (
-            <div className="text-center py-12 text-slate-400">
+            <div className="text-center py-12 text-muted-foreground">
               <CheckCircle className="w-12 h-12 mx-auto mb-3 text-emerald-300" />
               <p>{isRTL ? 'لا توجد طلبات إجازة معلقة' : 'No pending leave requests'}</p>
             </div>
@@ -182,9 +182,9 @@ export default function HRApprovalsInbox() {
 
         <TabsContent value="ess" className="space-y-3 mt-4">
           {loadingESS ? (
-            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
+            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
           ) : pendingESS.length === 0 ? (
-            <div className="text-center py-12 text-slate-400">
+            <div className="text-center py-12 text-muted-foreground">
               <CheckCircle className="w-12 h-12 mx-auto mb-3 text-emerald-300" />
               <p>{isRTL ? 'لا توجد طلبات معلقة' : 'No pending ESS requests'}</p>
             </div>
@@ -207,7 +207,7 @@ export default function HRApprovalsInbox() {
               {actionDialog?.item?.employee_name} — {actionDialog?.item?.leave_type_name || actionDialog?.item?.request_type}
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-700">{isRTL ? 'تعليق (اختياري)' : 'Comment (optional)'}</label>
+              <label className="text-sm font-medium text-ink">{isRTL ? 'تعليق (اختياري)' : 'Comment (optional)'}</label>
               <Textarea value={comment} onChange={e => setComment(e.target.value)} rows={3} placeholder={isRTL ? 'أضف تعليقاً...' : 'Add a comment...'} />
             </div>
           </div>

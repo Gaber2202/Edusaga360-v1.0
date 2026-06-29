@@ -48,12 +48,12 @@ export default function Admissions() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">{isRTL ? 'إدارة القبول والتسجيل' : 'Admissions Management'}</h1>
-          <p className="text-sm text-slate-500">{isRTL ? 'خط سير طلبات القبول بالكامل' : 'Full admission pipeline management'}</p>
+          <h1 className="text-xl font-bold text-ink">{isRTL ? 'إدارة القبول والتسجيل' : 'Admissions Management'}</h1>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'خط سير طلبات القبول بالكامل' : 'Full admission pipeline management'}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* View toggle */}
-          <div className="flex items-center bg-slate-100 rounded-lg p-1 gap-1">
+          <div className="flex items-center bg-sand-alt rounded-lg p-1 gap-1">
             <Button
               size="sm" variant={viewMode === 'pipeline' ? 'default' : 'ghost'}
               onClick={() => setViewMode('pipeline')}
@@ -80,7 +80,7 @@ export default function Admissions() {
             </Button>
           </div>
           {canCreate && (
-            <Button onClick={() => { setSelectedApplication(null); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button onClick={() => { setSelectedApplication(null); setShowForm(true); }} className="bg-najdi-700 hover:bg-najdi-900 text-white">
               <Plus className="w-4 h-4 me-1" />
               {isRTL ? 'طلب جديد' : 'New Application'}
             </Button>

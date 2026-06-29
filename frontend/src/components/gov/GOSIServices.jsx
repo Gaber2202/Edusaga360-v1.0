@@ -63,7 +63,7 @@ export default function GOSIServices() {
   const columns = [
     { header: isRTL ? 'الموظف' : 'Employee', cell: r => <span>{isRTL ? (r.name_ar || r.name_en) : (r.name_en || r.name_ar)}</span> },
     { header: isRTL ? 'الجنسية' : 'Nationality', cell: r => (
-      <Badge className={r.isSaudi ? 'bg-emerald-900/60 text-emerald-300 border-emerald-700' : 'bg-blue-900/60 text-blue-300 border-blue-700'}>
+      <Badge className={r.isSaudi ? 'bg-emerald-900/60 text-emerald-300 border-emerald-700' : 'bg-najdi-900/60 text-najdi-500 border-najdi-700'}>
         {r.isSaudi ? (isRTL ? 'سعودي' : 'Saudi') : (isRTL ? 'غير سعودي' : 'Non-Saudi')}
       </Badge>
     )},
@@ -103,20 +103,20 @@ export default function GOSIServices() {
       <div>
         <div className="flex items-center gap-3 mb-4">
           <h2 className="text-white font-semibold text-base">{isRTL ? 'مطابقة بيانات التأمينات' : 'GOSI Salary Reconciliation'}</h2>
-          <div className="flex-1 h-px bg-slate-700" />
+          <div className="flex-1 h-px bg-ink" />
         </div>
         <div className="grid grid-cols-3 gap-4 mb-4">
           <Card><CardContent className="p-4">
             <div className="text-2xl font-bold text-white">{employees.length}</div>
-            <div className="text-sm text-slate-400">{isRTL ? 'إجمالي الموظفين' : 'Total Employees'}</div>
+            <div className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الموظفين' : 'Total Employees'}</div>
           </CardContent></Card>
           <Card><CardContent className="p-4">
             <div className="text-2xl font-bold text-emerald-400">{enriched.filter(e => !e.isMismatch).length}</div>
-            <div className="text-sm text-slate-400">{isRTL ? 'بيانات مطابقة' : 'Records Matched'}</div>
+            <div className="text-sm text-muted-foreground">{isRTL ? 'بيانات مطابقة' : 'Records Matched'}</div>
           </CardContent></Card>
           <Card><CardContent className="p-4">
             <div className="text-2xl font-bold text-red-400">{mismatches.length}</div>
-            <div className="text-sm text-slate-400">{isRTL ? 'تناقضات' : 'Mismatches'}</div>
+            <div className="text-sm text-muted-foreground">{isRTL ? 'تناقضات' : 'Mismatches'}</div>
           </CardContent></Card>
         </div>
         {mismatches.length > 0 && (

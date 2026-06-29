@@ -58,7 +58,7 @@ export default function NotificationBell() {
         onClick={handleClick}
         className="relative"
       >
-        <Bell className="w-5 h-5 text-slate-600" />
+        <Bell className="w-5 h-5 text-muted-foreground" />
         {unreadCount > 0 && (
           <Badge
             className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center p-0 bg-red-600 text-white text-xs"

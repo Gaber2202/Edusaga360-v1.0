@@ -173,7 +173,7 @@ export default function Assets() {
 
   const columns = [
     { header: isRTL ? 'الرمز' : 'Code', cell: (row) => <span className="font-mono text-sm">{row.asset_code}</span> },
-    { header: isRTL ? 'الأصل' : 'Asset', cell: (row) => <div><p className="font-medium">{row.name_ar}</p><p className="text-sm text-slate-500">{t(row.category)}</p></div> },
+    { header: isRTL ? 'الأصل' : 'Asset', cell: (row) => <div><p className="font-medium">{row.name_ar}</p><p className="text-sm text-muted-foreground">{t(row.category)}</p></div> },
     { header: isRTL ? 'تكلفة الاقتناء' : 'Cost', cell: (row) => <span>{row.acquisition_cost?.toLocaleString()} {t('sar')}</span> },
     { header: isRTL ? 'الإهلاك المتراكم' : 'Acc. Dep.', cell: (row) => <span className="text-red-600">{(row.accumulated_depreciation || 0).toLocaleString()} {t('sar')}</span> },
     { header: isRTL ? 'صافي القيمة' : 'NBV', cell: (row) => <span className="font-semibold">{(row.net_book_value || row.acquisition_cost)?.toLocaleString()} {t('sar')}</span> },
@@ -198,7 +198,7 @@ export default function Assets() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard title={isRTL ? 'إجمالي التكلفة' : 'Total Cost'} value={`${(totalCost/1000).toFixed(0)}K`} icon={Package} iconClassName="bg-blue-50" />
+        <StatCard title={isRTL ? 'إجمالي التكلفة' : 'Total Cost'} value={`${(totalCost/1000).toFixed(0)}K`} icon={Package} iconClassName="bg-najdi-50" />
         <StatCard title={isRTL ? 'إجمالي الإهلاك' : 'Total Depreciation'} value={`${(totalDepreciation/1000).toFixed(0)}K`} icon={TrendingDown} iconClassName="bg-red-50" />
         <StatCard title={isRTL ? 'صافي القيمة الدفترية' : 'Net Book Value'} value={`${(totalNBV/1000).toFixed(0)}K`} icon={Package} iconClassName="bg-emerald-50" />
       </div>
@@ -206,7 +206,7 @@ export default function Assets() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
           <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${isRTL ? 'pr-10' : 'pl-10'} bg-white`} />
         </div>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>

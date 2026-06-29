@@ -27,13 +27,13 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-najdi-900 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardContent className="pt-8 pb-6 px-8">
           <div className="flex flex-col items-center mb-8">
             <img src="/edusaga-logo.svg" alt="EduSaga 360" className="w-14 h-14 mb-4" />
-            <h1 className="text-xl font-bold text-slate-800">EduSaga 360</h1>
-            <p className="text-sm text-slate-500 mt-1">Internal Admin Portal</p>
+            <h1 className="text-xl font-bold text-ink">EduSaga 360</h1>
+            <p className="text-sm text-muted-foreground mt-1">Internal Admin Portal</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

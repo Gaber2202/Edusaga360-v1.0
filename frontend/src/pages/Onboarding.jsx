@@ -105,19 +105,19 @@ Respond in both Arabic and English. Be specific and actionable.`;
     const trainsPending = (onb.training_assignments || []).filter(t => !t.completed).length;
     return (
       <Card
-        className="bg-white hover:shadow-md transition-shadow cursor-pointer border border-slate-200"
+        className="bg-white hover:shadow-md transition-shadow cursor-pointer border border-border"
         onClick={() => { setSelected(onb); setAiInsight(''); }}
       >
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-slate-800 truncate">{onb.employee_name}</p>
-              <p className="text-xs text-slate-400 mt-0.5">{onb.job_title || '-'}</p>
-              <p className="text-xs text-slate-400">{isRTL ? 'البداية:' : 'Start:'} {onb.start_date}</p>
+              <p className="font-semibold text-ink truncate">{onb.employee_name}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{onb.job_title || '-'}</p>
+              <p className="text-xs text-muted-foreground">{isRTL ? 'البداية:' : 'Start:'} {onb.start_date}</p>
               <div className="flex gap-2 mt-2 flex-wrap">
                 {docsPending > 0 && <Badge className="text-xs bg-red-100 text-red-700">{docsPending} {isRTL ? 'مستندات' : 'docs'}</Badge>}
                 {polsPending > 0 && <Badge className="text-xs bg-amber-100 text-amber-700">{polsPending} {isRTL ? 'سياسات' : 'policies'}</Badge>}
-                {trainsPending > 0 && <Badge className="text-xs bg-blue-100 text-blue-700">{trainsPending} {isRTL ? 'تدريبات' : 'trainings'}</Badge>}
+                {trainsPending > 0 && <Badge className="text-xs bg-najdi-50 text-najdi-900">{trainsPending} {isRTL ? 'تدريبات' : 'trainings'}</Badge>}
                 {pct === 100 && <Badge className="text-xs bg-emerald-100 text-emerald-700"><CheckCircle2 className="w-3 h-3 me-1" />{isRTL ? 'مكتمل' : 'Complete'}</Badge>}
               </div>
             </div>
@@ -138,22 +138,22 @@ Respond in both Arabic and English. Be specific and actionable.`;
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Card className="bg-white"><CardContent className="p-4 text-center">
-          <p className="text-2xl font-bold text-blue-600">{active.length}</p>
-          <p className="text-xs text-slate-500 mt-1">{isRTL ? 'قيد الإلحاق' : 'In Progress'}</p>
+          <p className="text-2xl font-bold text-najdi-700">{active.length}</p>
+          <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'قيد الإلحاق' : 'In Progress'}</p>
         </CardContent></Card>
         <Card className="bg-white"><CardContent className="p-4 text-center">
           <p className="text-2xl font-bold text-emerald-600">{completed.length}</p>
-          <p className="text-xs text-slate-500 mt-1">{isRTL ? 'مكتمل' : 'Completed'}</p>
+          <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'مكتمل' : 'Completed'}</p>
         </CardContent></Card>
         <Card className="bg-white"><CardContent className="p-4 text-center">
           <p className="text-2xl font-bold text-red-500">{active.filter(o => calcPct(o) < 30).length}</p>
-          <p className="text-xs text-slate-500 mt-1">{isRTL ? 'بطيء الإنجاز' : 'Low Progress'}</p>
+          <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'بطيء الإنجاز' : 'Low Progress'}</p>
         </CardContent></Card>
         <Card className="bg-white"><CardContent className="p-4 text-center">
           <p className="text-2xl font-bold text-amber-500">
             {active.length > 0 ? Math.round(active.reduce((s, o) => s + calcPct(o), 0) / active.length) : 0}%
           </p>
-          <p className="text-xs text-slate-500 mt-1">{isRTL ? 'متوسط الإتمام' : 'Avg Completion'}</p>
+          <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'متوسط الإتمام' : 'Avg Completion'}</p>
         </CardContent></Card>
       </div>
 
@@ -170,9 +170,9 @@ Respond in both Arabic and English. Be specific and actionable.`;
         </TabsList>
         <TabsContent value="active">
           {isLoading ? (
-            <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div>
+            <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
           ) : active.length === 0 ? (
-            <div className="text-center py-12 text-slate-400">
+            <div className="text-center py-12 text-muted-foreground">
               <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p>{isRTL ? 'لا توجد عمليات إلحاق نشطة' : 'No active onboardings'}</p>
               <p className="text-xs mt-1">{isRTL ? 'سيتم الإنشاء تلقائياً عند تحويل المتقدم إلى موظف' : 'Auto-created when a candidate is converted to employee'}</p>

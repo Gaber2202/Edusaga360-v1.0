@@ -24,25 +24,25 @@ function StatLine({ label, value, bold, indent = 0, negative, subtotal, total, a
   const isNeg = negative || value < 0;
   const displayVal = value !== undefined ? (isNeg && value < 0 ? `(${SAR(Math.abs(value))})` : SAR(Math.abs(value || 0))) : '';
   return (
-    <div className={`flex items-center justify-between py-1.5 border-b border-slate-50 ${
-      total ? 'border-t-2 border-slate-300 font-bold text-slate-900 bg-slate-50 px-2 rounded' :
-      subtotal ? 'border-t border-slate-200 font-semibold' :
-      'hover:bg-slate-50/50'
+    <div className={`flex items-center justify-between py-1.5 border-b border-sand ${
+      total ? 'border-t-2 border-border font-bold text-ink bg-sand px-2 rounded' :
+      subtotal ? 'border-t border-border font-semibold' :
+      'hover:bg-sand/50'
     }`}
       style={{ paddingLeft: `${indent * 16 + 8}px` }}>
       <div className="flex items-center gap-1 flex-1 min-w-0">
-        <span className={`text-sm truncate ${bold || total ? 'font-bold text-slate-800' : subtotal ? 'font-semibold text-slate-700' : 'text-slate-600'}`}>
+        <span className={`text-sm truncate ${bold || total ? 'font-bold text-ink' : subtotal ? 'font-semibold text-ink' : 'text-muted-foreground'}`}>
           {label}
         </span>
         {accountId && (
           <Link to={`/GeneralLedger?account=${accountId}`}>
-            <ChevronRight className="w-3 h-3 text-slate-300 hover:text-blue-500" />
+            <ChevronRight className="w-3 h-3 text-muted-foreground hover:text-najdi-500" />
           </Link>
         )}
       </div>
       {value !== undefined && (
         <span className={`text-sm font-mono flex-shrink-0 ms-4 ${
-          isNeg ? 'text-red-600' : total || subtotal ? 'text-slate-800' : 'text-slate-700'
+          isNeg ? 'text-red-600' : total || subtotal ? 'text-ink' : 'text-ink'
         }`}>{displayVal}</span>
       )}
     </div>
@@ -193,7 +193,7 @@ export default function FinancialStatements() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <RefreshCw className="w-8 h-8 animate-spin text-slate-400" />
+        <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -203,8 +203,8 @@ export default function FinancialStatements() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">{isRTL ? 'القوائم المالية' : 'Financial Statements'}</h1>
-          <p className="text-sm text-slate-500">{isRTL ? 'تُولَّد تلقائياً — IFRS — مقارنة مع الميزانية والعام السابق' : 'Auto-generated — IFRS compliant — vs budget & prior year'}</p>
+          <h1 className="text-xl font-bold text-ink">{isRTL ? 'القوائم المالية' : 'Financial Statements'}</h1>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'تُولَّد تلقائياً — IFRS — مقارنة مع الميزانية والعام السابق' : 'Auto-generated — IFRS compliant — vs budget & prior year'}</p>
         </div>
         <div className="flex items-center gap-2">
           <Label className="text-xs whitespace-nowrap">{isRTL ? 'حتى تاريخ' : 'As of'}</Label>

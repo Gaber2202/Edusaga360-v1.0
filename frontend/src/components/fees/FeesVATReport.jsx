@@ -66,8 +66,8 @@ export default function FeesVATReport({ invoices, payments: _payments, isRTL }) 
       {/* VAT Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: isRTL ? 'الإجمالي (بدون ضريبة)' : 'Total (ex-VAT)', value: `${totalExVAT.toLocaleString('en', {maximumFractionDigits:2})} SAR`, icon: Receipt, cls: 'bg-slate-100 text-slate-600' },
-          { label: isRTL ? 'ضريبة القيمة المضافة (15%)' : 'VAT (15%)', value: `${totalVAT.toLocaleString('en', {maximumFractionDigits:2})} SAR`, icon: Receipt, cls: 'bg-blue-100 text-blue-600' },
+          { label: isRTL ? 'الإجمالي (بدون ضريبة)' : 'Total (ex-VAT)', value: `${totalExVAT.toLocaleString('en', {maximumFractionDigits:2})} SAR`, icon: Receipt, cls: 'bg-sand-alt text-muted-foreground' },
+          { label: isRTL ? 'ضريبة القيمة المضافة (15%)' : 'VAT (15%)', value: `${totalVAT.toLocaleString('en', {maximumFractionDigits:2})} SAR`, icon: Receipt, cls: 'bg-najdi-50 text-najdi-700' },
           { label: isRTL ? 'الإجمالي (شامل الضريبة)' : 'Total (inc-VAT)', value: `${totalIncVAT.toLocaleString('en', {maximumFractionDigits:2})} SAR`, icon: CheckCircle, cls: 'bg-emerald-100 text-emerald-600' },
           { label: isRTL ? 'ضريبة مدفوعة فعلياً' : 'VAT Collected', value: `${paidVAT.toLocaleString('en', {maximumFractionDigits:2})} SAR`, icon: CheckCircle, cls: 'bg-green-100 text-green-600' },
         ].map((kpi, i) => (
@@ -76,19 +76,19 @@ export default function FeesVATReport({ invoices, payments: _payments, isRTL }) 
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 ${kpi.cls}`}>
                 <kpi.icon className="w-4 h-4" />
               </div>
-              <div className="text-lg font-bold text-slate-800 leading-tight">{kpi.value}</div>
-              <div className="text-xs text-slate-500 mt-0.5">{kpi.label}</div>
+              <div className="text-lg font-bold text-ink leading-tight">{kpi.value}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{kpi.label}</div>
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* ZATCA compliance note */}
-      <div className="flex gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-        <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+      <div className="flex gap-3 p-4 bg-najdi-50 border border-najdi-100 rounded-xl">
+        <AlertCircle className="w-5 h-5 text-najdi-500 flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-semibold text-blue-700">{isRTL ? 'الامتثال لمتطلبات هيئة الزكاة والضريبة (ZATCA)' : 'ZATCA Compliance Notice'}</p>
-          <p className="text-xs text-blue-600 mt-0.5">
+          <p className="text-sm font-semibold text-najdi-900">{isRTL ? 'الامتثال لمتطلبات هيئة الزكاة والضريبة (ZATCA)' : 'ZATCA Compliance Notice'}</p>
+          <p className="text-xs text-najdi-700 mt-0.5">
             {isRTL
               ? 'يُلزم نظام هيئة الزكاة والضريبة والجمارك بإصدار فواتير إلكترونية لجميع المعاملات. يُرجى مراجعة الفواتير قبل التقديم للهيئة.'
               : 'ZATCA requires e-invoicing for all transactions. Please review invoices before submission to the authority. Phase 2 requires cryptographic stamping.'}
@@ -119,7 +119,7 @@ export default function FeesVATReport({ invoices, payments: _payments, isRTL }) 
             <TableBody>
               {filteredInvoices.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-10 text-slate-400">
+                  <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                     {isRTL ? 'لا توجد فواتير في هذه الفترة' : 'No invoices in this period'}
                   </TableCell>
                 </TableRow>
@@ -131,12 +131,12 @@ export default function FeesVATReport({ invoices, payments: _payments, isRTL }) 
                     <TableRow key={inv.id}>
                       <TableCell><span className="font-mono text-xs">{inv.invoice_number}</span></TableCell>
                       <TableCell><span className="text-sm">{inv.student_name}</span></TableCell>
-                      <TableCell><span className="text-xs text-slate-500">{(inv.issue_date || inv.created_at?.slice(0,10)) || '-'}</span></TableCell>
+                      <TableCell><span className="text-xs text-muted-foreground">{(inv.issue_date || inv.created_at?.slice(0,10)) || '-'}</span></TableCell>
                       <TableCell className="text-end text-sm">{exVAT.toLocaleString('en', {maximumFractionDigits:2})}</TableCell>
-                      <TableCell className="text-end text-sm text-blue-600">{vat.toLocaleString('en', {maximumFractionDigits:2})}</TableCell>
+                      <TableCell className="text-end text-sm text-najdi-700">{vat.toLocaleString('en', {maximumFractionDigits:2})}</TableCell>
                       <TableCell className="text-end font-semibold text-sm">{(inv.total_amount||0).toLocaleString('en', {maximumFractionDigits:2})}</TableCell>
                       <TableCell>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${inv.status === 'paid' ? 'bg-green-100 text-green-700' : inv.status === 'overdue' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${inv.status === 'paid' ? 'bg-green-100 text-green-700' : inv.status === 'overdue' ? 'bg-red-100 text-red-700' : 'bg-najdi-50 text-najdi-900'}`}>
                           {inv.status}
                         </span>
                       </TableCell>

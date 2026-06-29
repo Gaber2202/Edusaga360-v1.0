@@ -103,10 +103,10 @@ export default function BusinessTravel() {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'طلبات معلقة' : 'Pending'}</p><p className="text-2xl font-bold text-amber-600">{travelRequests.filter(r => r.status === 'pending').length}</p></Card>
-        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'معتمدة' : 'Approved'}</p><p className="text-2xl font-bold text-emerald-600">{travelRequests.filter(r => r.status === 'approved').length}</p></Card>
-        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'تكلفة مخططة' : 'Planned Cost'}</p><p className="text-2xl font-bold text-blue-600">{totalPlanned.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p></Card>
-        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'تكلفة فعلية' : 'Actual Cost'}</p><p className="text-2xl font-bold text-purple-600">{totalActual.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'طلبات معلقة' : 'Pending'}</p><p className="text-2xl font-bold text-amber-600">{travelRequests.filter(r => r.status === 'pending').length}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'معتمدة' : 'Approved'}</p><p className="text-2xl font-bold text-emerald-600">{travelRequests.filter(r => r.status === 'approved').length}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'تكلفة مخططة' : 'Planned Cost'}</p><p className="text-2xl font-bold text-najdi-700">{totalPlanned.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'تكلفة فعلية' : 'Actual Cost'}</p><p className="text-2xl font-bold text-purple-600">{totalActual.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p></Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -135,7 +135,7 @@ export default function BusinessTravel() {
                 {isLoading ? (
                   <TableRow><TableCell colSpan={8} className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></TableCell></TableRow>
                 ) : travelRequests.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="text-center py-8 text-slate-400">{isRTL ? 'لا توجد طلبات' : 'No requests'}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{isRTL ? 'لا توجد طلبات' : 'No requests'}</TableCell></TableRow>
                 ) : travelRequests.map(r => (
                   <TableRow key={r.id}>
                     <TableCell className="font-mono text-sm">{r.request_number}</TableCell>
@@ -164,8 +164,8 @@ export default function BusinessTravel() {
           <Card className="p-6">
             <h4 className="font-semibold mb-4">{isRTL ? 'سياسات السفر حسب الدور/القسم' : 'Travel Policies by Role/Department'}</h4>
             {travelPolicies.length === 0 ? (
-              <div className="text-center py-8 text-slate-400">
-                <FileText className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
                 <p>{isRTL ? 'لا توجد سياسات سفر بعد' : 'No travel policies configured yet'}</p>
                 <p className="text-xs mt-1">{isRTL ? 'سيتم تطبيق السياسات تلقائياً على طلبات السفر' : 'Policies will be auto-enforced on travel requests'}</p>
               </div>
@@ -199,15 +199,15 @@ export default function BusinessTravel() {
             <Card className="p-6">
               <h4 className="font-semibold mb-4">{isRTL ? 'مقارنة المخطط مقابل الفعلي' : 'Planned vs Actual Spend'}</h4>
               <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                <div className="flex justify-between items-center p-3 bg-najdi-50 rounded-lg">
                   <span className="text-sm">{isRTL ? 'التكلفة المخططة' : 'Planned'}</span>
-                  <span className="font-bold text-blue-600">{totalPlanned.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                  <span className="font-bold text-najdi-700">{totalPlanned.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-emerald-50 rounded-lg">
                   <span className="text-sm">{isRTL ? 'التكلفة الفعلية' : 'Actual'}</span>
                   <span className="font-bold text-emerald-600">{totalActual.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                <div className="flex justify-between items-center p-3 bg-sand rounded-lg">
                   <span className="text-sm">{isRTL ? 'الفرق' : 'Variance'}</span>
                   <span className={`font-bold ${totalPlanned - totalActual >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{(totalPlanned - totalActual).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
                 </div>
@@ -217,12 +217,12 @@ export default function BusinessTravel() {
               <h4 className="font-semibold mb-4">{isRTL ? 'أكثر الوجهات' : 'Top Destinations'}</h4>
               <div className="space-y-2">
                 {Object.entries(travelRequests.reduce((acc, r) => { acc[r.destination || 'N/A'] = (acc[r.destination || 'N/A'] || 0) + 1; return acc; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([dest, count], i) => (
-                  <div key={i} className="flex justify-between items-center p-2 bg-slate-50 rounded-lg">
+                  <div key={i} className="flex justify-between items-center p-2 bg-sand rounded-lg">
                     <span className="text-sm">{dest}</span>
                     <Badge variant="outline">{count}</Badge>
                   </div>
                 ))}
-                {travelRequests.length === 0 && <p className="text-center text-slate-400 py-4">{isRTL ? 'لا توجد بيانات' : 'No data'}</p>}
+                {travelRequests.length === 0 && <p className="text-center text-muted-foreground py-4">{isRTL ? 'لا توجد بيانات' : 'No data'}</p>}
               </div>
             </Card>
           </div>

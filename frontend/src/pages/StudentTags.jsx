@@ -96,7 +96,7 @@ export default function StudentTags() {
   };
 
   const colorOptions = [
-    { value: 'blue', label: isRTL ? 'أزرق' : 'Blue', class: 'bg-blue-100 text-blue-700' },
+    { value: 'blue', label: isRTL ? 'أزرق' : 'Blue', class: 'bg-najdi-50 text-najdi-900' },
     { value: 'green', label: isRTL ? 'أخضر' : 'Green', class: 'bg-emerald-100 text-emerald-700' },
     { value: 'purple', label: isRTL ? 'بنفسجي' : 'Purple', class: 'bg-purple-100 text-purple-700' },
     { value: 'amber', label: isRTL ? 'كهرماني' : 'Amber', class: 'bg-amber-100 text-amber-700' },
@@ -138,7 +138,7 @@ export default function StudentTags() {
                 <TableRow key={tag.id}>
                   <TableCell className="font-mono text-xs">{tag.tag_code}</TableCell>
                   <TableCell>
-                    <Badge className={colorOptions.find(c => c.value === tag.color)?.class || 'bg-slate-100'}>
+                    <Badge className={colorOptions.find(c => c.value === tag.color)?.class || 'bg-sand-alt'}>
                       {isRTL ? tag.name_ar : tag.name_en}
                     </Badge>
                   </TableCell>

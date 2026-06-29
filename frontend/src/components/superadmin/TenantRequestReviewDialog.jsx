@@ -69,9 +69,9 @@ export default function TenantRequestReviewDialog({ request, open, onClose, onUp
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 flex-wrap">
-            <Building2 className="w-5 h-5 text-blue-600" />
+            <Building2 className="w-5 h-5 text-najdi-700" />
             {isRTL ? 'مراجعة طلب التسجيل' : 'Review Registration Request'}
-            <Badge className={statusColors[request.status] || 'bg-slate-100'}>
+            <Badge className={statusColors[request.status] || 'bg-sand-alt'}>
               {request.status === 'pending_approval' ? (isRTL ? 'بانتظار الموافقة' : 'Pending') :
                request.status === 'approved' ? (isRTL ? 'مقبول' : 'Approved') :
                isRTL ? 'مرفوض' : 'Rejected'}
@@ -81,68 +81,68 @@ export default function TenantRequestReviewDialog({ request, open, onClose, onUp
 
         <div className="space-y-5">
           {/* Request Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 rounded-lg p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-sand rounded-lg p-4">
             <div className="flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-slate-400" />
+              <Building2 className="w-4 h-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-slate-500">{isRTL ? 'اسم المؤسسة' : 'School Name'}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'اسم المؤسسة' : 'School Name'}</p>
                 <p className="font-medium">{request.school_name}</p>
-                {request.school_name_ar && <p className="text-sm text-slate-600">{request.school_name_ar}</p>}
+                {request.school_name_ar && <p className="text-sm text-muted-foreground">{request.school_name_ar}</p>}
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Mail className="w-4 h-4 text-slate-400" />
+              <Mail className="w-4 h-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-slate-500">{isRTL ? 'البريد' : 'Email'}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'البريد' : 'Email'}</p>
                 <p className="font-medium">{request.contact_email}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-slate-400" />
+              <Users className="w-4 h-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-slate-500">{isRTL ? 'اسم التواصل' : 'Contact Name'}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'اسم التواصل' : 'Contact Name'}</p>
                 <p className="font-medium">{request.contact_name || '-'}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-slate-400" />
+              <Phone className="w-4 h-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-slate-500">{isRTL ? 'الهاتف' : 'Phone'}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'الهاتف' : 'Phone'}</p>
                 <p className="font-medium">{request.contact_phone || '-'}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Globe className="w-4 h-4 text-slate-400" />
+              <Globe className="w-4 h-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-slate-500">{isRTL ? 'الدولة' : 'Country'}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'الدولة' : 'Country'}</p>
                 <p className="font-medium">{request.country === 'UAE' ? '🇦🇪 UAE' : '🇸🇦 Saudi Arabia'}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-slate-400" />
+              <MapPin className="w-4 h-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-slate-500">{isRTL ? 'المدينة' : 'City'}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'المدينة' : 'City'}</p>
                 <p className="font-medium">{request.city || '-'}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-slate-400" />
+              <Users className="w-4 h-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-slate-500">{isRTL ? 'عدد الموظفين' : 'Employees'}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'عدد الموظفين' : 'Employees'}</p>
                 <p className="font-medium">{request.number_of_employees || '-'}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Globe className="w-4 h-4 text-slate-400" />
+              <Globe className="w-4 h-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-slate-500">{isRTL ? 'اللغة المفضلة' : 'Language'}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'اللغة المفضلة' : 'Language'}</p>
                 <p className="font-medium">{request.preferred_language === 'en' ? 'English' : 'العربية'}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 col-span-2">
-              <Calendar className="w-4 h-4 text-slate-400" />
+              <Calendar className="w-4 h-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-slate-500">{isRTL ? 'تاريخ التقديم' : 'Submitted'}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'تاريخ التقديم' : 'Submitted'}</p>
                 <p className="font-medium">{request.created_at ? format(new Date(request.created_at), 'dd/MM/yyyy HH:mm') : '-'}</p>
               </div>
             </div>
@@ -175,7 +175,7 @@ export default function TenantRequestReviewDialog({ request, open, onClose, onUp
           {/* Action Panel — only for pending */}
           {isPending && (
             <div className="border-t pt-4 space-y-4">
-              <h3 className="font-semibold text-slate-900">
+              <h3 className="font-semibold text-ink">
                 {isRTL ? 'إجراء المراجعة' : 'Review Action'}
               </h3>
 

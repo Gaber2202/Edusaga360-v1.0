@@ -80,10 +80,10 @@ export default function CorporateCards() {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'بطاقات نشطة' : 'Active Cards'}</p><p className="text-2xl font-bold text-blue-600">{cards.filter(c => c.status === 'active').length}</p></Card>
-        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'إجمالي الحد' : 'Total Limit'}</p><p className="text-2xl font-bold text-emerald-600">{totalLimit.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p></Card>
-        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'إجمالي الإنفاق' : 'Total Spend'}</p><p className="text-2xl font-bold text-amber-600">{totalSpend.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p></Card>
-        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'معاملات' : 'Transactions'}</p><p className="text-2xl font-bold">{transactions.length}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'بطاقات نشطة' : 'Active Cards'}</p><p className="text-2xl font-bold text-najdi-700">{cards.filter(c => c.status === 'active').length}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الحد' : 'Total Limit'}</p><p className="text-2xl font-bold text-emerald-600">{totalLimit.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الإنفاق' : 'Total Spend'}</p><p className="text-2xl font-bold text-amber-600">{totalSpend.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'معاملات' : 'Transactions'}</p><p className="text-2xl font-bold">{transactions.length}</p></Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -110,7 +110,7 @@ export default function CorporateCards() {
                 {isLoading ? (
                   <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></TableCell></TableRow>
                 ) : cards.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-slate-400">{isRTL ? 'لا توجد بطاقات' : 'No cards'}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{isRTL ? 'لا توجد بطاقات' : 'No cards'}</TableCell></TableRow>
                 ) : cards.map(c => (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.cardholder_name}</TableCell>
@@ -141,7 +141,7 @@ export default function CorporateCards() {
               </TableHeader>
               <TableBody>
                 {transactions.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-slate-400">{isRTL ? 'لا توجد معاملات' : 'No transactions'}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{isRTL ? 'لا توجد معاملات' : 'No transactions'}</TableCell></TableRow>
                 ) : transactions.map(t => (
                   <TableRow key={t.id}>
                     <TableCell>{t.transaction_date ? format(new Date(t.transaction_date), 'dd/MM/yyyy') : '-'}</TableCell>
@@ -159,13 +159,13 @@ export default function CorporateCards() {
 
         <TabsContent value="reconciliation" className="mt-4">
           <Card className="p-6 text-center">
-            <BarChart3 className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
             <h4 className="font-semibold">{isRTL ? 'تسوية المعاملات' : 'Transaction Reconciliation'}</h4>
-            <p className="text-sm text-slate-500 mt-2">{isRTL ? 'مطابقة معاملات البطاقات مع القيود المحاسبية تلقائياً' : 'Automatically match card transactions with GL entries'}</p>
+            <p className="text-sm text-muted-foreground mt-2">{isRTL ? 'مطابقة معاملات البطاقات مع القيود المحاسبية تلقائياً' : 'Automatically match card transactions with GL entries'}</p>
             <div className="grid grid-cols-3 gap-4 mt-4">
-              <div className="p-3 bg-slate-50 rounded-lg"><p className="text-sm text-slate-500">{isRTL ? 'معاملات مطابقة' : 'Matched'}</p><p className="text-xl font-bold text-emerald-600">{transactions.filter(t => t.reconciled).length}</p></div>
-              <div className="p-3 bg-slate-50 rounded-lg"><p className="text-sm text-slate-500">{isRTL ? 'غير مطابقة' : 'Unmatched'}</p><p className="text-xl font-bold text-amber-600">{transactions.filter(t => !t.reconciled).length}</p></div>
-              <div className="p-3 bg-slate-50 rounded-lg"><p className="text-sm text-slate-500">{isRTL ? 'مشبوهة' : 'Flagged'}</p><p className="text-xl font-bold text-red-600">{transactions.filter(t => t.flagged).length}</p></div>
+              <div className="p-3 bg-sand rounded-lg"><p className="text-sm text-muted-foreground">{isRTL ? 'معاملات مطابقة' : 'Matched'}</p><p className="text-xl font-bold text-emerald-600">{transactions.filter(t => t.reconciled).length}</p></div>
+              <div className="p-3 bg-sand rounded-lg"><p className="text-sm text-muted-foreground">{isRTL ? 'غير مطابقة' : 'Unmatched'}</p><p className="text-xl font-bold text-amber-600">{transactions.filter(t => !t.reconciled).length}</p></div>
+              <div className="p-3 bg-sand rounded-lg"><p className="text-sm text-muted-foreground">{isRTL ? 'مشبوهة' : 'Flagged'}</p><p className="text-xl font-bold text-red-600">{transactions.filter(t => t.flagged).length}</p></div>
             </div>
           </Card>
         </TabsContent>

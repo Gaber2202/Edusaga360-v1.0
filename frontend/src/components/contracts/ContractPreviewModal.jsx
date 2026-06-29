@@ -74,8 +74,8 @@ export default function ContractPreviewModal({ open, onClose, template, previewD
             {contract?.status && (
               <Badge className={
                 contract.status === 'signed' ? 'bg-green-100 text-green-700' :
-                contract.status === 'sent' ? 'bg-blue-100 text-blue-700' :
-                'bg-slate-100 text-slate-700'
+                contract.status === 'sent' ? 'bg-najdi-50 text-najdi-900' :
+                'bg-sand-alt text-ink'
               }>
                 {contract.status}
               </Badge>
@@ -85,14 +85,14 @@ export default function ContractPreviewModal({ open, onClose, template, previewD
 
         {/* Preview Area */}
         <div className="flex-1 overflow-y-auto border rounded-lg bg-white">
-          <div ref={printRef} className="p-8 min-h-[800px] bg-white text-slate-900" style={{ fontFamily: 'Arial, sans-serif' }}>
+          <div ref={printRef} className="p-8 min-h-[800px] bg-white text-ink" style={{ fontFamily: 'Arial, sans-serif' }}>
             {/* Header */}
-            <div className="text-center border-b-2 border-slate-900 pb-4 mb-6">
+            <div className="text-center border-b-2 border-najdi-900 pb-4 mb-6">
               <h1 className="text-2xl font-bold" style={{ color: '#1e293b' }}>
                 {isRTL ? (template?.name_ar || 'عقد') : (template?.name_en || template?.name_ar || 'Contract')}
               </h1>
               {previewData.contract_number && (
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {isRTL ? 'رقم العقد:' : 'Contract No:'} {previewData.contract_number}
                 </p>
               )}
@@ -102,12 +102,12 @@ export default function ContractPreviewModal({ open, onClose, template, previewD
             {contentAr && (
               <div dir="rtl" className="mb-8">
                 {contentEn && (
-                  <h3 className="font-bold text-slate-700 border-b pb-1 mb-4 text-right">
+                  <h3 className="font-bold text-ink border-b pb-1 mb-4 text-right">
                     النص العربي
                   </h3>
                 )}
                 <div
-                  className="prose prose-sm max-w-none text-slate-800"
+                  className="prose prose-sm max-w-none text-ink"
                   style={{ direction: 'rtl', textAlign: 'right' }}
                   dangerouslySetInnerHTML={{ __html: sanitizeHtml(contentAr) }}
                 />
@@ -118,12 +118,12 @@ export default function ContractPreviewModal({ open, onClose, template, previewD
             {contentEn && (
               <div dir="ltr" className="mt-8 pt-8 border-t">
                 {contentAr && (
-                  <h3 className="font-bold text-slate-700 border-b pb-1 mb-4">
+                  <h3 className="font-bold text-ink border-b pb-1 mb-4">
                     English Version
                   </h3>
                 )}
                 <div
-                  className="prose prose-sm max-w-none text-slate-800"
+                  className="prose prose-sm max-w-none text-ink"
                   dangerouslySetInnerHTML={{ __html: sanitizeHtml(contentEn) }}
                 />
               </div>

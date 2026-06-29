@@ -169,7 +169,7 @@ export default function HRDemoDataSeeder({ isRTL }) {
 
           {!results ? (
             <div className="space-y-3 py-2">
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 {isRTL
                   ? 'سيتم إنشاء البيانات التالية للتجربة والاختبار:'
                   : 'The following demo data will be created for testing:'}

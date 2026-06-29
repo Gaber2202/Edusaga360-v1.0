@@ -264,7 +264,7 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
               </Table>
             </div>
             {liveStudent.fee_config_applied_date && (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 {isRTL ? 'آخر تطبيق:' : 'Last applied:'}{' '}
                 {format(new Date(liveStudent.fee_config_applied_date), 'dd/MM/yyyy HH:mm')}
                 {liveStudent.fee_config_applied_by ? ` — ${liveStudent.fee_config_applied_by}` : ''}
@@ -292,13 +292,13 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
             ) : (
               <>
                 <div className="space-y-2">
-                  <Label className="text-blue-700 font-semibold">
+                  <Label className="text-najdi-900 font-semibold">
                     {isRTL ? '📋 الرسوم المتاحة (سيتم تطبيقها)' : '📋 Available Fees (Will Be Applied)'}
                   </Label>
-                  <div className="border rounded-lg overflow-hidden bg-blue-50/30">
+                  <div className="border rounded-lg overflow-hidden bg-najdi-50/30">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-blue-100">
+                        <TableRow className="bg-najdi-50">
                           <TableHead>{isRTL ? 'نوع الرسوم' : 'Fee Type'}</TableHead>
                           <TableHead className="text-right">{isRTL ? 'المبلغ' : 'Amount'}</TableHead>
                           <TableHead className="text-center">{isRTL ? 'إلزامي' : 'Mandatory'}</TableHead>
@@ -315,12 +315,12 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
                               {f.is_mandatory ? (
                                 <CheckCircle className="w-4 h-4 text-emerald-600 mx-auto" />
                               ) : (
-                                <span className="text-slate-400">-</span>
+                                <span className="text-muted-foreground">-</span>
                               )}
                             </TableCell>
                           </TableRow>
                         ))}
-                        <TableRow className="bg-blue-50 font-bold">
+                        <TableRow className="bg-najdi-50 font-bold">
                           <TableCell>{isRTL ? 'الإجمالي' : 'Total'}</TableCell>
                           <TableCell className="text-right">
                             {totalNewFees.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}

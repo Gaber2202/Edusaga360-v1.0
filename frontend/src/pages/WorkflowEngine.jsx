@@ -129,10 +129,10 @@ export default function WorkflowEngine() {
   };
 
   const STATUS_COLORS = {
-    in_progress: 'bg-blue-100 text-blue-700',
+    in_progress: 'bg-najdi-50 text-najdi-900',
     approved: 'bg-emerald-100 text-emerald-700',
     rejected: 'bg-red-100 text-red-700',
-    cancelled: 'bg-slate-100 text-slate-700',
+    cancelled: 'bg-sand-alt text-ink',
     escalated: 'bg-amber-100 text-amber-700',
   };
 
@@ -154,21 +154,21 @@ export default function WorkflowEngine() {
         <TabsContent value="templates" className="mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {loadingTemplates ? (
-              <div className="col-span-3 text-center py-12"><Loader2 className="w-8 h-8 animate-spin mx-auto text-slate-400" /></div>
+              <div className="col-span-3 text-center py-12"><Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground" /></div>
             ) : templates.length === 0 ? (
-              <div className="col-span-3 text-center py-12 text-slate-400">
+              <div className="col-span-3 text-center py-12 text-muted-foreground">
                 <GitBranch className="w-12 h-12 mx-auto mb-3 opacity-30" />
                 <p>{isRTL ? 'لا توجد قوالب بعد' : 'No workflow templates yet'}</p>
               </div>
             ) : templates.map(tmpl => (
-              <Card key={tmpl.id} className={`border-2 ${tmpl.is_active ? 'border-blue-100' : 'border-slate-100 opacity-60'}`}>
+              <Card key={tmpl.id} className={`border-2 ${tmpl.is_active ? 'border-najdi-100' : 'border-border opacity-60'}`}>
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <div>
                       <CardTitle className="text-base">{isRTL ? tmpl.name_ar : tmpl.name_en}</CardTitle>
-                      <p className="text-xs text-slate-500 mt-1">{tmpl.template_code} • {isRTL ? MODULE_LABELS[tmpl.module]?.ar : MODULE_LABELS[tmpl.module]?.en}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{tmpl.template_code} • {isRTL ? MODULE_LABELS[tmpl.module]?.ar : MODULE_LABELS[tmpl.module]?.en}</p>
                     </div>
-                    <Badge className={tmpl.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}>
+                    <Badge className={tmpl.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-sand-alt text-muted-foreground'}>
                       {tmpl.is_active ? (isRTL ? 'مفعل' : 'Active') : (isRTL ? 'معطل' : 'Inactive')}
                     </Badge>
                   </div>
@@ -177,10 +177,10 @@ export default function WorkflowEngine() {
                   <div className="flex items-center gap-1 overflow-x-auto">
                     {(tmpl.stages || []).map((s, i) => (
                       <React.Fragment key={i}>
-                        <span className="text-xs bg-slate-100 rounded px-2 py-1 whitespace-nowrap">
+                        <span className="text-xs bg-sand-alt rounded px-2 py-1 whitespace-nowrap">
                           {isRTL ? s.stage_name_ar : s.stage_name_en}
                         </span>
-                        {i < tmpl.stages.length - 1 && <ArrowRight className="w-3 h-3 text-slate-400 flex-shrink-0" />}
+                        {i < tmpl.stages.length - 1 && <ArrowRight className="w-3 h-3 text-muted-foreground flex-shrink-0" />}
                       </React.Fragment>
                     ))}
                   </div>
@@ -219,15 +219,15 @@ export default function WorkflowEngine() {
                 {loadingInstances ? (
                   <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></TableCell></TableRow>
                 ) : instances.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-slate-400">{isRTL ? 'لا توجد مسارات جارية' : 'No active workflow instances'}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{isRTL ? 'لا توجد مسارات جارية' : 'No active workflow instances'}</TableCell></TableRow>
                 ) : instances.map(inst => (
                   <TableRow key={inst.id}>
                     <TableCell className="font-medium">{inst.entity_label || inst.entity_id}</TableCell>
                     <TableCell>{isRTL ? MODULE_LABELS[inst.module]?.ar : MODULE_LABELS[inst.module]?.en}</TableCell>
                     <TableCell>{isRTL ? inst.current_stage_name_ar : inst.current_stage_name_en}</TableCell>
                     <TableCell>{inst.current_approver_role || inst.current_approver_email || '—'}</TableCell>
-                    <TableCell><Badge className={STATUS_COLORS[inst.status] || 'bg-slate-100 text-slate-700'}>{inst.status}</Badge></TableCell>
-                    <TableCell className="text-sm text-slate-500">{inst.created_at ? format(new Date(inst.created_at), 'dd/MM/yyyy') : '—'}</TableCell>
+                    <TableCell><Badge className={STATUS_COLORS[inst.status] || 'bg-sand-alt text-ink'}>{inst.status}</Badge></TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{inst.created_at ? format(new Date(inst.created_at), 'dd/MM/yyyy') : '—'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -278,7 +278,7 @@ export default function WorkflowEngine() {
                 <Card key={idx} className="border-l-4 border-l-blue-400">
                   <CardContent className="p-3 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-blue-700">{isRTL ? `المرحلة ${stage.stage_order}` : `Stage ${stage.stage_order}`}</span>
+                      <span className="text-sm font-semibold text-najdi-900">{isRTL ? `المرحلة ${stage.stage_order}` : `Stage ${stage.stage_order}`}</span>
                       {form.stages.length > 1 && (
                         <Button size="sm" variant="ghost" onClick={() => removeStage(idx)} className="text-red-500 hover:text-red-700 h-6 w-6 p-0">
                           <Trash2 className="w-3 h-3" />
@@ -329,7 +329,7 @@ export default function WorkflowEngine() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowTemplateDialog(false)}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
-            <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleSave} disabled={saving} className="bg-najdi-700 hover:bg-najdi-900">
               {saving && <Loader2 className="w-4 h-4 animate-spin me-2" />}
               {isRTL ? 'حفظ' : 'Save'}
             </Button>

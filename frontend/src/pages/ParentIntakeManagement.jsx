@@ -150,7 +150,7 @@ export default function ParentIntakeManagement() {
               </TableRow>
             ) : links.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-slate-400" style={{ textAlign: 'center' }}>
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground" style={{ textAlign: 'center' }}>
                   {isRTL ? 'لا توجد روابط' : 'No links found'}
                 </TableCell>
               </TableRow>
@@ -160,7 +160,7 @@ export default function ParentIntakeManagement() {
                   <TableCell style={{ width: '25%' }}>
                     <div>
                       <p className="font-medium">{isRTL ? link.name_ar : link.name_en}</p>
-                      <p className="text-xs text-slate-500 font-mono" dir="ltr">{link.link_code}</p>
+                      <p className="text-xs text-muted-foreground font-mono" dir="ltr">{link.link_code}</p>
                     </div>
                   </TableCell>
                   <TableCell style={{ width: '15%' }}>{link.academic_year}</TableCell>

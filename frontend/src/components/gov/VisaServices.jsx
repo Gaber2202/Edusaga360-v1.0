@@ -48,7 +48,7 @@ export default function VisaServices() {
     )},
     { header: isRTL ? 'نوع الدخول' : 'Entry', cell: r => r.entry_type === 'multiple' ? (isRTL ? 'متعدد' : 'Multiple') : (isRTL ? 'مفرد' : 'Single') },
     { header: isRTL ? 'الحالة' : 'Status', cell: r => (
-      <Badge className={r.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}>{r.status}</Badge>
+      <Badge className={r.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-sand-alt text-ink'}>{r.status}</Badge>
     )},
   ];
 

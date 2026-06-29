@@ -105,7 +105,7 @@ export default function TenantFormDialog({ open, onClose, onCreated }) {
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-blue-600" />
+            <Building2 className="w-5 h-5 text-najdi-700" />
             {isRTL ? 'إنشاء مؤسسة جديدة' : 'Create New Tenant'}
           </DialogTitle>
         </DialogHeader>

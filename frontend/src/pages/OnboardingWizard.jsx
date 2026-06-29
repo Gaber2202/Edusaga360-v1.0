@@ -155,26 +155,26 @@ export default function OnboardingWizard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-slate-600 border-t-emerald-400 rounded-full" />
+      <div className="min-h-screen bg-najdi-900 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-najdi-900 border-t-emerald-400 rounded-full" />
       </div>
     );
   }
 
   if (error === 'expired') {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4" dir="rtl">
+      <div className="min-h-screen bg-najdi-900 flex items-center justify-center p-4" dir="rtl">
         <Card className="max-w-md w-full">
           <CardContent className="py-12 text-center">
             <Clock className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-            <h1 className="text-xl font-bold text-slate-800 mb-2">انتهت صلاحية الرابط</h1>
-            <p className="text-slate-500 mb-5">انتهت صلاحية رابط الإعداد. اطلب رابطًا جديدًا للمتابعة — سنرسله إلى بريدك الإلكتروني ويمكنك إكمال الإعداد مباشرةً.</p>
+            <h1 className="text-xl font-bold text-ink mb-2">انتهت صلاحية الرابط</h1>
+            <p className="text-muted-foreground mb-5">انتهت صلاحية رابط الإعداد. اطلب رابطًا جديدًا للمتابعة — سنرسله إلى بريدك الإلكتروني ويمكنك إكمال الإعداد مباشرةً.</p>
             <Button onClick={requestNewLink} disabled={renewing} className="w-full bg-emerald-600 hover:bg-emerald-700 mb-4">
               {renewing
                 ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> جاري التجديد...</span>
                 : 'طلب رابط جديد'}
             </Button>
-            <p className="text-xs text-slate-400">تحتاج مساعدة؟ <a href="mailto:info@edusaga360.com" className="text-emerald-600 font-medium hover:underline">info@edusaga360.com</a></p>
+            <p className="text-xs text-muted-foreground">تحتاج مساعدة؟ <a href="mailto:info@edusaga360.com" className="text-emerald-600 font-medium hover:underline">info@edusaga360.com</a></p>
           </CardContent>
         </Card>
       </div>
@@ -183,12 +183,12 @@ export default function OnboardingWizard() {
 
   if (error === 'already') {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4" dir="rtl">
+      <div className="min-h-screen bg-najdi-900 flex items-center justify-center p-4" dir="rtl">
         <Card className="max-w-md w-full">
           <CardContent className="py-12 text-center">
             <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
-            <h1 className="text-xl font-bold text-slate-800 mb-2">تم إعداد حسابك بالفعل</h1>
-            <p className="text-slate-500 mb-4">حساب مدرستك جاهز للاستخدام. يتم تحويلك إلى تسجيل الدخول…</p>
+            <h1 className="text-xl font-bold text-ink mb-2">تم إعداد حسابك بالفعل</h1>
+            <p className="text-muted-foreground mb-4">حساب مدرستك جاهز للاستخدام. يتم تحويلك إلى تسجيل الدخول…</p>
             <Loader2 className="w-6 h-6 animate-spin text-emerald-500 mx-auto" />
             <a href="/school-login" className="block mt-4 text-emerald-600 font-medium hover:underline">تسجيل الدخول الآن</a>
           </CardContent>
@@ -199,12 +199,12 @@ export default function OnboardingWizard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4" dir="rtl">
+      <div className="min-h-screen bg-najdi-900 flex items-center justify-center p-4" dir="rtl">
         <Card className="max-w-md w-full">
           <CardContent className="py-12 text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h1 className="text-xl font-bold text-slate-800 mb-2">رابط غير صالح</h1>
-            <p className="text-slate-500">هذا الرابط غير صالح. تأكد من الرابط في البريد الإلكتروني أو تواصل مع الدعم.</p>
+            <h1 className="text-xl font-bold text-ink mb-2">رابط غير صالح</h1>
+            <p className="text-muted-foreground">هذا الرابط غير صالح. تأكد من الرابط في البريد الإلكتروني أو تواصل مع الدعم.</p>
           </CardContent>
         </Card>
       </div>
@@ -214,12 +214,12 @@ export default function OnboardingWizard() {
   if (completed) {
     const ar = defaultLanguage !== 'en';
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4" dir={ar ? 'rtl' : 'ltr'}>
+      <div className="min-h-screen bg-najdi-900 flex items-center justify-center p-4" dir={ar ? 'rtl' : 'ltr'}>
         <Card className="max-w-md w-full">
           <CardContent className="py-12 text-center">
             <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
-            <h1 className="text-xl font-bold text-slate-800 mb-2">{ar ? 'تم الإعداد بنجاح!' : 'Setup complete!'}</h1>
-            <p className="text-slate-500 mb-4">{ar ? 'يتم الآن تحويلك إلى لوحة التحكم...' : 'Taking you to your dashboard…'}</p>
+            <h1 className="text-xl font-bold text-ink mb-2">{ar ? 'تم الإعداد بنجاح!' : 'Setup complete!'}</h1>
+            <p className="text-muted-foreground mb-4">{ar ? 'يتم الآن تحويلك إلى لوحة التحكم...' : 'Taking you to your dashboard…'}</p>
             <Loader2 className="w-6 h-6 animate-spin text-emerald-500 mx-auto" />
           </CardContent>
         </Card>
@@ -228,7 +228,7 @@ export default function OnboardingWizard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-najdi-900 to-najdi-900 flex items-center justify-center p-4" dir="rtl">
       <Card className="max-w-lg w-full">
         <CardContent className="p-8">
           {/* Progress */}
@@ -236,11 +236,11 @@ export default function OnboardingWizard() {
             {STEPS.map((s, i) => (
               <div key={s} className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                  i <= step ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-400'
+                  i <= step ? 'bg-emerald-600 text-white' : 'bg-sand-alt text-muted-foreground'
                 }`}>
                   {i + 1}
                 </div>
-                {i < STEPS.length - 1 && <div className={`w-8 h-0.5 ${i < step ? 'bg-emerald-600' : 'bg-slate-200'}`} />}
+                {i < STEPS.length - 1 && <div className={`w-8 h-0.5 ${i < step ? 'bg-emerald-600' : 'bg-sand-alt'}`} />}
               </div>
             ))}
           </div>
@@ -249,8 +249,8 @@ export default function OnboardingWizard() {
           {step === 0 && (
             <div className="text-center space-y-4">
               <GraduationCap className="w-16 h-16 text-emerald-600 mx-auto" />
-              <h1 className="text-2xl font-bold text-slate-800">مرحباً {request?.contact_name}!</h1>
-              <p className="text-slate-500">أهلاً بك في EduSaga 360. لنقم بإعداد حساب مدرستك {request?.school_name}.</p>
+              <h1 className="text-2xl font-bold text-ink">مرحباً {request?.contact_name}!</h1>
+              <p className="text-muted-foreground">أهلاً بك في EduSaga 360. لنقم بإعداد حساب مدرستك {request?.school_name}.</p>
               <Button className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={() => setStep(1)}>
                 ابدأ الإعداد
               </Button>
@@ -260,12 +260,12 @@ export default function OnboardingWizard() {
           {/* Step 2: Set Password */}
           {step === 1 && (
             <div className="space-y-4">
-              <h2 className="text-xl font-bold text-slate-800">تعيين كلمة المرور</h2>
-              <p className="text-sm text-slate-500">اختر كلمة مرور قوية لحسابك ({request?.contact_email})</p>
+              <h2 className="text-xl font-bold text-ink">تعيين كلمة المرور</h2>
+              <p className="text-sm text-muted-foreground">اختر كلمة مرور قوية لحسابك ({request?.contact_email})</p>
               <div>
                 <Label>كلمة المرور</Label>
                 <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="10 أحرف على الأقل" />
-                <p className="text-xs text-slate-400">10 أحرف على الأقل، تشمل حرفاً كبيراً وحرفاً صغيراً ورقماً</p>
+                <p className="text-xs text-muted-foreground">10 أحرف على الأقل، تشمل حرفاً كبيراً وحرفاً صغيراً ورقماً</p>
               </div>
               <div>
                 <Label>تأكيد كلمة المرور</Label>
@@ -285,7 +285,7 @@ export default function OnboardingWizard() {
           {/* Step 3: School Settings */}
           {step === 2 && (
             <div className="space-y-4">
-              <h2 className="text-xl font-bold text-slate-800">إعدادات المدرسة</h2>
+              <h2 className="text-xl font-bold text-ink">إعدادات المدرسة</h2>
               <div>
                 <Label>رابط شعار المدرسة (اختياري)</Label>
                 <Input value={schoolLogo} onChange={e => setSchoolLogo(e.target.value)} placeholder="https://..." />
@@ -319,12 +319,12 @@ export default function OnboardingWizard() {
           {/* Step 4: Confirm */}
           {step === 3 && (
             <div className="space-y-4">
-              <h2 className="text-xl font-bold text-slate-800">تأكيد الإعداد</h2>
-              <div className="bg-slate-50 rounded-lg p-4 space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-slate-500">المدرسة:</span><span className="font-medium">{request?.school_name}</span></div>
-                <div className="flex justify-between"><span className="text-slate-500">المسؤول:</span><span className="font-medium">{request?.contact_name}</span></div>
-                <div className="flex justify-between"><span className="text-slate-500">البريد:</span><span className="font-medium">{request?.contact_email}</span></div>
-                <div className="flex justify-between"><span className="text-slate-500">اللغة:</span><span className="font-medium">{defaultLanguage === 'ar' ? 'العربية' : 'English'}</span></div>
+              <h2 className="text-xl font-bold text-ink">تأكيد الإعداد</h2>
+              <div className="bg-sand rounded-lg p-4 space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">المدرسة:</span><span className="font-medium">{request?.school_name}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">المسؤول:</span><span className="font-medium">{request?.contact_name}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">البريد:</span><span className="font-medium">{request?.contact_email}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">اللغة:</span><span className="font-medium">{defaultLanguage === 'ar' ? 'العربية' : 'English'}</span></div>
               </div>
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1" onClick={() => setStep(2)}>رجوع</Button>

@@ -106,21 +106,21 @@ export default function YamenDraftDocuments({ isRTL }) {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={() => { setShowDialog(true); setStep(1); setDocContent(''); }} className="bg-slate-900 hover:bg-slate-800">
+        <Button onClick={() => { setShowDialog(true); setStep(1); setDocContent(''); }} className="bg-najdi-900 hover:bg-najdi-900">
             <Plus className="w-4 h-4 me-2" />{isRTL ? 'مسودة مستند جديد' : 'New Document Draft'}
           </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
          {DOC_TYPES.map(dt => (
-           <Card key={dt.id} className="cursor-pointer bg-white hover:shadow-md hover:border-emerald-400 transition-all border-2 border-slate-200" onClick={() => { setSelectedType(dt.id); setShowDialog(true); setStep(1); setDocContent(''); }}>
+           <Card key={dt.id} className="cursor-pointer bg-white hover:shadow-md hover:border-emerald-400 transition-all border-2 border-border" onClick={() => { setSelectedType(dt.id); setShowDialog(true); setStep(1); setDocContent(''); }}>
              <CardContent className="p-4 flex items-center gap-3">
                <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
                  <FileText className="w-5 h-5 text-emerald-600" />
                </div>
                <div>
-                 <p className="font-medium text-sm text-slate-900">{isRTL ? dt.ar : dt.en}</p>
-                 <p className="text-xs text-slate-500">{isRTL ? dt.en : dt.ar}</p>
+                 <p className="font-medium text-sm text-ink">{isRTL ? dt.ar : dt.en}</p>
+                 <p className="text-xs text-muted-foreground">{isRTL ? dt.en : dt.ar}</p>
                </div>
              </CardContent>
            </Card>
@@ -205,7 +205,7 @@ export default function YamenDraftDocuments({ isRTL }) {
             )}
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
+          <div className="flex justify-end gap-3 pt-4 border-t border-najdi-900">
             {step === 1 ? (
               <>
                 <Button variant="outline" onClick={() => setShowDialog(false)}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>

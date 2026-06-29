@@ -218,13 +218,13 @@ export default function TuitionFeesConfiguration() {
       />
 
       {/* SSOT banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-        <DollarSign className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+      <div className="bg-najdi-50 border border-najdi-100 rounded-lg p-4 flex items-start gap-3">
+        <DollarSign className="w-5 h-5 text-najdi-700 flex-shrink-0 mt-0.5" />
         <div>
-          <p className="font-semibold text-blue-900">
+          <p className="font-semibold text-najdi-900">
             {isRTL ? 'المصدر الوحيد لإعداد الرسوم' : 'Single Source of Truth for Fees'}
           </p>
-          <p className="text-sm text-blue-700 mt-1">
+          <p className="text-sm text-najdi-900 mt-1">
             {isRTL
               ? 'هذه الصفحة هي المكان الوحيد لإعداد الرسوم الدراسية. بعد الإعداد، انتقل إلى بيانات الطالب → رسوم الطالب → تطبيق الرسوم.'
               : 'This page is the only place to configure fees. After configuration, go to Student → Fee Plan → Apply Fees.'}
@@ -284,7 +284,7 @@ export default function TuitionFeesConfiguration() {
                         {fee.section_id ? (
                           sections.find(s => s.id === fee.section_id)?.[isRTL ? 'name_ar' : 'name_en'] || '-'
                         ) : (
-                          <span className="text-slate-400">{isRTL ? 'جميع الشعب' : 'All Sections'}</span>
+                          <span className="text-muted-foreground">{isRTL ? 'جميع الشعب' : 'All Sections'}</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -294,7 +294,7 @@ export default function TuitionFeesConfiguration() {
                       </TableCell>
                       <TableCell className="font-semibold">{fee.amount.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</TableCell>
                       <TableCell>
-                        <Badge className={fee.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100'}>
+                        <Badge className={fee.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-sand-alt'}>
                           {fee.is_active ? (isRTL ? 'نشط' : 'Active') : (isRTL ? 'معطل' : 'Inactive')}
                         </Badge>
                       </TableCell>
@@ -450,7 +450,7 @@ export default function TuitionFeesConfiguration() {
                   </SelectContent>
                 </Select>
                 {tuitionFormData.branch_id === 'ALL' && (
-                  <p className="text-xs text-blue-600 mt-1">
+                  <p className="text-xs text-najdi-700 mt-1">
                     {isRTL ? 'سيتم تطبيق هذا الإعداد على جميع الفروع' : 'This configuration will apply to all branches'}
                   </p>
                 )}

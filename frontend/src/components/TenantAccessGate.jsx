@@ -24,7 +24,7 @@ export default function TenantAccessGate({ children }) {
   if (roleLoading || tenantLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-border border-t-najdi-700 rounded-full animate-spin" />
       </div>
     );
   }
@@ -45,10 +45,10 @@ export default function TenantAccessGate({ children }) {
             <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
               <ShieldAlert className="w-8 h-8 text-amber-600" />
             </div>
-            <h2 className="text-xl font-bold text-slate-900">
+            <h2 className="text-xl font-bold text-ink">
               {isRTL ? 'لم يتم العثور على مؤسسة مرتبطة' : 'No Linked Organization Found'}
             </h2>
-            <p className="text-slate-500 text-sm">
+            <p className="text-muted-foreground text-sm">
               {isRTL
                 ? 'حسابك غير مرتبط بأي مؤسسة بعد. إذا أكملت الإعداد للتو، أعد تحميل الصفحة. وإلا سجّل مؤسسة جديدة أو تواصل مع الدعم.'
                 : 'Your account is not linked to any organization yet. If you just completed setup, reload the page. Otherwise register a new organization or contact support.'}
@@ -79,10 +79,10 @@ export default function TenantAccessGate({ children }) {
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
               <Clock className="w-8 h-8 text-red-600" />
             </div>
-            <h2 className="text-xl font-bold text-slate-900">
+            <h2 className="text-xl font-bold text-ink">
               {isRTL ? 'انتهت الفترة التجريبية' : 'Trial Period Expired'}
             </h2>
-            <p className="text-slate-500 text-sm">
+            <p className="text-muted-foreground text-sm">
               {isRTL 
                 ? 'انتهت فترة التجربة المجانية لمؤسستك. يرجى الترقية للاستمرار.'
                 : 'Your organization\'s free trial has expired. Please upgrade to continue.'}
@@ -102,10 +102,10 @@ export default function TenantAccessGate({ children }) {
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
               <AlertTriangle className="w-8 h-8 text-red-600" />
             </div>
-            <h2 className="text-xl font-bold text-slate-900">
+            <h2 className="text-xl font-bold text-ink">
               {isRTL ? 'الحساب موقوف' : 'Account Suspended'}
             </h2>
-            <p className="text-slate-500 text-sm">
+            <p className="text-muted-foreground text-sm">
               {isRTL 
                 ? 'حساب مؤسستك موقوف حالياً. يرجى التواصل مع الدعم.'
                 : 'Your organization account is currently suspended. Please contact support.'}
@@ -133,10 +133,10 @@ export default function TenantAccessGate({ children }) {
             <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
               <ShieldAlert className="w-8 h-8 text-amber-600" />
             </div>
-            <h2 className="text-xl font-bold text-slate-900">
+            <h2 className="text-xl font-bold text-ink">
               {isRTL ? 'لم يتم تعيين صلاحية بعد' : 'Role Not Assigned Yet'}
             </h2>
-            <p className="text-slate-500 text-sm">
+            <p className="text-muted-foreground text-sm">
               {isRTL
                 ? 'تم ربط حسابك بالمؤسسة بنجاح. يرجى التواصل مع مدير النظام لتعيين صلاحيتك قبل الدخول إلى النظام.'
                 : 'Your account is linked to the organization, but your administrator has not yet assigned you a role. Please contact your system administrator.'}

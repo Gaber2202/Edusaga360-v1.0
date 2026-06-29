@@ -169,7 +169,7 @@ export default function UserManagement() {
     { header: isRTL ? 'الطلاب المرتبطون' : 'Linked Students', cell: (row) => {
       if (row.user_role !== 'parent' && row.role !== 'parent') return '-';
       const ids = row.linked_student_ids || [];
-      if (ids.length === 0) return <span className="text-slate-400">-</span>;
+      if (ids.length === 0) return <span className="text-muted-foreground">-</span>;
       return <Badge variant="secondary">{ids.length} {isRTL ? 'طالب' : 'student(s)'}</Badge>;
     }},
     { header: t('actions'), cell: (row) => (

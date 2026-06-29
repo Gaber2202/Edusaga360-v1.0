@@ -20,13 +20,13 @@ export default function FeatureFlags() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Feature Flags</h1>
-        <p className="text-sm text-slate-500">Control module access per tenant</p>
+        <h1 className="text-2xl font-bold text-ink">Feature Flags</h1>
+        <p className="text-sm text-muted-foreground">Control module access per tenant</p>
       </div>
 
       <Card>
         <CardContent className="p-5">
-          <h3 className="font-semibold text-slate-800 mb-4">Available Modules</h3>
+          <h3 className="font-semibold text-ink mb-4">Available Modules</h3>
           <div className="flex flex-wrap gap-2">
             {AVAILABLE_MODULES.map(m => (
               <Badge key={m} variant="outline" className="text-xs">{m.replace('_', ' ')}</Badge>
@@ -41,10 +41,10 @@ export default function FeatureFlags() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <Flag className="w-5 h-5 text-slate-400" />
+                  <Flag className="w-5 h-5 text-muted-foreground" />
                   <div>
-                    <p className="font-medium text-sm text-slate-800">{t.name_en || t.name_ar}</p>
-                    <p className="text-xs text-slate-500">Plan: {t.plan || 'trial'}</p>
+                    <p className="font-medium text-sm text-ink">{t.name_en || t.name_ar}</p>
+                    <p className="text-xs text-muted-foreground">Plan: {t.plan || 'trial'}</p>
                   </div>
                 </div>
               </div>
@@ -61,7 +61,7 @@ export default function FeatureFlags() {
       </div>
 
       <Card>
-        <CardContent className="p-5 text-center text-slate-500">
+        <CardContent className="p-5 text-center text-muted-foreground">
           <p className="text-sm">Feature flag management UI coming soon. Currently managed via Supabase.</p>
         </CardContent>
       </Card>

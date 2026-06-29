@@ -9,11 +9,11 @@ export default function AccessDenied() {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-sand flex items-center justify-center p-4">
       <div className="text-center">
-        <ShieldOff className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-        <h1 className="text-2xl font-bold text-slate-700 mb-2">{t('accessDenied')}</h1>
-        <p className="text-slate-500 mb-6 max-w-sm">
+        <ShieldOff className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+        <h1 className="text-2xl font-bold text-ink mb-2">{t('accessDenied')}</h1>
+        <p className="text-muted-foreground mb-6 max-w-sm">
           {t('accessDeniedDesc')}
         </p>
         <Button variant="outline" onClick={logout}>

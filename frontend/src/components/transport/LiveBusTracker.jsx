@@ -122,24 +122,24 @@ export default function LiveBusTracker({ routes, assignments, students, getTenan
         <>
           {/* Route info bar */}
           <div className="flex flex-wrap gap-3 text-sm">
-            <span className="flex items-center gap-1 text-slate-600">
+            <span className="flex items-center gap-1 text-muted-foreground">
               🚌 {selectedRoute.vehicle_number || (isRTL ? 'غير محدد' : 'Unassigned')}
             </span>
-            <span className="flex items-center gap-1 text-slate-600">
+            <span className="flex items-center gap-1 text-muted-foreground">
               👤 {selectedRoute.driver_name || '—'}
             </span>
-            <span className="flex items-center gap-1 text-slate-600">
+            <span className="flex items-center gap-1 text-muted-foreground">
               👥 {routeAssignments.length} {isRTL ? 'طالب' : 'students'}
             </span>
-            <span className={`flex items-center gap-1 ms-auto font-semibold ${selectedRoute.is_active ? 'text-green-600' : 'text-slate-400'}`}>
-              <div className={`w-2 h-2 rounded-full ${selectedRoute.is_active ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`} />
+            <span className={`flex items-center gap-1 ms-auto font-semibold ${selectedRoute.is_active ? 'text-green-600' : 'text-muted-foreground'}`}>
+              <div className={`w-2 h-2 rounded-full ${selectedRoute.is_active ? 'bg-green-500 animate-pulse' : 'bg-sand-alt'}`} />
               {selectedRoute.is_active ? (isRTL ? 'على الطريق' : 'En Route') : (isRTL ? 'متوقف' : 'Stopped')}
             </span>
           </div>
 
           {/* Simulated map: stop-by-stop progress timeline */}
-          <div className="bg-slate-50 rounded-xl p-4 border">
-            <p className="text-xs font-medium text-slate-500 mb-3 flex items-center gap-1">
+          <div className="bg-sand rounded-xl p-4 border">
+            <p className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-1">
               <Navigation className="w-3.5 h-3.5" />
               {isRTL ? 'موقع الحافلة الحالي' : 'Live Bus Position'} — {isRTL ? 'تحديث كل 30 ثانية' : 'Updates every 30s'}
             </p>
@@ -154,23 +154,23 @@ export default function LiveBusTracker({ routes, assignments, students, getTenan
                         <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                           status === 'done' ? 'bg-green-400 border-green-400' :
                           status === 'current' ? 'bg-cyan-500 border-cyan-500 ring-4 ring-cyan-200 animate-pulse' :
-                          'bg-white border-slate-300'
+                          'bg-white border-border'
                         }`}>
                           {status === 'done' && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                           {status === 'current' && <Bus className="w-2.5 h-2.5 text-white" />}
                         </div>
                         {i < selectedRoute.stops.length - 1 && (
-                          <div className={`w-0.5 h-8 ${status === 'done' ? 'bg-green-300' : 'bg-slate-200'}`} />
+                          <div className={`w-0.5 h-8 ${status === 'done' ? 'bg-green-300' : 'bg-sand-alt'}`} />
                         )}
                       </div>
                       {/* Stop info */}
                       <div className="pb-3 flex-1">
-                        <p className={`text-sm font-medium ${status === 'current' ? 'text-cyan-700' : status === 'done' ? 'text-slate-400' : 'text-slate-700'}`}>
+                        <p className={`text-sm font-medium ${status === 'current' ? 'text-cyan-700' : status === 'done' ? 'text-muted-foreground' : 'text-ink'}`}>
                           {stop.name_ar}
                           {status === 'current' && <span className="ms-2 text-xs bg-cyan-100 text-cyan-700 px-1.5 py-0.5 rounded-full">{isRTL ? 'الموقع الحالي' : 'Current'}</span>}
                         </p>
                         {stop.estimated_time && (
-                          <p className="text-xs text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" />{stop.estimated_time}</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" />{stop.estimated_time}</p>
                         )}
                       </div>
                     </div>
@@ -178,7 +178,7 @@ export default function LiveBusTracker({ routes, assignments, students, getTenan
                 })}
               </div>
             ) : (
-              <p className="text-slate-400 text-sm text-center py-4">{isRTL ? 'لا محطات محددة' : 'No stops defined'}</p>
+              <p className="text-muted-foreground text-sm text-center py-4">{isRTL ? 'لا محطات محددة' : 'No stops defined'}</p>
             )}
           </div>
 
@@ -214,12 +214,12 @@ export default function LiveBusTracker({ routes, assignments, students, getTenan
 
           {/* Live boarding log */}
           <div>
-            <p className="text-xs font-medium text-slate-500 mb-2 flex items-center gap-1">
+            <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
               {isRTL ? 'سجل الصعود اللحظي' : 'Live Boarding Log'}
             </p>
             {boardingLog.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-3">{isRTL ? 'لا أحداث بعد...' : 'No events yet...'}</p>
+              <p className="text-xs text-muted-foreground text-center py-3">{isRTL ? 'لا أحداث بعد...' : 'No events yet...'}</p>
             ) : (
               <div className="space-y-1.5">
                 {boardingLog.map((log, i) => (
@@ -227,11 +227,11 @@ export default function LiveBusTracker({ routes, assignments, students, getTenan
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-green-500" />
                       <div>
-                        <p className="text-sm font-medium text-slate-800">{log.student_name}</p>
-                        <p className="text-xs text-slate-500">📍 {log.stop_name}</p>
+                        <p className="text-sm font-medium text-ink">{log.student_name}</p>
+                        <p className="text-xs text-muted-foreground">📍 {log.stop_name}</p>
                       </div>
                     </div>
-                    <span className="text-xs text-slate-400 font-mono">{log.event_time}</span>
+                    <span className="text-xs text-muted-foreground font-mono">{log.event_time}</span>
                   </div>
                 ))}
               </div>
@@ -241,7 +241,7 @@ export default function LiveBusTracker({ routes, assignments, students, getTenan
       )}
 
       {!selectedRoute && (
-        <div className="text-center py-12 text-slate-400">
+        <div className="text-center py-12 text-muted-foreground">
           <Bus className="w-10 h-10 mx-auto mb-2 opacity-30" />
           <p>{isRTL ? 'اختر مساراً لعرض التتبع' : 'Select a route to view tracking'}</p>
         </div>

@@ -219,7 +219,7 @@ export default function Attendance() {
           p-2 rounded-lg transition-all duration-200 flex items-center gap-1
           ${isActive 
             ? `${activeColor} text-white shadow-sm` 
-            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+            : 'bg-sand-alt text-muted-foreground hover:bg-sand-alt'
           }
         `}
         title={label}
@@ -236,7 +236,7 @@ export default function Attendance() {
           title={t('attendance')}
           subtitle={isRTL ? 'سجل حضور أبنائك' : 'Your children\'s attendance record'}
         />
-        <p className="text-slate-500">
+        <p className="text-muted-foreground">
           {isRTL ? 'يمكنك مشاهدة سجل الحضور من صفحة الطلاب' : 'You can view attendance records from the Students page'}
         </p>
       </div>
@@ -304,7 +304,7 @@ export default function Attendance() {
 
           {/* Search */}
           <div className="relative flex-1 min-w-[200px]">
-            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
             <Input
               placeholder={isRTL ? 'بحث...' : 'Search...'}
               value={search}
@@ -318,7 +318,7 @@ export default function Attendance() {
         <Button 
           onClick={handleSave} 
           disabled={saving} 
-          className="bg-slate-900 hover:bg-slate-800 gap-2"
+          className="bg-najdi-900 hover:bg-najdi-900 gap-2"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           {t('save')}
@@ -328,8 +328,8 @@ export default function Attendance() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Card className="p-4 text-center">
-          <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
-          <p className="text-sm text-slate-500">{isRTL ? 'إجمالي' : 'Total'}</p>
+          <p className="text-2xl font-bold text-ink">{stats.total}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي' : 'Total'}</p>
         </Card>
         <Card className="p-4 text-center bg-emerald-50">
           <p className="text-2xl font-bold text-emerald-600">{stats.present}</p>
@@ -343,9 +343,9 @@ export default function Attendance() {
           <p className="text-2xl font-bold text-amber-600">{stats.late}</p>
           <p className="text-sm text-amber-600">{t('late')}</p>
         </Card>
-        <Card className="p-4 text-center bg-blue-50">
-          <p className="text-2xl font-bold text-blue-600">{stats.excused}</p>
-          <p className="text-sm text-blue-600">{t('excused')}</p>
+        <Card className="p-4 text-center bg-najdi-50">
+          <p className="text-2xl font-bold text-najdi-700">{stats.excused}</p>
+          <p className="text-sm text-najdi-700">{t('excused')}</p>
         </Card>
       </div>
 
@@ -364,27 +364,27 @@ export default function Attendance() {
       {/* Student List */}
       {loadingStudents || loadingAttendance ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       ) : filteredStudents.length === 0 ? (
-        <Card className="p-12 text-center text-slate-500">
+        <Card className="p-12 text-center text-muted-foreground">
           {isRTL ? 'لا يوجد طلاب' : 'No students found'}
         </Card>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100">
+        <div className="bg-white rounded-xl border border-border divide-y divide-border">
           {filteredStudents.map(student => (
             <div key={student.id} className="p-4 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-sand-alt flex items-center justify-center overflow-hidden flex-shrink-0">
                   {student.photo_url ? (
                     <img src={student.photo_url} alt={student.name_ar} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-sm text-slate-500">{student.name_ar?.[0]}</span>
+                    <span className="text-sm text-muted-foreground">{student.name_ar?.[0]}</span>
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="font-medium text-slate-900 truncate">{student.name_ar}</p>
-                  <p className="text-sm text-slate-500">
+                  <p className="font-medium text-ink truncate">{student.name_ar}</p>
+                  <p className="text-sm text-muted-foreground">
                     {t(student.grade)} {student.section && `- ${student.section}`}
                   </p>
                 </div>
@@ -416,7 +416,7 @@ export default function Attendance() {
                   studentId={student.id}
                   status="excused"
                   icon={AlertCircle}
-                  activeColor="bg-blue-500"
+                  activeColor="bg-najdi-500"
                   label={t('excused')}
                 />
               </div>

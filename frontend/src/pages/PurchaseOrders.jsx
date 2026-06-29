@@ -341,7 +341,7 @@ export default function PurchaseOrders() {
       </Tabs>
 
       <div className="relative max-w-md">
-        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
         <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${isRTL ? 'pr-10' : 'pl-10'} bg-white`} />
       </div>
 
@@ -382,7 +382,7 @@ export default function PurchaseOrders() {
               <div className="border rounded-lg overflow-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-50">
+                    <TableRow className="bg-sand">
                       <TableHead>{isRTL ? 'الوصف' : 'Description'}</TableHead>
                       <TableHead className="w-[100px]">{t('quantity')}</TableHead>
                       <TableHead className="w-[120px]">{t('unitPrice')}</TableHead>
@@ -414,7 +414,7 @@ export default function PurchaseOrders() {
                 </Table>
               </div>
               <div className="flex justify-end">
-                <div className="w-64 space-y-2 bg-slate-50 p-4 rounded-lg">
+                <div className="w-64 space-y-2 bg-sand p-4 rounded-lg">
                   <div className="flex justify-between"><span>{t('subtotal')}</span><span>{subtotal.toLocaleString()}</span></div>
                   <div className="flex justify-between"><span>{t('vat')} (15%)</span><span>{vat.toLocaleString()}</span></div>
                   <div className="flex justify-between font-bold border-t pt-2"><span>{t('total')}</span><span>{total.toLocaleString()} {t('sar')}</span></div>

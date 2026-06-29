@@ -163,8 +163,8 @@ export default function RegistrationWizard() {
           onClick={() => set(field, o.value)}
           className={`py-2 px-4 rounded-lg border text-sm font-medium transition-all ${
             form[field] === o.value
-              ? 'border-blue-500 bg-blue-50 text-blue-700'
-              : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+              ? 'border-najdi-500 bg-najdi-50 text-najdi-900'
+              : 'border-border text-muted-foreground hover:border-border hover:bg-sand'
           }`}
         >
           {isRTL ? o.ar : o.en}
@@ -174,15 +174,15 @@ export default function RegistrationWizard() {
   );
 
   const ReviewRow = ({ label, value }) => (
-    <div className="flex justify-between items-start gap-4 py-1.5 border-b border-slate-100 last:border-0">
-      <span className="text-slate-500 text-sm flex-shrink-0">{label}</span>
-      <span className="text-slate-800 text-sm font-medium text-end">{value || '—'}</span>
+    <div className="flex justify-between items-start gap-4 py-1.5 border-b border-border last:border-0">
+      <span className="text-muted-foreground text-sm flex-shrink-0">{label}</span>
+      <span className="text-ink text-sm font-medium text-end">{value || '—'}</span>
     </div>
   );
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4 ${isRTL ? 'rtl' : 'ltr'}`}
+      className={`min-h-screen bg-gradient-to-br from-sand via-najdi-50 to-sand flex items-center justify-center p-4 ${isRTL ? 'rtl' : 'ltr'}`}
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       <style>{`
@@ -200,11 +200,11 @@ export default function RegistrationWizard() {
               className="h-12 w-auto"
             />
             <div className="text-start">
-              <p className="font-bold text-xl text-slate-900">EduSaga 360</p>
-              <p className="text-xs text-slate-500">{isRTL ? 'منصة إدارة المدارس' : 'School Management Platform'}</p>
+              <p className="font-bold text-xl text-ink">EduSaga 360</p>
+              <p className="text-xs text-muted-foreground">{isRTL ? 'منصة إدارة المدارس' : 'School Management Platform'}</p>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => setLang(l => l === 'ar' ? 'en' : 'ar')} className="text-slate-500">
+          <Button variant="ghost" size="sm" onClick={() => setLang(l => l === 'ar' ? 'en' : 'ar')} className="text-muted-foreground">
             <Globe className="w-4 h-4 me-1" />
             {lang === 'ar' ? 'English' : 'العربية'}
           </Button>
@@ -217,16 +217,16 @@ export default function RegistrationWizard() {
               <React.Fragment key={i}>
                 <div className="flex items-center gap-1.5">
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                    i < step ? 'bg-emerald-500 text-white' : i === step ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-400'
+                    i < step ? 'bg-emerald-500 text-white' : i === step ? 'bg-najdi-700 text-white' : 'bg-sand-alt text-muted-foreground'
                   }`}>
                     {i < step ? <CheckCircle className="w-4 h-4" /> : i + 1}
                   </div>
-                  <span className={`text-xs hidden sm:block font-medium ${i === step ? 'text-blue-600' : 'text-slate-400'}`}>
+                  <span className={`text-xs hidden sm:block font-medium ${i === step ? 'text-najdi-700' : 'text-muted-foreground'}`}>
                     {isRTL ? s.titleAr : s.titleEn}
                   </span>
                 </div>
                 {i < STEPS.length - 1 && (
-                  <div className={`h-0.5 w-6 rounded mx-1 ${i < step ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+                  <div className={`h-0.5 w-6 rounded mx-1 ${i < step ? 'bg-emerald-500' : 'bg-sand-alt'}`} />
                 )}
               </React.Fragment>
             ))}
@@ -238,12 +238,12 @@ export default function RegistrationWizard() {
           <Card className="shadow-lg border-0">
             <CardContent className="pt-6 pb-6 space-y-5">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <School className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 bg-najdi-50 rounded-xl flex items-center justify-center">
+                  <School className="w-5 h-5 text-najdi-700" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">{isRTL ? 'معلومات المدرسة' : 'School Information'}</h2>
-                  <p className="text-sm text-slate-500">{isRTL ? 'أخبرنا عن مؤسستك التعليمية' : 'Tell us about your educational institution'}</p>
+                  <h2 className="text-lg font-bold text-ink">{isRTL ? 'معلومات المدرسة' : 'School Information'}</h2>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'أخبرنا عن مؤسستك التعليمية' : 'Tell us about your educational institution'}</p>
                 </div>
               </div>
 
@@ -305,8 +305,8 @@ export default function RegistrationWizard() {
                   <User className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">{isRTL ? 'بيانات المسؤول عن التواصل' : 'Contact Person Details'}</h2>
-                  <p className="text-sm text-slate-500">{isRTL ? 'من سيكون نقطة التواصل الرئيسية؟' : 'Who will be the main point of contact?'}</p>
+                  <h2 className="text-lg font-bold text-ink">{isRTL ? 'بيانات المسؤول عن التواصل' : 'Contact Person Details'}</h2>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'من سيكون نقطة التواصل الرئيسية؟' : 'Who will be the main point of contact?'}</p>
                 </div>
               </div>
 
@@ -314,14 +314,14 @@ export default function RegistrationWizard() {
                 <div className="space-y-1.5">
                   <Label>{isRTL ? 'الاسم الكامل *' : 'Full Name *'}</Label>
                   <div className="relative">
-                    <User className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+                    <User className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
                     <Input className={isRTL ? 'pr-9' : 'pl-9'} placeholder={isRTL ? 'محمد أحمد' : 'John Smith'} value={form.contact_name} onChange={e => set('contact_name', e.target.value)} />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label>{isRTL ? 'المسمى الوظيفي *' : 'Job Title *'}</Label>
                   <div className="relative">
-                    <Briefcase className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+                    <Briefcase className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
                     <Input className={isRTL ? 'pr-9' : 'pl-9'} placeholder={isRTL ? 'مدير المدرسة' : 'School Principal'} value={form.job_title} onChange={e => set('job_title', e.target.value)} />
                   </div>
                 </div>
@@ -331,14 +331,14 @@ export default function RegistrationWizard() {
                 <div className="space-y-1.5">
                   <Label>{isRTL ? 'رقم الجوال (966+) *' : 'Mobile (+966) *'}</Label>
                   <div className="relative">
-                    <Phone className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+                    <Phone className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
                     <Input className={isRTL ? 'pr-9' : 'pl-9'} placeholder="+966 5x xxx xxxx" value={form.contact_phone} onChange={e => set('contact_phone', e.target.value)} />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label>{isRTL ? 'البريد الإلكتروني للعمل *' : 'Work Email *'}</Label>
                   <div className="relative">
-                    <Mail className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+                    <Mail className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
                     <Input type="email" className={isRTL ? 'pr-9' : 'pl-9'} placeholder="you@school.edu.sa" value={form.contact_email} onChange={e => set('contact_email', e.target.value)} />
                   </div>
                 </div>
@@ -369,8 +369,8 @@ export default function RegistrationWizard() {
                   <Settings className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">{isRTL ? 'المعلومات التقنية' : 'Technical Information'}</h2>
-                  <p className="text-sm text-slate-500">{isRTL ? 'لنفهم احتياجاتك التقنية' : 'Help us understand your technical needs'}</p>
+                  <h2 className="text-lg font-bold text-ink">{isRTL ? 'المعلومات التقنية' : 'Technical Information'}</h2>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'لنفهم احتياجاتك التقنية' : 'Help us understand your technical needs'}</p>
                 </div>
               </div>
 
@@ -399,7 +399,7 @@ export default function RegistrationWizard() {
                       type="button"
                       onClick={() => set('needs_migration', o.value)}
                       className={`flex-1 py-2.5 rounded-lg border text-sm font-medium transition-all ${
-                        form.needs_migration === o.value ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                        form.needs_migration === o.value ? 'border-najdi-500 bg-najdi-50 text-najdi-900' : 'border-border text-muted-foreground hover:border-border hover:bg-sand'
                       }`}
                     >
                       {isRTL ? o.ar : o.en}
@@ -428,19 +428,19 @@ export default function RegistrationWizard() {
                   <FileText className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">{isRTL ? 'مراجعة وإرسال الطلب' : 'Review & Submit Application'}</h2>
-                  <p className="text-sm text-slate-500">{isRTL ? 'تأكد من صحة البيانات قبل الإرسال' : 'Verify all details before submitting'}</p>
+                  <h2 className="text-lg font-bold text-ink">{isRTL ? 'مراجعة وإرسال الطلب' : 'Review & Submit Application'}</h2>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'تأكد من صحة البيانات قبل الإرسال' : 'Verify all details before submitting'}</p>
                 </div>
               </div>
 
               {/* Section 1 review */}
               <div className="border rounded-xl overflow-hidden">
-                <div className="bg-blue-50 px-4 py-2.5 flex items-center justify-between">
+                <div className="bg-najdi-50 px-4 py-2.5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <School className="w-4 h-4 text-blue-600" />
-                    <span className="font-semibold text-blue-800 text-sm">{isRTL ? 'معلومات المدرسة' : 'School Information'}</span>
+                    <School className="w-4 h-4 text-najdi-700" />
+                    <span className="font-semibold text-najdi-900 text-sm">{isRTL ? 'معلومات المدرسة' : 'School Information'}</span>
                   </div>
-                  <button onClick={() => { setStep(0); }} className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-xs font-medium">
+                  <button onClick={() => { setStep(0); }} className="text-najdi-700 hover:text-najdi-900 flex items-center gap-1 text-xs font-medium">
                     <Edit2 className="w-3 h-3" /> {isRTL ? 'تعديل' : 'Edit'}
                   </button>
                 </div>
@@ -502,7 +502,7 @@ export default function RegistrationWizard() {
               <div className="flex gap-3 pt-2">
                 <Button variant="outline" onClick={() => setStep(2)} className="flex-1">{isRTL ? 'رجوع' : 'Back'}</Button>
                 <Button
-                  className="flex-1 gap-2 h-11 bg-blue-600 hover:bg-blue-700"
+                  className="flex-1 gap-2 h-11 bg-najdi-700 hover:bg-najdi-900"
                   onClick={handleSubmit}
                   disabled={submitting}
                 >
@@ -522,33 +522,33 @@ export default function RegistrationWizard() {
                 <CheckCircle className="w-10 h-10 text-emerald-600" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">
+                <h2 className="text-2xl font-bold text-ink">
                   {isRTL ? 'تم استلام طلبك! 🎉' : 'Application Received! 🎉'}
                 </h2>
-                <p className="text-slate-500 mt-2 max-w-sm mx-auto text-sm leading-relaxed">
+                <p className="text-muted-foreground mt-2 max-w-sm mx-auto text-sm leading-relaxed">
                   {isRTL
                     ? `تم استلام طلبك بنجاح. سيتم إشعارك عند الموافقة عبر ${form.contact_email}.`
                     : `Your application has been received. You will be notified once approved at ${form.contact_email}.`}
                 </p>
               </div>
-              <div className="bg-slate-50 rounded-xl p-4 text-start max-w-xs mx-auto space-y-2 text-sm">
+              <div className="bg-sand rounded-xl p-4 text-start max-w-xs mx-auto space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">{isRTL ? 'المدرسة:' : 'School:'}</span>
-                  <span className="font-medium text-slate-900">{form.school_name}</span>
+                  <span className="text-muted-foreground">{isRTL ? 'المدرسة:' : 'School:'}</span>
+                  <span className="font-medium text-ink">{form.school_name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">{isRTL ? 'الحالة:' : 'Status:'}</span>
+                  <span className="text-muted-foreground">{isRTL ? 'الحالة:' : 'Status:'}</span>
                   <span className="font-medium text-amber-600">{isRTL ? 'بانتظار الموافقة' : 'Pending Approval'}</span>
                 </div>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 {isRTL ? 'إذا لم تتلق بريداً إلكترونياً، تحقق من مجلد البريد العشوائي.' : "If you don't receive an email, please check your spam folder."}
               </p>
             </CardContent>
           </Card>
         )}
 
-        <p className="text-center text-xs text-slate-400 mt-4">
+        <p className="text-center text-xs text-muted-foreground mt-4">
           {isRTL ? 'بالتسجيل، أنت توافق على شروط الخدمة وسياسة الخصوصية' : 'By registering, you agree to our Terms of Service and Privacy Policy'}
         </p>
       </div>

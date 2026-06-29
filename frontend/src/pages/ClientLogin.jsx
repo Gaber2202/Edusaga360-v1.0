@@ -39,7 +39,7 @@ export default function ClientLogin() {
                 setLang(next);
                 try { localStorage.setItem('erp_language', next); } catch {}
               }}
-              className="text-xs text-slate-400 hover:text-slate-600"
+              className="text-xs text-muted-foreground hover:text-muted-foreground"
             >
               {isRTL ? 'English' : 'العربية'}
             </button>
@@ -52,16 +52,16 @@ export default function ClientLogin() {
               alt="EduSaga 360"
               className="h-14 w-auto mx-auto"
             />
-            <h1 className="text-2xl font-bold text-slate-900">EduSaga 360</h1>
-            <p className="text-slate-500 text-sm">
+            <h1 className="text-2xl font-bold text-ink">EduSaga 360</h1>
+            <p className="text-muted-foreground text-sm">
               {t('تسجيل الدخول إلى حسابك المدرسي', 'Sign in to your school account')}
             </p>
           </div>
 
           {/* Info box */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800 text-start">
+          <div className="bg-najdi-50 border border-najdi-100 rounded-xl p-4 text-sm text-najdi-900 text-start">
             <p className="font-semibold mb-1">{t('للمسؤولين المعتمدين فقط', 'Approved administrators only')}</p>
-            <p className="text-xs text-blue-600">
+            <p className="text-xs text-najdi-700">
               {t(
                 'إذا لم تتلقَّ رابط الإعداد بعد، يرجى التحقق من بريدك الإلكتروني أو التواصل مع فريق الدعم.',
                 'If you haven\'t received your setup link yet, check your email or contact support.'
@@ -71,7 +71,7 @@ export default function ClientLogin() {
 
           {/* Sign in button */}
           <Button
-            className="w-full h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700"
+            className="w-full h-12 text-base font-semibold bg-najdi-700 hover:bg-najdi-900"
             onClick={handleLogin}
           >
             <LogIn className="w-5 h-5 me-2" />
@@ -81,9 +81,9 @@ export default function ClientLogin() {
           {/* Divider */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200" />
+              <div className="w-full border-t border-border" />
             </div>
-            <div className="relative flex justify-center text-xs text-slate-400 bg-white px-3">
+            <div className="relative flex justify-center text-xs text-muted-foreground bg-white px-3">
               {t('مدرسة جديدة؟', 'New school?')}
             </div>
           </div>
@@ -91,15 +91,15 @@ export default function ClientLogin() {
           {/* Register link */}
           <a
             href="/register"
-            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-50 transition-colors text-sm"
+            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 border border-border text-muted-foreground font-medium rounded-xl hover:bg-sand transition-colors text-sm"
           >
             <ArrowRight className="w-4 h-4" />
             {t('تسجيل مدرسة جديدة', 'Register a new school')}
           </a>
 
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-muted-foreground">
             {t('للمساعدة: ', 'Need help? ')}
-            <a href="mailto:Info@edusaga360.com" className="text-blue-500 hover:underline">
+            <a href="mailto:Info@edusaga360.com" className="text-najdi-500 hover:underline">
               Info@edusaga360.com
             </a>
           </p>

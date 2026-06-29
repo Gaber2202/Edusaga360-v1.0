@@ -157,7 +157,7 @@ export default function PolicyEditor() {
 
       {isCompareMode && policyVersions.length < 2 && (
         <Card className="p-6 text-center">
-          <p className="text-slate-500">{isRTL ? 'لا توجد إصدارات للمقارنة' : 'No versions available to compare'}</p>
+          <p className="text-muted-foreground">{isRTL ? 'لا توجد إصدارات للمقارنة' : 'No versions available to compare'}</p>
         </Card>
       )}
 
@@ -169,7 +169,7 @@ export default function PolicyEditor() {
               <div key={version.id} className="border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-4">
                   <Badge>{version.version_number}</Badge>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-muted-foreground">
                     {version.created_at ? new Date(version.created_at).toLocaleDateString() : ''}
                   </span>
                 </div>
@@ -350,7 +350,7 @@ export default function PolicyEditor() {
           <Card className="p-6 space-y-4">
             <div>
               <h2 className="text-2xl font-bold mb-4">{formData[`title_${language}`]}</h2>
-              <p className="text-slate-600 mb-4">{formData[`description_${language}`]}</p>
+              <p className="text-muted-foreground mb-4">{formData[`description_${language}`]}</p>
               <div 
                 className="prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{ __html: sanitizeHtml(formData[`body_${language}`]) }}
@@ -365,7 +365,7 @@ export default function PolicyEditor() {
             <Button variant="outline" onClick={() => window.history.back()}>
               {isRTL ? 'إلغاء' : 'Cancel'}
             </Button>
-            <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleSave} disabled={saving} className="bg-najdi-700 hover:bg-najdi-900">
               {saving && <RotateCcw className="w-4 h-4 animate-spin me-2" />}
               <Save className="w-4 h-4 me-2" />
               {isRTL ? 'حفظ' : 'Save'}

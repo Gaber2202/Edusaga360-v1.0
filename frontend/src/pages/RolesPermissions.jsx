@@ -271,7 +271,7 @@ export default function RolesPermissions() {
               </TableRow>
             ) : roles.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-slate-400">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   {isRTL ? 'لا توجد أدوار' : 'No roles found'}
                 </TableCell>
               </TableRow>
@@ -282,18 +282,18 @@ export default function RolesPermissions() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {role.is_creator_role && <Crown className="w-4 h-4 text-amber-500" />}
-                      {role.is_trial && <TestTube className="w-4 h-4 text-blue-500" />}
+                      {role.is_trial && <TestTube className="w-4 h-4 text-najdi-500" />}
                       <span className="font-medium">{isRTL ? role.name_ar : role.name_en}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm text-slate-600">
+                  <TableCell className="text-sm text-muted-foreground">
                     {isRTL ? role.description_ar : role.description_en}
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">{role.data_scope}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge className={role.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}>
+                    <Badge className={role.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-sand-alt text-ink'}>
                       {role.is_active ? (isRTL ? 'نشط' : 'Active') : (isRTL ? 'غير نشط' : 'Inactive')}
                     </Badge>
                   </TableCell>
@@ -396,7 +396,7 @@ export default function RolesPermissions() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-najdi-50 rounded-lg">
                 <Label>{isRTL ? 'دور تجريبي (للعرض)' : 'Trial Role (Demo)'}</Label>
                 <Switch 
                   checked={form.is_trial}
@@ -408,7 +408,7 @@ export default function RolesPermissions() {
             <TabsContent value="modules" className="mt-4">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {modules.map(module => (
-                  <div key={module.key} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50">
+                  <div key={module.key} className="flex items-center justify-between p-3 border rounded-lg hover:bg-sand">
                     <span className="text-sm font-medium">
                       {isRTL ? module.label_ar : module.label_en}
                     </span>
@@ -435,7 +435,7 @@ export default function RolesPermissions() {
                   { key: 'view_salary_amounts', label_ar: 'عرض مبالغ الرواتب', label_en: 'View Salary Amounts' },
                   { key: 'view_finance_amounts', label_ar: 'عرض المبالغ المالية', label_en: 'View Finance Amounts' },
                 ].map(action => (
-                  <div key={action.key} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50">
+                  <div key={action.key} className="flex items-center justify-between p-3 border rounded-lg hover:bg-sand">
                     <span className="text-sm font-medium">
                       {isRTL ? action.label_ar : action.label_en}
                     </span>

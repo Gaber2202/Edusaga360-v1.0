@@ -162,11 +162,11 @@ export default function ChartOfAccounts() {
 
     return (
       <>
-        <TableRow className="hover:bg-slate-50">
+        <TableRow className="hover:bg-sand">
           <TableCell style={{ paddingLeft: `${level * 24 + 16}px` }}>
             <div className="flex items-center gap-2">
               {hasChildren && (
-                <button onClick={() => toggleExpand(account.id)} className="p-1 hover:bg-slate-200 rounded">
+                <button onClick={() => toggleExpand(account.id)} className="p-1 hover:bg-sand-alt rounded">
                   {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
               )}
@@ -206,7 +206,7 @@ export default function ChartOfAccounts() {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
           <Input
             placeholder={isRTL ? 'بحث...' : 'Search...'}
             value={search}
@@ -230,7 +230,7 @@ export default function ChartOfAccounts() {
       <Card className="overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50">
+            <TableRow className="bg-sand">
               <TableHead>{t('accountCode')}</TableHead>
               <TableHead>{isRTL ? 'اسم الحساب' : 'Account Name'}</TableHead>
               <TableHead>{isRTL ? 'النوع' : 'Type'}</TableHead>
@@ -243,7 +243,7 @@ export default function ChartOfAccounts() {
             {isLoading ? (
               <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></TableCell></TableRow>
             ) : accountTree.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-slate-500">{t('noData')}</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{t('noData')}</TableCell></TableRow>
             ) : (
               accountTree.map(account => <AccountRow key={account.id} account={account} />)
             )}

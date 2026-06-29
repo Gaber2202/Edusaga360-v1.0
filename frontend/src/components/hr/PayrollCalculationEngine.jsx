@@ -282,12 +282,12 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
               return (
                 <React.Fragment key={step.id}>
                   <div className={`flex flex-col items-center gap-1 flex-shrink-0 ${active ? 'opacity-100' : done ? 'opacity-100' : 'opacity-40'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${done ? 'bg-emerald-500 border-emerald-500' : active ? 'border-blue-500 bg-blue-50' : 'border-slate-200 bg-white'}`}>
-                      {done ? <CheckCircle className="w-4 h-4 text-white" /> : <StepIcon className={`w-4 h-4 ${active ? 'text-blue-500' : 'text-slate-400'}`} />}
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${done ? 'bg-emerald-500 border-emerald-500' : active ? 'border-najdi-500 bg-najdi-50' : 'border-border bg-white'}`}>
+                      {done ? <CheckCircle className="w-4 h-4 text-white" /> : <StepIcon className={`w-4 h-4 ${active ? 'text-najdi-500' : 'text-muted-foreground'}`} />}
                     </div>
-                    <span className="text-xs text-slate-500 text-center w-16 leading-tight">{isRTL ? step.label.ar : step.label.en}</span>
+                    <span className="text-xs text-muted-foreground text-center w-16 leading-tight">{isRTL ? step.label.ar : step.label.en}</span>
                   </div>
-                  {i < STEPS.length - 1 && <div className={`h-0.5 flex-1 min-w-4 ${currentStep >= step.id ? 'bg-emerald-400' : 'bg-slate-200'}`} />}
+                  {i < STEPS.length - 1 && <div className={`h-0.5 flex-1 min-w-4 ${currentStep >= step.id ? 'bg-emerald-400' : 'bg-sand-alt'}`} />}
                 </React.Fragment>
               );
             })}
@@ -297,8 +297,8 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
 
       {/* Period info */}
       <div className="flex items-center gap-4">
-        <Badge className="bg-blue-100 text-blue-700 text-sm px-4 py-1.5">{period}</Badge>
-        <span className="text-slate-500 text-sm">{employees.length} {isRTL ? 'موظف' : 'employees'}</span>
+        <Badge className="bg-najdi-50 text-najdi-900 text-sm px-4 py-1.5">{period}</Badge>
+        <span className="text-muted-foreground text-sm">{employees.length} {isRTL ? 'موظف' : 'employees'}</span>
       </div>
 
       {/* Action button */}
@@ -337,16 +337,16 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
           {/* Totals summary */}
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
             {[
-              { label: isRTL ? 'إجمالي الرواتب' : 'Gross Payroll', value: totals.gross, color: 'text-slate-800' },
+              { label: isRTL ? 'إجمالي الرواتب' : 'Gross Payroll', value: totals.gross, color: 'text-ink' },
               { label: isRTL ? 'صافي الرواتب' : 'Net Payroll', value: totals.net, color: 'text-emerald-600' },
-              { label: isRTL ? 'GOSI (موظف)' : 'GOSI (Employee)', value: totals.gosiEmp, color: 'text-blue-600' },
+              { label: isRTL ? 'GOSI (موظف)' : 'GOSI (Employee)', value: totals.gosiEmp, color: 'text-najdi-700' },
               { label: isRTL ? 'GOSI (صاحب عمل)' : 'GOSI (Employer)', value: totals.gosiEmpl, color: 'text-purple-600' },
               { label: isRTL ? 'مخصص EOSB' : 'EOSB Accrual', value: totals.eosb, color: 'text-amber-600' },
               { label: isRTL ? 'إجمالي التكلفة' : 'Total Cost', value: totals.totalCost, color: 'text-red-600' },
             ].map(item => (
               <Card key={item.label}>
                 <CardContent className="p-3">
-                  <p className="text-xs text-slate-500">{item.label}</p>
+                  <p className="text-xs text-muted-foreground">{item.label}</p>
                   <p className={`text-base font-bold ${item.color}`}>SAR {SAR(item.value)}</p>
                 </CardContent>
               </Card>
@@ -361,29 +361,29 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50">
+                  <thead className="bg-sand">
                     <tr>
-                      <th className="text-start py-2 px-3 font-medium text-slate-600">{isRTL ? 'الموظف' : 'Employee'}</th>
-                      <th className="text-end py-2 px-3 font-medium text-slate-600">{isRTL ? 'الإجمالي' : 'Gross'}</th>
-                      <th className="text-end py-2 px-3 font-medium text-slate-600">{isRTL ? 'GOSI (موظف)' : 'GOSI Emp'}</th>
-                      <th className="text-end py-2 px-3 font-medium text-slate-600">{isRTL ? 'استقطاعات' : 'Deductions'}</th>
+                      <th className="text-start py-2 px-3 font-medium text-muted-foreground">{isRTL ? 'الموظف' : 'Employee'}</th>
+                      <th className="text-end py-2 px-3 font-medium text-muted-foreground">{isRTL ? 'الإجمالي' : 'Gross'}</th>
+                      <th className="text-end py-2 px-3 font-medium text-muted-foreground">{isRTL ? 'GOSI (موظف)' : 'GOSI Emp'}</th>
+                      <th className="text-end py-2 px-3 font-medium text-muted-foreground">{isRTL ? 'استقطاعات' : 'Deductions'}</th>
                       <th className="text-end py-2 px-3 font-medium text-emerald-600">{isRTL ? 'الصافي' : 'Net'}</th>
                       <th className="py-2 px-3"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {calculatedLines.map(line => (
-                      <tr key={line.employeeId} className="border-t border-slate-100 hover:bg-slate-50">
+                      <tr key={line.employeeId} className="border-t border-border hover:bg-sand">
                         <td className="py-2 px-3">
                           <div className="flex items-center gap-2">
                             {line.isNewJoiner && <Badge className="bg-green-100 text-green-700 text-xs">New</Badge>}
                             {line.isLeaver && <Badge className="bg-red-100 text-red-700 text-xs">Leaver</Badge>}
                             <span className="font-medium">{line.name_ar}</span>
-                            <span className="text-slate-400 text-xs">{line.employee_id}</span>
+                            <span className="text-muted-foreground text-xs">{line.employee_id}</span>
                           </div>
                         </td>
                         <td className="text-end py-2 px-3 font-mono">{SAR(line.grossSalary)}</td>
-                        <td className="text-end py-2 px-3 font-mono text-blue-600">({SAR(line.gosiEmployee)})</td>
+                        <td className="text-end py-2 px-3 font-mono text-najdi-700">({SAR(line.gosiEmployee)})</td>
                         <td className="text-end py-2 px-3 font-mono text-red-500">({SAR(line.totalDeductions)})</td>
                         <td className="text-end py-2 px-3 font-mono font-bold text-emerald-600">{SAR(line.netSalary)}</td>
                         <td className="py-2 px-3">

@@ -222,14 +222,14 @@ export default function VATManagement() {
     { header: isRTL ? 'رقم الإقرار' : 'Return #', cell: (row) => <span className="font-mono text-sm">{row.return_number}</span> },
     { header: isRTL ? 'الفترة' : 'Period', cell: (row) => `${format(new Date(row.period_start), 'dd/MM/yyyy')} - ${format(new Date(row.period_end), 'dd/MM/yyyy')}` },
     { header: isRTL ? 'ض.ق.م المبيعات' : 'VAT on Sales', cell: (row) => <span className="text-emerald-600">{row.vat_on_sales?.toLocaleString()} {t('sar')}</span> },
-    { header: isRTL ? 'ض.ق.م المشتريات' : 'VAT on Purchases', cell: (row) => <span className="text-blue-600">{row.vat_on_purchases?.toLocaleString()} {t('sar')}</span> },
+    { header: isRTL ? 'ض.ق.م المشتريات' : 'VAT on Purchases', cell: (row) => <span className="text-najdi-700">{row.vat_on_purchases?.toLocaleString()} {t('sar')}</span> },
     { header: isRTL ? 'المستحق للهيئة' : 'Payable', cell: (row) => row.vat_payable > 0 ? <span className="font-semibold text-red-600">{row.vat_payable?.toLocaleString()} {t('sar')}</span> : '-' },
     { header: isRTL ? 'المسترد' : 'Refundable', cell: (row) => row.vat_refundable > 0 ? <span className="font-semibold text-emerald-600">{row.vat_refundable?.toLocaleString()} {t('sar')}</span> : '-' },
     { header: t('status'), cell: (row) => <StatusBadge status={row.status} /> },
     { header: t('actions'), cell: (row) => (
       <div className="flex gap-1">
         {row.status === 'draft' && (
-          <Button size="sm" variant="ghost" onClick={() => handleSubmitToZATCA(row)} className="text-blue-600">
+          <Button size="sm" variant="ghost" onClick={() => handleSubmitToZATCA(row)} className="text-najdi-700">
             <Send className="w-4 h-4 me-1" /> {isRTL ? 'رفع' : 'Submit'}
           </Button>
         )}
@@ -275,7 +275,7 @@ export default function VATManagement() {
           title={isRTL ? 'المرفوعة' : 'Submitted'} 
           value={stats.submitted} 
           icon={CheckCircle} 
-          iconClassName="bg-blue-50" 
+          iconClassName="bg-najdi-50" 
         />
       </div>
 
@@ -326,10 +326,10 @@ export default function VATManagement() {
 
             {/* VAT Calculation Results */}
             {formData.vat_on_sales !== undefined && (
-              <Card className="bg-slate-50 border-slate-200">
+              <Card className="bg-sand border-border">
                 <CardContent className="p-4 space-y-3">
                   <div className="flex justify-between items-center pb-2 border-b">
-                    <span className="text-slate-600">{isRTL ? 'إجمالي المبيعات (قبل الضريبة)' : 'Total Sales (Pre-VAT)'}</span>
+                    <span className="text-muted-foreground">{isRTL ? 'إجمالي المبيعات (قبل الضريبة)' : 'Total Sales (Pre-VAT)'}</span>
                     <span className="font-semibold">{formData.total_sales?.toLocaleString()} {t('sar')}</span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -338,12 +338,12 @@ export default function VATManagement() {
                   </div>
 
                   <div className="flex justify-between items-center pb-2 border-b pt-2">
-                    <span className="text-slate-600">{isRTL ? 'إجمالي المشتريات (قبل الضريبة)' : 'Total Purchases (Pre-VAT)'}</span>
+                    <span className="text-muted-foreground">{isRTL ? 'إجمالي المشتريات (قبل الضريبة)' : 'Total Purchases (Pre-VAT)'}</span>
                     <span className="font-semibold">{formData.total_purchases?.toLocaleString()} {t('sar')}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-blue-700 font-medium">{isRTL ? 'ضريبة المشتريات (15%)' : 'VAT on Purchases (15%)'}</span>
-                    <span className="font-semibold text-blue-600">{formData.vat_on_purchases?.toLocaleString()} {t('sar')}</span>
+                    <span className="text-najdi-900 font-medium">{isRTL ? 'ضريبة المشتريات (15%)' : 'VAT on Purchases (15%)'}</span>
+                    <span className="font-semibold text-najdi-700">{formData.vat_on_purchases?.toLocaleString()} {t('sar')}</span>
                   </div>
 
                   <div className="flex justify-between items-center pt-3 border-t-2">

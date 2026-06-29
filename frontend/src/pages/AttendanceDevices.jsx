@@ -274,9 +274,9 @@ export default function AttendanceDevices() {
         ) : row.last_sync_status === 'failed' ? (
           <WifiOff className="w-4 h-4 text-red-500" />
         ) : (
-          <Clock className="w-4 h-4 text-slate-400" />
+          <Clock className="w-4 h-4 text-muted-foreground" />
         )}
-        <span className="text-sm text-slate-600">
+        <span className="text-sm text-muted-foreground">
           {row.last_sync_date ? format(new Date(row.last_sync_date), 'dd/MM HH:mm') : '-'}
         </span>
       </div>
@@ -327,11 +327,11 @@ export default function AttendanceDevices() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <Activity className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-najdi-50 rounded-full flex items-center justify-center">
+                <Activity className="w-5 h-5 text-najdi-700" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'الأجهزة' : 'Devices'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'الأجهزة' : 'Devices'}</p>
                 <p className="text-2xl font-bold">{devices.length}</p>
               </div>
             </div>
@@ -344,7 +344,7 @@ export default function AttendanceDevices() {
                 <Wifi className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'نشط' : 'Active'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'نشط' : 'Active'}</p>
                 <p className="text-2xl font-bold">{devices.filter(d => d.is_active).length}</p>
               </div>
             </div>
@@ -357,7 +357,7 @@ export default function AttendanceDevices() {
                 <Clock className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'سجلات معلقة' : 'Pending Logs'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'سجلات معلقة' : 'Pending Logs'}</p>
                 <p className="text-2xl font-bold">{unprocessedCount}</p>
               </div>
             </div>
@@ -370,7 +370,7 @@ export default function AttendanceDevices() {
                 <Download className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'إجمالي السجلات' : 'Total Logs'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي السجلات' : 'Total Logs'}</p>
                 <p className="text-2xl font-bold">{punchLogs.length}</p>
               </div>
             </div>
@@ -396,7 +396,7 @@ export default function AttendanceDevices() {
         <TabsContent value="devices" className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between gap-3">
             <div className="relative flex-1 max-w-md">
-              <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+              <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
               <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${isRTL ? 'pr-10' : 'pl-10'} bg-white`} />
             </div>
             <Button onClick={() => { resetDeviceForm(); setShowDeviceForm(true); }} className="gap-2">
@@ -521,8 +521,8 @@ export default function AttendanceDevices() {
             <DialogTitle>{isRTL ? 'استيراد سجلات البصمة' : 'Import Punch Logs'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="p-4 bg-slate-50 rounded-lg">
-              <p className="text-sm text-slate-600 mb-2">{isRTL ? 'صيغة الملف المطلوبة (CSV):' : 'Required file format (CSV):'}</p>
+            <div className="p-4 bg-sand rounded-lg">
+              <p className="text-sm text-muted-foreground mb-2">{isRTL ? 'صيغة الملف المطلوبة (CSV):' : 'Required file format (CSV):'}</p>
               <code className="text-xs bg-white p-2 rounded block">
                 employee_badge_id, punch_time, punch_type<br/>
                 EMP-001, 2024-01-15 08:00:00, in<br/>

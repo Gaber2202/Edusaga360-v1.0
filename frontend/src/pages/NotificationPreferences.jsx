@@ -108,7 +108,7 @@ export default function NotificationPreferences() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-900" />
+        <Loader2 className="w-8 h-8 animate-spin text-ink" />
       </div>
     );
   }
@@ -131,12 +131,12 @@ export default function NotificationPreferences() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-sand rounded-lg">
             <div>
-              <Label className="font-semibold text-slate-900">
+              <Label className="font-semibold text-ink">
                 {isRTL ? 'العقود' : 'Contracts'}
               </Label>
-              <p className="text-sm text-slate-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {isRTL ? 'تجديد العقود، انتهاء الصلاحية' : 'Contract renewals, expirations'}
               </p>
             </div>
@@ -146,12 +146,12 @@ export default function NotificationPreferences() {
             />
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-sand rounded-lg">
             <div>
-              <Label className="font-semibold text-slate-900">
+              <Label className="font-semibold text-ink">
                 {isRTL ? 'المالية والفواتير' : 'Finance & Invoices'}
               </Label>
-              <p className="text-sm text-slate-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {isRTL ? 'الفواتير المستحقة، المتأخرة، المدفوعات' : 'Due invoices, overdue, payments'}
               </p>
             </div>
@@ -161,12 +161,12 @@ export default function NotificationPreferences() {
             />
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-sand rounded-lg">
             <div>
-              <Label className="font-semibold text-slate-900">
+              <Label className="font-semibold text-ink">
                 {isRTL ? 'القبول والطلاب' : 'Admissions & Students'}
               </Label>
-              <p className="text-sm text-slate-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {isRTL ? 'التسجيلات الجديدة، طلبات القبول' : 'New enrollments, admission requests'}
               </p>
             </div>
@@ -176,12 +176,12 @@ export default function NotificationPreferences() {
             />
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-sand rounded-lg">
             <div>
-              <Label className="font-semibold text-slate-900">
+              <Label className="font-semibold text-ink">
                 {isRTL ? 'الموارد البشرية' : 'Human Resources'}
               </Label>
-              <p className="text-sm text-slate-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {isRTL ? 'التوظيف، الإجازات، الحضور' : 'Onboarding, leaves, attendance'}
               </p>
             </div>
@@ -191,17 +191,17 @@ export default function NotificationPreferences() {
             />
           </div>
 
-          <div className={`flex items-center justify-between p-4 rounded-lg ${isSystemRequired ? 'bg-red-50 border border-red-200' : 'bg-slate-50'}`}>
+          <div className={`flex items-center justify-between p-4 rounded-lg ${isSystemRequired ? 'bg-red-50 border border-red-200' : 'bg-sand'}`}>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <Label className="font-semibold text-slate-900">
+                <Label className="font-semibold text-ink">
                   {isRTL ? 'النظام والأخطاء الحرجة' : 'System & Critical Errors'}
                 </Label>
                 {isSystemRequired && (
                   <AlertTriangle className="w-4 h-4 text-red-600" />
                 )}
               </div>
-              <p className="text-sm text-slate-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {isRTL ? 'أخطاء النظام الحرجة، التنبيهات' : 'Critical system errors, alerts'}
               </p>
               {isSystemRequired && (
@@ -241,7 +241,7 @@ export default function NotificationPreferences() {
                   <SelectItem value="critical">{isRTL ? 'حرج فقط' : 'Critical only'}</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 {isRTL ? 'استقبال فقط الإشعارات بمستوى الخطورة المحدد أو أعلى' : 'Only receive notifications at this severity level or higher'}
               </p>
             </div>
@@ -261,7 +261,7 @@ export default function NotificationPreferences() {
                   <SelectItem value="weekly">{isRTL ? 'ملخص أسبوعي' : 'Weekly digest'}</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 {isRTL ? 'كيفية تلقي الإشعارات' : 'How you want to receive notifications'}
               </p>
             </div>
@@ -271,7 +271,7 @@ export default function NotificationPreferences() {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={saving} className="gap-2 bg-slate-900 hover:bg-slate-800">
+        <Button onClick={handleSave} disabled={saving} className="gap-2 bg-najdi-900 hover:bg-najdi-900">
           {saving && <Loader2 className="w-4 h-4 animate-spin" />}
           <Save className="w-4 h-4" />
           {isRTL ? 'حفظ التفضيلات' : 'Save Preferences'}

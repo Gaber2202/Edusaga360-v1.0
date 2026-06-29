@@ -317,8 +317,8 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
   };
 
   const _statusColors = {
-    draft: 'bg-slate-100 text-slate-700',
-    calculated: 'bg-blue-100 text-blue-700',
+    draft: 'bg-sand-alt text-ink',
+    calculated: 'bg-najdi-50 text-najdi-900',
     review: 'bg-amber-100 text-amber-700',
     approved: 'bg-purple-100 text-purple-700',
     exported: 'bg-indigo-100 text-indigo-700',
@@ -385,7 +385,7 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
           </Button>
           <div>
             <h2 className="text-xl font-semibold">{payRun.pay_run_number}</h2>
-            <p className="text-sm text-slate-500">{payRun.period} • {payRun.branch_name}</p>
+            <p className="text-sm text-muted-foreground">{payRun.period} • {payRun.branch_name}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -412,7 +412,7 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
             {isRTL ? 'تصدير' : 'Export'}
           </Button>
           {nextStatus && !isAborted && (
-            <Button onClick={() => handleStatusChange(nextStatus)} disabled={processing} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={() => handleStatusChange(nextStatus)} disabled={processing} className="bg-najdi-700 hover:bg-najdi-900">
               {processing && <Loader2 className="w-4 h-4 animate-spin me-2" />}
               <CheckCircle2 className="w-4 h-4 me-2" />
               {isRTL ? actionLabels[nextStatus]?.ar : actionLabels[nextStatus]?.en}
@@ -431,31 +431,31 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <Card className="bg-white">
           <CardContent className="p-4">
-            <p className="text-xs text-slate-500">{isRTL ? 'الموظفين' : 'Employees'}</p>
+            <p className="text-xs text-muted-foreground">{isRTL ? 'الموظفين' : 'Employees'}</p>
             <p className="text-xl font-bold mt-1">{summary.employees}</p>
           </CardContent>
         </Card>
         <Card className="bg-white">
           <CardContent className="p-4">
-            <p className="text-xs text-slate-500">{isRTL ? 'سعودي / غير سعودي' : 'Saudi / Non'}</p>
+            <p className="text-xs text-muted-foreground">{isRTL ? 'سعودي / غير سعودي' : 'Saudi / Non'}</p>
             <p className="text-xl font-bold mt-1">{summary.saudis} / {summary.nonSaudis}</p>
           </CardContent>
         </Card>
         <Card className="bg-white">
           <CardContent className="p-4">
-            <p className="text-xs text-slate-500">{isRTL ? 'إجمالي المكتسبات' : 'Total Earnings'}</p>
+            <p className="text-xs text-muted-foreground">{isRTL ? 'إجمالي المكتسبات' : 'Total Earnings'}</p>
             <p className="text-xl font-bold mt-1">{(summary.totalEarnings / 1000).toFixed(1)}K</p>
           </CardContent>
         </Card>
         <Card className="bg-white">
           <CardContent className="p-4">
-            <p className="text-xs text-slate-500">{isRTL ? 'تأمينات الموظف' : 'GOSI Employee'}</p>
+            <p className="text-xs text-muted-foreground">{isRTL ? 'تأمينات الموظف' : 'GOSI Employee'}</p>
             <p className="text-xl font-bold mt-1 text-red-600">{(summary.totalGOSIEmployee / 1000).toFixed(1)}K</p>
           </CardContent>
         </Card>
         <Card className="bg-white">
           <CardContent className="p-4">
-            <p className="text-xs text-slate-500">{isRTL ? 'تأمينات صاحب العمل' : 'GOSI Employer'}</p>
+            <p className="text-xs text-muted-foreground">{isRTL ? 'تأمينات صاحب العمل' : 'GOSI Employer'}</p>
             <p className="text-xl font-bold mt-1 text-amber-600">{(summary.totalGOSIEmployer / 1000).toFixed(1)}K</p>
           </CardContent>
         </Card>
@@ -484,7 +484,7 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50">
+                <TableRow className="bg-sand">
                   <TableHead className="font-semibold">{isRTL ? 'الموظف' : 'Employee'}</TableHead>
                   <TableHead className="text-center">{isRTL ? 'الأساسي' : 'Basic'}</TableHead>
                   <TableHead className="text-center">{isRTL ? 'السكن' : 'Housing'}</TableHead>
@@ -500,22 +500,22 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={9} className="text-center py-8">
-                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-slate-400" />
+                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
                     </TableCell>
                   </TableRow>
                 ) : filteredInputs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-slate-400">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       {isRTL ? 'لا توجد بيانات' : 'No data'}
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredInputs.map(input => (
-                    <TableRow key={input.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => setSelectedRow(input)}>
+                    <TableRow key={input.id} className="hover:bg-sand cursor-pointer" onClick={() => setSelectedRow(input)}>
                       <TableCell>
                         <div>
                           <p className="font-medium">{input.employee_name}</p>
-                          <p className="text-xs text-slate-500">{input.employee_number} • {input.job_title}</p>
+                          <p className="text-xs text-muted-foreground">{input.employee_number} • {input.job_title}</p>
                           {!input.iban && (
                             <span className="inline-flex items-center gap-1 text-xs text-red-600 mt-1">
                               <AlertTriangle className="w-3 h-3" />{isRTL ? 'IBAN مفقود' : 'IBAN missing'}
@@ -546,16 +546,16 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-blue-600" />
+                <Users className="w-5 h-5 text-najdi-700" />
                 {selectedRow.employee_name}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-3 text-sm">
-              <p className="text-xs text-slate-400">{selectedRow.employee_number} • {selectedRow.job_title}</p>
+              <p className="text-xs text-muted-foreground">{selectedRow.employee_number} • {selectedRow.job_title}</p>
 
               {/* Earnings */}
-              <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 space-y-2">
-                <p className="font-semibold text-slate-700 text-xs uppercase tracking-wide">{isRTL ? 'المكتسبات' : 'Earnings'}</p>
+              <div className="bg-sand rounded-lg p-3 border border-border space-y-2">
+                <p className="font-semibold text-ink text-xs uppercase tracking-wide">{isRTL ? 'المكتسبات' : 'Earnings'}</p>
                 {[
                   { label: isRTL ? 'الراتب الأساسي' : 'Basic Salary', value: selectedRow.basic_salary },
                   { label: isRTL ? 'بدل السكن' : 'Housing Allowance', value: selectedRow.housing_allowance },
@@ -563,11 +563,11 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
                   { label: isRTL ? 'بدلات أخرى' : 'Other Allowances', value: selectedRow.other_allowances },
                 ].map((item, i) => item.value > 0 && (
                   <div key={i} className="flex justify-between">
-                    <span className="text-slate-600">{item.label}</span>
+                    <span className="text-muted-foreground">{item.label}</span>
                     <span className="font-medium">{(item.value || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
                   </div>
                 ))}
-                <div className="flex justify-between font-semibold border-t pt-2 text-blue-700">
+                <div className="flex justify-between font-semibold border-t pt-2 text-najdi-900">
                   <span>{isRTL ? 'الإجمالي' : 'Gross'}</span>
                   <span>{(selectedRow.gross_salary || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
                 </div>
@@ -578,13 +578,13 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
                 <p className="font-semibold text-red-700 text-xs uppercase tracking-wide">{isRTL ? 'الاستقطاعات' : 'Deductions'}</p>
                 {selectedRow.gosi_employee > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-slate-600">{isRTL ? 'تأمينات الموظف (9.75%)' : 'GOSI Employee (9.75%)'}</span>
+                    <span className="text-muted-foreground">{isRTL ? 'تأمينات الموظف (9.75%)' : 'GOSI Employee (9.75%)'}</span>
                     <span className="text-red-600 font-medium">{(selectedRow.gosi_employee || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
                   </div>
                 )}
                 {(selectedRow.total_deductions || 0) - (selectedRow.gosi_employee || 0) > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-slate-600">{isRTL ? 'استقطاعات أخرى' : 'Other Deductions'}</span>
+                    <span className="text-muted-foreground">{isRTL ? 'استقطاعات أخرى' : 'Other Deductions'}</span>
                     <span className="text-red-600 font-medium">{((selectedRow.total_deductions || 0) - (selectedRow.gosi_employee || 0)).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
                   </div>
                 )}
@@ -612,8 +612,8 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
               )}
 
               {/* Bank Info */}
-              <div className={`rounded-lg p-3 border text-xs ${selectedRow.iban ? 'bg-slate-50 border-slate-200' : 'bg-red-50 border-red-200'}`}>
-                <p className="font-semibold text-slate-700 mb-1">{isRTL ? 'معلومات التحويل البنكي' : 'Bank Transfer Info'}</p>
+              <div className={`rounded-lg p-3 border text-xs ${selectedRow.iban ? 'bg-sand border-border' : 'bg-red-50 border-red-200'}`}>
+                <p className="font-semibold text-ink mb-1">{isRTL ? 'معلومات التحويل البنكي' : 'Bank Transfer Info'}</p>
                 {selectedRow.bank_name && <p>{isRTL ? 'البنك:' : 'Bank:'} {selectedRow.bank_name}</p>}
                 {selectedRow.iban
                   ? <p className="font-mono mt-1">{isRTL ? 'IBAN:' : 'IBAN:'} {selectedRow.iban}</p>

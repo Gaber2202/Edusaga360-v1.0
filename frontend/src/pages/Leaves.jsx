@@ -272,7 +272,7 @@ export default function Leaves() {
               </>
             )}
             {row.status === 'edited' && (
-              <Button size="sm" variant="ghost" onClick={() => handleEdit(row)} className="text-blue-600">
+              <Button size="sm" variant="ghost" onClick={() => handleEdit(row)} className="text-najdi-700">
                 <Edit2 className="w-4 h-4" />
               </Button>
             )}
@@ -390,7 +390,7 @@ export default function Leaves() {
               <Textarea value={formData.reason} onChange={(e) => setFormData(p => ({...p, reason: e.target.value}))} rows={3} />
             </div>
             {formData.start_date && formData.end_date && (
-              <div className="bg-slate-50 p-3 rounded-lg space-y-2">
+              <div className="bg-sand p-3 rounded-lg space-y-2">
                 {(() => {
                   const leaveBalance = getEmployeeLeaveBalance(formData.employee_id, formData.leave_type_id);
                   const { deductibleDays, overlappingHolidays } = calculateDeductibleDays(formData.start_date, formData.end_date, holidays);
@@ -402,7 +402,7 @@ export default function Leaves() {
                       <p className="text-sm"><span className="font-medium">{isRTL ? 'إجمالي الأيام:' : 'Total Days:'}</span> {totalDays}</p>
                       <p className="text-sm"><span className="font-medium">{isRTL ? 'الأيام المخصومة:' : 'Deductible Days:'}</span> {deductibleDays}</p>
                       {overlappingHolidays.length > 0 && (
-                        <p className="text-sm text-blue-600"><span className="font-medium">{isRTL ? 'أيام عطل رسمية:' : 'Holidays:'}</span> {overlappingHolidays.length}</p>
+                        <p className="text-sm text-najdi-700"><span className="font-medium">{isRTL ? 'أيام عطل رسمية:' : 'Holidays:'}</span> {overlappingHolidays.length}</p>
                       )}
                       <p className="text-sm"><span className="font-medium">{isRTL ? 'الرصيد الحالي:' : 'Current Balance:'}</span> {leaveBalance?.remaining_days || 0}</p>
                       <p className={`text-sm font-medium ${balanceAfter < 0 ? 'text-red-600' : 'text-emerald-600'}`}>

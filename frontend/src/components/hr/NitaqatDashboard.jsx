@@ -67,7 +67,7 @@ export default function NitaqatDashboard({ isRTL }) {
   return (
     <div className="space-y-4">
       {/* Live update badge */}
-      <div className="flex items-center gap-2 text-xs text-slate-400">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
         {isRTL ? `آخر تحديث: ${stats.lastUpdated?.toLocaleTimeString('ar-SA')}` : `Live — last updated: ${stats.lastUpdated?.toLocaleTimeString('en-US')}`}
       </div>
@@ -77,36 +77,36 @@ export default function NitaqatDashboard({ isRTL }) {
         <CardContent className="p-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <p className="text-sm text-slate-500 font-medium">{isRTL ? 'نسبة السعودة الحالية — نطاقات' : 'Current Saudization % — Nitaqat'}</p>
+              <p className="text-sm text-muted-foreground font-medium">{isRTL ? 'نسبة السعودة الحالية — نطاقات' : 'Current Saudization % — Nitaqat'}</p>
               <div className="flex items-center gap-3 mt-1">
                 <span className="text-5xl font-bold" style={{ color: stats.band.color }}>{stats.pct.toFixed(1)}%</span>
                 <Badge style={{ backgroundColor: stats.band.color + '20', color: stats.band.color, border: `1px solid ${stats.band.color}40` }} className="text-sm px-3 py-1">
                   {isRTL ? stats.band.nameAr : stats.band.name}
                 </Badge>
               </div>
-              <p className="text-sm text-slate-400 mt-2">
+              <p className="text-sm text-muted-foreground mt-2">
                 {stats.saudis} {isRTL ? 'سعودي من' : 'Saudi of'} {stats.total} {isRTL ? 'موظف' : 'employees'}
               </p>
             </div>
 
             {stats.nextBand && stats.saudisNeededForNextBand > 0 && (
-              <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                <p className="text-xs text-blue-600 font-medium">{isRTL ? 'للارتقاء إلى الشريط التالي:' : 'To reach next band:'}</p>
-                <p className="text-2xl font-bold text-blue-700 mt-0.5">{stats.saudisNeededForNextBand}</p>
-                <p className="text-xs text-blue-500">{isRTL ? `توظيفات سعودية → ${isRTL ? stats.nextBand.nameAr : stats.nextBand.name}` : `Saudi hires → ${stats.nextBand.name}`}</p>
+              <div className="bg-najdi-50 rounded-xl p-4 border border-najdi-100">
+                <p className="text-xs text-najdi-700 font-medium">{isRTL ? 'للارتقاء إلى الشريط التالي:' : 'To reach next band:'}</p>
+                <p className="text-2xl font-bold text-najdi-900 mt-0.5">{stats.saudisNeededForNextBand}</p>
+                <p className="text-xs text-najdi-500">{isRTL ? `توظيفات سعودية → ${isRTL ? stats.nextBand.nameAr : stats.nextBand.name}` : `Saudi hires → ${stats.nextBand.name}`}</p>
               </div>
             )}
           </div>
 
           {/* Band progress bar */}
           <div className="mt-5">
-            <div className="relative h-4 rounded-full overflow-hidden bg-slate-100">
+            <div className="relative h-4 rounded-full overflow-hidden bg-sand-alt">
               {BANDS.slice().reverse().map((band, i) => (
                 <div key={band.name} className="absolute h-full" style={{ left: `${band.min}%`, right: i < BANDS.length - 1 ? `${100 - (BANDS.slice().reverse()[i + 1]?.min || 100)}%` : '0', backgroundColor: band.color + '40' }} />
               ))}
               <div className="absolute h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(100, stats.pct)}%`, backgroundColor: stats.band.color }} />
             </div>
-            <div className="flex justify-between text-xs text-slate-400 mt-1">
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
               <span>0%</span>
               {BANDS.filter(b => b.min > 0 && b.min < 100).map(b => (
                 <span key={b.name} style={{ color: b.color }}>{b.min}%</span>
@@ -148,15 +148,15 @@ export default function NitaqatDashboard({ isRTL }) {
               { rule: isRTL ? 'مواطن سعودي (دوام كامل)' : 'Saudi national (full-time)', count: '1.0', color: 'text-emerald-600' },
               { rule: isRTL ? 'سعودي بدوام جزئي (أكثر من 20 ساعة/أسبوع)' : 'Saudi part-time (>20 hrs/week)', count: '0.5', color: 'text-emerald-500' },
               { rule: isRTL ? 'سعودي ذوي إعاقة' : 'Saudi with disability', count: '4.0', color: 'text-purple-600' },
-              { rule: isRTL ? 'غير سعودي متزوج من سعودية/سعودي' : 'Non-Saudi married to Saudi', count: '0.5*', color: 'text-blue-500' },
-              { rule: isRTL ? 'غير سعودي (لا يُحسب)' : 'Non-Saudi (not counted)', count: '0', color: 'text-slate-400' },
+              { rule: isRTL ? 'غير سعودي متزوج من سعودية/سعودي' : 'Non-Saudi married to Saudi', count: '0.5*', color: 'text-najdi-500' },
+              { rule: isRTL ? 'غير سعودي (لا يُحسب)' : 'Non-Saudi (not counted)', count: '0', color: 'text-muted-foreground' },
             ].map(r => (
               <div key={r.rule} className="flex items-center justify-between">
-                <span className="text-slate-600">{r.rule}</span>
+                <span className="text-muted-foreground">{r.rule}</span>
                 <span className={`font-bold ${r.color}`}>{r.count}</span>
               </div>
             ))}
-            <p className="text-xs text-slate-400 pt-1">* {isRTL ? 'حسب قرارات وزارة الموارد البشرية' : 'Per MHRSD decisions'}</p>
+            <p className="text-xs text-muted-foreground pt-1">* {isRTL ? 'حسب قرارات وزارة الموارد البشرية' : 'Per MHRSD decisions'}</p>
           </div>
         </CardContent>
       </Card>

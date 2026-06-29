@@ -70,9 +70,9 @@ export default function FeesDashboard({ invoices, payments, isRTL }) {
             <Icon className="w-4.5 h-4.5" />
           </div>
         </div>
-        <div className="text-2xl font-bold text-slate-800">{value}</div>
-        <div className="text-sm text-slate-500 mt-0.5">{title}</div>
-        {sub && <div className="text-xs text-slate-400 mt-0.5">{sub}</div>}
+        <div className="text-2xl font-bold text-ink">{value}</div>
+        <div className="text-sm text-muted-foreground mt-0.5">{title}</div>
+        {sub && <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>}
       </CardContent>
     </Card>
   );
@@ -81,11 +81,11 @@ export default function FeesDashboard({ invoices, payments, isRTL }) {
     <div className="space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-        <KPI title={isRTL ? 'إجمالي الرسوم' : 'Total Fees'} value={`${(total/1000).toFixed(0)}K`} sub="SAR" icon={DollarSign} iconCls="bg-slate-100 text-slate-600" />
+        <KPI title={isRTL ? 'إجمالي الرسوم' : 'Total Fees'} value={`${(total/1000).toFixed(0)}K`} sub="SAR" icon={DollarSign} iconCls="bg-sand-alt text-muted-foreground" />
         <KPI title={isRTL ? 'المحصل' : 'Collected'} value={`${(collected/1000).toFixed(0)}K`} sub="SAR" icon={CheckCircle} iconCls="bg-green-100 text-green-600" />
         <KPI title={isRTL ? 'المتبقي' : 'Outstanding'} value={`${(outstanding/1000).toFixed(0)}K`} sub="SAR" icon={Banknote} iconCls="bg-amber-100 text-amber-600" />
         <KPI title={isRTL ? 'المتأخر' : 'Overdue'} value={`${(overdueAmt/1000).toFixed(0)}K`} sub="SAR" icon={AlertCircle} iconCls="bg-red-100 text-red-600" />
-        <KPI title={isRTL ? 'نسبة التحصيل' : 'Collection Rate'} value={`${collectionRate}%`} icon={Percent} iconCls="bg-blue-100 text-blue-600" />
+        <KPI title={isRTL ? 'نسبة التحصيل' : 'Collection Rate'} value={`${collectionRate}%`} icon={Percent} iconCls="bg-najdi-50 text-najdi-700" />
         <KPI title={isRTL ? 'ضريبة القيمة المضافة' : 'VAT Collected'} value={`${(vatCollected/1000).toFixed(1)}K`} sub="SAR" icon={TrendingUp} iconCls="bg-purple-100 text-purple-600" />
       </div>
 
@@ -175,16 +175,16 @@ export default function FeesDashboard({ invoices, payments, isRTL }) {
         </CardHeader>
         <CardContent className="space-y-4">
           {[
-            { label: isRTL ? 'نسبة التحصيل الإجمالية' : 'Overall Collection Rate', pct: total > 0 ? collected/total*100 : 0, color: 'bg-blue-500' },
+            { label: isRTL ? 'نسبة التحصيل الإجمالية' : 'Overall Collection Rate', pct: total > 0 ? collected/total*100 : 0, color: 'bg-najdi-500' },
             { label: isRTL ? 'المدفوعة كاملاً' : 'Fully Paid', pct: active.length > 0 ? active.filter(i=>i.status==='paid').length/active.length*100 : 0, color: 'bg-emerald-500' },
             { label: isRTL ? 'نسبة التأخر' : 'Overdue Rate', pct: active.length > 0 ? overdue.length/active.length*100 : 0, color: 'bg-red-400' },
           ].map((row, i) => (
             <div key={i}>
               <div className="flex justify-between text-sm mb-1">
-                <span className="text-slate-600">{row.label}</span>
-                <span className="font-semibold text-slate-800">{row.pct.toFixed(1)}%</span>
+                <span className="text-muted-foreground">{row.label}</span>
+                <span className="font-semibold text-ink">{row.pct.toFixed(1)}%</span>
               </div>
-              <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-2.5 bg-sand-alt rounded-full overflow-hidden">
                 <div className={`h-full rounded-full ${row.color}`} style={{ width: `${Math.min(row.pct, 100)}%` }} />
               </div>
             </div>

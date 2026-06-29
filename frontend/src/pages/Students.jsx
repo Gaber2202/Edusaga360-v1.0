@@ -131,17 +131,17 @@ export default function Students() {
       header: isRTL ? 'الطالب' : 'Student',
       cell: (row) => (
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-sand-alt flex items-center justify-center overflow-hidden flex-shrink-0">
             {row.photo_url ? (
               <img src={row.photo_url} alt={row.name_ar} className="w-full h-full object-cover" />
             ) : (
-              <span className="text-sm text-slate-500">{row.name_ar?.[0]}</span>
+              <span className="text-sm text-muted-foreground">{row.name_ar?.[0]}</span>
             )}
           </div>
           <div>
-            <p className="font-medium text-slate-900">{row.name_ar}</p>
+            <p className="font-medium text-ink">{row.name_ar}</p>
             {row.student_id && (
-              <p className="text-sm text-slate-500 font-mono">{row.student_id}</p>
+              <p className="text-sm text-muted-foreground font-mono">{row.student_id}</p>
             )}
           </div>
         </div>
@@ -151,8 +151,8 @@ export default function Students() {
       header: t('grade'),
       cell: (row) => (
         <div>
-          <p className="text-slate-900">{t(row.grade)}</p>
-          {row.section && <p className="text-sm text-slate-500">{isRTL ? 'شعبة' : 'Section'} {row.section}</p>}
+          <p className="text-ink">{t(row.grade)}</p>
+          {row.section && <p className="text-sm text-muted-foreground">{isRTL ? 'شعبة' : 'Section'} {row.section}</p>}
         </div>
       )
     },
@@ -235,7 +235,7 @@ export default function Students() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
           <Input
             placeholder={isRTL ? 'بحث بالاسم أو رقم الطالب أو الهوية...' : 'Search by name, ID, or national ID...'}
             value={search}
@@ -245,7 +245,7 @@ export default function Students() {
         </div>
         <Select value={gradeFilter} onValueChange={setGradeFilter}>
           <SelectTrigger className="w-full sm:w-48 bg-white">
-            <Filter className="w-4 h-4 me-2 text-slate-400" />
+            <Filter className="w-4 h-4 me-2 text-muted-foreground" />
             <SelectValue placeholder={t('grade')} />
           </SelectTrigger>
           <SelectContent>
@@ -270,8 +270,8 @@ export default function Students() {
       </div>
 
       {/* Stats */}
-      <div className="flex gap-4 text-sm text-slate-500">
-        <span>{isRTL ? 'إجمالي الطلاب:' : 'Total Students:'} <strong className="text-slate-900">{filteredStudents.length}</strong></span>
+      <div className="flex gap-4 text-sm text-muted-foreground">
+        <span>{isRTL ? 'إجمالي الطلاب:' : 'Total Students:'} <strong className="text-ink">{filteredStudents.length}</strong></span>
         <span>{t('active')}: <strong className="text-emerald-600">{filteredStudents.filter(s => s.status === 'active').length}</strong></span>
       </div>
 

@@ -88,30 +88,30 @@ export default function YamenDashboard({ isRTL }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-slate-400 mb-1">{isRTL ? 'صحة الموارد البشرية' : 'HR Health Score'}</p>
+            <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'صحة الموارد البشرية' : 'HR Health Score'}</p>
             <p className={`text-3xl font-bold ${hrHealthScore >= 70 ? 'text-emerald-400' : hrHealthScore >= 50 ? 'text-amber-400' : 'text-red-400'}`}>{hrHealthScore}%</p>
-            <p className="text-xs text-slate-500 mt-1">{isRTL ? 'من 100' : 'out of 100'}</p>
+            <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'من 100' : 'out of 100'}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-slate-400 mb-1">{isRTL ? 'نسبة السعودة' : 'Saudization %'}</p>
+            <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'نسبة السعودة' : 'Saudization %'}</p>
             <p className={`text-3xl font-bold ${saudizationPct >= 40 ? 'text-emerald-400' : 'text-amber-400'}`}>{saudizationPct}%</p>
-            <p className="text-xs text-slate-500 mt-1">{saudiCount} / {activeEmployees}</p>
+            <p className="text-xs text-muted-foreground mt-1">{saudiCount} / {activeEmployees}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-slate-400 mb-1">{isRTL ? 'موظفون عالي المخاطر' : 'High Risk Employees'}</p>
+            <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'موظفون عالي المخاطر' : 'High Risk Employees'}</p>
             <p className="text-3xl font-bold text-red-400">{highRisk}</p>
-            <p className="text-xs text-slate-500 mt-1">{medRisk} {isRTL ? 'متوسط المخاطر' : 'medium risk'}</p>
+            <p className="text-xs text-muted-foreground mt-1">{medRisk} {isRTL ? 'متوسط المخاطر' : 'medium risk'}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-slate-400 mb-1">{isRTL ? 'إقامات منتهية/قريبة' : 'Iqama Alerts'}</p>
+            <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'إقامات منتهية/قريبة' : 'Iqama Alerts'}</p>
             <p className="text-3xl font-bold text-amber-400">{iqamaExpired.length + iqamaExpiringSoon.length}</p>
-            <p className="text-xs text-slate-500 mt-1">{iqamaExpired.length} {isRTL ? 'منتهية' : 'expired'}</p>
+            <p className="text-xs text-muted-foreground mt-1">{iqamaExpired.length} {isRTL ? 'منتهية' : 'expired'}</p>
           </CardContent>
         </Card>
       </div>
@@ -151,15 +151,15 @@ export default function YamenDashboard({ isRTL }) {
               </Link>
             )}
             {pendingLeaves > 0 && (
-              <Link to={createPageUrl('HRApprovalsInbox')} className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 border border-blue-200 hover:border-blue-400 hover:bg-blue-100 transition-colors group">
-                <Clock className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+              <Link to={createPageUrl('HRApprovalsInbox')} className="flex items-center gap-3 p-3 rounded-lg bg-najdi-50 border border-najdi-100 hover:border-najdi-500 hover:bg-najdi-50 transition-colors group">
+                <Clock className="w-5 h-5 text-najdi-500 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-blue-700">
+                  <p className="text-sm font-medium text-najdi-900">
                     {isRTL ? `${pendingLeaves} طلب إجازة معلق` : `${pendingLeaves} pending leave request(s)`}
                   </p>
-                  <p className="text-xs text-blue-500/70">{isRTL ? 'انقر للانتقال إلى صندوق الموافقات' : 'Click to go to Approvals Inbox'}</p>
+                  <p className="text-xs text-najdi-500/70">{isRTL ? 'انقر للانتقال إلى صندوق الموافقات' : 'Click to go to Approvals Inbox'}</p>
                 </div>
-                <ArrowRight className="w-4 h-4 text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ArrowRight className="w-4 h-4 text-najdi-500 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Link>
             )}
             {highRisk > 0 && (
@@ -199,10 +199,10 @@ export default function YamenDashboard({ isRTL }) {
                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${rc.dot}`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{isRTL ? emp.name_ar : emp.name_en || emp.name_ar}</p>
-                      <p className="text-xs text-slate-500">{emp.employee_id}</p>
+                      <p className="text-xs text-muted-foreground">{emp.employee_id}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <div className="w-24 bg-slate-700 rounded-full h-1.5">
+                      <div className="w-24 bg-ink rounded-full h-1.5">
                         <div className={`h-1.5 rounded-full ${rc.dot}`} style={{ width: `${emp.overallRisk}%` }} />
                       </div>
                       <span className={`text-xs font-bold w-8 text-end ${rc.text}`}>{emp.overallRisk}%</span>

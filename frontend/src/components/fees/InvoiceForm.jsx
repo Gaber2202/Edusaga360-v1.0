@@ -412,7 +412,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Student Selection */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-slate-900 border-b pb-2">
+            <h3 className="font-semibold text-ink border-b pb-2">
               {isRTL ? 'بيانات الطالب' : 'Student Information'}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -481,7 +481,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
           {/* Invoice Items */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-slate-900">{isRTL ? 'بنود الفاتورة' : 'Invoice Items'}</h3>
+              <h3 className="font-semibold text-ink">{isRTL ? 'بنود الفاتورة' : 'Invoice Items'}</h3>
               <Button type="button" size="sm" variant="outline" onClick={addItem} className="gap-2">
                 <Plus className="w-4 h-4" />
                 {isRTL ? 'إضافة بند' : 'Add Item'}
@@ -490,7 +490,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
             
             <div className="space-y-3">
               {formData.items.map((item, index) => (
-                <div key={index} className="flex gap-3 items-start p-3 bg-slate-50 rounded-lg">
+                <div key={index} className="flex gap-3 items-start p-3 bg-sand rounded-lg">
                   <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div className="md:col-span-2">
                       <Input
@@ -524,7 +524,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
                         onChange={(e) => handleItemChange(index, 'amount', e.target.value)}
                         className="pe-12"
                       />
-                      <span className="absolute top-1/2 -translate-y-1/2 end-3 text-slate-500 text-sm">
+                      <span className="absolute top-1/2 -translate-y-1/2 end-3 text-muted-foreground text-sm">
                         {t('sar')}
                       </span>
                     </div>
@@ -559,7 +559,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
                     onChange={(e) => handleChange('discount_amount', e.target.value)}
                     className="pe-12"
                   />
-                  <span className="absolute top-1/2 -translate-y-1/2 end-3 text-slate-500 text-sm">
+                  <span className="absolute top-1/2 -translate-y-1/2 end-3 text-muted-foreground text-sm">
                     {t('sar')}
                   </span>
                 </div>
@@ -574,8 +574,8 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
             </div>
 
             {/* Summary */}
-            <div className="bg-slate-50 rounded-lg p-4 space-y-2">
-              <div className="flex justify-between text-slate-600">
+            <div className="bg-sand rounded-lg p-4 space-y-2">
+              <div className="flex justify-between text-muted-foreground">
                 <span>{isRTL ? 'المجموع الفرعي' : 'Subtotal'}</span>
                 <span>{subtotal.toLocaleString()} {t('sar')}</span>
               </div>
@@ -589,7 +589,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
                   <span>-{parseFloat(formData.discount_amount).toLocaleString()} {t('sar')}</span>
                 </div>
               )}
-              <div className="flex justify-between text-lg font-bold text-slate-900 border-t pt-2">
+              <div className="flex justify-between text-lg font-bold text-ink border-t pt-2">
                 <span>{t('total')}</span>
                 <span>{total.toLocaleString()} {t('sar')}</span>
               </div>
@@ -605,7 +605,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
 
           {/* Payment Method Preference */}
           <div className="space-y-4 border-t pt-4">
-            <h3 className="font-semibold text-slate-900">{isRTL ? 'تفضيلات الدفع' : 'Payment Preferences'}</h3>
+            <h3 className="font-semibold text-ink">{isRTL ? 'تفضيلات الدفع' : 'Payment Preferences'}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{isRTL ? 'طريقة الدفع المفضلة' : 'Preferred Payment Method'}</Label>
@@ -685,7 +685,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
               <Button type="button" variant="outline" onClick={onClose}>
                 {t('cancel')}
               </Button>
-              <Button type="submit" disabled={loading} className="bg-slate-900 hover:bg-slate-800">
+              <Button type="submit" disabled={loading} className="bg-najdi-900 hover:bg-najdi-900">
                 {loading && <Loader2 className="w-4 h-4 animate-spin me-2" />}
                 {t('save')}
               </Button>

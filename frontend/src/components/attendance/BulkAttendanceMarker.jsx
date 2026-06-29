@@ -22,7 +22,7 @@ const STATUSES = [
   { value: 'present',  ar: 'حاضر',        en: 'Present',  color: 'bg-green-500',  light: 'bg-green-50 border-green-300 text-green-800',  icon: CheckCircle },
   { value: 'absent',   ar: 'غائب',         en: 'Absent',   color: 'bg-red-500',    light: 'bg-red-50 border-red-300 text-red-800',          icon: XCircle },
   { value: 'late',     ar: 'متأخر',        en: 'Late',     color: 'bg-amber-500',  light: 'bg-amber-50 border-amber-300 text-amber-800',    icon: Clock },
-  { value: 'excused',  ar: 'بعذر',         en: 'Excused',  color: 'bg-blue-500',   light: 'bg-blue-50 border-blue-300 text-blue-800',       icon: FileText },
+  { value: 'excused',  ar: 'بعذر',         en: 'Excused',  color: 'bg-najdi-500',   light: 'bg-najdi-50 border-najdi-100 text-najdi-900',       icon: FileText },
   { value: 'officially_absent', ar: 'نشاط مدرسي', en: 'School Event', color: 'bg-purple-500', light: 'bg-purple-50 border-purple-300 text-purple-800', icon: AlertCircle },
 ];
 
@@ -144,7 +144,7 @@ export default function BulkAttendanceMarker({
 
   if (students.length === 0) {
     return (
-      <div className="text-center py-16 text-slate-400">
+      <div className="text-center py-16 text-muted-foreground">
         <Users className="w-10 h-10 mx-auto mb-2 opacity-30" />
         <p>{isRTL ? 'لا طلاب في هذا الصف/الشعبة' : 'No students in this class'}</p>
       </div>
@@ -155,14 +155,14 @@ export default function BulkAttendanceMarker({
     <div className="space-y-3">
       {/* Quick actions */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-slate-500 font-medium">{isRTL ? 'تعيين الكل:' : 'Mark all:'}</span>
+        <span className="text-xs text-muted-foreground font-medium">{isRTL ? 'تعيين الكل:' : 'Mark all:'}</span>
         {STATUSES.slice(0, 4).map(s => (
           <button key={s.value} onClick={() => setAll(s.value)}
             className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all hover:shadow-sm ${s.light}`}>
             {isRTL ? s.ar : s.en}
           </button>
         ))}
-        <div className="ms-auto flex items-center gap-2 text-xs text-slate-500">
+        <div className="ms-auto flex items-center gap-2 text-xs text-muted-foreground">
           <span className="text-green-600 font-bold">{counts.present} ✓</span>
           <span className="text-red-600 font-bold">{counts.absent} ✗</span>
           <span className="text-amber-600 font-bold">{counts.late} ⏱</span>
@@ -170,7 +170,7 @@ export default function BulkAttendanceMarker({
       </div>
 
       {/* Hint */}
-      <div className="flex items-center gap-2 p-2.5 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-700">
+      <div className="flex items-center gap-2 p-2.5 bg-najdi-50 border border-najdi-100 rounded-xl text-xs text-najdi-900">
         <Zap className="w-3.5 h-3.5 flex-shrink-0" />
         {isRTL
           ? 'جميع الطلاب حاضرون افتراضياً — انقر على الطالب لتغيير حالته (غائب ← متأخر ← بعذر)'
@@ -195,12 +195,12 @@ export default function BulkAttendanceMarker({
               }`}
             >
               {/* Student number */}
-              <span className="absolute top-1.5 end-2 text-[10px] text-slate-300 font-mono">{idx + 1}</span>
+              <span className="absolute top-1.5 end-2 text-[10px] text-muted-foreground font-mono">{idx + 1}</span>
               {/* Status dot */}
               <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${cfg.color}`} />
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-sm leading-tight truncate">{s.name_ar}</p>
-                <p className="text-[10px] text-slate-400 font-mono">{s.student_id}</p>
+                <p className="text-[10px] text-muted-foreground font-mono">{s.student_id}</p>
               </div>
               {!isPresent && <Icon className="w-4 h-4 flex-shrink-0 opacity-60" />}
             </button>
@@ -231,7 +231,7 @@ export default function BulkAttendanceMarker({
         <Button
           onClick={handleSubmit}
           disabled={saving}
-          className="w-full h-12 bg-slate-800 hover:bg-slate-700 text-white text-base font-semibold"
+          className="w-full h-12 bg-najdi-900 hover:bg-ink text-white text-base font-semibold"
         >
           {saving ? (
             <span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{isRTL ? 'جاري الحفظ...' : 'Saving...'}</span>

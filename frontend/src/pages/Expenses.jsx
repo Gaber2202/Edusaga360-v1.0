@@ -264,7 +264,7 @@ export default function Expenses() {
               <Label>{isRTL ? 'رفع الإيصال' : 'Upload Receipt'}</Label>
               <div className="flex gap-2">
                 <Input type="file" accept="image/*,.pdf" onChange={handleFileUpload} disabled={uploading} />
-                {uploading && <Loader2 className="w-5 h-5 animate-spin text-slate-400" />}
+                {uploading && <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />}
               </div>
               {formData.receipt_url && (
                 <p className="text-xs text-emerald-600">{isRTL ? 'تم الرفع بنجاح' : 'Uploaded successfully'}</p>

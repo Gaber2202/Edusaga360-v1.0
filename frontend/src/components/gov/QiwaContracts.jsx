@@ -15,8 +15,8 @@ import { toast } from 'sonner';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 
 const QIWA_STATUS = {
-  draft: { ar: 'مسودة', en: 'Draft', color: 'bg-slate-100 text-slate-700' },
-  submitted: { ar: 'مُرسل لقوى', en: 'Submitted', color: 'bg-blue-100 text-blue-700' },
+  draft: { ar: 'مسودة', en: 'Draft', color: 'bg-sand-alt text-ink' },
+  submitted: { ar: 'مُرسل لقوى', en: 'Submitted', color: 'bg-najdi-50 text-najdi-900' },
   approved: { ar: 'معتمد قوى', en: 'Approved', color: 'bg-emerald-100 text-emerald-700' },
   rejected: { ar: 'مرفوض', en: 'Rejected', color: 'bg-red-100 text-red-700' },
 };
@@ -93,17 +93,17 @@ export default function QiwaContracts() {
     { header: isRTL ? 'الموظف' : 'Employee', cell: (row) => (
       <div>
         <p className="font-medium">{row.employee_name}</p>
-        <p className="text-xs text-slate-500">{row.employee?.employee_id}</p>
+        <p className="text-xs text-muted-foreground">{row.employee?.employee_id}</p>
       </div>
     )},
     { header: isRTL ? 'المستند' : 'Document', cell: (row) => (
       <div>
         <p className="text-sm">{row.document_name}</p>
-        <p className="text-xs text-slate-400">{isRTL ? 'إصدار' : 'v'}{row.version}</p>
+        <p className="text-xs text-muted-foreground">{isRTL ? 'إصدار' : 'v'}{row.version}</p>
       </div>
     )},
     { header: isRTL ? 'تاريخ الانتهاء' : 'Expiry', cell: (row) => {
-      if (!row.expiry_date) return <span className="text-slate-400">—</span>;
+      if (!row.expiry_date) return <span className="text-muted-foreground">—</span>;
       const days = row.daysToExpiry;
       return (
         <div className={`text-sm ${days !== null && days <= 60 ? 'text-amber-600 font-medium' : ''}`}>
@@ -118,14 +118,14 @@ export default function QiwaContracts() {
       return (
         <div className="space-y-1">
           <Badge className={cfg.color}>{isRTL ? cfg.ar : cfg.en}</Badge>
-          {row.qiwa_reference_id && <p className="text-xs text-slate-500">Ref: {row.qiwa_reference_id}</p>}
+          {row.qiwa_reference_id && <p className="text-xs text-muted-foreground">Ref: {row.qiwa_reference_id}</p>}
         </div>
       );
     }},
     { header: isRTL ? 'الإجراءات' : 'Actions', cell: (row) => (
       <div className="flex gap-2 flex-wrap">
         {(!row.qiwa_status || row.qiwa_status === 'draft') && (
-          <Button size="sm" variant="outline" className="gap-1 text-blue-700 border-blue-200 text-xs" onClick={() => handleSync(row)}>
+          <Button size="sm" variant="outline" className="gap-1 text-najdi-900 border-najdi-100 text-xs" onClick={() => handleSync(row)}>
             <Upload className="w-3 h-3" /> {isRTL ? 'إرسال لقوى' : 'Submit to Qiwa'}
           </Button>
         )}

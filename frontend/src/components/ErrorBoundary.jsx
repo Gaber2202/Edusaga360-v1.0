@@ -68,7 +68,7 @@ export default class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-sand flex items-center justify-center p-4">
           <Card className="max-w-md w-full">
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -77,19 +77,19 @@ export default class ErrorBoundary extends React.Component {
                 </div>
                 <div>
                   <CardTitle className="text-xl">حدث خطأ / Error Occurred</CardTitle>
-                  <p className="text-sm text-slate-500">Something went wrong</p>
+                  <p className="text-sm text-muted-foreground">Something went wrong</p>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-muted-foreground">
                 {this.props.isRTL 
                   ? 'عذراً، حدث خطأ غير متوقع. تم تسجيل المشكلة وسيتم حلها قريباً.'
                   : 'Sorry, an unexpected error occurred. The issue has been logged and will be resolved shortly.'}
               </p>
               
-              <div className="bg-slate-50 p-3 rounded-lg border max-h-24 overflow-auto">
-                <p className="text-xs font-mono text-slate-700 break-all">
+              <div className="bg-sand p-3 rounded-lg border max-h-24 overflow-auto">
+                <p className="text-xs font-mono text-ink break-all">
                   {this.state.error?.toString()}
                 </p>
               </div>

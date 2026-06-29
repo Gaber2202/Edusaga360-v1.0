@@ -104,20 +104,20 @@ export default function HRPoliciesLibrary() {
 
       {/* Dashboard Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <Card className="p-3 bg-gradient-to-br from-blue-50 to-blue-100">
-          <p className="text-xs text-slate-600 mb-1">{isRTL ? 'إجمالي' : 'Total'}</p>
-          <p className="text-2xl font-bold text-blue-600">{stats.total}</p>
+        <Card className="p-3 bg-gradient-to-br from-najdi-50 to-blue-100">
+          <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'إجمالي' : 'Total'}</p>
+          <p className="text-2xl font-bold text-najdi-700">{stats.total}</p>
         </Card>
         <Card className="p-3 bg-gradient-to-br from-yellow-50 to-yellow-100">
-          <p className="text-xs text-slate-600 mb-1">{isRTL ? 'مسودات' : 'Drafts'}</p>
+          <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'مسودات' : 'Drafts'}</p>
           <p className="text-2xl font-bold text-yellow-600">{stats.draft}</p>
         </Card>
         <Card className="p-3 bg-gradient-to-br from-emerald-50 to-emerald-100">
-          <p className="text-xs text-slate-600 mb-1">{isRTL ? 'منشورة' : 'Published'}</p>
+          <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'منشورة' : 'Published'}</p>
           <p className="text-2xl font-bold text-emerald-600">{stats.published}</p>
         </Card>
         <Card className="p-3 bg-gradient-to-br from-orange-50 to-orange-100">
-          <p className="text-xs text-slate-600 mb-1">{isRTL ? 'قيد المراجعة' : 'Pending'}</p>
+          <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'قيد المراجعة' : 'Pending'}</p>
           <p className="text-2xl font-bold text-orange-600">{stats.pending}</p>
         </Card>
       </div>
@@ -126,7 +126,7 @@ export default function HRPoliciesLibrary() {
       <Card className="p-3 space-y-3">
         <div className="flex flex-col md:flex-row gap-2">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder={isRTL ? 'ابحث...' : 'Search...'}
               value={searchTerm}
@@ -165,7 +165,7 @@ export default function HRPoliciesLibrary() {
 
         {policies.length === 0 && (
           <div className="text-center py-4">
-            <Button onClick={handleInitializeTemplates} disabled={initializing} className="bg-blue-600 hover:bg-blue-700 h-8 text-sm">
+            <Button onClick={handleInitializeTemplates} disabled={initializing} className="bg-najdi-700 hover:bg-najdi-900 h-8 text-sm">
               {initializing && <Loader2 className="w-3 h-3 animate-spin me-2" />}
               {isRTL ? 'تحميل' : 'Initialize'}
             </Button>
@@ -183,7 +183,7 @@ export default function HRPoliciesLibrary() {
                   <h3 className="font-semibold text-xs line-clamp-2 leading-tight">
                     {isRTL ? policy.title_ar : policy.title_en}
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                     {getCategoryLabel(policy.category)}
                   </p>
                 </div>
@@ -193,7 +193,7 @@ export default function HRPoliciesLibrary() {
                 <Badge className={`text-xs py-0 h-5 ${
                   policy.status === 'published' ? 'bg-emerald-100 text-emerald-800' :
                   policy.status === 'under_review' ? 'bg-orange-100 text-orange-800' :
-                  'bg-slate-100 text-slate-800'
+                  'bg-sand-alt text-ink'
                 }`}>
                   {policy.status === 'published' ? 'Pub' :
                    policy.status === 'under_review' ? 'Rev' :
@@ -247,8 +247,8 @@ export default function HRPoliciesLibrary() {
 
       {filteredPolicies.length === 0 && policies.length > 0 && (
         <div className="text-center py-8">
-          <FileText className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm text-slate-500">{isRTL ? 'لا توجد سياسات' : 'No policies found'}</p>
+          <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">{isRTL ? 'لا توجد سياسات' : 'No policies found'}</p>
         </div>
       )}
     </div>

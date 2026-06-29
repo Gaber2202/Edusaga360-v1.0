@@ -306,7 +306,7 @@ export default function PurchaseRequisitions() {
       </Tabs>
 
       <div className="relative max-w-md">
-        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
         <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${isRTL ? 'pr-10' : 'pl-10'} bg-white`} />
       </div>
 
@@ -338,7 +338,7 @@ export default function PurchaseRequisitions() {
               <div className="border rounded-lg overflow-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-50">
+                    <TableRow className="bg-sand">
                       <TableHead>{isRTL ? 'الوصف' : 'Description'}</TableHead>
                       <TableHead className="w-[100px]">{t('quantity')}</TableHead>
                       <TableHead className="w-[120px]">{isRTL ? 'السعر التقديري' : 'Est. Price'}</TableHead>
@@ -366,7 +366,7 @@ export default function PurchaseRequisitions() {
                         </TableCell>
                       </TableRow>
                     ))}
-                    <TableRow className="bg-slate-50 font-semibold">
+                    <TableRow className="bg-sand font-semibold">
                       <TableCell colSpan={3}>{t('total')}</TableCell>
                       <TableCell>{calculateTotal().toLocaleString()} {t('sar')}</TableCell>
                       <TableCell></TableCell>

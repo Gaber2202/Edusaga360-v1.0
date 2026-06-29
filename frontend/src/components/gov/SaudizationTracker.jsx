@@ -55,7 +55,7 @@ export default function SaudizationTracker() {
     { header: isRTL ? 'غير سعودي' : 'Non-Saudi', accessorKey: 'nonSaudi' },
     { header: isRTL ? 'نسبة التوطين' : 'Saudization %', cell: r => (
       <div className="flex items-center gap-3">
-        <div className="flex-1 bg-slate-200 rounded-full h-2 min-w-16">
+        <div className="flex-1 bg-sand-alt rounded-full h-2 min-w-16">
           <div className="h-2 rounded-full transition-all" style={{ width: `${Math.min(100, r.pct)}%`, backgroundColor: r.pct >= TARGET_PCT ? '#10b981' : '#ef4444' }} />
         </div>
         <span className={`text-sm font-semibold ${r.pct >= TARGET_PCT ? 'text-emerald-600' : 'text-red-600'}`}>{r.pct}%</span>
@@ -85,13 +85,13 @@ export default function SaudizationTracker() {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-4xl font-bold" style={{ color: riskConfig.color }}>{stats.pct}%</span>
-                <span className="text-slate-500 text-xs mt-1">{isRTL ? 'الفعلي' : 'Actual'}</span>
+                <span className="text-muted-foreground text-xs mt-1">{isRTL ? 'الفعلي' : 'Actual'}</span>
               </div>
             </div>
             <div className="mt-4 text-center space-y-1">
               <div className="flex items-center gap-2 justify-center">
-                <div className="w-3 h-3 rounded-full bg-slate-300" />
-                <span className="text-sm text-slate-600">{isRTL ? `الهدف: ${TARGET_PCT}%` : `Target: ${TARGET_PCT}%`}</span>
+                <div className="w-3 h-3 rounded-full bg-sand-alt" />
+                <span className="text-sm text-muted-foreground">{isRTL ? `الهدف: ${TARGET_PCT}%` : `Target: ${TARGET_PCT}%`}</span>
               </div>
               <Badge className={`text-base px-4 py-1 ${riskConfig.text} ${riskConfig.bg}`}>{riskConfig.label}</Badge>
             </div>
@@ -101,14 +101,14 @@ export default function SaudizationTracker() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             {[
-              { label: isRTL ? 'الإجمالي' : 'Total Employees', value: stats.total, color: 'text-slate-900' },
+              { label: isRTL ? 'الإجمالي' : 'Total Employees', value: stats.total, color: 'text-ink' },
               { label: isRTL ? 'موظفون سعوديون' : 'Saudi Employees', value: stats.saudi, color: 'text-emerald-600' },
-              { label: isRTL ? 'غير سعوديين' : 'Non-Saudi', value: stats.nonSaudi, color: 'text-blue-600' },
+              { label: isRTL ? 'غير سعوديين' : 'Non-Saudi', value: stats.nonSaudi, color: 'text-najdi-700' },
               { label: isRTL ? 'مطلوب لتحقيق الهدف' : 'Needed to Hit Target', value: stats.needed, color: 'text-amber-600' },
             ].map((item, i) => (
               <Card key={i}><CardContent className="p-4">
                 <div className={`text-2xl font-bold ${item.color}`}>{item.value}</div>
-                <div className="text-sm text-slate-500">{item.label}</div>
+                <div className="text-sm text-muted-foreground">{item.label}</div>
               </CardContent></Card>
             ))}
           </div>
@@ -132,7 +132,7 @@ export default function SaudizationTracker() {
       {/* Branch Breakdown */}
       {branchBreakdown.length > 0 && (
         <div>
-          <h3 className="text-base font-semibold text-slate-800 mb-3">{isRTL ? 'التوطين حسب الفرع' : 'Saudization by Branch'}</h3>
+          <h3 className="text-base font-semibold text-ink mb-3">{isRTL ? 'التوطين حسب الفرع' : 'Saudization by Branch'}</h3>
           <DataTable columns={branchColumns} data={branchBreakdown} loading={false} emptyMessage="" />
         </div>
       )}

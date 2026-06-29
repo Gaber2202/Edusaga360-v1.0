@@ -121,7 +121,7 @@ export default function YamenHRInsights({ module, data = {}, isRTL }) {
           {isRTL ? 'تحليل البيانات' : 'Analyze Data'}
         </Button>
         {insight && (
-          <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 whitespace-pre-wrap text-sm text-slate-700 leading-relaxed">
+          <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 whitespace-pre-wrap text-sm text-ink leading-relaxed">
             {insight}
           </div>
         )}

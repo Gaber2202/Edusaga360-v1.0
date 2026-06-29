@@ -90,7 +90,7 @@ export default function ResetPassword() {
                 setLang(next);
                 try { localStorage.setItem('erp_language', next); } catch {}
               }}
-              className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+              className="text-xs text-muted-foreground hover:text-muted-foreground transition-colors"
             >
               {isRTL ? 'English' : 'العربية'}
             </button>
@@ -99,14 +99,14 @@ export default function ResetPassword() {
           {/* Logo */}
           <div className="text-center space-y-2">
             <img src="/edusaga-logo.svg" alt="EduSaga 360" className="h-14 w-auto mx-auto" />
-            <h1 className="text-2xl font-bold text-slate-900">
+            <h1 className="text-2xl font-bold text-ink">
               {t('تعيين كلمة مرور جديدة', 'Set a new password')}
             </h1>
           </div>
 
           {phase === 'checking' && (
-            <div className="flex flex-col items-center gap-3 py-8 text-slate-500">
-              <Loader2 className="w-7 h-7 animate-spin text-slate-300" />
+            <div className="flex flex-col items-center gap-3 py-8 text-muted-foreground">
+              <Loader2 className="w-7 h-7 animate-spin text-muted-foreground" />
               <p className="text-sm">{t('جاري التحقق من الرابط...', 'Verifying your link...')}</p>
             </div>
           )}
@@ -127,7 +127,7 @@ export default function ResetPassword() {
               </div>
               <a
                 href="/forgot-password"
-                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors text-sm"
+                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-najdi-700 hover:bg-najdi-900 text-white font-medium rounded-xl transition-colors text-sm"
               >
                 <KeyRound className="w-4 h-4" />
                 {t('طلب رابط جديد', 'Request a new link')}
@@ -151,12 +151,12 @@ export default function ResetPassword() {
 
           {phase === 'ready' && (
             <form onSubmit={handleSubmit} className="space-y-4">
-              <p className="text-slate-500 text-sm text-center">
+              <p className="text-muted-foreground text-sm text-center">
                 {t('اختر كلمة مرور جديدة لحسابك', 'Choose a new password for your account')}
               </p>
 
               <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-slate-700">
+                <Label className="text-sm font-medium text-ink">
                   {t('كلمة المرور الجديدة', 'New password')}
                 </Label>
                 <div className="relative">
@@ -173,7 +173,7 @@ export default function ResetPassword() {
                   <button
                     type="button"
                     onClick={() => setShowPass((p) => !p)}
-                    className="absolute inset-y-0 end-0 flex items-center px-3 text-slate-400 hover:text-slate-600"
+                    className="absolute inset-y-0 end-0 flex items-center px-3 text-muted-foreground hover:text-muted-foreground"
                     tabIndex={-1}
                   >
                     {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -182,7 +182,7 @@ export default function ResetPassword() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-slate-700">
+                <Label className="text-sm font-medium text-ink">
                   {t('تأكيد كلمة المرور', 'Confirm password')}
                 </Label>
                 <Input
@@ -204,7 +204,7 @@ export default function ResetPassword() {
               <Button
                 type="submit"
                 disabled={saving}
-                className="w-full h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700"
+                className="w-full h-12 text-base font-semibold bg-najdi-700 hover:bg-najdi-900"
               >
                 {saving ? (
                   <span className="flex items-center gap-2">

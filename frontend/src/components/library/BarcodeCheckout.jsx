@@ -117,7 +117,7 @@ export default function BarcodeCheckout({ books, students, getTenantIdForCreate,
           <CheckCircle className="w-8 h-8 text-green-600" />
         </div>
         <p className="text-lg font-bold text-green-700">{isRTL ? 'تمت الاستعارة!' : 'Checked Out!'}</p>
-        <div className="text-center text-sm text-slate-500">
+        <div className="text-center text-sm text-muted-foreground">
           <p className="font-medium">{scannedBook?.title_ar}</p>
           <p>→ {scannedStudent?.name_ar}</p>
         </div>
@@ -128,18 +128,18 @@ export default function BarcodeCheckout({ books, students, getTenantIdForCreate,
   return (
     <div className="space-y-4">
       {/* Phase indicator */}
-      <div className="flex items-center gap-1 justify-center text-xs text-slate-500">
-        <div className={`flex items-center gap-1 px-2 py-1 rounded ${phase === 'book' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-slate-400'}`}>
+      <div className="flex items-center gap-1 justify-center text-xs text-muted-foreground">
+        <div className={`flex items-center gap-1 px-2 py-1 rounded ${phase === 'book' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-muted-foreground'}`}>
           <BookOpen className="w-3 h-3" />
           {isRTL ? 'مسح الكتاب' : 'Scan Book'}
         </div>
         <span>→</span>
-        <div className={`flex items-center gap-1 px-2 py-1 rounded ${phase === 'student' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-slate-400'}`}>
+        <div className={`flex items-center gap-1 px-2 py-1 rounded ${phase === 'student' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-muted-foreground'}`}>
           <User className="w-3 h-3" />
           {isRTL ? 'مسح بطاقة الطالب' : 'Scan Student ID'}
         </div>
         <span>→</span>
-        <div className={`flex items-center gap-1 px-2 py-1 rounded ${phase === 'confirm' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-slate-400'}`}>
+        <div className={`flex items-center gap-1 px-2 py-1 rounded ${phase === 'confirm' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-muted-foreground'}`}>
           <CheckCircle className="w-3 h-3" />
           {isRTL ? 'تأكيد' : 'Confirm'}
         </div>
@@ -158,8 +158,8 @@ export default function BarcodeCheckout({ books, students, getTenantIdForCreate,
         <div className="space-y-3">
           <div className="text-center">
             <Scan className="w-10 h-10 text-indigo-400 mx-auto mb-2" />
-            <p className="font-semibold text-slate-700">{isRTL ? 'امسح باركود الكتاب أو أدخل ISBN' : 'Scan book barcode or type ISBN'}</p>
-            <p className="text-xs text-slate-400 mt-1">{isRTL ? 'اضغط Enter أو وجّه الماسح نحو الكتاب' : 'Press Enter or point scanner at book'}</p>
+            <p className="font-semibold text-ink">{isRTL ? 'امسح باركود الكتاب أو أدخل ISBN' : 'Scan book barcode or type ISBN'}</p>
+            <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'اضغط Enter أو وجّه الماسح نحو الكتاب' : 'Press Enter or point scanner at book'}</p>
           </div>
           <Input
             ref={bookInputRef}
@@ -170,7 +170,7 @@ export default function BarcodeCheckout({ books, students, getTenantIdForCreate,
             className="text-center h-12 text-lg font-mono tracking-widest"
             autoComplete="off"
           />
-          <p className="text-center text-xs text-slate-400">{isRTL ? `${books.length} كتاب في الفهرس` : `${books.length} books in catalog`}</p>
+          <p className="text-center text-xs text-muted-foreground">{isRTL ? `${books.length} كتاب في الفهرس` : `${books.length} books in catalog`}</p>
         </div>
       )}
 
@@ -190,7 +190,7 @@ export default function BarcodeCheckout({ books, students, getTenantIdForCreate,
         <div className="space-y-3">
           <div className="text-center">
             <User className="w-8 h-8 text-indigo-400 mx-auto mb-2" />
-            <p className="font-semibold text-slate-700">{isRTL ? 'امسح بطاقة الطالب أو أدخل رقمه' : 'Scan student ID card or type ID'}</p>
+            <p className="font-semibold text-ink">{isRTL ? 'امسح بطاقة الطالب أو أدخل رقمه' : 'Scan student ID card or type ID'}</p>
           </div>
           <Input
             ref={studentInputRef}
@@ -202,7 +202,7 @@ export default function BarcodeCheckout({ books, students, getTenantIdForCreate,
             autoComplete="off"
           />
           <button onClick={() => { setPhase('book'); setScannedBook(null); setBookScan(''); }}
-            className="text-xs text-slate-400 hover:text-slate-600 w-full text-center">
+            className="text-xs text-muted-foreground hover:text-muted-foreground w-full text-center">
             ← {isRTL ? 'تغيير الكتاب' : 'Change book'}
           </button>
         </div>
@@ -220,7 +220,7 @@ export default function BarcodeCheckout({ books, students, getTenantIdForCreate,
             <CheckCircle className="w-5 h-5 text-green-500 ms-auto" />
           </div>
 
-          <div className="p-4 bg-slate-50 rounded-xl text-sm text-slate-700 space-y-1">
+          <div className="p-4 bg-sand rounded-xl text-sm text-ink space-y-1">
             <div className="flex justify-between"><span>{isRTL ? 'الكتاب:' : 'Book:'}</span><span className="font-medium">{scannedBook.title_ar}</span></div>
             <div className="flex justify-between"><span>{isRTL ? 'الطالب:' : 'Student:'}</span><span className="font-medium">{scannedStudent.name_ar}</span></div>
             <div className="flex justify-between"><span>{isRTL ? 'مدة الاستعارة:' : 'Loan period:'}</span><span className="font-medium">{LOAN_DAYS[scannedBook.loan_type]} {isRTL ? 'يوم' : 'days'}</span></div>

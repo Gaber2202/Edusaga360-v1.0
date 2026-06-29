@@ -40,7 +40,7 @@ export default function POActions({
         </Button>
       )}
       {po.status === 'approved' && (
-        <Button size="sm" variant="ghost" onClick={() => onSend(po)} className="text-blue-600">
+        <Button size="sm" variant="ghost" onClick={() => onSend(po)} className="text-najdi-700">
           <Send className="w-4 h-4" />
         </Button>
       )}

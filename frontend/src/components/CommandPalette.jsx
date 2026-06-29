@@ -135,7 +135,7 @@ export default function CommandPalette({ open, onOpenChange }) {
           </CommandGroup>
         ))}
       </CommandList>
-      <p className="text-xs text-slate-400 px-3 pb-2">Press Esc to close</p>
+      <p className="text-xs text-muted-foreground px-3 pb-2">Press Esc to close</p>
     </CommandDialog>
   );
 }

@@ -110,7 +110,7 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
               </div>
             )}
             {onProbation && (
-              <div className="flex items-center gap-2 text-sm text-blue-700">
+              <div className="flex items-center gap-2 text-sm text-najdi-900">
                 <Clock className="w-4 h-4" />
                 {isRTL ? `قيد الاختبار — متبقي ${daysLeftProbation} يوم` : `On probation — ${daysLeftProbation} days remaining`}
               </div>
@@ -130,12 +130,12 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
         <Card>
           <CardHeader><CardTitle className="text-base">{isRTL ? 'معلومات الوظيفة' : 'Job Information'}</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'القسم' : 'Department'}</span><span className="font-medium">{dept?.name_ar || '-'}</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'الفرع' : 'Branch'}</span><span className="font-medium">{branch?.name_ar || '-'}</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'المدير المباشر' : 'Line Manager'}</span><span className="font-medium">{employee?.manager_id || '-'}</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'نوع التوظيف' : 'Employment Type'}</span><span className="font-medium">{employee?.employment_type || '-'}</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'تاريخ التعيين' : 'Hire Date'}</span><span className="font-medium">{employee?.hire_date ? format(new Date(employee.hire_date), 'dd/MM/yyyy') : '-'}</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'حالة الاختبار' : 'Probation'}</span>
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'القسم' : 'Department'}</span><span className="font-medium">{dept?.name_ar || '-'}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'الفرع' : 'Branch'}</span><span className="font-medium">{branch?.name_ar || '-'}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'المدير المباشر' : 'Line Manager'}</span><span className="font-medium">{employee?.manager_id || '-'}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'نوع التوظيف' : 'Employment Type'}</span><span className="font-medium">{employee?.employment_type || '-'}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'تاريخ التعيين' : 'Hire Date'}</span><span className="font-medium">{employee?.hire_date ? format(new Date(employee.hire_date), 'dd/MM/yyyy') : '-'}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'حالة الاختبار' : 'Probation'}</span>
               <Badge className={onProbation ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}>
                 {onProbation ? (isRTL ? `جارٍ (${daysLeftProbation} يوم)` : `Active (${daysLeftProbation}d)`) : (isRTL ? 'مكتمل' : 'Completed')}
               </Badge>
@@ -146,9 +146,9 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
         <Card>
           <CardHeader><CardTitle className="text-base">{isRTL ? 'هيكل الراتب' : 'Salary Structure'}</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'الراتب الأساسي' : 'Basic Salary'}</span><span className="font-medium">{employee?.compensation?.salary_structure?.basic_salary?.toLocaleString() || employee?.basic_salary?.toLocaleString() || '-'} {isRTL ? 'ر.س' : 'SAR'}</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'بدل السكن' : 'Housing'}</span><span className="font-medium">{employee?.housing_allowance?.toLocaleString() || '-'}</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'بدل النقل' : 'Transport'}</span><span className="font-medium">{employee?.transport_allowance?.toLocaleString() || '-'}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'الراتب الأساسي' : 'Basic Salary'}</span><span className="font-medium">{employee?.compensation?.salary_structure?.basic_salary?.toLocaleString() || employee?.basic_salary?.toLocaleString() || '-'} {isRTL ? 'ر.س' : 'SAR'}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'بدل السكن' : 'Housing'}</span><span className="font-medium">{employee?.housing_allowance?.toLocaleString() || '-'}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'بدل النقل' : 'Transport'}</span><span className="font-medium">{employee?.transport_allowance?.toLocaleString() || '-'}</span></div>
             {(() => {
               const basic = employee?.compensation?.salary_structure?.basic_salary || employee?.basic_salary || 0;
               const allowances = (employee?.compensation?.salary_structure?.allowances || [])
@@ -163,13 +163,13 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
               const net = basic + allowances - deductions;
               return (
                 <>
-                  {allowances > 0 && <div className="flex justify-between text-emerald-700"><span className="text-slate-500">{isRTL ? 'البدلات الدورية' : 'Recurring Allowances'}</span><span>+{allowances.toLocaleString()}</span></div>}
-                  {deductions > 0 && <div className="flex justify-between text-red-600"><span className="text-slate-500">{isRTL ? 'الخصومات الدورية' : 'Recurring Deductions'}</span><span>-{deductions.toLocaleString()}</span></div>}
+                  {allowances > 0 && <div className="flex justify-between text-emerald-700"><span className="text-muted-foreground">{isRTL ? 'البدلات الدورية' : 'Recurring Allowances'}</span><span>+{allowances.toLocaleString()}</span></div>}
+                  {deductions > 0 && <div className="flex justify-between text-red-600"><span className="text-muted-foreground">{isRTL ? 'الخصومات الدورية' : 'Recurring Deductions'}</span><span>-{deductions.toLocaleString()}</span></div>}
                   <div className="flex justify-between border-t pt-2 font-semibold"><span>{isRTL ? 'صافي الراتب' : 'Net Salary'}</span><span className="text-emerald-600">{net.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span></div>
                 </>
               );
             })()}
-            <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'العقد الحالي' : 'Current Contract'}</span><span className="font-medium">{latestContract ? `${latestContract.contract_number || '-'} (${latestContract.status})` : '-'}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'العقد الحالي' : 'Current Contract'}</span><span className="font-medium">{latestContract ? `${latestContract.contract_number || '-'} (${latestContract.status})` : '-'}</span></div>
           </CardContent>
         </Card>
       </div>
@@ -183,8 +183,8 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
           </Button>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
-          <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'البنك' : 'Bank'}</span><span className="font-medium">{employee?.bank_name || '-'}</span></div>
-          <div className="flex justify-between"><span className="text-slate-500">IBAN</span><span className="font-mono">{employee?.iban || '-'}</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'البنك' : 'Bank'}</span><span className="font-medium">{employee?.bank_name || '-'}</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">IBAN</span><span className="font-mono">{employee?.iban || '-'}</span></div>
         </CardContent>
       </Card>
 
@@ -193,13 +193,13 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
         <CardHeader><CardTitle className="text-base">{isRTL ? 'الأصول المُخصصة' : 'Assigned Assets'}</CardTitle></CardHeader>
         <CardContent>
           {assetAssignments.length === 0 ? (
-            <p className="text-slate-400 text-sm text-center py-2">{isRTL ? 'لا توجد أصول مُخصصة' : 'No assigned assets'}</p>
+            <p className="text-muted-foreground text-sm text-center py-2">{isRTL ? 'لا توجد أصول مُخصصة' : 'No assigned assets'}</p>
           ) : (
             <div className="space-y-2">
               {assetAssignments.map(a => (
-                <div key={a.id} className="flex justify-between text-sm p-2 bg-slate-50 rounded-lg">
+                <div key={a.id} className="flex justify-between text-sm p-2 bg-sand rounded-lg">
                   <span className="font-medium">{a.asset_name || a.asset_id}</span>
-                  <Badge className="bg-blue-100 text-blue-700">{a.status || 'active'}</Badge>
+                  <Badge className="bg-najdi-50 text-najdi-900">{a.status || 'active'}</Badge>
                 </div>
               ))}
             </div>
@@ -212,13 +212,13 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><BookOpen className="w-4 h-4" />{isRTL ? 'سجل التدريب' : 'Training History'}</CardTitle></CardHeader>
         <CardContent>
           {myTrainings.length === 0 ? (
-            <p className="text-slate-400 text-sm text-center py-2">{isRTL ? 'لا توجد سجلات تدريب' : 'No training records'}</p>
+            <p className="text-muted-foreground text-sm text-center py-2">{isRTL ? 'لا توجد سجلات تدريب' : 'No training records'}</p>
           ) : (
             <div className="space-y-2">
               {myTrainings.map(t => (
-                <div key={t.id} className="flex justify-between text-sm p-2 bg-slate-50 rounded-lg">
-                  <div><p className="font-medium">{t.training_name_ar}</p><p className="text-xs text-slate-500">{t.cpd_hours} CPD hrs</p></div>
-                  <Badge className={t.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}>{t.status}</Badge>
+                <div key={t.id} className="flex justify-between text-sm p-2 bg-sand rounded-lg">
+                  <div><p className="font-medium">{t.training_name_ar}</p><p className="text-xs text-muted-foreground">{t.cpd_hours} CPD hrs</p></div>
+                  <Badge className={t.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-najdi-50 text-najdi-900'}>{t.status}</Badge>
                 </div>
               ))}
             </div>
@@ -249,7 +249,7 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
             {loadingAI ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
             {isRTL ? 'تحليل الملف الشخصي' : 'Analyze Employee Profile'}
           </Button>
-          {aiInsight && <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 whitespace-pre-wrap text-sm text-slate-700">{aiInsight}</div>}
+          {aiInsight && <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 whitespace-pre-wrap text-sm text-ink">{aiInsight}</div>}
         </CardContent>
       </Card>
 

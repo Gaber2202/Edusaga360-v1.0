@@ -27,7 +27,7 @@ export default function FixedIssuesLog() {
   // Admin only
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-sand flex items-center justify-center">
         <Card className="max-w-md w-full p-6">
           <div className="flex items-center gap-3 mb-4">
             <AlertTriangle className="w-6 h-6 text-red-600" />
@@ -65,21 +65,21 @@ export default function FixedIssuesLog() {
       header: isRTL ? 'الوصف' : 'Description',
       cell: (row) => (
         <div className="max-w-sm">
-          <p className="font-medium text-slate-900">{row.issue_description}</p>
-          <p className="text-xs text-slate-500 mt-1">{row.module}</p>
+          <p className="font-medium text-ink">{row.issue_description}</p>
+          <p className="text-xs text-muted-foreground mt-1">{row.module}</p>
         </div>
       )
     },
     {
       header: isRTL ? 'السبب الجذري' : 'Root Cause',
       cell: (row) => (
-        <p className="text-sm text-slate-600 max-w-xs">{row.root_cause}</p>
+        <p className="text-sm text-muted-foreground max-w-xs">{row.root_cause}</p>
       )
     },
     {
       header: isRTL ? 'الحل المطبق' : 'Fix Applied',
       cell: (row) => (
-        <p className="text-sm text-slate-600 max-w-xs">{row.fix_applied}</p>
+        <p className="text-sm text-muted-foreground max-w-xs">{row.fix_applied}</p>
       )
     },
     {
@@ -89,7 +89,7 @@ export default function FixedIssuesLog() {
           critical: 'bg-red-100 text-red-800',
           high: 'bg-orange-100 text-orange-800',
           medium: 'bg-yellow-100 text-yellow-800',
-          low: 'bg-blue-100 text-blue-800'
+          low: 'bg-najdi-50 text-najdi-900'
         };
         return (
           <span className={`px-2 py-1 rounded text-xs font-semibold ${colors[row.priority] || colors.medium}`}>
@@ -108,7 +108,7 @@ export default function FixedIssuesLog() {
               <span className="text-xs">{row.verified_by}</span>
             </>
           ) : (
-            <span className="text-xs text-slate-500">Pending</span>
+            <span className="text-xs text-muted-foreground">Pending</span>
           )}
         </div>
       )
@@ -186,9 +186,9 @@ export default function FixedIssuesLog() {
             </div>
           </div>
 
-          <div className="bg-white/50 p-3 rounded border border-blue-200">
-            <h4 className="font-semibold text-blue-900 text-sm mb-2">{isRTL ? 'خطوات التحقق' : 'VERIFICATION'}</h4>
-            <ol className="text-xs space-y-1 text-blue-800 ms-4">
+          <div className="bg-white/50 p-3 rounded border border-najdi-100">
+            <h4 className="font-semibold text-najdi-900 text-sm mb-2">{isRTL ? 'خطوات التحقق' : 'VERIFICATION'}</h4>
+            <ol className="text-xs space-y-1 text-najdi-900 ms-4">
               {diagnosis.verificationSteps.map((step, i) => (
                 <li key={i}>{i + 1}. {step}</li>
               ))}
@@ -229,15 +229,15 @@ export default function FixedIssuesLog() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         <Card className="p-4">
-          <div className="text-sm text-slate-600 mb-1">{isRTL ? 'إجمالي المشاكل' : 'Total Issues'}</div>
-          <div className="text-2xl font-bold text-slate-900">{filteredIssues.length}</div>
+          <div className="text-sm text-muted-foreground mb-1">{isRTL ? 'إجمالي المشاكل' : 'Total Issues'}</div>
+          <div className="text-2xl font-bold text-ink">{filteredIssues.length}</div>
         </Card>
         <Card className="p-4">
-          <div className="text-sm text-slate-600 mb-1">{isRTL ? 'تم التحقق' : 'Verified'}</div>
+          <div className="text-sm text-muted-foreground mb-1">{isRTL ? 'تم التحقق' : 'Verified'}</div>
           <div className="text-2xl font-bold text-green-600">{filteredIssues.filter(i => i.verified).length}</div>
         </Card>
         <Card className="p-4">
-          <div className="text-sm text-slate-600 mb-1">{isRTL ? 'حرجة' : 'Critical'}</div>
+          <div className="text-sm text-muted-foreground mb-1">{isRTL ? 'حرجة' : 'Critical'}</div>
           <div className="text-2xl font-bold text-red-600">{filteredIssues.filter(i => i.priority === 'critical').length}</div>
         </Card>
       </div>

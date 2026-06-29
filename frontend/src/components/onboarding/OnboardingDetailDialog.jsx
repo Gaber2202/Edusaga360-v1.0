@@ -201,7 +201,7 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
                 {pct}% {isRTL ? 'مكتمل' : 'complete'}
               </Badge>
               {isHR && (
-                <Badge className="bg-blue-100 text-blue-700 text-xs">
+                <Badge className="bg-najdi-50 text-najdi-900 text-xs">
                   <Shield className="w-3 h-3 me-1" />{isRTL ? 'موارد بشرية' : 'HR View'}
                 </Badge>
               )}
@@ -210,25 +210,25 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
           <Progress value={pct} className="h-2 mt-1" />
 
           <Tabs defaultValue="docs">
-            <TabsList className="w-full bg-slate-50">
+            <TabsList className="w-full bg-sand">
               <TabsTrigger value="docs" className="flex-1">
                 <FileText className="w-4 h-4 me-1" />
                 {isRTL ? 'المستندات' : 'Documents'}
-                <Badge className="ms-1 text-xs bg-slate-200 text-slate-600">
+                <Badge className="ms-1 text-xs bg-sand-alt text-muted-foreground">
                   {(localOnb.hr_documents || []).filter(d => d.completed).length}/{(localOnb.hr_documents || []).length}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger value="policies" className="flex-1">
                 <BookOpen className="w-4 h-4 me-1" />
                 {isRTL ? 'السياسات' : 'Policies'}
-                <Badge className="ms-1 text-xs bg-slate-200 text-slate-600">
+                <Badge className="ms-1 text-xs bg-sand-alt text-muted-foreground">
                   {(localOnb.policy_acknowledgements || []).filter(p => p.acknowledged).length}/{(localOnb.policy_acknowledgements || []).length}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger value="trainings" className="flex-1">
                 <GraduationCap className="w-4 h-4 me-1" />
                 {isRTL ? 'التدريبات' : 'Trainings'}
-                <Badge className="ms-1 text-xs bg-slate-200 text-slate-600">
+                <Badge className="ms-1 text-xs bg-sand-alt text-muted-foreground">
                   {(localOnb.training_assignments || []).filter(t => t.completed).length}/{(localOnb.training_assignments || []).length}
                 </Badge>
               </TabsTrigger>
@@ -237,13 +237,13 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
             {/* ── DOCUMENTS TAB ── */}
             <TabsContent value="docs" className="space-y-2 mt-3">
               {(localOnb.hr_documents || []).length === 0 && !isHR && (
-                <div className="text-center py-8 text-slate-400 text-sm">
+                <div className="text-center py-8 text-muted-foreground text-sm">
                   <FileText className="w-10 h-10 mx-auto mb-2 opacity-30" />
                   {isRTL ? 'لا توجد مستندات مطلوبة بعد' : 'No documents required yet'}
                 </div>
               )}
               {(localOnb.hr_documents || []).map(doc => (
-                <div key={doc.id} className={`rounded-lg border transition-all ${doc.completed ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-200'}`}>
+                <div key={doc.id} className={`rounded-lg border transition-all ${doc.completed ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-border'}`}>
                   <div className="flex items-center gap-3 p-3">
                     <button
                       className="flex-shrink-0"
@@ -252,28 +252,28 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
                       title={isHR ? (doc.completed ? 'Mark incomplete' : 'Mark complete') : 'Only HR can mark complete'}
                     >
                       {savingId === localOnb.id + doc.id
-                        ? <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                        ? <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                         : doc.completed
                           ? <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                           : isHR
-                            ? <Circle className="w-5 h-5 text-slate-300 hover:text-blue-400 transition-colors" />
-                            : <Circle className="w-5 h-5 text-slate-200" />
+                            ? <Circle className="w-5 h-5 text-muted-foreground hover:text-najdi-500 transition-colors" />
+                            : <Circle className="w-5 h-5 text-najdi-100" />
                       }
                     </button>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium ${doc.completed ? 'text-emerald-700' : 'text-slate-700'}`}>
+                      <p className={`text-sm font-medium ${doc.completed ? 'text-emerald-700' : 'text-ink'}`}>
                         {isRTL ? doc.ar : doc.en}
                         {doc.required && <span className="text-red-400 ms-1">*</span>}
                       </p>
                       {doc.completed_date && (
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-muted-foreground">
                           {isRTL ? 'أُنجز:' : 'Completed:'} {format(new Date(doc.completed_date), 'dd/MM/yyyy')}
                           {doc.completed_by && ` — ${doc.completed_by}`}
                         </p>
                       )}
                       {doc.document_url && (
                         <a href={doc.document_url} target="_blank" rel="noopener noreferrer"
-                          className="text-xs text-blue-600 flex items-center gap-1 mt-0.5 hover:underline">
+                          className="text-xs text-najdi-700 flex items-center gap-1 mt-0.5 hover:underline">
                           <ExternalLink className="w-3 h-3" />
                           {isRTL ? 'عرض المستند' : 'View Document'}
                         </a>
@@ -282,7 +282,7 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
                     {isHR && (
                       <div className="flex items-center gap-1 flex-shrink-0">
                         <button
-                          className="text-slate-400 hover:text-red-500 p-1"
+                          className="text-muted-foreground hover:text-red-500 p-1"
                           onClick={() => deleteDoc(doc.id)}
                           title="Remove document"
                         >
@@ -314,8 +314,8 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
                       {isRTL ? 'إضافة مستند جديد' : 'Add Document'}
                     </Button>
                   ) : (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
-                      <p className="text-xs font-semibold text-blue-800">{isRTL ? 'مستند جديد' : 'New Document'}</p>
+                    <div className="bg-najdi-50 border border-najdi-100 rounded-lg p-3 space-y-2">
+                      <p className="text-xs font-semibold text-najdi-900">{isRTL ? 'مستند جديد' : 'New Document'}</p>
                       <Input
                         placeholder={isRTL ? 'الاسم بالإنجليزي *' : 'Document name (English) *'}
                         value={newDoc.en}
@@ -330,7 +330,7 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
                         dir="rtl"
                       />
                       <div className="flex gap-2">
-                        <Button size="sm" onClick={handleAddDoc} disabled={addingDoc} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                        <Button size="sm" onClick={handleAddDoc} disabled={addingDoc} className="flex-1 bg-najdi-700 hover:bg-najdi-900">
                           {addingDoc ? <Loader2 className="w-3 h-3 animate-spin" /> : isRTL ? 'إضافة' : 'Add'}
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => setShowAddDoc(false)}>
@@ -343,7 +343,7 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
               )}
 
               {!isHR && (
-                <div className="mt-3 flex items-center gap-2 text-xs text-slate-400 bg-slate-50 rounded-lg p-3">
+                <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground bg-sand rounded-lg p-3">
                   <Lock className="w-4 h-4 flex-shrink-0" />
                   {isRTL ? 'إدارة المستندات متاحة لفريق الموارد البشرية فقط' : 'Document management is restricted to HR team'}
                 </div>
@@ -353,14 +353,14 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
             {/* ── POLICIES TAB ── */}
             <TabsContent value="policies" className="space-y-2 mt-3">
               {(localOnb.policy_acknowledgements || []).length === 0 && (
-                <div className="text-center py-8 text-slate-400 text-sm">
+                <div className="text-center py-8 text-muted-foreground text-sm">
                   <BookOpen className="w-10 h-10 mx-auto mb-2 opacity-30" />
                   {isRTL ? 'لا توجد سياسات مضافة بعد' : 'No policies assigned yet'}
                   {isHR && <p className="text-xs mt-1">{isRTL ? 'أضف السياسات من مكتبة الموارد البشرية أدناه' : 'Add policies from the HR library below'}</p>}
                 </div>
               )}
               {(localOnb.policy_acknowledgements || []).map(pol => (
-                <div key={pol.id} className={`rounded-lg border transition-all ${pol.acknowledged ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-200'}`}>
+                <div key={pol.id} className={`rounded-lg border transition-all ${pol.acknowledged ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-border'}`}>
                   <div className="flex items-start gap-3 p-3">
                     <button
                       className="flex-shrink-0 mt-0.5"
@@ -369,21 +369,21 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
                       title={pol.acknowledged ? 'Already acknowledged' : 'Click to acknowledge'}
                     >
                       {savingId === localOnb.id + pol.id
-                        ? <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                        ? <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                         : pol.acknowledged
                           ? <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                          : <Circle className="w-5 h-5 text-slate-300 hover:text-emerald-400 transition-colors" />
+                          : <Circle className="w-5 h-5 text-muted-foreground hover:text-emerald-400 transition-colors" />
                       }
                     </button>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium ${pol.acknowledged ? 'text-emerald-700' : 'text-slate-700'}`}>
+                      <p className={`text-sm font-medium ${pol.acknowledged ? 'text-emerald-700' : 'text-ink'}`}>
                         {isRTL ? pol.ar : pol.en}
                       </p>
                       {pol.category && (
-                        <Badge className="text-xs bg-slate-100 text-slate-600 mt-0.5">{pol.category.replace(/_/g, ' ')}</Badge>
+                        <Badge className="text-xs bg-sand-alt text-muted-foreground mt-0.5">{pol.category.replace(/_/g, ' ')}</Badge>
                       )}
                       {pol.acknowledged_date && (
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                           {isRTL ? 'تم الإقرار بواسطة:' : 'Acknowledged by:'} {pol.acknowledged_by || '-'}
                           {' — '}{format(new Date(pol.acknowledged_date), 'dd/MM/yyyy HH:mm')}
                         </p>
@@ -397,7 +397,7 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {(pol.body_ar || pol.body_en) && (
                         <button
-                          className="text-slate-400 hover:text-blue-500 p-1"
+                          className="text-muted-foreground hover:text-najdi-500 p-1"
                           onClick={() => setViewingPolicy(pol)}
                           title={isRTL ? 'عرض السياسة' : 'View Policy'}
                         >
@@ -406,7 +406,7 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
                       )}
                       {isHR && (
                         <button
-                          className="text-slate-400 hover:text-red-500 p-1"
+                          className="text-muted-foreground hover:text-red-500 p-1"
                           onClick={() => removePolicy(pol.id)}
                           title="Remove"
                         >
@@ -430,7 +430,7 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
                       <p className="text-xs font-semibold text-amber-800">{isRTL ? 'السياسات المنشورة' : 'Published Policies'}</p>
                       {availableToAdd.length === 0 ? (
-                        <p className="text-xs text-slate-500 py-2">
+                        <p className="text-xs text-muted-foreground py-2">
                           {isRTL ? 'جميع السياسات المنشورة مضافة بالفعل' : 'All published policies already added'}
                         </p>
                       ) : (
@@ -442,7 +442,7 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
                               onClick={() => addPolicyFromLibrary(p)}
                               disabled={addingPolicy}
                             >
-                              <span className="font-medium text-slate-700">{isRTL ? p.title_ar : p.title_en}</span>
+                              <span className="font-medium text-ink">{isRTL ? p.title_ar : p.title_en}</span>
                               <Badge className="text-xs bg-amber-100 text-amber-700 flex-shrink-0">{p.category?.replace(/_/g, ' ')}</Badge>
                             </button>
                           ))}
@@ -470,22 +470,22 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
                 return (
                   <button
                     key={tr.id}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-start ${tr.completed ? 'bg-emerald-50 border-emerald-200' : overdue ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-start ${tr.completed ? 'bg-emerald-50 border-emerald-200' : overdue ? 'bg-red-50 border-red-200' : 'bg-white border-border hover:border-border'}`}
                     onClick={() => isHR && toggleTraining(tr.id)}
                     disabled={savingId === localOnb.id + tr.id || !isHR}
                   >
                     {savingId === localOnb.id + tr.id
-                      ? <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                      ? <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                       : tr.completed
                         ? <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                         : overdue
                           ? <AlertTriangle className="w-5 h-5 text-red-500" />
-                          : <Clock className="w-5 h-5 text-slate-300" />}
+                          : <Clock className="w-5 h-5 text-muted-foreground" />}
                     <div className="flex-1">
-                      <p className={`text-sm font-medium ${tr.completed ? 'text-emerald-700' : overdue ? 'text-red-700' : 'text-slate-700'}`}>
+                      <p className={`text-sm font-medium ${tr.completed ? 'text-emerald-700' : overdue ? 'text-red-700' : 'text-ink'}`}>
                         {isRTL ? tr.ar : tr.en}
                       </p>
-                      <p className={`text-xs ${overdue ? 'text-red-500' : 'text-slate-400'}`}>
+                      <p className={`text-xs ${overdue ? 'text-red-500' : 'text-muted-foreground'}`}>
                         {isRTL ? 'الموعد النهائي:' : 'Deadline:'} {tr.deadline}
                         {overdue && ` — ${isRTL ? 'متأخر' : 'OVERDUE'}`}
                       </p>
@@ -494,7 +494,7 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
                 );
               })}
               {!isHR && (
-                <div className="mt-3 flex items-center gap-2 text-xs text-slate-400 bg-slate-50 rounded-lg p-3">
+                <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground bg-sand rounded-lg p-3">
                   <Lock className="w-4 h-4 flex-shrink-0" />
                   {isRTL ? 'يمكن للموارد البشرية فقط تحديث حالة التدريبات' : 'Only HR can update training completion status'}
                 </div>
@@ -509,7 +509,7 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
               {isRTL ? 'تحليل يامن AI — مخاطر الإلحاق' : 'Yamen AI — Onboarding Risk Analysis'}
             </Button>
             {aiInsight && (
-              <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 whitespace-pre-wrap text-sm text-slate-700">
+              <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 whitespace-pre-wrap text-sm text-ink">
                 {aiInsight}
               </div>
             )}
@@ -531,7 +531,7 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
             <DialogHeader>
               <DialogTitle>{isRTL ? viewingPolicy.ar : viewingPolicy.en}</DialogTitle>
             </DialogHeader>
-            <div className="prose prose-sm max-w-none text-slate-700 whitespace-pre-wrap text-sm leading-relaxed">
+            <div className="prose prose-sm max-w-none text-ink whitespace-pre-wrap text-sm leading-relaxed">
               {isRTL
                 ? (viewingPolicy.body_ar || viewingPolicy.body_en || (isRTL ? 'لا يوجد محتوى' : 'No content'))
                 : (viewingPolicy.body_en || viewingPolicy.body_ar || 'No content available')}

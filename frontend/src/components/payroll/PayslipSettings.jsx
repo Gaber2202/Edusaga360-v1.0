@@ -243,7 +243,7 @@ export default function PayslipSettings({ open, onClose }) {
                           onChange={(e) => setSettings(prev => ({ ...prev, password_pattern: e.target.value }))}
                           placeholder="{{employee_id}}{{phone_last4}}"
                         />
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-muted-foreground">
                           {isRTL ? 'المتغيرات: {{employee_id}}, {{phone_last4}}, {{national_id_last4}}' : 'Variables: {{employee_id}}, {{phone_last4}}, {{national_id_last4}}'}
                         </p>
                       </div>
@@ -366,7 +366,7 @@ export default function PayslipSettings({ open, onClose }) {
                   value={settings.email_template_ar}
                   onChange={(e) => setSettings(prev => ({ ...prev, email_template_ar: e.target.value }))}
                 />
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   {isRTL ? 'المتغيرات: {{employee_name}}, {{period}}, {{net_salary}}' : 'Variables: {{employee_name}}, {{period}}, {{net_salary}}'}
                 </p>
               </div>

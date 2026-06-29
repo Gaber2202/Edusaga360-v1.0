@@ -118,7 +118,7 @@ export default function ClientSubscriptionPortal() {
   if (tenantLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-border border-t-najdi-900 rounded-full" />
       </div>
     );
   }
@@ -126,7 +126,7 @@ export default function ClientSubscriptionPortal() {
   if (!tenant) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <p className="text-slate-500">{isRTL ? 'لا توجد معلومات اشتراك' : 'No subscription info'}</p>
+        <p className="text-muted-foreground">{isRTL ? 'لا توجد معلومات اشتراك' : 'No subscription info'}</p>
       </div>
     );
   }
@@ -144,22 +144,22 @@ export default function ClientSubscriptionPortal() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-ink flex items-center gap-2">
           <Crown className="w-6 h-6 text-amber-500" />
           {isRTL ? 'خطتك الحالية' : 'Your Subscription'}
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           {isRTL ? 'عرض وإدارة خطتك وطلبات المستخدمين' : 'View and manage your plan and user requests'}
         </p>
       </div>
 
       {/* Current Plan Card */}
-      <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
+      <Card className="border-najdi-100 bg-gradient-to-br from-najdi-50 to-blue-100">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <p className="text-sm text-slate-600">{isRTL ? 'الخطة الحالية' : 'Current Plan'}</p>
-              <h2 className="text-3xl font-bold text-slate-900 mt-2">
+              <p className="text-sm text-muted-foreground">{isRTL ? 'الخطة الحالية' : 'Current Plan'}</p>
+              <h2 className="text-3xl font-bold text-ink mt-2">
                 {isRTL ? currentPlan.nameAr : currentPlan.nameEn}
               </h2>
               <Badge className="mt-3">
@@ -172,8 +172,8 @@ export default function ClientSubscriptionPortal() {
 
             <div className="space-y-3">
               <div>
-                <p className="text-xs text-slate-600 mb-1">{isRTL ? 'المستخدمين' : 'Users'}</p>
-                <p className="text-2xl font-bold text-slate-900">
+                <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'المستخدمين' : 'Users'}</p>
+                <p className="text-2xl font-bold text-ink">
                   {tenant.current_users || 0}/{tenant.max_users || '∞'}
                 </p>
                 <Progress value={(tenant.current_users || 0) / (tenant.max_users || 1) * 100} className="mt-2" />
@@ -182,8 +182,8 @@ export default function ClientSubscriptionPortal() {
 
             <div className="space-y-3">
               <div>
-                <p className="text-xs text-slate-600 mb-1">{isRTL ? 'الموظفين' : 'Employees'}</p>
-                <p className="text-2xl font-bold text-slate-900">
+                <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'الموظفين' : 'Employees'}</p>
+                <p className="text-2xl font-bold text-ink">
                   {tenant.current_employees || 0}/{tenant.max_employees || '∞'}
                 </p>
                 <Progress value={(tenant.current_employees || 0) / (tenant.max_employees || 1) * 100} className="mt-2" />
@@ -199,12 +199,12 @@ export default function ClientSubscriptionPortal() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-600" />
+              <Users className="w-5 h-5 text-najdi-700" />
               {isRTL ? 'طلب مستخدمين إضافيين' : 'Request Additional Users'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               {isRTL 
                 ? `لديك ${availableUsers} مقعد متاح في خطتك الحالية`
                 : `You have ${availableUsers} available seats in your current plan`}
@@ -236,7 +236,7 @@ export default function ClientSubscriptionPortal() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               {isRTL ? 'ترقية أو تخفيض خطتك — تتم الموافقة من قبل المسؤول' : 'Upgrade or downgrade — requires admin approval'}
             </p>
             {pendingUpgrade && (
@@ -269,18 +269,18 @@ export default function ClientSubscriptionPortal() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className={`py-3 px-3 font-semibold text-start text-slate-600 w-40`}>{isRTL ? 'الميزة' : 'Feature'}</th>
+                <tr className="border-b border-border">
+                  <th className={`py-3 px-3 font-semibold text-start text-muted-foreground w-40`}>{isRTL ? 'الميزة' : 'Feature'}</th>
                   {[
                     { code: 'starter',    label: isRTL ? 'الانطلاق' : 'Starter',    price: '120,000' },
                     { code: 'growth',     label: isRTL ? 'النمو'     : 'Growth',     price: '190,000' },
                     { code: 'enterprise', label: isRTL ? 'المؤسسات' : 'Enterprise', price: '342,000' },
                   ].map(({ code, label: lbl, price }) => (
-                    <th key={code} className={`text-center py-3 px-3 font-semibold ${tenant.plan_code === code ? 'bg-blue-50 text-blue-700' : 'text-slate-700'}`}>
+                    <th key={code} className={`text-center py-3 px-3 font-semibold ${tenant.plan_code === code ? 'bg-najdi-50 text-najdi-900' : 'text-ink'}`}>
                       <div>{lbl}</div>
-                      <div className="text-xs font-normal text-slate-400">{price} {isRTL ? 'ر.س/سنة' : 'SAR/yr'}</div>
+                      <div className="text-xs font-normal text-muted-foreground">{price} {isRTL ? 'ر.س/سنة' : 'SAR/yr'}</div>
                       {tenant.plan_code === code && (
-                        <div className="mt-1 inline-block text-[10px] bg-blue-600 text-white rounded-full px-2 py-0.5">
+                        <div className="mt-1 inline-block text-[10px] bg-najdi-700 text-white rounded-full px-2 py-0.5">
                           {isRTL ? 'خطتك' : 'Your plan'}
                         </div>
                       )}
@@ -288,7 +288,7 @@ export default function ClientSubscriptionPortal() {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-border">
                 {[
                   {
                     label: isRTL ? 'موظفو النظام (مستخدمون كاملون)' : 'Staff users (full access)',
@@ -323,18 +323,18 @@ export default function ClientSubscriptionPortal() {
                     values: [isRTL ? 'إضافي' : 'Add-on', isRTL ? 'إضافي' : 'Add-on', isRTL ? 'مخصص + SLA' : 'Dedicated + SLA'],
                   },
                 ].map((row, i) => (
-                  <tr key={i} className="hover:bg-slate-50">
-                    <td className="py-3 px-3 text-slate-600 text-xs font-medium">{row.label}</td>
+                  <tr key={i} className="hover:bg-sand">
+                    <td className="py-3 px-3 text-muted-foreground text-xs font-medium">{row.label}</td>
                     {row.values.map((v, j) => {
                       const codes = ['starter', 'growth', 'enterprise'];
                       const isActive = tenant.plan_code === codes[j];
                       return (
-                        <td key={j} className={`text-center py-3 px-3 text-xs ${isActive ? 'bg-blue-50' : ''}`}>
+                        <td key={j} className={`text-center py-3 px-3 text-xs ${isActive ? 'bg-najdi-50' : ''}`}>
                           {v === true
                             ? <CheckCircle className="w-4 h-4 text-emerald-500 mx-auto" />
                             : v === false
-                              ? <Lock className="w-4 h-4 text-slate-200 mx-auto" />
-                              : <span className="text-slate-700 font-medium">{v}</span>}
+                              ? <Lock className="w-4 h-4 text-najdi-100 mx-auto" />
+                              : <span className="text-ink font-medium">{v}</span>}
                         </td>
                       );
                     })}
@@ -343,7 +343,7 @@ export default function ClientSubscriptionPortal() {
               </tbody>
             </table>
           </div>
-          <p className="text-xs text-slate-400 mt-3">{isRTL ? '* الأسعار سنوية بالريال السعودي، لا تشمل ضريبة القيمة المضافة.' : '* Prices are annual in SAR, excluding VAT.'}</p>
+          <p className="text-xs text-muted-foreground mt-3">{isRTL ? '* الأسعار سنوية بالريال السعودي، لا تشمل ضريبة القيمة المضافة.' : '* Prices are annual in SAR, excluding VAT.'}</p>
         </CardContent>
       </Card>
 
@@ -356,24 +356,24 @@ export default function ClientSubscriptionPortal() {
         </CardHeader>
         <CardContent>
           {[...(upgradeRequests || []), ...(userRequests || [])].length === 0 ? (
-            <div className="text-center py-8 text-slate-400">
-              <AlertCircle className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+            <div className="text-center py-8 text-muted-foreground">
+              <AlertCircle className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
               <p className="text-sm">{isRTL ? 'لا يوجد سجل طلبات بعد' : 'No request history yet'}</p>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {isRTL ? 'ستظهر هنا طلبات الترقية وإضافة المستخدمين' : 'Upgrade and user requests will appear here'}
               </p>
             </div>
           ) : (
             <div className="space-y-3">
               {[...(upgradeRequests || []), ...(userRequests || [])].map(req => (
-                <div key={req.id} className="flex items-center justify-between bg-slate-50 rounded-lg p-3">
+                <div key={req.id} className="flex items-center justify-between bg-sand rounded-lg p-3">
                   <div>
-                    <p className="text-sm font-medium text-slate-700">
+                    <p className="text-sm font-medium text-ink">
                       {req.request_type === 'plan_upgrade'
                         ? (isRTL ? 'طلب ترقية الخطة' : 'Plan Upgrade Request')
                         : (isRTL ? 'طلب مستخدمين إضافيين' : 'Additional Users Request')}
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       {req.created_at ? new Date(req.created_at).toLocaleDateString() : '—'}
                     </p>
                   </div>
@@ -417,13 +417,13 @@ export default function ClientSubscriptionPortal() {
                 <Card
                   key={code}
                   className={`cursor-pointer border-2 transition-all ${
-                    selectedPlan === code ? 'border-purple-500 bg-purple-50' : 'border-slate-200 hover:border-purple-300'
+                    selectedPlan === code ? 'border-purple-500 bg-purple-50' : 'border-border hover:border-purple-300'
                   }`}
                   onClick={() => setSelectedPlan(code)}
                 >
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-bold text-slate-900">
+                      <h3 className="text-lg font-bold text-ink">
                         {isRTL ? plan.nameAr : plan.nameEn}
                       </h3>
                       {isUpgrade && (
@@ -439,12 +439,12 @@ export default function ClientSubscriptionPortal() {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm font-semibold text-slate-700 mb-3">
+                    <p className="text-sm font-semibold text-ink mb-3">
                       {plan.priceYearly > 0
                         ? `${plan.priceYearly.toLocaleString()} ${isRTL ? 'ر.س / سنة' : 'SAR / yr'}`
                         : (isRTL ? 'حسب الطلب' : 'Custom')}
                     </p>
-                    <ul className="space-y-2 text-xs text-slate-600">
+                    <ul className="space-y-2 text-xs text-muted-foreground">
                       <li className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
                         {isRTL ? `${plan.maxEmployees} موظف (مستخدم كامل)` : `${plan.maxEmployees} staff (full users)`}
@@ -463,12 +463,12 @@ export default function ClientSubscriptionPortal() {
                           {isRTL ? 'قدرات الذكاء الاصطناعي' : 'AI Capabilities'}
                         </li>
                       ) : (
-                        <li className="flex items-center gap-2 text-slate-400">
+                        <li className="flex items-center gap-2 text-muted-foreground">
                           <Lock className="w-4 h-4 flex-shrink-0" />
                           {isRTL ? 'بدون ذكاء اصطناعي' : 'No AI'}
                         </li>
                       )}
-                      <li className="flex items-center gap-2 text-slate-500">
+                      <li className="flex items-center gap-2 text-muted-foreground">
                         <Check className={`w-4 h-4 flex-shrink-0 ${plan.support === 'dedicated' ? 'text-green-600' : 'text-amber-400'}`} />
                         {plan.support === 'dedicated'
                           ? (isRTL ? 'دعم مخصص + SLA' : 'Dedicated Support + SLA')
@@ -507,12 +507,12 @@ export default function ClientSubscriptionPortal() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-600" />
+              <Users className="w-5 h-5 text-najdi-700" />
               {isRTL ? 'طلب مستخدمين إضافيين' : 'Request Additional Users'}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700">
+            <div className="p-3 bg-najdi-50 border border-najdi-100 rounded-lg text-xs text-najdi-900">
               {isRTL 
                 ? `المقاعد المتاحة: ${availableUsers} | ستتم الموافقة تلقائياً على ما يصل إلى ${availableUsers} مستخدم`
                 : `Available seats: ${availableUsers} | Auto-approved up to ${availableUsers} users`}

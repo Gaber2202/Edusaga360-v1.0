@@ -72,11 +72,11 @@ export default function GovReports() {
           <Card key={i}>
             <CardContent className="p-5">
               <div className={`text-4xl font-bold ${m.color} mb-1`}>{m.value}%</div>
-              <div className="text-slate-400 text-sm">{m.label}</div>
-              <div className="mt-3 w-full bg-slate-700 rounded-full h-2">
+              <div className="text-muted-foreground text-sm">{m.label}</div>
+              <div className="mt-3 w-full bg-ink rounded-full h-2">
                 <div className="h-2 rounded-full transition-all" style={{ width: `${m.value}%`, backgroundColor: m.value >= m.threshold ? '#10b981' : '#ef4444' }} />
               </div>
-              <div className="text-xs text-slate-500 mt-1">{isRTL ? `الهدف: ${m.threshold}%` : `Target: ${m.threshold}%`}</div>
+              <div className="text-xs text-muted-foreground mt-1">{isRTL ? `الهدف: ${m.threshold}%` : `Target: ${m.threshold}%`}</div>
             </CardContent>
           </Card>
         ))}
@@ -88,28 +88,28 @@ export default function GovReports() {
           <XCircle className="w-8 h-8 text-red-400 flex-shrink-0" />
           <div>
             <div className="text-2xl font-bold text-red-400">{stats.expiredIqama}</div>
-            <div className="text-xs text-slate-400">{isRTL ? 'إقامات منتهية' : 'Expired Iqamas'}</div>
+            <div className="text-xs text-muted-foreground">{isRTL ? 'إقامات منتهية' : 'Expired Iqamas'}</div>
           </div>
         </div>
         <div className="bg-amber-900/20 border border-amber-700/50 rounded-xl p-4 flex items-center gap-3">
           <Clock className="w-8 h-8 text-amber-400 flex-shrink-0" />
           <div>
             <div className="text-2xl font-bold text-amber-400">{stats.expiring30}</div>
-            <div className="text-xs text-slate-400">{isRTL ? 'تنتهي خلال 30 يوم' : 'Expiring 30 days'}</div>
+            <div className="text-xs text-muted-foreground">{isRTL ? 'تنتهي خلال 30 يوم' : 'Expiring 30 days'}</div>
           </div>
         </div>
         <div className="bg-red-900/20 border border-red-700/50 rounded-xl p-4 flex items-center gap-3">
           <AlertTriangle className="w-8 h-8 text-red-400 flex-shrink-0" />
           <div>
             <div className="text-2xl font-bold text-red-400">{stats.openViolations}</div>
-            <div className="text-xs text-slate-400">{isRTL ? 'مخالفات مفتوحة' : 'Open Violations'}</div>
+            <div className="text-xs text-muted-foreground">{isRTL ? 'مخالفات مفتوحة' : 'Open Violations'}</div>
           </div>
         </div>
         <div className="bg-red-900/10 border border-red-800/40 rounded-xl p-4 flex items-center gap-3">
           <DollarSign className="w-8 h-8 text-red-400 flex-shrink-0" />
           <div>
             <div className="text-xl font-bold text-red-400">{stats.totalFines.toLocaleString()}</div>
-            <div className="text-xs text-slate-400">{isRTL ? 'غرامات مفتوحة (ر.س)' : 'Open Fines (SAR)'}</div>
+            <div className="text-xs text-muted-foreground">{isRTL ? 'غرامات مفتوحة (ر.س)' : 'Open Fines (SAR)'}</div>
           </div>
         </div>
       </div>

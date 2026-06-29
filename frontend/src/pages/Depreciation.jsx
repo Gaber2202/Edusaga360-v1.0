@@ -210,7 +210,7 @@ export default function Depreciation() {
     { header: isRTL ? 'عدد الأصول' : 'Asset Count', accessorKey: 'asset_count' },
     { header: isRTL ? 'إجمالي الإهلاك' : 'Total Depreciation', cell: (row) => `${row.total_depreciation?.toLocaleString()} ${t('sar')}` },
     { header: t('status'), cell: (row) => {
-      const colors = { completed: 'bg-blue-100 text-blue-700', posted: 'bg-emerald-100 text-emerald-700' };
+      const colors = { completed: 'bg-najdi-50 text-najdi-900', posted: 'bg-emerald-100 text-emerald-700' };
       const labels = { completed: isRTL ? 'مكتمل' : 'Completed', posted: isRTL ? 'مرحل' : 'Posted' };
       return <Badge className={colors[row.status]}>{labels[row.status]}</Badge>;
     }},
@@ -234,7 +234,7 @@ export default function Depreciation() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <StatCard title={isRTL ? 'إجمالي الأصول' : 'Total Assets'} value={`${(totalAssetValue/1000).toFixed(0)}K`} icon={FileText} iconClassName="bg-blue-50" />
+        <StatCard title={isRTL ? 'إجمالي الأصول' : 'Total Assets'} value={`${(totalAssetValue/1000).toFixed(0)}K`} icon={FileText} iconClassName="bg-najdi-50" />
         <StatCard title={isRTL ? 'الإهلاك المتراكم' : 'Accumulated Depreciation'} value={`${(totalAccDep/1000).toFixed(0)}K`} icon={TrendingDown} iconClassName="bg-red-50" />
         <StatCard title={isRTL ? 'صافي القيمة' : 'Net Book Value'} value={`${(totalNBV/1000).toFixed(0)}K`} icon={FileText} iconClassName="bg-emerald-50" />
         <StatCard title={isRTL ? 'عمليات الإهلاك' : 'Completed Runs'} value={completedRuns} icon={CheckCircle} iconClassName="bg-purple-50" />
@@ -308,7 +308,7 @@ export default function Depreciation() {
               <Input type="month" value={runPeriod} onChange={(e) => setRunPeriod(e.target.value)} />
             </div>
 
-            <div className="bg-slate-50 rounded-lg p-4 space-y-2 text-sm">
+            <div className="bg-sand rounded-lg p-4 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span>{isRTL ? 'عدد الأصول' : 'Assets Count'}:</span>
                 <span className="font-semibold">{filteredAssets.length}</span>

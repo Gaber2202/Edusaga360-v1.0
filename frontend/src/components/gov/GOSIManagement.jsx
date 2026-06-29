@@ -30,7 +30,7 @@ export default function GOSIManagement() {
   const columns = [
     { header: isRTL ? 'الموظف' : 'Employee', cell: r => <span>{isRTL ? (r.name_ar || r.name_en) : (r.name_en || r.name_ar)}</span> },
     { header: isRTL ? 'الجنسية' : 'Nationality', cell: r => (
-      <Badge className={r.isSaudi ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}>
+      <Badge className={r.isSaudi ? 'bg-emerald-100 text-emerald-700' : 'bg-najdi-50 text-najdi-900'}>
         {r.isSaudi ? (isRTL ? 'سعودي' : 'Saudi') : (isRTL ? 'غير سعودي' : 'Non-Saudi')}
       </Badge>
     )},
@@ -50,10 +50,10 @@ export default function GOSIManagement() {
   return (
     <div className="space-y-4 mt-4">
       <div className="grid grid-cols-3 gap-4">
-        <Card className="border-slate-200">
+        <Card className="border-border">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-slate-900">{employees.length}</div>
-            <div className="text-sm text-slate-500">{isRTL ? 'إجمالي الموظفين' : 'Total Employees'}</div>
+            <div className="text-2xl font-bold text-ink">{employees.length}</div>
+            <div className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الموظفين' : 'Total Employees'}</div>
           </CardContent>
         </Card>
         <Card className="border-emerald-200 bg-emerald-50">

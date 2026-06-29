@@ -114,7 +114,7 @@ export default function FuelTracker() {
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold">{isRTL ? 'سجل الوقود' : 'Fuel Records'}</h3>
-          <p className="text-sm text-slate-500">{isRTL ? 'تتبع استهلاك الوقود' : 'Track fuel consumption'}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'تتبع استهلاك الوقود' : 'Track fuel consumption'}</p>
         </div>
         <Button onClick={() => { resetForm(); setShowForm(true); }}>
           <Plus className="w-4 h-4 me-2" />
@@ -127,11 +127,11 @@ export default function FuelTracker() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'إجمالي المصروف' : 'Total Spent'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي المصروف' : 'Total Spent'}</p>
                 <p className="text-2xl font-bold">{totalSpent.toLocaleString()}</p>
-                <p className="text-xs text-slate-500">{t('sar')}</p>
+                <p className="text-xs text-muted-foreground">{t('sar')}</p>
               </div>
-              <Fuel className="w-10 h-10 text-blue-400" />
+              <Fuel className="w-10 h-10 text-najdi-500" />
             </div>
           </CardContent>
         </Card>
@@ -139,7 +139,7 @@ export default function FuelTracker() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'إجمالي اللترات' : 'Total Liters'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي اللترات' : 'Total Liters'}</p>
                 <p className="text-2xl font-bold">{totalLiters.toFixed(0)}</p>
               </div>
               <Fuel className="w-10 h-10 text-emerald-400" />
@@ -150,9 +150,9 @@ export default function FuelTracker() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'متوسط السعر' : 'Avg Price/L'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'متوسط السعر' : 'Avg Price/L'}</p>
                 <p className="text-2xl font-bold">{avgPerLiter.toFixed(2)}</p>
-                <p className="text-xs text-slate-500">{t('sar')}</p>
+                <p className="text-xs text-muted-foreground">{t('sar')}</p>
               </div>
               <TrendingUp className="w-10 h-10 text-amber-400" />
             </div>
@@ -241,8 +241,8 @@ export default function FuelTracker() {
               </div>
             </div>
             {formData.liters > 0 && formData.cost_per_liter > 0 && (
-              <div className="bg-slate-50 p-4 rounded-lg">
-                <p className="text-sm text-slate-600">{isRTL ? 'الإجمالي' : 'Total Cost'}</p>
+              <div className="bg-sand p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">{isRTL ? 'الإجمالي' : 'Total Cost'}</p>
                 <p className="text-2xl font-bold">{(formData.liters * formData.cost_per_liter).toFixed(2)} {t('sar')}</p>
               </div>
             )}

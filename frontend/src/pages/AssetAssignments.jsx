@@ -130,9 +130,9 @@ export default function AssetAssignments() {
   };
 
   const conditionBadge = (cond) => {
-    const map = { excellent: 'bg-emerald-100 text-emerald-700', good: 'bg-blue-100 text-blue-700', fair: 'bg-amber-100 text-amber-700', poor: 'bg-red-100 text-red-700', damaged: 'bg-red-200 text-red-800' };
+    const map = { excellent: 'bg-emerald-100 text-emerald-700', good: 'bg-najdi-50 text-najdi-900', fair: 'bg-amber-100 text-amber-700', poor: 'bg-red-100 text-red-700', damaged: 'bg-red-200 text-red-800' };
     const label = CONDITION_OPTIONS.find(c => c.value === cond);
-    return <Badge className={map[cond] || 'bg-slate-100 text-slate-700'}>{isRTL ? label?.ar : label?.en || cond}</Badge>;
+    return <Badge className={map[cond] || 'bg-sand-alt text-ink'}>{isRTL ? label?.ar : label?.en || cond}</Badge>;
   };
 
   return (
@@ -175,11 +175,11 @@ export default function AssetAssignments() {
                   {isLoading ? (
                     <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></TableCell></TableRow>
                   ) : (tab === 'assignments' ? active : returned).length === 0 ? (
-                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-slate-400">{isRTL ? 'لا توجد بيانات' : 'No data'}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{isRTL ? 'لا توجد بيانات' : 'No data'}</TableCell></TableRow>
                   ) : (tab === 'assignments' ? active : returned).map(a => (
                     <TableRow key={a.id}>
                       <TableCell>
-                        <div><p className="font-medium">{a.asset_name_ar}</p><p className="text-xs text-slate-400">{a.asset_code} {a.serial_number && `• S/N: ${a.serial_number}`}</p></div>
+                        <div><p className="font-medium">{a.asset_name_ar}</p><p className="text-xs text-muted-foreground">{a.asset_code} {a.serial_number && `• S/N: ${a.serial_number}`}</p></div>
                       </TableCell>
                       <TableCell className="font-medium">{a.employee_name}</TableCell>
                       <TableCell>{a.assignment_date}</TableCell>
@@ -251,7 +251,7 @@ export default function AssetAssignments() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAssignDialog(false)}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
-            <Button onClick={handleAssign} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleAssign} disabled={saving} className="bg-najdi-700 hover:bg-najdi-900">
               {saving && <Loader2 className="w-4 h-4 animate-spin me-2" />}
               {isRTL ? 'تعيين' : 'Assign'}
             </Button>
@@ -265,10 +265,10 @@ export default function AssetAssignments() {
           <DialogContent className="max-w-md">
             <DialogHeader><DialogTitle>{isRTL ? 'تسجيل إرجاع الأصل' : 'Record Asset Return'}</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div className="bg-slate-50 rounded-lg p-3 text-sm">
+              <div className="bg-sand rounded-lg p-3 text-sm">
                 <p className="font-medium">{showReturnDialog.asset_name_ar}</p>
-                <p className="text-slate-500">{isRTL ? 'موظف:' : 'Employee:'} {showReturnDialog.employee_name}</p>
-                <p className="text-slate-500">{isRTL ? 'معين منذ:' : 'Assigned:'} {showReturnDialog.assignment_date}</p>
+                <p className="text-muted-foreground">{isRTL ? 'موظف:' : 'Employee:'} {showReturnDialog.employee_name}</p>
+                <p className="text-muted-foreground">{isRTL ? 'معين منذ:' : 'Assigned:'} {showReturnDialog.assignment_date}</p>
               </div>
               <div className="space-y-2">
                 <Label>{isRTL ? 'الحالة عند الإرجاع' : 'Condition on Return'}</Label>

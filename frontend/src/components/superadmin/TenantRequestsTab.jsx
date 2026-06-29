@@ -123,7 +123,7 @@ export default function TenantRequestsTab() {
 
       <div className="flex flex-col sm:flex-row gap-3 items-center">
         <div className="relative flex-1 max-w-md">
-          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
           <Input
             placeholder={isRTL ? 'بحث...' : 'Search...'}
             value={search}
@@ -154,23 +154,23 @@ export default function TenantRequestsTab() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-50 border-b">
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'اسم المؤسسة' : 'School Name'}</th>
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'المسؤول' : 'Contact'}</th>
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'المنطقة / النوع' : 'City / Type'}</th>
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'الطلاب' : 'Students'}</th>
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'تاريخ الإرسال' : 'Submitted'}</th>
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'الحالة' : 'Status'}</th>
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'الإجراءات' : 'Actions'}</th>
+                <tr className="bg-sand border-b">
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'اسم المؤسسة' : 'School Name'}</th>
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'المسؤول' : 'Contact'}</th>
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'المنطقة / النوع' : 'City / Type'}</th>
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'الطلاب' : 'Students'}</th>
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'تاريخ الإرسال' : 'Submitted'}</th>
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'الحالة' : 'Status'}</th>
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'الإجراءات' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr><td colSpan={7} className="p-8 text-center">
-                    <Loader2 className="w-5 h-5 animate-spin mx-auto text-slate-400" />
+                    <Loader2 className="w-5 h-5 animate-spin mx-auto text-muted-foreground" />
                   </td></tr>
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan={7} className="p-8 text-center text-slate-400">
+                  <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">
                     <FileText className="w-8 h-8 mx-auto mb-2 opacity-30" />
                     {isRTL ? 'لا توجد طلبات' : 'No requests'}
                   </td></tr>
@@ -178,50 +178,50 @@ export default function TenantRequestsTab() {
                   const isProcessing = processingId === r.id;
                   const isPending = r.status === 'pending';
                   return (
-                    <tr key={`${r._type}-${r.id}`} className="border-b hover:bg-slate-50 transition-colors">
+                    <tr key={`${r._type}-${r.id}`} className="border-b hover:bg-sand transition-colors">
                       <td className="p-3">
-                        <p className="font-medium text-slate-900">{r.schoolName}</p>
-                        <span className="text-xs text-slate-400">{r._type === 'registration' ? (isRTL ? 'طلب تسجيل' : 'Registration') : (isRTL ? 'طلب اشتراك' : 'Subscription')}</span>
+                        <p className="font-medium text-ink">{r.schoolName}</p>
+                        <span className="text-xs text-muted-foreground">{r._type === 'registration' ? (isRTL ? 'طلب تسجيل' : 'Registration') : (isRTL ? 'طلب اشتراك' : 'Subscription')}</span>
                       </td>
                       <td className="p-3">
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-1.5">
-                            <User className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                            <span className="text-sm text-slate-800">{r.contactName}</span>
+                            <User className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                            <span className="text-sm text-ink">{r.contactName}</span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <Mail className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                            <span className="text-xs text-slate-400">{r.contactEmail}</span>
+                            <Mail className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                            <span className="text-xs text-muted-foreground">{r.contactEmail}</span>
                           </div>
                           {r.contactPhone && r.contactPhone !== '-' && (
                             <div className="flex items-center gap-1.5">
-                              <Phone className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                              <span className="text-xs text-slate-400">{r.contactPhone}</span>
+                              <Phone className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                              <span className="text-xs text-muted-foreground">{r.contactPhone}</span>
                             </div>
                           )}
                         </div>
                       </td>
                       <td className="p-3">
-                        <div className="flex items-center gap-1 text-sm text-slate-600 mb-1">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground mb-1">
+                          <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
                           {r.city}
                         </div>
                         {r.schoolType && (
                           <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                            r.schoolType === 'government' ? 'bg-blue-100 text-blue-700' :
+                            r.schoolType === 'government' ? 'bg-najdi-50 text-najdi-900' :
                             r.schoolType === 'private' ? 'bg-purple-100 text-purple-700' :
                             'bg-amber-100 text-amber-700'
                           }`}>{schoolTypeLabel(r.schoolType)}</span>
                         )}
                       </td>
-                      <td className="p-3 text-slate-600 text-sm">
+                      <td className="p-3 text-muted-foreground text-sm">
                         {r.estimatedStudents || '-'}
                       </td>
-                      <td className="p-3 text-slate-500 text-xs">
+                      <td className="p-3 text-muted-foreground text-xs">
                         {r.submittedAt ? format(new Date(r.submittedAt), 'dd/MM/yyyy HH:mm') : '-'}
                       </td>
                       <td className="p-3">
-                        <Badge className={statusColors[r.status] || 'bg-slate-100'}>
+                        <Badge className={statusColors[r.status] || 'bg-sand-alt'}>
                           {statusLabels[r.status] || r.status}
                         </Badge>
                       </td>

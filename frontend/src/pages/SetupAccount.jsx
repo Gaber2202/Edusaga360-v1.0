@@ -182,12 +182,12 @@ function RecoveryCard({ icon: Icon, iconColor, iconBg, title, body, children, su
       <div className={`w-16 h-16 ${iconBg} rounded-full flex items-center justify-center mx-auto`}>
         <Icon className={`w-8 h-8 ${iconColor}`} />
       </div>
-      <h2 className="text-xl font-bold text-slate-900">{title}</h2>
-      <p className="text-slate-500 text-sm leading-relaxed">{body}</p>
+      <h2 className="text-xl font-bold text-ink">{title}</h2>
+      <p className="text-muted-foreground text-sm leading-relaxed">{body}</p>
       {children && <div className="pt-2 space-y-2">{children}</div>}
-      <p className="text-xs text-slate-400 pt-2">
+      <p className="text-xs text-muted-foreground pt-2">
         {support.prefix}{' '}
-        <a className="text-blue-600 hover:underline" href={`mailto:${support.email}`}>
+        <a className="text-najdi-700 hover:underline" href={`mailto:${support.email}`}>
           {support.email}
         </a>
       </p>
@@ -357,7 +357,7 @@ export default function SetupAccount() {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4"
+      className="min-h-screen bg-gradient-to-br from-sand via-najdi-50 to-sand flex items-center justify-center p-4"
       dir={t.dir}
     >
       <style>{`
@@ -369,7 +369,7 @@ export default function SetupAccount() {
         <button
           type="button"
           onClick={toggleLang}
-          className="absolute top-4 end-4 text-xs text-slate-400 hover:text-slate-600 transition"
+          className="absolute top-4 end-4 text-xs text-muted-foreground hover:text-muted-foreground transition"
           aria-label="Toggle language"
         >
           {t.switchLang}
@@ -383,16 +383,16 @@ export default function SetupAccount() {
 
         {phase === 'validating' && (
           <div className="space-y-3 py-4">
-            <Loader2 className="w-10 h-10 text-blue-500 animate-spin mx-auto" />
-            <p className="text-slate-600">{t.validatingTitle}</p>
+            <Loader2 className="w-10 h-10 text-najdi-500 animate-spin mx-auto" />
+            <p className="text-muted-foreground">{t.validatingTitle}</p>
           </div>
         )}
 
         {phase === 'no_token' && (
           <RecoveryCard
             icon={KeyRound}
-            iconColor="text-blue-600"
-            iconBg="bg-blue-100"
+            iconColor="text-najdi-700"
+            iconBg="bg-najdi-50"
             title={t.noTokenTitle}
             body={t.noTokenBody}
             support={support}
@@ -478,7 +478,7 @@ export default function SetupAccount() {
             body={t.consumedBody}
             support={support}
           >
-            <p className="text-slate-500 text-sm">{t.consumedLoginHint(tokenInfo?.email)}</p>
+            <p className="text-muted-foreground text-sm">{t.consumedLoginHint(tokenInfo?.email)}</p>
             <Button className="w-full" onClick={handleGoLogin} data-testid="setup-go-login">
               <LogIn className="w-4 h-4 me-2" />
               {t.goLogin}
@@ -508,17 +508,17 @@ export default function SetupAccount() {
 
         {phase === 'login_required' && tokenInfo && (
           <div className="space-y-4">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
-              <School className="w-8 h-8 text-blue-600" />
+            <div className="w-16 h-16 bg-najdi-50 rounded-full flex items-center justify-center mx-auto">
+              <School className="w-8 h-8 text-najdi-700" />
             </div>
-            <h2 className="text-xl font-bold text-slate-900">{t.loginRequiredTitle}</h2>
-            <div className="bg-slate-50 rounded-xl p-4 text-sm space-y-1 text-start">
-              <p className="text-slate-500">{t.loginRequiredSchool}</p>
-              <p className="font-semibold text-slate-900">{tokenInfo.school_name}</p>
-              <p className="text-slate-500 mt-2">{t.loginRequiredAccount}</p>
-              <p className="font-medium text-slate-700">{tokenInfo.email}</p>
+            <h2 className="text-xl font-bold text-ink">{t.loginRequiredTitle}</h2>
+            <div className="bg-sand rounded-xl p-4 text-sm space-y-1 text-start">
+              <p className="text-muted-foreground">{t.loginRequiredSchool}</p>
+              <p className="font-semibold text-ink">{tokenInfo.school_name}</p>
+              <p className="text-muted-foreground mt-2">{t.loginRequiredAccount}</p>
+              <p className="font-medium text-ink">{tokenInfo.email}</p>
             </div>
-            <p className="text-slate-500 text-sm">{t.loginRequiredBody}</p>
+            <p className="text-muted-foreground text-sm">{t.loginRequiredBody}</p>
             <Button className="w-full" onClick={handleLogin}>
               {t.loginRequiredCta}
             </Button>
@@ -530,10 +530,10 @@ export default function SetupAccount() {
             <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
               <School className="w-8 h-8 text-emerald-600" />
             </div>
-            <h2 className="text-xl font-bold text-slate-900">
+            <h2 className="text-xl font-bold text-ink">
               {t.readyTitle(user?.full_name || tokenInfo.full_name || '')}
             </h2>
-            <p className="text-slate-500 text-sm">{t.readyBody}</p>
+            <p className="text-muted-foreground text-sm">{t.readyBody}</p>
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-start">
               <p className="font-semibold text-emerald-800 text-sm">{tokenInfo.school_name}</p>
               <p className="text-xs text-emerald-600 mt-1">{t.readyTrial}</p>
@@ -547,8 +547,8 @@ export default function SetupAccount() {
         {phase === 'completing' && (
           <div className="space-y-3 py-4">
             <Loader2 className="w-10 h-10 text-emerald-500 animate-spin mx-auto" />
-            <p className="text-slate-600 font-medium">{t.completingTitle}</p>
-            <p className="text-slate-400 text-sm">{t.completingSub}</p>
+            <p className="text-muted-foreground font-medium">{t.completingTitle}</p>
+            <p className="text-muted-foreground text-sm">{t.completingSub}</p>
           </div>
         )}
 
@@ -557,8 +557,8 @@ export default function SetupAccount() {
             <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle className="w-10 h-10 text-emerald-600" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900">{t.doneTitle}</h2>
-            <p className="text-slate-500 text-sm">{t.doneSub}</p>
+            <h2 className="text-2xl font-bold text-ink">{t.doneTitle}</h2>
+            <p className="text-muted-foreground text-sm">{t.doneSub}</p>
           </div>
         )}
       </div>

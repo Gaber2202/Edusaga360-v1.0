@@ -63,46 +63,46 @@ export default function Fees() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold text-slate-800">{t('feesBilling')}</h1>
+        <h1 className="text-2xl font-bold text-ink">{t('feesBilling')}</h1>
         {invoices.length > 0 && (
           <div className="text-end">
-            <p className="text-xs text-slate-500">{t('totalOutstanding')}</p>
+            <p className="text-xs text-muted-foreground">{t('totalOutstanding')}</p>
             <p className={`text-lg font-bold ${totalOutstanding > 0 ? 'text-red-600' : 'text-green-600'}`}>{sar(totalOutstanding)}</p>
           </div>
         )}
       </div>
 
       {isLoading ? (
-        <Card><CardContent className="py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-slate-300 mx-auto" /></CardContent></Card>
+        <Card><CardContent className="py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground mx-auto" /></CardContent></Card>
       ) : linkedIds.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <AlertCircle className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500">{t('noStudentsLinkedAccount')}</p>
-            <p className="text-xs text-slate-400 mt-1">{t('contactSchoolLink')}</p>
+            <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">{t('noStudentsLinkedAccount')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('contactSchoolLink')}</p>
           </CardContent>
         </Card>
       ) : sorted.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <CreditCard className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500">{t('noInvoices')}</p>
-            <p className="text-xs text-slate-400 mt-1">{t('invoicesWillAppear')}</p>
+            <CreditCard className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">{t('noInvoices')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('invoicesWillAppear')}</p>
           </CardContent>
         </Card>
       ) : (
         <Card>
           <CardContent className="p-0 overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-sand border-b border-border">
                 <tr>
-                  <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">{t('invoiceNo')}</th>
-                  <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">{t('student')}</th>
-                  <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">{t('due')}</th>
-                  <th className="px-4 py-3 text-end text-xs font-semibold text-slate-500 uppercase">{t('total')}</th>
-                  <th className="px-4 py-3 text-end text-xs font-semibold text-slate-500 uppercase">{t('balance')}</th>
-                  <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">{t('status')}</th>
-                  <th className="px-4 py-3 text-end text-xs font-semibold text-slate-500 uppercase">{t('invoice')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase">{t('invoiceNo')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase">{t('student')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase">{t('due')}</th>
+                  <th className="px-4 py-3 text-end text-xs font-semibold text-muted-foreground uppercase">{t('total')}</th>
+                  <th className="px-4 py-3 text-end text-xs font-semibold text-muted-foreground uppercase">{t('balance')}</th>
+                  <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase">{t('status')}</th>
+                  <th className="px-4 py-3 text-end text-xs font-semibold text-muted-foreground uppercase">{t('invoice')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -110,11 +110,11 @@ export default function Fees() {
                   const st = displayStatus(inv);
                   const label = STATUS_LABELS[st]?.[lang] || STATUS_LABELS[st]?.en || st;
                   return (
-                    <tr key={inv.id} className="hover:bg-slate-50">
+                    <tr key={inv.id} className="hover:bg-sand">
                       <td className="px-4 py-3 font-mono text-xs text-emerald-700 font-semibold">{inv.invoice_number || inv.id.slice(0, 8)}</td>
-                      <td className="px-4 py-3 text-xs text-slate-700">{nameFor(inv)}</td>
-                      <td className="px-4 py-3 text-xs text-slate-500">{inv.due_date || '—'}</td>
-                      <td className="px-4 py-3 text-end text-xs font-semibold text-slate-800">{sar(inv.total_amount)}</td>
+                      <td className="px-4 py-3 text-xs text-ink">{nameFor(inv)}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{inv.due_date || '—'}</td>
+                      <td className="px-4 py-3 text-end text-xs font-semibold text-ink">{sar(inv.total_amount)}</td>
                       <td className="px-4 py-3 text-end text-xs">
                         <span className={invoiceBalance(inv) > 0 ? 'text-red-600 font-semibold' : 'text-green-600'}>{sar(invoiceBalance(inv))}</span>
                       </td>
@@ -126,7 +126,7 @@ export default function Fees() {
                           type="button"
                           onClick={() => handleDownload(inv)}
                           disabled={downloading === inv.id}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs font-medium text-ink hover:bg-sand-alt disabled:opacity-50"
                         >
                           {downloading === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                           PDF

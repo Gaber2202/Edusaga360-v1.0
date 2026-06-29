@@ -90,8 +90,8 @@ export default function StudentAttendancePage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">{isRTL ? 'حضور الطلاب' : 'Student Attendance'}</h1>
-          <p className="text-sm text-slate-500">{isRTL ? 'تسجيل سريع · إدارة الغياب · تقارير وزارة التعليم' : 'Fast marking · Absence management · MOE reports'}</p>
+          <h1 className="text-xl font-bold text-ink">{isRTL ? 'حضور الطلاب' : 'Student Attendance'}</h1>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'تسجيل سريع · إدارة الغياب · تقارير وزارة التعليم' : 'Fast marking · Absence management · MOE reports'}</p>
         </div>
         {/* Class selector */}
         <div className="flex flex-wrap gap-2 items-end">
@@ -123,31 +123,31 @@ export default function StudentAttendancePage() {
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Card className="col-span-1">
           <CardContent className="p-3">
-            <p className="text-xs text-slate-500">{isRTL ? 'الطلاب' : 'Students'}</p>
-            <p className="text-2xl font-bold text-slate-800">{classStudents.length}</p>
+            <p className="text-xs text-muted-foreground">{isRTL ? 'الطلاب' : 'Students'}</p>
+            <p className="text-2xl font-bold text-ink">{classStudents.length}</p>
           </CardContent>
         </Card>
         <Card className="col-span-1">
           <CardContent className="p-3">
-            <p className="text-xs text-slate-500">{isRTL ? 'تم التسجيل' : 'Marked'}</p>
-            <p className="text-2xl font-bold text-blue-600">{markedCount}</p>
+            <p className="text-xs text-muted-foreground">{isRTL ? 'تم التسجيل' : 'Marked'}</p>
+            <p className="text-2xl font-bold text-najdi-700">{markedCount}</p>
           </CardContent>
         </Card>
         <Card className="col-span-1">
           <CardContent className="p-3">
-            <p className="text-xs text-slate-500">{isRTL ? 'حاضر' : 'Present'}</p>
+            <p className="text-xs text-muted-foreground">{isRTL ? 'حاضر' : 'Present'}</p>
             <p className="text-2xl font-bold text-green-600">{presentCount}</p>
           </CardContent>
         </Card>
         <Card className="col-span-1">
           <CardContent className="p-3">
-            <p className="text-xs text-slate-500">{isRTL ? 'غائب' : 'Absent'}</p>
+            <p className="text-xs text-muted-foreground">{isRTL ? 'غائب' : 'Absent'}</p>
             <p className="text-2xl font-bold text-red-600">{absentCount}</p>
           </CardContent>
         </Card>
         <Card className="col-span-1">
           <CardContent className="p-3">
-            <p className="text-xs text-slate-500">{isRTL ? 'متأخر' : 'Late'}</p>
+            <p className="text-xs text-muted-foreground">{isRTL ? 'متأخر' : 'Late'}</p>
             <p className="text-2xl font-bold text-amber-600">{lateCount}</p>
           </CardContent>
         </Card>
@@ -165,14 +165,14 @@ export default function StudentAttendancePage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-white border">
           <TabsTrigger value="mark">
-            <Zap className="w-4 h-4 me-1 text-slate-600" />
+            <Zap className="w-4 h-4 me-1 text-muted-foreground" />
             {isRTL ? 'تسجيل سريع' : 'Quick Mark'}
           </TabsTrigger>
           <TabsTrigger value="absences">
             <AlertTriangle className="w-4 h-4 me-1" />
             {isRTL ? 'إدارة الغياب' : 'Absences'}
             {pendingExcuses > 0 && (
-              <span className="ms-1.5 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">{pendingExcuses}</span>
+              <span className="ms-1.5 bg-najdi-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">{pendingExcuses}</span>
             )}
           </TabsTrigger>
           <TabsTrigger value="reports">
@@ -184,8 +184,8 @@ export default function StudentAttendancePage() {
         {/* QUICK MARK TAB */}
         <TabsContent value="mark" className="mt-4">
           <div className="max-w-3xl">
-            <div className="flex items-center gap-2 mb-4 p-3 bg-slate-50 rounded-xl border text-sm text-slate-600">
-              <Zap className="w-4 h-4 text-slate-500" />
+            <div className="flex items-center gap-2 mb-4 p-3 bg-sand rounded-xl border text-sm text-muted-foreground">
+              <Zap className="w-4 h-4 text-muted-foreground" />
               <span>
                 {isRTL
                   ? `${t(selectedGrade)}${selectedSection !== 'all' ? ` — ${selectedSection}` : ''} · ${selectedDate} · ${classStudents.length} طالب`

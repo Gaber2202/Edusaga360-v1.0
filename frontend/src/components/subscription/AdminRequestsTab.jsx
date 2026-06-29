@@ -95,30 +95,30 @@ export default function AdminRequestsTab({ isRTL }) {
 
 
   const RequestRow = ({ request }) => (
-    <div className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50 border-b last:border-b-0">
+    <div className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-sand border-b last:border-b-0">
       <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 flex-shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-sand-alt flex items-center justify-center text-muted-foreground flex-shrink-0">
           {getTypeIcon(request.request_type)}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-slate-900">
+          <p className="text-sm font-medium text-ink">
             {getTypeLabel(request.request_type)}
           </p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             {getTenantName(request.tenant_id)} • {format(new Date(request.created_at), 'dd/MM/yyyy HH:mm')}
           </p>
           {request.request_type === 'additional_users' && (
-            <p className="text-xs text-slate-600 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {isRTL ? `طلب: ${request.additional_users} مستخدم` : `Requested: ${request.additional_users} users`}
             </p>
           )}
           {request.request_type === 'plan_upgrade' && (
-            <p className="text-xs text-slate-600 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {isRTL ? `من ${request.current_plan} إلى ${request.requested_plan}` : `From ${request.current_plan} to ${request.requested_plan}`}
             </p>
           )}
           {request.reason && (
-            <p className="text-xs text-slate-600 mt-1 line-clamp-1">{request.reason}</p>
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{request.reason}</p>
           )}
         </div>
       </div>
@@ -169,14 +169,14 @@ export default function AdminRequestsTab({ isRTL }) {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="p-8 text-center text-slate-400">{isRTL ? 'جاري التحميل...' : 'Loading...'}</div>
+            <div className="p-8 text-center text-muted-foreground">{isRTL ? 'جاري التحميل...' : 'Loading...'}</div>
           ) : filterRequests(tab).length === 0 ? (
             <div className="p-8 text-center">
-              <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-              <p className="text-slate-400">{isRTL ? 'لا توجد طلبات' : 'No requests'}</p>
+              <AlertCircle className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-muted-foreground">{isRTL ? 'لا توجد طلبات' : 'No requests'}</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-border">
               {filterRequests(tab).map(req => (
                 <RequestRow key={req.id} request={req} />
               ))}
@@ -196,27 +196,27 @@ export default function AdminRequestsTab({ isRTL }) {
           </DialogHeader>
           {selectedRequest && (
             <div className="space-y-4 py-4">
-              <div className="p-3 bg-slate-50 rounded-lg space-y-2 text-sm">
+              <div className="p-3 bg-sand rounded-lg space-y-2 text-sm">
                 <div>
-                  <p className="text-xs text-slate-500">{isRTL ? 'المؤسسة' : 'Tenant'}</p>
+                  <p className="text-xs text-muted-foreground">{isRTL ? 'المؤسسة' : 'Tenant'}</p>
                   <p className="font-medium">{getTenantName(selectedRequest.tenant_id)}</p>
                 </div>
                 {selectedRequest.request_type === 'additional_users' && (
                   <div>
-                    <p className="text-xs text-slate-500">{isRTL ? 'عدد المستخدمين' : 'Users Requested'}</p>
+                    <p className="text-xs text-muted-foreground">{isRTL ? 'عدد المستخدمين' : 'Users Requested'}</p>
                     <p className="font-medium">{selectedRequest.additional_users}</p>
                   </div>
                 )}
                 {selectedRequest.request_type === 'plan_upgrade' && (
                   <div>
-                    <p className="text-xs text-slate-500">{isRTL ? 'الخطة الجديدة' : 'Requested Plan'}</p>
+                    <p className="text-xs text-muted-foreground">{isRTL ? 'الخطة الجديدة' : 'Requested Plan'}</p>
                     <p className="font-medium">{selectedRequest.requested_plan}</p>
                   </div>
                 )}
                 {selectedRequest.reason && (
                   <div>
-                    <p className="text-xs text-slate-500">{isRTL ? 'السبب' : 'Reason'}</p>
-                    <p className="text-slate-700">{selectedRequest.reason}</p>
+                    <p className="text-xs text-muted-foreground">{isRTL ? 'السبب' : 'Reason'}</p>
+                    <p className="text-ink">{selectedRequest.reason}</p>
                   </div>
                 )}
               </div>

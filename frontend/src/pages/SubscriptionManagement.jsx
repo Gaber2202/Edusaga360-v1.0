@@ -120,13 +120,13 @@ function UsersTab({ isRTL, tenant }) {
       admin: 'bg-red-100 text-red-700',
       hr_admin: 'bg-purple-100 text-purple-700',
       hr_officer: 'bg-purple-50 text-purple-600',
-      finance: 'bg-blue-100 text-blue-700',
-      accountant: 'bg-blue-50 text-blue-600',
+      finance: 'bg-najdi-50 text-najdi-900',
+      accountant: 'bg-najdi-50 text-najdi-700',
       branch_manager: 'bg-amber-100 text-amber-700',
       teacher: 'bg-green-100 text-green-700',
-      creator: 'bg-slate-800 text-white',
+      creator: 'bg-najdi-900 text-white',
     };
-    return roleMap[r] || 'bg-slate-100 text-slate-600';
+    return roleMap[r] || 'bg-sand-alt text-muted-foreground';
   };
 
   const getRoleLabel = (u) => {
@@ -140,7 +140,7 @@ function UsersTab({ isRTL, tenant }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div className="relative flex-1 max-w-sm">
-          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
           <Input
             className={isRTL ? 'pr-9' : 'pl-9'}
             placeholder={isRTL ? 'بحث عن مستخدم...' : 'Search users...'}
@@ -157,31 +157,31 @@ function UsersTab({ isRTL, tenant }) {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="p-8 text-center text-slate-400">{isRTL ? 'جاري التحميل...' : 'Loading...'}</div>
+            <div className="p-8 text-center text-muted-foreground">{isRTL ? 'جاري التحميل...' : 'Loading...'}</div>
           ) : filtered.length === 0 ? (
-            <div className="p-8 text-center text-slate-400">{isRTL ? 'لا يوجد مستخدمون' : 'No users found'}</div>
+            <div className="p-8 text-center text-muted-foreground">{isRTL ? 'لا يوجد مستخدمون' : 'No users found'}</div>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-border">
               {filtered.map(u => (
-                <div key={u.id} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
+                <div key={u.id} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-sand">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-semibold text-sm shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-sand-alt flex items-center justify-center text-muted-foreground font-semibold text-sm shrink-0">
                       {(u.full_name || u.email || '?')[0].toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-slate-900 text-sm truncate">{u.full_name || '—'}</p>
-                      <p className="text-xs text-slate-500 truncate">{u.email}</p>
+                      <p className="font-medium text-ink text-sm truncate">{u.full_name || '—'}</p>
+                      <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Badge className={`text-xs ${getRoleBadge(u)}`}>{getRoleLabel(u)}</Badge>
-                    <p className="text-xs text-slate-400 hidden sm:block">
+                    <p className="text-xs text-muted-foreground hidden sm:block">
                       {u.created_at ? format(new Date(u.created_at), 'dd/MM/yyyy') : '—'}
                     </p>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-slate-400 hover:text-blue-600"
+                      className="h-8 w-8 text-muted-foreground hover:text-najdi-700"
                       onClick={() => setEditUser(u)}
                     >
                       <Edit2 className="w-4 h-4" />
@@ -194,7 +194,7 @@ function UsersTab({ isRTL, tenant }) {
         </CardContent>
       </Card>
 
-      <div className="text-xs text-slate-400 text-end">
+      <div className="text-xs text-muted-foreground text-end">
         {filtered.length} / {tenant?.max_users || '—'} {isRTL ? 'مستخدم' : 'users'}
       </div>
 
@@ -203,7 +203,7 @@ function UsersTab({ isRTL, tenant }) {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-blue-600" />
+              <UserPlus className="w-5 h-5 text-najdi-700" />
               {isRTL ? 'إضافة مستخدم' : 'Add User'}
             </DialogTitle>
           </DialogHeader>
@@ -219,8 +219,8 @@ function UsersTab({ isRTL, tenant }) {
               </div>
             )}
             {isTrial && !atLimit && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200 text-sm text-blue-800">
-                <Shield className="w-4 h-4 mt-0.5 shrink-0 text-blue-600" />
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-najdi-50 border border-najdi-100 text-sm text-najdi-900">
+                <Shield className="w-4 h-4 mt-0.5 shrink-0 text-najdi-700" />
                 {isRTL
                   ? `الخطة التجريبية تسمح بـ ${maxUsers} مستخدمين. حاليًا لديك ${users.length}.`
                   : `Trial plan allows ${maxUsers} users. You currently have ${users.length}.`}
@@ -237,7 +237,7 @@ function UsersTab({ isRTL, tenant }) {
             <div className="space-y-1.5">
               <Label>{isRTL ? 'البريد الإلكتروني *' : 'Email Address *'}</Label>
               <div className="relative">
-                <Mail className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+                <Mail className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
                 <Input
                   type="email"
                   className={isRTL ? 'pr-9' : 'pl-9'}
@@ -280,19 +280,19 @@ function UsersTab({ isRTL, tenant }) {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Edit2 className="w-5 h-5 text-blue-600" />
+              <Edit2 className="w-5 h-5 text-najdi-700" />
               {isRTL ? 'تعديل دور المستخدم' : 'Edit User Role'}
             </DialogTitle>
           </DialogHeader>
           {editUser && (
             <div className="space-y-4 py-2">
-              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-semibold text-sm">
+              <div className="flex items-center gap-3 p-3 bg-sand rounded-lg">
+                <div className="w-9 h-9 rounded-full bg-sand-alt flex items-center justify-center text-muted-foreground font-semibold text-sm">
                   {(editUser.full_name || editUser.email || '?')[0].toUpperCase()}
                 </div>
                 <div>
                   <p className="font-medium text-sm">{editUser.full_name || '—'}</p>
-                  <p className="text-xs text-slate-500">{editUser.email}</p>
+                  <p className="text-xs text-muted-foreground">{editUser.email}</p>
                 </div>
               </div>
               <div className="space-y-1.5">
@@ -344,7 +344,7 @@ function PlatformOwnerSubscriptions({ isRTL }) {
     if (status === 'trial') return <Badge className="bg-amber-100 text-amber-800">{isRTL ? 'فترة تجريبية' : 'Trial'}</Badge>;
     const plan = PLAN_DEFINITIONS[planCode];
     if (!plan) return <Badge variant="secondary">{planCode || '—'}</Badge>;
-    return <Badge className="bg-blue-100 text-blue-800">{isRTL ? plan.nameAr : plan.nameEn}</Badge>;
+    return <Badge className="bg-najdi-50 text-najdi-900">{isRTL ? plan.nameAr : plan.nameEn}</Badge>;
   };
 
   const getDaysLeft = (t) => {
@@ -354,7 +354,7 @@ function PlatformOwnerSubscriptions({ isRTL }) {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center min-h-[50vh]"><p className="text-slate-500">{isRTL ? 'جاري التحميل...' : 'Loading...'}</p></div>;
+    return <div className="flex items-center justify-center min-h-[50vh]"><p className="text-muted-foreground">{isRTL ? 'جاري التحميل...' : 'Loading...'}</p></div>;
   }
 
   return (
@@ -363,16 +363,16 @@ function PlatformOwnerSubscriptions({ isRTL }) {
         <Crown className="h-6 w-6 text-amber-500" />
         <h1 className="text-2xl font-bold">{isRTL ? 'إدارة الاشتراكات' : 'Subscription Management'}</h1>
       </div>
-      <p className="text-slate-500">{isRTL ? 'نظرة عامة على اشتراكات جميع المدارس المسجلة' : 'Overview of subscriptions for all registered schools'}</p>
+      <p className="text-muted-foreground">{isRTL ? 'نظرة عامة على اشتراكات جميع المدارس المسجلة' : 'Overview of subscriptions for all registered schools'}</p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <Building2 className="h-8 w-8 text-blue-500" />
+              <Building2 className="h-8 w-8 text-najdi-500" />
               <div>
                 <p className="text-2xl font-bold">{tenants.length}</p>
-                <p className="text-sm text-slate-500">{isRTL ? 'إجمالي المدارس' : 'Total Schools'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي المدارس' : 'Total Schools'}</p>
               </div>
             </div>
           </CardContent>
@@ -383,7 +383,7 @@ function PlatformOwnerSubscriptions({ isRTL }) {
               <CheckCircle className="h-8 w-8 text-green-500" />
               <div>
                 <p className="text-2xl font-bold">{tenants.filter(t => t.status === 'active').length}</p>
-                <p className="text-sm text-slate-500">{isRTL ? 'نشط' : 'Active'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'نشط' : 'Active'}</p>
               </div>
             </div>
           </CardContent>
@@ -394,7 +394,7 @@ function PlatformOwnerSubscriptions({ isRTL }) {
               <AlertTriangle className="h-8 w-8 text-amber-500" />
               <div>
                 <p className="text-2xl font-bold">{tenants.filter(t => t.status === 'trial').length}</p>
-                <p className="text-sm text-slate-500">{isRTL ? 'فترة تجريبية' : 'Trial'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'فترة تجريبية' : 'Trial'}</p>
               </div>
             </div>
           </CardContent>
@@ -407,18 +407,18 @@ function PlatformOwnerSubscriptions({ isRTL }) {
         </CardHeader>
         <CardContent>
           {tenants.length === 0 ? (
-            <p className="text-slate-500 text-center py-8">{isRTL ? 'لا توجد مدارس مسجلة بعد' : 'No schools registered yet'}</p>
+            <p className="text-muted-foreground text-center py-8">{isRTL ? 'لا توجد مدارس مسجلة بعد' : 'No schools registered yet'}</p>
           ) : (
             <div className="space-y-3">
               {tenants.map(t => {
                 const daysLeft = getDaysLeft(t);
                 return (
-                  <div key={t.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50">
+                  <div key={t.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-sand">
                     <div className="flex items-center gap-3">
-                      <Building2 className="h-5 w-5 text-slate-400" />
+                      <Building2 className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <p className="font-medium">{isRTL ? (t.name_ar || t.name) : (t.name || t.name_ar)}</p>
-                        <p className="text-sm text-slate-500">{t.city || '—'}</p>
+                        <p className="text-sm text-muted-foreground">{t.city || '—'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -456,7 +456,7 @@ export default function SubscriptionManagement() {
   if (tenantLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-border border-t-najdi-900 rounded-full" />
       </div>
     );
   }
@@ -468,7 +468,7 @@ export default function SubscriptionManagement() {
   if (!tenant) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <p className="text-slate-500">{isRTL ? 'لا توجد معلومات اشتراك' : 'No subscription info available'}</p>
+        <p className="text-muted-foreground">{isRTL ? 'لا توجد معلومات اشتراك' : 'No subscription info available'}</p>
       </div>
     );
   }
@@ -490,23 +490,23 @@ export default function SubscriptionManagement() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-ink flex items-center gap-2">
           <Crown className="w-6 h-6 text-amber-500" />
           {isRTL ? 'إدارة الاشتراك' : 'Subscription Management'}
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           {isRTL ? 'عرض تفاصيل اشتراكك وإدارة المستخدمين' : 'View your subscription details and manage users'}
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-slate-100 p-1 rounded-lg w-fit">
+      <div className="flex gap-1 bg-sand-alt p-1 rounded-lg w-fit">
         {TABS.filter(t => !t.adminOnly || isCreator).map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              tab === t.key ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'
+              tab === t.key ? 'bg-white shadow-sm text-ink' : 'text-muted-foreground hover:text-ink'
             }`}
           >
             {isRTL ? t.labelAr : t.labelEn}
@@ -548,23 +548,23 @@ export default function SubscriptionManagement() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <Shield className="w-5 h-5 text-blue-600" />
+                <Shield className="w-5 h-5 text-najdi-700" />
                 {isRTL ? 'الخطة الحالية' : 'Current Plan'}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-slate-900">{isRTL ? currentPlan.nameAr : currentPlan.nameEn}</h3>
-                  <p className="text-slate-500 text-sm">
+                  <h3 className="text-xl font-bold text-ink">{isRTL ? currentPlan.nameAr : currentPlan.nameEn}</h3>
+                  <p className="text-muted-foreground text-sm">
                     {isRTL ? 'تواصل مع فريق المبيعات للتسعير' : 'Contact sales for pricing'}
                   </p>
                 </div>
                 <Badge className={
                   tenant.plan_code === 'enterprise' ? 'bg-purple-100 text-purple-700' :
                   tenant.plan_code === 'government' ? 'bg-green-100 text-green-700' :
-                  tenant.plan_code === 'startup' ? 'bg-blue-100 text-blue-700' :
-                  'bg-slate-100 text-slate-600'
+                  tenant.plan_code === 'startup' ? 'bg-najdi-50 text-najdi-900' :
+                  'bg-sand-alt text-muted-foreground'
                 }>
                   {tenant.plan_code === 'enterprise' ? (isRTL ? 'مؤسسات' : 'Enterprise') :
                    tenant.plan_code === 'government' ? (isRTL ? 'حكومي' : 'Government') :
@@ -597,10 +597,10 @@ export default function SubscriptionManagement() {
                   <div key={i} className="space-y-1">
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
-                        <bar.icon className="w-4 h-4 text-slate-400" />
+                        <bar.icon className="w-4 h-4 text-muted-foreground" />
                         <span className="font-medium">{bar.label}</span>
                       </div>
-                      <span className="text-slate-500">{bar.current} / {bar.max}</span>
+                      <span className="text-muted-foreground">{bar.current} / {bar.max}</span>
                     </div>
                     <Progress value={pct} className="h-2" />
                   </div>
@@ -621,10 +621,10 @@ export default function SubscriptionManagement() {
                   return (
                     <div
                       key={mod.key}
-                      className={`flex items-center gap-2 p-3 rounded-lg border ${isEnabled ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200 opacity-50'}`}
+                      className={`flex items-center gap-2 p-3 rounded-lg border ${isEnabled ? 'bg-emerald-50 border-emerald-200' : 'bg-sand border-border opacity-50'}`}
                     >
-                      <CheckCircle className={`w-4 h-4 ${isEnabled ? 'text-emerald-600' : 'text-slate-300'}`} />
-                      <span className={`text-sm font-medium ${isEnabled ? 'text-slate-800' : 'text-slate-400'}`}>
+                      <CheckCircle className={`w-4 h-4 ${isEnabled ? 'text-emerald-600' : 'text-muted-foreground'}`} />
+                      <span className={`text-sm font-medium ${isEnabled ? 'text-ink' : 'text-muted-foreground'}`}>
                         {isRTL ? mod.nameAr : mod.nameEn}
                       </span>
                     </div>
@@ -638,7 +638,7 @@ export default function SubscriptionManagement() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <Lock className="w-5 h-5 text-slate-500" />
+                <Lock className="w-5 h-5 text-muted-foreground" />
                 {isRTL ? 'ميزات الخطة' : 'Plan Features'}
               </CardTitle>
             </CardHeader>
@@ -650,12 +650,12 @@ export default function SubscriptionManagement() {
                   { label: isRTL ? 'التكاملات' : 'Integrations', enabled: currentPlan.integrationsEnabled, icon: Link2 },
                   { label: isRTL ? 'الذكاء الاصطناعي' : 'AI Features', enabled: currentPlan.aiEnabled, icon: Bot },
                 ].map((f, i) => (
-                  <div key={i} className={`flex items-center gap-2 p-3 rounded-lg border ${f.enabled ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200 opacity-60'}`}>
-                    <f.icon className={`w-4 h-4 ${f.enabled ? 'text-emerald-600' : 'text-slate-400'}`} />
-                    <span className={`text-sm font-medium ${f.enabled ? 'text-slate-800' : 'text-slate-400'}`}>{f.label}</span>
+                  <div key={i} className={`flex items-center gap-2 p-3 rounded-lg border ${f.enabled ? 'bg-emerald-50 border-emerald-200' : 'bg-sand border-border opacity-60'}`}>
+                    <f.icon className={`w-4 h-4 ${f.enabled ? 'text-emerald-600' : 'text-muted-foreground'}`} />
+                    <span className={`text-sm font-medium ${f.enabled ? 'text-ink' : 'text-muted-foreground'}`}>{f.label}</span>
                     {f.enabled
                       ? <CheckCircle className="w-3.5 h-3.5 text-emerald-500 ms-auto" />
-                      : <Lock className="w-3.5 h-3.5 text-slate-300 ms-auto" />}
+                      : <Lock className="w-3.5 h-3.5 text-muted-foreground ms-auto" />}
                   </div>
                 ))}
               </div>
@@ -664,23 +664,23 @@ export default function SubscriptionManagement() {
 
           {/* Upgrade */}
           {tenant.plan_code !== 'enterprise' && tenant.plan_code !== 'government' && (
-            <Card className="border-blue-200 bg-blue-50">
+            <Card className="border-najdi-100 bg-najdi-50">
               <CardContent className="pt-6 space-y-4">
                 <div className="text-center space-y-2">
-                  <ArrowUpRight className="w-8 h-8 text-blue-600 mx-auto" />
-                  <h3 className="text-lg font-bold text-blue-900">
+                  <ArrowUpRight className="w-8 h-8 text-najdi-700 mx-auto" />
+                  <h3 className="text-lg font-bold text-najdi-900">
                     {isRTL ? 'قم بترقية خطتك' : 'Upgrade Your Plan'}
                   </h3>
-                  <p className="text-sm text-blue-700">
+                  <p className="text-sm text-najdi-900">
                     {isRTL ? 'احصل على المزيد من المزايا والوحدات' : 'Get more features and modules'}
                   </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {Object.entries(PLAN_DEFINITIONS).filter(([k]) => k !== 'government' && k !== tenant.plan_code).map(([code, plan]) => (
-                    <div key={code} className={`bg-white rounded-xl border-2 p-4 space-y-3 ${code === 'enterprise' ? 'border-purple-300' : 'border-slate-200'}`}>
-                      <h4 className="font-bold text-slate-900">{isRTL ? plan.nameAr : plan.nameEn}</h4>
+                    <div key={code} className={`bg-white rounded-xl border-2 p-4 space-y-3 ${code === 'enterprise' ? 'border-purple-300' : 'border-border'}`}>
+                      <h4 className="font-bold text-ink">{isRTL ? plan.nameAr : plan.nameEn}</h4>
 
-                      <ul className="text-xs space-y-1 text-slate-600">
+                      <ul className="text-xs space-y-1 text-muted-foreground">
                         <li>• {isRTL ? `${plan.maxUsers} مستخدم` : `${plan.maxUsers} users`}</li>
                         <li>• {isRTL ? `${plan.maxEmployees} موظف` : `${plan.maxEmployees} employees`}</li>
                         <li>• {isRTL ? `${plan.maxBranches} فرع` : `${plan.maxBranches} branches`}</li>

@@ -116,8 +116,8 @@ export default function PaymentLogForm({ open, onClose, invoice }) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="bg-slate-50 p-4 rounded-lg">
-            <p className="text-sm text-slate-600">{isRTL ? 'فاتورة' : 'Invoice'}: #{invoice?.invoice_number}</p>
+          <div className="bg-sand p-4 rounded-lg">
+            <p className="text-sm text-muted-foreground">{isRTL ? 'فاتورة' : 'Invoice'}: #{invoice?.invoice_number}</p>
             <p className="text-lg font-bold">{isRTL ? 'الرصيد المتبقي' : 'Balance'}: {invoice?.balance?.toLocaleString()} {t('sar')}</p>
           </div>
 

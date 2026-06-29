@@ -4,20 +4,20 @@ import { Building2, Users, GraduationCap, TrendingUp, Bot, AlertTriangle } from 
 function StatBox({ icon: Icon, value, label, color = 'slate' }) {
   const colorMap = {
     emerald: 'bg-emerald-50 text-emerald-600',
-    blue:    'bg-blue-50 text-blue-600',
+    blue:    'bg-najdi-50 text-najdi-700',
     amber:   'bg-amber-50 text-amber-600',
     red:     'bg-red-50 text-red-600',
-    slate:   'bg-slate-100 text-slate-600',
+    slate:   'bg-sand-alt text-muted-foreground',
     purple:  'bg-purple-50 text-purple-600',
   };
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-4">
+    <div className="bg-white rounded-xl border border-border p-4 flex items-center gap-4">
       <div className={`w-11 h-11 rounded-lg flex items-center justify-center ${colorMap[color]}`}>
         <Icon className="w-5 h-5" />
       </div>
       <div>
-        <div className="text-2xl font-bold text-slate-900">{value}</div>
-        <div className="text-xs text-slate-500">{label}</div>
+        <div className="text-2xl font-bold text-ink">{value}</div>
+        <div className="text-xs text-muted-foreground">{label}</div>
       </div>
     </div>
   );

@@ -322,14 +322,14 @@ export default function FinancialReports() {
             )}
           </div>
           {reportData && (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               {format(new Date(dateFrom), 'dd MMM yyyy')} - {format(new Date(dateTo), 'dd MMM yyyy')}
             </p>
           )}
         </CardHeader>
         <CardContent>
           {!reportData ? (
-            <div className="text-center py-12 text-slate-500">
+            <div className="text-center py-12 text-muted-foreground">
               <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>{isRTL ? 'اختر التقرير وانقر على "إنشاء التقرير"' : 'Select report and click "Generate Report"'}</p>
             </div>
@@ -340,16 +340,16 @@ export default function FinancialReports() {
                 <div className="grid grid-cols-3 gap-4">
                   {reportType === 'income_statement' && (
                     <>
-                      <Card className="bg-emerald-50"><CardContent className="p-4"><div className="text-sm text-slate-600">{isRTL ? 'الإيرادات' : 'Revenue'}</div><div className="text-xl font-bold">{reportData.revenue?.toLocaleString()} {t('sar')}</div></CardContent></Card>
-                      <Card className="bg-red-50"><CardContent className="p-4"><div className="text-sm text-slate-600">{isRTL ? 'المصروفات' : 'Expenses'}</div><div className="text-xl font-bold">{reportData.expenses?.toLocaleString()} {t('sar')}</div></CardContent></Card>
-                      <Card className="bg-blue-50"><CardContent className="p-4"><div className="text-sm text-slate-600">{isRTL ? 'صافي الدخل' : 'Net Income'}</div><div className="text-xl font-bold">{reportData.netIncome?.toLocaleString()} {t('sar')}</div></CardContent></Card>
+                      <Card className="bg-emerald-50"><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'الإيرادات' : 'Revenue'}</div><div className="text-xl font-bold">{reportData.revenue?.toLocaleString()} {t('sar')}</div></CardContent></Card>
+                      <Card className="bg-red-50"><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'المصروفات' : 'Expenses'}</div><div className="text-xl font-bold">{reportData.expenses?.toLocaleString()} {t('sar')}</div></CardContent></Card>
+                      <Card className="bg-najdi-50"><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'صافي الدخل' : 'Net Income'}</div><div className="text-xl font-bold">{reportData.netIncome?.toLocaleString()} {t('sar')}</div></CardContent></Card>
                     </>
                   )}
                   {reportType === 'ar_summary' && (
                     <>
-                      <Card><CardContent className="p-4"><div className="text-sm text-slate-600">{isRTL ? 'المفوتر' : 'Billed'}</div><div className="text-xl font-bold">{reportData.totalBilled?.toLocaleString()} {t('sar')}</div></CardContent></Card>
-                      <Card><CardContent className="p-4"><div className="text-sm text-slate-600">{isRTL ? 'المحصل' : 'Collected'}</div><div className="text-xl font-bold text-emerald-600">{reportData.totalCollected?.toLocaleString()} {t('sar')}</div></CardContent></Card>
-                      <Card><CardContent className="p-4"><div className="text-sm text-slate-600">{isRTL ? 'المتبقي' : 'Outstanding'}</div><div className="text-xl font-bold text-red-600">{reportData.outstanding?.toLocaleString()} {t('sar')}</div></CardContent></Card>
+                      <Card><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'المفوتر' : 'Billed'}</div><div className="text-xl font-bold">{reportData.totalBilled?.toLocaleString()} {t('sar')}</div></CardContent></Card>
+                      <Card><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'المحصل' : 'Collected'}</div><div className="text-xl font-bold text-emerald-600">{reportData.totalCollected?.toLocaleString()} {t('sar')}</div></CardContent></Card>
+                      <Card><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'المتبقي' : 'Outstanding'}</div><div className="text-xl font-bold text-red-600">{reportData.outstanding?.toLocaleString()} {t('sar')}</div></CardContent></Card>
                     </>
                   )}
                 </div>
@@ -359,7 +359,7 @@ export default function FinancialReports() {
               <div className="overflow-x-auto border rounded-lg">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-50">
+                    <TableRow className="bg-sand">
                       {reportData.items[0] && Object.keys(reportData.items[0]).map(key => (
                         <TableHead key={key}>{t(key) || key}</TableHead>
                       ))}
@@ -367,7 +367,7 @@ export default function FinancialReports() {
                   </TableHeader>
                   <TableBody>
                     {reportData.items.map((item, idx) => (
-                      <TableRow key={idx} className={item.highlight ? 'bg-slate-50 font-semibold' : ''}>
+                      <TableRow key={idx} className={item.highlight ? 'bg-sand font-semibold' : ''}>
                         {Object.entries(item).map(([key, value]) => (
                           <TableCell key={key}>
                             {typeof value === 'number' && key.includes('amount') || key.includes('balance') || key.includes('total') || key.includes('revenue') 
@@ -382,7 +382,7 @@ export default function FinancialReports() {
               </div>
             </div>
           ) : (
-            <p className="text-center py-12 text-slate-500">{reportData.message}</p>
+            <p className="text-center py-12 text-muted-foreground">{reportData.message}</p>
           )}
         </CardContent>
       </Card>

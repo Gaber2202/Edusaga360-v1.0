@@ -67,7 +67,7 @@ export default function GovDocuments() {
   };
 
   const columns = [
-    { header: isRTL ? 'العنوان' : 'Title', cell: r => <div className="flex items-center gap-2"><FileText className="w-4 h-4 text-blue-500" /><span>{r.title}</span></div> },
+    { header: isRTL ? 'العنوان' : 'Title', cell: r => <div className="flex items-center gap-2"><FileText className="w-4 h-4 text-najdi-500" /><span>{r.title}</span></div> },
     { header: isRTL ? 'النوع' : 'Type', cell: r => docTypeLabels[r.document_type] || r.document_type },
     { header: isRTL ? 'الموظف' : 'Employee', cell: r => r.employee_name || '—' },
     { header: isRTL ? 'تاريخ الانتهاء' : 'Expiry', cell: r => (
@@ -77,7 +77,7 @@ export default function GovDocuments() {
       </div>
     )},
     { header: isRTL ? 'الملف' : 'File', cell: r => r.file_url
-      ? <a href={r.file_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm">{isRTL ? 'فتح' : 'Open'}</a>
+      ? <a href={r.file_url} target="_blank" rel="noreferrer" className="text-najdi-700 hover:underline text-sm">{isRTL ? 'فتح' : 'Open'}</a>
       : '—'
     },
   ];
@@ -85,7 +85,7 @@ export default function GovDocuments() {
   return (
     <div className="space-y-4 mt-4">
       <div className="flex justify-end">
-        <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={() => setShowForm(true)} className="bg-najdi-700 hover:bg-najdi-900">
           <Plus className="w-4 h-4 me-2" />{isRTL ? 'إضافة مستند' : 'Add Document'}
         </Button>
       </div>
@@ -127,9 +127,9 @@ export default function GovDocuments() {
             <div className="col-span-2 space-y-1">
               <Label>{isRTL ? 'رفع الملف' : 'Upload File'}</Label>
               <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 hover:bg-slate-100 transition-colors">
-                  <Upload className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm text-slate-600">{uploading ? (isRTL ? 'جاري الرفع...' : 'Uploading...') : (isRTL ? 'اختر ملفاً' : 'Choose file')}</span>
+                <label className="flex items-center gap-2 cursor-pointer bg-sand border border-border rounded-lg px-4 py-2 hover:bg-sand-alt transition-colors">
+                  <Upload className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">{uploading ? (isRTL ? 'جاري الرفع...' : 'Uploading...') : (isRTL ? 'اختر ملفاً' : 'Choose file')}</span>
                   <input type="file" className="hidden" onChange={handleFileUpload} accept=".pdf,.jpg,.jpeg,.png" disabled={uploading} />
                 </label>
                 {form.file_url && <span className="text-emerald-600 text-sm">✓ {isRTL ? 'تم الرفع' : 'Uploaded'}</span>}
@@ -138,7 +138,7 @@ export default function GovDocuments() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowForm(false)}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
-            <Button onClick={handleSave} disabled={saving || !form.title} className="bg-blue-600 hover:bg-blue-700">{isRTL ? 'حفظ' : 'Save'}</Button>
+            <Button onClick={handleSave} disabled={saving || !form.title} className="bg-najdi-700 hover:bg-najdi-900">{isRTL ? 'حفظ' : 'Save'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

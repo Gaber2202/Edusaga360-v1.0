@@ -53,8 +53,8 @@ import { toast } from 'sonner';
 /* ─── Reusable section header (icon chip + title + description) ─── */
 function SectionHeader({ icon: Icon, title, description, color = 'slate' }) {
   const chips = {
-    slate:  'bg-slate-100 text-slate-600',
-    blue:   'bg-blue-50 text-blue-600',
+    slate:  'bg-sand-alt text-muted-foreground',
+    blue:   'bg-najdi-50 text-najdi-700',
     indigo: 'bg-indigo-50 text-indigo-600',
     emerald:'bg-emerald-50 text-emerald-600',
     amber:  'bg-amber-50 text-amber-600',
@@ -65,8 +65,8 @@ function SectionHeader({ icon: Icon, title, description, color = 'slate' }) {
         <Icon className="w-5 h-5" />
       </div>
       <div>
-        <h3 className="font-semibold text-slate-900 leading-tight">{title}</h3>
-        {description && <p className="text-sm text-slate-500 mt-0.5">{description}</p>}
+        <h3 className="font-semibold text-ink leading-tight">{title}</h3>
+        {description && <p className="text-sm text-muted-foreground mt-0.5">{description}</p>}
       </div>
     </div>
   );
@@ -200,7 +200,7 @@ Return ONLY a JSON object with keys "first_name_ar" and "last_name_ar". No expla
         <Button variant="outline" size="sm" onClick={handleTranslate} disabled={translating || (!form.first_name && !form.last_name)}>
           {translating ? (isRTL ? 'جاري الترجمة...' : 'Translating...') : (isRTL ? 'ترجمة الاسم تلقائياً للعربية' : 'Auto-translate to Arabic')}
         </Button>
-        <span className="text-xs text-slate-400">{isRTL ? 'أو أدخل يدوياً أدناه' : 'or enter manually below'}</span>
+        <span className="text-xs text-muted-foreground">{isRTL ? 'أو أدخل يدوياً أدناه' : 'or enter manually below'}</span>
       </div>
 
       {/* Arabic names */}
@@ -274,7 +274,7 @@ function SchoolInfoSection({ isRTL }) {
   };
 
   if (!tenant) return (
-    <div className="text-center py-8 text-slate-400 text-sm">
+    <div className="text-center py-8 text-muted-foreground text-sm">
       {isRTL ? 'لا توجد بيانات مدرسة مرتبطة بهذا الحساب' : 'No school profile linked to this account'}
     </div>
   );
@@ -283,10 +283,10 @@ function SchoolInfoSection({ isRTL }) {
     <div className="space-y-5">
       {/* Logo */}
       <div className="flex items-center gap-4">
-        <div className="w-20 h-20 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+        <div className="w-20 h-20 rounded-xl border border-border bg-sand flex items-center justify-center overflow-hidden flex-shrink-0">
           {form.logo_url
             ? <img src={form.logo_url} alt="logo" className="w-full h-full object-contain" />
-            : <Building className="w-8 h-8 text-slate-300" />}
+            : <Building className="w-8 h-8 text-muted-foreground" />}
         </div>
         <div>
           <Label className="mb-1 block">{isRTL ? 'شعار المدرسة' : 'School Logo'}</Label>
@@ -381,10 +381,10 @@ export default function Settings() {
             title={isRTL ? 'اللغة' : 'Language'}
             description={isRTL ? 'لغة عرض الواجهة' : 'Interface display language'}
           />
-          <div className="mt-5 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-sm text-slate-600">
+          <div className="mt-5 flex items-center justify-between rounded-xl border border-border bg-sand px-4 py-3">
+            <p className="text-sm text-muted-foreground">
               {isRTL ? 'اللغة الحالية' : 'Current Language'}:{' '}
-              <span className="font-semibold text-slate-900">{language === 'ar' ? 'العربية' : 'English'}</span>
+              <span className="font-semibold text-ink">{language === 'ar' ? 'العربية' : 'English'}</span>
             </p>
             <Button onClick={toggleLanguage} variant="outline" size="sm" className="gap-2">
               <Globe className="w-3.5 h-3.5" />
@@ -401,13 +401,13 @@ export default function Settings() {
             description={isRTL ? 'معلوماتك الشخصية واسم العرض' : 'Your personal information and display name'}
           />
           <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-            <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
-              <p className="text-xs text-slate-400">{isRTL ? 'البريد الإلكتروني' : 'Email'}</p>
-              <p className="text-sm font-medium text-slate-700 truncate">{user?.email}</p>
+            <div className="rounded-lg border border-border bg-sand px-3 py-2">
+              <p className="text-xs text-muted-foreground">{isRTL ? 'البريد الإلكتروني' : 'Email'}</p>
+              <p className="text-sm font-medium text-ink truncate">{user?.email}</p>
             </div>
-            <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
-              <p className="text-xs text-slate-400">{isRTL ? 'الدور' : 'Role'}</p>
-              <p className="text-sm font-medium text-slate-700">{t(userRole)}</p>
+            <div className="rounded-lg border border-border bg-sand px-3 py-2">
+              <p className="text-xs text-muted-foreground">{isRTL ? 'الدور' : 'Role'}</p>
+              <p className="text-sm font-medium text-ink">{t(userRole)}</p>
             </div>
           </div>
           <MyProfileSection isRTL={isRTL} user={user} />
@@ -426,10 +426,10 @@ export default function Settings() {
       {openSection === 'language' && (
         <Card className="p-6">
           <SectionHeader icon={Globe} color="indigo" title={isRTL ? 'اللغة' : 'Language'} description={isRTL ? 'لغة عرض الواجهة' : 'Interface display language'} />
-          <div className="mt-5 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-sm text-slate-600">
+          <div className="mt-5 flex items-center justify-between rounded-xl border border-border bg-sand px-4 py-3">
+            <p className="text-sm text-muted-foreground">
               {isRTL ? 'اللغة الحالية' : 'Current Language'}:{' '}
-              <span className="font-semibold text-slate-900">{language === 'ar' ? 'العربية' : 'English'}</span>
+              <span className="font-semibold text-ink">{language === 'ar' ? 'العربية' : 'English'}</span>
             </p>
             <Button onClick={toggleLanguage} variant="outline" size="sm" className="gap-2">
               <Globe className="w-3.5 h-3.5" />
@@ -443,9 +443,9 @@ export default function Settings() {
         <Card className="p-6">
           <SectionHeader icon={Users} color="blue" title={isRTL ? 'الملف الشخصي' : 'My Profile'} description={isRTL ? 'معلوماتك الشخصية واسم العرض' : 'Your personal information and display name'} />
           <div className="mt-5 mb-5">
-            <div className="inline-flex flex-col rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
-              <p className="text-xs text-slate-400">{isRTL ? 'البريد الإلكتروني' : 'Email'}</p>
-              <p className="text-sm font-medium text-slate-700">{user?.email}</p>
+            <div className="inline-flex flex-col rounded-lg border border-border bg-sand px-3 py-2">
+              <p className="text-xs text-muted-foreground">{isRTL ? 'البريد الإلكتروني' : 'Email'}</p>
+              <p className="text-sm font-medium text-ink">{user?.email}</p>
             </div>
           </div>
           <MyProfileSection isRTL={isRTL} user={user} />
@@ -466,13 +466,13 @@ export default function Settings() {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <SectionHeader icon={Users} color="blue" title={isRTL ? 'المستخدمين' : 'Users'} description={isRTL ? 'المستخدمون النشطون في حسابك' : 'Active users in your account'} />
-              <span className="text-sm font-semibold text-slate-700 bg-slate-100 rounded-full px-3 py-1">{users.length}</span>
+              <span className="text-sm font-semibold text-ink bg-sand-alt rounded-full px-3 py-1">{users.length}</span>
             </div>
           </Card>
           <Card className="overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50">
+                <TableRow className="bg-sand">
                   <TableHead>{isRTL ? 'الاسم' : 'Name'}</TableHead>
                   <TableHead>{t('email')}</TableHead>
                   <TableHead>{isRTL ? 'الدور' : 'Role'}</TableHead>
@@ -482,7 +482,7 @@ export default function Settings() {
               <TableBody>
                 {users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-10 text-slate-400 text-sm">
+                    <TableCell colSpan={4} className="text-center py-10 text-muted-foreground text-sm">
                       {isRTL ? 'لا يوجد مستخدمون' : 'No users found'}
                     </TableCell>
                   </TableRow>
@@ -514,7 +514,7 @@ export default function Settings() {
       {openSection ? inlineSection : (
         <>
           <div className="relative max-w-md">
-            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'end-3' : 'start-3'}`} />
+            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'end-3' : 'start-3'}`} />
             <Input
               className={isRTL ? 'pe-9' : 'ps-9'}
               placeholder={isRTL ? 'ابحث في الإعدادات...' : 'Search settings...'}
@@ -524,22 +524,22 @@ export default function Settings() {
           </div>
 
           {filteredCatalog.length === 0 ? (
-            <Card className="p-10 text-center text-slate-400 text-sm">{isRTL ? 'لا توجد إعدادات مطابقة' : 'No matching settings'}</Card>
+            <Card className="p-10 text-center text-muted-foreground text-sm">{isRTL ? 'لا توجد إعدادات مطابقة' : 'No matching settings'}</Card>
           ) : filteredCatalog.map((cat) => (
             <div key={cat.key} className="space-y-3">
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-1">{isRTL ? cat.titleAr : cat.titleEn}</h3>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1">{isRTL ? cat.titleAr : cat.titleEn}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {cat.items.map((it) => {
                   const Tile = (
-                    <div className="h-full flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 hover:border-slate-300 hover:shadow-sm transition-all">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center flex-shrink-0">
+                    <div className="h-full flex items-start gap-3 rounded-xl border border-border bg-white p-4 hover:border-border hover:shadow-sm transition-all">
+                      <div className="w-10 h-10 rounded-xl bg-sand-alt text-muted-foreground flex items-center justify-center flex-shrink-0">
                         <it.icon className="w-5 h-5" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-slate-900 leading-tight">{isRTL ? it.titleAr : it.titleEn}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">{isRTL ? it.descAr : it.descEn}</p>
+                        <p className="font-medium text-ink leading-tight">{isRTL ? it.titleAr : it.titleEn}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{isRTL ? it.descAr : it.descEn}</p>
                       </div>
-                      <ChevronRight className={`w-4 h-4 text-slate-300 ms-auto flex-shrink-0 self-center ${isRTL ? 'rotate-180' : ''}`} />
+                      <ChevronRight className={`w-4 h-4 text-muted-foreground ms-auto flex-shrink-0 self-center ${isRTL ? 'rotate-180' : ''}`} />
                     </div>
                   );
                   return it.page ? (

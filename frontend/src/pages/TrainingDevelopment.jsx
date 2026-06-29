@@ -120,16 +120,16 @@ export default function TrainingDevelopment() {
     setLoadingAI(false);
   };
 
-  const statusColors = { planned: 'bg-blue-100 text-blue-700', ongoing: 'bg-amber-100 text-amber-700', completed: 'bg-green-100 text-green-700', cancelled: 'bg-red-100 text-red-700' };
+  const statusColors = { planned: 'bg-najdi-50 text-najdi-900', ongoing: 'bg-amber-100 text-amber-700', completed: 'bg-green-100 text-green-700', cancelled: 'bg-red-100 text-red-700' };
   const statusLabel = { planned: isRTL ? 'مخطط' : 'Planned', ongoing: isRTL ? 'جارٍ' : 'Ongoing', completed: isRTL ? 'مكتمل' : 'Completed', cancelled: isRTL ? 'ملغى' : 'Cancelled' };
 
   const columns = [
-    { header: isRTL ? 'الاسم' : 'Training Name', cell: r => <div><p className="font-medium">{r.training_name_ar}</p><p className="text-xs text-slate-500">{r.training_name_en}</p></div> },
+    { header: isRTL ? 'الاسم' : 'Training Name', cell: r => <div><p className="font-medium">{r.training_name_ar}</p><p className="text-xs text-muted-foreground">{r.training_name_en}</p></div> },
     { header: isRTL ? 'النوع' : 'Type', cell: r => <Badge variant="outline">{r.training_type === 'internal' ? (isRTL ? 'داخلي' : 'Internal') : r.training_type === 'external' ? (isRTL ? 'خارجي' : 'External') : (isRTL ? 'إلكتروني' : 'Online')}</Badge> },
     { header: isRTL ? 'المزود' : 'Provider', accessorKey: 'provider' },
     { header: isRTL ? 'تاريخ البدء' : 'Start Date', cell: r => r.start_date ? format(new Date(r.start_date), 'dd/MM/yyyy') : '-' },
     { header: isRTL ? 'ساعات CPD' : 'CPD Hours', accessorKey: 'cpd_hours' },
-    { header: isRTL ? 'إلزامي' : 'Mandatory', cell: r => r.is_mandatory ? <Badge className="bg-red-100 text-red-700">{isRTL ? 'إلزامي' : 'Mandatory'}</Badge> : <span className="text-slate-400">-</span> },
+    { header: isRTL ? 'إلزامي' : 'Mandatory', cell: r => r.is_mandatory ? <Badge className="bg-red-100 text-red-700">{isRTL ? 'إلزامي' : 'Mandatory'}</Badge> : <span className="text-muted-foreground">-</span> },
     { header: isRTL ? 'الحالة' : 'Status', cell: r => <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[r.status] || ''}`}>{statusLabel[r.status] || r.status}</span> },
     { header: isRTL ? 'إجراءات' : 'Actions', cell: r => (
       <Button size="sm" variant="ghost" onClick={() => { setEditingItem(r); setForm({ ...r }); setShowForm(true); }}>{isRTL ? 'تعديل' : 'Edit'}</Button>
@@ -149,19 +149,19 @@ export default function TrainingDevelopment() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4">
-          <p className="text-sm text-slate-500">{isRTL ? 'إجمالي البرامج' : 'Total Programs'}</p>
-          <p className="text-3xl font-bold text-slate-900">{trainings.length}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي البرامج' : 'Total Programs'}</p>
+          <p className="text-3xl font-bold text-ink">{trainings.length}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-sm text-slate-500">{isRTL ? 'مكتملة' : 'Completed'}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'مكتملة' : 'Completed'}</p>
           <p className="text-3xl font-bold text-green-600">{trainings.filter(t => t.status === 'completed').length}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-sm text-slate-500">{isRTL ? 'شهادات تنتهي قريباً' : 'Expiring Certs'}</p>
-          <p className={`text-3xl font-bold ${expiringCerts.length > 0 ? 'text-amber-600' : 'text-slate-900'}`}>{expiringCerts.length}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'شهادات تنتهي قريباً' : 'Expiring Certs'}</p>
+          <p className={`text-3xl font-bold ${expiringCerts.length > 0 ? 'text-amber-600' : 'text-ink'}`}>{expiringCerts.length}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-sm text-slate-500">{isRTL ? 'إلزامية' : 'Mandatory'}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'إلزامية' : 'Mandatory'}</p>
           <p className="text-3xl font-bold text-red-600">{trainings.filter(t => t.is_mandatory).length}</p>
         </Card>
       </div>
@@ -179,7 +179,7 @@ export default function TrainingDevelopment() {
 
         <TabsContent value="catalog" className="space-y-4">
           <div className="relative max-w-md">
-            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
             <Input value={search} onChange={e => setSearch(e.target.value)} placeholder={isRTL ? 'بحث...' : 'Search...'} className={`${isRTL ? 'pr-10' : 'pl-10'} bg-white`} />
           </div>
           <DataTable columns={columns} data={filtered} loading={isLoading} emptyMessage={isRTL ? 'لا توجد برامج' : 'No training programs'} />
@@ -193,9 +193,9 @@ export default function TrainingDevelopment() {
             </Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="p-4 border-blue-200 bg-blue-50">
+            <Card className="p-4 border-najdi-100 bg-najdi-50">
               <div className="flex items-center gap-3 mb-3">
-                <Route className="w-6 h-6 text-blue-600" />
+                <Route className="w-6 h-6 text-najdi-700" />
                 <h4 className="font-semibold">{isRTL ? 'مسار المعلم الجديد' : 'New Teacher Onboarding Path'}</h4>
               </div>
               <div className="flex gap-2 flex-wrap mb-3">
@@ -204,8 +204,8 @@ export default function TrainingDevelopment() {
                 <Badge variant="outline" className="text-xs"><GraduationCap className="w-3 h-3 me-1" />{isRTL ? 'ورشة' : 'Workshop'}</Badge>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <span className="text-slate-500">4 {isRTL ? 'وحدات' : 'modules'}</span>
-                <span className="text-slate-500">12 {isRTL ? 'ساعة' : 'hrs'}</span>
+                <span className="text-muted-foreground">4 {isRTL ? 'وحدات' : 'modules'}</span>
+                <span className="text-muted-foreground">12 {isRTL ? 'ساعة' : 'hrs'}</span>
               </div>
             </Card>
             <Card className="p-4 border-emerald-200 bg-emerald-50">
@@ -218,13 +218,13 @@ export default function TrainingDevelopment() {
                 <Badge variant="outline" className="text-xs"><BookOpen className="w-3 h-3 me-1" />{isRTL ? 'دراسة ذاتية' : 'Self-Study'}</Badge>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <span className="text-slate-500">6 {isRTL ? 'وحدات' : 'modules'}</span>
-                <span className="text-slate-500">20 {isRTL ? 'ساعة' : 'hrs'}</span>
+                <span className="text-muted-foreground">6 {isRTL ? 'وحدات' : 'modules'}</span>
+                <span className="text-muted-foreground">20 {isRTL ? 'ساعة' : 'hrs'}</span>
               </div>
             </Card>
           </div>
-          <Card className="p-4 text-center text-slate-400">
-            <Route className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+          <Card className="p-4 text-center text-muted-foreground">
+            <Route className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
             <p className="text-sm">{isRTL ? 'أنشئ مسارات تعلم مخصصة بمحتوى مختلط (فيديو، تقييمات، ندوات، وحدات مصغرة)' : 'Create custom learning paths with mixed content (videos, assessments, webinars, bite-sized modules)'}</p>
           </Card>
         </TabsContent>
@@ -249,14 +249,14 @@ export default function TrainingDevelopment() {
                   return (
                     <TableRow key={t.id}>
                       <TableCell>
-                        <div><p className="font-medium">{t.training_name_ar}</p><p className="text-xs text-slate-500">{t.training_name_en}</p></div>
+                        <div><p className="font-medium">{t.training_name_ar}</p><p className="text-xs text-muted-foreground">{t.training_name_en}</p></div>
                       </TableCell>
                       <TableCell><Badge variant="outline">{t.training_type}</Badge></TableCell>
                       <TableCell>{t.max_participants || '-'}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-slate-100 rounded-full h-2 max-w-[100px]">
-                            <div className={`h-2 rounded-full ${completionPct === 100 ? 'bg-emerald-500' : completionPct > 50 ? 'bg-blue-500' : 'bg-amber-500'}`} style={{ width: `${completionPct}%` }} />
+                          <div className="flex-1 bg-sand-alt rounded-full h-2 max-w-[100px]">
+                            <div className={`h-2 rounded-full ${completionPct === 100 ? 'bg-emerald-500' : completionPct > 50 ? 'bg-najdi-500' : 'bg-amber-500'}`} style={{ width: `${completionPct}%` }} />
                           </div>
                           <span className="text-xs font-medium">{completionPct}%</span>
                         </div>
@@ -267,7 +267,7 @@ export default function TrainingDevelopment() {
                   );
                 })}
                 {trainings.length === 0 && (
-                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-slate-400">{isRTL ? 'لا توجد دورات' : 'No courses'}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{isRTL ? 'لا توجد دورات' : 'No courses'}</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -276,11 +276,11 @@ export default function TrainingDevelopment() {
 
         <TabsContent value="expiring" className="space-y-4">
           {expiringCerts.length === 0 ? (
-            <Card className="p-8 text-center text-slate-400">{isRTL ? 'لا توجد شهادات تنتهي خلال 60 يومًا' : 'No certifications expiring within 60 days'}</Card>
+            <Card className="p-8 text-center text-muted-foreground">{isRTL ? 'لا توجد شهادات تنتهي خلال 60 يومًا' : 'No certifications expiring within 60 days'}</Card>
           ) : (
             <Card className="overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50">
+                <thead className="bg-sand">
                   <tr>
                     <th className="text-start p-3">{isRTL ? 'الموظف' : 'Employee'}</th>
                     <th className="text-start p-3">{isRTL ? 'تاريخ انتهاء الترخيص' : 'License Expiry'}</th>
@@ -292,7 +292,7 @@ export default function TrainingDevelopment() {
                   {expiringCerts.map(e => {
                     const days = differenceInDays(new Date(e.license_expiry_date), new Date());
                     return (
-                      <tr key={e.id} className="border-t hover:bg-slate-50">
+                      <tr key={e.id} className="border-t hover:bg-sand">
                         <td className="p-3 font-medium">{e.name_ar}</td>
                         <td className="p-3">{format(new Date(e.license_expiry_date), 'dd/MM/yyyy')}</td>
                         <td className="p-3"><span className={`font-bold ${days <= 30 ? 'text-red-600' : 'text-amber-600'}`}>{days}</span></td>
@@ -315,11 +315,11 @@ export default function TrainingDevelopment() {
                 {['internal', 'external', 'online'].map(type => {
                   const count = trainings.filter(t => t.training_type === type).length;
                   const pct = trainings.length > 0 ? Math.round((count / trainings.length) * 100) : 0;
-                  const colors = { internal: 'bg-blue-500', external: 'bg-emerald-500', online: 'bg-purple-500' };
+                  const colors = { internal: 'bg-najdi-500', external: 'bg-emerald-500', online: 'bg-purple-500' };
                   return (
                     <div key={type} className="flex items-center gap-3">
                       <span className="text-sm w-24">{type === 'internal' ? (isRTL ? 'داخلي' : 'Internal') : type === 'external' ? (isRTL ? 'خارجي' : 'External') : (isRTL ? 'إلكتروني' : 'Online')}</span>
-                      <div className="flex-1 bg-slate-100 rounded-full h-4">
+                      <div className="flex-1 bg-sand-alt rounded-full h-4">
                         <div className={`${colors[type]} h-4 rounded-full`} style={{ width: `${pct}%` }} />
                       </div>
                       <span className="text-sm font-medium w-16 text-end">{count} ({pct}%)</span>
@@ -331,7 +331,7 @@ export default function TrainingDevelopment() {
             <Card className="p-6">
               <h4 className="font-semibold mb-4">{isRTL ? 'ملخص ساعات CPD' : 'CPD Hours Summary'}</h4>
               <div className="space-y-3">
-                <div className="flex justify-between"><span className="text-sm">{isRTL ? 'إجمالي ساعات CPD' : 'Total CPD Hours'}</span><span className="font-bold text-blue-600">{trainings.reduce((s, t) => s + (t.cpd_hours || 0), 0)}</span></div>
+                <div className="flex justify-between"><span className="text-sm">{isRTL ? 'إجمالي ساعات CPD' : 'Total CPD Hours'}</span><span className="font-bold text-najdi-700">{trainings.reduce((s, t) => s + (t.cpd_hours || 0), 0)}</span></div>
                 <div className="flex justify-between"><span className="text-sm">{isRTL ? 'ساعات مكتملة' : 'Completed Hours'}</span><span className="font-bold text-emerald-600">{trainings.filter(t => t.status === 'completed').reduce((s, t) => s + (t.cpd_hours || 0), 0)}</span></div>
                 <div className="flex justify-between"><span className="text-sm">{isRTL ? 'إلزامية' : 'Mandatory'}</span><span className="font-bold text-red-600">{trainings.filter(t => t.is_mandatory).reduce((s, t) => s + (t.cpd_hours || 0), 0)}</span></div>
                 <div className="flex justify-between"><span className="text-sm">{isRTL ? 'إجمالي التكاليف' : 'Total Cost'}</span><span className="font-bold">{trainings.reduce((s, t) => s + (t.cost_per_participant || 0), 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span></div>
@@ -346,7 +346,7 @@ export default function TrainingDevelopment() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h4 className="font-semibold">{isRTL ? 'تقارير الامتثال الحكومي (نمط قوى)' : 'Government Compliance Reports (Qiwa-style)'}</h4>
-                <p className="text-sm text-slate-500">{isRTL ? 'تصدير تقارير التدريب بنقرة واحدة' : 'One-click training report exports'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'تصدير تقارير التدريب بنقرة واحدة' : 'One-click training report exports'}</p>
               </div>
               <Button variant="outline" className="gap-2" onClick={() => {
                 const rows = trainings.map(t => `${t.training_name_ar}\t${t.training_name_en}\t${t.training_type}\t${t.provider}\t${t.start_date}\t${t.end_date}\t${t.cpd_hours}\t${t.is_mandatory ? 'Yes' : 'No'}\t${t.status}`);
@@ -360,7 +360,7 @@ export default function TrainingDevelopment() {
               </Button>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-3 bg-blue-50 rounded-lg text-center"><p className="text-sm text-blue-700">{isRTL ? 'إجمالي البرامج' : 'Total Programs'}</p><p className="text-xl font-bold text-blue-600">{trainings.length}</p></div>
+              <div className="p-3 bg-najdi-50 rounded-lg text-center"><p className="text-sm text-najdi-900">{isRTL ? 'إجمالي البرامج' : 'Total Programs'}</p><p className="text-xl font-bold text-najdi-700">{trainings.length}</p></div>
               <div className="p-3 bg-emerald-50 rounded-lg text-center"><p className="text-sm text-emerald-700">{isRTL ? 'مكتملة' : 'Completed'}</p><p className="text-xl font-bold text-emerald-600">{trainings.filter(t => t.status === 'completed').length}</p></div>
               <div className="p-3 bg-red-50 rounded-lg text-center"><p className="text-sm text-red-700">{isRTL ? 'إلزامية' : 'Mandatory'}</p><p className="text-xl font-bold text-red-600">{trainings.filter(t => t.is_mandatory).length}</p></div>
               <div className="p-3 bg-amber-50 rounded-lg text-center"><p className="text-sm text-amber-700">{isRTL ? 'شهادات تنتهي' : 'Expiring Certs'}</p><p className="text-xl font-bold text-amber-600">{expiringCerts.length}</p></div>
@@ -375,8 +375,8 @@ export default function TrainingDevelopment() {
                 <Bot className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-slate-900">Yamen AI — {isRTL ? 'تحليل التدريب' : 'Training Insights'}</h3>
-                <p className="text-sm text-slate-500">{isRTL ? 'تحليل ذكي لبيانات التدريب والتطوير' : 'AI-powered training & development analysis'}</p>
+                <h3 className="font-semibold text-ink">Yamen AI — {isRTL ? 'تحليل التدريب' : 'Training Insights'}</h3>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'تحليل ذكي لبيانات التدريب والتطوير' : 'AI-powered training & development analysis'}</p>
               </div>
             </div>
             <Button onClick={handleAI} disabled={loadingAI} className="mb-4 gap-2 bg-purple-600 hover:bg-purple-700">
@@ -384,7 +384,7 @@ export default function TrainingDevelopment() {
               {isRTL ? 'تحليل بيانات التدريب' : 'Analyze Training Data'}
             </Button>
             {aiInsight && (
-              <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 whitespace-pre-wrap text-sm text-slate-700">{aiInsight}</div>
+              <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 whitespace-pre-wrap text-sm text-ink">{aiInsight}</div>
             )}
           </Card>
         </TabsContent>

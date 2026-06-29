@@ -188,8 +188,8 @@ export default function GOSISubmissions() {
     { header: isRTL ? 'التاريخ' : 'Date', cell: (row) => row.generated_date ? format(new Date(row.generated_date), 'dd/MM/yyyy') : '-' },
     { header: t('status'), cell: (row) => {
       const colors = {
-        draft: 'bg-slate-100 text-slate-700',
-        submitted: 'bg-blue-100 text-blue-700',
+        draft: 'bg-sand-alt text-ink',
+        submitted: 'bg-najdi-50 text-najdi-900',
         accepted: 'bg-emerald-100 text-emerald-700',
         rejected: 'bg-red-100 text-red-700'
       };
@@ -237,7 +237,7 @@ export default function GOSISubmissions() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">{isRTL ? 'تقديمات GOSI' : 'GOSI Submissions'}</h2>
-          <p className="text-slate-500">{isRTL ? 'إدارة ملفات التأمينات الاجتماعية' : 'Manage GOSI submission files'}</p>
+          <p className="text-muted-foreground">{isRTL ? 'إدارة ملفات التأمينات الاجتماعية' : 'Manage GOSI submission files'}</p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -276,25 +276,25 @@ export default function GOSISubmissions() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
-            <div className="text-sm text-slate-500 mb-1">{isRTL ? 'موظفين GOSI' : 'GOSI Employees'}</div>
+            <div className="text-sm text-muted-foreground mb-1">{isRTL ? 'موظفين GOSI' : 'GOSI Employees'}</div>
             <div className="text-2xl font-bold">{filteredEmployees.length}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-sm text-slate-500 mb-1">{isRTL ? 'ملفات معلقة' : 'Pending Submissions'}</div>
+            <div className="text-sm text-muted-foreground mb-1">{isRTL ? 'ملفات معلقة' : 'Pending Submissions'}</div>
             <div className="text-2xl font-bold text-amber-600">{filteredSubmissions.filter(s => s.status === 'draft').length}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-sm text-slate-500 mb-1">{isRTL ? 'ملفات مرسلة' : 'Submitted'}</div>
-            <div className="text-2xl font-bold text-blue-600">{filteredSubmissions.filter(s => s.status === 'submitted').length}</div>
+            <div className="text-sm text-muted-foreground mb-1">{isRTL ? 'ملفات مرسلة' : 'Submitted'}</div>
+            <div className="text-2xl font-bold text-najdi-700">{filteredSubmissions.filter(s => s.status === 'submitted').length}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-sm text-slate-500 mb-1">{isRTL ? 'ملفات مقبولة' : 'Accepted'}</div>
+            <div className="text-sm text-muted-foreground mb-1">{isRTL ? 'ملفات مقبولة' : 'Accepted'}</div>
             <div className="text-2xl font-bold text-emerald-600">{filteredSubmissions.filter(s => s.status === 'accepted').length}</div>
           </CardContent>
         </Card>
@@ -328,8 +328,8 @@ export default function GOSISubmissions() {
                 <option value="quarterly">{isRTL ? 'ربع سنوي' : 'Quarterly'}</option>
               </select>
             </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
-              <p className="text-blue-900">
+            <div className="bg-najdi-50 border border-najdi-100 rounded-lg p-3 text-sm">
+              <p className="text-najdi-900">
                 {isRTL 
                   ? `سيتم إنشاء الملف لـ ${filteredEmployees.length} موظف مشمول بالتأمينات`
                   : `File will be generated for ${filteredEmployees.length} GOSI-eligible employees`

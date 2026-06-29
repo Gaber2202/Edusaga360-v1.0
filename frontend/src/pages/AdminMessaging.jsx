@@ -130,7 +130,7 @@ export default function AdminMessaging() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-najdi-900 border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -139,8 +139,8 @@ export default function AdminMessaging() {
     <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">{isRTL ? 'إرسال الرسائل' : 'Parent Messaging'}</h1>
-          <p className="text-slate-600 text-sm mt-1">
+          <h1 className="text-3xl font-bold text-ink">{isRTL ? 'إرسال الرسائل' : 'Parent Messaging'}</h1>
+          <p className="text-muted-foreground text-sm mt-1">
             {isRTL ? 'إرسال رسائل آمنة لأولياء الأمور' : 'Send secure messages to parents'}
           </p>
         </div>
@@ -152,7 +152,7 @@ export default function AdminMessaging() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="relative">
-            <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder={isRTL ? 'ابحث عن طالب...' : 'Search student...'}
               value={searchTerm}
@@ -162,7 +162,7 @@ export default function AdminMessaging() {
           </div>
 
           {filteredStudents.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">
+            <div className="text-center py-8 text-muted-foreground">
               {isRTL ? 'لا توجد طلاب' : 'No students found'}
             </div>
           ) : (
@@ -185,7 +185,7 @@ export default function AdminMessaging() {
                       <TableCell>{student.student_id}</TableCell>
                       <TableCell>{student.grade}</TableCell>
                       <TableCell>{student.guardian?.name_en || student.guardian?.name_ar || '-'}</TableCell>
-                      <TableCell className="text-sm text-slate-600">{student.guardian?.email || '-'}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{student.guardian?.email || '-'}</TableCell>
                       <TableCell>
                         <Button
                           size="sm"
@@ -220,20 +220,20 @@ export default function AdminMessaging() {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="bg-slate-50 p-4 rounded-lg">
-              <p className="text-sm text-slate-600">
+            <div className="bg-sand p-4 rounded-lg">
+              <p className="text-sm text-muted-foreground">
                 {isRTL ? 'إلى: ' : 'To: '}
-                <span className="font-medium text-slate-900">
+                <span className="font-medium text-ink">
                   {selectedStudent?.guardian?.name_en || selectedStudent?.guardian?.name_ar}
                 </span>
               </p>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {selectedStudent?.guardian?.email}
               </p>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-2">
+              <label className="text-sm font-medium text-ink block mb-2">
                 {isRTL ? 'نوع الرسالة' : 'Message Type'}
               </label>
               <Select
@@ -256,7 +256,7 @@ export default function AdminMessaging() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-2">
+              <label className="text-sm font-medium text-ink block mb-2">
                 {isRTL ? 'الموضوع' : 'Subject'}
               </label>
               <Input
@@ -269,7 +269,7 @@ export default function AdminMessaging() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-2">
+              <label className="text-sm font-medium text-ink block mb-2">
                 {isRTL ? 'الرسالة' : 'Message'}
               </label>
               <Textarea

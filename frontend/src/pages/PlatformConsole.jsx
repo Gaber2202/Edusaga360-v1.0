@@ -41,9 +41,9 @@ export default function PlatformConsole() {
   if (!isAuthorized) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <Shield className="w-16 h-16 text-slate-300" />
-        <h2 className="text-xl font-semibold text-slate-500">{label('غير مصرح', 'Unauthorized')}</h2>
-        <p className="text-slate-400 text-sm">{label('هذه الصفحة للمسؤول الأعلى فقط', 'This page is restricted to platform owners only.')}</p>
+        <Shield className="w-16 h-16 text-muted-foreground" />
+        <h2 className="text-xl font-semibold text-muted-foreground">{label('غير مصرح', 'Unauthorized')}</h2>
+        <p className="text-muted-foreground text-sm">{label('هذه الصفحة للمسؤول الأعلى فقط', 'This page is restricted to platform owners only.')}</p>
       </div>
     );
   }
@@ -98,8 +98,8 @@ export default function PlatformConsole() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{label('لوحة تحكم المنصة', 'Platform Console')}</h1>
-          <p className="text-sm text-slate-500 mt-0.5">{label('إدارة المستأجرين والخطط والاشتراكات', 'Manage tenants, plans & subscriptions')}</p>
+          <h1 className="text-2xl font-bold text-ink">{label('لوحة تحكم المنصة', 'Platform Console')}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{label('إدارة المستأجرين والخطط والاشتراكات', 'Manage tenants, plans & subscriptions')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => refetch()}>
@@ -124,9 +124,9 @@ export default function PlatformConsole() {
 
         <TabsContent value="tenants" className="space-y-4 pt-4">
           {/* Filters */}
-          <div className="flex flex-wrap items-center gap-3 bg-white border border-slate-200 rounded-xl p-3">
+          <div className="flex flex-wrap items-center gap-3 bg-white border border-border rounded-xl p-3">
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
@@ -154,7 +154,7 @@ export default function PlatformConsole() {
                 <SelectItem value="enterprise">Enterprise</SelectItem>
               </SelectContent>
             </Select>
-            <Badge variant="outline" className="text-xs text-slate-500">
+            <Badge variant="outline" className="text-xs text-muted-foreground">
               {filtered.length} {label('مستأجر', 'tenant(s)')}
             </Badge>
           </div>
@@ -162,10 +162,10 @@ export default function PlatformConsole() {
           {/* Tenant Grid */}
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1,2,3].map(i => <div key={i} className="h-48 bg-slate-100 rounded-xl animate-pulse" />)}
+              {[1,2,3].map(i => <div key={i} className="h-48 bg-sand-alt rounded-xl animate-pulse" />)}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-16 text-slate-400">
+            <div className="text-center py-16 text-muted-foreground">
               <Shield className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p>{label('لا يوجد مستأجرون', 'No tenants found')}</p>
               <Button onClick={handleNew} variant="outline" className="mt-4" size="sm">

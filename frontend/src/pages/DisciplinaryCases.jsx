@@ -40,7 +40,7 @@ const OUTCOMES = [
 ];
 
 const statusConfig = {
-  open: { color: 'bg-blue-100 text-blue-700', ar: 'مفتوحة', en: 'Open' },
+  open: { color: 'bg-najdi-50 text-najdi-900', ar: 'مفتوحة', en: 'Open' },
   under_investigation: { color: 'bg-amber-100 text-amber-700', ar: 'تحت التحقيق', en: 'Under Investigation' },
   hearing: { color: 'bg-purple-100 text-purple-700', ar: 'جلسة استماع', en: 'Hearing' },
   closed: { color: 'bg-green-100 text-green-700', ar: 'مغلقة', en: 'Closed' },
@@ -146,7 +146,7 @@ export default function DisciplinaryCases() {
     { header: isRTL ? 'الموظف' : 'Employee', accessorKey: 'employee_name' },
     { header: isRTL ? 'النوع' : 'Type', cell: r => { const t = CASE_TYPES.find(t => t.value === r.case_type); return <span>{isRTL ? t?.ar : t?.en}</span>; } },
     { header: isRTL ? 'تاريخ الحادثة' : 'Incident Date', cell: r => r.incident_date ? format(new Date(r.incident_date), 'dd/MM/yyyy') : '-' },
-    { header: isRTL ? 'سري' : 'Confidential', cell: r => r.is_confidential ? <Badge className="bg-slate-700 text-white">{isRTL ? 'سري' : 'Confidential'}</Badge> : '-' },
+    { header: isRTL ? 'سري' : 'Confidential', cell: r => r.is_confidential ? <Badge className="bg-ink text-white">{isRTL ? 'سري' : 'Confidential'}</Badge> : '-' },
     { header: isRTL ? 'الحالة' : 'Status', cell: r => { const s = statusConfig[r.status]; return <span className={`px-2 py-1 rounded-full text-xs font-medium ${s?.color}`}>{isRTL ? s?.ar : s?.en}</span>; } },
     { header: isRTL ? 'إجراءات' : 'Actions', cell: r => (
       <div className="flex gap-1">
@@ -169,20 +169,20 @@ export default function DisciplinaryCases() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4">
-          <p className="text-sm text-slate-500">{isRTL ? 'إجمالي' : 'Total Cases'}</p>
-          <p className="text-3xl font-bold text-slate-900">{cases.length}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي' : 'Total Cases'}</p>
+          <p className="text-3xl font-bold text-ink">{cases.length}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-sm text-slate-500">{isRTL ? 'مفتوحة' : 'Open'}</p>
-          <p className="text-3xl font-bold text-blue-600">{cases.filter(c => c.status === 'open').length}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'مفتوحة' : 'Open'}</p>
+          <p className="text-3xl font-bold text-najdi-700">{cases.filter(c => c.status === 'open').length}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-sm text-slate-500">{isRTL ? 'تحت التحقيق' : 'Under Investigation'}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'تحت التحقيق' : 'Under Investigation'}</p>
           <p className="text-3xl font-bold text-amber-600">{cases.filter(c => c.status === 'under_investigation').length}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-sm text-slate-500">{isRTL ? 'مصعّدة' : 'Escalated'}</p>
-          <p className={`text-3xl font-bold ${cases.filter(c => c.status === 'escalated').length > 0 ? 'text-red-600' : 'text-slate-900'}`}>{cases.filter(c => c.status === 'escalated').length}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'مصعّدة' : 'Escalated'}</p>
+          <p className={`text-3xl font-bold ${cases.filter(c => c.status === 'escalated').length > 0 ? 'text-red-600' : 'text-ink'}`}>{cases.filter(c => c.status === 'escalated').length}</p>
         </Card>
       </div>
 
@@ -194,7 +194,7 @@ export default function DisciplinaryCases() {
 
         <TabsContent value="cases" className="space-y-4">
           <div className="relative max-w-md">
-            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
             <Input value={search} onChange={e => setSearch(e.target.value)} placeholder={isRTL ? 'بحث...' : 'Search...'} className={`${isRTL ? 'pr-10' : 'pl-10'} bg-white`} />
           </div>
           <DataTable columns={columns} data={filtered} loading={isLoading} emptyMessage={isRTL ? 'لا توجد قضايا' : 'No cases'} />
@@ -208,7 +208,7 @@ export default function DisciplinaryCases() {
               </div>
               <div>
                 <h3 className="font-semibold">Yamen AI — {isRTL ? 'تحليل القضايا' : 'Case Analysis'}</h3>
-                <p className="text-sm text-slate-500">{isRTL ? 'كشف الأنماط وتقييم المخاطر' : 'Pattern detection & risk scoring'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'كشف الأنماط وتقييم المخاطر' : 'Pattern detection & risk scoring'}</p>
               </div>
             </div>
             <Button onClick={handleAI} disabled={loadingAI} className="mb-4 gap-2 bg-purple-600 hover:bg-purple-700">
@@ -290,7 +290,7 @@ export default function DisciplinaryCases() {
             </div>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={form.is_confidential} onChange={e => setForm(p => ({ ...p, is_confidential: e.target.checked }))} />
-              <span className="text-sm font-medium text-slate-700">{isRTL ? 'قضية سرية' : 'Confidential Case'}</span>
+              <span className="text-sm font-medium text-ink">{isRTL ? 'قضية سرية' : 'Confidential Case'}</span>
             </label>
           </div>
           <DialogFooter>
@@ -312,14 +312,14 @@ export default function DisciplinaryCases() {
             </DialogHeader>
             <div className="space-y-3 text-sm">
               <div className="grid grid-cols-2 gap-3">
-                <div><Label className="text-slate-500">{isRTL ? 'الموظف' : 'Employee'}</Label><p className="font-medium">{showDetails.employee_name}</p></div>
-                <div><Label className="text-slate-500">{isRTL ? 'النوع' : 'Type'}</Label><p>{CASE_TYPES.find(t => t.value === showDetails.case_type)?.[isRTL ? 'ar' : 'en']}</p></div>
-                <div><Label className="text-slate-500">{isRTL ? 'الحالة' : 'Status'}</Label><p>{statusConfig[showDetails.status]?.[isRTL ? 'ar' : 'en']}</p></div>
-                <div><Label className="text-slate-500">{isRTL ? 'النتيجة' : 'Outcome'}</Label><p>{OUTCOMES.find(o => o.value === showDetails.outcome)?.[isRTL ? 'ar' : 'en'] || '-'}</p></div>
+                <div><Label className="text-muted-foreground">{isRTL ? 'الموظف' : 'Employee'}</Label><p className="font-medium">{showDetails.employee_name}</p></div>
+                <div><Label className="text-muted-foreground">{isRTL ? 'النوع' : 'Type'}</Label><p>{CASE_TYPES.find(t => t.value === showDetails.case_type)?.[isRTL ? 'ar' : 'en']}</p></div>
+                <div><Label className="text-muted-foreground">{isRTL ? 'الحالة' : 'Status'}</Label><p>{statusConfig[showDetails.status]?.[isRTL ? 'ar' : 'en']}</p></div>
+                <div><Label className="text-muted-foreground">{isRTL ? 'النتيجة' : 'Outcome'}</Label><p>{OUTCOMES.find(o => o.value === showDetails.outcome)?.[isRTL ? 'ar' : 'en'] || '-'}</p></div>
               </div>
-              {showDetails.description && <div><Label className="text-slate-500">{isRTL ? 'الوصف' : 'Description'}</Label><p className="mt-1 p-3 bg-slate-50 rounded-lg">{showDetails.description}</p></div>}
-              {showDetails.investigation_notes && <div><Label className="text-slate-500">{isRTL ? 'ملاحظات التحقيق' : 'Investigation Notes'}</Label><p className="mt-1 p-3 bg-amber-50 rounded-lg">{showDetails.investigation_notes}</p></div>}
-              {showDetails.grievance_notes && <div><Label className="text-slate-500">{isRTL ? 'مظلمة الموظف' : 'Employee Grievance'}</Label><p className="mt-1 p-3 bg-blue-50 rounded-lg">{showDetails.grievance_notes}</p></div>}
+              {showDetails.description && <div><Label className="text-muted-foreground">{isRTL ? 'الوصف' : 'Description'}</Label><p className="mt-1 p-3 bg-sand rounded-lg">{showDetails.description}</p></div>}
+              {showDetails.investigation_notes && <div><Label className="text-muted-foreground">{isRTL ? 'ملاحظات التحقيق' : 'Investigation Notes'}</Label><p className="mt-1 p-3 bg-amber-50 rounded-lg">{showDetails.investigation_notes}</p></div>}
+              {showDetails.grievance_notes && <div><Label className="text-muted-foreground">{isRTL ? 'مظلمة الموظف' : 'Employee Grievance'}</Label><p className="mt-1 p-3 bg-najdi-50 rounded-lg">{showDetails.grievance_notes}</p></div>}
             </div>
           </DialogContent>
         </Dialog>

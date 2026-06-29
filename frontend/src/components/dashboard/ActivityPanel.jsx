@@ -8,7 +8,7 @@ import { createPageUrl } from '../../utils';
 
 function InitialsAvatar({ name, color: _color = 'blue' }) {
   const colorMap = {
-    blue: 'bg-blue-100 text-blue-700',
+    blue: 'bg-najdi-50 text-najdi-900',
     emerald: 'bg-emerald-100 text-emerald-700',
     amber: 'bg-amber-100 text-amber-700',
     purple: 'bg-purple-100 text-purple-700',
@@ -27,7 +27,7 @@ const statusConfig = {
   pending:  { label: { ar: 'معلق', en: 'Pending' }, cls: 'bg-amber-100 text-amber-700 border-amber-200' },
   approved: { label: { ar: 'موافق', en: 'Approved' }, cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
   rejected: { label: { ar: 'مرفوض', en: 'Rejected' }, cls: 'bg-red-100 text-red-700 border-red-200' },
-  manager_approved: { label: { ar: 'موافقة مدير', en: 'Mgr Approved' }, cls: 'bg-blue-100 text-blue-700 border-blue-200' },
+  manager_approved: { label: { ar: 'موافقة مدير', en: 'Mgr Approved' }, cls: 'bg-najdi-50 text-najdi-900 border-najdi-100' },
 };
 
 export default function ActivityPanel({ leaveRequests, applications, invoices, isHR, isSchoolAdmin, isFinance, isRTL }) {
@@ -38,7 +38,7 @@ export default function ActivityPanel({ leaveRequests, applications, invoices, i
         <Card>
           <div className="flex items-center justify-between p-5 pb-3">
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-slate-800 text-sm">{isRTL ? 'إجازات معلقة' : 'Pending Leave Requests'}</h3>
+              <h3 className="font-bold text-ink text-sm">{isRTL ? 'إجازات معلقة' : 'Pending Leave Requests'}</h3>
               {leaveRequests.length > 0 && (
                 <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full border border-amber-200">{leaveRequests.length}</span>
               )}
@@ -51,15 +51,15 @@ export default function ActivityPanel({ leaveRequests, applications, invoices, i
           </div>
           <CardContent className="pt-0 space-y-2">
             {leaveRequests.length === 0 ? (
-              <p className="text-sm text-slate-500 text-center py-4">{isRTL ? 'لا توجد طلبات معلقة' : 'No pending requests'}</p>
+              <p className="text-sm text-muted-foreground text-center py-4">{isRTL ? 'لا توجد طلبات معلقة' : 'No pending requests'}</p>
             ) : leaveRequests.slice(0, 5).map((r) => {
               const cfg = statusConfig[r.status] || statusConfig.pending;
               return (
-                <div key={r.id} className="bg-slate-50 p-3 rounded-lg flex items-center gap-3">
+                <div key={r.id} className="bg-sand p-3 rounded-lg flex items-center gap-3">
                   <InitialsAvatar name={r.employee_name} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-slate-800 text-sm font-semibold truncate">{r.employee_name}</p>
-                    <p className="text-xs text-slate-400">{r.leave_type_name} · {r.total_days} {isRTL ? 'أيام' : 'days'}</p>
+                    <p className="text-ink text-sm font-semibold truncate">{r.employee_name}</p>
+                    <p className="text-xs text-muted-foreground">{r.leave_type_name} · {r.total_days} {isRTL ? 'أيام' : 'days'}</p>
                   </div>
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${cfg.cls}`}>
                     {isRTL ? cfg.label.ar : cfg.label.en}
@@ -76,9 +76,9 @@ export default function ActivityPanel({ leaveRequests, applications, invoices, i
         <Card>
           <div className="flex items-center justify-between p-5 pb-3">
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-slate-800 text-sm">{isRTL ? 'أحدث الطلبات' : 'Recent Applications'}</h3>
+              <h3 className="font-bold text-ink text-sm">{isRTL ? 'أحدث الطلبات' : 'Recent Applications'}</h3>
               {applications.length > 0 && (
-                <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full border border-blue-200">{applications.length}</span>
+                <span className="bg-najdi-50 text-najdi-900 text-xs font-bold px-2 py-0.5 rounded-full border border-najdi-100">{applications.length}</span>
               )}
             </div>
             <Button asChild variant="ghost" size="sm">
@@ -89,13 +89,13 @@ export default function ActivityPanel({ leaveRequests, applications, invoices, i
           </div>
           <CardContent className="pt-0 space-y-2">
             {applications.length === 0 ? (
-              <p className="text-sm text-slate-500 text-center py-4">{isRTL ? 'لا توجد طلبات' : 'No applications'}</p>
+              <p className="text-sm text-muted-foreground text-center py-4">{isRTL ? 'لا توجد طلبات' : 'No applications'}</p>
             ) : applications.slice(0, 5).map((app) => (
-              <div key={app.id} className="bg-slate-50 p-3 rounded-lg flex items-center gap-3">
+              <div key={app.id} className="bg-sand p-3 rounded-lg flex items-center gap-3">
                 <InitialsAvatar name={app.student_name_ar || app.student_name_en} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-slate-800 text-sm font-semibold truncate">{app.student_name_ar}</p>
-                  <p className="text-xs text-slate-400">{app.applying_for_grade}</p>
+                  <p className="text-ink text-sm font-semibold truncate">{app.student_name_ar}</p>
+                  <p className="text-xs text-muted-foreground">{app.applying_for_grade}</p>
                 </div>
                 <StatusBadge status={app.status} />
               </div>
@@ -109,9 +109,9 @@ export default function ActivityPanel({ leaveRequests, applications, invoices, i
         <Card>
           <div className="flex items-center justify-between p-5 pb-3">
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-slate-800 text-sm">{isRTL ? 'أحدث الفواتير' : 'Recent Invoices'}</h3>
+              <h3 className="font-bold text-ink text-sm">{isRTL ? 'أحدث الفواتير' : 'Recent Invoices'}</h3>
               {invoices.length > 0 && (
-                <span className="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-0.5 rounded-full border border-slate-200">{invoices.length}</span>
+                <span className="bg-sand-alt text-muted-foreground text-xs font-bold px-2 py-0.5 rounded-full border border-border">{invoices.length}</span>
               )}
             </div>
             <Button asChild variant="ghost" size="sm">
@@ -122,13 +122,13 @@ export default function ActivityPanel({ leaveRequests, applications, invoices, i
           </div>
           <CardContent className="pt-0 space-y-2">
             {invoices.length === 0 ? (
-              <p className="text-sm text-slate-500 text-center py-4">{isRTL ? 'لا توجد فواتير' : 'No invoices'}</p>
+              <p className="text-sm text-muted-foreground text-center py-4">{isRTL ? 'لا توجد فواتير' : 'No invoices'}</p>
             ) : invoices.slice(0, 5).map((inv) => (
-              <div key={inv.id} className="bg-slate-50 p-3 rounded-lg flex items-center gap-3">
+              <div key={inv.id} className="bg-sand p-3 rounded-lg flex items-center gap-3">
                 <InitialsAvatar name={inv.student_name} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-slate-800 text-sm font-semibold truncate">{inv.student_name}</p>
-                  <p className="text-xs text-slate-400">{inv.total_amount?.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p>
+                  <p className="text-ink text-sm font-semibold truncate">{inv.student_name}</p>
+                  <p className="text-xs text-muted-foreground">{inv.total_amount?.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p>
                 </div>
                 <StatusBadge status={inv.status} />
               </div>

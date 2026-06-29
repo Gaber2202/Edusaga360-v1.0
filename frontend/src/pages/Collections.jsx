@@ -205,12 +205,12 @@ export default function Collections() {
 
   const columns = [
     { header: isRTL ? 'رقم الفاتورة' : 'Invoice #', cell: (row) => <span className="font-mono text-sm">{row.invoice_number}</span> },
-    { header: t('studentName'), cell: (row) => <div><p className="font-medium">{row.student_name}</p><p className="text-sm text-slate-500">{t(row.grade)}</p></div> },
+    { header: t('studentName'), cell: (row) => <div><p className="font-medium">{row.student_name}</p><p className="text-sm text-muted-foreground">{t(row.grade)}</p></div> },
     { header: t('total'), cell: (row) => <span className="font-semibold">{row.total_amount?.toLocaleString()} {t('sar')}</span> },
     { header: t('paid'), cell: (row) => <span className="text-emerald-600">{(row.paid_amount || 0).toLocaleString()} {t('sar')}</span> },
     { header: isRTL ? 'المتبقي' : 'Balance', cell: (row) => {
       const balance = (row.total_amount || 0) - (row.paid_amount || 0);
-      return <span className={balance > 0 ? 'text-red-600 font-medium' : 'text-slate-500'}>{balance.toLocaleString()} {t('sar')}</span>;
+      return <span className={balance > 0 ? 'text-red-600 font-medium' : 'text-muted-foreground'}>{balance.toLocaleString()} {t('sar')}</span>;
     }},
     { header: t('dueDate'), cell: (row) => row.due_date ? format(new Date(row.due_date), 'dd/MM/yyyy') : '-' },
     { header: t('status'), cell: (row) => <StatusBadge status={row.status} /> },
@@ -239,11 +239,11 @@ export default function Collections() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        <StatCard title={isRTL ? 'إجمالي الرسوم' : 'Total Fees'} value={`${stats.total.toLocaleString()}`} icon={DollarSign} iconClassName="bg-slate-100" />
+        <StatCard title={isRTL ? 'إجمالي الرسوم' : 'Total Fees'} value={`${stats.total.toLocaleString()}`} icon={DollarSign} iconClassName="bg-sand-alt" />
         <StatCard title={isRTL ? 'المحصل' : 'Collected'} value={`${stats.collected.toLocaleString()}`} icon={CheckCircle} iconClassName="bg-emerald-50" />
         <StatCard title={isRTL ? 'المتبقي' : 'Pending'} value={`${stats.pending.toLocaleString()}`} icon={Banknote} iconClassName="bg-amber-50" />
         <StatCard title={isRTL ? 'المتأخر' : 'Overdue'} value={`${stats.overdue.toLocaleString()}`} icon={CreditCard} iconClassName="bg-red-50" />
-        <StatCard title={isRTL ? 'تحصيل اليوم' : "Today's Collection"} value={`${stats.todayCollected.toLocaleString()}`} icon={DollarSign} iconClassName="bg-blue-50" />
+        <StatCard title={isRTL ? 'تحصيل اليوم' : "Today's Collection"} value={`${stats.todayCollected.toLocaleString()}`} icon={DollarSign} iconClassName="bg-najdi-50" />
         <StatCard title={isRTL ? 'نسبة التحصيل' : 'Collection Rate'} value={`${stats.collectionRate}%`} icon={CheckCircle} iconClassName="bg-purple-50" />
       </div>
 
@@ -259,7 +259,7 @@ export default function Collections() {
           </TabsList>
         </Tabs>
         <div className="relative w-full sm:w-64">
-          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
           <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${isRTL ? 'pr-10' : 'pl-10'} bg-white`} />
         </div>
       </div>
@@ -276,13 +276,13 @@ export default function Collections() {
           {selectedInvoice && (
             <div className="space-y-4">
               {/* Invoice Summary */}
-              <Card className="bg-slate-50">
+              <Card className="bg-sand">
                 <CardContent className="p-4 space-y-2">
-                  <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'الفاتورة' : 'Invoice'}</span><span className="font-mono">{selectedInvoice.invoice_number}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">{t('studentName')}</span><span className="font-medium">{selectedInvoice.student_name}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">{t('total')}</span><span>{selectedInvoice.total_amount?.toLocaleString()} {t('sar')}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">{t('paid')}</span><span className="text-emerald-600">{(selectedInvoice.paid_amount || 0).toLocaleString()} {t('sar')}</span></div>
-                  <div className="flex justify-between border-t pt-2"><span className="text-slate-500 font-medium">{isRTL ? 'المتبقي' : 'Remaining'}</span><span className="font-bold text-red-600">{((selectedInvoice.total_amount || 0) - (selectedInvoice.paid_amount || 0)).toLocaleString()} {t('sar')}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'الفاتورة' : 'Invoice'}</span><span className="font-mono">{selectedInvoice.invoice_number}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t('studentName')}</span><span className="font-medium">{selectedInvoice.student_name}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t('total')}</span><span>{selectedInvoice.total_amount?.toLocaleString()} {t('sar')}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t('paid')}</span><span className="text-emerald-600">{(selectedInvoice.paid_amount || 0).toLocaleString()} {t('sar')}</span></div>
+                  <div className="flex justify-between border-t pt-2"><span className="text-muted-foreground font-medium">{isRTL ? 'المتبقي' : 'Remaining'}</span><span className="font-bold text-red-600">{((selectedInvoice.total_amount || 0) - (selectedInvoice.paid_amount || 0)).toLocaleString()} {t('sar')}</span></div>
                 </CardContent>
               </Card>
 

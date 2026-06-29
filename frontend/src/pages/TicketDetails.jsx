@@ -94,7 +94,7 @@ export default function TicketDetails() {
   }
 
   const statusColors = {
-    open: 'bg-blue-100 text-blue-800',
+    open: 'bg-najdi-50 text-najdi-900',
     in_progress: 'bg-yellow-100 text-yellow-800',
     waiting: 'bg-purple-100 text-purple-800',
     resolved: 'bg-green-100 text-green-800',
@@ -103,7 +103,7 @@ export default function TicketDetails() {
 
   const priorityColors = {
     low: 'bg-gray-100',
-    medium: 'bg-blue-100',
+    medium: 'bg-najdi-50',
     high: 'bg-orange-100',
     critical: 'bg-red-100'
   };
@@ -148,7 +148,7 @@ export default function TicketDetails() {
                 {activities.map((activity, idx) => (
                   <div key={idx} className={`flex gap-4 p-3 rounded-lg ${activity.is_internal ? 'bg-yellow-50' : 'bg-gray-50'}`}>
                     <div className="flex-shrink-0">
-                      {activity.activity_type === 'comment' && <MessageSquare className="h-5 w-5 text-blue-500" />}
+                      {activity.activity_type === 'comment' && <MessageSquare className="h-5 w-5 text-najdi-500" />}
                       {activity.activity_type === 'status_change' && <CheckCircle className="h-5 w-5 text-green-500" />}
                       {activity.activity_type === 'created' && <Clock className="h-5 w-5 text-gray-500" />}
                     </div>

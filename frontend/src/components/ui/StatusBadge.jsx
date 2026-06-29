@@ -5,13 +5,13 @@ import { CheckCircle, XCircle, Clock, AlertCircle, Circle } from 'lucide-react';
 const statusConfig = {
   // Student Status
   active: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', icon: CheckCircle },
-  inactive: { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200', icon: Circle },
-  transferred: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', icon: Circle },
+  inactive: { bg: 'bg-sand', text: 'text-muted-foreground', border: 'border-border', icon: Circle },
+  transferred: { bg: 'bg-najdi-50', text: 'text-najdi-900', border: 'border-najdi-100', icon: Circle },
   graduated: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200', icon: CheckCircle },
   withdrawn: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200', icon: XCircle },
   
   // Application Status
-  submitted: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', icon: Circle },
+  submitted: { bg: 'bg-najdi-50', text: 'text-najdi-900', border: 'border-najdi-100', icon: Circle },
   under_review: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', icon: Clock },
   waitlist: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', icon: Clock },
   accepted: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', icon: CheckCircle },
@@ -22,7 +22,7 @@ const statusConfig = {
   present: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', icon: CheckCircle },
   absent: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200', icon: XCircle },
   late: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', icon: AlertCircle },
-  excused: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', icon: Circle },
+  excused: { bg: 'bg-najdi-50', text: 'text-najdi-900', border: 'border-najdi-100', icon: Circle },
   
   // Payment Status
   paid: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', icon: CheckCircle },
@@ -31,17 +31,17 @@ const statusConfig = {
   overdue: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', icon: AlertCircle },
   
   // General
-  draft: { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200', icon: Circle },
+  draft: { bg: 'bg-sand', text: 'text-muted-foreground', border: 'border-border', icon: Circle },
   pending: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', icon: Clock },
   approved: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', icon: CheckCircle },
   posted: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200', icon: CheckCircle },
-  issued: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', icon: Circle },
-  cancelled: { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200', icon: XCircle },
+  issued: { bg: 'bg-najdi-50', text: 'text-najdi-900', border: 'border-najdi-100', icon: Circle },
+  cancelled: { bg: 'bg-sand', text: 'text-muted-foreground', border: 'border-border', icon: XCircle },
 };
 
 export default function StatusBadge({ status, className = '', showIcon = true }) {
   const { t } = useLanguage();
-  const config = statusConfig[status] || { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200', icon: Circle };
+  const config = statusConfig[status] || { bg: 'bg-sand', text: 'text-muted-foreground', border: 'border-border', icon: Circle };
   const Icon = config.icon;
   
   return (

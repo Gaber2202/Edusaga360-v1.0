@@ -51,11 +51,11 @@ const sarFmt = (n) => `SAR ${(Number(n) || 0).toLocaleString('en-SA', { minimumF
 // ─── Status badge ──────────────────────────────────────────────────────────────
 
 const STATUS_STYLES = {
-  issued: 'bg-blue-50 text-blue-700 border-blue-200',
+  issued: 'bg-najdi-50 text-najdi-900 border-najdi-100',
   partial: 'bg-yellow-50 text-yellow-700 border-yellow-200',
   paid: 'bg-green-50 text-green-700 border-green-200',
   overdue: 'bg-red-50 text-red-700 border-red-200',
-  cancelled: 'bg-slate-50 text-slate-500 border-slate-200',
+  cancelled: 'bg-sand text-muted-foreground border-border',
   credit_note: 'bg-purple-50 text-purple-700 border-purple-200',
 };
 
@@ -70,7 +70,7 @@ function StatusBadge({ status, isRTL }) {
   };
   const label = labels[status]?.[isRTL ? 'ar' : 'en'] ?? status;
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLES[status] ?? 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLES[status] ?? 'bg-sand text-muted-foreground border-border'}`}>
       {label}
     </span>
   );
@@ -80,7 +80,7 @@ function StatusBadge({ status, isRTL }) {
 
 function VatBadge({ treatment }) {
   if (treatment === 'exempt') return <span className="text-xs text-green-600 font-medium">VAT Exempt</span>;
-  if (treatment === 'zero_rated') return <span className="text-xs text-blue-600 font-medium">0%</span>;
+  if (treatment === 'zero_rated') return <span className="text-xs text-najdi-700 font-medium">0%</span>;
   return <span className="text-xs text-orange-600 font-medium">15% VAT</span>;
 }
 
@@ -88,7 +88,7 @@ function VatBadge({ treatment }) {
 
 function KpiCard({ label, value, sub, icon: Icon, color = 'blue' }) {
   const colors = {
-    blue: 'bg-blue-50 text-blue-600',
+    blue: 'bg-najdi-50 text-najdi-700',
     green: 'bg-green-50 text-green-600',
     yellow: 'bg-yellow-50 text-yellow-600',
     red: 'bg-red-50 text-red-600',
@@ -101,9 +101,9 @@ function KpiCard({ label, value, sub, icon: Icon, color = 'blue' }) {
           <Icon className="w-5 h-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-xs text-slate-500 truncate">{label}</p>
-          <p className="text-lg font-bold text-slate-800 truncate">{value}</p>
-          {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+          <p className="text-xs text-muted-foreground truncate">{label}</p>
+          <p className="text-lg font-bold text-ink truncate">{value}</p>
+          {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
         </div>
       </CardContent>
     </Card>
@@ -167,7 +167,7 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
       {/* Filters row */}
       <div className="flex items-center gap-3 flex-wrap">
         <select
-          className="h-9 rounded-md border border-slate-200 px-3 text-sm bg-white"
+          className="h-9 rounded-md border border-border px-3 text-sm bg-white"
           value={filters.status}
           onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
         >
@@ -186,42 +186,42 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-slate-200 overflow-hidden bg-white shadow-sm">
+      <div className="rounded-xl border border-border overflow-hidden bg-white shadow-sm">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-slate-200">
+          <thead className="bg-sand border-b border-border">
             <tr>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase tracking-wide">{isRTL ? 'رقم الفاتورة' : 'Invoice #'}</th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase tracking-wide">{isRTL ? 'الطالب' : 'Student'}</th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase tracking-wide">{isRTL ? 'التاريخ' : 'Date'}</th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase tracking-wide">{isRTL ? 'تاريخ الاستحقاق' : 'Due'}</th>
-              <th className="px-4 py-3 text-end text-xs font-semibold text-slate-500 uppercase tracking-wide">{isRTL ? 'المبلغ' : 'Total'}</th>
-              <th className="px-4 py-3 text-end text-xs font-semibold text-slate-500 uppercase tracking-wide">{isRTL ? 'المتبقي' : 'Balance'}</th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase tracking-wide">{isRTL ? 'الحالة' : 'Status'}</th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase tracking-wide">ZATCA</th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase tracking-wide">{isRTL ? 'إجراءات' : 'Actions'}</th>
+              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'رقم الفاتورة' : 'Invoice #'}</th>
+              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'الطالب' : 'Student'}</th>
+              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'التاريخ' : 'Date'}</th>
+              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'تاريخ الاستحقاق' : 'Due'}</th>
+              <th className="px-4 py-3 text-end text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'المبلغ' : 'Total'}</th>
+              <th className="px-4 py-3 text-end text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'المتبقي' : 'Balance'}</th>
+              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'الحالة' : 'Status'}</th>
+              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide">ZATCA</th>
+              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'إجراءات' : 'Actions'}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border">
             {isLoading ? (
-              <tr><td colSpan={9} className="py-12 text-center text-slate-400">{isRTL ? 'جاري التحميل…' : 'Loading…'}</td></tr>
+              <tr><td colSpan={9} className="py-12 text-center text-muted-foreground">{isRTL ? 'جاري التحميل…' : 'Loading…'}</td></tr>
             ) : invoices.length === 0 ? (
-              <tr><td colSpan={9} className="py-12 text-center text-slate-400">{isRTL ? 'لا توجد فواتير' : 'No invoices found'}</td></tr>
+              <tr><td colSpan={9} className="py-12 text-center text-muted-foreground">{isRTL ? 'لا توجد فواتير' : 'No invoices found'}</td></tr>
             ) : invoices.map((inv) => {
               const balance = (Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0);
               return (
                 <tr
                   key={inv.id}
-                  className="hover:bg-slate-50 transition-colors cursor-pointer"
+                  className="hover:bg-sand transition-colors cursor-pointer"
                   onClick={() => { window.location.href = createPageUrl('InvoiceDetails') + '?id=' + inv.id; }}
                 >
-                  <td className="px-4 py-3 font-mono text-xs text-blue-700 font-semibold">{inv.invoice_number}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-najdi-900 font-semibold">{inv.invoice_number}</td>
                   <td className="px-4 py-3">
-                    <div className="font-medium text-slate-800 text-xs">{inv.student_name || '—'}</div>
-                    {inv.grade && <div className="text-xs text-slate-400">{isRTL ? 'الصف' : 'Grade'} {inv.grade}</div>}
+                    <div className="font-medium text-ink text-xs">{inv.student_name || '—'}</div>
+                    {inv.grade && <div className="text-xs text-muted-foreground">{isRTL ? 'الصف' : 'Grade'} {inv.grade}</div>}
                   </td>
-                  <td className="px-4 py-3 text-xs text-slate-500">{inv.date}</td>
-                  <td className="px-4 py-3 text-xs text-slate-500">{inv.due_date || '—'}</td>
-                  <td className="px-4 py-3 text-end font-semibold text-slate-800 text-xs">{sarFmt(inv.total_amount)}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">{inv.date}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">{inv.due_date || '—'}</td>
+                  <td className="px-4 py-3 text-end font-semibold text-ink text-xs">{sarFmt(inv.total_amount)}</td>
                   <td className="px-4 py-3 text-end text-xs">
                     <span className={balance > 0 ? 'text-red-600 font-semibold' : 'text-green-600'}>{sarFmt(balance)}</span>
                   </td>
@@ -229,12 +229,12 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
                   <td className="px-4 py-3">
                     {inv.qr_code
                       ? <span className="flex items-center gap-1 text-xs text-green-600"><CheckCircle className="w-3.5 h-3.5" />{isRTL ? 'معتمد' : 'QR OK'}</span>
-                      : <span className="flex items-center gap-1 text-xs text-slate-400"><Clock className="w-3.5 h-3.5" />{isRTL ? 'معلق' : 'Pending'}</span>}
+                      : <span className="flex items-center gap-1 text-xs text-muted-foreground"><Clock className="w-3.5 h-3.5" />{isRTL ? 'معلق' : 'Pending'}</span>}
                   </td>
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1">
                       <button
-                        className="p-1 rounded hover:bg-blue-50 text-blue-600"
+                        className="p-1 rounded hover:bg-najdi-50 text-najdi-700"
                         title={isRTL ? 'عرض الفاتورة' : 'View Invoice'}
                         onClick={() => { window.location.href = createPageUrl('InvoiceDetails') + '?id=' + inv.id; }}
                       >
@@ -274,7 +274,7 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
 
       {/* Pagination */}
       {pagination.pages > 1 && (
-        <div className="flex items-center justify-between text-sm text-slate-500">
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>{isRTL ? `${pagination.total} فاتورة` : `${pagination.total} invoices`}</span>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" disabled={filters.page <= 1} onClick={() => setFilters((f) => ({ ...f, page: f.page - 1 }))}>
@@ -291,7 +291,7 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
       <Dialog open={dunningOpen} onOpenChange={setDunningOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>{isRTL ? 'تنبيه المتأخرين' : 'Smart Dunning'}</DialogTitle></DialogHeader>
-          <div className="space-y-3 py-2 text-sm text-slate-600">
+          <div className="space-y-3 py-2 text-sm text-muted-foreground">
             <p>{isRTL ? 'سيتم إرسال رسائل واتساب تلقائية لجميع أولياء الأمور الذين تجاوزت فواتيرهم تاريخ الاستحقاق.' : 'Automatically send WhatsApp reminders to all families with overdue invoices.'}</p>
             {dunningResult && (
               <div className={`rounded-lg p-3 text-sm ${dunningResult.error ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
@@ -344,12 +344,12 @@ function ArrearsTab({ token, isRTL, tenantId }) {
       <div className="flex items-center gap-3">
         <input
           type="text"
-          className="h-9 rounded-md border border-slate-200 px-3 text-sm w-40"
+          className="h-9 rounded-md border border-border px-3 text-sm w-40"
           placeholder="2025-2026"
           value={year}
           onChange={(e) => setYear(e.target.value)}
         />
-        <span className="text-sm text-slate-500">{isRTL ? 'السنة الأكاديمية' : 'Academic Year'}</span>
+        <span className="text-sm text-muted-foreground">{isRTL ? 'السنة الأكاديمية' : 'Academic Year'}</span>
       </div>
 
       {/* Aging buckets */}
@@ -357,8 +357,8 @@ function ArrearsTab({ token, isRTL, tenantId }) {
         {Object.entries(BUCKET_LABELS).map(([k, labels]) => (
           <Card key={k} className="border-0 shadow-sm">
             <CardContent className="p-4">
-              <p className="text-xs text-slate-500">{isRTL ? labels.ar : labels.en}</p>
-              <p className="text-lg font-bold text-slate-800 mt-1">{sarFmt(buckets[k] ?? 0)}</p>
+              <p className="text-xs text-muted-foreground">{isRTL ? labels.ar : labels.en}</p>
+              <p className="text-lg font-bold text-ink mt-1">{sarFmt(buckets[k] ?? 0)}</p>
             </CardContent>
           </Card>
         ))}
@@ -373,37 +373,37 @@ function ArrearsTab({ token, isRTL, tenantId }) {
       )}
 
       {/* Overdue invoices */}
-      <div className="rounded-xl border border-slate-200 overflow-hidden bg-white shadow-sm">
+      <div className="rounded-xl border border-border overflow-hidden bg-white shadow-sm">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-slate-200">
+          <thead className="bg-sand border-b border-border">
             <tr>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">{isRTL ? 'الطالب' : 'Student'}</th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">{isRTL ? 'رقم الفاتورة' : 'Invoice'}</th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">{isRTL ? 'تاريخ الاستحقاق' : 'Due Date'}</th>
-              <th className="px-4 py-3 text-end text-xs font-semibold text-slate-500 uppercase">{isRTL ? 'الرصيد' : 'Balance'}</th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">{isRTL ? 'أيام التأخر' : 'Days Late'}</th>
+              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase">{isRTL ? 'الطالب' : 'Student'}</th>
+              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase">{isRTL ? 'رقم الفاتورة' : 'Invoice'}</th>
+              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase">{isRTL ? 'تاريخ الاستحقاق' : 'Due Date'}</th>
+              <th className="px-4 py-3 text-end text-xs font-semibold text-muted-foreground uppercase">{isRTL ? 'الرصيد' : 'Balance'}</th>
+              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase">{isRTL ? 'أيام التأخر' : 'Days Late'}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border">
             {isLoading ? (
-              <tr><td colSpan={5} className="py-8 text-center text-slate-400">{isRTL ? 'جاري التحميل…' : 'Loading…'}</td></tr>
+              <tr><td colSpan={5} className="py-8 text-center text-muted-foreground">{isRTL ? 'جاري التحميل…' : 'Loading…'}</td></tr>
             ) : items.length === 0 ? (
               <tr><td colSpan={5} className="py-8 text-center text-green-600 font-medium">{isRTL ? 'لا توجد متأخرات' : 'No arrears — all clear!'}</td></tr>
             ) : items.map((inv) => (
-              <tr key={inv.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3 text-xs font-medium text-slate-800">
+              <tr key={inv.id} className="hover:bg-sand">
+                <td className="px-4 py-3 text-xs font-medium text-ink">
                   {isRTL ? inv.students?.name_ar || inv.students?.name_en : inv.students?.name_en || inv.students?.name_ar}
-                  {inv.students?.grade && <span className="text-slate-400 ms-1">({inv.students.grade})</span>}
+                  {inv.students?.grade && <span className="text-muted-foreground ms-1">({inv.students.grade})</span>}
                 </td>
-                <td className="px-4 py-3 text-xs font-mono text-blue-700">{inv.invoice_number}</td>
-                <td className="px-4 py-3 text-xs text-slate-500">{inv.due_date}</td>
+                <td className="px-4 py-3 text-xs font-mono text-najdi-900">{inv.invoice_number}</td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{inv.due_date}</td>
                 <td className="px-4 py-3 text-end text-xs font-semibold text-red-600">{sarFmt(inv.outstanding_balance)}</td>
                 <td className="px-4 py-3">
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                     inv.days_overdue > 90 ? 'bg-red-100 text-red-700' :
                     inv.days_overdue > 60 ? 'bg-orange-100 text-orange-700' :
                     inv.days_overdue > 30 ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-blue-50 text-blue-700'
+                    'bg-najdi-50 text-najdi-900'
                   }`}>{inv.days_overdue}d</span>
                 </td>
               </tr>
@@ -432,12 +432,12 @@ function VATReportTab({ token, isRTL, tenantId }) {
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <label className="text-sm text-slate-500">{isRTL ? 'من' : 'From'}</label>
-          <input type="date" className="h-9 rounded-md border border-slate-200 px-3 text-sm" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <label className="text-sm text-muted-foreground">{isRTL ? 'من' : 'From'}</label>
+          <input type="date" className="h-9 rounded-md border border-border px-3 text-sm" value={from} onChange={(e) => setFrom(e.target.value)} />
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-sm text-slate-500">{isRTL ? 'إلى' : 'To'}</label>
-          <input type="date" className="h-9 rounded-md border border-slate-200 px-3 text-sm" value={to} onChange={(e) => setTo(e.target.value)} />
+          <label className="text-sm text-muted-foreground">{isRTL ? 'إلى' : 'To'}</label>
+          <input type="date" className="h-9 rounded-md border border-border px-3 text-sm" value={to} onChange={(e) => setTo(e.target.value)} />
         </div>
         <Button size="sm" variant="outline" className="h-9" onClick={() => refetch()}>
           <RefreshCw className="w-4 h-4 me-1" />{isRTL ? 'تحديث' : 'Refresh'}
@@ -445,7 +445,7 @@ function VATReportTab({ token, isRTL, tenantId }) {
       </div>
 
       {isLoading ? (
-        <div className="py-12 text-center text-slate-400">{isRTL ? 'جاري التحميل…' : 'Loading…'}</div>
+        <div className="py-12 text-center text-muted-foreground">{isRTL ? 'جاري التحميل…' : 'Loading…'}</div>
       ) : data ? (
         <div className="grid gap-4">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -459,13 +459,13 @@ function VATReportTab({ token, isRTL, tenantId }) {
             ].map((item) => (
               <Card key={item.label} className="border-0 shadow-sm">
                 <CardContent className="p-4">
-                  <p className="text-xs text-slate-500">{item.label}</p>
-                  <p className="text-base font-bold text-slate-800 mt-1">{item.value}</p>
+                  <p className="text-xs text-muted-foreground">{item.label}</p>
+                  <p className="text-base font-bold text-ink mt-1">{item.value}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
-          <div className="rounded-lg bg-blue-50 border border-blue-100 p-4 text-sm text-blue-800">
+          <div className="rounded-lg bg-najdi-50 border border-najdi-100 p-4 text-sm text-najdi-900">
             <strong>{isRTL ? 'ملاحظة ZATCA:' : 'ZATCA Note:'}</strong>{' '}
             {isRTL
               ? 'التعليم معفى من ضريبة القيمة المضافة. يخضع للضريبة: النقل، الوجبات، الزي، الكتب، الأنشطة.'
@@ -504,40 +504,40 @@ function FeeStructuresTab({ token, isRTL, tenantId }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500">{isRTL ? 'هياكل الرسوم حسب السنة الأكاديمية والصف' : 'Fee structures per academic year and grade'}</p>
+        <p className="text-sm text-muted-foreground">{isRTL ? 'هياكل الرسوم حسب السنة الأكاديمية والصف' : 'Fee structures per academic year and grade'}</p>
         <Button size="sm" onClick={() => setShowForm(true)} className="h-9 gap-1.5">
           <Plus className="w-4 h-4" />{isRTL ? 'إضافة هيكل' : 'Add Structure'}
         </Button>
       </div>
 
-      <div className="rounded-xl border border-slate-200 overflow-hidden bg-white shadow-sm">
+      <div className="rounded-xl border border-border overflow-hidden bg-white shadow-sm">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-slate-200">
+          <thead className="bg-sand border-b border-border">
             <tr>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">{isRTL ? 'الفئة' : 'Category'}</th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">{isRTL ? 'السنة' : 'Year'}</th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">{isRTL ? 'الصف' : 'Grade'}</th>
-              <th className="px-4 py-3 text-end text-xs font-semibold text-slate-500 uppercase">{isRTL ? 'المبلغ' : 'Amount'}</th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">VAT</th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-slate-500 uppercase">{isRTL ? 'أقساط' : 'Installments'}</th>
+              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase">{isRTL ? 'الفئة' : 'Category'}</th>
+              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase">{isRTL ? 'السنة' : 'Year'}</th>
+              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase">{isRTL ? 'الصف' : 'Grade'}</th>
+              <th className="px-4 py-3 text-end text-xs font-semibold text-muted-foreground uppercase">{isRTL ? 'المبلغ' : 'Amount'}</th>
+              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase">VAT</th>
+              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase">{isRTL ? 'أقساط' : 'Installments'}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border">
             {isLoading ? (
-              <tr><td colSpan={6} className="py-8 text-center text-slate-400">{isRTL ? 'جاري التحميل…' : 'Loading…'}</td></tr>
+              <tr><td colSpan={6} className="py-8 text-center text-muted-foreground">{isRTL ? 'جاري التحميل…' : 'Loading…'}</td></tr>
             ) : structures.length === 0 ? (
-              <tr><td colSpan={6} className="py-8 text-center text-slate-400">{isRTL ? 'لا توجد هياكل رسوم' : 'No fee structures yet'}</td></tr>
+              <tr><td colSpan={6} className="py-8 text-center text-muted-foreground">{isRTL ? 'لا توجد هياكل رسوم' : 'No fee structures yet'}</td></tr>
             ) : structures.map((s) => (
-              <tr key={s.id} className="hover:bg-slate-50">
+              <tr key={s.id} className="hover:bg-sand">
                 <td className="px-4 py-3">
-                  <div className="font-medium text-slate-800 text-xs">{isRTL ? s.fee_categories?.name_ar : s.fee_categories?.name_en}</div>
-                  <div className="text-xs text-slate-400 font-mono">{s.fee_categories?.code}</div>
+                  <div className="font-medium text-ink text-xs">{isRTL ? s.fee_categories?.name_ar : s.fee_categories?.name_en}</div>
+                  <div className="text-xs text-muted-foreground font-mono">{s.fee_categories?.code}</div>
                 </td>
-                <td className="px-4 py-3 text-xs text-slate-600">{s.academic_year}</td>
-                <td className="px-4 py-3 text-xs text-slate-600">{s.grade || (isRTL ? 'كل الصفوف' : 'All Grades')}</td>
-                <td className="px-4 py-3 text-end text-xs font-semibold text-slate-800">{sarFmt(s.amount)}</td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{s.academic_year}</td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{s.grade || (isRTL ? 'كل الصفوف' : 'All Grades')}</td>
+                <td className="px-4 py-3 text-end text-xs font-semibold text-ink">{sarFmt(s.amount)}</td>
                 <td className="px-4 py-3"><VatBadge treatment={s.fee_categories?.vat_treatment} /></td>
-                <td className="px-4 py-3 text-xs text-slate-600">{s.installment_count > 1 ? `${s.installment_count}×` : (isRTL ? 'دفعة واحدة' : 'Lump sum')}</td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{s.installment_count > 1 ? `${s.installment_count}×` : (isRTL ? 'دفعة واحدة' : 'Lump sum')}</td>
               </tr>
             ))}
           </tbody>
@@ -555,10 +555,10 @@ function FeeStructuresTab({ token, isRTL, tenantId }) {
               { key: 'installment_count', label: isRTL ? 'عدد الأقساط' : 'Installments', type: 'number' },
             ].map(({ key, label, placeholder, type }) => (
               <div key={key}>
-                <label className="block text-xs font-medium text-slate-700 mb-1">{label}</label>
+                <label className="block text-xs font-medium text-ink mb-1">{label}</label>
                 <input
                   type={type || 'text'}
-                  className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm"
+                  className="w-full h-9 rounded-md border border-border px-3 text-sm"
                   placeholder={placeholder}
                   value={form[key]}
                   onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
@@ -566,8 +566,8 @@ function FeeStructuresTab({ token, isRTL, tenantId }) {
               </div>
             ))}
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">{isRTL ? 'الفئة' : 'Category'}</label>
-              <select className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm bg-white" value={form.category_id} onChange={(e) => setForm((f) => ({ ...f, category_id: e.target.value }))}>
+              <label className="block text-xs font-medium text-ink mb-1">{isRTL ? 'الفئة' : 'Category'}</label>
+              <select className="w-full h-9 rounded-md border border-border px-3 text-sm bg-white" value={form.category_id} onChange={(e) => setForm((f) => ({ ...f, category_id: e.target.value }))}>
                 <option value="">{isRTL ? 'اختر فئة' : 'Select category'}</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>{isRTL ? c.name_ar : c.name_en} ({c.code})</option>
@@ -624,7 +624,7 @@ function DiscountRulesTab({ token, isRTL, tenantId }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500">{isRTL ? 'قواعد الخصم والمنح الدراسية' : 'Discount and scholarship rules with stacking logic'}</p>
+        <p className="text-sm text-muted-foreground">{isRTL ? 'قواعد الخصم والمنح الدراسية' : 'Discount and scholarship rules with stacking logic'}</p>
         <Button size="sm" onClick={() => setShowForm(true)} className="h-9 gap-1.5">
           <Plus className="w-4 h-4" />{isRTL ? 'إضافة قاعدة' : 'Add Rule'}
         </Button>
@@ -632,9 +632,9 @@ function DiscountRulesTab({ token, isRTL, tenantId }) {
 
       <div className="grid gap-3">
         {isLoading ? (
-          <div className="py-8 text-center text-slate-400">{isRTL ? 'جاري التحميل…' : 'Loading…'}</div>
+          <div className="py-8 text-center text-muted-foreground">{isRTL ? 'جاري التحميل…' : 'Loading…'}</div>
         ) : rules.length === 0 ? (
-          <div className="py-8 text-center text-slate-400">{isRTL ? 'لا توجد قواعد خصم' : 'No discount rules yet'}</div>
+          <div className="py-8 text-center text-muted-foreground">{isRTL ? 'لا توجد قواعد خصم' : 'No discount rules yet'}</div>
         ) : rules.map((r) => (
           <Card key={r.id} className="border-0 shadow-sm">
             <CardContent className="p-4 flex items-center justify-between gap-4">
@@ -643,18 +643,18 @@ function DiscountRulesTab({ token, isRTL, tenantId }) {
                   <Percent className="w-4 h-4 text-purple-600" />
                 </div>
                 <div>
-                  <div className="font-semibold text-slate-800 text-sm">{isRTL ? r.name_ar : r.name_en}</div>
-                  <div className="text-xs text-slate-400 font-mono">{r.code}</div>
+                  <div className="font-semibold text-ink text-sm">{isRTL ? r.name_ar : r.name_en}</div>
+                  <div className="text-xs text-muted-foreground font-mono">{r.code}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-4 text-xs text-slate-600">
-                <span className="px-2 py-0.5 rounded-full bg-slate-100">{TYPE_LABELS[r.discount_type]?.[isRTL ? 'ar' : 'en'] ?? r.discount_type}</span>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span className="px-2 py-0.5 rounded-full bg-sand-alt">{TYPE_LABELS[r.discount_type]?.[isRTL ? 'ar' : 'en'] ?? r.discount_type}</span>
                 <span className="font-semibold">{r.calculation === 'percentage' ? `${r.value}%` : sarFmt(r.value)}</span>
-                {r.max_amount && <span className="text-slate-400">{isRTL ? 'حد' : 'cap'} {sarFmt(r.max_amount)}</span>}
-                <span className={`px-2 py-0.5 rounded-full ${r.stacking === 'allowed' ? 'bg-green-50 text-green-700' : r.stacking === 'blocked' ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'}`}>
+                {r.max_amount && <span className="text-muted-foreground">{isRTL ? 'حد' : 'cap'} {sarFmt(r.max_amount)}</span>}
+                <span className={`px-2 py-0.5 rounded-full ${r.stacking === 'allowed' ? 'bg-green-50 text-green-700' : r.stacking === 'blocked' ? 'bg-red-50 text-red-700' : 'bg-najdi-50 text-najdi-900'}`}>
                   {r.stacking}
                 </span>
-                <span className={`px-1.5 py-0.5 rounded-full ${r.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                <span className={`px-1.5 py-0.5 rounded-full ${r.is_active ? 'bg-green-100 text-green-700' : 'bg-sand-alt text-muted-foreground'}`}>
                   {r.is_active ? (isRTL ? 'نشط' : 'Active') : (isRTL ? 'معطل' : 'Inactive')}
                 </span>
               </div>
@@ -677,8 +677,8 @@ function DiscountRulesTab({ token, isRTL, tenantId }) {
               { key: 'academic_year', label: isRTL ? 'السنة (اختياري)' : 'Year (optional)', placeholder: '2025-2026' },
             ].map(({ key, label, placeholder, type }) => (
               <div key={key}>
-                <label className="block text-xs font-medium text-slate-700 mb-1">{label}</label>
-                <input type={type || 'text'} className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm" placeholder={placeholder} value={form[key]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} />
+                <label className="block text-xs font-medium text-ink mb-1">{label}</label>
+                <input type={type || 'text'} className="w-full h-9 rounded-md border border-border px-3 text-sm" placeholder={placeholder} value={form[key]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} />
               </div>
             ))}
             {[
@@ -687,8 +687,8 @@ function DiscountRulesTab({ token, isRTL, tenantId }) {
               { key: 'stacking', label: isRTL ? 'التراكم' : 'Stacking', options: [['allowed', 'Allowed'], ['blocked', 'Blocked'], ['override', 'Override']] },
             ].map(({ key, label, options }) => (
               <div key={key}>
-                <label className="block text-xs font-medium text-slate-700 mb-1">{label}</label>
-                <select className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm bg-white" value={form[key]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}>
+                <label className="block text-xs font-medium text-ink mb-1">{label}</label>
+                <select className="w-full h-9 rounded-md border border-border px-3 text-sm bg-white" value={form[key]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}>
                   {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                 </select>
               </div>
@@ -718,9 +718,9 @@ function PaymentPlansTab({ token, isRTL, tenantId }) {
   return (
     <div className="space-y-3">
       {isLoading ? (
-        <div className="py-8 text-center text-slate-400">{isRTL ? 'جاري التحميل…' : 'Loading…'}</div>
+        <div className="py-8 text-center text-muted-foreground">{isRTL ? 'جاري التحميل…' : 'Loading…'}</div>
       ) : plans.length === 0 ? (
-        <div className="py-8 text-center text-slate-400">{isRTL ? 'لا توجد خطط دفع' : 'No payment plans yet'}</div>
+        <div className="py-8 text-center text-muted-foreground">{isRTL ? 'لا توجد خطط دفع' : 'No payment plans yet'}</div>
       ) : plans.map((plan) => {
         const installments = plan.payment_plan_installments ?? [];
         const paidCount = installments.filter((i) => i.status === 'paid').length;
@@ -729,11 +729,11 @@ function PaymentPlansTab({ token, isRTL, tenantId }) {
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <div className="font-semibold text-slate-800 text-sm">{plan.student_id?.slice(0, 8)}… — {plan.academic_year}</div>
-                  <div className="text-xs text-slate-400">{plan.plan_type} · {paidCount}/{installments.length} {isRTL ? 'مدفوع' : 'paid'}</div>
+                  <div className="font-semibold text-ink text-sm">{plan.student_id?.slice(0, 8)}… — {plan.academic_year}</div>
+                  <div className="text-xs text-muted-foreground">{plan.plan_type} · {paidCount}/{installments.length} {isRTL ? 'مدفوع' : 'paid'}</div>
                 </div>
                 <div className="text-end">
-                  <div className="font-bold text-slate-800">{sarFmt(plan.total_amount)}</div>
+                  <div className="font-bold text-ink">{sarFmt(plan.total_amount)}</div>
                   <StatusBadge status={plan.status} isRTL={isRTL} />
                 </div>
               </div>
@@ -743,8 +743,8 @@ function PaymentPlansTab({ token, isRTL, tenantId }) {
                     <div key={inst.id} className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${
                       inst.status === 'paid' ? 'bg-green-50 text-green-700' :
                       inst.status === 'overdue' ? 'bg-red-50 text-red-700' :
-                      inst.status === 'waived' ? 'bg-slate-100 text-slate-500' :
-                      'bg-blue-50 text-blue-700'
+                      inst.status === 'waived' ? 'bg-sand-alt text-muted-foreground' :
+                      'bg-najdi-50 text-najdi-900'
                     }`}>
                       #{inst.installment_no} · {sarFmt(inst.amount)} · {inst.due_date}
                     </div>
@@ -802,8 +802,8 @@ function DashboardTab({ token, isRTL, tenantId }) {
           <CardContent className="grid grid-cols-4 gap-3">
             {[['1_30', '1–30d'], ['31_60', '31–60d'], ['61_90', '61–90d'], ['90_plus', '90+d']].map(([key, label]) => (
               <div key={key} className="text-center">
-                <div className="text-xs text-slate-500 mb-1">{label}</div>
-                <div className="text-sm font-bold text-slate-800">{sarFmt(arrears.buckets[key] ?? 0)}</div>
+                <div className="text-xs text-muted-foreground mb-1">{label}</div>
+                <div className="text-sm font-bold text-ink">{sarFmt(arrears.buckets[key] ?? 0)}</div>
               </div>
             ))}
           </CardContent>
@@ -814,19 +814,19 @@ function DashboardTab({ token, isRTL, tenantId }) {
       {invoiceData?.data?.length > 0 && (
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-2"><CardTitle className="text-sm">{isRTL ? 'أحدث الفواتير' : 'Recent Invoices'}</CardTitle></CardHeader>
-          <CardContent className="divide-y divide-slate-100">
+          <CardContent className="divide-y divide-border">
             {invoiceData.data.map((inv) => (
               <div
                 key={inv.id}
-                className="flex items-center justify-between py-2 cursor-pointer hover:bg-slate-50 rounded px-1 -mx-1 transition-colors"
+                className="flex items-center justify-between py-2 cursor-pointer hover:bg-sand rounded px-1 -mx-1 transition-colors"
                 onClick={() => { window.location.href = createPageUrl('InvoiceDetails') + '?id=' + inv.id; }}
               >
                 <div>
-                  <div className="text-xs font-mono text-blue-700">{inv.invoice_number}</div>
-                  <div className="text-xs text-slate-500">{isRTL ? inv.students?.name_ar : inv.students?.name_en}</div>
+                  <div className="text-xs font-mono text-najdi-900">{inv.invoice_number}</div>
+                  <div className="text-xs text-muted-foreground">{isRTL ? inv.students?.name_ar : inv.students?.name_en}</div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-slate-800">{sarFmt(inv.total_amount)}</span>
+                  <span className="text-xs font-semibold text-ink">{sarFmt(inv.total_amount)}</span>
                   <StatusBadge status={inv.status} isRTL={isRTL} />
                 </div>
               </div>
@@ -836,11 +836,11 @@ function DashboardTab({ token, isRTL, tenantId }) {
       )}
 
       {/* ZATCA compliance note */}
-      <div className="rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-4 flex items-start gap-3">
-        <Zap className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+      <div className="rounded-lg bg-gradient-to-r from-najdi-50 to-sand border border-najdi-100 p-4 flex items-start gap-3">
+        <Zap className="w-5 h-5 text-najdi-700 shrink-0 mt-0.5" />
         <div className="text-sm">
-          <p className="font-semibold text-blue-800 mb-1">{isRTL ? 'محرك ZATCA المرحلة 2' : 'ZATCA Phase 2 Engine'}</p>
-          <p className="text-blue-700 text-xs">
+          <p className="font-semibold text-najdi-900 mb-1">{isRTL ? 'محرك ZATCA المرحلة 2' : 'ZATCA Phase 2 Engine'}</p>
+          <p className="text-najdi-900 text-xs">
             {isRTL
               ? 'كل فاتورة تُولّد تلقائياً رمز QR، تجزئة SHA-256، وملف UBL/XML متوافق مع لوائح هيئة الزكاة والضريبة والجمارك.'
               : 'Every invoice auto-generates a TLV QR code, SHA-256 hash chain, and UBL 2.1 XML compliant with ZATCA Phase 2 Fatoorah requirements.'}
@@ -921,9 +921,9 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) 
               <p className="text-sm text-green-700 font-mono mt-1">{result.invoice?.invoice_number}</p>
             </div>
             <div className="grid grid-cols-3 gap-3 text-center text-sm">
-              <div><div className="text-slate-500 text-xs">{isRTL ? 'المجموع قبل الضريبة' : 'Subtotal'}</div><div className="font-bold">{sarFmt(result.summary?.subtotal)}</div></div>
-              <div><div className="text-slate-500 text-xs">VAT</div><div className="font-bold text-orange-600">{sarFmt(result.summary?.vat_amount)}</div></div>
-              <div><div className="text-slate-500 text-xs">{isRTL ? 'الإجمالي' : 'Total'}</div><div className="font-bold text-blue-700">{sarFmt(result.summary?.total_amount)}</div></div>
+              <div><div className="text-muted-foreground text-xs">{isRTL ? 'المجموع قبل الضريبة' : 'Subtotal'}</div><div className="font-bold">{sarFmt(result.summary?.subtotal)}</div></div>
+              <div><div className="text-muted-foreground text-xs">VAT</div><div className="font-bold text-orange-600">{sarFmt(result.summary?.vat_amount)}</div></div>
+              <div><div className="text-muted-foreground text-xs">{isRTL ? 'الإجمالي' : 'Total'}</div><div className="font-bold text-najdi-900">{sarFmt(result.summary?.total_amount)}</div></div>
             </div>
             {result.zatca?.qr_code && (
               <div className="text-center">
@@ -938,64 +938,64 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) 
           <div className="space-y-4">
             {/* Student selector */}
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">{isRTL ? 'الطالب' : 'Student'}</label>
+              <label className="block text-xs font-medium text-ink mb-1">{isRTL ? 'الطالب' : 'Student'}</label>
               <input
                 type="text"
-                className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm mb-1"
+                className="w-full h-9 rounded-md border border-border px-3 text-sm mb-1"
                 placeholder={isRTL ? 'ابحث باسم الطالب أو الرقم...' : 'Search by student name or number...'}
                 value={studentSearch}
                 onChange={(e) => setStudentSearch(e.target.value)}
               />
               {students.length > 0 && !form.student_id && (
-                <div className="border border-slate-200 rounded-md max-h-40 overflow-y-auto bg-white shadow-sm">
+                <div className="border border-border rounded-md max-h-40 overflow-y-auto bg-white shadow-sm">
                   {students.map((s) => (
                     <button
                       key={s.id}
                       type="button"
-                      className="w-full text-start px-3 py-2 text-sm hover:bg-blue-50 border-b border-slate-100 last:border-0"
+                      className="w-full text-start px-3 py-2 text-sm hover:bg-najdi-50 border-b border-border last:border-0"
                       onClick={() => { setForm((f) => ({ ...f, student_id: s.id })); setStudentSearch(isRTL ? s.name_ar : s.name_en); }}
                     >
                       <span className="font-medium">{isRTL ? s.name_ar : s.name_en}</span>
-                      <span className="text-slate-400 ms-2 text-xs">{s.grade} • {s.student_number || s.id.slice(0, 8)}</span>
+                      <span className="text-muted-foreground ms-2 text-xs">{s.grade} • {s.student_number || s.id.slice(0, 8)}</span>
                     </button>
                   ))}
                 </div>
               )}
               {selectedStudent && (
-                <div className="flex items-center gap-2 mt-1 px-2 py-1.5 bg-blue-50 rounded-md text-xs text-blue-800">
+                <div className="flex items-center gap-2 mt-1 px-2 py-1.5 bg-najdi-50 rounded-md text-xs text-najdi-900">
                   <span className="font-medium">{isRTL ? selectedStudent.name_ar : selectedStudent.name_en}</span>
-                  <span className="text-blue-500">({selectedStudent.grade})</span>
-                  <button type="button" className="ms-auto text-blue-400 hover:text-red-500" onClick={() => { setForm((f) => ({ ...f, student_id: '' })); setStudentSearch(''); }}>×</button>
+                  <span className="text-najdi-500">({selectedStudent.grade})</span>
+                  <button type="button" className="ms-auto text-najdi-500 hover:text-red-500" onClick={() => { setForm((f) => ({ ...f, student_id: '' })); setStudentSearch(''); }}>×</button>
                 </div>
               )}
             </div>
 
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">{isRTL ? 'السنة الأكاديمية' : 'Academic Year'}</label>
-                <input type="text" className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm" placeholder="2025-2026" value={form.academic_year} onChange={(e) => setForm((f) => ({ ...f, academic_year: e.target.value }))} />
+                <label className="block text-xs font-medium text-ink mb-1">{isRTL ? 'السنة الأكاديمية' : 'Academic Year'}</label>
+                <input type="text" className="w-full h-9 rounded-md border border-border px-3 text-sm" placeholder="2025-2026" value={form.academic_year} onChange={(e) => setForm((f) => ({ ...f, academic_year: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">{isRTL ? 'تاريخ الاستحقاق' : 'Due Date'}</label>
-                <input type="date" className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm" value={form.due_date} onChange={(e) => setForm((f) => ({ ...f, due_date: e.target.value }))} />
+                <label className="block text-xs font-medium text-ink mb-1">{isRTL ? 'تاريخ الاستحقاق' : 'Due Date'}</label>
+                <input type="date" className="w-full h-9 rounded-md border border-border px-3 text-sm" value={form.due_date} onChange={(e) => setForm((f) => ({ ...f, due_date: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">{isRTL ? 'عدد الأقساط' : 'Installments'}</label>
-                <input type="number" min="1" max="12" className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm" value={form.installment_count} onChange={(e) => setForm((f) => ({ ...f, installment_count: e.target.value }))} />
+                <label className="block text-xs font-medium text-ink mb-1">{isRTL ? 'عدد الأقساط' : 'Installments'}</label>
+                <input type="number" min="1" max="12" className="w-full h-9 rounded-md border border-border px-3 text-sm" value={form.installment_count} onChange={(e) => setForm((f) => ({ ...f, installment_count: e.target.value }))} />
               </div>
             </div>
 
             {/* Fee lines */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-medium text-slate-700">{isRTL ? 'بنود الرسوم' : 'Fee Lines'}</label>
+                <label className="text-xs font-medium text-ink">{isRTL ? 'بنود الرسوم' : 'Fee Lines'}</label>
                 <Button size="sm" variant="outline" onClick={addLine} className="h-7 text-xs">+ {isRTL ? 'بند' : 'Line'}</Button>
               </div>
               <div className="space-y-2">
                 {feeLines.map((line, i) => (
                   <div key={i} className="grid grid-cols-12 gap-2 items-center">
                     <div className="col-span-3">
-                      <select className="w-full h-8 rounded-md border border-slate-200 px-2 text-xs bg-white" value={line.category_id} onChange={(e) => {
+                      <select className="w-full h-8 rounded-md border border-border px-2 text-xs bg-white" value={line.category_id} onChange={(e) => {
                         const cat = categories.find((c) => c.id === e.target.value);
                         updateLine(i, 'category_id', e.target.value);
                         if (cat) { updateLine(i, 'description_en', cat.name_en); updateLine(i, 'description_ar', cat.name_ar); }
@@ -1005,16 +1005,16 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) 
                       </select>
                     </div>
                     <div className="col-span-3">
-                      <input type="text" className="w-full h-8 rounded-md border border-slate-200 px-2 text-xs" placeholder={isRTL ? 'الوصف EN' : 'Description EN'} value={line.description_en} onChange={(e) => updateLine(i, 'description_en', e.target.value)} />
+                      <input type="text" className="w-full h-8 rounded-md border border-border px-2 text-xs" placeholder={isRTL ? 'الوصف EN' : 'Description EN'} value={line.description_en} onChange={(e) => updateLine(i, 'description_en', e.target.value)} />
                     </div>
                     <div className="col-span-3">
-                      <input type="text" className="w-full h-8 rounded-md border border-slate-200 px-2 text-xs" placeholder={isRTL ? 'الوصف AR' : 'وصف بالعربي'} value={line.description_ar} onChange={(e) => updateLine(i, 'description_ar', e.target.value)} />
+                      <input type="text" className="w-full h-8 rounded-md border border-border px-2 text-xs" placeholder={isRTL ? 'الوصف AR' : 'وصف بالعربي'} value={line.description_ar} onChange={(e) => updateLine(i, 'description_ar', e.target.value)} />
                     </div>
                     <div className="col-span-2">
-                      <input type="number" className="w-full h-8 rounded-md border border-slate-200 px-2 text-xs" placeholder="SAR" value={line.amount} onChange={(e) => updateLine(i, 'amount', e.target.value)} />
+                      <input type="number" className="w-full h-8 rounded-md border border-border px-2 text-xs" placeholder="SAR" value={line.amount} onChange={(e) => updateLine(i, 'amount', e.target.value)} />
                     </div>
                     <div className="col-span-1 flex justify-center">
-                      {feeLines.length > 1 && <button type="button" onClick={() => removeLine(i)} className="text-slate-400 hover:text-red-500 text-lg leading-none">×</button>}
+                      {feeLines.length > 1 && <button type="button" onClick={() => removeLine(i)} className="text-muted-foreground hover:text-red-500 text-lg leading-none">×</button>}
                     </div>
                   </div>
                 ))}
@@ -1076,9 +1076,9 @@ function BulkGenerateDialog({ open, onClose, token, isRTL, onSuccess }) {
               <p className="font-semibold text-green-800">{isRTL ? 'اكتمل الإنشاء الجماعي' : 'Bulk run complete'}</p>
             </div>
             <div className="grid grid-cols-3 gap-3 text-center text-sm">
-              <div><div className="text-slate-500 text-xs">{isRTL ? 'تم الإنشاء' : 'Created'}</div><div className="font-bold text-green-700">{result.created}</div></div>
-              <div><div className="text-slate-500 text-xs">{isRTL ? 'تم التخطي' : 'Skipped'}</div><div className="font-bold text-amber-600">{result.skipped}</div></div>
-              <div><div className="text-slate-500 text-xs">{isRTL ? 'فشل' : 'Failed'}</div><div className="font-bold text-red-600">{result.errors?.length ?? 0}</div></div>
+              <div><div className="text-muted-foreground text-xs">{isRTL ? 'تم الإنشاء' : 'Created'}</div><div className="font-bold text-green-700">{result.created}</div></div>
+              <div><div className="text-muted-foreground text-xs">{isRTL ? 'تم التخطي' : 'Skipped'}</div><div className="font-bold text-amber-600">{result.skipped}</div></div>
+              <div><div className="text-muted-foreground text-xs">{isRTL ? 'فشل' : 'Failed'}</div><div className="font-bold text-red-600">{result.errors?.length ?? 0}</div></div>
             </div>
             {result.errors?.length > 0 && (
               <div className="rounded-lg bg-red-50 border border-red-100 p-3 text-xs text-red-700 max-h-32 overflow-auto">
@@ -1091,29 +1091,29 @@ function BulkGenerateDialog({ open, onClose, token, isRTL, onSuccess }) {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">{isRTL ? 'السنة الأكاديمية' : 'Academic Year'} *</label>
-                <input type="text" className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm" placeholder="2025-2026"
+                <label className="block text-xs font-medium text-ink mb-1">{isRTL ? 'السنة الأكاديمية' : 'Academic Year'} *</label>
+                <input type="text" className="w-full h-9 rounded-md border border-border px-3 text-sm" placeholder="2025-2026"
                   value={criteria.academic_year} onChange={(e) => { setCriteria((c) => ({ ...c, academic_year: e.target.value })); setPreview(null); }} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">{isRTL ? 'الصف (اختياري)' : 'Grade (optional)'}</label>
-                <input type="text" className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm" placeholder={isRTL ? 'كل الصفوف' : 'All grades'}
+                <label className="block text-xs font-medium text-ink mb-1">{isRTL ? 'الصف (اختياري)' : 'Grade (optional)'}</label>
+                <input type="text" className="w-full h-9 rounded-md border border-border px-3 text-sm" placeholder={isRTL ? 'كل الصفوف' : 'All grades'}
                   value={criteria.grade} onChange={(e) => { setCriteria((c) => ({ ...c, grade: e.target.value })); setPreview(null); }} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">{isRTL ? 'تاريخ الاستحقاق (اختياري)' : 'Due Date (optional)'}</label>
-                <input type="date" className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm"
+                <label className="block text-xs font-medium text-ink mb-1">{isRTL ? 'تاريخ الاستحقاق (اختياري)' : 'Due Date (optional)'}</label>
+                <input type="date" className="w-full h-9 rounded-md border border-border px-3 text-sm"
                   value={criteria.due_date} onChange={(e) => setCriteria((c) => ({ ...c, due_date: e.target.value }))} />
               </div>
             </div>
 
             {preview && (
-              <div className="rounded-lg border border-slate-200 p-3 space-y-2">
+              <div className="rounded-lg border border-border p-3 space-y-2">
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'سيتم الإنشاء' : 'Will generate'}</span><span className="font-bold text-blue-700">{preview.estimated_invoices}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'القيمة المتوقعة' : 'Est. total'}</span><span className="font-bold text-emerald-700">{sarFmt(preview.estimated_total)}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'مفوتر مسبقاً' : 'Already invoiced'}</span><span className="font-medium text-slate-700">{preview.already_invoiced}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'بدون رسوم' : 'No fees'}</span><span className="font-medium text-slate-700">{preview.skipped_no_fees}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'سيتم الإنشاء' : 'Will generate'}</span><span className="font-bold text-najdi-900">{preview.estimated_invoices}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'القيمة المتوقعة' : 'Est. total'}</span><span className="font-bold text-emerald-700">{sarFmt(preview.estimated_total)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'مفوتر مسبقاً' : 'Already invoiced'}</span><span className="font-medium text-ink">{preview.already_invoiced}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'بدون رسوم' : 'No fees'}</span><span className="font-medium text-ink">{preview.skipped_no_fees}</span></div>
                 </div>
                 {preview.estimated_invoices === 0 && (
                   <p className="text-xs text-amber-600">{isRTL ? 'لا يوجد طلاب مؤهلون للإنشاء بهذه المعايير.' : 'No eligible students to invoice for these criteria.'}</p>
@@ -1128,7 +1128,7 @@ function BulkGenerateDialog({ open, onClose, token, isRTL, onSuccess }) {
                 {loading && !preview ? <RefreshCw className="w-4 h-4 animate-spin" /> : (isRTL ? 'معاينة' : 'Preview')}
               </Button>
               <Button onClick={() => run(false)} disabled={loading || !criteria.academic_year || !preview || preview.estimated_invoices === 0}
-                className="bg-blue-600 hover:bg-blue-700 text-white">
+                className="bg-najdi-700 hover:bg-najdi-900 text-white">
                 {loading && preview ? <RefreshCw className="w-4 h-4 animate-spin" /> : (isRTL ? `إنشاء ${preview?.estimated_invoices ?? ''} فاتورة` : `Generate${preview ? ` ${preview.estimated_invoices}` : ''}`)}
               </Button>
             </DialogFooter>
@@ -1171,8 +1171,8 @@ export default function Fees() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">{isRTL ? 'الرسوم والفوترة' : 'Fees & Billing'}</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-xl font-bold text-ink">{isRTL ? 'الرسوم والفوترة' : 'Fees & Billing'}</h1>
+          <p className="text-sm text-muted-foreground">
             {isRTL
               ? 'محرك فوترة سعودي متكامل — ZATCA المرحلة 2، ضريبة القيمة المضافة، الأقساط، التحصيل الذكي'
               : 'Saudi billing engine — ZATCA Phase 2, VAT-aware, installment plans, AI collections'}
@@ -1183,7 +1183,7 @@ export default function Fees() {
             <Button onClick={() => setShowBulk(true)} variant="outline" className="h-9 gap-1.5">
               <FileText className="w-4 h-4" />{isRTL ? 'فواتير جماعية' : 'Bulk Generate'}
             </Button>
-            <Button onClick={() => setShowNewInvoice(true)} className="bg-blue-600 hover:bg-blue-700 text-white h-9 gap-1.5">
+            <Button onClick={() => setShowNewInvoice(true)} className="bg-najdi-700 hover:bg-najdi-900 text-white h-9 gap-1.5">
               <Plus className="w-4 h-4" />{isRTL ? 'فاتورة جديدة' : 'New Invoice'}
             </Button>
           </div>
@@ -1198,8 +1198,8 @@ export default function Fees() {
             onClick={() => setTab(t.id)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               tab === t.id
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                ? 'bg-najdi-700 text-white shadow-sm'
+                : 'bg-sand-alt text-muted-foreground hover:bg-sand-alt'
             }`}
           >
             <t.icon className="w-3.5 h-3.5" />

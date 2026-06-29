@@ -138,7 +138,7 @@ export default function OperationsDashboard() {
           title={isRTL ? 'التذاكر المفتوحة' : 'Open Tickets'}
           value={openTickets}
           icon={Ticket}
-          iconClassName="bg-blue-50"
+          iconClassName="bg-najdi-50"
         />
         <StatCard
           title={isRTL ? 'نسبة الحل' : 'Resolution Rate'}
@@ -272,7 +272,7 @@ export default function OperationsDashboard() {
           <CardContent className="space-y-4">
             {[
               { segment: 'active', label: isRTL ? 'نشط' : 'Active', color: 'bg-green-500' },
-              { segment: 'prospect', label: isRTL ? 'محتمل' : 'Prospect', color: 'bg-blue-500' },
+              { segment: 'prospect', label: isRTL ? 'محتمل' : 'Prospect', color: 'bg-najdi-500' },
               { segment: 'vip', label: 'VIP', color: 'bg-purple-500' },
               { segment: 'withdrawn', label: isRTL ? 'منسحب' : 'Withdrawn', color: 'bg-red-500' },
             ].map(({ segment, label, color }) => {

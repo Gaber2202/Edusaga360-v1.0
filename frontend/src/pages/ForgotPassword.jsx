@@ -65,7 +65,7 @@ export default function ForgotPassword() {
                 setLang(next);
                 try { localStorage.setItem('erp_language', next); } catch {}
               }}
-              className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+              className="text-xs text-muted-foreground hover:text-muted-foreground transition-colors"
             >
               {isRTL ? 'English' : 'العربية'}
             </button>
@@ -74,10 +74,10 @@ export default function ForgotPassword() {
           {/* Logo */}
           <div className="text-center space-y-2">
             <img src="/edusaga-logo.svg" alt="EduSaga 360" className="h-14 w-auto mx-auto" />
-            <h1 className="text-2xl font-bold text-slate-900">
+            <h1 className="text-2xl font-bold text-ink">
               {t('استعادة كلمة المرور', 'Reset your password')}
             </h1>
-            <p className="text-slate-500 text-sm">
+            <p className="text-muted-foreground text-sm">
               {t(
                 'أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة التعيين',
                 "Enter your email and we'll send you a reset link",
@@ -101,7 +101,7 @@ export default function ForgotPassword() {
               </div>
               <a
                 href="/school-login"
-                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-50 transition-colors text-sm"
+                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 border border-border text-muted-foreground font-medium rounded-xl hover:bg-sand transition-colors text-sm"
               >
                 <ArrowLeft className="w-4 h-4" />
                 {t('العودة لتسجيل الدخول', 'Back to sign in')}
@@ -110,7 +110,7 @@ export default function ForgotPassword() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-slate-700">
+                <Label className="text-sm font-medium text-ink">
                   {t('البريد الإلكتروني', 'Email address')}
                 </Label>
                 <Input
@@ -129,7 +129,7 @@ export default function ForgotPassword() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700"
+                className="w-full h-12 text-base font-semibold bg-najdi-700 hover:bg-najdi-900"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -146,7 +146,7 @@ export default function ForgotPassword() {
 
               <a
                 href="/school-login"
-                className="flex items-center justify-center gap-2 w-full text-sm text-slate-500 hover:text-slate-700 transition-colors pt-1"
+                className="flex items-center justify-center gap-2 w-full text-sm text-muted-foreground hover:text-ink transition-colors pt-1"
               >
                 <ArrowLeft className="w-4 h-4" />
                 {t('العودة لتسجيل الدخول', 'Back to sign in')}

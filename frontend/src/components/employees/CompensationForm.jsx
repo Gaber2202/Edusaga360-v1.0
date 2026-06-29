@@ -115,7 +115,7 @@ export default function CompensationForm({ value = {}, onChange }) {
             </div>
             <div className="space-y-3">
               {allowances.map((allowance, idx) => (
-                <div key={idx} className="p-3 bg-slate-50 rounded-lg space-y-2">
+                <div key={idx} className="p-3 bg-sand rounded-lg space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <Input
                       placeholder={isRTL ? 'اسم البدل' : 'Allowance Name'}
@@ -156,7 +156,7 @@ export default function CompensationForm({ value = {}, onChange }) {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Medical Insurance */}
-          <div className="p-3 bg-slate-50 rounded-lg space-y-2">
+          <div className="p-3 bg-sand rounded-lg space-y-2">
             <label className="flex items-center gap-2">
               <Checkbox checked={benefits.medical_insurance || false} onCheckedChange={(c) => handleChange('benefits', 'medical_insurance', c)} />
               <span className="text-sm font-medium">{isRTL ? 'التأمين الطبي' : 'Medical Insurance'}</span>
@@ -181,7 +181,7 @@ export default function CompensationForm({ value = {}, onChange }) {
           </div>
 
           {/* School Fees Benefit */}
-          <div className="p-3 bg-slate-50 rounded-lg space-y-2">
+          <div className="p-3 bg-sand rounded-lg space-y-2">
             <label className="flex items-center gap-2">
               <Checkbox checked={benefits.school_fees_benefit || false} onCheckedChange={(c) => handleChange('benefits', 'school_fees_benefit', c)} />
               <span className="text-sm font-medium">{isRTL ? 'مزية رسوم المدرسة' : 'School Fees Benefit'}</span>
@@ -216,7 +216,7 @@ export default function CompensationForm({ value = {}, onChange }) {
             </div>
             <div className="space-y-3">
               {otherBenefits.map((benefit, idx) => (
-                <div key={idx} className="p-3 bg-slate-50 rounded-lg space-y-2">
+                <div key={idx} className="p-3 bg-sand rounded-lg space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <Input
                       placeholder={isRTL ? 'اسم المزية' : 'Benefit Name'}
@@ -254,7 +254,7 @@ export default function CompensationForm({ value = {}, onChange }) {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* GOSI */}
-          <label className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg">
+          <label className="flex items-center gap-2 p-3 bg-sand rounded-lg">
             <Checkbox checked={deductions.gosi_applicable !== false} onCheckedChange={(c) => handleChange('deductions', 'gosi_applicable', c)} />
             <span className="text-sm font-medium">{isRTL ? 'التأمينات الاجتماعية (GOSI)' : 'GOSI Applicable'}</span>
           </label>
@@ -269,7 +269,7 @@ export default function CompensationForm({ value = {}, onChange }) {
             </div>
             <div className="space-y-3">
               {otherDeductions.map((deduction, idx) => (
-                <div key={idx} className="p-3 bg-slate-50 rounded-lg space-y-2">
+                <div key={idx} className="p-3 bg-sand rounded-lg space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <Input
                       placeholder={isRTL ? 'اسم الخصم' : 'Deduction Name'}

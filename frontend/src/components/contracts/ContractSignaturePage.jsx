@@ -133,13 +133,13 @@ export default function ContractSignaturePage({ contractId }) {
   };
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <Loader2 className="w-8 h-8 animate-spin text-slate-500" />
+    <div className="min-h-screen flex items-center justify-center bg-sand">
+      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
     </div>
   );
 
   if (!contract) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="min-h-screen flex items-center justify-center bg-sand">
       <Card className="p-8 text-center max-w-md">
         <XCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
         <h2 className="text-xl font-semibold">Contract not found</h2>
@@ -148,33 +148,33 @@ export default function ContractSignaturePage({ contractId }) {
   );
 
   if (signed) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="min-h-screen flex items-center justify-center bg-sand">
       <Card className="p-10 text-center max-w-md">
         <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
         <h2 className="text-2xl font-bold text-green-700 mb-2">تم التوقيع بنجاح / Signed Successfully</h2>
-        <p className="text-slate-600">شكراً لك. تم استلام توقيعك وسيتم تأكيد التسجيل قريباً.</p>
-        <p className="text-slate-500 text-sm mt-2">Thank you. Your signature has been recorded and enrollment will be confirmed shortly.</p>
+        <p className="text-muted-foreground">شكراً لك. تم استلام توقيعك وسيتم تأكيد التسجيل قريباً.</p>
+        <p className="text-muted-foreground text-sm mt-2">Thank you. Your signature has been recorded and enrollment will be confirmed shortly.</p>
       </Card>
     </div>
   );
 
   if (rejected) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="min-h-screen flex items-center justify-center bg-sand">
       <Card className="p-10 text-center max-w-md">
         <XCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
         <h2 className="text-2xl font-bold text-red-600 mb-2">تم رفض العقد / Contract Rejected</h2>
-        <p className="text-slate-600">سيتواصل معك فريق المدرسة قريباً.</p>
-        <p className="text-slate-500 text-sm mt-2">The school team will contact you shortly.</p>
+        <p className="text-muted-foreground">سيتواصل معك فريق المدرسة قريباً.</p>
+        <p className="text-muted-foreground text-sm mt-2">The school team will contact you shortly.</p>
       </Card>
     </div>
   );
 
   if (contract.status === 'signed') return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="min-h-screen flex items-center justify-center bg-sand">
       <Card className="p-10 text-center max-w-md">
         <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
         <h2 className="text-xl font-bold text-green-700">تم توقيع هذا العقد مسبقاً / Already Signed</h2>
-        <p className="text-slate-500 text-sm mt-2">{contract.signed_date ? new Date(contract.signed_date).toLocaleString() : ''}</p>
+        <p className="text-muted-foreground text-sm mt-2">{contract.signed_date ? new Date(contract.signed_date).toLocaleString() : ''}</p>
       </Card>
     </div>
   );
@@ -183,21 +183,21 @@ export default function ContractSignaturePage({ contractId }) {
   const contentEn = contract.generated_content_en;
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4">
+    <div className="min-h-screen bg-sand py-8 px-4">
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center">
-          <FileText className="w-10 h-10 text-blue-600 mx-auto mb-2" />
-          <h1 className="text-2xl font-bold text-slate-900">
+          <FileText className="w-10 h-10 text-najdi-700 mx-auto mb-2" />
+          <h1 className="text-2xl font-bold text-ink">
             {contract.student_name} — {contract.academic_year}
           </h1>
-          <p className="text-slate-500 text-sm">
+          <p className="text-muted-foreground text-sm">
             {contract.guardian_name} | {contract.grade}
           </p>
         </div>
 
         {/* Contract Content */}
-        <Card className="p-8 bg-white text-slate-900">
+        <Card className="p-8 bg-white text-ink">
           {contentAr && (
             <div dir="rtl" className="mb-8" style={{ fontFamily: 'Arial, sans-serif' }}>
               <div
@@ -220,7 +220,7 @@ export default function ContractSignaturePage({ contractId }) {
 
         {/* Signature Section */}
         <Card className="p-6 space-y-4">
-          <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+          <h3 className="font-bold text-lg text-ink flex items-center gap-2">
             <PenLine className="w-5 h-5" />
             التوقيع الإلكتروني / Electronic Signature
           </h3>
@@ -232,7 +232,7 @@ export default function ContractSignaturePage({ contractId }) {
               checked={agreementChecked}
               onChange={(e) => setAgreementChecked(e.target.checked)}
             />
-            <span className="text-sm text-slate-700">
+            <span className="text-sm text-ink">
               أقر بأنني اطلعت على جميع بنود العقد وأوافق عليها / I confirm I have read and agree to all contract terms
             </span>
           </label>
@@ -248,12 +248,12 @@ export default function ContractSignaturePage({ contractId }) {
             </Button>
           ) : (
             <div className="space-y-2">
-              <p className="text-sm text-slate-500">ارسم توقيعك أدناه / Draw your signature below:</p>
+              <p className="text-sm text-muted-foreground">ارسم توقيعك أدناه / Draw your signature below:</p>
               <canvas
                 ref={canvasRef}
                 width={600}
                 height={150}
-                className="border-2 border-dashed border-slate-300 rounded-lg w-full bg-white cursor-crosshair touch-none"
+                className="border-2 border-dashed border-border rounded-lg w-full bg-white cursor-crosshair touch-none"
                 style={{ maxHeight: '150px' }}
                 onMouseDown={startDraw}
                 onMouseMove={draw}
