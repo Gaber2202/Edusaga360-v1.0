@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData, callApi, uploadFileApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -11,8 +11,8 @@ import { Badge } from '../ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { toast } from 'sonner';
 import {
-  AlertTriangle, CheckCircle, Upload, Camera, FileText,
-  User, Phone, Mail, Loader2, ChevronRight, X
+  AlertTriangle, CheckCircle, Camera,
+  User, Phone, Mail, Loader2, ChevronRight
 } from 'lucide-react';
 
 const REQUIRED_DOCUMENT_TYPES = [

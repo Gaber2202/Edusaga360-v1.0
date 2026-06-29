@@ -9,12 +9,11 @@ import { Badge } from '../ui/badge';
 import { Progress } from '../ui/progress';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { toast } from 'sonner';
 import {
   Crown, Users, Check, AlertCircle, Zap, CheckCircle, Lock, ArrowUpRight, ArrowDownRight, Loader2,
-  CreditCard, Building2, Upload, ExternalLink, Copy, FileText
+  CreditCard, Building2, Upload, Copy, FileText
 } from 'lucide-react';
 import { PLAN_DEFINITIONS } from '../../hooks/useModuleAccess';
 import AttachmentUploader from '../ui/AttachmentUploader';

@@ -162,7 +162,7 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
   });
   const { data: feeStructures = [] } = useQuery({
     queryKey: ['fee_structures', tenantId],
-    queryFn: () => fetchData(tenantQuery('fee_structures').select('id, name_ar, name_en, grade').order('name_ar')),
+    queryFn: () => fetchData(tenantQuery('fee_structures').select('id, fee_type_name_ar, fee_type_name_en, grade').order('fee_type_name_ar')),
   });
   const { data: paymentPlans = [] } = useQuery({
     queryKey: ['payment_plans', tenantId],
@@ -454,7 +454,7 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
                         {feeStructures
                           .filter((f) => !f.grade || !formData.grade || f.grade === formData.grade)
                           .map((f) => (
-                            <SelectItem key={f.id} value={f.id}>{isRTL ? f.name_ar : f.name_en || f.name_ar}</SelectItem>
+                            <SelectItem key={f.id} value={f.id}>{isRTL ? f.fee_type_name_ar : f.fee_type_name_en || f.fee_type_name_ar}</SelectItem>
                           ))}
                       </SelectContent>
                     </Select>
