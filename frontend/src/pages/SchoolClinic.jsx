@@ -39,7 +39,7 @@ const OUTCOMES = [
   { value: 'sent_home', ar: 'أُرسل للمنزل', en: 'Sent Home', cls: 'bg-amber-100 text-amber-700' },
   { value: 'referred_to_hospital', ar: 'إحالة للمستشفى', en: 'Referred to Hospital', cls: 'bg-orange-100 text-orange-700' },
   { value: 'ambulance_called', ar: 'طلب إسعاف', en: 'Ambulance Called', cls: 'bg-red-100 text-red-700' },
-  { value: 'parent_called', ar: 'تم الاتصال بولي الأمر', en: 'Parent Called', cls: 'bg-blue-100 text-blue-700' },
+  { value: 'parent_called', ar: 'تم الاتصال بولي الأمر', en: 'Parent Called', cls: 'bg-najdi-50 text-najdi-900' },
 ];
 
 const BLANK_VISIT = {
@@ -149,8 +149,8 @@ export default function SchoolClinic() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">{isRTL ? 'العيادة المدرسية' : 'School Clinic'}</h1>
-          <p className="text-sm text-slate-500">{isRTL ? 'إدارة الصحة المدرسية والزيارات والسجلات الصحية' : 'Student health management, clinic visits & health records'}</p>
+          <h1 className="text-xl font-bold text-ink">{isRTL ? 'العيادة المدرسية' : 'School Clinic'}</h1>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'إدارة الصحة المدرسية والزيارات والسجلات الصحية' : 'Student health management, clinic visits & health records'}</p>
         </div>
         <Button onClick={() => setShowVisitForm(true)} className="bg-red-600 hover:bg-red-700 text-white">
           <Plus className="w-4 h-4 me-1" />{isRTL ? 'تسجيل زيارة' : 'Log Visit'}
@@ -159,7 +159,7 @@ export default function SchoolClinic() {
 
       {/* Quick stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title={isRTL ? 'زيارات اليوم' : "Today's Visits"} value={todayVisits.length} icon={Activity} iconClassName="bg-blue-50" />
+        <StatCard title={isRTL ? 'زيارات اليوم' : "Today's Visits"} value={todayVisits.length} icon={Activity} iconClassName="bg-najdi-50" />
         <StatCard title={isRTL ? 'في العيادة الآن' : 'Currently in Clinic'} value={inClinic} icon={Stethoscope} iconClassName="bg-amber-50" />
         <StatCard title={isRTL ? 'أُرسلوا للمنزل' : 'Sent Home'} value={sentHome} icon={Phone} iconClassName="bg-orange-50" />
         <StatCard title={isRTL ? 'مراجعون متكررون' : 'Frequent Visitors'} value={frequentCount} icon={AlertTriangle} iconClassName="bg-red-50" />
@@ -179,7 +179,7 @@ export default function SchoolClinic() {
           <div className="max-w-md mx-auto bg-white border rounded-2xl p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <Heart className="w-5 h-5 text-red-500" />
-              <h2 className="font-semibold text-slate-700">{isRTL ? 'تسجيل زيارة سريع — أقل من 60 ثانية' : 'Quick Visit Log — Under 60 Seconds'}</h2>
+              <h2 className="font-semibold text-ink">{isRTL ? 'تسجيل زيارة سريع — أقل من 60 ثانية' : 'Quick Visit Log — Under 60 Seconds'}</h2>
             </div>
             <QuickVisitPanel
               students={students}
@@ -197,14 +197,14 @@ export default function SchoolClinic() {
               <CardHeader className="pb-2"><CardTitle className="text-base">{isRTL ? 'زيارات اليوم' : "Today's Visits"}</CardTitle></CardHeader>
               <CardContent>
                 {todayVisits.length === 0 ? (
-                  <p className="text-slate-400 text-sm text-center py-6">{isRTL ? 'لا زيارات اليوم' : 'No visits today'}</p>
+                  <p className="text-muted-foreground text-sm text-center py-6">{isRTL ? 'لا زيارات اليوم' : 'No visits today'}</p>
                 ) : (
                   <div className="space-y-2">
                     {todayVisits.slice(0, 6).map(v => (
-                      <div key={v.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                      <div key={v.id} className="flex items-center justify-between p-2 bg-sand rounded-lg">
                         <div>
                           <p className="text-sm font-medium">{v.student_name}</p>
-                          <p className="text-xs text-slate-500">{v.visit_time} · {COMPLAINTS.find(c => c.value === v.complaint_category)?.[isRTL ? 'ar' : 'en']}</p>
+                          <p className="text-xs text-muted-foreground">{v.visit_time} · {COMPLAINTS.find(c => c.value === v.complaint_category)?.[isRTL ? 'ar' : 'en']}</p>
                         </div>
                         <OutcomeBadge outcome={v.outcome} />
                       </div>
@@ -226,7 +226,7 @@ export default function SchoolClinic() {
                         <span>{isRTL ? c.ar : c.en}</span>
                         <span className="font-medium">{count}</span>
                       </div>
-                      <div className="h-2 bg-slate-100 rounded-full">
+                      <div className="h-2 bg-sand-alt rounded-full">
                         <div className="h-full bg-red-400 rounded-full" style={{ width: `${pct}%` }} />
                       </div>
                     </div>
@@ -262,7 +262,7 @@ export default function SchoolClinic() {
         {/* VISIT LOG */}
         <TabsContent value="visits" className="mt-4 space-y-4">
           <div className="relative max-w-72">
-            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
             <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={e => setSearch(e.target.value)} className={`${isRTL ? 'pr-9' : 'pl-9'} bg-white h-9`} />
           </div>
           <Card>
@@ -282,17 +282,17 @@ export default function SchoolClinic() {
                   {isLoading ? (
                     <TableRow><TableCell colSpan={6} className="text-center py-10"><div className="w-6 h-6 border-2 border-red-500 border-t-transparent rounded-full animate-spin mx-auto" /></TableCell></TableRow>
                   ) : filteredVisits.length === 0 ? (
-                    <TableRow><TableCell colSpan={6} className="text-center py-10 text-slate-400">{isRTL ? 'لا توجد زيارات' : 'No visits found'}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">{isRTL ? 'لا توجد زيارات' : 'No visits found'}</TableCell></TableRow>
                   ) : filteredVisits.map(v => (
                     <TableRow key={v.id}>
                       <TableCell>
                         <p className="font-medium text-sm">{v.student_name}</p>
-                        <p className="text-xs text-slate-400">{v.grade}</p>
+                        <p className="text-xs text-muted-foreground">{v.grade}</p>
                       </TableCell>
-                      <TableCell className="text-xs text-slate-500">{v.visit_date} {v.visit_time}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{v.visit_date} {v.visit_time}</TableCell>
                       <TableCell><span className="text-sm">{COMPLAINTS.find(c => c.value === v.complaint_category)?.[isRTL ? 'ar' : 'en']}</span></TableCell>
-                      <TableCell>{v.temperature ? <span className={`text-sm font-medium ${v.temperature > 38 ? 'text-red-600' : 'text-slate-700'}`}>{v.temperature}°C</span> : '-'}</TableCell>
-                      <TableCell className="text-xs text-slate-600 max-w-32 truncate">{v.treatment_given || '-'}</TableCell>
+                      <TableCell>{v.temperature ? <span className={`text-sm font-medium ${v.temperature > 38 ? 'text-red-600' : 'text-ink'}`}>{v.temperature}°C</span> : '-'}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground max-w-32 truncate">{v.treatment_given || '-'}</TableCell>
                       <TableCell><OutcomeBadge outcome={v.outcome} /></TableCell>
                     </TableRow>
                   ))}
@@ -310,14 +310,14 @@ export default function SchoolClinic() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <p className="font-semibold text-slate-800">{r.student_name}</p>
-                      <p className="text-xs text-slate-500">{isRTL ? 'فصيلة الدم:' : 'Blood type:'} {r.blood_type || '—'}</p>
+                      <p className="font-semibold text-ink">{r.student_name}</p>
+                      <p className="text-xs text-muted-foreground">{isRTL ? 'فصيلة الدم:' : 'Blood type:'} {r.blood_type || '—'}</p>
                     </div>
                     {r.has_critical_condition && <AlertTriangle className="w-5 h-5 text-red-500" />}
                   </div>
                   {r.allergies?.length > 0 && (
                     <div className="mb-2">
-                      <p className="text-xs text-slate-500 mb-1">{isRTL ? 'الحساسية:' : 'Allergies:'}</p>
+                      <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'الحساسية:' : 'Allergies:'}</p>
                       <div className="flex flex-wrap gap-1">
                         {r.allergies.map((a, i) => <span key={i} className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">{a.name}</span>)}
                       </div>
@@ -325,18 +325,18 @@ export default function SchoolClinic() {
                   )}
                   {r.chronic_conditions?.length > 0 && (
                     <div>
-                      <p className="text-xs text-slate-500 mb-1">{isRTL ? 'الأمراض المزمنة:' : 'Conditions:'}</p>
+                      <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'الأمراض المزمنة:' : 'Conditions:'}</p>
                       <div className="flex flex-wrap gap-1">
                         {r.chronic_conditions.map((c, i) => <span key={i} className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">{c}</span>)}
                       </div>
                     </div>
                   )}
-                  {r.insurance_company && <p className="text-xs text-slate-400 mt-2">🏥 {r.insurance_company} · {r.insurance_policy_number}</p>}
+                  {r.insurance_company && <p className="text-xs text-muted-foreground mt-2">🏥 {r.insurance_company} · {r.insurance_policy_number}</p>}
                 </CardContent>
               </Card>
             ))}
             {healthRecords.length === 0 && (
-              <div className="col-span-3 text-center py-12 text-slate-400">
+              <div className="col-span-3 text-center py-12 text-muted-foreground">
                 {isRTL ? 'لا توجد سجلات صحية' : 'No health records found'}
               </div>
             )}
@@ -366,8 +366,8 @@ export default function SchoolClinic() {
                       <TableRow key={`${r.id}-${i}`}>
                         <TableCell className="text-sm font-medium">{r.student_name}</TableCell>
                         <TableCell className="text-sm">{vac.vaccine_name}</TableCell>
-                        <TableCell className="text-xs text-slate-500">{vac.date_given || '-'}</TableCell>
-                        <TableCell className="text-xs text-slate-500">{vac.next_due || '-'}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{vac.date_given || '-'}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{vac.next_due || '-'}</TableCell>
                         <TableCell>
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${vac.status === 'complete' ? 'bg-green-100 text-green-700' : vac.status === 'overdue' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
                             {vac.status || 'pending'}
@@ -377,7 +377,7 @@ export default function SchoolClinic() {
                     ))
                   )}
                   {healthRecords.flatMap(r => r.vaccinations || []).length === 0 && (
-                    <TableRow><TableCell colSpan={5} className="text-center py-10 text-slate-400">{isRTL ? 'لا بيانات تطعيم' : 'No vaccination data'}</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">{isRTL ? 'لا بيانات تطعيم' : 'No vaccination data'}</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -407,9 +407,9 @@ export default function SchoolClinic() {
               {studentSearch && !visitForm.student_id && (
                 <div className="border rounded-lg max-h-40 overflow-y-auto">
                   {filteredStudents.slice(0, 8).map(s => (
-                    <button key={s.id} onClick={() => selectStudent(s)} className="w-full text-start px-3 py-2 hover:bg-slate-50 text-sm border-b last:border-0">
+                    <button key={s.id} onClick={() => selectStudent(s)} className="w-full text-start px-3 py-2 hover:bg-sand text-sm border-b last:border-0">
                       <span className="font-medium">{s.name_ar}</span>
-                      <span className="text-slate-400 ms-2">{s.grade}</span>
+                      <span className="text-muted-foreground ms-2">{s.grade}</span>
                     </button>
                   ))}
                 </div>

@@ -191,11 +191,11 @@ export default function Reconciliation() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <StatCard title={isRTL ? 'إجمالي الدفعات' : 'Total Payments'} value={stats.total} icon={RefreshCw} iconClassName="bg-slate-100" />
+        <StatCard title={isRTL ? 'إجمالي الدفعات' : 'Total Payments'} value={stats.total} icon={RefreshCw} iconClassName="bg-sand-alt" />
         <StatCard title={isRTL ? 'مطابق' : 'Matched'} value={stats.matched} icon={CheckCircle} iconClassName="bg-emerald-50" />
         <StatCard title={isRTL ? 'معلق' : 'Pending'} value={stats.pending} icon={RefreshCw} iconClassName="bg-amber-50" />
         <StatCard title={isRTL ? 'استثناءات' : 'Exceptions'} value={stats.exceptions} icon={AlertCircle} iconClassName="bg-red-50" />
-        <StatCard title={isRTL ? 'إجمالي المبلغ' : 'Total Amount'} value={`${stats.totalAmount.toLocaleString()}`} icon={RefreshCw} iconClassName="bg-blue-50" />
+        <StatCard title={isRTL ? 'إجمالي المبلغ' : 'Total Amount'} value={`${stats.totalAmount.toLocaleString()}`} icon={RefreshCw} iconClassName="bg-najdi-50" />
         <StatCard title={isRTL ? 'المبلغ المسوى' : 'Reconciled'} value={`${stats.reconciledAmount.toLocaleString()}`} icon={CheckCircle} iconClassName="bg-purple-50" />
       </div>
 
@@ -223,13 +223,13 @@ export default function Reconciliation() {
             <DialogTitle>{isRTL ? 'تأكيد التسوية' : 'Confirm Reconciliation'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="bg-slate-50 p-4 rounded-lg space-y-2">
+            <div className="bg-sand p-4 rounded-lg space-y-2">
               <div className="flex justify-between">
-                <span className="text-slate-500">{isRTL ? 'عدد الدفعات' : 'Payment Count'}</span>
+                <span className="text-muted-foreground">{isRTL ? 'عدد الدفعات' : 'Payment Count'}</span>
                 <span className="font-semibold">{selectedPayments.length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">{isRTL ? 'إجمالي المبلغ' : 'Total Amount'}</span>
+                <span className="text-muted-foreground">{isRTL ? 'إجمالي المبلغ' : 'Total Amount'}</span>
                 <span className="font-semibold text-emerald-600">
                   {payments.filter(p => selectedPayments.includes(p.id)).reduce((sum, p) => sum + (p.amount || 0), 0).toLocaleString()} {t('sar')}
                 </span>

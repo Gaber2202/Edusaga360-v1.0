@@ -225,17 +225,17 @@ ${content}
                   <Checkbox checked={sendChannels.email} onCheckedChange={(v) => setSendChannels({...sendChannels, email: v})} />
                   <Mail className="w-4 h-4" />
                   <span>{isRTL ? 'البريد الإلكتروني' : 'Email'}</span>
-                  <span className="text-sm text-slate-500">({contract.guardian_email || isRTL ? 'غير متوفر' : 'Not available'})</span>
+                  <span className="text-sm text-muted-foreground">({contract.guardian_email || isRTL ? 'غير متوفر' : 'Not available'})</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Checkbox checked={sendChannels.whatsapp} onCheckedChange={(v) => setSendChannels({...sendChannels, whatsapp: v})} />
                   <MessageSquare className="w-4 h-4" />
                   <span>{isRTL ? 'واتساب' : 'WhatsApp'}</span>
-                  <span className="text-sm text-slate-500">({contract.guardian_phone || isRTL ? 'غير متوفر' : 'Not available'})</span>
+                  <span className="text-sm text-muted-foreground">({contract.guardian_phone || isRTL ? 'غير متوفر' : 'Not available'})</span>
                 </div>
               </div>
             </div>
-            <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm">
+            <div className="bg-najdi-50 border border-najdi-100 rounded p-3 text-sm">
               <p>{isRTL ? 'سيتم إرسال رابط العقد لولي الأمر للمراجعة والتوقيع الإلكتروني' : 'A contract link will be sent to the guardian for review and digital signature'}</p>
             </div>
           </div>
@@ -256,7 +256,7 @@ ${content}
             <DialogTitle>{isRTL ? 'تحديد العقد كموقع' : 'Mark Contract as Signed'}</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-slate-600">{isRTL ? 'هل تريد تحديد هذا العقد كموقع من قبل ولي الأمر؟' : 'Do you want to mark this contract as signed by the guardian?'}</p>
+            <p className="text-muted-foreground">{isRTL ? 'هل تريد تحديد هذا العقد كموقع من قبل ولي الأمر؟' : 'Do you want to mark this contract as signed by the guardian?'}</p>
             <div className="bg-amber-50 border border-amber-200 rounded p-3 text-sm mt-4">
               <p>{isRTL ? 'ملاحظة: سيتم حفظ تاريخ ووقت التوقيع' : 'Note: Signature date and time will be recorded'}</p>
             </div>

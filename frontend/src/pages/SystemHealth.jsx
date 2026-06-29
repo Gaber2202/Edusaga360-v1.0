@@ -188,7 +188,7 @@ export default function SystemHealth() {
                 <CheckCircle className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'الوحدات النشطة' : 'Active Modules'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'الوحدات النشطة' : 'Active Modules'}</p>
                 <p className="text-2xl font-bold">{modules.length}</p>
               </div>
             </div>
@@ -197,11 +197,11 @@ export default function SystemHealth() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <Activity className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-najdi-50 rounded-full flex items-center justify-center">
+                <Activity className="w-5 h-5 text-najdi-700" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'اختبارات ناجحة' : 'Tests Passed'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'اختبارات ناجحة' : 'Tests Passed'}</p>
                 <p className="text-2xl font-bold">{passedTests}/{smokeTests.length}</p>
               </div>
             </div>
@@ -214,7 +214,7 @@ export default function SystemHealth() {
                 <Bug className={`w-5 h-5 ${openDefects > 0 ? 'text-red-600' : 'text-green-600'}`} />
               </div>
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'مشاكل مفتوحة' : 'Open Defects'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'مشاكل مفتوحة' : 'Open Defects'}</p>
                 <p className="text-2xl font-bold">{openDefects}</p>
               </div>
             </div>
@@ -227,7 +227,7 @@ export default function SystemHealth() {
                 <Clock className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'آخر نشاط' : 'Last Activity'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'آخر نشاط' : 'Last Activity'}</p>
                 <p className="text-sm font-medium">{auditLogs[0] ? format(new Date(auditLogs[0].created_at), 'HH:mm') : '-'}</p>
               </div>
             </div>
@@ -261,7 +261,7 @@ export default function SystemHealth() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 {modules.map(module => (
-                  <div key={module.key} className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg">
+                  <div key={module.key} className="flex items-center gap-2 p-3 bg-sand rounded-lg">
                     <CheckCircle className="w-4 h-4 text-green-500" />
                     <span className="text-sm font-medium">{module.name}</span>
                   </div>
@@ -278,11 +278,11 @@ export default function SystemHealth() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Users className="w-6 h-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-najdi-50 rounded-full flex items-center justify-center">
+                    <Users className="w-6 h-6 text-najdi-700" />
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">{isRTL ? 'الطلاب' : 'Students'}</p>
+                    <p className="text-sm text-muted-foreground">{isRTL ? 'الطلاب' : 'Students'}</p>
                     <p className="text-xl font-bold">{students.length}</p>
                   </div>
                 </div>
@@ -291,7 +291,7 @@ export default function SystemHealth() {
                     <Users className="w-6 h-6 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">{isRTL ? 'الموظفون' : 'Employees'}</p>
+                    <p className="text-sm text-muted-foreground">{isRTL ? 'الموظفون' : 'Employees'}</p>
                     <p className="text-xl font-bold">{employees.length}</p>
                   </div>
                 </div>
@@ -300,7 +300,7 @@ export default function SystemHealth() {
                     <FileText className="w-6 h-6 text-amber-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">{isRTL ? 'الفواتير' : 'Invoices'}</p>
+                    <p className="text-sm text-muted-foreground">{isRTL ? 'الفواتير' : 'Invoices'}</p>
                     <p className="text-xl font-bold">{invoices.length}</p>
                   </div>
                 </div>
@@ -315,16 +315,16 @@ export default function SystemHealth() {
             </CardHeader>
             <CardContent>
               {auditLogs.length === 0 ? (
-                <p className="text-slate-500 text-center py-4">{isRTL ? 'لا يوجد نشاط' : 'No activity'}</p>
+                <p className="text-muted-foreground text-center py-4">{isRTL ? 'لا يوجد نشاط' : 'No activity'}</p>
               ) : (
                 <div className="space-y-2">
                   {auditLogs.slice(0, 10).map(log => (
-                    <div key={log.id} className="flex items-center justify-between p-2 bg-slate-50 rounded">
+                    <div key={log.id} className="flex items-center justify-between p-2 bg-sand rounded">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">{log.action}</Badge>
                         <span className="text-sm">{log.entity_type}</span>
                       </div>
-                      <span className="text-xs text-slate-500">{format(new Date(log.created_at), 'dd/MM HH:mm')}</span>
+                      <span className="text-xs text-muted-foreground">{format(new Date(log.created_at), 'dd/MM HH:mm')}</span>
                     </div>
                   ))}
                 </div>
@@ -344,7 +344,7 @@ export default function SystemHealth() {
             <CardContent>
               <div className="space-y-2">
                 {smokeTests.map((test, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                  <div key={idx} className="flex items-center justify-between p-3 bg-sand rounded-lg">
                     <div className="flex items-center gap-3">
                       {test.status === 'pass' ? (
                         <CheckCircle className="w-5 h-5 text-green-500" />
@@ -355,7 +355,7 @@ export default function SystemHealth() {
                       )}
                       <div>
                         <p className="font-medium">{test.test}</p>
-                        <p className="text-sm text-slate-500">{test.module}</p>
+                        <p className="text-sm text-muted-foreground">{test.module}</p>
                       </div>
                     </div>
                     <Badge variant={test.status === 'pass' ? 'default' : 'destructive'}>
@@ -371,7 +371,7 @@ export default function SystemHealth() {
         <TabsContent value="defects" className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between gap-3">
             <div className="relative flex-1 max-w-md">
-              <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+              <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
               <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${isRTL ? 'pr-10' : 'pl-10'} bg-white`} />
             </div>
             <Button onClick={() => setShowDefectForm(true)} className="gap-2">

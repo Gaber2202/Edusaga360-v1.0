@@ -110,11 +110,11 @@ export default function PayrollDashboard({ onNavigate }) {
   }, 0);
 
   const statusColors = {
-    draft: 'bg-slate-100 text-slate-700',
-    calculated: 'bg-blue-100 text-blue-700',
+    draft: 'bg-sand-alt text-ink',
+    calculated: 'bg-najdi-50 text-najdi-900',
     review: 'bg-amber-100 text-amber-700',
     approved: 'bg-purple-100 text-purple-700',
-    hr_approved: 'bg-blue-100 text-blue-700',
+    hr_approved: 'bg-najdi-50 text-najdi-900',
     finance_approved: 'bg-purple-100 text-purple-700',
     exported: 'bg-indigo-100 text-indigo-700',
     completed: 'bg-emerald-100 text-emerald-700',
@@ -140,13 +140,13 @@ export default function PayrollDashboard({ onNavigate }) {
   return (
     <div className="space-y-6">
       {/* Current Pay Run Card */}
-      <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+      <Card className="bg-gradient-to-br from-najdi-900 to-najdi-900 text-white">
         <CardContent className="p-6">
           <div className="flex flex-col lg:flex-row justify-between gap-6">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-slate-300" />
-                <span className="text-slate-300">{isRTL ? 'كشف الرواتب الحالي' : 'Current Pay Run'}</span>
+                <Calendar className="w-5 h-5 text-muted-foreground" />
+                <span className="text-muted-foreground">{isRTL ? 'كشف الرواتب الحالي' : 'Current Pay Run'}</span>
               </div>
               <h2 className="text-3xl font-bold">
                 {format(new Date(), isRTL ? 'MMMM yyyy' : 'MMMM yyyy')}
@@ -156,19 +156,19 @@ export default function PayrollDashboard({ onNavigate }) {
                   <Badge className={statusColors[currentPayRun.status]}>
                     {isRTL ? statusLabels[currentPayRun.status]?.ar : statusLabels[currentPayRun.status]?.en}
                   </Badge>
-                  <span className="text-slate-300">
+                  <span className="text-muted-foreground">
                     {currentPayRun.employee_count} {isRTL ? 'موظف' : 'employees'}
                   </span>
                 </div>
               ) : (
-                <Badge className="bg-slate-700 text-slate-300">
+                <Badge className="bg-ink text-muted-foreground">
                   {isRTL ? 'لم يتم الإنشاء بعد' : 'Not Created Yet'}
                 </Badge>
               )}
             </div>
             
             <div className="flex flex-col items-end gap-2">
-              <span className="text-slate-300 text-sm">{isRTL ? 'صافي الرواتب' : 'Net Payroll'}</span>
+              <span className="text-muted-foreground text-sm">{isRTL ? 'صافي الرواتب' : 'Net Payroll'}</span>
               <span className="text-4xl font-bold">
                 {currentPayRun 
                   ? `${(currentPayRun.net_payroll || 0).toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}`
@@ -176,7 +176,7 @@ export default function PayrollDashboard({ onNavigate }) {
                 }
               </span>
               {currentPayRun?.payment_date && (
-                <span className="text-slate-400 text-sm">
+                <span className="text-muted-foreground text-sm">
                   {isRTL ? 'تاريخ الصرف:' : 'Payment Date:'} {format(new Date(currentPayRun.payment_date), 'dd/MM/yyyy')}
                 </span>
               )}
@@ -202,7 +202,7 @@ export default function PayrollDashboard({ onNavigate }) {
             )}
             {currentPayRun?.status === 'draft' && (
               <Button 
-                className="bg-blue-500 hover:bg-blue-600 text-white"
+                className="bg-najdi-500 hover:bg-najdi-700 text-white"
                 onClick={() => onNavigate('payruns')}
               >
                 {isRTL ? 'متابعة المعالجة' : 'Continue Processing'}
@@ -219,12 +219,12 @@ export default function PayrollDashboard({ onNavigate }) {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'إجمالي الموظفين' : 'Total Employees'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الموظفين' : 'Total Employees'}</p>
                 <p className="text-2xl font-bold mt-1">{filteredEmployees.length}</p>
-                <p className="text-xs text-slate-400 mt-1">{isRTL ? 'إجمالي الرواتب:' : 'Total Payroll:'} {totalGrossSalary.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p>
+                <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'إجمالي الرواتب:' : 'Total Payroll:'} {totalGrossSalary.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p>
               </div>
-              <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-najdi-50 rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6 text-najdi-700" />
               </div>
             </div>
           </CardContent>
@@ -235,7 +235,7 @@ export default function PayrollDashboard({ onNavigate }) {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'سعودي / غير سعودي' : 'Saudi / Non-Saudi'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'سعودي / غير سعودي' : 'Saudi / Non-Saudi'}</p>
                 <p className="text-2xl font-bold mt-1">{saudiCount} / {nonSaudiCount}</p>
               </div>
               <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
@@ -249,7 +249,7 @@ export default function PayrollDashboard({ onNavigate }) {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'التأمينات (موظف)' : 'GOSI (Employee)'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'التأمينات (موظف)' : 'GOSI (Employee)'}</p>
                 <p className="text-2xl font-bold mt-1">{(estimatedGOSIEmployee / 1000).toFixed(1)}K</p>
               </div>
               <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
@@ -263,7 +263,7 @@ export default function PayrollDashboard({ onNavigate }) {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'التأمينات (صاحب العمل)' : 'GOSI (Employer)'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'التأمينات (صاحب العمل)' : 'GOSI (Employer)'}</p>
                 <p className="text-2xl font-bold mt-1">{(estimatedGOSIEmployer / 1000).toFixed(1)}K</p>
               </div>
               <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center">
@@ -278,25 +278,25 @@ export default function PayrollDashboard({ onNavigate }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-white">
           <CardContent className="p-4">
-            <p className="text-sm text-slate-500">{isRTL ? 'معلمين' : 'Teachers'}</p>
+            <p className="text-sm text-muted-foreground">{isRTL ? 'معلمين' : 'Teachers'}</p>
             <p className="text-xl font-bold mt-1">{teacherCount}</p>
           </CardContent>
         </Card>
         <Card className="bg-white">
           <CardContent className="p-4">
-            <p className="text-sm text-slate-500">{isRTL ? 'إداريين' : 'Admin Staff'}</p>
+            <p className="text-sm text-muted-foreground">{isRTL ? 'إداريين' : 'Admin Staff'}</p>
             <p className="text-xl font-bold mt-1">{adminCount}</p>
           </CardContent>
         </Card>
         <Card className="bg-white">
           <CardContent className="p-4">
-            <p className="text-sm text-slate-500">{isRTL ? 'قروض نشطة' : 'Active Loans'}</p>
+            <p className="text-sm text-muted-foreground">{isRTL ? 'قروض نشطة' : 'Active Loans'}</p>
             <p className="text-xl font-bold mt-1">{loans.filter(l => l.status === 'active').length}</p>
           </CardContent>
         </Card>
         <Card className="bg-white">
           <CardContent className="p-4">
-            <p className="text-sm text-slate-500">{isRTL ? 'سلف رسوم نشطة' : 'Active Tuition'}</p>
+            <p className="text-sm text-muted-foreground">{isRTL ? 'سلف رسوم نشطة' : 'Active Tuition'}</p>
             <p className="text-xl font-bold mt-1">{tuitionAdvances.filter(t => t.status === 'active').length}</p>
           </CardContent>
         </Card>
@@ -363,17 +363,17 @@ export default function PayrollDashboard({ onNavigate }) {
 
             {pendingLoans.length > 0 && (
               <button
-                className="w-full flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors cursor-pointer text-start"
+                className="w-full flex items-center justify-between p-3 bg-najdi-50 rounded-lg border border-najdi-100 hover:bg-najdi-50 transition-colors cursor-pointer text-start"
                 onClick={() => onNavigate('loans')}
               >
                 <div className="flex items-center gap-3">
-                  <DollarSign className="w-5 h-5 text-blue-500" />
+                  <DollarSign className="w-5 h-5 text-najdi-500" />
                   <div>
-                    <p className="font-medium text-blue-700">{isRTL ? 'طلبات قروض معلقة' : 'Pending Loan Requests'}</p>
-                    <p className="text-sm text-blue-600">{pendingLoans.length} {isRTL ? 'طلب' : 'requests'}</p>
+                    <p className="font-medium text-najdi-900">{isRTL ? 'طلبات قروض معلقة' : 'Pending Loan Requests'}</p>
+                    <p className="text-sm text-najdi-700">{pendingLoans.length} {isRTL ? 'طلب' : 'requests'}</p>
                   </div>
                 </div>
-                <ArrowRight className="w-4 h-4 text-blue-500" />
+                <ArrowRight className="w-4 h-4 text-najdi-500" />
               </button>
             )}
 
@@ -394,7 +394,7 @@ export default function PayrollDashboard({ onNavigate }) {
             )}
 
             {expiredIqama.length === 0 && expiringIqama.length === 0 && missingIBAN.length === 0 && pendingLoans.length === 0 && pendingTuition.length === 0 && (
-              <div className="flex items-center justify-center p-6 text-slate-400">
+              <div className="flex items-center justify-center p-6 text-muted-foreground">
                 <CheckCircle2 className="w-5 h-5 me-2" />
                 {isRTL ? 'لا توجد تنبيهات' : 'No alerts'}
               </div>
@@ -406,7 +406,7 @@ export default function PayrollDashboard({ onNavigate }) {
         <Card className="bg-white">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <FileText className="w-5 h-5 text-slate-500" />
+              <FileText className="w-5 h-5 text-muted-foreground" />
               {isRTL ? 'كشوفات الرواتب الأخيرة' : 'Recent Pay Runs'}
             </CardTitle>
           </CardHeader>
@@ -414,12 +414,12 @@ export default function PayrollDashboard({ onNavigate }) {
             {payRuns.slice(0, 5).map(run => (
               <button
                 key={run.id}
-                className="w-full flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer text-start"
+                className="w-full flex items-center justify-between p-3 bg-sand rounded-lg hover:bg-sand-alt transition-colors cursor-pointer text-start"
                 onClick={() => onNavigate('payruns')}
               >
                 <div>
                   <p className="font-medium">{run.period}</p>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-muted-foreground">
                     {run.employee_count} {isRTL ? 'موظف' : 'employees'} • {(run.net_payroll || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}
                   </p>
                 </div>
@@ -429,7 +429,7 @@ export default function PayrollDashboard({ onNavigate }) {
               </button>
             ))}
             {payRuns.length === 0 && (
-              <div className="text-center p-6 text-slate-400">
+              <div className="text-center p-6 text-muted-foreground">
                 {isRTL ? 'لا توجد كشوفات رواتب سابقة' : 'No previous pay runs'}
               </div>
             )}

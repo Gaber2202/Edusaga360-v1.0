@@ -32,7 +32,7 @@ export default function MudadWPS() {
   const { data: _branches = [] } = useQuery({ queryKey: ['branches'], queryFn: () => fetchData(tenantQuery('branches').select('*').match({ is_active: true })) });
 
   const statusIcon = { pending: <Clock className="w-3 h-3" />, submitted: <CheckCircle className="w-3 h-3" />, accepted: <CheckCircle className="w-3 h-3" />, rejected: <XCircle className="w-3 h-3" />, partial: <Clock className="w-3 h-3" /> };
-  const statusColor = { pending: 'bg-amber-100 text-amber-700', submitted: 'bg-blue-100 text-blue-700', accepted: 'bg-emerald-100 text-emerald-700', rejected: 'bg-red-100 text-red-700', partial: 'bg-yellow-100 text-yellow-700' };
+  const statusColor = { pending: 'bg-amber-100 text-amber-700', submitted: 'bg-najdi-50 text-najdi-900', accepted: 'bg-emerald-100 text-emerald-700', rejected: 'bg-red-100 text-red-700', partial: 'bg-yellow-100 text-yellow-700' };
 
   const columns = [
     { header: isRTL ? 'الفترة' : 'Period', cell: r => `${isRTL ? monthsAr[r.period_month - 1] : months[r.period_month - 1]} ${r.period_year}` },
@@ -41,7 +41,7 @@ export default function MudadWPS() {
     { header: isRTL ? 'إجمالي الأجور' : 'Total Wages', cell: r => `${(r.total_salary || 0).toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}` },
     { header: isRTL ? 'الامتثال %' : 'Compliance %', cell: r => (
       <div className="flex items-center gap-2">
-        <div className="w-16 bg-slate-200 rounded-full h-2">
+        <div className="w-16 bg-sand-alt rounded-full h-2">
           <div className="h-2 rounded-full" style={{ width: `${r.compliance_percentage || 0}%`, backgroundColor: (r.compliance_percentage || 0) >= 90 ? '#10b981' : '#ef4444' }} />
         </div>
         <span className="text-sm font-medium">{r.compliance_percentage || 0}%</span>
@@ -49,7 +49,7 @@ export default function MudadWPS() {
     )},
     { header: isRTL ? 'البنك' : 'Bank', accessorKey: 'bank_name' },
     { header: isRTL ? 'الحالة' : 'Status', cell: r => (
-      <Badge className={statusColor[r.status] || 'bg-slate-100 text-slate-700'}>
+      <Badge className={statusColor[r.status] || 'bg-sand-alt text-ink'}>
         <span className="me-1">{statusIcon[r.status]}</span>
         {r.status}
       </Badge>
@@ -77,18 +77,18 @@ export default function MudadWPS() {
     <div className="space-y-4 mt-4">
       <div className="grid grid-cols-3 gap-4">
         <Card><CardContent className="p-4">
-          <div className="text-2xl font-bold text-slate-900">{submissions.length}</div>
-          <div className="text-sm text-slate-500">{isRTL ? 'إجمالي الرفوعات' : 'Total Submissions'}</div>
+          <div className="text-2xl font-bold text-ink">{submissions.length}</div>
+          <div className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الرفوعات' : 'Total Submissions'}</div>
         </CardContent></Card>
         <Card className={avgCompliance >= 90 ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50'}>
           <CardContent className="p-4">
             <div className={`text-2xl font-bold ${avgCompliance >= 90 ? 'text-emerald-700' : 'text-red-700'}`}>{avgCompliance}%</div>
-            <div className="text-sm text-slate-500">{isRTL ? 'متوسط الامتثال' : 'Avg Compliance'}</div>
+            <div className="text-sm text-muted-foreground">{isRTL ? 'متوسط الامتثال' : 'Avg Compliance'}</div>
           </CardContent>
         </Card>
         <Card><CardContent className="p-4">
-          <div className="text-2xl font-bold text-slate-900">{lastSubmission ? `${isRTL ? monthsAr[lastSubmission.period_month - 1] : months[lastSubmission.period_month - 1]} ${lastSubmission.period_year}` : '—'}</div>
-          <div className="text-sm text-slate-500">{isRTL ? 'آخر فترة مرفوعة' : 'Last Submitted Period'}</div>
+          <div className="text-2xl font-bold text-ink">{lastSubmission ? `${isRTL ? monthsAr[lastSubmission.period_month - 1] : months[lastSubmission.period_month - 1]} ${lastSubmission.period_year}` : '—'}</div>
+          <div className="text-sm text-muted-foreground">{isRTL ? 'آخر فترة مرفوعة' : 'Last Submitted Period'}</div>
         </CardContent></Card>
       </div>
 

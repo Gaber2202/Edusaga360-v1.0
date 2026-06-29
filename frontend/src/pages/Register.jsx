@@ -135,20 +135,20 @@ export default function Register() {
             className="h-10 w-auto mx-auto"
           />
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">تم استلام طلبك بنجاح!</h2>
-            <p className="text-slate-600 mt-3 leading-relaxed text-sm">
-              شكراً <span className="font-semibold text-slate-900">{form.first_name} {form.last_name}</span>، تلقينا طلب تسجيل مدرسة{' '}
-              <span className="font-semibold text-slate-900">{form.school_name}</span>.
+            <h2 className="text-2xl font-bold text-ink">تم استلام طلبك بنجاح!</h2>
+            <p className="text-muted-foreground mt-3 leading-relaxed text-sm">
+              شكراً <span className="font-semibold text-ink">{form.first_name} {form.last_name}</span>، تلقينا طلب تسجيل مدرسة{' '}
+              <span className="font-semibold text-ink">{form.school_name}</span>.
               <br /><br />
               سيقوم فريقنا بمراجعة طلبك وسيصلك بريد إلكتروني على{' '}
-              <span className="font-semibold text-blue-700">{form.email}</span>{' '}
+              <span className="font-semibold text-najdi-900">{form.email}</span>{' '}
               خلال 24 ساعة يحتوي على رابط إعداد حسابك.
             </p>
           </div>
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
             في حال لم يصلك البريد، تحقق من مجلد الرسائل غير المرغوب فيها (Spam).
           </div>
-          <a href="/school-login" className="text-sm text-blue-600 hover:underline block">
+          <a href="/school-login" className="text-sm text-najdi-700 hover:underline block">
             لديك حساب بالفعل؟ تسجيل الدخول
           </a>
         </div>
@@ -176,14 +176,14 @@ export default function Register() {
             />
             <div>
               <p className="font-bold text-xl">EduSaga 360</p>
-              <p className="text-blue-300 text-xs">v1.0</p>
+              <p className="text-najdi-500 text-xs">v1.0</p>
             </div>
           </div>
 
           {/* Taglines */}
           <div>
             <h1 className="text-3xl font-bold leading-snug">نظام إدارة المدارس الذكي</h1>
-            <p className="text-blue-300 mt-2 text-sm">Powered by AI. Built for Saudi Schools.</p>
+            <p className="text-najdi-500 mt-2 text-sm">Powered by AI. Built for Saudi Schools.</p>
           </div>
 
           {/* Value props */}
@@ -195,7 +195,7 @@ export default function Register() {
             ].map((item) => (
               <div key={item.text} className="flex items-start gap-3">
                 <span className="text-2xl flex-shrink-0">{item.icon}</span>
-                <p className="text-blue-100 text-sm leading-relaxed">{item.text}</p>
+                <p className="text-najdi-100 text-sm leading-relaxed">{item.text}</p>
               </div>
             ))}
           </div>
@@ -204,12 +204,12 @@ export default function Register() {
         {/* Bottom badge */}
         <div className="bg-white/10 border border-white/20 rounded-xl p-4 text-center">
           <p className="text-white font-semibold text-sm">🎁 تجربة مجانية 30 يوماً</p>
-          <p className="text-blue-200 text-xs mt-1">لا يلزم بطاقة ائتمان</p>
+          <p className="text-najdi-100 text-xs mt-1">لا يلزم بطاقة ائتمان</p>
         </div>
       </div>
 
       {/* RIGHT — Form */}
-      <div className="flex-1 bg-slate-50 flex items-center justify-center p-6 overflow-y-auto">
+      <div className="flex-1 bg-sand flex items-center justify-center p-6 overflow-y-auto">
         <div className="w-full max-w-lg">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-between mb-6">
@@ -219,15 +219,15 @@ export default function Register() {
                 alt="EduSaga"
                 className="h-8 w-auto"
               />
-              <span className="font-bold text-slate-900">EduSaga 360</span>
+              <span className="font-bold text-ink">EduSaga 360</span>
             </div>
           </div>
 
           {/* Form Card */}
           <div className="bg-white rounded-2xl shadow-xl p-8 space-y-5">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">ابدأ تجربتك المجانية</h2>
-              <p className="text-slate-500 text-sm mt-1">أنشئ حساب مدرستك في دقيقتين</p>
+              <h2 className="text-2xl font-bold text-ink">ابدأ تجربتك المجانية</h2>
+              <p className="text-muted-foreground text-sm mt-1">أنشئ حساب مدرستك في دقيقتين</p>
             </div>
 
             {/* Trial badge */}
@@ -285,7 +285,7 @@ export default function Register() {
                   <select
                     value={form.country_code}
                     onChange={e => set('country_code', e.target.value)}
-                    className="h-9 rounded-md border border-input px-2 text-xs bg-transparent text-slate-900 focus:outline-none focus:ring-1 focus:ring-ring flex-shrink-0"
+                    className="h-9 rounded-md border border-input px-2 text-xs bg-transparent text-ink focus:outline-none focus:ring-1 focus:ring-ring flex-shrink-0"
                     style={{ minWidth: '90px' }}
                     dir="ltr"
                   >
@@ -310,7 +310,7 @@ export default function Register() {
                 <select
                   value={form.city}
                   onChange={e => set('city', e.target.value)}
-                  className={`w-full h-9 rounded-md border px-3 text-sm bg-transparent text-slate-900 focus:outline-none focus:ring-1 focus:ring-ring ${errors.city ? 'border-red-400' : 'border-input'}`}
+                  className={`w-full h-9 rounded-md border px-3 text-sm bg-transparent text-ink focus:outline-none focus:ring-1 focus:ring-ring ${errors.city ? 'border-red-400' : 'border-input'}`}
                 >
                   <option value="">اختر المدينة</option>
                   {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
@@ -325,8 +325,8 @@ export default function Register() {
                       onClick={() => set('school_type', t.value)}
                       className={`flex-1 py-1.5 px-2 rounded-lg border text-xs font-medium transition-all ${
                         form.school_type === t.value
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                          ? 'border-najdi-500 bg-najdi-50 text-najdi-900'
+                          : 'border-border text-muted-foreground hover:border-border'
                       } ${errors.school_type ? 'border-red-300' : ''}`}
                     >
                       {t.label}
@@ -346,8 +346,8 @@ export default function Register() {
                     onClick={() => set('estimated_students', r.value)}
                     className={`py-1.5 px-3 rounded-lg border text-sm font-medium transition-all ${
                       form.estimated_students === r.value
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                        ? 'border-najdi-500 bg-najdi-50 text-najdi-900'
+                        : 'border-border text-muted-foreground hover:border-border'
                     } ${errors.estimated_students ? 'border-red-300' : ''}`}
                   >
                     {r.label}
@@ -361,7 +361,7 @@ export default function Register() {
               <select
                 value={form.how_heard}
                 onChange={e => set('how_heard', e.target.value)}
-                className="w-full h-9 rounded-md border border-input px-3 text-sm bg-transparent text-slate-900 focus:outline-none focus:ring-1 focus:ring-ring"
+                className="w-full h-9 rounded-md border border-input px-3 text-sm bg-transparent text-ink focus:outline-none focus:ring-1 focus:ring-ring"
               >
                 <option value="">اختر...</option>
                 {HOW_HEARD.map(h => <option key={h} value={h}>{h}</option>)}
@@ -370,7 +370,7 @@ export default function Register() {
 
             {/* Submit */}
             <Button
-              className="w-full h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700"
+              className="w-full h-12 text-base font-semibold bg-najdi-700 hover:bg-najdi-900"
               onClick={handleSubmit}
               disabled={submitting}
             >
@@ -379,12 +379,12 @@ export default function Register() {
 
             {/* Footer links */}
             <div className="text-center space-y-2">
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 بالتسجيل، أنت توافق على شروط الاستخدام وسياسة الخصوصية
               </p>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 لديك حساب بالفعل؟{' '}
-                <a href="/school-login" className="text-blue-600 hover:underline font-medium">
+                <a href="/school-login" className="text-najdi-700 hover:underline font-medium">
                   تسجيل الدخول
                 </a>
               </p>
@@ -399,7 +399,7 @@ export default function Register() {
 function FieldBlock({ label, error, children }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-sm font-medium text-slate-700">{label}</Label>
+      <Label className="text-sm font-medium text-ink">{label}</Label>
       {children}
       {error && <p className="text-xs text-red-500 mt-0.5">{error}</p>}
     </div>

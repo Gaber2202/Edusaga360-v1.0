@@ -28,13 +28,13 @@ export default function AbsherServices() {
 
   return (
     <div className="space-y-6 mt-4">
-      <div className="p-4 rounded-xl bg-slate-800 border border-slate-700 flex items-start gap-3">
+      <div className="p-4 rounded-xl bg-najdi-900 border border-najdi-900 flex items-start gap-3">
         <div className="w-10 h-10 rounded-lg bg-emerald-900/40 flex items-center justify-center flex-shrink-0">
           <Shield className="w-5 h-5 text-emerald-400" />
         </div>
         <div>
           <h3 className="text-white font-semibold">{isRTL ? 'أبشر أعمال' : 'Absher Business'}</h3>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             {isRTL
               ? 'منصة أبشر أعمال تتيح لأصحاب العمل إدارة شؤون موظفيهم وتراخيص منشآتهم إلكترونياً'
               : 'Absher Business platform enables employers to manage employee affairs and establishment licenses electronically'}

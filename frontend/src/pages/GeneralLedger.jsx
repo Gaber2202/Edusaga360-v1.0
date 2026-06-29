@@ -184,7 +184,7 @@ export default function GeneralLedger() {
               title={isRTL ? 'الرصيد الافتتاحي' : 'Opening Balance'}
               value={`${totals.openingBalance.toLocaleString()}`}
               icon={FileText}
-              iconClassName="bg-slate-100"
+              iconClassName="bg-sand-alt"
             />
             <StatCard
               title={isRTL ? 'إجمالي المدين' : 'Total Debit'}
@@ -202,28 +202,28 @@ export default function GeneralLedger() {
               title={isRTL ? 'الرصيد الختامي' : 'Closing Balance'}
               value={`${totals.closingBalance.toLocaleString()}`}
               icon={DollarSign}
-              iconClassName="bg-blue-50"
+              iconClassName="bg-najdi-50"
             />
           </div>
 
           {/* Account Header */}
-          <Card className="bg-slate-50">
+          <Card className="bg-sand">
             <CardContent className="py-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
                 <div>
-                  <p className="text-sm text-slate-500">{isRTL ? 'رقم الحساب' : 'Account Code'}</p>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'رقم الحساب' : 'Account Code'}</p>
                   <p className="font-mono font-semibold">{selectedAccountData?.account_code}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500">{isRTL ? 'اسم الحساب' : 'Account Name'}</p>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'اسم الحساب' : 'Account Name'}</p>
                   <p className="font-semibold">{isRTL ? selectedAccountData?.name_ar : (selectedAccountData?.name_en || selectedAccountData?.name_ar)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500">{isRTL ? 'نوع الحساب' : 'Account Type'}</p>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'نوع الحساب' : 'Account Type'}</p>
                   <p className="font-medium capitalize">{selectedAccountData?.account_type}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500">{isRTL ? 'الطبيعة' : 'Normal Balance'}</p>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'الطبيعة' : 'Normal Balance'}</p>
                   <p className="font-medium capitalize">{selectedAccountData?.normal_balance}</p>
                 </div>
               </div>
@@ -239,7 +239,7 @@ export default function GeneralLedger() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-50">
+                    <TableRow className="bg-sand">
                       <TableHead>{t('date')}</TableHead>
                       <TableHead>{isRTL ? 'المرجع' : 'Reference'}</TableHead>
                       <TableHead>{t('description')}</TableHead>
@@ -251,13 +251,13 @@ export default function GeneralLedger() {
                   <TableBody>
                     {ledgerEntries.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                           {isRTL ? 'لا توجد حركات في هذه الفترة' : 'No transactions in this period'}
                         </TableCell>
                       </TableRow>
                     ) : (
                       ledgerEntries.map(entry => (
-                        <TableRow key={entry.id} className={entry.isOpening ? 'bg-blue-50 font-medium' : ''}>
+                        <TableRow key={entry.id} className={entry.isOpening ? 'bg-najdi-50 font-medium' : ''}>
                           <TableCell>{entry.isOpening ? '-' : format(new Date(entry.date), 'dd/MM/yyyy')}</TableCell>
                           <TableCell className="font-mono text-sm">{entry.reference}</TableCell>
                           <TableCell>{entry.description}</TableCell>
@@ -270,7 +270,7 @@ export default function GeneralLedger() {
                       ))
                     )}
                     {ledgerEntries.length > 0 && (
-                      <TableRow className="bg-slate-100 font-semibold">
+                      <TableRow className="bg-sand-alt font-semibold">
                         <TableCell colSpan={3}>{isRTL ? 'الإجمالي' : 'Total'}</TableCell>
                         <TableCell className="text-end">{totals.totalDebit.toLocaleString()}</TableCell>
                         <TableCell className="text-end">{totals.totalCredit.toLocaleString()}</TableCell>
@@ -286,10 +286,10 @@ export default function GeneralLedger() {
       )}
 
       {!selectedAccount && (
-        <Card className="bg-slate-50">
+        <Card className="bg-sand">
           <CardContent className="py-12 text-center">
-            <FileText className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-500">{isRTL ? 'اختر حساباً لعرض حركاته' : 'Select an account to view its transactions'}</p>
+            <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">{isRTL ? 'اختر حساباً لعرض حركاته' : 'Select an account to view its transactions'}</p>
           </CardContent>
         </Card>
       )}

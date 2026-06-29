@@ -12,7 +12,7 @@ export default function TenantUsageDashboard({ isRTL }) {
     queryFn: () => fetchData(tenantQuery('tenants').select('*').order('created_at', { ascending: false })),
   });
 
-  if (isLoading) return <div className="animate-pulse h-40 bg-slate-100 rounded-xl" />;
+  if (isLoading) return <div className="animate-pulse h-40 bg-sand-alt rounded-xl" />;
 
   const atRisk = tenants.filter(t => {
     const empPct  = t.max_employees   ? (t.current_employees   || 0) / t.max_employees   : 0;
@@ -39,32 +39,32 @@ export default function TenantUsageDashboard({ isRTL }) {
       )}
 
       {/* Tenant usage table */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div className="bg-white border border-border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
-              <th className="text-start px-4 py-2.5 text-xs font-medium text-slate-500">{label('المستأجر', 'Tenant')}</th>
-              <th className="px-4 py-2.5 text-xs font-medium text-slate-500">{label('الموظفون', 'Employees')}</th>
-              <th className="px-4 py-2.5 text-xs font-medium text-slate-500">{label('الطلاب', 'Students')}</th>
-              <th className="px-4 py-2.5 text-xs font-medium text-slate-500">{label('يامن AI', 'Yamen AI')}</th>
-              <th className="px-4 py-2.5 text-xs font-medium text-slate-500">{label('الحالة', 'Status')}</th>
+            <tr className="bg-sand border-b border-border">
+              <th className="text-start px-4 py-2.5 text-xs font-medium text-muted-foreground">{label('المستأجر', 'Tenant')}</th>
+              <th className="px-4 py-2.5 text-xs font-medium text-muted-foreground">{label('الموظفون', 'Employees')}</th>
+              <th className="px-4 py-2.5 text-xs font-medium text-muted-foreground">{label('الطلاب', 'Students')}</th>
+              <th className="px-4 py-2.5 text-xs font-medium text-muted-foreground">{label('يامن AI', 'Yamen AI')}</th>
+              <th className="px-4 py-2.5 text-xs font-medium text-muted-foreground">{label('الحالة', 'Status')}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border">
             {tenants.map(t => {
               const isActive = ['trial', 'active'].includes(t.status);
 
               return (
-                <tr key={t.id} className="hover:bg-slate-50">
+                <tr key={t.id} className="hover:bg-sand">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-slate-800">{isRTL ? t.name_ar : t.name_en}</div>
-                    <div className="text-xs text-slate-400">{t.tenant_code}</div>
+                    <div className="font-medium text-ink">{isRTL ? t.name_ar : t.name_en}</div>
+                    <div className="text-xs text-muted-foreground">{t.tenant_code}</div>
                   </td>
                   <td className="px-4 py-3 min-w-[120px]">
                     <TenantUsageBar label="" current={t.current_employees || 0} max={t.max_employees || 0} />
                   </td>
                   <td className="px-4 py-3 min-w-[120px]">
-                    <TenantUsageBar label="" current={t.current_students || 0} max={t.max_students || 0} colorClass="bg-blue-500" />
+                    <TenantUsageBar label="" current={t.current_students || 0} max={t.max_students || 0} colorClass="bg-najdi-500" />
                   </td>
                   <td className="px-4 py-3 min-w-[120px]">
                     <TenantUsageBar label="" current={t.yamen_ai_used_this_month || 0} max={t.yamen_ai_monthly_limit || 0} colorClass="bg-purple-500" />

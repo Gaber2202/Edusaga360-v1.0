@@ -11,9 +11,9 @@ import { Search, AlertTriangle, Eye, Edit } from 'lucide-react';
 const GRADES = ['KG1','KG2','KG3','Grade1','Grade2','Grade3','Grade4','Grade5','Grade6','Grade7','Grade8','Grade9','Grade10','Grade11','Grade12'];
 
 const STATUS_COLORS = {
-  inquiry: 'bg-slate-100 text-slate-700',
-  submitted: 'bg-blue-100 text-blue-700',
-  pending: 'bg-blue-100 text-blue-700',
+  inquiry: 'bg-sand-alt text-ink',
+  submitted: 'bg-najdi-50 text-najdi-900',
+  pending: 'bg-najdi-50 text-najdi-900',
   under_review: 'bg-yellow-100 text-yellow-700',
   assessment: 'bg-purple-100 text-purple-700',
   interview: 'bg-indigo-100 text-indigo-700',
@@ -59,7 +59,7 @@ export default function AdmissionsListView({ applications, loading, branches: _b
       {/* Filters */}
       <div className="flex gap-3 flex-wrap items-center">
         <div className="relative flex-1 min-w-48">
-          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
           <Input
             placeholder={isRTL ? 'بحث بالاسم أو رقم الطلب أو الهاتف...' : 'Search by name, number, or phone...'}
             value={search}
@@ -87,7 +87,7 @@ export default function AdmissionsListView({ applications, loading, branches: _b
             {GRADES.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
           </SelectContent>
         </Select>
-        <span className="text-sm text-slate-500">{isRTL ? `${filtered.length} طلب` : `${filtered.length} records`}</span>
+        <span className="text-sm text-muted-foreground">{isRTL ? `${filtered.length} طلب` : `${filtered.length} records`}</span>
       </div>
 
       <Card>
@@ -109,12 +109,12 @@ export default function AdmissionsListView({ applications, loading, branches: _b
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-12">
-                    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                    <div className="w-8 h-8 border-4 border-najdi-500 border-t-transparent rounded-full animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12 text-slate-400">
+                  <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
                     {isRTL ? 'لا توجد طلبات' : 'No applications found'}
                   </TableCell>
                 </TableRow>
@@ -123,34 +123,34 @@ export default function AdmissionsListView({ applications, loading, branches: _b
                   const days = differenceInDays(new Date(), new Date(app.created_at));
                   const isOverdue = days > 30;
                   return (
-                    <TableRow key={app.id} className="cursor-pointer hover:bg-slate-50" onClick={() => onView(app)}>
+                    <TableRow key={app.id} className="cursor-pointer hover:bg-sand" onClick={() => onView(app)}>
                       <TableCell>
-                        <span className="font-mono text-xs text-slate-600">{app.application_number || '-'}</span>
+                        <span className="font-mono text-xs text-muted-foreground">{app.application_number || '-'}</span>
                       </TableCell>
                       <TableCell>
-                        <p className="font-medium text-slate-800">{app.student_name_ar}</p>
-                        {app.student_name_en && <p className="text-xs text-slate-400">{app.student_name_en}</p>}
+                        <p className="font-medium text-ink">{app.student_name_ar}</p>
+                        {app.student_name_en && <p className="text-xs text-muted-foreground">{app.student_name_en}</p>}
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-slate-600">{app.applying_for_grade}</span>
+                        <span className="text-sm text-muted-foreground">{app.applying_for_grade}</span>
                       </TableCell>
                       <TableCell>
-                        <p className="text-sm text-slate-700">{app.guardian_name_ar}</p>
-                        <p className="text-xs text-slate-400">{app.guardian_phone}</p>
+                        <p className="text-sm text-ink">{app.guardian_name_ar}</p>
+                        <p className="text-xs text-muted-foreground">{app.guardian_phone}</p>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-slate-500">
+                        <span className="text-sm text-muted-foreground">
                           {app.created_at ? format(new Date(app.created_at), 'dd/MM/yy') : '-'}
                         </span>
                       </TableCell>
                       <TableCell>
-                        <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-500' : 'text-slate-500'}`}>
+                        <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-500' : 'text-muted-foreground'}`}>
                           {isOverdue && <AlertTriangle className="w-3 h-3" />}
                           <span className="text-sm font-medium">{days}</span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLORS[app.status] || 'bg-slate-100 text-slate-600'}`}>
+                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLORS[app.status] || 'bg-sand-alt text-muted-foreground'}`}>
                           {isRTL ? (STATUS_LABELS_AR[app.status] || app.status) : (app.status?.charAt(0).toUpperCase() + app.status?.slice(1))}
                         </span>
                       </TableCell>

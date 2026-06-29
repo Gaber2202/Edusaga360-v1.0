@@ -86,7 +86,7 @@ export default function Communications() {
       cell: (row) => (
         <div>
           <p className="font-medium">{row.recipient_name}</p>
-          <p className="text-sm text-slate-500">{t(row.recipient_type)}</p>
+          <p className="text-sm text-muted-foreground">{t(row.recipient_type)}</p>
         </div>
       )
     },
@@ -95,7 +95,7 @@ export default function Communications() {
       cell: (row) => (
         <div className="flex items-center gap-2">
           {row.channel === 'whatsapp' && <MessageSquare className="w-4 h-4 text-green-600" />}
-          {row.channel === 'email' && <Mail className="w-4 h-4 text-blue-600" />}
+          {row.channel === 'email' && <Mail className="w-4 h-4 text-najdi-700" />}
           {row.channel === 'sms' && <Send className="w-4 h-4 text-purple-600" />}
           <span className="capitalize">{row.channel}</span>
         </div>
@@ -104,13 +104,13 @@ export default function Communications() {
     {
       header: isRTL ? 'الموضوع' : 'Subject',
       cell: (row) => (
-        <span className="text-slate-700">{row.subject}</span>
+        <span className="text-ink">{row.subject}</span>
       )
     },
     {
       header: isRTL ? 'التاريخ' : 'Date',
       cell: (row) => (
-        <span className="text-slate-600">
+        <span className="text-muted-foreground">
           {row.sent_date ? format(new Date(row.sent_date), 'dd/MM/yyyy HH:mm') : '-'}
         </span>
       )
@@ -139,35 +139,35 @@ export default function Communications() {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-slate-900">{stats.total}</div>
-            <div className="text-sm text-slate-600">{isRTL ? 'إجمالي الرسائل' : 'Total Messages'}</div>
+            <div className="text-2xl font-bold text-ink">{stats.total}</div>
+            <div className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الرسائل' : 'Total Messages'}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-green-600" />
-              <div className="text-2xl font-bold text-slate-900">{stats.whatsapp}</div>
+              <div className="text-2xl font-bold text-ink">{stats.whatsapp}</div>
             </div>
-            <div className="text-sm text-slate-600">{isRTL ? 'واتساب' : 'WhatsApp'}</div>
+            <div className="text-sm text-muted-foreground">{isRTL ? 'واتساب' : 'WhatsApp'}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Mail className="w-5 h-5 text-blue-600" />
-              <div className="text-2xl font-bold text-slate-900">{stats.email}</div>
+              <Mail className="w-5 h-5 text-najdi-700" />
+              <div className="text-2xl font-bold text-ink">{stats.email}</div>
             </div>
-            <div className="text-sm text-slate-600">{isRTL ? 'بريد' : 'Email'}</div>
+            <div className="text-sm text-muted-foreground">{isRTL ? 'بريد' : 'Email'}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <Send className="w-5 h-5 text-purple-600" />
-              <div className="text-2xl font-bold text-slate-900">{stats.sms}</div>
+              <div className="text-2xl font-bold text-ink">{stats.sms}</div>
             </div>
-            <div className="text-sm text-slate-600">SMS</div>
+            <div className="text-sm text-muted-foreground">SMS</div>
           </CardContent>
         </Card>
         <Card>
@@ -176,7 +176,7 @@ export default function Communications() {
               <CheckCircle2 className="w-5 h-5 text-green-600" />
               <div className="text-2xl font-bold text-green-700">{stats.sent}</div>
             </div>
-            <div className="text-sm text-slate-600">{isRTL ? 'مرسل' : 'Sent'}</div>
+            <div className="text-sm text-muted-foreground">{isRTL ? 'مرسل' : 'Sent'}</div>
           </CardContent>
         </Card>
         <Card>
@@ -185,7 +185,7 @@ export default function Communications() {
               <XCircle className="w-5 h-5 text-red-600" />
               <div className="text-2xl font-bold text-red-700">{stats.failed}</div>
             </div>
-            <div className="text-sm text-slate-600">{isRTL ? 'فشل' : 'Failed'}</div>
+            <div className="text-sm text-muted-foreground">{isRTL ? 'فشل' : 'Failed'}</div>
           </CardContent>
         </Card>
       </div>
@@ -204,7 +204,7 @@ export default function Communications() {
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+              <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
               <Input
                 placeholder={isRTL ? 'بحث...' : 'Search...'}
                 value={search}
@@ -253,8 +253,8 @@ export default function Communications() {
               <CardTitle>{isRTL ? 'إرسال رسالة جديدة' : 'Send New Message'}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-slate-500">
-                <MessageSquare className="w-16 h-16 mx-auto mb-4 text-slate-300" />
+              <div className="text-center py-8 text-muted-foreground">
+                <MessageSquare className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-lg font-medium mb-2">
                   {isRTL ? 'استخدم أزرار واتساب' : 'Use WhatsApp Buttons'}
                 </p>

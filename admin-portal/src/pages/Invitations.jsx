@@ -10,9 +10,9 @@ import { format } from 'date-fns';
 import { Mail, Plus, Copy, Trash2, X, RefreshCw, Send, RotateCcw } from 'lucide-react';
 
 const STATUS_STYLES = {
-  pending: 'bg-blue-100 text-blue-700',
+  pending: 'bg-najdi-50 text-najdi-900',
   accepted: 'bg-emerald-100 text-emerald-700',
-  expired: 'bg-slate-100 text-slate-500',
+  expired: 'bg-sand-alt text-muted-foreground',
   revoked: 'bg-red-100 text-red-600',
 };
 
@@ -109,8 +109,8 @@ export default function Invitations() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Platform Invitations</h1>
-          <p className="text-sm text-slate-500">Invite schools and prospects to try EduSaga 360</p>
+          <h1 className="text-2xl font-bold text-ink">Platform Invitations</h1>
+          <p className="text-sm text-muted-foreground">Invite schools and prospects to try EduSaga 360</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)} className="gap-1.5">
           {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -122,7 +122,7 @@ export default function Invitations() {
       {showForm && (
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 space-y-4">
-            <h3 className="font-semibold text-slate-800">Send Invitation</h3>
+            <h3 className="font-semibold text-ink">Send Invitation</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {[
                 { key: 'recipient_name', label: 'Contact Name *', placeholder: 'Dr. Ahmed Al-Rashid' },
@@ -130,7 +130,7 @@ export default function Invitations() {
                 { key: 'school_name', label: 'School Name', placeholder: 'Al Noor International School' },
               ].map(({ key, label, placeholder, type }) => (
                 <div key={key}>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">{label}</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">{label}</label>
                   <Input
                     type={type || 'text'}
                     placeholder={placeholder}
@@ -141,9 +141,9 @@ export default function Invitations() {
                 </div>
               ))}
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Plan</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Plan</label>
                 <select
-                  className="w-full h-9 rounded-md border border-slate-200 px-3 text-sm bg-white"
+                  className="w-full h-9 rounded-md border border-border px-3 text-sm bg-white"
                   value={form.plan_code}
                   onChange={e => setForm(f => ({ ...f, plan_code: e.target.value }))}
                 >
@@ -154,7 +154,7 @@ export default function Invitations() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Expires In (days)</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Expires In (days)</label>
                 <Input
                   type="number"
                   min="1"
@@ -166,9 +166,9 @@ export default function Invitations() {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Personal Message (optional)</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Personal Message (optional)</label>
               <textarea
-                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm resize-none h-20"
+                className="w-full rounded-md border border-border px-3 py-2 text-sm resize-none h-20"
                 placeholder="We'd love for you to try EduSaga 360…"
                 value={form.message}
                 onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
@@ -207,47 +207,47 @@ export default function Invitations() {
       {/* Stats strip */}
       <div className="flex gap-3 flex-wrap">
         {[
-          { label: 'Total Sent', value: invitations.length, color: 'text-slate-800' },
-          { label: 'Pending', value: pending.length, color: 'text-blue-600' },
+          { label: 'Total Sent', value: invitations.length, color: 'text-ink' },
+          { label: 'Pending', value: pending.length, color: 'text-najdi-700' },
           { label: 'Accepted', value: invitations.filter(i => i.status === 'accepted').length, color: 'text-emerald-600' },
-          { label: 'Expired/Revoked', value: invitations.filter(i => ['expired', 'revoked'].includes(i.status)).length, color: 'text-slate-400' },
+          { label: 'Expired/Revoked', value: invitations.filter(i => ['expired', 'revoked'].includes(i.status)).length, color: 'text-muted-foreground' },
         ].map(({ label, value, color }) => (
-          <div key={label} className="bg-white rounded-lg border border-slate-200 px-4 py-2 text-center shadow-sm">
+          <div key={label} className="bg-white rounded-lg border border-border px-4 py-2 text-center shadow-sm">
             <div className={`text-xl font-bold ${color}`}>{value}</div>
-            <div className="text-xs text-slate-400">{label}</div>
+            <div className="text-xs text-muted-foreground">{label}</div>
           </div>
         ))}
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><div className="animate-spin w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full" /></div>
+        <div className="flex justify-center py-12"><div className="animate-spin w-8 h-8 border-4 border-border border-t-najdi-700 rounded-full" /></div>
       ) : invitations.length === 0 ? (
-        <Card><CardContent className="py-16 text-center"><Mail className="w-12 h-12 text-slate-200 mx-auto mb-3" /><p className="text-slate-400">No invitations yet — send your first one above</p></CardContent></Card>
+        <Card><CardContent className="py-16 text-center"><Mail className="w-12 h-12 text-najdi-100 mx-auto mb-3" /><p className="text-muted-foreground">No invitations yet — send your first one above</p></CardContent></Card>
       ) : (
         <Card className="border-0 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-sand border-b border-border">
               <tr>
                 {['Recipient', 'School', 'Plan', 'Status', 'Expires', 'Actions'].map(h => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">{h}</th>
+                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {[...pending, ...rest].map(inv => (
-                <tr key={inv.id} className="hover:bg-slate-50">
+                <tr key={inv.id} className="hover:bg-sand">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-slate-800 text-sm">{inv.recipient_name}</p>
-                    <p className="text-xs text-slate-400">{inv.recipient_email}</p>
+                    <p className="font-medium text-ink text-sm">{inv.recipient_name}</p>
+                    <p className="text-xs text-muted-foreground">{inv.recipient_email}</p>
                   </td>
-                  <td className="px-4 py-3 text-xs text-slate-600">{inv.school_name || '—'}</td>
-                  <td className="px-4 py-3 text-xs text-slate-600 capitalize">{inv.plan_code}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">{inv.school_name || '—'}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground capitalize">{inv.plan_code}</td>
                   <td className="px-4 py-3">
-                    <Badge className={`text-xs ${STATUS_STYLES[inv.status] || 'bg-slate-100 text-slate-600'}`}>
+                    <Badge className={`text-xs ${STATUS_STYLES[inv.status] || 'bg-sand-alt text-muted-foreground'}`}>
                       {inv.status}
                     </Badge>
                   </td>
-                  <td className="px-4 py-3 text-xs text-slate-400">
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
                     {inv.expires_at ? format(new Date(inv.expires_at), 'MMM d, yyyy') : '—'}
                   </td>
                   <td className="px-4 py-3">
@@ -257,14 +257,14 @@ export default function Invitations() {
                           const base = 'https://edusaga-360-production.vercel.app';
                           copyLink(`${base}/register?invite=${inv.token}`);
                         }}>
-                          <Copy className="w-3.5 h-3.5 text-slate-400" />
+                          <Copy className="w-3.5 h-3.5 text-muted-foreground" />
                         </Button>
                       )}
                       {inv.status === 'pending' && (
                         <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Resend email" onClick={() => resend(inv)} disabled={resending === inv.id}>
                           {resending === inv.id
-                            ? <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-400" />
-                            : <RotateCcw className="w-3.5 h-3.5 text-blue-400" />}
+                            ? <RefreshCw className="w-3.5 h-3.5 animate-spin text-najdi-500" />
+                            : <RotateCcw className="w-3.5 h-3.5 text-najdi-500" />}
                         </Button>
                       )}
                       {inv.status === 'pending' && (

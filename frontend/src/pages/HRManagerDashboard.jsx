@@ -45,13 +45,13 @@ function KPICard({ title, value, subtitle, icon: KPIIcon, iconBg, alert, warn, t
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-slate-500 font-medium truncate">{title}</p>
-            <p className={`text-2xl font-bold mt-0.5 ${alert ? 'text-red-600' : warn ? 'text-amber-600' : 'text-slate-800'}`}>{value}</p>
-            {subtitle && <p className="text-xs text-slate-400 mt-0.5 truncate">{subtitle}</p>}
+            <p className="text-xs text-muted-foreground font-medium truncate">{title}</p>
+            <p className={`text-2xl font-bold mt-0.5 ${alert ? 'text-red-600' : warn ? 'text-amber-600' : 'text-ink'}`}>{value}</p>
+            {subtitle && <p className="text-xs text-muted-foreground mt-0.5 truncate">{subtitle}</p>}
             {badge && <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-1 ${badge.color}`}>{badge.label}</span>}
           </div>
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ms-2 ${iconBg || 'bg-slate-100'}`}>
-            <Icon className="w-5 h-5 text-slate-600" />
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ms-2 ${iconBg || 'bg-sand-alt'}`}>
+            <Icon className="w-5 h-5 text-muted-foreground" />
           </div>
         </div>
       </CardContent>
@@ -189,15 +189,15 @@ export default function HRManagerDashboard() {
 
   const PIE_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
-  if (isLoading) return <div className="flex items-center justify-center py-16"><RefreshCw className="w-6 h-6 animate-spin text-slate-400" /></div>;
+  if (isLoading) return <div className="flex items-center justify-center py-16"><RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
 
   return (
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">{isRTL ? 'لوحة تحكم الموارد البشرية' : 'HR Manager Dashboard'}</h1>
-          <p className="text-sm text-slate-500">{isRTL ? 'مؤشرات الأداء الرئيسية لحظياً — لا حاجة لطلب تقرير' : 'Real-time HR KPIs — no report requests needed'}</p>
+          <h1 className="text-xl font-bold text-ink">{isRTL ? 'لوحة تحكم الموارد البشرية' : 'HR Manager Dashboard'}</h1>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'مؤشرات الأداء الرئيسية لحظياً — لا حاجة لطلب تقرير' : 'Real-time HR KPIs — no report requests needed'}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={exportMHRSDReport} className="gap-1">
@@ -214,7 +214,7 @@ export default function HRManagerDashboard() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-slate-200">
+      <div className="flex gap-1 border-b border-border">
         {[
           { key: 'overview', label: isRTL ? 'نظرة عامة' : 'Overview' },
           { key: 'benchmarks', label: isRTL ? 'المعايير المرجعية' : 'Benchmarks' },
@@ -222,7 +222,7 @@ export default function HRManagerDashboard() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.key ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.key ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-muted-foreground hover:text-ink'}`}
           >
             {tab.label}
           </button>
@@ -260,7 +260,7 @@ export default function HRManagerDashboard() {
 
       {/* KPI grid — row 1: headcount */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <KPICard title={isRTL ? 'إجمالي الموظفين' : 'Total Employees'} value={kpis.totalActive} subtitle={isRTL ? 'موظف نشط' : 'active'} icon={Users} iconBg="bg-blue-50" to="/Employees" />
+        <KPICard title={isRTL ? 'إجمالي الموظفين' : 'Total Employees'} value={kpis.totalActive} subtitle={isRTL ? 'موظف نشط' : 'active'} icon={Users} iconBg="bg-najdi-50" to="/Employees" />
         <KPICard title={isRTL ? 'السعودة %' : 'Saudization %'} value={PCT(kpis.saudizationPct)} subtitle={`${kpis.saudis} ${isRTL ? 'سعودي' : 'Saudi'}`} icon={Target} iconBg="bg-emerald-50"
           badge={{ label: isRTL ? kpis.nitaqatBand.nameAr : kpis.nitaqatBand.name, color: kpis.nitaqatBand.name === 'Red' ? 'bg-red-100 text-red-700' : kpis.nitaqatBand.name === 'Yellow' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700' }}
           warn={kpis.nitaqatBand.name === 'Yellow'} alert={kpis.nitaqatBand.name === 'Red'} />
@@ -273,7 +273,7 @@ export default function HRManagerDashboard() {
       {/* KPI row 2: finance */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <KPICard title={isRTL ? 'إجمالي الرواتب الشهرية' : 'Monthly Payroll'} value={SAR(kpis.totalPayroll)} icon={DollarSign} iconBg="bg-green-50" to="/Payroll" />
-        <KPICard title={isRTL ? 'مخصص نهاية الخدمة' : 'EOSB Provision'} value={SAR(kpis.totalEOSB)} icon={Shield} iconBg="bg-blue-50" to="/EOSBCalculator" />
+        <KPICard title={isRTL ? 'مخصص نهاية الخدمة' : 'EOSB Provision'} value={SAR(kpis.totalEOSB)} icon={Shield} iconBg="bg-najdi-50" to="/EOSBCalculator" />
         <KPICard title={isRTL ? 'نسبة الدوران' : 'Turnover Rate YTD'} value={PCT(kpis.turnoverRate)} subtitle={`${kpis.terminated} ${isRTL ? 'غادروا' : 'left'}`} icon={TrendingDown} iconBg="bg-red-50" warn={kpis.turnoverRate > 15} />
         <KPICard title={isRTL ? 'WPS آخر شهر' : 'Last WPS Status'} value={kpis.wpsCompliant ? (isRTL ? 'ممتثل ✓' : 'Compliant ✓') : (isRTL ? 'بانتظار' : 'Pending')} subtitle={kpis.lastPayRunPeriod} icon={CheckCircle} iconBg={kpis.wpsCompliant ? 'bg-green-50' : 'bg-amber-50'} to="/Payroll" />
       </div>
@@ -295,14 +295,14 @@ export default function HRManagerDashboard() {
                 {NITAQAT_BANDS.slice().reverse().map(band => (
                   <div key={band.name} className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: band.color }} />
-                    <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div className="flex-1 h-2 rounded-full bg-sand-alt overflow-hidden">
                       <div className="h-full rounded-full" style={{ backgroundColor: band.color, width: `${Math.min(100, kpis.saudizationPct / (band.min || 1) * 100)}%` }} />
                     </div>
-                    <span className="text-xs text-slate-500 w-16 text-end">{band.min}%+ {isRTL ? band.nameAr : band.name}</span>
+                    <span className="text-xs text-muted-foreground w-16 text-end">{band.min}%+ {isRTL ? band.nameAr : band.name}</span>
                   </div>
                 ))}
               </div>
-              <div className="mt-3 text-xs text-slate-500 text-center">
+              <div className="mt-3 text-xs text-muted-foreground text-center">
                 {isRTL ? `${kpis.saudis} سعودي من ${kpis.totalActive} موظف` : `${kpis.saudis} Saudi of ${kpis.totalActive} employees`}
               </div>
             </div>
@@ -326,7 +326,7 @@ export default function HRManagerDashboard() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[200px] flex items-center justify-center text-slate-400 text-sm">{isRTL ? 'لا بيانات' : 'No data'}</div>
+              <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">{isRTL ? 'لا بيانات' : 'No data'}</div>
             )}
           </CardContent>
         </Card>
@@ -344,7 +344,7 @@ export default function HRManagerDashboard() {
                 { label: isRTL ? 'تنتهي خلال 60 يوم' : 'Expiring in 60d', count: kpis.docsIn60Count, color: 'bg-yellow-400', textColor: 'text-yellow-700', bg: 'bg-yellow-50' },
               ].map(item => (
                 <Link to="/GovernmentRelations" key={item.label}>
-                  <div className={`flex items-center justify-between p-3 rounded-xl ${item.bg} border border-transparent hover:border-slate-200 transition-all`}>
+                  <div className={`flex items-center justify-between p-3 rounded-xl ${item.bg} border border-transparent hover:border-border transition-all`}>
                     <div className="flex items-center gap-2">
                       <div className={`w-2.5 h-2.5 rounded-full ${item.color}`} />
                       <span className={`text-sm font-medium ${item.textColor}`}>{item.label}</span>
@@ -353,7 +353,7 @@ export default function HRManagerDashboard() {
                   </div>
                 </Link>
               ))}
-              <div className="pt-1 text-xs text-slate-400 text-center">
+              <div className="pt-1 text-xs text-muted-foreground text-center">
                 {isRTL ? 'انقر للعرض في سجل الحوكمة' : 'Click to view in Government Relations'}
               </div>
             </div>
@@ -376,8 +376,8 @@ export default function HRManagerDashboard() {
           <Link key={link.to} to={link.to}>
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="p-3 flex items-center gap-2">
-                <link.icon className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                <span className="text-sm font-medium text-slate-700 truncate">{link.label}</span>
+                <link.icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-sm font-medium text-ink truncate">{link.label}</span>
               </CardContent>
             </Card>
           </Link>

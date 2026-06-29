@@ -214,11 +214,11 @@ export default function ParentIntake() {
 
   if (!linkCode) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-najdi-50 to-sand flex items-center justify-center p-4">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
-            <School className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-600">{isRTL ? 'رابط غير صالح' : 'Invalid link'}</p>
+            <School className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">{isRTL ? 'رابط غير صالح' : 'Invalid link'}</p>
           </CardContent>
         </Card>
       </div>
@@ -227,11 +227,11 @@ export default function ParentIntake() {
 
   if (!intakeLink) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-najdi-50 to-sand flex items-center justify-center p-4">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600 mb-4" />
-            <p className="text-slate-600">{isRTL ? 'جاري التحميل...' : 'Loading...'}</p>
+            <Loader2 className="w-8 h-8 animate-spin mx-auto text-najdi-700 mb-4" />
+            <p className="text-muted-foreground">{isRTL ? 'جاري التحميل...' : 'Loading...'}</p>
           </CardContent>
         </Card>
       </div>
@@ -240,19 +240,19 @@ export default function ParentIntake() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4" dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className="min-h-screen bg-gradient-to-br from-najdi-50 to-sand flex items-center justify-center p-4" dir={isRTL ? 'rtl' : 'ltr'}>
         <Card className="max-w-lg">
           <CardContent className="pt-8 pb-8 text-center">
             <CheckCircle className="w-20 h-20 text-green-600 mx-auto mb-6" />
-            <h2 className="text-2xl font-bold text-slate-900 mb-4">
+            <h2 className="text-2xl font-bold text-ink mb-4">
               {isRTL ? 'تم إرسال الطلب بنجاح!' : 'Application Submitted Successfully!'}
             </h2>
-            <p className="text-slate-600 mb-6">
+            <p className="text-muted-foreground mb-6">
               {isRTL 
                 ? 'شكراً لك! سيتم التواصل معك قريباً من فريق القبول.'
                 : 'Thank you! The admissions team will contact you soon.'}
             </p>
-            <div className="bg-blue-50 p-4 rounded-lg text-sm text-slate-700">
+            <div className="bg-najdi-50 p-4 rounded-lg text-sm text-ink">
               {isRTL 
                 ? 'يرجى الاحتفاظ برقم الطلب للمتابعة'
                 : 'Please keep your application number for reference'}
@@ -264,7 +264,7 @@ export default function ParentIntake() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 lg:p-8" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-gradient-to-br from-najdi-50 to-sand p-4 lg:p-8" dir={isRTL ? 'rtl' : 'ltr'}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
         * { font-family: ${isRTL ? "'IBM Plex Sans Arabic', sans-serif" : "'Inter', sans-serif"}; }
@@ -280,10 +280,10 @@ export default function ParentIntake() {
               className="h-16"
             />
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
+          <h1 className="text-3xl font-bold text-ink mb-2">
             {isRTL ? 'طلب قبول طالب جديد' : 'New Student Admission Application'}
           </h1>
-          <p className="text-slate-600">
+          <p className="text-muted-foreground">
             {isRTL ? (intakeLink.name_ar || intakeLink.name_en) : (intakeLink.name_en || intakeLink.name_ar)}
           </p>
           <Button variant="ghost" size="sm" onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')} className="mt-2">
@@ -440,9 +440,9 @@ export default function ParentIntake() {
 
           {/* Fee Breakdown */}
           {formData.academic_year && formData.applying_for_grade && (
-            <Card className="border-2 border-blue-200 bg-blue-50/50">
+            <Card className="border-2 border-najdi-100 bg-najdi-50/50">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-blue-900">
+                <CardTitle className="flex items-center gap-2 text-najdi-900">
                   <DollarSign className="w-5 h-5" />
                   {isRTL ? 'الرسوم الدراسية المتوقعة' : 'Estimated Tuition Fees'}
                 </CardTitle>
@@ -456,9 +456,9 @@ export default function ParentIntake() {
                 ))}
                 <div className="flex justify-between items-center py-3 bg-white rounded-lg px-4 mt-3">
                   <span className="font-bold text-lg">{isRTL ? 'الإجمالي التقديري' : 'Total Estimated'}</span>
-                  <span className="text-2xl font-bold text-blue-700">{calculatedFees.total.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                  <span className="text-2xl font-bold text-najdi-900">{calculatedFees.total.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
                 </div>
-                <p className="text-xs text-slate-600 text-center mt-2">
+                <p className="text-xs text-muted-foreground text-center mt-2">
                   {isRTL 
                     ? 'الرسوم تقديرية وقد تتغير حسب الخدمات المضافة'
                     : 'Fees are estimated and may vary based on additional services'}
@@ -476,20 +476,20 @@ export default function ParentIntake() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
-                <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                <Label htmlFor="file-upload" className="cursor-pointer text-blue-600 hover:text-blue-700">
+              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                <Label htmlFor="file-upload" className="cursor-pointer text-najdi-700 hover:text-najdi-900">
                   {isRTL ? 'رفع المستندات' : 'Upload Documents'}
                 </Label>
                 <Input id="file-upload" type="file" multiple onChange={handleFileUpload} className="hidden" />
-                <p className="text-xs text-slate-500 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   {isRTL ? 'شهادة الميلاد، التقارير الطبية، السجلات الدراسية' : 'Birth certificate, medical reports, school records'}
                 </p>
               </div>
               {formData.documents.length > 0 && (
                 <div className="mt-4 space-y-2">
                   {formData.documents.map((doc, idx) => (
-                    <div key={idx} className="flex items-center justify-between bg-slate-50 p-2 rounded">
+                    <div key={idx} className="flex items-center justify-between bg-sand p-2 rounded">
                       <span className="text-sm">{doc.name}</span>
                       <CheckCircle className="w-4 h-4 text-green-600" />
                     </div>
@@ -506,7 +506,7 @@ export default function ParentIntake() {
                 <CardTitle>{isRTL ? 'الشروط والأحكام' : 'Terms & Conditions'}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="bg-slate-50 p-4 rounded-lg max-h-48 overflow-y-auto mb-4 text-sm">
+                <div className="bg-sand p-4 rounded-lg max-h-48 overflow-y-auto mb-4 text-sm">
                   <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(isRTL ? currentTC.content_ar : currentTC.content_en) }} />
                 </div>
                 <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
@@ -531,7 +531,7 @@ export default function ParentIntake() {
               type="submit" 
               size="lg" 
               disabled={submitting || !termsAccepted}
-              className="px-12 bg-blue-600 hover:bg-blue-700"
+              className="px-12 bg-najdi-700 hover:bg-najdi-900"
             >
               {submitting && <Loader2 className="w-5 h-5 animate-spin me-2" />}
               {isRTL ? 'إرسال الطلب' : 'Submit Application'}

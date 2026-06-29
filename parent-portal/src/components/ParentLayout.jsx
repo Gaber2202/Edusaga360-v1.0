@@ -33,21 +33,21 @@ export default function ParentLayout({ children }) {
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <div className="min-h-screen bg-sand">
+      <header className="bg-white border-b border-border sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
             <img src="/edusaga-logo.svg" alt="EduSaga 360" className="w-8 h-8" />
             <div>
-              <h1 className="text-sm font-bold text-slate-800">EduSaga 360</h1>
-              <p className="text-[10px] text-slate-400">{t('parentPortal')}</p>
+              <h1 className="text-sm font-bold text-ink">EduSaga 360</h1>
+              <p className="text-[10px] text-muted-foreground">{t('parentPortal')}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-1">
             <button
               onClick={toggle}
-              className="flex items-center gap-1.5 hover:bg-slate-100 rounded-lg px-2.5 py-1.5 text-sm text-slate-600"
+              className="flex items-center gap-1.5 hover:bg-sand-alt rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground"
               aria-label="Toggle language"
             >
               <Globe className="w-4 h-4" />
@@ -56,11 +56,11 @@ export default function ParentLayout({ children }) {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 hover:bg-slate-100 rounded-lg px-2 py-1">
+                <button className="flex items-center gap-2 hover:bg-sand-alt rounded-lg px-2 py-1">
                   <Avatar className="w-8 h-8">
                     <AvatarFallback className="bg-emerald-600 text-white text-xs">{initials}</AvatarFallback>
                   </Avatar>
-                  <span className="text-sm text-slate-700 hidden sm:inline">{displayName}</span>
+                  <span className="text-sm text-ink hidden sm:inline">{displayName}</span>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -75,7 +75,7 @@ export default function ParentLayout({ children }) {
       </header>
 
       <div className="flex">
-        <nav className="hidden md:block w-56 bg-white border-e border-slate-200 min-h-[calc(100vh-64px)] p-3 space-y-1">
+        <nav className="hidden md:block w-56 bg-white border-e border-border min-h-[calc(100vh-64px)] p-3 space-y-1">
           {navigation.map(item => {
             const isActive = location.pathname === item.path;
             return (
@@ -85,10 +85,10 @@ export default function ParentLayout({ children }) {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                   isActive
                     ? 'bg-emerald-50 text-emerald-700 font-medium'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+                    : 'text-muted-foreground hover:bg-sand hover:text-ink'
                 }`}
               >
-                <item.icon className={`w-5 h-5 ${isActive ? 'text-emerald-600' : 'text-slate-400'}`} />
+                <item.icon className={`w-5 h-5 ${isActive ? 'text-emerald-600' : 'text-muted-foreground'}`} />
                 {t(item.key)}
               </Link>
             );
@@ -100,14 +100,14 @@ export default function ParentLayout({ children }) {
         </main>
       </div>
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around py-2 z-30">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-border flex justify-around py-2 z-30">
         {navigation.slice(0, 5).map(item => {
           const isActive = location.pathname === item.path;
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1 ${isActive ? 'text-emerald-600' : 'text-slate-400'}`}
+              className={`flex flex-col items-center gap-0.5 px-2 py-1 ${isActive ? 'text-emerald-600' : 'text-muted-foreground'}`}
             >
               <item.icon className="w-5 h-5" />
               <span className="text-[10px]">{t(item.key)}</span>

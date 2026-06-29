@@ -13,13 +13,13 @@ import { Clock, Sparkles, Calendar, Building2, Users, AlertTriangle, TrendingUp,
 function Stat({ label, value, icon: Icon, color }) {
   const colors = {
     amber: 'bg-amber-50 text-amber-600', red: 'bg-red-50 text-red-600',
-    emerald: 'bg-emerald-50 text-emerald-600', blue: 'bg-blue-50 text-blue-600',
+    emerald: 'bg-emerald-50 text-emerald-600', blue: 'bg-najdi-50 text-najdi-700',
   };
   return (
     <Card className="border-0 shadow-sm">
       <CardContent className="p-4 flex items-center gap-3">
         <div className={`p-2.5 rounded-xl ${colors[color]}`}><Icon className="w-5 h-5" /></div>
-        <div><p className="text-2xl font-bold text-slate-800">{value}</p><p className="text-xs text-slate-400">{label}</p></div>
+        <div><p className="text-2xl font-bold text-ink">{value}</p><p className="text-xs text-muted-foreground">{label}</p></div>
       </CardContent>
     </Card>
   );
@@ -58,7 +58,7 @@ export default function Trials() {
   };
 
   const urgency = (d) => {
-    if (d == null) return { cls: 'bg-slate-100 text-slate-600', label: 'No end date' };
+    if (d == null) return { cls: 'bg-sand-alt text-muted-foreground', label: 'No end date' };
     if (d < 0) return { cls: 'bg-red-100 text-red-700', label: `Expired ${-d}d ago` };
     if (d <= 3) return { cls: 'bg-red-100 text-red-700', label: `${d}d left` };
     if (d <= 7) return { cls: 'bg-amber-100 text-amber-700', label: `${d}d left` };
@@ -68,8 +68,8 @@ export default function Trials() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Trials Pipeline</h1>
-        <p className="text-sm text-slate-500">Track every trial and convert them into paying customers</p>
+        <h1 className="text-2xl font-bold text-ink">Trials Pipeline</h1>
+        <p className="text-sm text-muted-foreground">Track every trial and convert them into paying customers</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -80,32 +80,32 @@ export default function Trials() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-16"><div className="animate-spin w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full" /></div>
+        <div className="flex justify-center py-16"><div className="animate-spin w-8 h-8 border-4 border-border border-t-najdi-700 rounded-full" /></div>
       ) : trials.length === 0 ? (
-        <Card><CardContent className="py-16 text-center"><CheckCircle2 className="w-12 h-12 text-emerald-200 mx-auto mb-3" /><p className="text-slate-400">No active trials — all caught up</p></CardContent></Card>
+        <Card><CardContent className="py-16 text-center"><CheckCircle2 className="w-12 h-12 text-emerald-200 mx-auto mb-3" /><p className="text-muted-foreground">No active trials — all caught up</p></CardContent></Card>
       ) : (
         <Card className="border-0 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>{['School', 'Plan', 'Seats', 'Trial ends', 'Countdown', 'Actions'].map((h) => <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">{h}</th>)}</tr>
+            <thead className="bg-sand border-b border-border">
+              <tr>{['School', 'Plan', 'Seats', 'Trial ends', 'Countdown', 'Actions'].map((h) => <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{h}</th>)}</tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {trials.map((t) => {
                 const u = urgency(t.daysLeft);
                 return (
-                  <tr key={t.id} className="hover:bg-slate-50">
+                  <tr key={t.id} className="hover:bg-sand">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center"><Building2 className="w-4 h-4 text-slate-500" /></div>
+                        <div className="w-8 h-8 bg-sand-alt rounded-lg flex items-center justify-center"><Building2 className="w-4 h-4 text-muted-foreground" /></div>
                         <div>
-                          <p className="font-medium text-slate-800">{t.name_en || t.name_ar}</p>
-                          <p className="text-xs text-slate-400">{t.admin_email || t.tenant_code}</p>
+                          <p className="font-medium text-ink">{t.name_en || t.name_ar}</p>
+                          <p className="text-xs text-muted-foreground">{t.admin_email || t.tenant_code}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3"><Badge className={`text-xs ${PLAN_COLORS[t.plan_code || t.plan] || 'bg-slate-100 text-slate-600'}`}>{planLabel(t.plan_code || t.plan)}</Badge></td>
-                    <td className="px-4 py-3 text-xs text-slate-500"><span className="inline-flex items-center gap-1"><Users className="w-3 h-3" />{t.user_count ?? 0}/{t.max_users ?? 5}</span></td>
-                    <td className="px-4 py-3 text-xs text-slate-500">{t.trial_end_date ? format(new Date(t.trial_end_date), 'MMM d, yyyy') : '—'}</td>
+                    <td className="px-4 py-3"><Badge className={`text-xs ${PLAN_COLORS[t.plan_code || t.plan] || 'bg-sand-alt text-muted-foreground'}`}>{planLabel(t.plan_code || t.plan)}</Badge></td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground"><span className="inline-flex items-center gap-1"><Users className="w-3 h-3" />{t.user_count ?? 0}/{t.max_users ?? 5}</span></td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">{t.trial_end_date ? format(new Date(t.trial_end_date), 'MMM d, yyyy') : '—'}</td>
                     <td className="px-4 py-3"><span className={`text-xs font-medium px-2 py-0.5 rounded-full ${u.cls}`}>{u.label}</span></td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1.5">
@@ -125,16 +125,16 @@ export default function Trials() {
       {converted.length > 0 && (
         <Card className="border-0 shadow-sm">
           <CardContent className="p-4">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Recently converted ({converted.length})</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Recently converted ({converted.length})</p>
             <div className="space-y-2">
               {converted.slice(0, 8).map((t) => (
                 <div key={t.id} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span className="text-slate-700">{t.name_en || t.name_ar}</span>
-                    <Badge className={`text-xs ${PLAN_COLORS[t.plan_code] || 'bg-slate-100'}`}>{planLabel(t.plan_code)}</Badge>
+                    <span className="text-ink">{t.name_en || t.name_ar}</span>
+                    <Badge className={`text-xs ${PLAN_COLORS[t.plan_code] || 'bg-sand-alt'}`}>{planLabel(t.plan_code)}</Badge>
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-muted-foreground">
                     {t.monthly_revenue ? <span className="text-emerald-600 font-medium me-2">{formatMoney(t.monthly_revenue)}/mo</span> : null}
                     {t.converted_at ? format(new Date(t.converted_at), 'MMM d') : ''}
                   </div>

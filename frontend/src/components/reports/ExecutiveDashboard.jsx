@@ -217,14 +217,14 @@ export default function ExecutiveDashboard() {
     window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
   };
 
-  const KPICard = ({ title, value, subtitle, icon: Icon, trend, trendUp, color = 'bg-blue-50' }) => (
+  const KPICard = ({ title, value, subtitle, icon: Icon, trend, trendUp, color = 'bg-najdi-50' }) => (
     <Card>
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-sm text-slate-500">{title}</p>
+            <p className="text-sm text-muted-foreground">{title}</p>
             <p className="text-2xl font-bold mt-1">{value}</p>
-            {subtitle && <p className="text-sm text-slate-500 mt-1">{subtitle}</p>}
+            {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
             {trend !== undefined && (
               <div className={`flex items-center gap-1 mt-2 text-sm ${trendUp ? 'text-emerald-600' : 'text-red-600'}`}>
                 {trendUp ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
@@ -233,7 +233,7 @@ export default function ExecutiveDashboard() {
             )}
           </div>
           <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center`}>
-            <Icon className="w-6 h-6 text-slate-700" />
+            <Icon className="w-6 h-6 text-ink" />
           </div>
         </div>
       </CardContent>
@@ -286,7 +286,7 @@ export default function ExecutiveDashboard() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard title={isRTL ? 'الطلاب النشطين' : 'Active Students'} value={activeStudents} icon={Users} color="bg-blue-50" />
+        <KPICard title={isRTL ? 'الطلاب النشطين' : 'Active Students'} value={activeStudents} icon={Users} color="bg-najdi-50" />
         <KPICard title={isRTL ? 'نسبة التحصيل' : 'Collection Rate'} value={`${collectionRate}%`} icon={CreditCard} color="bg-emerald-50" trend={5.2} trendUp />
         <KPICard title={isRTL ? 'طلبات جديدة' : 'New Applications'} value={pendingApplications} icon={UserPlus} color="bg-amber-50" />
         <KPICard title={isRTL ? 'معدل التحويل' : 'Conversion Rate'} value={`${conversionRate}%`} icon={GraduationCap} color="bg-purple-50" />
@@ -294,7 +294,7 @@ export default function ExecutiveDashboard() {
 
       {/* Second Row KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard title={isRTL ? 'إجمالي المفوتر' : 'Total Billed'} value={`${(totalBilled/1000).toFixed(0)}K`} subtitle={t('sar')} icon={FileText} color="bg-slate-50" />
+        <KPICard title={isRTL ? 'إجمالي المفوتر' : 'Total Billed'} value={`${(totalBilled/1000).toFixed(0)}K`} subtitle={t('sar')} icon={FileText} color="bg-sand" />
         <KPICard title={isRTL ? 'إجمالي المحصل' : 'Total Collected'} value={`${(totalCollected/1000).toFixed(0)}K`} subtitle={t('sar')} icon={DollarSign} color="bg-emerald-50" />
         <KPICard title={isRTL ? 'فواتير متأخرة' : 'Overdue Invoices'} value={overdueInvoices} icon={AlertTriangle} color="bg-red-50" />
         <KPICard title={isRTL ? 'مدفوعات فاشلة' : 'Failed Payments'} value={failedPayments} icon={RefreshCw} color="bg-amber-50" />

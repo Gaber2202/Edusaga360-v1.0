@@ -14,8 +14,8 @@ export default function ReportPreview({ data, reportId, loading }) {
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto text-slate-400" />
-          <p className="text-slate-600 mt-4">{isRTL ? 'جاري التحميل...' : 'Loading...'}</p>
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground" />
+          <p className="text-muted-foreground mt-4">{isRTL ? 'جاري التحميل...' : 'Loading...'}</p>
         </CardContent>
       </Card>
     );
@@ -25,8 +25,8 @@ export default function ReportPreview({ data, reportId, loading }) {
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <FileText className="w-12 h-12 mx-auto text-slate-300 mb-4" />
-          <p className="text-slate-500">{isRTL ? 'لا توجد بيانات' : 'No data available'}</p>
+          <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">{isRTL ? 'لا توجد بيانات' : 'No data available'}</p>
         </CardContent>
       </Card>
     );
@@ -50,7 +50,7 @@ export default function ReportPreview({ data, reportId, loading }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <CardTitle>{isRTL ? 'معاينة التقرير' : 'Report Preview'}</CardTitle>
-            <p className="text-sm text-slate-600 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {data.rows.length} {isRTL ? 'سجل' : 'records'}
             </p>
           </div>
@@ -85,7 +85,7 @@ export default function ReportPreview({ data, reportId, loading }) {
             </TableBody>
           </Table>
           {data.rows.length > 50 && (
-            <div className="text-center text-sm text-slate-500 mt-4">
+            <div className="text-center text-sm text-muted-foreground mt-4">
               {isRTL
                 ? `عرض أول 50 سجل من ${data.rows.length}`
                 : `Showing first 50 of ${data.rows.length} records`}

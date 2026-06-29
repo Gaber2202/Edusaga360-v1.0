@@ -178,7 +178,7 @@ export default function ScheduledReports() {
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold">{isRTL ? 'التقارير المجدولة' : 'Scheduled Reports'}</h3>
-          <p className="text-sm text-slate-500">{isRTL ? 'إدارة التقارير الآلية المرسلة بالبريد الإلكتروني' : 'Manage automated email reports'}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'إدارة التقارير الآلية المرسلة بالبريد الإلكتروني' : 'Manage automated email reports'}</p>
         </div>
         <Button onClick={() => { resetForm(); setShowForm(true); }}>
           <Plus className="w-4 h-4 me-2" />
@@ -190,7 +190,7 @@ export default function ScheduledReports() {
       <Card>
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50">
+            <TableRow className="bg-sand">
               <TableHead>{isRTL ? 'التقرير' : 'Report'}</TableHead>
               <TableHead>{isRTL ? 'التكرار' : 'Frequency'}</TableHead>
               <TableHead>{isRTL ? 'المستلمون' : 'Recipients'}</TableHead>
@@ -203,7 +203,7 @@ export default function ScheduledReports() {
           <TableBody>
             {schedules.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   {isRTL ? 'لا توجد تقارير مجدولة' : 'No scheduled reports'}
                 </TableCell>
               </TableRow>
@@ -213,19 +213,19 @@ export default function ScheduledReports() {
                   <TableCell>
                     <div>
                       <p className="font-medium">{schedule.name}</p>
-                      <p className="text-sm text-slate-500">{getReportTypeName(schedule.report_type)}</p>
+                      <p className="text-sm text-muted-foreground">{getReportTypeName(schedule.report_type)}</p>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-slate-400" />
+                      <Clock className="w-4 h-4 text-muted-foreground" />
                       <span>{getFrequencyName(schedule.frequency)}</span>
-                      <span className="text-slate-500">{schedule.send_time}</span>
+                      <span className="text-muted-foreground">{schedule.send_time}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-slate-400" />
+                      <Mail className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm truncate max-w-[200px]">{schedule.recipients}</span>
                     </div>
                   </TableCell>
@@ -356,7 +356,7 @@ export default function ScheduledReports() {
                 onChange={(e) => setFormData(p => ({...p, recipients: e.target.value}))}
                 placeholder={isRTL ? 'أدخل عناوين البريد مفصولة بفاصلة' : 'Enter emails separated by comma'}
               />
-              <p className="text-xs text-slate-500">{isRTL ? 'مثال: email1@school.sa, email2@school.sa' : 'Example: email1@school.sa, email2@school.sa'}</p>
+              <p className="text-xs text-muted-foreground">{isRTL ? 'مثال: email1@school.sa, email2@school.sa' : 'Example: email1@school.sa, email2@school.sa'}</p>
             </div>
 
             <div className="flex flex-wrap gap-4 pt-2">

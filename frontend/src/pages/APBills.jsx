@@ -265,7 +265,7 @@ export default function APBills() {
     { header: t('paid'), cell: (row) => <span className="text-emerald-600">{(row.paid_amount || 0).toLocaleString()} {t('sar')}</span> },
     { header: isRTL ? 'المتبقي' : 'Balance', cell: (row) => {
       const balance = (row.total_amount || 0) - (row.paid_amount || 0);
-      return <span className={balance > 0 ? 'text-red-600 font-medium' : 'text-slate-500'}>{balance.toLocaleString()} {t('sar')}</span>;
+      return <span className={balance > 0 ? 'text-red-600 font-medium' : 'text-muted-foreground'}>{balance.toLocaleString()} {t('sar')}</span>;
     }},
     { header: t('dueDate'), cell: (row) => row.due_date ? format(new Date(row.due_date), 'dd/MM/yyyy') : '-' },
     { header: t('status'), cell: (row) => <StatusBadge status={row.status} /> },
@@ -292,17 +292,17 @@ export default function APBills() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <StatCard title={isRTL ? 'إجمالي الفواتير' : 'Total Bills'} value={`${stats.total.toLocaleString()} ${t('sar')}`} icon={DollarSign} iconClassName="bg-blue-50" />
+        <StatCard title={isRTL ? 'إجمالي الفواتير' : 'Total Bills'} value={`${stats.total.toLocaleString()} ${t('sar')}`} icon={DollarSign} iconClassName="bg-najdi-50" />
         <StatCard title={isRTL ? 'المدفوع' : 'Paid'} value={`${stats.paid.toLocaleString()} ${t('sar')}`} icon={Check} iconClassName="bg-emerald-50" />
         <StatCard title={isRTL ? 'المستحق' : 'Due'} value={`${stats.pending.toLocaleString()} ${t('sar')}`} icon={Clock} iconClassName="bg-amber-50" />
         <StatCard title={isRTL ? 'المتأخر' : 'Overdue'} value={`${stats.overdue.toLocaleString()} ${t('sar')}`} icon={AlertCircle} iconClassName="bg-red-50" />
-        <StatCard title={isRTL ? 'عدد الفواتير' : 'Count'} value={stats.billCount.toString()} icon={CreditCard} iconClassName="bg-slate-50" />
+        <StatCard title={isRTL ? 'عدد الفواتير' : 'Count'} value={stats.billCount.toString()} icon={CreditCard} iconClassName="bg-sand" />
       </div>
 
       <Card className="border-0 shadow-sm">
         <CardContent className="p-4">
           <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-            <TabsList className="bg-slate-100 p-1 h-auto rounded-lg">
+            <TabsList className="bg-sand-alt p-1 h-auto rounded-lg">
               <TabsTrigger value="all" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md px-4 py-2 text-sm font-medium">{t('all')}</TabsTrigger>
               <TabsTrigger value="pending" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md px-4 py-2 text-sm font-medium">{t('pending')}</TabsTrigger>
               <TabsTrigger value="approved" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md px-4 py-2 text-sm font-medium">{t('approved')}</TabsTrigger>
@@ -314,7 +314,7 @@ export default function APBills() {
       </Card>
 
       <div className="relative max-w-md">
-        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
         <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${isRTL ? 'pr-10' : 'pl-10'} edu-input shadow-sm`} />
       </div>
 
@@ -329,13 +329,13 @@ export default function APBills() {
           
           {selectedBill && (
             <div className="space-y-4">
-              <Card className="bg-slate-50">
+              <Card className="bg-sand">
                 <CardContent className="p-4 space-y-2">
-                  <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'الفاتورة' : 'Bill'}</span><span className="font-mono">{selectedBill.bill_number}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">{t('vendor')}</span><span className="font-medium">{selectedBill.vendor_name}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">{t('total')}</span><span>{selectedBill.total_amount?.toLocaleString()} {t('sar')}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">{t('paid')}</span><span className="text-emerald-600">{(selectedBill.paid_amount || 0).toLocaleString()} {t('sar')}</span></div>
-                  <div className="flex justify-between border-t pt-2"><span className="text-slate-500 font-medium">{isRTL ? 'المتبقي' : 'Remaining'}</span><span className="font-bold text-red-600">{((selectedBill.total_amount || 0) - (selectedBill.paid_amount || 0)).toLocaleString()} {t('sar')}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'الفاتورة' : 'Bill'}</span><span className="font-mono">{selectedBill.bill_number}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t('vendor')}</span><span className="font-medium">{selectedBill.vendor_name}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t('total')}</span><span>{selectedBill.total_amount?.toLocaleString()} {t('sar')}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t('paid')}</span><span className="text-emerald-600">{(selectedBill.paid_amount || 0).toLocaleString()} {t('sar')}</span></div>
+                  <div className="flex justify-between border-t pt-2"><span className="text-muted-foreground font-medium">{isRTL ? 'المتبقي' : 'Remaining'}</span><span className="font-bold text-red-600">{((selectedBill.total_amount || 0) - (selectedBill.paid_amount || 0)).toLocaleString()} {t('sar')}</span></div>
                 </CardContent>
               </Card>
 
@@ -369,7 +369,7 @@ export default function APBills() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>{t('cancel')}</Button>
-            <Button onClick={handleRecordPayment} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleRecordPayment} disabled={saving} className="bg-najdi-700 hover:bg-najdi-900">
               {saving && <Loader2 className="w-4 h-4 animate-spin me-2" />}
               {isRTL ? 'تسجيل الدفعة' : 'Record Payment'}
             </Button>

@@ -347,8 +347,8 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
                 </div>
                 <div className="pt-4 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-slate-400" />
-                    <span className="text-sm text-slate-600">{isRTL ? 'الطلاب المطابقين:' : 'Matching Students:'} <strong>{filteredStudents.length}</strong></span>
+                    <Users className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">{isRTL ? 'الطلاب المطابقين:' : 'Matching Students:'} <strong>{filteredStudents.length}</strong></span>
                   </div>
                   <Button onClick={handlePreview} disabled={!criteria.academic_year}>
                     {isRTL ? 'معاينة' : 'Preview'}
@@ -366,23 +366,23 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
                   <div>
-                    <p className="text-sm text-slate-500">{isRTL ? 'إجمالي المطابقين' : 'Matched'}</p>
+                    <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي المطابقين' : 'Matched'}</p>
                     <p className="text-2xl font-bold">{selectedStudents.length}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">{isRTL ? 'الفواتير المتوقعة' : 'Will Generate'}</p>
-                    <p className="text-2xl font-bold text-blue-600">{plan.eligible}</p>
+                    <p className="text-sm text-muted-foreground">{isRTL ? 'الفواتير المتوقعة' : 'Will Generate'}</p>
+                    <p className="text-2xl font-bold text-najdi-700">{plan.eligible}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">{isRTL ? 'سيتم تخطيهم' : 'Skipped'}</p>
+                    <p className="text-sm text-muted-foreground">{isRTL ? 'سيتم تخطيهم' : 'Skipped'}</p>
                     <p className="text-2xl font-bold text-amber-600">{plan.excluded + plan.alreadyInvoiced + plan.skippedNoContract}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">{isRTL ? 'القيمة المتوقعة (شاملة الضريبة)' : 'Est. Total (incl. VAT)'}</p>
+                    <p className="text-sm text-muted-foreground">{isRTL ? 'القيمة المتوقعة (شاملة الضريبة)' : 'Est. Total (incl. VAT)'}</p>
                     <p className="text-2xl font-bold text-emerald-600">{plan.estimatedTotal.toLocaleString()} {t('sar')}</p>
                   </div>
                 </div>
-                <p className="text-xs text-slate-500 mb-4">
+                <p className="text-xs text-muted-foreground mb-4">
                   {isRTL
                     ? `مفوتر مسبقاً: ${plan.alreadyInvoiced} • بدون عقد: ${plan.skippedNoContract} • مستبعد: ${plan.excluded}`
                     : `Already invoiced: ${plan.alreadyInvoiced} • No contract: ${plan.skippedNoContract} • Excluded: ${plan.excluded}`}
@@ -434,7 +434,7 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
                         <TableCell>
                           <div>
                             <p className="font-medium">{student.name_ar || student.name_en}</p>
-                            <p className="text-xs text-slate-500">{student.student_id}</p>
+                            <p className="text-xs text-muted-foreground">{student.student_id}</p>
                           </div>
                         </TableCell>
                         <TableCell>{t(student.grade)}</TableCell>
@@ -448,12 +448,12 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
                           </div>
                         </TableCell>
                         <TableCell className="font-medium">{tuitionFee.toLocaleString()} {t('sar')}</TableCell>
-                        <TableCell className="font-semibold text-slate-900">{total.toLocaleString()} {t('sar')}</TableCell>
+                        <TableCell className="font-semibold text-ink">{total.toLocaleString()} {t('sar')}</TableCell>
                         <TableCell>
                           {isExcluded ? (
                             <Badge className="bg-red-100 text-red-700">{isRTL ? 'مستبعد' : 'Excluded'}</Badge>
                           ) : alreadyInv ? (
-                            <Badge className="bg-blue-100 text-blue-700">{isRTL ? 'مفوتر مسبقاً' : 'Already Invoiced'}</Badge>
+                            <Badge className="bg-najdi-50 text-najdi-900">{isRTL ? 'مفوتر مسبقاً' : 'Already Invoiced'}</Badge>
                           ) : !contract ? (
                             <Badge className="bg-amber-100 text-amber-700">{isRTL ? 'لا يوجد عقد' : 'No Contract'}</Badge>
                           ) : (

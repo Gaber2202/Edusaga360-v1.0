@@ -4,22 +4,22 @@ import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 
 const gradients = {
-  blue:    'from-blue-500/10 to-blue-600/5 border-blue-200/50',
+  blue:    'from-najdi-500/10 to-najdi-700/5 border-najdi-100/50',
   emerald: 'from-emerald-500/10 to-emerald-600/5 border-emerald-200/50',
   amber:   'from-amber-500/10 to-amber-600/5 border-amber-200/50',
   red:     'from-red-500/10 to-red-600/5 border-red-200/50',
   purple:  'from-purple-500/10 to-purple-600/5 border-purple-200/50',
   teal:    'from-teal-500/10 to-teal-600/5 border-teal-200/50',
-  slate:   'from-slate-500/10 to-slate-600/5 border-slate-200/50',
+  slate:   'from-sand0/10 to-slate-600/5 border-border/50',
 };
 const iconColors = {
-  blue:    'bg-blue-100 text-blue-600',
+  blue:    'bg-najdi-50 text-najdi-700',
   emerald: 'bg-emerald-100 text-emerald-600',
   amber:   'bg-amber-100 text-amber-600',
   red:     'bg-red-100 text-red-600',
   purple:  'bg-purple-100 text-purple-600',
   teal:    'bg-teal-100 text-teal-600',
-  slate:   'bg-slate-100 text-slate-600',
+  slate:   'bg-sand-alt text-muted-foreground',
 };
 const sparkColors = {
   blue: '#3b82f6', emerald: '#10b981', amber: '#f59e0b',
@@ -50,7 +50,7 @@ export default function DashboardKPICard({ title, value, sub, icon: Icon, color 
           </div>
         )}
         {trendNeutral && trend !== undefined && (
-          <div className="flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">
+          <div className="flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-sand-alt text-muted-foreground">
             <Minus className="w-3 h-3" /> 0%
           </div>
         )}
@@ -59,9 +59,9 @@ export default function DashboardKPICard({ title, value, sub, icon: Icon, color 
         )}
       </div>
 
-      <div className="text-2xl font-extrabold text-slate-800 leading-tight">{typeof value === 'number' ? value.toLocaleString() : value}</div>
-      <div className="text-xs text-slate-500 font-semibold leading-tight">{title}</div>
-      {sub && <div className="text-xs text-slate-400">{sub}</div>}
+      <div className="text-2xl font-extrabold text-ink leading-tight">{typeof value === 'number' ? value.toLocaleString() : value}</div>
+      <div className="text-xs text-muted-foreground font-semibold leading-tight">{title}</div>
+      {sub && <div className="text-xs text-muted-foreground">{sub}</div>}
 
       {/* Sparkline — only rendered when real trend data exists */}
       {hasSpark && (

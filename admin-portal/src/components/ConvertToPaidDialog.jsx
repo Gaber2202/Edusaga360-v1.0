@@ -8,7 +8,7 @@ import { Input } from './ui/input';
 import { toast } from 'sonner';
 import { Sparkles, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 
-const inputCls = 'w-full h-9 rounded-md border border-slate-200 px-3 text-sm bg-white';
+const inputCls = 'w-full h-9 rounded-md border border-border px-3 text-sm bg-white';
 
 /**
  * Trial → Paid conversion. Pre-fills list pricing/seats from the chosen plan,
@@ -78,16 +78,16 @@ export default function ConvertToPaidDialog({ tenant, open, onOpenChange, onConv
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="flex items-center gap-2 text-sm bg-slate-50 rounded-lg px-3 py-2">
-            <span className="font-medium text-slate-800">{tenant.name_en || tenant.name_ar}</span>
+          <div className="flex items-center gap-2 text-sm bg-sand rounded-lg px-3 py-2">
+            <span className="font-medium text-ink">{tenant.name_en || tenant.name_ar}</span>
             <span className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">{tenant.status}</span>
-            <ArrowRight className="w-4 h-4 text-slate-400" />
+            <ArrowRight className="w-4 h-4 text-muted-foreground" />
             <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">active · paid</span>
           </div>
 
           {/* Plan picker */}
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Plan</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Plan</label>
             <div className="grid grid-cols-2 gap-2">
               {PLANS.map((p) => (
                 <button
@@ -95,14 +95,14 @@ export default function ConvertToPaidDialog({ tenant, open, onOpenChange, onConv
                   type="button"
                   onClick={() => setPlanCode(p.code)}
                   className={`text-left rounded-lg border p-2.5 transition-colors ${
-                    planCode === p.code ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-slate-300'
+                    planCode === p.code ? 'border-emerald-500 bg-emerald-50' : 'border-border hover:border-border'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-slate-800">{p.name}</span>
+                    <span className="text-sm font-semibold text-ink">{p.name}</span>
                     {planCode === p.code && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-0.5">{p.blurb}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{p.blurb}</p>
                 </button>
               ))}
             </div>
@@ -110,28 +110,28 @@ export default function ConvertToPaidDialog({ tenant, open, onOpenChange, onConv
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Billing Cycle</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Billing Cycle</label>
               <select className={inputCls} value={cycle} onChange={(e) => setCycle(e.target.value)}>
                 <option value="monthly">Monthly</option>
                 <option value="annual">Annual (billed yearly)</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Price / month (SAR)</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Price / month (SAR)</label>
               <Input type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} className="h-9" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Seats (max users)</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Seats (max users)</label>
               <Input type="number" min="1" value={maxUsers} onChange={(e) => setMaxUsers(e.target.value)} className="h-9" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Max students</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Max students</label>
               <Input type="number" min="1" value={maxStudents} onChange={(e) => setMaxStudents(e.target.value)} className="h-9" />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Billing email</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">Billing email</label>
             <Input type="email" placeholder="finance@school.edu.sa" value={billingEmail} onChange={(e) => setBillingEmail(e.target.value)} className="h-9" />
           </div>
 
@@ -141,8 +141,8 @@ export default function ConvertToPaidDialog({ tenant, open, onOpenChange, onConv
               <p className="text-lg font-bold text-emerald-800">{formatMoney(billedNow)}</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-slate-500">Adds to MRR</p>
-              <p className="text-sm font-semibold text-slate-700">{formatMoney(mrr)}/mo</p>
+              <p className="text-xs text-muted-foreground">Adds to MRR</p>
+              <p className="text-sm font-semibold text-ink">{formatMoney(mrr)}/mo</p>
             </div>
           </div>
         </div>

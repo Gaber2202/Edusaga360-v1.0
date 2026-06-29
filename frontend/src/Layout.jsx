@@ -375,8 +375,8 @@ function LayoutContent({ children, currentPageName }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full" />
+      <div className="min-h-screen bg-sand flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-najdi-700 border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -395,16 +395,16 @@ function LayoutContent({ children, currentPageName }) {
             <button
             className={`
               w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-base font-medium
-              ${isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'}
+              ${isActive ? 'bg-najdi-700 text-white shadow-sm' : 'text-ink hover:bg-najdi-50 hover:text-najdi-900'}
               ${sidebarCollapsed && !mobile ? 'justify-center' : ''}
             `}
             >
               <div className="flex items-center gap-3">
-                <item.icon className={`w-5 h-5 flex-shrink-0 text-slate-600`} />
+                <item.icon className={`w-5 h-5 flex-shrink-0 text-muted-foreground`} />
                 {(!sidebarCollapsed || mobile) && <span className="font-medium text-sm">{t(item.name)}</span>}
               </div>
               {(!sidebarCollapsed || mobile) && (
-                <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
               )}
             </button>
           </CollapsibleTrigger>
@@ -420,12 +420,12 @@ function LayoutContent({ children, currentPageName }) {
                   className={`
                     flex items-center gap-2 px-2 py-2 rounded-lg transition-all duration-200 text-sm
                     ${isChildActive
-                      ? 'bg-blue-600 text-white shadow-sm' 
-                      : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                      ? 'bg-najdi-700 text-white shadow-sm' 
+                      : 'text-ink hover:bg-najdi-50 hover:text-najdi-900'
                     }
                   `}
                 >
-                  <child.icon className={`w-4 h-4 flex-shrink-0 ${isChildActive ? 'text-white' : 'text-slate-500'}`} />
+                  <child.icon className={`w-4 h-4 flex-shrink-0 ${isChildActive ? 'text-white' : 'text-muted-foreground'}`} />
                   <span>{t(child.name)}</span>
                 </Link>
               );
@@ -443,12 +443,12 @@ function LayoutContent({ children, currentPageName }) {
         className={`
           flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
           ${isPageActive
-            ? 'bg-blue-600 text-white shadow-sm' 
-            : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'}
+            ? 'bg-najdi-700 text-white shadow-sm' 
+            : 'text-ink hover:bg-najdi-50 hover:text-najdi-900'}
           ${sidebarCollapsed && !mobile ? 'justify-center' : ''}
         `}
       >
-        <item.icon className={`w-5 h-5 flex-shrink-0 ${isPageActive ? 'text-white' : 'text-slate-600'}`} />
+        <item.icon className={`w-5 h-5 flex-shrink-0 ${isPageActive ? 'text-white' : 'text-muted-foreground'}`} />
         {(!sidebarCollapsed || mobile) && <span className="font-medium text-sm">{t(item.name)}</span>}
       </Link>
     );
@@ -463,7 +463,7 @@ function LayoutContent({ children, currentPageName }) {
   );
 
   return (
-    <div className={`flex h-screen bg-slate-50 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className={`flex h-screen bg-sand ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       <style>{`
         html, body, #root { 
           width: 100%;
@@ -472,10 +472,9 @@ function LayoutContent({ children, currentPageName }) {
           padding: 0;
           overflow: hidden;
         }
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Tajawal:wght@400;500;700&display=swap');
         html, body { 
-          font-family: ${isRTL ? "'IBM Plex Sans Arabic', -apple-system, sans-serif" : "'Inter', -apple-system, sans-serif"}; 
+          font-family: ${isRTL ? "'Tajawal', -apple-system, sans-serif" : "'Plus Jakarta Sans', -apple-system, sans-serif"}; 
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
         }
@@ -495,7 +494,7 @@ function LayoutContent({ children, currentPageName }) {
         .safe-area-pb { padding-bottom: env(safe-area-inset-bottom, 0px); }
         /* Dark mode base */
         .dark { color-scheme: dark; }
-        .dark body { background: #0f172a; color: #e2e8f0; }
+        .dark body { background: hsl(156, 30%, 4%); color: hsl(150, 15%, 92%); }
         /* Print styles */
         @media print {
           aside, nav, header, .no-print, [role="navigation"] { display: none !important; }
@@ -513,10 +512,10 @@ function LayoutContent({ children, currentPageName }) {
         hidden lg:flex flex-col bg-white shadow-sm
         transition-all duration-300 z-20 flex-shrink-0
         ${sidebarCollapsed ? 'w-20 min-w-20' : 'w-72 min-w-72'}
-        ${isRTL ? 'border-l' : 'border-r'} border-slate-200
+        ${isRTL ? 'border-l' : 'border-r'} border-border
       `}>
         {/* Logo */}
-        <div className="h-14 flex items-center justify-between px-3 border-b border-slate-200 flex-shrink-0 w-full">
+        <div className="h-14 flex items-center justify-between px-3 border-b border-border flex-shrink-0 w-full">
           {!sidebarCollapsed && (
                 <div className="flex items-center gap-2">
                   <img 
@@ -525,8 +524,8 @@ function LayoutContent({ children, currentPageName }) {
                     className="h-8 w-auto"
                   />
                   <div>
-                    <span className="font-semibold text-sm text-slate-900 block leading-tight">EduSaga 360</span>
-                    <span className="text-xs text-slate-500">v1.0</span>
+                    <span className="font-semibold text-sm text-ink block leading-tight">EduSaga 360</span>
+                    <span className="text-xs text-muted-foreground">v1.0</span>
                   </div>
                 </div>
               )}
@@ -544,12 +543,12 @@ function LayoutContent({ children, currentPageName }) {
         </div>
 
         {/* Collapse Button */}
-        <div className="p-3 border-t border-slate-200 flex-shrink-0">
+        <div className="p-3 border-t border-border flex-shrink-0">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="w-full justify-center text-slate-500 hover:text-slate-900"
+            className="w-full justify-center text-muted-foreground hover:text-ink"
           >
             {sidebarCollapsed 
               ? (isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)
@@ -562,10 +561,10 @@ function LayoutContent({ children, currentPageName }) {
       {/* Main Content */}
       <div className={`flex flex-col flex-1 min-w-0 overflow-hidden`}>
         {/* Top Header */}
-        <header className="w-full h-14 bg-white border-b border-slate-200 flex items-center justify-between px-2 sm:px-3 lg:px-4 sticky top-0 z-10 shadow-sm overflow-x-hidden">
+        <header className="w-full h-14 bg-white border-b border-border flex items-center justify-between px-2 sm:px-3 lg:px-4 sticky top-0 z-10 shadow-sm overflow-x-hidden">
           {/* Trial Banner */}
           {isTrial() && (
-            <div className="absolute top-full left-0 right-0 bg-blue-600 text-white py-2 px-4 text-center text-sm font-medium z-10">
+            <div className="absolute top-full left-0 right-0 bg-najdi-700 text-white py-2 px-4 text-center text-sm font-medium z-10">
               <TestTube className="w-4 h-4 inline me-2" />
               {isRTL ? 'وضع تجريبي' : 'Trial Mode'}
               {user?.trial_expires_date && (
@@ -584,7 +583,7 @@ function LayoutContent({ children, currentPageName }) {
               </Button>
             </SheetTrigger>
             <SheetContent side={isRTL ? 'right' : 'left'} className="w-72 p-0 flex flex-col h-full">
-              <div className="h-16 flex items-center px-4 border-b border-slate-200 flex-shrink-0">
+              <div className="h-16 flex items-center px-4 border-b border-border flex-shrink-0">
                 <div className="flex items-center gap-3">
                   <img 
                     src="/edusaga-logo.svg" 
@@ -592,8 +591,8 @@ function LayoutContent({ children, currentPageName }) {
                     className="h-10 w-auto"
                   />
                   <div>
-                    <span className="font-semibold text-base text-slate-900 block leading-tight">EduSaga 360</span>
-                    <span className="text-xs text-slate-500">Platform</span>
+                    <span className="font-semibold text-base text-ink block leading-tight">EduSaga 360</span>
+                    <span className="text-xs text-muted-foreground">Platform</span>
                   </div>
                 </div>
               </div>
@@ -624,16 +623,16 @@ function LayoutContent({ children, currentPageName }) {
           <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 ml-auto">
             {/* Tenant Badge */}
             {tenant && (
-              <div className="hidden lg:flex items-center gap-1 px-2 py-1 bg-slate-100 rounded-lg border border-slate-200 text-xs">
-                <Building2 className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                <span className="font-medium text-slate-600 max-w-[100px] truncate">
+              <div className="hidden lg:flex items-center gap-1 px-2 py-1 bg-najdi-50 rounded-lg border border-border text-xs">
+                <Building2 className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                <span className="font-medium text-muted-foreground max-w-[100px] truncate">
                   {isRTL ? tenant.name_ar : tenant.name_en}
                 </span>
               </div>
             )}
 
             {/* Cmd+K Search */}
-            <Button variant="ghost" size="icon" onClick={() => setCmdOpen(true)} className="hidden sm:flex text-slate-500 hover:text-slate-900 h-9 w-9" title={isRTL ? 'بحث (Ctrl+K)' : 'Search (Ctrl+K)'}>
+            <Button variant="ghost" size="icon" onClick={() => setCmdOpen(true)} className="hidden sm:flex text-muted-foreground hover:text-ink h-9 w-9" title={isRTL ? 'بحث (Ctrl+K)' : 'Search (Ctrl+K)'}>
               <Search className="w-4 h-4" />
             </Button>
 
@@ -642,7 +641,7 @@ function LayoutContent({ children, currentPageName }) {
 
             {/* Dark Mode Toggle */}
             {/* Language Toggle */}
-            <Button variant="ghost" size="icon" onClick={toggleLanguage} className="text-slate-600 hover:text-slate-900 h-9 w-9">
+            <Button variant="ghost" size="icon" onClick={toggleLanguage} className="text-muted-foreground hover:text-ink h-9 w-9">
               <Globe className="w-4 h-4" />
             </Button>
 
@@ -651,18 +650,18 @@ function LayoutContent({ children, currentPageName }) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-1 sm:gap-2 px-1 sm:px-2 h-9">
                   <Avatar className="w-7 h-7 sm:w-8 sm:h-8">
-                    <AvatarFallback className="bg-slate-900 text-white text-xs">
+                    <AvatarFallback className="bg-najdi-900 text-white text-xs">
                         {(user?.display_name || user?.full_name || user?.email || 'U')[0]?.toUpperCase()}
                       </AvatarFallback>
                   </Avatar>
                   <div className="hidden md:flex flex-col text-left min-w-0">
-                    <p className="text-xs sm:text-sm font-medium text-slate-900 truncate">
+                    <p className="text-xs sm:text-sm font-medium text-ink truncate">
                       {isRTL
                         ? ([user?.first_name_ar, user?.last_name_ar].filter(Boolean).join(' ') || user?._displayName || user?.display_name || user?.full_name || user?.email || '')
                         : ([user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.display_name || user?.full_name || user?.email || '')
                       }
                     </p>
-                    <p className="text-xs text-slate-500">{t(userRole)}</p>
+                    <p className="text-xs text-muted-foreground">{t(userRole)}</p>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
@@ -697,14 +696,14 @@ function LayoutContent({ children, currentPageName }) {
         )}
 
         {/* Page Content */}
-        <main className="flex-1 w-full p-2 sm:p-4 lg:p-6 bg-slate-50 overflow-hidden overflow-y-auto pb-16 lg:pb-6">
+        <main className="flex-1 w-full p-2 sm:p-4 lg:p-6 bg-sand overflow-hidden overflow-y-auto pb-16 lg:pb-6">
           <div className="w-full h-full">
             <TenantAccessGate>{children}</TenantAccessGate>
           </div>
         </main>
 
         {/* Mobile Bottom Navigation */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 flex items-center justify-around h-14 px-2 safe-area-pb">
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-border flex items-center justify-around h-14 px-2 safe-area-pb">
           {[
             { icon: LayoutDashboard, page: 'Dashboard', labelAr: 'الرئيسية', label: 'Home' },
             { icon: Users, page: 'Students', labelAr: 'الطلاب', label: 'Students' },
@@ -714,7 +713,7 @@ function LayoutContent({ children, currentPageName }) {
           ].map(({ icon: Icon, page, label, labelAr }) => {
             const active = currentPageName === page;
             return (
-              <Link key={page} to={createPageUrl(page)} className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${active ? 'text-blue-600' : 'text-slate-500'}`}>
+              <Link key={page} to={createPageUrl(page)} className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${active ? 'text-najdi-700' : 'text-muted-foreground'}`}>
                 <Icon className="w-5 h-5" />
                 <span className="text-[10px] font-medium">{isRTL ? labelAr : label}</span>
               </Link>

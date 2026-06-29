@@ -97,10 +97,10 @@ export default function YamenAdminControls() {
                 <div key={m.key} className="flex items-center justify-between py-2 border-b last:border-0">
                   <div>
                     <p className="font-medium">{isRTL ? m.ar : m.en}</p>
-                    <p className="text-xs text-slate-500">{isRTL ? m.en : m.ar}</p>
+                    <p className="text-xs text-muted-foreground">{isRTL ? m.en : m.ar}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge className={moduleEnabled[m.key] ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}>
+                    <Badge className={moduleEnabled[m.key] ? 'bg-green-100 text-green-700' : 'bg-sand-alt text-muted-foreground'}>
                       {moduleEnabled[m.key] ? (isRTL ? 'مفعّل' : 'Enabled') : (isRTL ? 'معطّل' : 'Disabled')}
                     </Badge>
                     <Switch
@@ -133,7 +133,7 @@ export default function YamenAdminControls() {
                     <p className="font-medium capitalize">{role.replace('_', ' ')}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge className={roleVisibility[role] ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}>
+                    <Badge className={roleVisibility[role] ? 'bg-purple-100 text-purple-700' : 'bg-sand-alt text-muted-foreground'}>
                       {roleVisibility[role] ? (isRTL ? 'مرئي' : 'Visible') : (isRTL ? 'مخفي' : 'Hidden')}
                     </Badge>
                     <Switch
@@ -163,7 +163,7 @@ export default function YamenAdminControls() {
                 <div className="bg-purple-50 rounded-lg p-4">
                   <p className="text-sm font-medium text-purple-800">{isRTL ? 'الاستخدام هذا الشهر' : 'This Month Usage'}</p>
                   <div className="mt-2">
-                    <div className="flex justify-between text-xs text-slate-600 mb-1">
+                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
                       <span>{usageData.thisMonth} {isRTL ? 'استدعاء' : 'calls'}</span>
                       <span>{usageData.limit} {isRTL ? 'الحد' : 'limit'}</span>
                     </div>
@@ -188,7 +188,7 @@ export default function YamenAdminControls() {
                       <span>{item.module}</span>
                       <span className="font-medium text-purple-700">{item.calls}</span>
                     </div>
-                    <div className="w-full bg-slate-100 rounded-full h-1.5">
+                    <div className="w-full bg-sand-alt rounded-full h-1.5">
                       <div className="bg-purple-500 h-1.5 rounded-full" style={{ width: `${Math.min((item.calls / usageData.thisMonth) * 100, 100)}%` }} />
                     </div>
                   </div>
@@ -206,14 +206,14 @@ export default function YamenAdminControls() {
               <div className="flex items-center justify-between py-2 border-b">
                 <div>
                   <p className="font-medium">{isRTL ? 'الوضع الصارم' : 'Strict Mode'}</p>
-                  <p className="text-xs text-slate-500">{isRTL ? 'يمنع التنبؤات ويقتصر على البيانات الفعلية' : 'No predictions — only factual data analysis'}</p>
+                  <p className="text-xs text-muted-foreground">{isRTL ? 'يمنع التنبؤات ويقتصر على البيانات الفعلية' : 'No predictions — only factual data analysis'}</p>
                 </div>
                 <Switch checked={strictMode} onCheckedChange={setStrictMode} />
               </div>
               <div className="flex items-center justify-between py-2 border-b">
                 <div>
                   <p className="font-medium">{isRTL ? 'الوضع التنبؤي' : 'Predictive Mode'}</p>
-                  <p className="text-xs text-slate-500">{isRTL ? 'يامن يتنبأ بالمخاطر والاتجاهات المستقبلية' : 'Yamen predicts risks and future trends'}</p>
+                  <p className="text-xs text-muted-foreground">{isRTL ? 'يامن يتنبأ بالمخاطر والاتجاهات المستقبلية' : 'Yamen predicts risks and future trends'}</p>
                 </div>
                 <Switch checked={predictiveMode} onCheckedChange={setPredictiveMode} />
               </div>
@@ -250,15 +250,15 @@ export default function YamenAdminControls() {
           <Card>
             <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileText className="w-5 h-5 text-purple-600" />{isRTL ? 'قاعدة معرفة يامن AI' : 'Yamen AI Knowledge Base'}</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 {isRTL
                   ? 'أضف مستندات السياسات، واللوائح، ونظام العمل السعودي لتحسين دقة إجابات يامن AI.'
                   : 'Upload policy documents, regulations, and Saudi Labor Law content to improve Yamen AI accuracy.'}
               </p>
               <div className="border-2 border-dashed border-purple-200 rounded-xl p-8 text-center">
                 <Upload className="w-10 h-10 text-purple-400 mx-auto mb-3" />
-                <p className="text-slate-600 font-medium">{isRTL ? 'رفع مستند' : 'Upload Document'}</p>
-                <p className="text-xs text-slate-400 mt-1">{isRTL ? 'PDF، Word، نص عادي' : 'PDF, Word, Plain Text'}</p>
+                <p className="text-muted-foreground font-medium">{isRTL ? 'رفع مستند' : 'Upload Document'}</p>
+                <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'PDF، Word، نص عادي' : 'PDF, Word, Plain Text'}</p>
                 <Button variant="outline" className="mt-4">{isRTL ? 'اختيار ملف' : 'Choose File'}</Button>
               </div>
               <div className="space-y-2">

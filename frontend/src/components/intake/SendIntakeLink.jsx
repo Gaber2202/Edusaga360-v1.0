@@ -166,7 +166,7 @@ export default function SendIntakeLink({ intakeLink, open, onOpenChange }) {
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
-          <Button onClick={handleSend} disabled={sending} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={handleSend} disabled={sending} className="bg-najdi-700 hover:bg-najdi-900">
             {sending && <Loader2 className="w-4 h-4 animate-spin me-2" />}
             <Send className="w-4 h-4 me-2" />
             {isRTL ? 'إرسال' : 'Send'}

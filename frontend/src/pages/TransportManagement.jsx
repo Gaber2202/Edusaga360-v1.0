@@ -146,8 +146,8 @@ export default function TransportManagement() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">{isRTL ? 'إدارة النقل المدرسي' : 'Transport Management'}</h1>
-          <p className="text-sm text-slate-500">{isRTL ? 'المسارات، تخصيص الطلاب، والتتبع' : 'Routes, student assignments & bus tracking'}</p>
+          <h1 className="text-xl font-bold text-ink">{isRTL ? 'إدارة النقل المدرسي' : 'Transport Management'}</h1>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'المسارات، تخصيص الطلاب، والتتبع' : 'Routes, student assignments & bus tracking'}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setShowAssignForm(true)}>
@@ -161,7 +161,7 @@ export default function TransportManagement() {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatCard title={isRTL ? 'مسارات نشطة' : 'Active Routes'} value={activeRoutes.length} icon={Route} iconClassName="bg-cyan-50" />
-        <StatCard title={isRTL ? 'طلاب مخصصون' : 'Assigned Students'} value={totalStudents} icon={Users} iconClassName="bg-blue-50" />
+        <StatCard title={isRTL ? 'طلاب مخصصون' : 'Assigned Students'} value={totalStudents} icon={Users} iconClassName="bg-najdi-50" />
         <StatCard title={isRTL ? 'مراقبو الحافلات' : 'With Supervisors'} value={routesWithSupervisor} icon={Shield} iconClassName="bg-green-50" />
         <StatCard title={isRTL ? 'تنبيهات انتهاء' : 'Expiry Alerts'} value={expiryAlerts.length} icon={AlertTriangle} iconClassName="bg-red-50" />
       </div>
@@ -206,7 +206,7 @@ export default function TransportManagement() {
         {/* ROUTES */}
         <TabsContent value="routes" className="mt-4 space-y-4">
           <div className="relative max-w-72">
-            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
             <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={e => setSearch(e.target.value)} className={`${isRTL ? 'pr-9' : 'pl-9'} bg-white h-9`} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -217,15 +217,15 @@ export default function TransportManagement() {
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <p className="font-semibold text-slate-800">{r.name_ar}</p>
-                        {r.name_en && <p className="text-xs text-slate-400">{r.name_en}</p>}
+                        <p className="font-semibold text-ink">{r.name_ar}</p>
+                        {r.name_en && <p className="text-xs text-muted-foreground">{r.name_en}</p>}
                         <p className="text-xs text-cyan-600 font-mono">{r.route_code}</p>
                       </div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${r.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${r.is_active ? 'bg-green-100 text-green-700' : 'bg-sand-alt text-muted-foreground'}`}>
                         {r.is_active ? (isRTL ? 'نشط' : 'Active') : (isRTL ? 'متوقف' : 'Inactive')}
                       </span>
                     </div>
-                    <div className="space-y-1 text-xs text-slate-500 mb-3">
+                    <div className="space-y-1 text-xs text-muted-foreground mb-3">
                       {r.vehicle_number && <p>🚌 {r.vehicle_number}</p>}
                       {r.driver_name && <p>👤 {isRTL ? 'السائق:' : 'Driver:'} {r.driver_name}</p>}
                       {r.supervisor_name && <p>🛡 {isRTL ? 'المشرف:' : 'Supervisor:'} {r.supervisor_name}</p>}
@@ -234,7 +234,7 @@ export default function TransportManagement() {
                     </div>
                     {r.stops?.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-2">
-                        {r.stops.map((s, i) => <span key={i} className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">{s.name_ar}</span>)}
+                        {r.stops.map((s, i) => <span key={i} className="text-xs bg-sand-alt px-1.5 py-0.5 rounded">{s.name_ar}</span>)}
                       </div>
                     )}
                     <Button size="sm" variant="ghost" className="w-full h-7 text-xs mt-1" onClick={() => { setEditingRoute(r); setRouteForm({ ...r }); setShowRouteForm(true); }}>
@@ -245,7 +245,7 @@ export default function TransportManagement() {
               );
             })}
             {filteredRoutes.length === 0 && !routesLoading && (
-              <div className="col-span-3 text-center py-12 text-slate-400">{isRTL ? 'لا توجد مسارات' : 'No routes found'}</div>
+              <div className="col-span-3 text-center py-12 text-muted-foreground">{isRTL ? 'لا توجد مسارات' : 'No routes found'}</div>
             )}
           </div>
         </TabsContent>
@@ -269,14 +269,14 @@ export default function TransportManagement() {
                   {assignments.map(a => (
                     <TableRow key={a.id}>
                       <TableCell className="font-medium text-sm">{a.student_name}</TableCell>
-                      <TableCell className="text-sm text-slate-500">{a.grade}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{a.grade}</TableCell>
                       <TableCell className="text-sm">{a.route_name}</TableCell>
-                      <TableCell className="text-xs text-slate-500">{a.pickup_stop || '—'}</TableCell>
-                      <TableCell className="text-xs text-slate-500">{a.dropoff_stop || '—'}</TableCell>
-                      <TableCell><span className={`text-xs px-2 py-0.5 rounded-full font-medium ${a.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>{a.status}</span></TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{a.pickup_stop || '—'}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{a.dropoff_stop || '—'}</TableCell>
+                      <TableCell><span className={`text-xs px-2 py-0.5 rounded-full font-medium ${a.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-sand-alt text-muted-foreground'}`}>{a.status}</span></TableCell>
                     </TableRow>
                   ))}
-                  {assignments.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-10 text-slate-400">{isRTL ? 'لا تخصيصات' : 'No assignments'}</TableCell></TableRow>}
+                  {assignments.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">{isRTL ? 'لا تخصيصات' : 'No assignments'}</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </div>
@@ -296,8 +296,8 @@ export default function TransportManagement() {
                   { ar: 'سجل الحوادث والطوارئ', en: 'Incident & emergency log', done: true },
                 ].map((req, i) => (
                   <div key={i} className="flex items-center gap-2 text-sm">
-                    <CheckCircle className={`w-4 h-4 flex-shrink-0 ${req.done ? 'text-green-500' : 'text-slate-300'}`} />
-                    <span className={req.done ? 'text-slate-700' : 'text-slate-400'}>{isRTL ? req.ar : req.en}</span>
+                    <CheckCircle className={`w-4 h-4 flex-shrink-0 ${req.done ? 'text-green-500' : 'text-muted-foreground'}`} />
+                    <span className={req.done ? 'text-ink' : 'text-muted-foreground'}>{isRTL ? req.ar : req.en}</span>
                   </div>
                 ))}
               </CardContent>
@@ -309,7 +309,7 @@ export default function TransportManagement() {
                   <div key={r.id} className="flex items-center justify-between py-2 border-b last:border-0">
                     <div>
                       <p className="text-sm font-medium">{r.name_ar}</p>
-                      <p className="text-xs text-slate-400">{r.route_code}</p>
+                      <p className="text-xs text-muted-foreground">{r.route_code}</p>
                     </div>
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setEditingRoute(r); setRouteForm({ ...r }); setShowRouteForm(true); }}>
                       {isRTL ? 'تعيين مشرف' : 'Assign Supervisor'}
@@ -378,11 +378,11 @@ export default function TransportManagement() {
             <div className="space-y-2">
               <Label>{isRTL ? 'المحطات' : 'Stops'}</Label>
               {(routeForm.stops || []).map((s, i) => (
-                <div key={i} className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg text-sm">
+                <div key={i} className="flex items-center gap-2 p-2 bg-sand rounded-lg text-sm">
                   <MapPin className="w-3.5 h-3.5 text-cyan-500" />
                   <span className="font-medium">{i + 1}. {s.name_ar}</span>
-                  {s.estimated_time && <span className="text-slate-400">· {s.estimated_time}</span>}
-                  <button onClick={() => setRouteForm(f => ({ ...f, stops: f.stops.filter((_, j) => j !== i) }))} className="text-slate-400 hover:text-red-500 ms-auto">×</button>
+                  {s.estimated_time && <span className="text-muted-foreground">· {s.estimated_time}</span>}
+                  <button onClick={() => setRouteForm(f => ({ ...f, stops: f.stops.filter((_, j) => j !== i) }))} className="text-muted-foreground hover:text-red-500 ms-auto">×</button>
                 </div>
               ))}
               <div className="flex gap-2">
@@ -412,7 +412,7 @@ export default function TransportManagement() {
                   {studentSearch && (
                     <div className="border rounded-lg max-h-40 overflow-y-auto">
                       {filteredStudents.slice(0, 6).map(s => (
-                        <button key={s.id} onClick={() => { setAssignData(d => ({ ...d, student_id: s.id })); setStudentSearch(s.name_ar); }} className="w-full text-start px-3 py-2 hover:bg-slate-50 text-sm border-b last:border-0">{s.name_ar} — {s.grade}</button>
+                        <button key={s.id} onClick={() => { setAssignData(d => ({ ...d, student_id: s.id })); setStudentSearch(s.name_ar); }} className="w-full text-start px-3 py-2 hover:bg-sand text-sm border-b last:border-0">{s.name_ar} — {s.grade}</button>
                       ))}
                     </div>
                   )}
@@ -420,7 +420,7 @@ export default function TransportManagement() {
               ) : (
                 <div className="flex items-center gap-2 p-2 bg-cyan-50 rounded-lg">
                   <CheckCircle className="w-4 h-4 text-cyan-500" /><span className="text-sm">{studentSearch}</span>
-                  <button onClick={() => { setAssignData(d => ({ ...d, student_id: '' })); setStudentSearch(''); }} className="text-slate-400 ms-auto">×</button>
+                  <button onClick={() => { setAssignData(d => ({ ...d, student_id: '' })); setStudentSearch(''); }} className="text-muted-foreground ms-auto">×</button>
                 </div>
               )}
             </div>

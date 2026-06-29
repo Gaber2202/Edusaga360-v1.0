@@ -19,14 +19,14 @@ const METRIC_CONFIG = {
 function PercentileBar({ pct }) {
   const color = pct >= 75 ? 'bg-green-500' : pct >= 50 ? 'bg-amber-400' : pct >= 25 ? 'bg-orange-400' : 'bg-red-400';
   return (
-    <div className="w-full bg-slate-100 rounded-full h-2 mt-1">
+    <div className="w-full bg-sand-alt rounded-full h-2 mt-1">
       <div className={`${color} h-2 rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
     </div>
   );
 }
 
 function TrendIcon({ value, avg, higherBetter }) {
-  if (higherBetter === null) return <Minus className="w-4 h-4 text-slate-400" />;
+  if (higherBetter === null) return <Minus className="w-4 h-4 text-muted-foreground" />;
   const better = higherBetter ? value >= avg : value <= avg;
   return better
     ? <TrendingUp  className="w-4 h-4 text-green-500" />
@@ -69,7 +69,7 @@ export default function BenchmarkDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">{isRTL ? 'مقارنة الأداء — الشبكة' : 'School Network Benchmarks'}</h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             {isRTL
               ? 'مقارنة أداء مدرستك مع المدارس الأخرى — البيانات مجهولة الهوية تماماً'
               : 'How your school compares to the network — all data fully anonymised'}
@@ -89,7 +89,7 @@ export default function BenchmarkDashboard() {
 
       {data && (
         <>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-muted-foreground">
             {isRTL
               ? `حجم الشبكة: ${data.pool_size} مدرسة · آخر تحديث: ${data.snapshot_date}`
               : `Network: ${data.pool_size} school${data.pool_size !== 1 ? 's' : ''} · Updated: ${data.snapshot_date}`}
@@ -109,21 +109,21 @@ export default function BenchmarkDashboard() {
               return (
                 <Card key={key} className="hover:shadow-md transition-shadow">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                       <Icon className="w-4 h-4" />{label}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="flex items-end justify-between mb-1">
                       <div>
-                        <span className="text-2xl font-bold text-slate-900">
+                        <span className="text-2xl font-bold text-ink">
                           {fmt(comp.your_value)}{config.unit}
                         </span>
-                        <p className="text-xs text-slate-500 mt-0.5">{isRTL ? 'مدرستك' : 'Your school'}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{isRTL ? 'مدرستك' : 'Your school'}</p>
                       </div>
                       <div className="text-right">
                         <TrendIcon value={comp.your_value} avg={comp.network_avg} higherBetter={config.higherBetter} />
-                        <p className="text-xs text-slate-400 mt-0.5">
+                        <p className="text-xs text-muted-foreground mt-0.5">
                           {isRTL ? 'متوسط:' : 'Avg:'} {fmt(comp.network_avg)}{config.unit}
                         </p>
                       </div>
@@ -132,7 +132,7 @@ export default function BenchmarkDashboard() {
                     <PercentileBar pct={pctRank} />
 
                     <div className="flex items-center justify-between mt-1.5">
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-muted-foreground">
                         {isRTL ? `أفضل من ${pctRank}% من المدارس` : `Top ${100 - pctRank}% of schools`}
                       </span>
                       <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${
@@ -153,7 +153,7 @@ export default function BenchmarkDashboard() {
       )}
 
       {!data && !loading && (
-        <div className="border-2 border-dashed border-slate-200 rounded-xl p-10 text-center text-slate-400">
+        <div className="border-2 border-dashed border-border rounded-xl p-10 text-center text-muted-foreground">
           <TrendingUp className="w-10 h-10 mx-auto mb-3 opacity-30" />
           <p className="text-sm">{isRTL ? 'اضغط تحديث لحساب موقع مدرستك في الشبكة' : 'Click Refresh to compute your school\'s position in the network'}</p>
         </div>

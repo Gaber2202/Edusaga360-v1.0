@@ -41,7 +41,7 @@ export default function PRActions({
         </>
       )}
       {pr.status === 'approved' && (
-        <Button size="sm" onClick={() => onConvert(pr)} className="bg-blue-600 hover:bg-blue-700">
+        <Button size="sm" onClick={() => onConvert(pr)} className="bg-najdi-700 hover:bg-najdi-900">
           <ArrowRight className="w-4 h-4 me-1" />
           {isRTL ? 'أمر شراء' : 'PO'}
         </Button>

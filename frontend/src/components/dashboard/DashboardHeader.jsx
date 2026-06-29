@@ -42,17 +42,17 @@ export default function DashboardHeader({ user, tenant, isRTL }) {
     <div className="flex items-start justify-between flex-wrap gap-3">
       <div className="flex items-center gap-3">
         {tenant?.logo_url && (
-          <img src={tenant.logo_url} alt={schoolName || 'School'} className="w-12 h-12 rounded-xl object-cover border border-slate-200 bg-white" />
+          <img src={tenant.logo_url} alt={schoolName || 'School'} className="w-12 h-12 rounded-xl object-cover border border-border bg-white" />
         )}
         <div>
           {schoolName && <p className="text-sm font-bold text-emerald-600 mb-0.5">{schoolName}</p>}
-          <h1 className="text-slate-800 text-xl font-extrabold tracking-tight">
+          <h1 className="text-ink text-xl font-extrabold tracking-tight">
             {isRTL ? `مرحباً، ${displayName}` : `Welcome back, ${displayName}`}
           </h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
-            <span className="text-slate-400 text-sm">{gregorianDate}</span>
-            <span className="text-slate-300 hidden sm:inline">|</span>
-            <span className="text-slate-500 text-xs font-medium">{hijriDate}</span>
+            <span className="text-muted-foreground text-sm">{gregorianDate}</span>
+            <span className="text-muted-foreground hidden sm:inline">|</span>
+            <span className="text-muted-foreground text-xs font-medium">{hijriDate}</span>
           </div>
         </div>
       </div>
@@ -60,8 +60,8 @@ export default function DashboardHeader({ user, tenant, isRTL }) {
       <div className="flex items-center gap-4">
         {/* Live clock */}
         <div className="hidden sm:flex flex-col items-end">
-          <span className="text-slate-700 text-lg font-mono font-bold tabular-nums">{timeStr}</span>
-          <span className="text-slate-400 text-xs">{Intl.DateTimeFormat().resolvedOptions().timeZone}</span>
+          <span className="text-ink text-lg font-mono font-bold tabular-nums">{timeStr}</span>
+          <span className="text-muted-foreground text-xs">{Intl.DateTimeFormat().resolvedOptions().timeZone}</span>
         </div>
 
         {/* System health */}
@@ -70,7 +70,7 @@ export default function DashboardHeader({ user, tenant, isRTL }) {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
           </span>
-          <span className="text-xs text-slate-400 hidden sm:inline">{isRTL ? 'النظام يعمل' : 'All systems operational'}</span>
+          <span className="text-xs text-muted-foreground hidden sm:inline">{isRTL ? 'النظام يعمل' : 'All systems operational'}</span>
         </div>
       </div>
     </div>

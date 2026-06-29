@@ -97,12 +97,12 @@ export default function CRM() {
       <Badge variant="outline">{crmCategoryLabel(row.category, isRTL)}</Badge>
     )},
     { key: 'priority', label: isRTL ? 'الأولوية' : 'Priority', render: (_, row) => {
-      const colors = { low: 'bg-gray-100', medium: 'bg-blue-100', high: 'bg-orange-100', critical: 'bg-red-100' };
+      const colors = { low: 'bg-gray-100', medium: 'bg-najdi-50', high: 'bg-orange-100', critical: 'bg-red-100' };
       return <Badge className={colors[row.priority]}>{priorityLabel(row.priority, isRTL)}</Badge>;
     }},
     { key: 'status', label: isRTL ? 'الحالة' : 'Status', render: (_, row) => {
       const colors = {
-        open: 'bg-blue-100 text-blue-800',
+        open: 'bg-najdi-50 text-najdi-900',
         in_progress: 'bg-yellow-100 text-yellow-800',
         waiting: 'bg-purple-100 text-purple-800',
         resolved: 'bg-green-100 text-green-800',
@@ -128,7 +128,7 @@ export default function CRM() {
     { key: 'phone', label: isRTL ? 'الهاتف' : 'Phone' },
     { key: 'email', label: isRTL ? 'البريد' : 'Email' },
     { key: 'segment', label: isRTL ? 'التصنيف' : 'Segment', render: (_, row) => {
-      const colors = { prospect: 'bg-blue-100', active: 'bg-green-100', vip: 'bg-purple-100', withdrawn: 'bg-red-100' };
+      const colors = { prospect: 'bg-najdi-50', active: 'bg-green-100', vip: 'bg-purple-100', withdrawn: 'bg-red-100' };
       return <Badge className={colors[row.segment] || 'bg-gray-100'}>{segmentLabel(row.segment, isRTL)}</Badge>;
     }},
     { key: 'total_interactions', label: isRTL ? 'التفاعلات' : 'Interactions' },
@@ -147,7 +147,7 @@ export default function CRM() {
           title={isRTL ? 'تذاكر مفتوحة' : 'Open Tickets'}
           value={openTickets}
           icon={Ticket}
-          iconClassName="bg-blue-50"
+          iconClassName="bg-najdi-50"
         />
         <StatCard
           title={isRTL ? 'قيد المعالجة' : 'In Progress'}

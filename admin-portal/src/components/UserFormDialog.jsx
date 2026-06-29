@@ -8,8 +8,8 @@ import { Input } from './ui/input';
 import { toast } from 'sonner';
 import { Loader2, UserPlus, UserCog, Copy } from 'lucide-react';
 
-const inputCls = 'w-full h-9 rounded-md border border-slate-200 px-3 text-sm bg-white';
-const labelCls = 'block text-xs font-medium text-slate-600 mb-1';
+const inputCls = 'w-full h-9 rounded-md border border-border px-3 text-sm bg-white';
+const labelCls = 'block text-xs font-medium text-muted-foreground mb-1';
 
 /**
  * Create a new user in a tenant, or edit an existing one.
@@ -74,16 +74,16 @@ export default function UserFormDialog({ open, onOpenChange, user, tenants = [],
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {isEdit ? <UserCog className="w-5 h-5 text-slate-600" /> : <UserPlus className="w-5 h-5 text-emerald-600" />}
+            {isEdit ? <UserCog className="w-5 h-5 text-muted-foreground" /> : <UserPlus className="w-5 h-5 text-emerald-600" />}
             {isEdit ? 'Edit User' : 'Add User'}
           </DialogTitle>
         </DialogHeader>
 
         {createdLink ? (
           <div className="space-y-3 py-2">
-            <p className="text-sm text-slate-600">User created. Share this one-time setup link if the email doesn't arrive:</p>
+            <p className="text-sm text-muted-foreground">User created. Share this one-time setup link if the email doesn't arrive:</p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 text-xs bg-slate-50 border rounded px-2 py-1.5 truncate">{createdLink}</code>
+              <code className="flex-1 text-xs bg-sand border rounded px-2 py-1.5 truncate">{createdLink}</code>
               <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => { navigator.clipboard.writeText(createdLink); toast.success('Copied'); }}>
                 <Copy className="w-3.5 h-3.5" /> Copy
               </Button>
@@ -137,8 +137,8 @@ export default function UserFormDialog({ open, onOpenChange, user, tenants = [],
                 )}
               </div>
               {!isEdit && (
-                <label className="flex items-center gap-2 text-sm text-slate-600">
-                  <input type="checkbox" checked={!!form.send_invite} onChange={(e) => set('send_invite', e.target.checked)} className="rounded border-slate-300" />
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <input type="checkbox" checked={!!form.send_invite} onChange={(e) => set('send_invite', e.target.checked)} className="rounded border-border" />
                   Send invite / password-setup email
                 </label>
               )}

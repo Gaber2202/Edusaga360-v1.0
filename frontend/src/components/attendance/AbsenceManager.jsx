@@ -117,11 +117,11 @@ export default function AbsenceManager({ attendanceRecords, students, onRefresh 
                 <div key={s.id} className="flex items-center justify-between p-2 bg-amber-50 rounded-lg">
                   <div>
                     <p className="font-medium text-sm">{s.name_ar}</p>
-                    <p className="text-xs text-slate-500">{s.grade} · {s.totalAbsent} {isRTL ? 'يوم غياب' : 'absent days'}</p>
+                    <p className="text-xs text-muted-foreground">{s.grade} · {s.totalAbsent} {isRTL ? 'يوم غياب' : 'absent days'}</p>
                   </div>
                   <div className="text-right">
                     <p className={`text-lg font-bold ${s.pct < 70 ? 'text-red-600' : 'text-amber-600'}`}>{s.pct}%</p>
-                    <p className="text-xs text-slate-400">{isRTL ? 'نسبة الحضور' : 'attendance'}</p>
+                    <p className="text-xs text-muted-foreground">{isRTL ? 'نسبة الحضور' : 'attendance'}</p>
                   </div>
                 </div>
               ))}
@@ -135,18 +135,18 @@ export default function AbsenceManager({ attendanceRecords, students, onRefresh 
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <FileText className="w-4 h-4 text-blue-500" />
+              <FileText className="w-4 h-4 text-najdi-500" />
               {isRTL ? 'أعذار بانتظار المراجعة' : 'Pending Excuse Reviews'}
-              <span className="ms-auto bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{pendingExcuses.length}</span>
+              <span className="ms-auto bg-najdi-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{pendingExcuses.length}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {pendingExcuses.map(r => (
-                <div key={r.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-xl border border-blue-100">
+                <div key={r.id} className="flex items-center justify-between p-3 bg-najdi-50 rounded-xl border border-najdi-100">
                   <div>
                     <p className="font-medium text-sm">{r.student_name}</p>
-                    <p className="text-xs text-slate-500">{r.date} · {r.excuse_reason || (isRTL ? 'لا سبب محدد' : 'No reason given')}</p>
+                    <p className="text-xs text-muted-foreground">{r.date} · {r.excuse_reason || (isRTL ? 'لا سبب محدد' : 'No reason given')}</p>
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => handleApproveExcuse(r)} disabled={saving}
@@ -185,7 +185,7 @@ export default function AbsenceManager({ attendanceRecords, students, onRefresh 
             </TableHeader>
             <TableBody>
               {studentStats.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-8 text-slate-400">
+                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   {isRTL ? 'لا بيانات غياب' : 'No absence data'}
                 </TableCell></TableRow>
               ) : studentStats.map(s => {
@@ -194,18 +194,18 @@ export default function AbsenceManager({ attendanceRecords, students, onRefresh 
                   <TableRow key={s.id}>
                     <TableCell>
                       <p className="font-medium text-sm">{s.name_ar}</p>
-                      <p className="text-xs text-slate-400">{s.grade}</p>
+                      <p className="text-xs text-muted-foreground">{s.grade}</p>
                     </TableCell>
                     <TableCell className="text-center font-semibold text-red-600">{s.totalAbsent}</TableCell>
-                    <TableCell className="text-center text-blue-600">{s.excused}</TableCell>
+                    <TableCell className="text-center text-najdi-700">{s.excused}</TableCell>
                     <TableCell className="text-center font-semibold text-orange-600">{s.unauthorized}</TableCell>
                     <TableCell className="text-center text-amber-600">{s.late}</TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center gap-1.5 justify-center">
-                        <div className="w-12 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                        <div className="w-12 h-1.5 bg-sand-alt rounded-full overflow-hidden">
                           <div className={`h-full rounded-full ${s.pct >= 90 ? 'bg-green-500' : s.pct >= 80 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${s.pct}%` }} />
                         </div>
-                        <span className={`text-xs font-bold ${s.pct < 80 ? 'text-red-600' : 'text-slate-600'}`}>{s.pct}%</span>
+                        <span className={`text-xs font-bold ${s.pct < 80 ? 'text-red-600' : 'text-muted-foreground'}`}>{s.pct}%</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -213,7 +213,7 @@ export default function AbsenceManager({ attendanceRecords, students, onRefresh 
                         <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${moe.color}`}>
                           {isRTL ? moe.ar : moe.label}
                         </span>
-                      ) : <span className="text-slate-300 text-xs">—</span>}
+                      ) : <span className="text-muted-foreground text-xs">—</span>}
                     </TableCell>
                   </TableRow>
                 );

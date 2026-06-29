@@ -435,8 +435,8 @@ export default function ContractTemplates() {
 
       {templates.length === 0 && !isLoading && (
         <Card className="p-8 text-center">
-          <FileText className="w-12 h-12 mx-auto text-slate-400 mb-4" />
-          <p className="text-slate-600 mb-4">{isRTL ? 'لا توجد قوالب. ابدأ بإنشاء القالب القياسي للمدارس السعودية' : 'No templates. Start by creating the Saudi standard template'}</p>
+          <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground mb-4">{isRTL ? 'لا توجد قوالب. ابدأ بإنشاء القالب القياسي للمدارس السعودية' : 'No templates. Start by creating the Saudi standard template'}</p>
           <Button onClick={createDefaultTemplate} disabled={saving}>
             {saving && <Loader2 className="w-4 h-4 animate-spin me-2" />}
             {isRTL ? 'إنشاء القالب القياسي' : 'Create Default Template'}
@@ -454,7 +454,7 @@ export default function ContractTemplates() {
                     {isRTL ? template.name_ar : (template.name_en || template.name_ar)}
                   </CardTitle>
 
-                  <p className="text-sm text-slate-500 mt-1">{TEMPLATE_TYPES.find(tp => tp.value === template.template_type)?.[isRTL ? 'label_ar' : 'label_en']}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{TEMPLATE_TYPES.find(tp => tp.value === template.template_type)?.[isRTL ? 'label_ar' : 'label_en']}</p>
                   <div className="flex gap-2 mt-2 flex-wrap">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${template.content_ar ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                       {template.content_ar ? '✓ عربي' : '✗ عربي'}
@@ -543,14 +543,14 @@ export default function ContractTemplates() {
                 <button
                   type="button"
                   onClick={() => setActiveEditorTab('arabic')}
-                  className={`px-4 py-1.5 rounded text-sm font-medium border transition-colors ${activeEditorTab === 'arabic' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
+                  className={`px-4 py-1.5 rounded text-sm font-medium border transition-colors ${activeEditorTab === 'arabic' ? 'bg-najdi-900 text-white border-najdi-900' : 'bg-white text-muted-foreground border-border hover:bg-sand'}`}
                 >
                   {isRTL ? 'عربي' : 'Arabic'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveEditorTab('english')}
-                  className={`px-4 py-1.5 rounded text-sm font-medium border transition-colors ${activeEditorTab === 'english' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
+                  className={`px-4 py-1.5 rounded text-sm font-medium border transition-colors ${activeEditorTab === 'english' ? 'bg-najdi-900 text-white border-najdi-900' : 'bg-white text-muted-foreground border-border hover:bg-sand'}`}
                 >
                   {isRTL ? 'إنجليزي' : 'English'}
                   {!formData.content_en && <span className="ms-1 text-amber-500">•</span>}
@@ -592,7 +592,7 @@ export default function ContractTemplates() {
               )}
             </div>
 
-            <Card className="bg-slate-50">
+            <Card className="bg-sand">
               <CardContent className="p-4">
                 <h4 className="font-semibold mb-2">{isRTL ? 'المتغيرات المتاحة:' : 'Available Placeholders:'}</h4>
                 <div className="grid grid-cols-2 gap-2 text-sm">

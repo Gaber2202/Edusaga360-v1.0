@@ -93,7 +93,7 @@ export default function MuqeemServices() {
           <div key={group.key}>
             <div className="flex items-center gap-3 mb-4">
               <h2 className="text-white font-semibold text-base">{isRTL ? group.ar : group.en}</h2>
-              <div className="flex-1 h-px bg-slate-700" />
+              <div className="flex-1 h-px bg-ink" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {services.map(service => (

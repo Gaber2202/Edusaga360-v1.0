@@ -77,7 +77,7 @@ export default function Payroll() {
         <PayrollErrorBoundary page="PayrollEngine" action="run_engine">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <label className="text-sm font-medium text-slate-700">{isRTL ? 'الفترة:' : 'Period:'}</label>
+              <label className="text-sm font-medium text-ink">{isRTL ? 'الفترة:' : 'Period:'}</label>
               <input type="month" value={enginePeriod} onChange={e => setEnginePeriod(e.target.value)} className="border rounded-lg px-3 py-1.5 text-sm" />
             </div>
             <PayrollCalculationEngine isRTL={isRTL} period={enginePeriod} onComplete={() => handleNavigate('payruns')} />
@@ -151,14 +151,14 @@ export default function Payroll() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-120px)] bg-slate-50 -m-6">
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-120px)] bg-sand -m-6">
       {/* Left Sidebar Navigation */}
-      <aside className="hidden lg:flex lg:w-64 bg-white border-e border-slate-200 flex-shrink-0 flex-col">
-        <div className="p-4 border-b border-slate-100">
-          <h1 className="text-xl font-bold text-slate-900">
+      <aside className="hidden lg:flex lg:w-64 bg-white border-e border-border flex-shrink-0 flex-col">
+        <div className="p-4 border-b border-border">
+          <h1 className="text-xl font-bold text-ink">
             {isRTL ? 'نظام الرواتب' : 'Payroll System'}
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {isRTL ? 'إدارة رواتب الموظفين' : 'Employee Payroll Management'}
           </p>
         </div>
@@ -175,7 +175,7 @@ export default function Payroll() {
                   key={item.id}
                   variant={isActive ? 'secondary' : 'ghost'}
                   className={`w-full justify-start gap-3 h-11 ${
-                    isActive ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-600'
+                    isActive ? 'bg-sand-alt text-ink font-medium' : 'text-muted-foreground'
                   }`}
                   onClick={() => handleNavigate(item.id)}
                 >
@@ -189,7 +189,7 @@ export default function Payroll() {
       </aside>
 
       {/* Mobile Navigation */}
-      <div className="lg:hidden bg-white border-b border-slate-200 p-3 overflow-x-auto">
+      <div className="lg:hidden bg-white border-b border-border p-3 overflow-x-auto">
         <div className="flex gap-2 min-w-max">
           {navItems.map(item => {
             const Icon = item.icon;
@@ -201,7 +201,7 @@ export default function Payroll() {
                 key={item.id}
                 variant={isActive ? 'default' : 'outline'}
                 size="sm"
-                className={`gap-2 ${isActive ? 'bg-slate-900' : ''}`}
+                className={`gap-2 ${isActive ? 'bg-najdi-900' : ''}`}
                 onClick={() => handleNavigate(item.id)}
               >
                 <Icon className="w-4 h-4" />

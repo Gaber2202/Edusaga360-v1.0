@@ -107,11 +107,11 @@ export default function LeaveBalances() {
       header: isRTL ? 'الموظف' : 'Employee',
       cell: (row) => {
         const emp = row._emp;
-        if (!emp) return <span className="text-slate-400 text-xs">{row.employee_id || '-'}</span>;
+        if (!emp) return <span className="text-muted-foreground text-xs">{row.employee_id || '-'}</span>;
         return (
           <div>
             <p className="font-medium">{isRTL ? (emp.name_ar || emp.name_en) : (emp.name_en || emp.name_ar)}</p>
-            {emp.name_en && emp.name_ar && <p className="text-xs text-slate-400">{isRTL ? emp.name_en : emp.name_ar}</p>}
+            {emp.name_en && emp.name_ar && <p className="text-xs text-muted-foreground">{isRTL ? emp.name_en : emp.name_ar}</p>}
           </div>
         );
       }
@@ -158,7 +158,7 @@ export default function LeaveBalances() {
       />
 
       <div className="relative max-w-md">
-        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
         <Input
           placeholder={isRTL ? 'بحث عن موظف...' : 'Search employee...'}
           value={search}
@@ -168,12 +168,12 @@ export default function LeaveBalances() {
       </div>
 
       {employees.length === 0 && !loadingEmployees && (
-        <div className="text-center py-6 text-slate-400 text-sm border border-dashed rounded-lg">
+        <div className="text-center py-6 text-muted-foreground text-sm border border-dashed rounded-lg">
           {isRTL ? 'لا يوجد موظفون. يرجى إضافة موظفين أولاً.' : 'No employees found. Please add employees first.'}
         </div>
       )}
       {employees.length > 0 && filteredBalances.length === 0 && !isLoading && searchTerm && (
-        <div className="text-center py-6 text-slate-400 text-sm border border-dashed rounded-lg">
+        <div className="text-center py-6 text-muted-foreground text-sm border border-dashed rounded-lg">
           {isRTL ? `لا نتائج لـ "${search}"` : `No results for "${search}"`}
         </div>
       )}
@@ -189,10 +189,10 @@ export default function LeaveBalances() {
               <DialogTitle>{isRTL ? 'تعديل الرصيد' : 'Adjust Balance'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <Card className="bg-slate-50">
+              <Card className="bg-sand">
                 <CardContent className="pt-4 text-sm">
-                  <p><span className="text-slate-600">{isRTL ? 'نوع الإجازة' : 'Leave Type'}:</span> <span className="font-medium">{showAdjustment.leave_type_name_ar}</span></p>
-                  <p><span className="text-slate-600">{isRTL ? 'الرصيد الحالي' : 'Current Balance'}:</span> <span className="font-semibold text-green-600">{showAdjustment.remaining_days}</span></p>
+                  <p><span className="text-muted-foreground">{isRTL ? 'نوع الإجازة' : 'Leave Type'}:</span> <span className="font-medium">{showAdjustment.leave_type_name_ar}</span></p>
+                  <p><span className="text-muted-foreground">{isRTL ? 'الرصيد الحالي' : 'Current Balance'}:</span> <span className="font-semibold text-green-600">{showAdjustment.remaining_days}</span></p>
                 </CardContent>
               </Card>
 

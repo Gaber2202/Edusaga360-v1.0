@@ -28,10 +28,10 @@ export default function ParentPortal() {
 
   if (!canView) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-sand flex items-center justify-center">
         <Card className="max-w-md w-full p-6">
           <CardContent className="text-center py-6">
-            <p className="text-slate-600">
+            <p className="text-muted-foreground">
               {isRTL ? 'لا يمكنك الوصول إلى هذه الصفحة' : 'You do not have access to this page'}
             </p>
           </CardContent>
@@ -43,7 +43,7 @@ export default function ParentPortal() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-900" />
+        <Loader2 className="w-8 h-8 animate-spin text-ink" />
       </div>
     );
   }

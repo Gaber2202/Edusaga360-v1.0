@@ -105,9 +105,9 @@ export default function PayslipViewer({ payslip, employee, branch, open, onClose
         )}
 
         {securitySettings?.watermark_enabled && (
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 flex items-start gap-2">
-            <Info className="w-4 h-4 text-slate-600 mt-0.5" />
-            <p className="text-xs text-slate-600">
+          <div className="bg-sand border border-border rounded-lg p-3 flex items-start gap-2">
+            <Info className="w-4 h-4 text-muted-foreground mt-0.5" />
+            <p className="text-xs text-muted-foreground">
               {isRTL 
                 ? 'سيتم إضافة علامة مائية إلى ملف PDF للحماية'
                 : 'A watermark will be added to the PDF for protection'}
@@ -120,10 +120,10 @@ export default function PayslipViewer({ payslip, employee, branch, open, onClose
           <div className="flex items-start justify-between border-b pb-4">
             <div>
               <h3 className="font-bold text-xl">{isRTL ? 'كشف الراتب' : 'PAYSLIP'}</h3>
-              <p className="text-sm text-slate-500">{payslip.period}</p>
+              <p className="text-sm text-muted-foreground">{payslip.period}</p>
             </div>
             <div className="text-end">
-              <div className="flex items-center gap-2 text-sm text-slate-500">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Building2 className="w-4 h-4" />
                 <span>{isRTL ? branch?.name_ar : branch?.name_en || branch?.name_ar}</span>
               </div>
@@ -131,21 +131,21 @@ export default function PayslipViewer({ payslip, employee, branch, open, onClose
           </div>
 
           {/* Employee Info */}
-          <div className="grid grid-cols-2 gap-4 bg-slate-50 rounded-lg p-4">
+          <div className="grid grid-cols-2 gap-4 bg-sand rounded-lg p-4">
             <div>
-              <p className="text-xs text-slate-500 mb-1">{isRTL ? 'الموظف' : 'Employee'}</p>
+              <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'الموظف' : 'Employee'}</p>
               <p className="font-medium">{employee.name_ar}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 mb-1">{isRTL ? 'الرقم الوظيفي' : 'Employee ID'}</p>
+              <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'الرقم الوظيفي' : 'Employee ID'}</p>
               <p className="font-medium">{employee.employee_id}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 mb-1">{isRTL ? 'المسمى الوظيفي' : 'Job Title'}</p>
+              <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'المسمى الوظيفي' : 'Job Title'}</p>
               <p className="font-medium">{employee.job_title_name || '-'}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 mb-1">{isRTL ? 'رقم الحساب' : 'Account Number'}</p>
+              <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'رقم الحساب' : 'Account Number'}</p>
               <p className="font-medium font-mono text-sm">{employee.iban ? `***${employee.iban.slice(-4)}` : '-'}</p>
             </div>
           </div>
@@ -249,7 +249,7 @@ export default function PayslipViewer({ payslip, employee, branch, open, onClose
           </div>
 
           {/* Net Salary */}
-          <div className="bg-slate-900 text-white rounded-lg p-6">
+          <div className="bg-najdi-900 text-white rounded-lg p-6">
             <div className="flex justify-between items-center">
               <span className="text-lg">{isRTL ? 'صافي الراتب' : 'Net Salary'}</span>
               <span className="text-3xl font-bold">{payslip.net_salary?.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
@@ -257,7 +257,7 @@ export default function PayslipViewer({ payslip, employee, branch, open, onClose
           </div>
 
           {/* Footer */}
-          <div className="text-xs text-slate-500 text-center pt-4 border-t">
+          <div className="text-xs text-muted-foreground text-center pt-4 border-t">
             {isRTL 
               ? `تم الإنشاء بتاريخ ${format(new Date(), 'dd/MM/yyyy')}`
               : `Generated on ${format(new Date(), 'dd/MM/yyyy')}`

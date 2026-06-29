@@ -114,8 +114,8 @@ export default function TrialBalance() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">{isRTL ? 'ميزان المراجعة' : 'Trial Balance'}</h1>
-          <p className="text-sm text-slate-500">{isRTL ? 'أرصدة جميع الحسابات في تاريخ محدد' : 'All account balances at a selected date'}</p>
+          <h1 className="text-xl font-bold text-ink">{isRTL ? 'ميزان المراجعة' : 'Trial Balance'}</h1>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'أرصدة جميع الحسابات في تاريخ محدد' : 'All account balances at a selected date'}</p>
         </div>
         <div className="flex items-center gap-2">
           <Label className="text-xs whitespace-nowrap">{isRTL ? 'حتى تاريخ' : 'As of'}</Label>
@@ -147,12 +147,12 @@ export default function TrialBalance() {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <RefreshCw className="w-6 h-6 animate-spin text-slate-400" />
+              <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50">
+                <TableRow className="bg-sand">
                   <TableHead className="w-24">{isRTL ? 'رمز' : 'Code'}</TableHead>
                   <TableHead>{isRTL ? 'اسم الحساب' : 'Account Name'}</TableHead>
                   <TableHead className="text-end w-36">{isRTL ? 'مدين (ر.س)' : 'Debit (SAR)'}</TableHead>
@@ -170,15 +170,15 @@ export default function TrialBalance() {
                   return (
                     <React.Fragment key={type}>
                       {/* Type header */}
-                      <TableRow className="bg-slate-100/80">
+                      <TableRow className="bg-sand-alt/80">
                         <TableCell colSpan={5} className="py-2 px-4">
-                          <span className="font-bold text-sm text-slate-700 uppercase tracking-wide">{labels[type]}</span>
+                          <span className="font-bold text-sm text-ink uppercase tracking-wide">{labels[type]}</span>
                         </TableCell>
                       </TableRow>
                       {/* Account rows */}
                       {typeAccs.sort((a, b) => (a.account_code || '').localeCompare(b.account_code || '')).map(acc => (
-                        <TableRow key={acc.id} className="hover:bg-slate-50/50">
-                          <TableCell className="font-mono text-xs text-slate-500 py-2">{acc.account_code}</TableCell>
+                        <TableRow key={acc.id} className="hover:bg-sand/50">
+                          <TableCell className="font-mono text-xs text-muted-foreground py-2">{acc.account_code}</TableCell>
                           <TableCell className="py-2 text-sm">{isRTL ? acc.name_ar : (acc.name_en || acc.name_ar)}</TableCell>
                           <TableCell className="text-end py-2 font-mono text-sm">
                             {acc.debitBalance > 0 ? SAR(acc.debitBalance) : '—'}
@@ -189,17 +189,17 @@ export default function TrialBalance() {
                           {/* AC#7: drill-down to GL */}
                           <TableCell className="py-2">
                             <Link to={`/GeneralLedger?account=${acc.id}`}>
-                              <ChevronRight className="w-4 h-4 text-slate-300 hover:text-blue-500 transition-colors" />
+                              <ChevronRight className="w-4 h-4 text-muted-foreground hover:text-najdi-500 transition-colors" />
                             </Link>
                           </TableCell>
                         </TableRow>
                       ))}
                       {/* Type subtotal */}
-                      <TableRow className="bg-slate-50 font-semibold text-sm">
+                      <TableRow className="bg-sand font-semibold text-sm">
                         <TableCell className="py-2"></TableCell>
-                        <TableCell className="py-2 text-slate-600">{isRTL ? `إجمالي ${labels[type]}` : `Total ${labels[type]}`}</TableCell>
+                        <TableCell className="py-2 text-muted-foreground">{isRTL ? `إجمالي ${labels[type]}` : `Total ${labels[type]}`}</TableCell>
                         <TableCell className="text-end py-2 font-mono text-emerald-600">{typeDebit > 0 ? SAR(typeDebit) : '—'}</TableCell>
-                        <TableCell className="text-end py-2 font-mono text-blue-600">{typeCredit > 0 ? SAR(typeCredit) : '—'}</TableCell>
+                        <TableCell className="text-end py-2 font-mono text-najdi-700">{typeCredit > 0 ? SAR(typeCredit) : '—'}</TableCell>
                         <TableCell></TableCell>
                       </TableRow>
                     </React.Fragment>
@@ -207,11 +207,11 @@ export default function TrialBalance() {
                 })}
 
                 {/* Grand totals */}
-                <TableRow className="bg-slate-800 text-white font-bold">
+                <TableRow className="bg-najdi-900 text-white font-bold">
                   <TableCell className="py-3"></TableCell>
                   <TableCell className="py-3">{isRTL ? 'الإجمالي الكلي' : 'GRAND TOTAL'}</TableCell>
                   <TableCell className="text-end py-3 font-mono text-emerald-300">{SAR(totals.totalDebit)}</TableCell>
-                  <TableCell className="text-end py-3 font-mono text-blue-300">{SAR(totals.totalCredit)}</TableCell>
+                  <TableCell className="text-end py-3 font-mono text-najdi-500">{SAR(totals.totalCredit)}</TableCell>
                   <TableCell className="py-3">
                     {totals.balanced
                       ? <CheckCircle className="w-4 h-4 text-emerald-400" />
@@ -221,7 +221,7 @@ export default function TrialBalance() {
 
                 {accountBalances.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-12 text-slate-400">
+                    <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
                       {isRTL ? 'لا توجد قيود مرحّلة حتى هذا التاريخ' : 'No posted entries up to this date'}
                     </TableCell>
                   </TableRow>

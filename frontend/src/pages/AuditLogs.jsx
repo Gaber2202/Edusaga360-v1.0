@@ -93,7 +93,7 @@ export default function AuditLogs() {
     return (
       <div className="space-y-6">
         <PageHeader title={t('auditLogs')} subtitle={isRTL ? 'سجلات التدقيق' : 'Audit Logs'} />
-        <Card className="p-10 text-center text-slate-500">
+        <Card className="p-10 text-center text-muted-foreground">
           {isRTL ? 'هذه الصفحة متاحة لمالك المنصة فقط.' : 'This page is available to the platform owner only.'}
         </Card>
       </div>
@@ -141,22 +141,22 @@ export default function AuditLogs() {
   const getActionColor = (action) => {
     const colors = {
       create: 'bg-emerald-100 text-emerald-700',
-      update: 'bg-blue-100 text-blue-700',
+      update: 'bg-najdi-50 text-najdi-900',
       delete: 'bg-red-100 text-red-700',
       approve: 'bg-green-100 text-green-700',
       reject: 'bg-red-100 text-red-700',
       post: 'bg-purple-100 text-purple-700',
       refund: 'bg-amber-100 text-amber-700',
-      login: 'bg-slate-100 text-slate-700',
-      logout: 'bg-slate-100 text-slate-700',
+      login: 'bg-sand-alt text-ink',
+      logout: 'bg-sand-alt text-ink',
       export: 'bg-indigo-100 text-indigo-700',
       import: 'bg-cyan-100 text-cyan-700',
-      send: 'bg-blue-100 text-blue-700',
+      send: 'bg-najdi-50 text-najdi-900',
       generate: 'bg-purple-100 text-purple-700',
       configure: 'bg-amber-100 text-amber-700',
       mfa_verify: 'bg-teal-100 text-teal-700',
     };
-    return colors[action] || 'bg-slate-100 text-slate-700';
+    return colors[action] || 'bg-sand-alt text-ink';
   };
 
   return (
@@ -174,7 +174,7 @@ export default function AuditLogs() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
           <Input
             placeholder={isRTL ? 'بحث بالمستخدم، المعرف، أو الملاحظات...' : 'Search by user, entity, or notes...'}
             value={search}
@@ -218,7 +218,7 @@ export default function AuditLogs() {
           min={fromDate || undefined}
         />
         {hasAnyFilter && (
-          <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-1 text-slate-500">
+          <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-1 text-muted-foreground">
             <X className="w-4 h-4" />
             {isRTL ? 'مسح' : 'Clear'}
           </Button>
@@ -227,7 +227,7 @@ export default function AuditLogs() {
 
       {/* Logs Table */}
       <Card className="overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-2 border-b bg-slate-50 text-sm text-slate-600">
+        <div className="flex items-center justify-between px-4 py-2 border-b bg-sand text-sm text-muted-foreground">
           <div>
             {isLoading
               ? t('loading')
@@ -249,7 +249,7 @@ export default function AuditLogs() {
         </div>
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50">
+            <TableRow className="bg-sand">
               <TableHead>{isRTL ? 'التاريخ والوقت' : 'Timestamp'}</TableHead>
               <TableHead>{isRTL ? 'المستخدم' : 'User'}</TableHead>
               <TableHead>{isRTL ? 'الإجراء' : 'Action'}</TableHead>
@@ -262,17 +262,17 @@ export default function AuditLogs() {
             {isLoading ? (
               <TableRow><TableCell colSpan={6} className="text-center py-8">{t('loading')}</TableCell></TableRow>
             ) : pageLogs.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-slate-500">{t('noData')}</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{t('noData')}</TableCell></TableRow>
             ) : (
               pageLogs.map((log) => (
-                <TableRow key={log.id} className="hover:bg-slate-50">
+                <TableRow key={log.id} className="hover:bg-sand">
                   <TableCell className="text-sm whitespace-nowrap">
                     {log.timestamp ? format(new Date(log.timestamp), 'dd/MM/yyyy HH:mm:ss') : '-'}
                   </TableCell>
                   <TableCell>
                     <div>
-                      <p className="font-medium text-slate-900">{log.user_name || '-'}</p>
-                      <p className="text-sm text-slate-500">{log.user_email || '-'}</p>
+                      <p className="font-medium text-ink">{log.user_name || '-'}</p>
+                      <p className="text-sm text-muted-foreground">{log.user_email || '-'}</p>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -304,7 +304,7 @@ export default function AuditLogs() {
             >
               {isRTL ? 'السابق' : 'Previous'}
             </Button>
-            <span className="text-sm text-slate-600">
+            <span className="text-sm text-muted-foreground">
               {isRTL ? `صفحة ${currentPage} من ${totalPages}` : `Page ${currentPage} of ${totalPages}`}
             </span>
             <Button
@@ -328,32 +328,32 @@ export default function AuditLogs() {
           {showDetails && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">{isRTL ? 'التاريخ والوقت' : 'Timestamp'}</p>
+                <div className="p-3 bg-sand rounded-lg">
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'التاريخ والوقت' : 'Timestamp'}</p>
                   <p className="font-medium">{showDetails.timestamp ? format(new Date(showDetails.timestamp), 'dd/MM/yyyy HH:mm:ss') : '-'}</p>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">{isRTL ? 'الإجراء' : 'Action'}</p>
+                <div className="p-3 bg-sand rounded-lg">
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'الإجراء' : 'Action'}</p>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getActionColor(showDetails.action)}`}>
                     {t(showDetails.action) || showDetails.action}
                   </span>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">{isRTL ? 'المستخدم' : 'User'}</p>
+                <div className="p-3 bg-sand rounded-lg">
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'المستخدم' : 'User'}</p>
                   <p className="font-medium">{showDetails.user_name || '-'}</p>
-                  <p className="text-sm text-slate-500">{showDetails.user_email || '-'}</p>
+                  <p className="text-sm text-muted-foreground">{showDetails.user_email || '-'}</p>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">{isRTL ? 'الدور' : 'Role'}</p>
+                <div className="p-3 bg-sand rounded-lg">
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'الدور' : 'Role'}</p>
                   <p className="font-medium">{t(showDetails.user_role) || showDetails.user_role || '-'}</p>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-lg col-span-2">
-                  <p className="text-sm text-slate-500">{isRTL ? 'نوع الكيان' : 'Entity'}</p>
+                <div className="p-3 bg-sand rounded-lg col-span-2">
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'نوع الكيان' : 'Entity'}</p>
                   <p className="font-medium">{showDetails.entity_type} - <span className="font-mono text-sm">{showDetails.entity_id}</span></p>
                 </div>
                 {(showDetails.ip_address || showDetails.session_id) && (
-                  <div className="p-3 bg-slate-50 rounded-lg col-span-2">
-                    <p className="text-sm text-slate-500">{isRTL ? 'الجلسة' : 'Session'}</p>
+                  <div className="p-3 bg-sand rounded-lg col-span-2">
+                    <p className="text-sm text-muted-foreground">{isRTL ? 'الجلسة' : 'Session'}</p>
                     <p className="font-mono text-sm">
                       {showDetails.ip_address && <>IP: {showDetails.ip_address}</>}
                       {showDetails.ip_address && showDetails.session_id && ' • '}
@@ -362,8 +362,8 @@ export default function AuditLogs() {
                   </div>
                 )}
                 {isSuperAdmin && showDetails.tenant_id && (
-                  <div className="p-3 bg-slate-50 rounded-lg col-span-2">
-                    <p className="text-sm text-slate-500">{isRTL ? 'المستأجر' : 'Tenant'}</p>
+                  <div className="p-3 bg-sand rounded-lg col-span-2">
+                    <p className="text-sm text-muted-foreground">{isRTL ? 'المستأجر' : 'Tenant'}</p>
                     <p className="font-mono text-sm">{showDetails.tenant_id}</p>
                   </div>
                 )}
@@ -388,8 +388,8 @@ export default function AuditLogs() {
               )}
 
               {showDetails.notes && (
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">{t('notes')}</p>
+                <div className="p-3 bg-sand rounded-lg">
+                  <p className="text-sm text-muted-foreground">{t('notes')}</p>
                   <p>{showDetails.notes}</p>
                 </div>
               )}

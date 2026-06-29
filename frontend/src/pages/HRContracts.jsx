@@ -163,7 +163,7 @@ export default function HRContracts() {
     { header: isRTL ? 'المستند' : 'Document', cell: (row) => (
       <div>
         <p className="font-medium">{row.document_name}</p>
-        <p className="text-sm text-slate-500">{row.document_type}</p>
+        <p className="text-sm text-muted-foreground">{row.document_type}</p>
       </div>
     )},
     { header: isRTL ? 'الموظف' : 'Employee', accessorKey: 'employee_name' },
@@ -182,8 +182,8 @@ export default function HRContracts() {
     }},
     { header: t('status'), cell: (row) => {
       const colors = {
-        draft: 'bg-slate-100 text-slate-700',
-        sent: 'bg-blue-100 text-blue-700',
+        draft: 'bg-sand-alt text-ink',
+        sent: 'bg-najdi-50 text-najdi-900',
         signed: 'bg-emerald-100 text-emerald-700',
         expired: 'bg-red-100 text-red-700'
       };
@@ -225,14 +225,14 @@ export default function HRContracts() {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard title={isRTL ? 'جميع المستندات' : 'Total Documents'} value={filteredDocuments.length} icon={FileText} iconClassName="bg-blue-50" />
+        <StatCard title={isRTL ? 'جميع المستندات' : 'Total Documents'} value={filteredDocuments.length} icon={FileText} iconClassName="bg-najdi-50" />
         <StatCard title={isRTL ? 'بانتظار التوقيع' : 'Pending Signature'} value={pendingSignature} icon={Clock} iconClassName="bg-amber-50" />
         <StatCard title={isRTL ? 'موقعة' : 'Signed'} value={filteredDocuments.filter(d => d.status === 'signed').length} icon={CheckCircle} iconClassName="bg-emerald-50" />
         <StatCard title={isRTL ? 'تنتهي قريباً' : 'Expiring Soon'} value={expiringDocs} icon={AlertCircle} iconClassName="bg-red-50" />
       </div>
 
       <div className="relative max-w-md">
-        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
         <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${isRTL ? 'pr-10' : 'pl-10'} bg-white`} />
       </div>
 
@@ -281,7 +281,7 @@ export default function HRContracts() {
               <Label>{isRTL ? 'رفع المستند' : 'Upload Document'}</Label>
               <div className="flex gap-2">
                 <Input type="file" accept=".pdf,.doc,.docx" onChange={handleFileUpload} disabled={uploading} />
-                {uploading && <Loader2 className="w-5 h-5 animate-spin text-slate-400" />}
+                {uploading && <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />}
               </div>
               {formData.document_url && (
                 <p className="text-xs text-emerald-600">{isRTL ? 'تم الرفع بنجاح' : 'Uploaded successfully'}</p>

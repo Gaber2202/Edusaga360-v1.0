@@ -82,7 +82,7 @@ export default function CMS() {
       const colors = { 
         draft: 'bg-gray-100', 
         pending_review: 'bg-yellow-100',
-        approved: 'bg-blue-100',
+        approved: 'bg-najdi-50',
         published: 'bg-green-100',
         archived: 'bg-red-100'
       };
@@ -120,7 +120,7 @@ export default function CMS() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <FileText className="h-8 w-8 text-blue-500" />
+              <FileText className="h-8 w-8 text-najdi-500" />
               <div>
                 <p className="text-sm text-gray-500">{isRTL ? 'إجمالي المحتوى' : 'Total Content'}</p>
                 <p className="text-2xl font-bold">{contents.length}</p>

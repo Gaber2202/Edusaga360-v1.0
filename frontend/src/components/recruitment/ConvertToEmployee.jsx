@@ -176,7 +176,7 @@ export default function ConvertToEmployee({ applicant, recruitment, employees, o
 
   return (
     <>
-      <Button className="gap-2 bg-blue-700 hover:bg-blue-800" onClick={() => setOpen(true)}>
+      <Button className="gap-2 bg-najdi-900 hover:bg-najdi-900" onClick={() => setOpen(true)}>
         <UserCheck className="w-4 h-4" />
         {isRTL ? 'تحويل إلى موظف' : 'Convert to Employee'}
       </Button>
@@ -185,15 +185,15 @@ export default function ConvertToEmployee({ applicant, recruitment, employees, o
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <UserCheck className="w-5 h-5 text-blue-600" />
+              <UserCheck className="w-5 h-5 text-najdi-700" />
               {isRTL ? 'تحويل المتقدم إلى موظف' : 'Convert Candidate to Employee'}
             </DialogTitle>
           </DialogHeader>
 
-          <Card className="bg-blue-50 border-blue-200">
+          <Card className="bg-najdi-50 border-najdi-100">
             <CardContent className="pt-4 text-sm space-y-1">
-              <p className="font-semibold text-blue-800">{isRTL ? 'تنبيه: لا يلزم إعادة إدخال البيانات' : 'Note: No re-entry required'}</p>
-              <p className="text-blue-700">{isRTL ? 'جميع البيانات مستوردة تلقائياً من ملف المتقدم وخطاب العرض.' : 'All data auto-imported from applicant profile and offer letter.'}</p>
+              <p className="font-semibold text-najdi-900">{isRTL ? 'تنبيه: لا يلزم إعادة إدخال البيانات' : 'Note: No re-entry required'}</p>
+              <p className="text-najdi-900">{isRTL ? 'جميع البيانات مستوردة تلقائياً من ملف المتقدم وخطاب العرض.' : 'All data auto-imported from applicant profile and offer letter.'}</p>
             </CardContent>
           </Card>
 
@@ -250,15 +250,15 @@ export default function ConvertToEmployee({ applicant, recruitment, employees, o
               </div>
             </div>
 
-            <div className="bg-slate-50 rounded-lg p-4 space-y-2 text-sm">
-              <h4 className="font-semibold text-slate-700">{isRTL ? 'ملخص الراتب' : 'Salary Summary'}</h4>
-              <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'الأساسي' : 'Basic'}</span><span>{form.basic_salary.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'السكن' : 'Housing'}</span><span>{form.housing_allowance.toLocaleString()}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">{isRTL ? 'النقل' : 'Transport'}</span><span>{form.transport_allowance.toLocaleString()}</span></div>
+            <div className="bg-sand rounded-lg p-4 space-y-2 text-sm">
+              <h4 className="font-semibold text-ink">{isRTL ? 'ملخص الراتب' : 'Salary Summary'}</h4>
+              <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'الأساسي' : 'Basic'}</span><span>{form.basic_salary.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'السكن' : 'Housing'}</span><span>{form.housing_allowance.toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'النقل' : 'Transport'}</span><span>{form.transport_allowance.toLocaleString()}</span></div>
               <div className="flex justify-between font-bold border-t pt-2"><span>{isRTL ? 'الإجمالي' : 'Total'}</span><span className="text-emerald-600">{totalSalary.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span></div>
             </div>
 
-            <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-sm text-najdi-900 bg-najdi-50 rounded-lg p-3">
               <CheckCircle className="w-4 h-4 flex-shrink-0" />
               {isRTL ? 'سيتم إنشاء عقد التوظيف تلقائياً كمسودة وربطه بالملف الشخصي.' : 'Employment contract will be auto-generated as draft and linked to the employee profile.'}
             </div>
@@ -266,7 +266,7 @@ export default function ConvertToEmployee({ applicant, recruitment, employees, o
 
           <DialogFooter className="sticky bottom-0 bg-white pt-4 border-t">
             <Button variant="outline" onClick={() => setOpen(false)}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
-            <Button onClick={handleConvert} disabled={saving} className="bg-blue-700 hover:bg-blue-800 gap-2">
+            <Button onClick={handleConvert} disabled={saving} className="bg-najdi-900 hover:bg-najdi-900 gap-2">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
               {isRTL ? 'تأكيد التحويل' : 'Confirm Conversion'}
             </Button>

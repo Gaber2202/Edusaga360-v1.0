@@ -92,8 +92,8 @@ export default function CompanyTransferDialog({ open, onClose, employee, compani
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="bg-slate-50 p-3 rounded-lg">
-            <p className="text-sm text-slate-600 mb-1">{isRTL ? 'الموظف' : 'Employee'}</p>
+          <div className="bg-sand p-3 rounded-lg">
+            <p className="text-sm text-muted-foreground mb-1">{isRTL ? 'الموظف' : 'Employee'}</p>
             <p className="font-medium">{employee?.name_ar}</p>
           </div>
 
@@ -151,7 +151,7 @@ export default function CompanyTransferDialog({ open, onClose, employee, compani
           <Button variant="outline" onClick={onClose}>
             {isRTL ? 'إلغاء' : 'Cancel'}
           </Button>
-          <Button onClick={handleTransfer} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={handleTransfer} disabled={saving} className="bg-najdi-700 hover:bg-najdi-900">
             {saving && <Loader2 className="w-4 h-4 animate-spin me-2" />}
             <ArrowRight className="w-4 h-4 me-2" />
             {isRTL ? 'تنفيذ النقل' : 'Execute Transfer'}

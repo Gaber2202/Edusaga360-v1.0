@@ -32,9 +32,9 @@ function KPICard({ title, value, subtitle, trend, trendLabel, icon: KPIIcon, ico
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-xs text-slate-500 font-medium">{title}</p>
-            <p className={`text-2xl font-bold mt-1 ${alert ? 'text-red-600' : 'text-slate-800'}`}>{value}</p>
-            {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
+            <p className="text-xs text-muted-foreground font-medium">{title}</p>
+            <p className={`text-2xl font-bold mt-1 ${alert ? 'text-red-600' : 'text-ink'}`}>{value}</p>
+            {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
             {trend !== undefined && (
               <div className={`flex items-center gap-1 mt-1.5 text-xs font-medium ${trend >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                 {trend >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
@@ -42,8 +42,8 @@ function KPICard({ title, value, subtitle, trend, trendLabel, icon: KPIIcon, ico
               </div>
             )}
           </div>
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg || 'bg-slate-100'}`}>
-            <Icon className="w-5 h-5 text-slate-600" />
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg || 'bg-sand-alt'}`}>
+            <Icon className="w-5 h-5 text-muted-foreground" />
           </div>
         </div>
       </CardContent>
@@ -251,8 +251,8 @@ export default function FinanceDashboard() {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-slate-800">{isRTL ? 'لوحة تحكم المالية' : 'Finance Dashboard'}</h1>
-        <p className="text-sm text-slate-500">{isRTL ? 'مؤشرات مالية لحظية — لا حاجة لطلب تقرير' : 'Real-time financial KPIs — no report requests needed'}</p>
+        <h1 className="text-xl font-bold text-ink">{isRTL ? 'لوحة تحكم المالية' : 'Finance Dashboard'}</h1>
+        <p className="text-sm text-muted-foreground">{isRTL ? 'مؤشرات مالية لحظية — لا حاجة لطلب تقرير' : 'Real-time financial KPIs — no report requests needed'}</p>
       </div>
 
       {/* Anomaly alerts */}
@@ -273,7 +273,7 @@ export default function FinanceDashboard() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         <KPICard title={isRTL ? 'الإيرادات (سنوي)' : 'Revenue YTD'} value={SAR(kpis.ytdRevenue)} subtitle={isRTL ? 'منذ بداية السنة' : 'Since year start'} icon={TrendingUp} iconBg="bg-emerald-50" to="/Fees" />
         <KPICard title={isRTL ? 'إجمالي المصروفات' : 'Expenses YTD'} value={SAR(kpis.totalExpenses)} icon={TrendingDown} iconBg="bg-red-50" to="/JournalEntries" />
-        <KPICard title={isRTL ? 'صافي الربح' : 'Net Profit'} value={SAR(kpis.grossProfit)} subtitle={PCT(kpis.netMargin) + (isRTL ? ' هامش' : ' margin')} icon={DollarSign} iconBg="bg-blue-50" />
+        <KPICard title={isRTL ? 'صافي الربح' : 'Net Profit'} value={SAR(kpis.grossProfit)} subtitle={PCT(kpis.netMargin) + (isRTL ? ' هامش' : ' margin')} icon={DollarSign} iconBg="bg-najdi-50" />
         <KPICard title={isRTL ? 'نسبة التحصيل' : 'Collection Rate'} value={PCT(kpis.collectionRate)} subtitle={SAR(kpis.ytdCollected) + (isRTL ? ' محصّل' : ' collected')} icon={CreditCard} iconBg="bg-purple-50" to="/Collections" />
         <KPICard title={isRTL ? 'ذمم مدينة' : 'AR Outstanding'} value={SAR(kpis.totalAR)} subtitle={isRTL ? `${SAR(kpis.overdueAR)} متأخر` : `${SAR(kpis.overdueAR)} overdue`} alert={kpis.overdueAR > 50000} icon={AlertCircle} iconBg="bg-amber-50" to="/Fees" />
         <KPICard title={isRTL ? 'ذمم دائنة' : 'AP Outstanding'} value={SAR(kpis.totalAP)} subtitle={isRTL ? `${SAR(kpis.apDueThisWeek)} هذا الأسبوع` : `${SAR(kpis.apDueThisWeek)} due this week`} icon={Wallet} iconBg="bg-orange-50" to="/APBills" />
@@ -319,7 +319,7 @@ export default function FinanceDashboard() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-[220px] text-slate-400 text-sm">
+              <div className="flex items-center justify-center h-[220px] text-muted-foreground text-sm">
                 {isRTL ? 'لا بيانات' : 'No data'}
               </div>
             )}
@@ -335,11 +335,11 @@ export default function FinanceDashboard() {
         <CardContent>
           <div className="grid grid-cols-5 gap-3">
             {arAging.map(bucket => (
-              <div key={bucket.name} className="text-center p-3 rounded-xl border bg-slate-50">
-                <p className="text-xs text-slate-500 mb-1">{bucket.name}</p>
+              <div key={bucket.name} className="text-center p-3 rounded-xl border bg-sand">
+                <p className="text-xs text-muted-foreground mb-1">{bucket.name}</p>
                 <p className="font-bold text-sm" style={{ color: bucket.color }}>{SAR(bucket.value)}</p>
                 {kpis.totalAR > 0 && (
-                  <p className="text-xs text-slate-400 mt-1">{((bucket.value / kpis.totalAR) * 100).toFixed(0)}%</p>
+                  <p className="text-xs text-muted-foreground mt-1">{((bucket.value / kpis.totalAR) * 100).toFixed(0)}%</p>
                 )}
               </div>
             ))}
@@ -358,8 +358,8 @@ export default function FinanceDashboard() {
           <Link key={link.to} to={link.to}>
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="p-4 flex items-center gap-3">
-                <link.icon className="w-5 h-5 text-slate-500" />
-                <span className="text-sm font-medium text-slate-700">{link.label}</span>
+                <link.icon className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm font-medium text-ink">{link.label}</span>
               </CardContent>
             </Card>
           </Link>

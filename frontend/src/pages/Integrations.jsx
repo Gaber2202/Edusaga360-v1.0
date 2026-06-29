@@ -22,7 +22,7 @@ import { useTenantFilter } from '../hooks/useTenantFilter';
 const CONNECTOR_CONFIGS = {
   payment_gateway: {
     icon: CreditCard,
-    color: 'bg-blue-50 text-blue-600',
+    color: 'bg-najdi-50 text-najdi-700',
     providers: ['Mada/SPAN', 'Visa/Mastercard', 'SADAD', 'STC Pay', 'Apple Pay'],
     fields: ['api_key', 'api_secret', 'merchant_id']
   },
@@ -147,7 +147,7 @@ export default function Integrations() {
       case 'connected': return <CheckCircle className="w-5 h-5 text-emerald-500" />;
       case 'error': return <XCircle className="w-5 h-5 text-red-500" />;
       case 'testing': return <Clock className="w-5 h-5 text-amber-500" />;
-      default: return <AlertCircle className="w-5 h-5 text-slate-400" />;
+      default: return <AlertCircle className="w-5 h-5 text-muted-foreground" />;
     }
   };
 
@@ -163,15 +163,15 @@ export default function Integrations() {
               <Icon className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900">{t(type) || type}</h3>
-              <p className="text-sm text-slate-500">{connector?.provider || (isRTL ? 'غير مهيأ' : 'Not configured')}</p>
+              <h3 className="font-semibold text-ink">{t(type) || type}</h3>
+              <p className="text-sm text-muted-foreground">{connector?.provider || (isRTL ? 'غير مهيأ' : 'Not configured')}</p>
             </div>
           </div>
           {connector && getStatusIcon(connector.status)}
         </div>
 
         <div className="mt-4 flex items-center justify-between">
-          <div className="text-sm text-slate-500">
+          <div className="text-sm text-muted-foreground">
             {connector?.last_sync ? (
               <span>{isRTL ? 'آخر مزامنة:' : 'Last sync:'} {format(new Date(connector.last_sync), 'dd/MM HH:mm')}</span>
             ) : (
@@ -238,7 +238,7 @@ export default function Integrations() {
           <Card className="overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50">
+                <TableRow className="bg-sand">
                   <TableHead>{isRTL ? 'الموصل' : 'Connector'}</TableHead>
                   <TableHead>{isRTL ? 'العملية' : 'Operation'}</TableHead>
                   <TableHead>{t('status')}</TableHead>
@@ -247,7 +247,7 @@ export default function Integrations() {
               </TableHeader>
               <TableBody>
                 {logs.length === 0 ? (
-                  <TableRow><TableCell colSpan={4} className="text-center py-8 text-slate-500">{t('noData')}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">{t('noData')}</TableCell></TableRow>
                 ) : (
                   logs.map(log => (
                     <TableRow key={log.id}>

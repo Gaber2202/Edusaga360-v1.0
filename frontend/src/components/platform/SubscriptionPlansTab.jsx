@@ -13,9 +13,9 @@ import { Plus, Pencil, Star, Check, X, Zap, Building2, Crown } from 'lucide-reac
 const PLAN_DEFS = {
   starter: {
     icon: Zap,
-    color: 'from-slate-600 to-slate-700',
-    badge: 'bg-slate-100 text-slate-700 border-slate-300',
-    accent: 'text-slate-600',
+    color: 'from-najdi-900 to-najdi-900',
+    badge: 'bg-sand-alt text-ink border-border',
+    accent: 'text-muted-foreground',
     price: '120,000',
     limits: { staff: 15, generalAccess: 500, branches: 1 },
     features: [
@@ -33,9 +33,9 @@ const PLAN_DEFS = {
   },
   growth: {
     icon: Building2,
-    color: 'from-blue-600 to-indigo-700',
-    badge: 'bg-blue-100 text-blue-700 border-blue-300',
-    accent: 'text-blue-600',
+    color: 'from-najdi-700 to-indigo-700',
+    badge: 'bg-najdi-50 text-najdi-900 border-najdi-100',
+    accent: 'text-najdi-700',
     price: '190,000',
     limits: { staff: 30, generalAccess: 2000, branches: 3 },
     features: [
@@ -80,7 +80,7 @@ function PlanCard({ plan, def, isRTL, onEdit }) {
   const limits = def.limits;
 
   return (
-    <div className={`relative bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col`}>
+    <div className={`relative bg-white rounded-2xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col`}>
       {/* Header gradient */}
       <div className={`bg-gradient-to-br ${def.color} p-5 text-white`}>
         <div className="flex items-center justify-between mb-3">
@@ -94,13 +94,13 @@ function PlanCard({ plan, def, isRTL, onEdit }) {
       </div>
 
       {/* Price */}
-      <div className="px-5 py-2 bg-slate-50/80 border-b border-slate-100">
-        <p className="text-xs text-slate-500">{label('السعر السنوي (ر.س)', 'Annual price (SAR, excl. VAT)')}</p>
-        <p className="text-lg font-bold text-slate-800">{def.price} <span className="text-xs font-normal text-slate-400">SAR/yr</span></p>
+      <div className="px-5 py-2 bg-sand/80 border-b border-border">
+        <p className="text-xs text-muted-foreground">{label('السعر السنوي (ر.س)', 'Annual price (SAR, excl. VAT)')}</p>
+        <p className="text-lg font-bold text-ink">{def.price} <span className="text-xs font-normal text-muted-foreground">SAR/yr</span></p>
       </div>
 
       {/* Limits */}
-      <div className="px-5 py-3 bg-slate-50 border-b border-slate-100">
+      <div className="px-5 py-3 bg-sand border-b border-border">
         <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
           {[
             { key: 'staff',         label: label('موظفو النظام', 'Staff users')       },
@@ -108,8 +108,8 @@ function PlanCard({ plan, def, isRTL, onEdit }) {
             { key: 'branches',      label: label('الفروع',        'Branches')          },
           ].map(({ key, label: lbl }) => (
             <div key={key} className="flex items-center justify-between text-xs">
-              <span className="text-slate-500">{lbl}</span>
-              <span className="font-semibold text-slate-800">{limits[key]?.toLocaleString?.() ?? limits[key]}</span>
+              <span className="text-muted-foreground">{lbl}</span>
+              <span className="font-semibold text-ink">{limits[key]?.toLocaleString?.() ?? limits[key]}</span>
             </div>
           ))}
         </div>
@@ -122,9 +122,9 @@ function PlanCard({ plan, def, isRTL, onEdit }) {
             <li key={i} className="flex items-start gap-2 text-sm">
               {f.included
                 ? <Check className={`w-4 h-4 flex-shrink-0 mt-0.5 ${def.accent}`} />
-                : <X className="w-4 h-4 flex-shrink-0 mt-0.5 text-slate-300" />
+                : <X className="w-4 h-4 flex-shrink-0 mt-0.5 text-muted-foreground" />
               }
-              <span className={f.included ? 'text-slate-700' : 'text-slate-400'}>
+              <span className={f.included ? 'text-ink' : 'text-muted-foreground'}>
                 {f.label}
                 {f.note && <span className="ms-1 text-xs text-amber-600">({f.note})</span>}
               </span>
@@ -134,7 +134,7 @@ function PlanCard({ plan, def, isRTL, onEdit }) {
       </div>
 
       {/* Footer */}
-      <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between">
+      <div className="px-5 py-3 border-t border-border flex items-center justify-between">
         <Badge className={`text-xs border ${def.badge}`}>
           {plan.plan_code?.toUpperCase()}
         </Badge>
@@ -187,7 +187,7 @@ export default function SubscriptionPlansTab({ isRTL }) {
     setDialogOpen(false);
   };
 
-  if (isLoading) return <div className="text-center py-12 text-slate-400">{label('جاري التحميل...', 'Loading...')}</div>;
+  if (isLoading) return <div className="text-center py-12 text-muted-foreground">{label('جاري التحميل...', 'Loading...')}</div>;
 
   // Merge DB plans with static defs; fall back to starter style if unknown code
   const orderedCodes = ['starter', 'growth', 'enterprise'];
@@ -201,8 +201,8 @@ export default function SubscriptionPlansTab({ isRTL }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-semibold text-slate-800">{label('خطط الاشتراك', 'Subscription Plans')}</h2>
-          <p className="text-xs text-slate-400 mt-0.5">{label('الأسعار تُحدد حسب عدد المستخدمين والوحدات المفعّلة', 'Pricing is defined per users & enabled modules')}</p>
+          <h2 className="font-semibold text-ink">{label('خطط الاشتراك', 'Subscription Plans')}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{label('الأسعار تُحدد حسب عدد المستخدمين والوحدات المفعّلة', 'Pricing is defined per users & enabled modules')}</p>
         </div>
         <Button size="sm" onClick={openNew}>
           <Plus className="w-4 h-4 me-1" />{label('خطة جديدة', 'New Plan')}
@@ -210,7 +210,7 @@ export default function SubscriptionPlansTab({ isRTL }) {
       </div>
 
       {plans.length === 0 ? (
-        <div className="text-center py-16 text-slate-400">
+        <div className="text-center py-16 text-muted-foreground">
           <p className="mb-3">{label('لا توجد خطط بعد', 'No plans yet')}</p>
           <Button variant="outline" size="sm" onClick={openNew}>{label('إضافة خطة', 'Add Plan')}</Button>
         </div>
@@ -247,15 +247,15 @@ export default function SubscriptionPlansTab({ isRTL }) {
               <div><Label>{label('وصف عربي', 'Description (AR)')}</Label><Input value={form.description_ar || ''} onChange={e => set('description_ar', e.target.value)} /></div>
               <div><Label>{label('وصف إنجليزي', 'Description (EN)')}</Label><Input value={form.description_en || ''} onChange={e => set('description_en', e.target.value)} /></div>
             </div>
-            <div className="border-t border-slate-100 pt-3">
-              <p className="text-xs text-slate-400 mb-2">{label('الأسعار (اختياري - اتركها فارغة للتسعير المخصص)', 'Pricing (optional — leave 0 for custom pricing)')}</p>
+            <div className="border-t border-border pt-3">
+              <p className="text-xs text-muted-foreground mb-2">{label('الأسعار (اختياري - اتركها فارغة للتسعير المخصص)', 'Pricing (optional — leave 0 for custom pricing)')}</p>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>{label('السعر الشهري (ر.س)', 'Monthly Price (SAR)')}</Label><Input type="number" value={form.price_monthly_sar || 0} onChange={e => set('price_monthly_sar', +e.target.value)} /></div>
                 <div><Label>{label('السعر السنوي (ر.س)', 'Yearly Price (SAR)')}</Label><Input type="number" value={form.price_yearly_sar || 0} onChange={e => set('price_yearly_sar', +e.target.value)} /></div>
               </div>
             </div>
-            <div className="border-t border-slate-100 pt-3">
-              <p className="text-xs text-slate-400 mb-2">{label('الحدود', 'Limits')}</p>
+            <div className="border-t border-border pt-3">
+              <p className="text-xs text-muted-foreground mb-2">{label('الحدود', 'Limits')}</p>
               <div className="grid grid-cols-3 gap-3">
                 <div><Label>{label('موظفون', 'Employees')}</Label><Input type="number" value={form.max_employees || 0} onChange={e => set('max_employees', +e.target.value)} /></div>
                 <div><Label>{label('طلاب', 'Students')}</Label><Input type="number" value={form.max_students || 0} onChange={e => set('max_students', +e.target.value)} /></div>
@@ -275,7 +275,7 @@ export default function SubscriptionPlansTab({ isRTL }) {
               <Switch checked={!!form.is_featured} onCheckedChange={v => set('is_featured', v)} />
             </div>
           </div>
-          <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
+          <div className="flex justify-end gap-2 pt-2 border-t border-border">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>{label('إلغاء', 'Cancel')}</Button>
             <Button onClick={handleSave} disabled={saving || !form.name_ar || !form.plan_code}>
               {saving ? label('جاري الحفظ...', 'Saving...') : label('حفظ', 'Save')}

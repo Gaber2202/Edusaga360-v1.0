@@ -45,7 +45,7 @@ const CLOSE_CHECKLIST = [
 
 const ROLE_COLORS = {
   system: 'bg-purple-100 text-purple-700',
-  accountant: 'bg-blue-100 text-blue-700',
+  accountant: 'bg-najdi-50 text-najdi-900',
   senior_accountant: 'bg-indigo-100 text-indigo-700',
   finance_manager: 'bg-emerald-100 text-emerald-700',
 };
@@ -133,8 +133,8 @@ export default function MonthEndClose() {
     <div className="space-y-4 max-w-3xl">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-slate-800">{isRTL ? 'قائمة إقفال الفترة' : 'Month-End Close Checklist'}</h1>
-        <p className="text-sm text-slate-500">{isRTL ? 'هدف: إقفال الفترة بحلول اليوم ٧ من الشهر التالي' : 'Target: close by Day 7 of following month'}</p>
+        <h1 className="text-xl font-bold text-ink">{isRTL ? 'قائمة إقفال الفترة' : 'Month-End Close Checklist'}</h1>
+        <p className="text-sm text-muted-foreground">{isRTL ? 'هدف: إقفال الفترة بحلول اليوم ٧ من الشهر التالي' : 'Target: close by Day 7 of following month'}</p>
       </div>
 
       {/* Period selector */}
@@ -143,17 +143,17 @@ export default function MonthEndClose() {
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="icon" onClick={prevPeriod}><ChevronLeft className="w-4 h-4" /></Button>
             <div className="text-center">
-              <p className="font-bold text-lg text-slate-800">{periodLabel}</p>
+              <p className="font-bold text-lg text-ink">{periodLabel}</p>
               <p className={`text-sm font-semibold ${statusColor}`}>{pct}% {isRTL ? 'مكتمل' : 'Complete'}</p>
             </div>
             <Button variant="ghost" size="icon" onClick={nextPeriod}><ChevronRight className="w-4 h-4" /></Button>
           </div>
           {/* Progress bar */}
-          <div className="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden">
+          <div className="mt-3 h-2 bg-sand-alt rounded-full overflow-hidden">
             <div className={`h-full rounded-full transition-all duration-500 ${pct === 100 ? 'bg-emerald-500' : pct >= 70 ? 'bg-amber-500' : 'bg-red-500'}`}
               style={{ width: `${pct}%` }} />
           </div>
-          <div className="flex justify-between text-xs text-slate-400 mt-1">
+          <div className="flex justify-between text-xs text-muted-foreground mt-1">
             <span>{completedCount}/{totalItems} {isRTL ? 'مهمة' : 'tasks'}</span>
             {currentPeriod && (
               <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -179,8 +179,8 @@ export default function MonthEndClose() {
             <div className="flex items-center gap-2 mb-2">
               {groupDone
                 ? <CheckCircle className="w-4 h-4 text-emerald-500" />
-                : <Clock className="w-4 h-4 text-slate-300" />}
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">{groupLabel}</h3>
+                : <Clock className="w-4 h-4 text-muted-foreground" />}
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{groupLabel}</h3>
               {groupDone && <span className="text-xs text-emerald-600 font-medium">{isRTL ? '✓ مكتمل' : '✓ Done'}</span>}
             </div>
 
@@ -191,19 +191,19 @@ export default function MonthEndClose() {
                 return (
                   <div key={item.id}
                     className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${
-                      done ? 'bg-green-50/50 border-green-200' : 'bg-white border-slate-200 hover:border-slate-300'
+                      done ? 'bg-green-50/50 border-green-200' : 'bg-white border-border hover:border-border'
                     }`}>
                     <button onClick={() => handleToggle(item)} disabled={!!isSaving || (item.auto && autoCompletedIds.has(item.id))}
                       className="mt-0.5 flex-shrink-0">
                       {isSaving
-                        ? <RefreshCw className="w-5 h-5 text-slate-400 animate-spin" />
+                        ? <RefreshCw className="w-5 h-5 text-muted-foreground animate-spin" />
                         : done
                         ? <CheckCircle className="w-5 h-5 text-emerald-500" />
-                        : <Circle className="w-5 h-5 text-slate-300" />}
+                        : <Circle className="w-5 h-5 text-muted-foreground" />}
                     </button>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className={`text-sm font-medium ${done ? 'line-through text-slate-400' : 'text-slate-700'}`}>
+                        <p className={`text-sm font-medium ${done ? 'line-through text-muted-foreground' : 'text-ink'}`}>
                           {isRTL ? item.ar : item.en}
                         </p>
                         {item.auto && (
@@ -211,13 +211,13 @@ export default function MonthEndClose() {
                             <Zap className="w-2.5 h-2.5" />{isRTL ? 'تلقائي' : 'Auto'}
                           </span>
                         )}
-                        <span className={`text-xs px-1.5 py-0.5 rounded-md ${ROLE_COLORS[item.role] || 'bg-slate-100 text-slate-500'}`}>
+                        <span className={`text-xs px-1.5 py-0.5 rounded-md ${ROLE_COLORS[item.role] || 'bg-sand-alt text-muted-foreground'}`}>
                           {item.role.replace('_', ' ')}
                         </span>
                       </div>
                     </div>
                     {!item.auto && (
-                      <span className="text-xs text-slate-300 flex-shrink-0">
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
                         {isRTL ? `يوم ${item.day}` : `Day ${item.day}`}
                       </span>
                     )}
@@ -230,9 +230,9 @@ export default function MonthEndClose() {
       })}
 
       {/* Period lock controls */}
-      <Card className="border-slate-300">
+      <Card className="border-border">
         <CardContent className="p-4">
-          <p className="text-sm font-semibold text-slate-700 mb-3">{isRTL ? 'إدارة الفترة' : 'Period Management'}</p>
+          <p className="text-sm font-semibold text-ink mb-3">{isRTL ? 'إدارة الفترة' : 'Period Management'}</p>
           <div className="flex gap-3 flex-wrap">
             <Button variant="outline" size="sm" className="text-amber-700 border-amber-300 hover:bg-amber-50">
               <Unlock className="w-4 h-4 me-1" />{isRTL ? 'إقفال جزئي' : 'Soft Close'}
@@ -244,7 +244,7 @@ export default function MonthEndClose() {
               <Download className="w-4 h-4 me-1" />{isRTL ? 'تصدير قائمة الإقفال' : 'Export Checklist'}
             </Button>
           </div>
-          <p className="text-xs text-slate-400 mt-2">
+          <p className="text-xs text-muted-foreground mt-2">
             {isRTL
               ? 'الإقفال الجزئي: قيد جديد للمدير المالي فقط | الإقفال النهائي: لا قيود على الإطلاق'
               : 'Soft Close: Finance Manager posting only | Hard Close: no posting possible'}

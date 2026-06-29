@@ -55,7 +55,7 @@ export default function PaymentPortal({ student }) {
   if (!student) {
     return (
       <Card>
-        <CardContent className="py-6 text-center text-slate-500">
+        <CardContent className="py-6 text-center text-muted-foreground">
           {isRTL ? 'يرجى اختيار طالب' : 'Please select a student'}
         </CardContent>
       </Card>
@@ -94,10 +94,10 @@ export default function PaymentPortal({ student }) {
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
           ) : invoices.length === 0 ? (
-            <p className="text-center text-slate-500 py-6">
+            <p className="text-center text-muted-foreground py-6">
               {isRTL ? 'لا توجد فواتير' : 'No invoices found'}
             </p>
           ) : (
@@ -114,7 +114,7 @@ export default function PaymentPortal({ student }) {
                   <div key={invoice.id} className="border rounded-xl overflow-hidden">
                     {/* Header row */}
                     <button
-                      className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors text-left"
+                      className="w-full flex items-center justify-between p-4 hover:bg-sand transition-colors text-left"
                       onClick={() => setExpanded(isOpen ? null : invoice.id)}
                     >
                       <div className="flex items-center gap-3">
@@ -123,7 +123,7 @@ export default function PaymentPortal({ student }) {
                           <p className="font-medium text-sm">
                             {isRTL ? 'فاتورة #' : 'Invoice #'}{invoice.invoice_number}
                           </p>
-                          <p className="text-xs text-slate-500">{invoice.academic_year}{invoice.due_date ? ` · ${isRTL ? 'الاستحقاق' : 'Due'}: ${invoice.due_date}` : ''}</p>
+                          <p className="text-xs text-muted-foreground">{invoice.academic_year}{invoice.due_date ? ` · ${isRTL ? 'الاستحقاق' : 'Due'}: ${invoice.due_date}` : ''}</p>
                         </div>
                       </div>
                       <div className="text-right">
@@ -136,25 +136,25 @@ export default function PaymentPortal({ student }) {
 
                     {/* Expanded payment section */}
                     {isOpen && invoice.status !== 'paid' && (
-                      <div className="border-t bg-slate-50 p-4 space-y-3">
+                      <div className="border-t bg-sand p-4 space-y-3">
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           <div>
-                            <span className="text-slate-500">{isRTL ? 'الإجمالي' : 'Total'}</span>
+                            <span className="text-muted-foreground">{isRTL ? 'الإجمالي' : 'Total'}</span>
                             <p className="font-medium">{invoice.total_amount.toLocaleString('en-SA', { minimumFractionDigits: 2 })} {isRTL ? 'ر.س' : 'SAR'}</p>
                           </div>
                           {invoice.paid_amount > 0 && (
                             <div>
-                              <span className="text-slate-500">{isRTL ? 'المدفوع' : 'Paid'}</span>
+                              <span className="text-muted-foreground">{isRTL ? 'المدفوع' : 'Paid'}</span>
                               <p className="font-medium text-green-600">{invoice.paid_amount.toLocaleString('en-SA', { minimumFractionDigits: 2 })} {isRTL ? 'ر.س' : 'SAR'}</p>
                             </div>
                           )}
                           <div>
-                            <span className="text-slate-500">{isRTL ? 'المتبقي' : 'Outstanding'}</span>
+                            <span className="text-muted-foreground">{isRTL ? 'المتبقي' : 'Outstanding'}</span>
                             <p className="font-semibold text-red-600">{outstanding.toLocaleString('en-SA', { minimumFractionDigits: 2 })} {isRTL ? 'ر.س' : 'SAR'}</p>
                           </div>
                         </div>
 
-                        <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">
+                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
                           {isRTL ? 'خيارات الدفع' : 'Payment Options'}
                         </p>
 
@@ -175,7 +175,7 @@ export default function PaymentPortal({ student }) {
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={() => toast.info(isRTL ? 'جاري فتح بوابة الدفع...' : 'Opening payment gateway...')}
-                            className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium py-2.5 px-4 rounded-lg transition-colors"
+                            className="flex items-center justify-center gap-2 bg-najdi-900 hover:bg-ink text-white text-sm font-medium py-2.5 px-4 rounded-lg transition-colors"
                           >
                             <CreditCard className="w-4 h-4" />
                             {isRTL ? 'مدى / بطاقة' : 'Mada / Card'}
@@ -196,7 +196,7 @@ export default function PaymentPortal({ student }) {
                         </div>
 
                         {invoice.notes && (
-                          <p className="text-xs text-slate-500 italic">{invoice.notes}</p>
+                          <p className="text-xs text-muted-foreground italic">{invoice.notes}</p>
                         )}
                       </div>
                     )}

@@ -59,8 +59,8 @@ export default function UserRequests() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">User Requests</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-ink">User Requests</h1>
+        <p className="text-sm text-muted-foreground">
           Trial schools requesting additional users beyond their limit
         </p>
       </div>
@@ -86,19 +86,19 @@ export default function UserRequests() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><div className="animate-spin w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full" /></div>
+        <div className="flex justify-center py-12"><div className="animate-spin w-8 h-8 border-4 border-border border-t-najdi-700 rounded-full" /></div>
       ) : requests.length === 0 ? (
         <Card><CardContent className="py-16 text-center">
-          <UserPlus className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-          <p className="text-slate-400">No {statusFilter} requests</p>
+          <UserPlus className="w-12 h-12 text-najdi-100 mx-auto mb-3" />
+          <p className="text-muted-foreground">No {statusFilter} requests</p>
         </CardContent></Card>
       ) : (
         <Card className="border-0 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-sand border-b border-border">
               <tr>
                 {['Requested User', 'Role', 'School', 'Status', 'Requested', 'Action'].map(h => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">{h}</th>
+                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -107,22 +107,22 @@ export default function UserRequests() {
                 const tenant = r.tenants || {};
                 const busy = busyId === r.id;
                 return (
-                  <tr key={r.id} className="hover:bg-slate-50">
+                  <tr key={r.id} className="hover:bg-sand">
                     <td className="px-4 py-3">
-                      <p className="font-medium text-slate-800">{r.name}</p>
-                      <p className="text-xs text-slate-400">{r.email}</p>
+                      <p className="font-medium text-ink">{r.name}</p>
+                      <p className="text-xs text-muted-foreground">{r.email}</p>
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant="outline" className="text-xs">{r.requested_role}</Badge>
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-600">
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
                       {tenant.name_en || tenant.name_ar || '—'}
                       {tenant.tenant_code ? ` (${tenant.tenant_code})` : ''}
                     </td>
                     <td className="px-4 py-3">
                       <Badge className={`text-xs ${STATUS_STYLES[r.status] || ''}`}>{r.status}</Badge>
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-400">
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
                       {r.created_at ? format(new Date(r.created_at), 'MMM d, yyyy') : '—'}
                     </td>
                     <td className="px-4 py-3">
@@ -138,7 +138,7 @@ export default function UserRequests() {
                         </div>
                       )}
                       {r.status === 'rejected' && r.rejection_reason && (
-                        <p className="text-xs text-slate-400 italic">"{r.rejection_reason}"</p>
+                        <p className="text-xs text-muted-foreground italic">"{r.rejection_reason}"</p>
                       )}
                     </td>
                   </tr>

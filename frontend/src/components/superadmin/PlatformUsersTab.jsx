@@ -29,11 +29,11 @@ const PLATFORM_ROLES = [
 
 const ROLE_COLORS = {
   admin: 'bg-red-100 text-red-700',
-  creator: 'bg-slate-800 text-white',
+  creator: 'bg-najdi-900 text-white',
   hr_admin: 'bg-purple-100 text-purple-700',
   hr_officer: 'bg-purple-50 text-purple-600',
-  finance: 'bg-blue-100 text-blue-700',
-  accountant: 'bg-blue-50 text-blue-600',
+  finance: 'bg-najdi-50 text-najdi-900',
+  accountant: 'bg-najdi-50 text-najdi-700',
   branch_manager: 'bg-amber-100 text-amber-700',
   teacher: 'bg-green-100 text-green-700',
   admissions: 'bg-teal-100 text-teal-700',
@@ -144,7 +144,7 @@ export default function PlatformUsersTab({ tenants = [] }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-3 items-center">
         <div className="relative flex-1 max-w-sm">
-          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
           <Input
             className={isRTL ? 'pr-9' : 'pl-9'}
             placeholder={isRTL ? 'بحث بالاسم أو البريد...' : 'Search by name or email...'}
@@ -173,10 +173,10 @@ export default function PlatformUsersTab({ tenants = [] }) {
       </div>
 
       {/* Summary */}
-      <div className="flex gap-4 text-sm text-slate-500">
-        <span><strong className="text-slate-900">{users.length}</strong> {isRTL ? 'إجمالي المستخدمين' : 'total users'}</span>
-        <span><strong className="text-slate-900">{users.filter(u => !u.tenant_id && u.role !== 'creator').length}</strong> {isRTL ? 'غير مُعينين' : 'unassigned'}</span>
-        <span><strong className="text-slate-900">{filtered.length}</strong> {isRTL ? 'نتيجة' : 'shown'}</span>
+      <div className="flex gap-4 text-sm text-muted-foreground">
+        <span><strong className="text-ink">{users.length}</strong> {isRTL ? 'إجمالي المستخدمين' : 'total users'}</span>
+        <span><strong className="text-ink">{users.filter(u => !u.tenant_id && u.role !== 'creator').length}</strong> {isRTL ? 'غير مُعينين' : 'unassigned'}</span>
+        <span><strong className="text-ink">{filtered.length}</strong> {isRTL ? 'نتيجة' : 'shown'}</span>
       </div>
 
       {/* Table */}
@@ -185,21 +185,21 @@ export default function PlatformUsersTab({ tenants = [] }) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-50 border-b">
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'المستخدم' : 'User'}</th>
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'الدور' : 'Role'}</th>
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'المؤسسة' : 'Tenant'}</th>
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'تاريخ الانضمام' : 'Joined'}</th>
-                  <th className="text-start p-3 font-medium text-slate-600">{isRTL ? 'إجراء' : 'Action'}</th>
+                <tr className="bg-sand border-b">
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'المستخدم' : 'User'}</th>
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'الدور' : 'Role'}</th>
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'المؤسسة' : 'Tenant'}</th>
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'تاريخ الانضمام' : 'Joined'}</th>
+                  <th className="text-start p-3 font-medium text-muted-foreground">{isRTL ? 'إجراء' : 'Action'}</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr><td colSpan={5} className="p-8 text-center">
-                    <Loader2 className="w-5 h-5 animate-spin mx-auto text-slate-400" />
+                    <Loader2 className="w-5 h-5 animate-spin mx-auto text-muted-foreground" />
                   </td></tr>
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan={5} className="p-8 text-center text-slate-400">
+                  <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">
                     <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
                     {isRTL ? 'لا يوجد مستخدمون' : 'No users found'}
                   </td></tr>
@@ -207,20 +207,20 @@ export default function PlatformUsersTab({ tenants = [] }) {
                   const role = u.user_role || u.role || 'user';
                   const isCreator = role === 'creator';
                   return (
-                    <tr key={u.id} className="border-b hover:bg-slate-50 transition-colors">
+                    <tr key={u.id} className="border-b hover:bg-sand transition-colors">
                       <td className="p-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-semibold text-xs shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-sand-alt flex items-center justify-center text-muted-foreground font-semibold text-xs shrink-0">
                             {(u.full_name || u.email || '?')[0].toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-medium text-slate-900">{u.full_name || '—'}</p>
-                            <p className="text-xs text-slate-500">{u.email}</p>
+                            <p className="font-medium text-ink">{u.full_name || '—'}</p>
+                            <p className="text-xs text-muted-foreground">{u.email}</p>
                           </div>
                         </div>
                       </td>
                       <td className="p-3">
-                        <Badge className={`text-xs ${ROLE_COLORS[role] || 'bg-slate-100 text-slate-600'}`}>
+                        <Badge className={`text-xs ${ROLE_COLORS[role] || 'bg-sand-alt text-muted-foreground'}`}>
                           {isCreator ? <Shield className="w-3 h-3 inline me-1" /> : null}
                           {getRoleLabel(u)}
                         </Badge>
@@ -228,16 +228,16 @@ export default function PlatformUsersTab({ tenants = [] }) {
                       <td className="p-3">
                         {u.tenant_id ? (
                           <div className="flex items-center gap-1.5">
-                            <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                            <span className="text-slate-700 text-xs">{getTenantName(u)}</span>
+                            <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className="text-ink text-xs">{getTenantName(u)}</span>
                           </div>
                         ) : (
-                          <span className="text-xs text-slate-400 italic">
+                          <span className="text-xs text-muted-foreground italic">
                             {isCreator ? (isRTL ? 'مشرف المنصة' : 'Platform') : (isRTL ? 'غير مُعين' : 'Unassigned')}
                           </span>
                         )}
                       </td>
-                      <td className="p-3 text-xs text-slate-500">
+                      <td className="p-3 text-xs text-muted-foreground">
                         {u.created_at ? format(new Date(u.created_at), 'dd/MM/yyyy') : '—'}
                       </td>
                       <td className="p-3">
@@ -261,7 +261,7 @@ export default function PlatformUsersTab({ tenants = [] }) {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-blue-600" />
+              <UserPlus className="w-5 h-5 text-najdi-700" />
               {isRTL ? 'دعوة مستخدم جديد' : 'Invite New User'}
             </DialogTitle>
           </DialogHeader>
@@ -269,7 +269,7 @@ export default function PlatformUsersTab({ tenants = [] }) {
             <div className="space-y-1.5">
               <Label>{isRTL ? 'البريد الإلكتروني *' : 'Email Address *'}</Label>
               <div className="relative">
-                <Mail className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+                <Mail className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
                 <Input
                   type="email"
                   className={isRTL ? 'pr-9' : 'pl-9'}
@@ -288,7 +288,7 @@ export default function PlatformUsersTab({ tenants = [] }) {
                 <SelectContent>
                   {tenants.map(t => (
                     <SelectItem key={t.id} value={t.id}>
-                      {isRTL ? t.name_ar : t.name_en} <span className="text-xs text-slate-400 ms-1">({t.tenant_code})</span>
+                      {isRTL ? t.name_ar : t.name_en} <span className="text-xs text-muted-foreground ms-1">({t.tenant_code})</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -323,19 +323,19 @@ export default function PlatformUsersTab({ tenants = [] }) {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Edit2 className="w-5 h-5 text-blue-600" />
+              <Edit2 className="w-5 h-5 text-najdi-700" />
               {isRTL ? 'تعديل بيانات المستخدم' : 'Edit User'}
             </DialogTitle>
           </DialogHeader>
           {editUser && (
             <div className="space-y-4 py-2">
-              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-semibold">
+              <div className="flex items-center gap-3 p-3 bg-sand rounded-lg">
+                <div className="w-10 h-10 rounded-full bg-sand-alt flex items-center justify-center text-muted-foreground font-semibold">
                   {(editUser.full_name || editUser.email || '?')[0].toUpperCase()}
                 </div>
                 <div>
                   <p className="font-medium text-sm">{editUser.full_name || '—'}</p>
-                  <p className="text-xs text-slate-500">{editUser.email}</p>
+                  <p className="text-xs text-muted-foreground">{editUser.email}</p>
                 </div>
               </div>
 

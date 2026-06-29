@@ -53,10 +53,10 @@ export default function MyPayslips() {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'sent': return <Mail className="w-3 h-3 text-blue-600" />;
+      case 'sent': return <Mail className="w-3 h-3 text-najdi-700" />;
       case 'delivered': return <CheckCircle className="w-3 h-3 text-green-600" />;
       case 'failed': return <XCircle className="w-3 h-3 text-red-600" />;
-      default: return <Clock className="w-3 h-3 text-slate-400" />;
+      default: return <Clock className="w-3 h-3 text-muted-foreground" />;
     }
   };
 
@@ -69,7 +69,7 @@ export default function MyPayslips() {
   if (!employee) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-slate-500">
+        <p className="text-muted-foreground">
           {isRTL ? 'جاري التحميل...' : 'Loading...'}
         </p>
       </div>
@@ -79,10 +79,10 @@ export default function MyPayslips() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">
+        <h1 className="text-3xl font-bold text-ink">
           {isRTL ? 'قسائم راتبي' : 'My Payslips'}
         </h1>
-        <p className="text-slate-600 mt-2">
+        <p className="text-muted-foreground mt-2">
           {isRTL ? 'عرض وتحميل قسائم الراتب الخاصة بك' : 'View and download your payslips'}
         </p>
         
@@ -144,7 +144,7 @@ export default function MyPayslips() {
               </TableRow>
             ) : filteredPayslips.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   {isRTL ? 'لا توجد قسائم' : 'No payslips found'}
                 </TableCell>
               </TableRow>
@@ -168,17 +168,17 @@ export default function MyPayslips() {
                         {latestEmail && (
                           <div className="flex items-center gap-1">
                             {getStatusIcon(latestEmail.email_status)}
-                            <span className="text-xs text-slate-600">{isRTL ? 'بريد' : 'Email'}</span>
+                            <span className="text-xs text-muted-foreground">{isRTL ? 'بريد' : 'Email'}</span>
                           </div>
                         )}
                         {latestWhatsApp && (
                           <div className="flex items-center gap-1">
                             {getStatusIcon(latestWhatsApp.whatsapp_status)}
-                            <span className="text-xs text-slate-600">{isRTL ? 'واتساب' : 'WhatsApp'}</span>
+                            <span className="text-xs text-muted-foreground">{isRTL ? 'واتساب' : 'WhatsApp'}</span>
                           </div>
                         )}
                         {!latestEmail && !latestWhatsApp && (
-                          <Badge variant="outline" className="text-slate-500">
+                          <Badge variant="outline" className="text-muted-foreground">
                             {isRTL ? 'لم يُرسل' : 'Not Sent'}
                           </Badge>
                         )}
@@ -222,20 +222,20 @@ export default function MyPayslips() {
                     <p className="font-medium text-sm">{delivery.period}</p>
                     <div className="flex items-center gap-3 mt-1">
                       {delivery.email_status !== 'not_sent' && (
-                        <div className="flex items-center gap-1 text-xs text-slate-600">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Mail className="w-3 h-3" />
                           {delivery.email_status}
                         </div>
                       )}
                       {delivery.whatsapp_status !== 'not_sent' && (
-                        <div className="flex items-center gap-1 text-xs text-slate-600">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <MessageSquare className="w-3 h-3" />
                           {delivery.whatsapp_status}
                         </div>
                       )}
                     </div>
                   </div>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-muted-foreground">
                     {delivery.email_sent_date && format(new Date(delivery.email_sent_date), 'dd/MM/yyyy HH:mm')}
                   </div>
                 </div>

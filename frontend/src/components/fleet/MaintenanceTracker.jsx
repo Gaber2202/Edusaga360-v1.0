@@ -117,7 +117,7 @@ export default function MaintenanceTracker() {
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold">{isRTL ? 'سجل الصيانة' : 'Maintenance Records'}</h3>
-          <p className="text-sm text-slate-500">{isRTL ? 'تتبع صيانة المركبات' : 'Track vehicle maintenance'}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'تتبع صيانة المركبات' : 'Track vehicle maintenance'}</p>
         </div>
         <Button onClick={() => { resetForm(); setShowForm(true); }}>
           <Plus className="w-4 h-4 me-2" />
@@ -130,10 +130,10 @@ export default function MaintenanceTracker() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'إجمالي التكاليف' : 'Total Costs'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي التكاليف' : 'Total Costs'}</p>
                 <p className="text-2xl font-bold">{totalCost.toLocaleString()}</p>
               </div>
-              <DollarSign className="w-10 h-10 text-slate-400" />
+              <DollarSign className="w-10 h-10 text-muted-foreground" />
             </div>
           </CardContent>
         </Card>
@@ -141,7 +141,7 @@ export default function MaintenanceTracker() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'مجدولة' : 'Scheduled'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'مجدولة' : 'Scheduled'}</p>
                 <p className="text-2xl font-bold">{scheduledCount}</p>
               </div>
               <Calendar className="w-10 h-10 text-amber-400" />
@@ -152,7 +152,7 @@ export default function MaintenanceTracker() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'مكتملة' : 'Completed'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'مكتملة' : 'Completed'}</p>
                 <p className="text-2xl font-bold">{completedCount}</p>
               </div>
               <Wrench className="w-10 h-10 text-emerald-400" />

@@ -102,9 +102,9 @@ export default function Branches() {
 
   const columns = [
     { header: isRTL ? 'الرمز' : 'Code', cell: (row) => <span className="font-mono text-sm">{row.code}</span> },
-    { header: isRTL ? 'اسم الفرع' : 'Branch Name', cell: (row) => <div><p className="font-medium">{row.name_ar}</p><p className="text-sm text-slate-500">{row.name_en}</p></div> },
-    { header: isRTL ? 'المدينة' : 'City', cell: (row) => <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-slate-400" /><span>{row.city}</span></div> },
-    { header: isRTL ? 'الهاتف' : 'Phone', cell: (row) => row.phone ? <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-slate-400" /><span>{row.phone}</span></div> : '-' },
+    { header: isRTL ? 'اسم الفرع' : 'Branch Name', cell: (row) => <div><p className="font-medium">{row.name_ar}</p><p className="text-sm text-muted-foreground">{row.name_en}</p></div> },
+    { header: isRTL ? 'المدينة' : 'City', cell: (row) => <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-muted-foreground" /><span>{row.city}</span></div> },
+    { header: isRTL ? 'الهاتف' : 'Phone', cell: (row) => row.phone ? <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-muted-foreground" /><span>{row.phone}</span></div> : '-' },
     { header: t('status'), cell: (row) => <StatusBadge status={row.is_active ? 'active' : 'inactive'} /> },
     { header: t('actions'), cell: (row) => (
       <Button size="sm" variant="ghost" onClick={() => handleEdit(row)}>

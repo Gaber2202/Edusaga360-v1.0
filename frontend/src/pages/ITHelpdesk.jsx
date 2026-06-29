@@ -97,12 +97,12 @@ export default function ITHelpdesk() {
       return <Badge variant="outline"><Icon className="h-3 w-3 mr-1" />{row.category}</Badge>;
     }},
     { key: 'priority', label: isRTL ? 'الأولوية' : 'Priority', render: (_, row) => {
-      const colors = { low: 'bg-gray-100', medium: 'bg-blue-100', high: 'bg-orange-100', critical: 'bg-red-100' };
+      const colors = { low: 'bg-gray-100', medium: 'bg-najdi-50', high: 'bg-orange-100', critical: 'bg-red-100' };
       return <Badge className={colors[row.priority]}>{row.priority}</Badge>;
     }},
     { key: 'status', label: isRTL ? 'الحالة' : 'Status', render: (_, row) => {
       const colors = { 
-        open: 'bg-blue-100 text-blue-800', 
+        open: 'bg-najdi-50 text-najdi-900', 
         in_progress: 'bg-yellow-100 text-yellow-800',
         resolved: 'bg-green-100 text-green-800',
         closed: 'bg-gray-100 text-gray-800'
@@ -143,7 +143,7 @@ export default function ITHelpdesk() {
           title={isRTL ? 'تذاكر مفتوحة' : 'Open Tickets'}
           value={openTickets}
           icon={Ticket}
-          iconClassName="bg-blue-50"
+          iconClassName="bg-najdi-50"
         />
         <StatCard
           title={isRTL ? 'قيد المعالجة' : 'In Progress'}

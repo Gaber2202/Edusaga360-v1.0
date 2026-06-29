@@ -24,7 +24,7 @@ const LEAVE_STATUS_COLORS = {
   pending: 'bg-amber-100 text-amber-700',
   approved: 'bg-green-100 text-green-700',
   rejected: 'bg-red-100 text-red-700',
-  cancelled: 'bg-slate-100 text-slate-500',
+  cancelled: 'bg-sand-alt text-muted-foreground',
 };
 
 export default function LeaveWorkflow({ isRTL, viewMode = 'hr' }) {
@@ -187,7 +187,7 @@ export default function LeaveWorkflow({ isRTL, viewMode = 'hr' }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-slate-800">{isRTL ? 'إدارة الإجازات' : 'Leave Management'}</h2>
+          <h2 className="text-lg font-bold text-ink">{isRTL ? 'إدارة الإجازات' : 'Leave Management'}</h2>
           {pendingCount > 0 && (
             <p className="text-sm text-amber-600">{pendingCount} {isRTL ? 'طلب بانتظار الاعتماد' : 'requests pending approval'}</p>
           )}
@@ -212,9 +212,9 @@ export default function LeaveWorkflow({ isRTL, viewMode = 'hr' }) {
 
         <TabsContent value={activeTab} className="mt-3">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
+            <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
           ) : filteredRequests.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Calendar className="w-10 h-10 mb-2" />
               <p className="text-sm">{isRTL ? 'لا توجد طلبات' : 'No requests'}</p>
             </div>
@@ -227,20 +227,20 @@ export default function LeaveWorkflow({ isRTL, viewMode = 'hr' }) {
                       <div className="flex items-start justify-between gap-3 flex-wrap">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <p className="font-medium text-slate-800">{req.employee_name}</p>
-                            <Badge className={LEAVE_STATUS_COLORS[req.status] || 'bg-slate-100 text-slate-600'}>
+                            <p className="font-medium text-ink">{req.employee_name}</p>
+                            <Badge className={LEAVE_STATUS_COLORS[req.status] || 'bg-sand-alt text-muted-foreground'}>
                               {req.status === 'pending' ? (isRTL ? 'معلق' : 'Pending') :
                                req.status === 'approved' ? (isRTL ? 'مقبول' : 'Approved') :
                                req.status === 'rejected' ? (isRTL ? 'مرفوض' : 'Rejected') : req.status}
                             </Badge>
                           </div>
-                          <p className="text-sm text-blue-600 font-medium">{req.leave_type_name}</p>
-                          <p className="text-sm text-slate-500 mt-0.5">
+                          <p className="text-sm text-najdi-700 font-medium">{req.leave_type_name}</p>
+                          <p className="text-sm text-muted-foreground mt-0.5">
                             {req.start_date && format(new Date(req.start_date), 'dd/MM/yyyy')} → {req.end_date && format(new Date(req.end_date), 'dd/MM/yyyy')}
                             <span className="mx-2">•</span>
                             <strong>{req.total_days}</strong> {isRTL ? 'يوم' : 'days'}
                           </p>
-                          {req.reason && <p className="text-sm text-slate-400 mt-1 truncate">{req.reason}</p>}
+                          {req.reason && <p className="text-sm text-muted-foreground mt-1 truncate">{req.reason}</p>}
                         </div>
                         {req.status === 'pending' && viewMode === 'hr' && (
                           <div className="flex gap-2 flex-shrink-0">
@@ -300,7 +300,7 @@ export default function LeaveWorkflow({ isRTL, viewMode = 'hr' }) {
               </div>
             </div>
             {calcDays() > 0 && (
-              <div className="bg-blue-50 rounded-lg p-2 text-sm text-blue-700 text-center">
+              <div className="bg-najdi-50 rounded-lg p-2 text-sm text-najdi-900 text-center">
                 {isRTL ? `الأيام المطلوبة: ${calcDays()} يوم` : `Days requested: ${calcDays()} days`}
               </div>
             )}

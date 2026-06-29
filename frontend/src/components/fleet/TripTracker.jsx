@@ -131,7 +131,7 @@ export default function TripTracker() {
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold">{isRTL ? 'سجل الرحلات' : 'Trip Logs'}</h3>
-          <p className="text-sm text-slate-500">{isRTL ? 'تتبع رحلات المركبات' : 'Track vehicle trips'}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'تتبع رحلات المركبات' : 'Track vehicle trips'}</p>
         </div>
         <Button onClick={() => { resetForm(); setShowForm(true); }}>
           <Plus className="w-4 h-4 me-2" />
@@ -144,10 +144,10 @@ export default function TripTracker() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'إجمالي الرحلات' : 'Total Trips'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الرحلات' : 'Total Trips'}</p>
                 <p className="text-2xl font-bold">{totalTrips}</p>
               </div>
-              <Route className="w-10 h-10 text-blue-400" />
+              <Route className="w-10 h-10 text-najdi-500" />
             </div>
           </CardContent>
         </Card>
@@ -155,9 +155,9 @@ export default function TripTracker() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'إجمالي المسافة' : 'Total Distance'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي المسافة' : 'Total Distance'}</p>
                 <p className="text-2xl font-bold">{totalDistance.toFixed(0)}</p>
-                <p className="text-xs text-slate-500">{isRTL ? 'كيلومتر' : 'km'}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'كيلومتر' : 'km'}</p>
               </div>
               <MapPin className="w-10 h-10 text-emerald-400" />
             </div>
@@ -167,7 +167,7 @@ export default function TripTracker() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'إجمالي الطلاب' : 'Total Students'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الطلاب' : 'Total Students'}</p>
                 <p className="text-2xl font-bold">{totalStudents}</p>
               </div>
               <Clock className="w-10 h-10 text-amber-400" />
@@ -249,8 +249,8 @@ export default function TripTracker() {
               </div>
             </div>
             {formData.end_odometer > formData.start_odometer && (
-              <div className="bg-slate-50 p-4 rounded-lg">
-                <p className="text-sm text-slate-600">{isRTL ? 'المسافة المقطوعة' : 'Distance Traveled'}</p>
+              <div className="bg-sand p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">{isRTL ? 'المسافة المقطوعة' : 'Distance Traveled'}</p>
                 <p className="text-2xl font-bold">{(formData.end_odometer - formData.start_odometer).toFixed(0)} {isRTL ? 'كم' : 'km'}</p>
               </div>
             )}

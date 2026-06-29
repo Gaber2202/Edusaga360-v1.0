@@ -635,7 +635,7 @@ export default function Contracts() {
     { 
       header: t('studentName'), 
       width: '20%',
-      cell: (row) => <div><p className="font-medium">{row.student_name}</p><p className="text-sm text-slate-500">{t(row.grade)}</p></div> 
+      cell: (row) => <div><p className="font-medium">{row.student_name}</p><p className="text-sm text-muted-foreground">{t(row.grade)}</p></div> 
     },
     { 
       header: t('academicYear'), 
@@ -670,7 +670,7 @@ export default function Contracts() {
             <Button
               size="sm"
               variant="outline"
-              className="text-blue-600 border-blue-300 hover:bg-blue-50"
+              className="text-najdi-700 border-najdi-100 hover:bg-najdi-50"
               onClick={() => handleSendForSigning(row)}
               disabled={sendingId === row.id}
               title={isRTL ? 'إرسال للتوقيع' : 'Send for Signing'}
@@ -714,7 +714,7 @@ export default function Contracts() {
       </Tabs>
 
       <div className="relative max-w-md">
-        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
         <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${isRTL ? 'pr-10' : 'pl-10'} bg-white`} />
       </div>
 
@@ -762,11 +762,11 @@ export default function Contracts() {
 
             {formData.student_id && (
               <>
-                <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded">
-                  <div><Label className="text-slate-500">{isRTL ? 'ولي الأمر' : 'Guardian'}</Label><p>{formData.guardian_name || (isRTL ? 'غير متوفر' : 'Not available')}</p></div>
-                  <div><Label className="text-slate-500">{isRTL ? 'الهاتف' : 'Phone'}</Label><p>{formData.guardian_phone || (isRTL ? 'غير متوفر' : 'Not available')}</p></div>
-                  <div><Label className="text-slate-500">{isRTL ? 'الفرع' : 'Branch'}</Label><p>{branches.find(b => b.id === formData.branch_id)?.[isRTL ? 'name_ar' : 'name_en']}</p></div>
-                  <div><Label className="text-slate-500">{isRTL ? 'الصف' : 'Grade'}</Label><p>{grades.find(g => g.grade_code === formData.grade)?.[isRTL ? 'name_ar' : 'name_en'] || formData.grade}</p></div>
+                <div className="grid grid-cols-2 gap-4 bg-sand p-4 rounded">
+                  <div><Label className="text-muted-foreground">{isRTL ? 'ولي الأمر' : 'Guardian'}</Label><p>{formData.guardian_name || (isRTL ? 'غير متوفر' : 'Not available')}</p></div>
+                  <div><Label className="text-muted-foreground">{isRTL ? 'الهاتف' : 'Phone'}</Label><p>{formData.guardian_phone || (isRTL ? 'غير متوفر' : 'Not available')}</p></div>
+                  <div><Label className="text-muted-foreground">{isRTL ? 'الفرع' : 'Branch'}</Label><p>{branches.find(b => b.id === formData.branch_id)?.[isRTL ? 'name_ar' : 'name_en']}</p></div>
+                  <div><Label className="text-muted-foreground">{isRTL ? 'الصف' : 'Grade'}</Label><p>{grades.find(g => g.grade_code === formData.grade)?.[isRTL ? 'name_ar' : 'name_en'] || formData.grade}</p></div>
                 </div>
 
                 {/* Fee Resolution Status */}
@@ -851,7 +851,7 @@ export default function Contracts() {
                   <h4 className="font-semibold mb-3">{t('services')}</h4>
                   <div className="border rounded-lg overflow-hidden">
                     <table className="w-full">
-                      <thead className="bg-slate-50">
+                      <thead className="bg-sand">
                         <tr>
                           <th className="p-2 text-start">{isRTL ? 'الخدمة' : 'Service'}</th>
                           <th className="p-2 text-start">{t('amount')}</th>
@@ -887,7 +887,7 @@ export default function Contracts() {
                   )}
                 </div>
 
-                <div className="bg-slate-50 rounded-lg p-4 space-y-2">
+                <div className="bg-sand rounded-lg p-4 space-y-2">
                   <div className="flex justify-between"><span>{isRTL ? 'إجمالي الرسوم' : 'Total Fees'}</span><span>{totalFees.toLocaleString()} {t('sar')}</span></div>
                   {discountAmount > 0 && <div className="flex justify-between text-red-600"><span>{t('discount')}</span><span>-{discountAmount.toLocaleString()} {t('sar')}</span></div>}
                   <div className="flex justify-between text-lg font-bold border-t pt-2"><span>{isRTL ? 'صافي المبلغ' : 'Net Amount'}</span><span>{netAmount.toLocaleString()} {t('sar')}</span></div>
@@ -959,12 +959,12 @@ export default function Contracts() {
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div><Label className="text-slate-500">{isRTL ? 'رقم العقد' : 'Contract #'}</Label><p className="font-medium">{showDetails.contract_number}</p></div>
-                <div><Label className="text-slate-500">{t('studentName')}</Label><p className="font-medium">{showDetails.student_name}</p></div>
-                <div><Label className="text-slate-500">{t('grade')}</Label><p>{t(showDetails.grade)}</p></div>
-                <div><Label className="text-slate-500">{t('academicYear')}</Label><p>{showDetails.academic_year}</p></div>
+                <div><Label className="text-muted-foreground">{isRTL ? 'رقم العقد' : 'Contract #'}</Label><p className="font-medium">{showDetails.contract_number}</p></div>
+                <div><Label className="text-muted-foreground">{t('studentName')}</Label><p className="font-medium">{showDetails.student_name}</p></div>
+                <div><Label className="text-muted-foreground">{t('grade')}</Label><p>{t(showDetails.grade)}</p></div>
+                <div><Label className="text-muted-foreground">{t('academicYear')}</Label><p>{showDetails.academic_year}</p></div>
               </div>
-              <div className="bg-slate-50 rounded-lg p-4">
+              <div className="bg-sand rounded-lg p-4">
                 <div className="flex justify-between"><span>{isRTL ? 'إجمالي الرسوم' : 'Total Fees'}</span><span>{showDetails.total_fees?.toLocaleString()} {t('sar')}</span></div>
                 <div className="flex justify-between text-red-600"><span>{t('discount')}</span><span>-{showDetails.total_discount?.toLocaleString()} {t('sar')}</span></div>
                 <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2"><span>{isRTL ? 'صافي المبلغ' : 'Net Amount'}</span><span>{showDetails.net_amount?.toLocaleString()} {t('sar')}</span></div>
@@ -977,7 +977,7 @@ export default function Contracts() {
                       <div key={i} className="flex justify-between items-center p-2 bg-white border rounded">
                         <span>{isRTL ? `القسط ${p.installment_number}` : `Installment ${p.installment_number}`}</span>
                         <span>{p.amount?.toLocaleString()} {t('sar')}</span>
-                        <span className="text-sm text-slate-500">{p.due_date}</span>
+                        <span className="text-sm text-muted-foreground">{p.due_date}</span>
                         <StatusBadge status={p.status} />
                       </div>
                     ))}

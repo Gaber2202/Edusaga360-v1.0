@@ -47,7 +47,7 @@ export default function IqamaServices() {
     )},
     { header: isRTL ? 'الكفيل' : 'Sponsor', accessorKey: 'sponsorship_company_name' },
     { header: isRTL ? 'الحالة' : 'Status', cell: r => (
-      <Badge className={r.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}>
+      <Badge className={r.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-sand-alt text-ink'}>
         {r.status}
       </Badge>
     )},

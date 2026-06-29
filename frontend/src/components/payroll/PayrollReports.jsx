@@ -163,7 +163,7 @@ export default function PayrollReports() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-xl font-semibold">{isRTL ? 'تقارير الرواتب' : 'Payroll Reports'}</h2>
-          <p className="text-sm text-slate-500">{isRTL ? 'تحليلات وإحصائيات الرواتب' : 'Payroll analytics and statistics'}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'تحليلات وإحصائيات الرواتب' : 'Payroll analytics and statistics'}</p>
         </div>
         <div className="flex gap-3 items-center">
           <MonthPicker
@@ -185,7 +185,7 @@ export default function PayrollReports() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'صافي الرواتب' : 'Net Payroll'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'صافي الرواتب' : 'Net Payroll'}</p>
                 <p className="text-2xl font-bold">
                   {(currentInputs.reduce((sum, i) => sum + (i.net_salary || 0), 0) / 1000).toFixed(0)}K
                 </p>
@@ -199,7 +199,7 @@ export default function PayrollReports() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'تأمينات' : 'GOSI'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'تأمينات' : 'GOSI'}</p>
                 <p className="text-2xl font-bold">
                   {((gosiSummary.total_employee_contribution + gosiSummary.total_employer_contribution) / 1000).toFixed(0)}K
                 </p>
@@ -213,11 +213,11 @@ export default function PayrollReports() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'قروض نشطة' : 'Active Loans'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'قروض نشطة' : 'Active Loans'}</p>
                 <p className="text-2xl font-bold">{loanSummary.count}</p>
-                <p className="text-xs text-slate-400">{loanSummary.totalBalance.toLocaleString()} {isRTL ? 'متبقي' : 'remaining'}</p>
+                <p className="text-xs text-muted-foreground">{loanSummary.totalBalance.toLocaleString()} {isRTL ? 'متبقي' : 'remaining'}</p>
               </div>
-              <FileText className="w-8 h-8 text-blue-500" />
+              <FileText className="w-8 h-8 text-najdi-500" />
             </div>
           </CardContent>
         </Card>
@@ -226,9 +226,9 @@ export default function PayrollReports() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">{isRTL ? 'سلف رسوم' : 'Tuition Advances'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'سلف رسوم' : 'Tuition Advances'}</p>
                 <p className="text-2xl font-bold">{tuitionSummary.count}</p>
-                <p className="text-xs text-slate-400">{tuitionSummary.totalBalance.toLocaleString()} {isRTL ? 'متبقي' : 'remaining'}</p>
+                <p className="text-xs text-muted-foreground">{tuitionSummary.totalBalance.toLocaleString()} {isRTL ? 'متبقي' : 'remaining'}</p>
               </div>
               <Users className="w-8 h-8 text-amber-500" />
             </div>
@@ -323,12 +323,12 @@ export default function PayrollReports() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-500">{isRTL ? 'حصة الموظف' : 'Employee Share'}</p>
+              <div className="p-4 bg-sand rounded-lg">
+                <p className="text-sm text-muted-foreground">{isRTL ? 'حصة الموظف' : 'Employee Share'}</p>
                 <p className="text-xl font-bold">{gosiSummary.total_employee_contribution?.toLocaleString()}</p>
               </div>
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-500">{isRTL ? 'حصة صاحب العمل' : 'Employer Share'}</p>
+              <div className="p-4 bg-sand rounded-lg">
+                <p className="text-sm text-muted-foreground">{isRTL ? 'حصة صاحب العمل' : 'Employer Share'}</p>
                 <p className="text-xl font-bold">{gosiSummary.total_employer_contribution?.toLocaleString()}</p>
               </div>
             </div>
@@ -337,9 +337,9 @@ export default function PayrollReports() {
                 <p className="text-sm text-emerald-600">{isRTL ? 'موظفين سعوديين' : 'Saudi Employees'}</p>
                 <p className="text-xl font-bold text-emerald-700">{gosiSummary.saudi_employees}</p>
               </div>
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-600">{isRTL ? 'غير سعوديين' : 'Non-Saudi'}</p>
-                <p className="text-xl font-bold text-blue-700">{gosiSummary.non_saudi_employees}</p>
+              <div className="p-4 bg-najdi-50 rounded-lg">
+                <p className="text-sm text-najdi-700">{isRTL ? 'غير سعوديين' : 'Non-Saudi'}</p>
+                <p className="text-xl font-bold text-najdi-900">{gosiSummary.non_saudi_employees}</p>
               </div>
             </div>
             <div className="p-4 bg-purple-50 rounded-lg">
@@ -376,7 +376,7 @@ export default function PayrollReports() {
                   <TableCell>
                     <div>
                       <p className="font-medium">{input.employee_name}</p>
-                      <p className="text-xs text-slate-500">{input.job_title}</p>
+                      <p className="text-xs text-muted-foreground">{input.job_title}</p>
                     </div>
                   </TableCell>
                   <TableCell className="text-center">{input.basic_salary?.toLocaleString()}</TableCell>

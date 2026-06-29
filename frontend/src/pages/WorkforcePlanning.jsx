@@ -109,10 +109,10 @@ export default function WorkforcePlanning() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center"><Users className="w-5 h-5 text-blue-600" /></div>
+            <div className="w-10 h-10 rounded-lg bg-najdi-50 flex items-center justify-center"><Users className="w-5 h-5 text-najdi-700" /></div>
             <div>
-              <p className="text-xs text-slate-500">{isRTL ? 'إجمالي الموظفين' : 'Total Employees'}</p>
-              <p className="text-2xl font-bold text-slate-900">{activeEmployees.length}</p>
+              <p className="text-xs text-muted-foreground">{isRTL ? 'إجمالي الموظفين' : 'Total Employees'}</p>
+              <p className="text-2xl font-bold text-ink">{activeEmployees.length}</p>
             </div>
           </div>
         </Card>
@@ -120,8 +120,8 @@ export default function WorkforcePlanning() {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center"><DollarSign className="w-5 h-5 text-green-600" /></div>
             <div>
-              <p className="text-xs text-slate-500">{isRTL ? 'الرواتب الشهرية' : 'Monthly Payroll'}</p>
-              <p className="text-2xl font-bold text-slate-900">{(totalPayroll / 1000).toFixed(0)}K</p>
+              <p className="text-xs text-muted-foreground">{isRTL ? 'الرواتب الشهرية' : 'Monthly Payroll'}</p>
+              <p className="text-2xl font-bold text-ink">{(totalPayroll / 1000).toFixed(0)}K</p>
             </div>
           </div>
         </Card>
@@ -129,7 +129,7 @@ export default function WorkforcePlanning() {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center"><TrendingUp className="w-5 h-5 text-amber-600" /></div>
             <div>
-              <p className="text-xs text-slate-500">{isRTL ? 'نسبة السعودة' : 'Saudization'}</p>
+              <p className="text-xs text-muted-foreground">{isRTL ? 'نسبة السعودة' : 'Saudization'}</p>
               <p className={`text-2xl font-bold ${saudizationRate >= 50 ? 'text-green-600' : 'text-red-600'}`}>{saudizationRate}%</p>
             </div>
           </div>
@@ -138,8 +138,8 @@ export default function WorkforcePlanning() {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center"><Briefcase className="w-5 h-5 text-purple-600" /></div>
             <div>
-              <p className="text-xs text-slate-500">{isRTL ? 'وظائف شاغرة' : 'Open Vacancies'}</p>
-              <p className="text-2xl font-bold text-slate-900">{openVacancies}</p>
+              <p className="text-xs text-muted-foreground">{isRTL ? 'وظائف شاغرة' : 'Open Vacancies'}</p>
+              <p className="text-2xl font-bold text-ink">{openVacancies}</p>
             </div>
           </div>
         </Card>
@@ -155,7 +155,7 @@ export default function WorkforcePlanning() {
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="p-5">
-              <h3 className="font-semibold text-slate-900 mb-4">{isRTL ? 'توزيع الموظفين حسب القسم' : 'Employees by Department'}</h3>
+              <h3 className="font-semibold text-ink mb-4">{isRTL ? 'توزيع الموظفين حسب القسم' : 'Employees by Department'}</h3>
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={deptData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
@@ -168,7 +168,7 @@ export default function WorkforcePlanning() {
             </Card>
 
             <Card className="p-5">
-              <h3 className="font-semibold text-slate-900 mb-4">{isRTL ? 'السعودة' : 'Nationalization'}</h3>
+              <h3 className="font-semibold text-ink mb-4">{isRTL ? 'السعودة' : 'Nationalization'}</h3>
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie data={nationalityData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
@@ -180,7 +180,7 @@ export default function WorkforcePlanning() {
             </Card>
 
             <Card className="p-5">
-              <h3 className="font-semibold text-slate-900 mb-4">{isRTL ? 'نوع التوظيف' : 'Employment Type'}</h3>
+              <h3 className="font-semibold text-ink mb-4">{isRTL ? 'نوع التوظيف' : 'Employment Type'}</h3>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={typeData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -193,12 +193,12 @@ export default function WorkforcePlanning() {
             </Card>
 
             <Card className="p-5">
-              <h3 className="font-semibold text-slate-900 mb-4">{isRTL ? 'ملخص الرواتب' : 'Payroll Summary'}</h3>
+              <h3 className="font-semibold text-ink mb-4">{isRTL ? 'ملخص الرواتب' : 'Payroll Summary'}</h3>
               <div className="space-y-3">
-                <div className="flex justify-between py-2 border-b"><span className="text-slate-500">{isRTL ? 'إجمالي شهري' : 'Monthly Total'}</span><span className="font-bold">{totalPayroll.toLocaleString()} SAR</span></div>
-                <div className="flex justify-between py-2 border-b"><span className="text-slate-500">{isRTL ? 'متوسط الراتب' : 'Avg Salary'}</span><span className="font-bold">{avgSalary.toLocaleString()} SAR</span></div>
-                <div className="flex justify-between py-2 border-b"><span className="text-slate-500">{isRTL ? 'سنوي تقديري' : 'Annual Estimate'}</span><span className="font-bold">{(totalPayroll * 12).toLocaleString()} SAR</span></div>
-                <div className="flex justify-between py-2"><span className="text-slate-500">{isRTL ? 'نسبة السعودة' : 'Saudization Rate'}</span><span className={`font-bold ${saudizationRate >= 50 ? 'text-green-600' : 'text-red-600'}`}>{saudizationRate}%</span></div>
+                <div className="flex justify-between py-2 border-b"><span className="text-muted-foreground">{isRTL ? 'إجمالي شهري' : 'Monthly Total'}</span><span className="font-bold">{totalPayroll.toLocaleString()} SAR</span></div>
+                <div className="flex justify-between py-2 border-b"><span className="text-muted-foreground">{isRTL ? 'متوسط الراتب' : 'Avg Salary'}</span><span className="font-bold">{avgSalary.toLocaleString()} SAR</span></div>
+                <div className="flex justify-between py-2 border-b"><span className="text-muted-foreground">{isRTL ? 'سنوي تقديري' : 'Annual Estimate'}</span><span className="font-bold">{(totalPayroll * 12).toLocaleString()} SAR</span></div>
+                <div className="flex justify-between py-2"><span className="text-muted-foreground">{isRTL ? 'نسبة السعودة' : 'Saudization Rate'}</span><span className={`font-bold ${saudizationRate >= 50 ? 'text-green-600' : 'text-red-600'}`}>{saudizationRate}%</span></div>
               </div>
             </Card>
           </div>
@@ -206,7 +206,7 @@ export default function WorkforcePlanning() {
 
         <TabsContent value="simulation" className="space-y-4">
           <Card className="p-6">
-            <h3 className="font-semibold text-slate-900 mb-4">{isRTL ? 'محاكاة أثر التوظيف على الرواتب' : 'Hiring Impact Simulation'}</h3>
+            <h3 className="font-semibold text-ink mb-4">{isRTL ? 'محاكاة أثر التوظيف على الرواتب' : 'Hiring Impact Simulation'}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="space-y-2">
                 <Label>{isRTL ? 'عدد الموظفين الجدد' : 'New Hires'}</Label>
@@ -222,23 +222,23 @@ export default function WorkforcePlanning() {
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-blue-50 rounded-xl p-4 text-center">
-                <p className="text-xs text-slate-500 mb-1">{isRTL ? 'التكلفة الإجمالية' : 'Total Cost'}</p>
-                <p className="text-xl font-bold text-blue-700">{simulatedCost.toLocaleString()}</p>
-                <p className="text-xs text-slate-400">SAR</p>
+              <div className="bg-najdi-50 rounded-xl p-4 text-center">
+                <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'التكلفة الإجمالية' : 'Total Cost'}</p>
+                <p className="text-xl font-bold text-najdi-900">{simulatedCost.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">SAR</p>
               </div>
               <div className="bg-green-50 rounded-xl p-4 text-center">
-                <p className="text-xs text-slate-500 mb-1">{isRTL ? 'الرواتب الجديدة' : 'New Payroll'}</p>
+                <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'الرواتب الجديدة' : 'New Payroll'}</p>
                 <p className="text-xl font-bold text-green-700">{newPayroll.toLocaleString()}</p>
-                <p className="text-xs text-slate-400">{isRTL ? 'شهرياً' : 'Monthly'}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'شهرياً' : 'Monthly'}</p>
               </div>
               <div className="bg-amber-50 rounded-xl p-4 text-center">
-                <p className="text-xs text-slate-500 mb-1">{isRTL ? 'الزيادة %' : 'Increase %'}</p>
+                <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'الزيادة %' : 'Increase %'}</p>
                 <p className="text-xl font-bold text-amber-700">{totalPayroll > 0 ? Math.round(((newPayroll - totalPayroll) / totalPayroll) * 100) : 0}%</p>
               </div>
-              <div className="bg-slate-50 rounded-xl p-4 text-center">
-                <p className="text-xs text-slate-500 mb-1">{isRTL ? 'إجمالي الموظفين' : 'Total Headcount'}</p>
-                <p className="text-xl font-bold text-slate-700">{activeEmployees.length + hiringScenario.count}</p>
+              <div className="bg-sand rounded-xl p-4 text-center">
+                <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'إجمالي الموظفين' : 'Total Headcount'}</p>
+                <p className="text-xl font-bold text-ink">{activeEmployees.length + hiringScenario.count}</p>
               </div>
             </div>
           </Card>
@@ -252,7 +252,7 @@ export default function WorkforcePlanning() {
               </div>
               <div>
                 <h3 className="font-semibold">Yamen AI — {isRTL ? 'تخطيط القوى العاملة' : 'Workforce Strategy'}</h3>
-                <p className="text-sm text-slate-500">{isRTL ? 'توصيات استراتيجية مبنية على البيانات الفعلية' : 'Data-driven strategic recommendations'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'توصيات استراتيجية مبنية على البيانات الفعلية' : 'Data-driven strategic recommendations'}</p>
               </div>
             </div>
             <Button onClick={handleAI} disabled={loadingAI} className="mb-4 gap-2 bg-purple-600 hover:bg-purple-700">

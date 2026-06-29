@@ -144,7 +144,7 @@ export default function PayRunValidations({ payrollInputs }) {
                     <p className={`font-medium text-sm ${severityText[sev]}`}>
                       {isRTL ? meta.ar : meta.en}
                     </p>
-                    <p className="text-xs text-slate-500 mt-0.5 truncate">
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
                       {v.employees.slice(0, 3).map(e => e.employee_name).join('، ')}
                       {v.employees.length > 3 && (isRTL ? ` وآخرون (${v.employees.length - 3})` : ` +${v.employees.length - 3} more`)}
                     </p>
@@ -182,25 +182,25 @@ export default function PayRunValidations({ payrollInputs }) {
                 </div>
 
                 {/* Fix suggestion */}
-                <div className="p-3 rounded-lg border bg-blue-50 border-blue-200 text-blue-800 text-sm">
+                <div className="p-3 rounded-lg border bg-najdi-50 border-najdi-100 text-najdi-900 text-sm">
                   <p className="font-semibold mb-1">{isRTL ? '📋 خطوات الحل:' : '📋 Resolution:'}</p>
                   {isRTL ? meta.fixAr : meta.fixEn}
                 </div>
 
                 {/* Impacted employees list */}
                 <div>
-                  <p className="font-semibold text-sm mb-2 text-slate-700">
+                  <p className="font-semibold text-sm mb-2 text-ink">
                     {isRTL ? `الموظفون المتأثرون (${selectedViolation.employees.length})` : `Impacted Employees (${selectedViolation.employees.length})`}
                   </p>
                   <div className="space-y-1 max-h-48 overflow-y-auto">
                     {selectedViolation.employees.map((emp, i) => (
-                      <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-slate-50 border border-slate-200 text-sm">
-                        <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                      <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-sand border border-border text-sm">
+                        <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{emp.employee_name}</p>
-                          {emp.employee_number && <p className="text-xs text-slate-400">{emp.employee_number}</p>}
+                          {emp.employee_number && <p className="text-xs text-muted-foreground">{emp.employee_number}</p>}
                         </div>
-                        <div className="text-right text-xs text-slate-500 flex-shrink-0">
+                        <div className="text-right text-xs text-muted-foreground flex-shrink-0">
                           <p>{isRTL ? 'صافي:' : 'Net:'} {(emp.net_salary || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p>
                         </div>
                       </div>

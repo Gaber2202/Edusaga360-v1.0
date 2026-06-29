@@ -301,7 +301,7 @@ export default function ReportBuilder() {
               {currentReport ? (isRTL ? currentReport.name_ar : currentReport.name_en) : 'Report'}
             </CardTitle>
             {reportData.length > 0 && (
-              <span className="text-sm text-slate-500">
+              <span className="text-sm text-muted-foreground">
                 {reportData.length} {isRTL ? 'سجل' : 'records'}
               </span>
             )}
@@ -309,7 +309,7 @@ export default function ReportBuilder() {
         </CardHeader>
         <CardContent>
           {reportData.length === 0 ? (
-            <div className="text-center py-12 text-slate-500">
+            <div className="text-center py-12 text-muted-foreground">
               <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>{isRTL ? 'اختر نوع التقرير وانقر على "تنفيذ التقرير"' : 'Select report type and click "Run Report"'}</p>
             </div>
@@ -317,7 +317,7 @@ export default function ReportBuilder() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-50">
+                  <TableRow className="bg-sand">
                     {selectedFields.map(field => (
                       <TableHead key={field}>{t(field) || field}</TableHead>
                     ))}
@@ -334,7 +334,7 @@ export default function ReportBuilder() {
                 </TableBody>
               </Table>
               {reportData.length > 100 && (
-                <p className="text-center text-sm text-slate-500 mt-4">
+                <p className="text-center text-sm text-muted-foreground mt-4">
                   {isRTL ? `يتم عرض أول 100 سجل من ${reportData.length}` : `Showing first 100 of ${reportData.length} records`}
                 </p>
               )}

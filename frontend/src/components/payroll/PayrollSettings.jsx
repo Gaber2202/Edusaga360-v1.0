@@ -74,7 +74,7 @@ export default function PayrollSettings() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-xl font-semibold">{isRTL ? 'إعدادات الرواتب' : 'Payroll Settings'}</h2>
-          <p className="text-sm text-slate-500">{isRTL ? 'تكوين نظام الرواتب' : 'Configure payroll system'}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'تكوين نظام الرواتب' : 'Configure payroll system'}</p>
         </div>
         <Button onClick={handleSave} disabled={saving}>
           {saving && <Loader2 className="w-4 h-4 animate-spin me-2" />}
@@ -120,7 +120,7 @@ export default function PayrollSettings() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="text-base">{isRTL ? 'تفعيل حساب التأمينات' : 'Enable GOSI Calculation'}</Label>
-                  <p className="text-sm text-slate-500">{isRTL ? 'حساب التأمينات تلقائياً' : 'Auto-calculate GOSI contributions'}</p>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'حساب التأمينات تلقائياً' : 'Auto-calculate GOSI contributions'}</p>
                 </div>
                 <Switch 
                   checked={settings.gosi_enabled}
@@ -152,7 +152,7 @@ export default function PayrollSettings() {
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="font-medium text-blue-700">{isRTL ? 'غير السعوديين' : 'Non-Saudi Employees'}</h4>
+                  <h4 className="font-medium text-najdi-900">{isRTL ? 'غير السعوديين' : 'Non-Saudi Employees'}</h4>
                   <div className="space-y-2">
                     <Label>{isRTL ? 'نسبة صاحب العمل %' : 'Employer Rate %'}</Label>
                     <Input 
@@ -162,7 +162,7 @@ export default function PayrollSettings() {
                       onChange={(e) => setSettings({...settings, gosi_non_saudi_employer_rate: parseFloat(e.target.value)})}
                     />
                   </div>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-muted-foreground">
                     {isRTL ? 'غير السعوديين: صاحب العمل فقط' : 'Non-Saudis: Employer contribution only'}
                   </p>
                 </div>
@@ -175,7 +175,7 @@ export default function PayrollSettings() {
                   value={settings.gosi_wage_ceiling}
                   onChange={(e) => setSettings({...settings, gosi_wage_ceiling: parseFloat(e.target.value)})}
                 />
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   {isRTL ? 'الحد الأقصى للراتب الخاضع للتأمينات (45,000 ر.س)' : 'Maximum salary subject to GOSI (45,000 SAR)'}
                 </p>
               </div>
@@ -214,7 +214,7 @@ export default function PayrollSettings() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="text-base">{isRTL ? 'حساب الوقت الإضافي تلقائياً' : 'Auto-calculate Overtime'}</Label>
-                  <p className="text-sm text-slate-500">{isRTL ? 'من سجلات الحضور' : 'From attendance records'}</p>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'من سجلات الحضور' : 'From attendance records'}</p>
                 </div>
                 <Switch 
                   checked={settings.auto_calculate_overtime}
@@ -270,14 +270,14 @@ export default function PayrollSettings() {
                       value={settings.max_loan_salary_multiple}
                       onChange={(e) => setSettings({...settings, max_loan_salary_multiple: parseFloat(e.target.value)})}
                     />
-                    <p className="text-xs text-slate-500">{isRTL ? 'الحد الأقصى للقرض = الراتب × المضاعف' : 'Max loan = Salary × Multiple'}</p>
+                    <p className="text-xs text-muted-foreground">{isRTL ? 'الحد الأقصى للقرض = الراتب × المضاعف' : 'Max loan = Salary × Multiple'}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
                     <Label className="text-base">{isRTL ? 'يتطلب موافقة' : 'Require Approval'}</Label>
-                    <p className="text-sm text-slate-500">{isRTL ? 'المدير ← HR ← المالية' : 'Manager → HR → Finance'}</p>
+                    <p className="text-sm text-muted-foreground">{isRTL ? 'المدير ← HR ← المالية' : 'Manager → HR → Finance'}</p>
                   </div>
                   <Switch 
                     checked={settings.loan_approval_required}
@@ -304,7 +304,7 @@ export default function PayrollSettings() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label className="text-base">{isRTL ? 'تسوية الفاتورة تلقائياً' : 'Auto-settle Invoice'}</Label>
-                    <p className="text-sm text-slate-500">{isRTL ? 'تسوية فاتورة الطالب عند التفعيل' : 'Settle student invoice on activation'}</p>
+                    <p className="text-sm text-muted-foreground">{isRTL ? 'تسوية فاتورة الطالب عند التفعيل' : 'Settle student invoice on activation'}</p>
                   </div>
                   <Switch 
                     checked={settings.auto_settle_invoice}
@@ -366,7 +366,7 @@ export default function PayrollSettings() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="text-base">{isRTL ? 'ترحيل القيود تلقائياً' : 'Auto-post Journal Entries'}</Label>
-                  <p className="text-sm text-slate-500">{isRTL ? 'ترحيل قيود الرواتب للدفتر العام' : 'Post payroll entries to GL automatically'}</p>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'ترحيل قيود الرواتب للدفتر العام' : 'Post payroll entries to GL automatically'}</p>
                 </div>
                 <Switch 
                   checked={settings.auto_post_journal}

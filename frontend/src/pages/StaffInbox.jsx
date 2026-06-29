@@ -36,10 +36,10 @@ export default function StaffInbox() {
   // Only staff can access
   if (!isStaff) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-sand flex items-center justify-center">
         <Card className="max-w-md w-full p-6">
           <CardContent className="text-center py-6">
-            <p className="text-slate-600">{isRTL ? 'غير مصرح' : 'Unauthorized'}</p>
+            <p className="text-muted-foreground">{isRTL ? 'غير مصرح' : 'Unauthorized'}</p>
           </CardContent>
         </Card>
       </div>
@@ -124,7 +124,7 @@ export default function StaffInbox() {
       <Card>
         <CardContent className="pt-6">
           <div className="relative">
-            <Search className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'right-3' : 'left-3'} w-4 h-4 text-slate-400`} />
+            <Search className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'right-3' : 'left-3'} w-4 h-4 text-muted-foreground`} />
             <Input
               placeholder={isRTL ? 'بحث في الرسائل...' : 'Search messages...'}
               value={searchTerm}
@@ -140,21 +140,21 @@ export default function StaffInbox() {
         {loading ? (
           <Card>
             <CardContent className="py-8 text-center">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto text-slate-400" />
+              <Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground" />
             </CardContent>
           </Card>
         ) : filteredMessages.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <Mail className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500">{isRTL ? 'لا توجد رسائل' : 'No messages'}</p>
+              <Mail className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">{isRTL ? 'لا توجد رسائل' : 'No messages'}</p>
             </CardContent>
           </Card>
         ) : (
           filteredMessages.map((msg) => (
             <Card 
               key={msg.id} 
-              className={`cursor-pointer hover:shadow-md transition ${!msg.is_read ? 'border-blue-300 bg-blue-50' : ''}`}
+              className={`cursor-pointer hover:shadow-md transition ${!msg.is_read ? 'border-najdi-100 bg-najdi-50' : ''}`}
               onClick={() => {
                 setSelectedMessage(msg);
                 setShowReply(true);
@@ -165,13 +165,13 @@ export default function StaffInbox() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-slate-900">{msg.subject}</span>
+                      <span className="font-semibold text-ink">{msg.subject}</span>
                       {!msg.is_read && (
-                        <span className="w-2 h-2 rounded-full bg-blue-600" />
+                        <span className="w-2 h-2 rounded-full bg-najdi-700" />
                       )}
                     </div>
-                    <p className="text-sm text-slate-600 mb-2 line-clamp-2">{msg.message_body}</p>
-                    <div className="flex items-center gap-3 text-xs text-slate-500">
+                    <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{msg.message_body}</p>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span>{isRTL ? 'من:' : 'From:'} {msg.sender_name}</span>
                       <span>•</span>
                       <span>{msg.student_name}</span>
@@ -194,12 +194,12 @@ export default function StaffInbox() {
           </DialogHeader>
           <div className="space-y-4">
             {/* Original Message */}
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-              <div className="text-sm text-slate-600 mb-2">
+            <div className="bg-sand border border-border rounded-lg p-4">
+              <div className="text-sm text-muted-foreground mb-2">
                 {isRTL ? 'من:' : 'From:'} <strong>{selectedMessage?.sender_name}</strong>
               </div>
-              <p className="text-sm text-slate-900">{selectedMessage?.message_body}</p>
-              <div className="text-xs text-slate-500 mt-2">
+              <p className="text-sm text-ink">{selectedMessage?.message_body}</p>
+              <div className="text-xs text-muted-foreground mt-2">
                 {selectedMessage?.created_at && format(new Date(selectedMessage.created_at), 'dd/MM/yyyy h:mm a')}
               </div>
             </div>

@@ -165,7 +165,7 @@ export default function Companies() {
                       <TableCell className="font-medium">{isRTL ? company.name_ar : company.name_en}</TableCell>
                       <TableCell>{company.cr_number || '-'}</TableCell>
                       <TableCell>
-                        <Badge className={company.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100'}>
+                        <Badge className={company.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-sand-alt'}>
                           {company.is_active ? (isRTL ? 'نشط' : 'Active') : (isRTL ? 'معطل' : 'Inactive')}
                         </Badge>
                       </TableCell>
@@ -203,7 +203,7 @@ export default function Companies() {
                       {companies.find(c => c.id === sub.parent_company_id)?.[isRTL ? 'name_ar' : 'name_en'] || '-'}
                     </TableCell>
                     <TableCell>
-                      <Badge className={sub.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100'}>
+                      <Badge className={sub.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-sand-alt'}>
                         {sub.is_active ? (isRTL ? 'نشط' : 'Active') : (isRTL ? 'معطل' : 'Inactive')}
                       </Badge>
                     </TableCell>

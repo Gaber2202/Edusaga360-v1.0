@@ -69,13 +69,13 @@ export default function FeesArrearsView({ invoices, isRTL, userRole, onRecordPay
           <button
             key={b.key}
             onClick={() => setBucketFilter(bucketFilter === b.key ? 'all' : b.key)}
-            className={`text-start p-4 rounded-xl border-2 transition-all ${bucketFilter === b.key ? 'border-slate-800 shadow-md' : 'border-slate-200 hover:border-slate-300'} bg-white`}
+            className={`text-start p-4 rounded-xl border-2 transition-all ${bucketFilter === b.key ? 'border-slate-800 shadow-md' : 'border-border hover:border-border'} bg-white`}
           >
             <div className={`text-xs px-2 py-0.5 rounded-full font-medium w-fit mb-2 ${b.color}`}>
               {isRTL ? b.label_ar : b.label_en}
             </div>
-            <div className="text-xl font-bold text-slate-800">{b.amount.toLocaleString()}</div>
-            <div className="text-xs text-slate-500">SAR · {b.count} {isRTL ? 'فاتورة' : 'invoices'}</div>
+            <div className="text-xl font-bold text-ink">{b.amount.toLocaleString()}</div>
+            <div className="text-xs text-muted-foreground">SAR · {b.count} {isRTL ? 'فاتورة' : 'invoices'}</div>
           </button>
         ))}
       </div>
@@ -93,7 +93,7 @@ export default function FeesArrearsView({ invoices, isRTL, userRole, onRecordPay
 
       {/* Search */}
       <div className="relative max-w-72">
-        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
         <Input
           placeholder={isRTL ? 'بحث...' : 'Search...'}
           value={search} onChange={e => setSearch(e.target.value)}
@@ -119,7 +119,7 @@ export default function FeesArrearsView({ invoices, isRTL, userRole, onRecordPay
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-10 text-slate-400">
+                  <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                     {isRTL ? 'لا توجد متأخرات' : 'No arrears found'}
                   </TableCell>
                 </TableRow>
@@ -129,11 +129,11 @@ export default function FeesArrearsView({ invoices, isRTL, userRole, onRecordPay
                   return (
                     <TableRow key={inv.id} className={inv.daysOverdue > 45 ? 'bg-red-50/30' : ''}>
                       <TableCell>
-                        <p className="font-medium text-slate-800 text-sm">{inv.student_name}</p>
-                        <p className="text-xs text-slate-400">{inv.grade}</p>
+                        <p className="font-medium text-ink text-sm">{inv.student_name}</p>
+                        <p className="text-xs text-muted-foreground">{inv.grade}</p>
                       </TableCell>
                       <TableCell>
-                        <span className="font-mono text-xs text-slate-600">{inv.invoice_number}</span>
+                        <span className="font-mono text-xs text-muted-foreground">{inv.invoice_number}</span>
                       </TableCell>
                       <TableCell className="text-end font-bold text-red-600">
                         {inv.balance.toLocaleString()} ر.س
@@ -158,7 +158,7 @@ export default function FeesArrearsView({ invoices, isRTL, userRole, onRecordPay
                             </span>
                           ))}
                           {inv.escalations.length === 0 && (
-                            <span className="text-xs text-slate-400">{isRTL ? 'لا إجراءات بعد' : 'None yet'}</span>
+                            <span className="text-xs text-muted-foreground">{isRTL ? 'لا إجراءات بعد' : 'None yet'}</span>
                           )}
                         </div>
                       </TableCell>

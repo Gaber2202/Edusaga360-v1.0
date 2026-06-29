@@ -141,8 +141,8 @@ export default function CanteenManagement() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-800">{isRTL ? 'إدارة المقصف' : 'Canteen Management'}</h1>
-          <p className="text-sm text-slate-500">{isRTL ? 'المحفظة الرقمية، القائمة، والمبيعات' : 'Digital wallet, menu management & sales'}</p>
+          <h1 className="text-xl font-bold text-ink">{isRTL ? 'إدارة المقصف' : 'Canteen Management'}</h1>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'المحفظة الرقمية، القائمة، والمبيعات' : 'Digital wallet, menu management & sales'}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setShowTopupForm(true)}>
@@ -175,7 +175,7 @@ export default function CanteenManagement() {
           <div className="max-w-md mx-auto bg-white border rounded-2xl p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <Scan className="w-5 h-5 text-orange-500" />
-              <h2 className="font-semibold text-slate-700">{isRTL ? 'دفع سريع — أقل من 3 ثوانٍ' : 'Quick Pay — Under 3 Seconds'}</h2>
+              <h2 className="font-semibold text-ink">{isRTL ? 'دفع سريع — أقل من 3 ثوانٍ' : 'Quick Pay — Under 3 Seconds'}</h2>
             </div>
             <QuickPOS
               students={students}
@@ -193,7 +193,7 @@ export default function CanteenManagement() {
             <Card>
               <CardHeader className="pb-2"><CardTitle className="text-base">{isRTL ? 'أكثر الأصناف طلباً اليوم' : "Today's Top Items"}</CardTitle></CardHeader>
               <CardContent>
-                {todayTxns.length === 0 ? <p className="text-slate-400 text-sm text-center py-6">{isRTL ? 'لا مبيعات اليوم' : 'No sales today'}</p> : (
+                {todayTxns.length === 0 ? <p className="text-muted-foreground text-sm text-center py-6">{isRTL ? 'لا مبيعات اليوم' : 'No sales today'}</p> : (
                   <div className="space-y-2">
                     {Object.entries(
                       todayTxns.flatMap(t => t.items || []).reduce((acc, item) => {
@@ -217,12 +217,12 @@ export default function CanteenManagement() {
                   <div key={w.id} className="flex items-center justify-between py-1.5 border-b last:border-0">
                     <div>
                       <p className="text-sm font-medium">{w.student_name}</p>
-                      <p className="text-xs text-slate-400">{w.grade}</p>
+                      <p className="text-xs text-muted-foreground">{w.grade}</p>
                     </div>
                     <span className={`text-sm font-bold ${w.balance <= 0 ? 'text-red-600' : 'text-amber-600'}`}>{w.balance} SAR</span>
                   </div>
                 ))}
-                {wallets.filter(w => w.balance < 20).length === 0 && <p className="text-slate-400 text-sm text-center py-6">{isRTL ? 'جميع الأرصدة جيدة' : 'All balances are good'}</p>}
+                {wallets.filter(w => w.balance < 20).length === 0 && <p className="text-muted-foreground text-sm text-center py-6">{isRTL ? 'جميع الأرصدة جيدة' : 'All balances are good'}</p>}
               </CardContent>
             </Card>
           </div>
@@ -240,7 +240,7 @@ export default function CanteenManagement() {
         {/* MENU */}
         <TabsContent value="menu" className="mt-4 space-y-4">
           <div className="relative max-w-72">
-            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
             <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={e => setSearch(e.target.value)} className={`${isRTL ? 'pr-9' : 'pl-9'} bg-white h-9`} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -249,12 +249,12 @@ export default function CanteenManagement() {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-semibold text-slate-800">{item.name_ar}</p>
-                      {item.name_en && <p className="text-xs text-slate-400">{item.name_en}</p>}
+                      <p className="font-semibold text-ink">{item.name_ar}</p>
+                      {item.name_en && <p className="text-xs text-muted-foreground">{item.name_en}</p>}
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-orange-600">{item.price} SAR</p>
-                      {item.calories && <p className="text-xs text-slate-400">{item.calories} cal</p>}
+                      {item.calories && <p className="text-xs text-muted-foreground">{item.calories} cal</p>}
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1 mb-2">
@@ -262,7 +262,7 @@ export default function CanteenManagement() {
                       {item.is_halal ? '✓ Halal' : '✗ Not Halal'}
                     </span>
                     {item.is_prohibited && <span className="text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-700">⚠ Prohibited</span>}
-                    <span className="text-xs px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">{CATEGORIES.find(c => c.value === item.category)?.[isRTL ? 'ar' : 'en']}</span>
+                    <span className="text-xs px-1.5 py-0.5 bg-sand-alt text-muted-foreground rounded">{CATEGORIES.find(c => c.value === item.category)?.[isRTL ? 'ar' : 'en']}</span>
                   </div>
                   {item.allergens?.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-2">
@@ -276,7 +276,7 @@ export default function CanteenManagement() {
               </Card>
             ))}
             {filteredMenu.length === 0 && (
-              <div className="col-span-3 text-center py-12 text-slate-400">{isRTL ? 'لا توجد أصناف' : 'No menu items'}</div>
+              <div className="col-span-3 text-center py-12 text-muted-foreground">{isRTL ? 'لا توجد أصناف' : 'No menu items'}</div>
             )}
           </div>
         </TabsContent>
@@ -300,12 +300,12 @@ export default function CanteenManagement() {
                   {wallets.sort((a, b) => a.balance - b.balance).map(w => (
                     <TableRow key={w.id}>
                       <TableCell className="font-medium text-sm">{w.student_name}</TableCell>
-                      <TableCell className="text-sm text-slate-500">{w.grade}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{w.grade}</TableCell>
                       <TableCell className="text-end">
                         <span className={`font-bold ${w.balance <= 0 ? 'text-red-600' : w.balance < 20 ? 'text-amber-600' : 'text-green-600'}`}>{w.balance} SAR</span>
                       </TableCell>
-                      <TableCell className="text-sm text-slate-500">{w.daily_limit ? `${w.daily_limit} SAR` : '—'}</TableCell>
-                      <TableCell className="text-xs text-slate-400">{w.last_transaction_date || '—'}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{w.daily_limit ? `${w.daily_limit} SAR` : '—'}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{w.last_transaction_date || '—'}</TableCell>
                       <TableCell>
                         <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setTopupData({ student_id: w.student_id, student_name: w.student_name, amount: 50 }); setStudentSearch(w.student_name); setShowTopupForm(true); }}>
                           <Wallet className="w-3 h-3 me-1" />{isRTL ? 'شحن' : 'Top Up'}
@@ -313,7 +313,7 @@ export default function CanteenManagement() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {wallets.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-10 text-slate-400">{isRTL ? 'لا محافظ' : 'No wallets'}</TableCell></TableRow>}
+                  {wallets.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">{isRTL ? 'لا محافظ' : 'No wallets'}</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </div>
@@ -339,7 +339,7 @@ export default function CanteenManagement() {
                     <TableRow key={t.id}>
                       <TableCell className="font-medium text-sm">{t.student_name}</TableCell>
                       <TableCell>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${t.transaction_type === 'topup' ? 'bg-green-100 text-green-700' : t.transaction_type === 'purchase' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${t.transaction_type === 'topup' ? 'bg-green-100 text-green-700' : t.transaction_type === 'purchase' ? 'bg-najdi-50 text-najdi-900' : 'bg-sand-alt text-muted-foreground'}`}>
                           {t.transaction_type}
                         </span>
                       </TableCell>
@@ -347,10 +347,10 @@ export default function CanteenManagement() {
                         {t.transaction_type === 'purchase' ? '-' : '+'}{t.amount} SAR
                       </TableCell>
                       <TableCell className="text-end text-sm">{t.balance_after?.toFixed(2)} SAR</TableCell>
-                      <TableCell className="text-xs text-slate-400">{t.transaction_date} {t.transaction_time}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{t.transaction_date} {t.transaction_time}</TableCell>
                     </TableRow>
                   ))}
-                  {transactions.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-10 text-slate-400">{isRTL ? 'لا معاملات' : 'No transactions'}</TableCell></TableRow>}
+                  {transactions.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">{isRTL ? 'لا معاملات' : 'No transactions'}</TableCell></TableRow>}
                 </TableBody>
               </Table>
             </div>
@@ -379,7 +379,7 @@ export default function CanteenManagement() {
               <Label>{isRTL ? 'مسببات الحساسية' : 'Allergens'}</Label>
               <div className="flex flex-wrap gap-2">
                 {ALLERGENS.map(a => (
-                  <button key={a} onClick={() => toggleAllergen(a)} className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${itemForm.allergens?.includes(a) ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-slate-600 border-slate-300'}`}>{a}</button>
+                  <button key={a} onClick={() => toggleAllergen(a)} className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${itemForm.allergens?.includes(a) ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-muted-foreground border-border'}`}>{a}</button>
                 ))}
               </div>
             </div>
@@ -409,7 +409,7 @@ export default function CanteenManagement() {
                   {studentSearch && (
                     <div className="border rounded-lg max-h-40 overflow-y-auto">
                       {filteredStudents.slice(0, 6).map(s => (
-                        <button key={s.id} onClick={() => { setTopupData(d => ({ ...d, student_id: s.id, student_name: s.name_ar })); setStudentSearch(s.name_ar); }} className="w-full text-start px-3 py-2 hover:bg-slate-50 text-sm border-b last:border-0">{s.name_ar} — {s.grade}</button>
+                        <button key={s.id} onClick={() => { setTopupData(d => ({ ...d, student_id: s.id, student_name: s.name_ar })); setStudentSearch(s.name_ar); }} className="w-full text-start px-3 py-2 hover:bg-sand text-sm border-b last:border-0">{s.name_ar} — {s.grade}</button>
                       ))}
                     </div>
                   )}
@@ -418,7 +418,7 @@ export default function CanteenManagement() {
                 <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
                   <CheckCircle className="w-4 h-4 text-green-500" />
                   <span className="text-sm font-medium">{topupData.student_name}</span>
-                  <button onClick={() => { setTopupData(d => ({ ...d, student_id: '', student_name: '' })); setStudentSearch(''); }} className="text-xs text-slate-400 ms-auto">×</button>
+                  <button onClick={() => { setTopupData(d => ({ ...d, student_id: '', student_name: '' })); setStudentSearch(''); }} className="text-xs text-muted-foreground ms-auto">×</button>
                 </div>
               )}
             </div>
@@ -426,7 +426,7 @@ export default function CanteenManagement() {
               <Label>{isRTL ? 'المبلغ (ر.س)' : 'Amount (SAR)'}</Label>
               <Input type="number" min="1" value={topupData.amount} onChange={e => setTopupData(d => ({ ...d, amount: e.target.value }))} />
               <div className="flex gap-2">
-                {[20, 50, 100, 200].map(a => <button key={a} onClick={() => setTopupData(d => ({ ...d, amount: a }))} className="flex-1 py-1 text-xs border rounded hover:bg-slate-50">{a}</button>)}
+                {[20, 50, 100, 200].map(a => <button key={a} onClick={() => setTopupData(d => ({ ...d, amount: a }))} className="flex-1 py-1 text-xs border rounded hover:bg-sand">{a}</button>)}
               </div>
             </div>
           </div>

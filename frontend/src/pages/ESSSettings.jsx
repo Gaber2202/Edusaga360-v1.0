@@ -100,7 +100,7 @@ export default function ESSSettings() {
           <div className="flex items-center justify-between p-4 bg-amber-50 rounded-lg border border-amber-200">
             <div>
               <Label className="text-base font-medium">{isRTL ? 'تفعيل وضع الاختبار' : 'Enable Test Mode'}</Label>
-              <p className="text-sm text-slate-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {isRTL 
                   ? 'عند التفعيل، سيظهر ESS موظف واحد فقط للاختبار'
                   : 'When enabled, ESS will show only one employee for testing'}
@@ -130,7 +130,7 @@ export default function ESSSettings() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-slate-500 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 {isRTL 
                   ? 'سيظهر هذا الموظف فقط في بوابة ESS أثناء وضع الاختبار'
                   : 'Only this employee will appear in ESS portal during test mode'}
@@ -139,7 +139,7 @@ export default function ESSSettings() {
           )}
 
           <div className="flex justify-end pt-4 border-t">
-            <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleSave} disabled={saving} className="bg-najdi-700 hover:bg-najdi-900">
               {saving && <Loader2 className="w-4 h-4 animate-spin me-2" />}
               <Save className="w-4 h-4 me-2" />
               {isRTL ? 'حفظ الإعدادات' : 'Save Settings'}

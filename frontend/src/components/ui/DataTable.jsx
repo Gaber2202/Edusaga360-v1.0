@@ -55,23 +55,23 @@ export function DataTable({
     if (!col.sortable) return null;
     const key = col.sortKey || col.accessorKey;
     if (sortConfig.key !== key)
-      return <ChevronsUpDown className="inline-block ml-1 w-4 h-4 text-slate-400" />;
+      return <ChevronsUpDown className="inline-block ml-1 w-4 h-4 text-muted-foreground" />;
     if (sortConfig.dir === 'asc')
-      return <ChevronUp className="inline-block ml-1 w-4 h-4 text-slate-600" />;
-    return <ChevronDown className="inline-block ml-1 w-4 h-4 text-slate-600" />;
+      return <ChevronUp className="inline-block ml-1 w-4 h-4 text-muted-foreground" />;
+    return <ChevronDown className="inline-block ml-1 w-4 h-4 text-muted-foreground" />;
   };
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-border overflow-hidden">
         <div className="overflow-x-auto" dir={isRTL ? 'rtl' : 'ltr'}>
           <Table className="w-full" style={{ minWidth: '600px' }}>
-            <TableHeader className="sticky top-0 z-10 bg-slate-50">
-              <TableRow className="bg-slate-50">
+            <TableHeader className="sticky top-0 z-10 bg-sand">
+              <TableRow className="bg-sand">
                 {columns.map((col, i) => (
                   <TableHead
                     key={i}
-                    className="text-slate-600 font-semibold px-2 sm:px-4 py-2 whitespace-nowrap"
+                    className="text-muted-foreground font-semibold px-2 sm:px-4 py-2 whitespace-nowrap"
                     style={{
                       minWidth: col.width || '120px',
                       textAlign: col.align || (isRTL ? 'right' : 'left'),
@@ -108,14 +108,14 @@ export function DataTable({
   if (!data || data.length === 0) {
     const EmptyIcon = emptyIcon || null;
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+      <div className="bg-white rounded-xl border border-border p-12 text-center">
         <div className="flex flex-col items-center gap-3">
           {EmptyIcon ? (
-            <EmptyIcon className="w-12 h-12 text-slate-300" />
+            <EmptyIcon className="w-12 h-12 text-muted-foreground" />
           ) : (
-            <Inbox className="w-12 h-12 text-slate-300" />
+            <Inbox className="w-12 h-12 text-muted-foreground" />
           )}
-          <p className="text-slate-500">{emptyMessage || t('noData')}</p>
+          <p className="text-muted-foreground">{emptyMessage || t('noData')}</p>
           {emptyAction && (
             <Button
               size="sm"
@@ -131,15 +131,15 @@ export function DataTable({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <div className="bg-white rounded-xl border border-border overflow-hidden">
       <div className="overflow-x-auto" dir={isRTL ? 'rtl' : 'ltr'}>
         <Table className="w-full" style={{ minWidth: '600px' }}>
-          <TableHeader className="sticky top-0 z-10 bg-slate-50">
-            <TableRow className="bg-slate-50 hover:bg-slate-50">
+          <TableHeader className="sticky top-0 z-10 bg-sand">
+            <TableRow className="bg-sand hover:bg-sand">
               {columns.map((col, i) => (
                 <TableHead
                   key={i}
-                  className={`text-slate-600 font-semibold whitespace-nowrap px-2 sm:px-4 py-2 ${col.sortable ? 'cursor-pointer select-none' : ''} ${col.headerClassName || col.className || ''}`}
+                  className={`text-muted-foreground font-semibold whitespace-nowrap px-2 sm:px-4 py-2 ${col.sortable ? 'cursor-pointer select-none' : ''} ${col.headerClassName || col.className || ''}`}
                   style={{
                     minWidth: col.width || '120px',
                     textAlign: col.align || (isRTL ? 'right' : 'left'),
@@ -156,7 +156,7 @@ export function DataTable({
             {sortedData.map((row, i) => (
               <TableRow
                 key={row.id || i}
-                className={onRowClick ? 'cursor-pointer hover:bg-slate-50' : ''}
+                className={onRowClick ? 'cursor-pointer hover:bg-sand' : ''}
               >
                 {columns.map((col, j) => (
                   <TableCell

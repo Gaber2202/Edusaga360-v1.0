@@ -22,17 +22,17 @@ const PAGE_SIZE = 50;
 
 function StatusPill({ status }) {
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${STATUS_COLORS[status] || 'bg-slate-100 text-slate-500'}`}>
+    <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${STATUS_COLORS[status] || 'bg-sand-alt text-muted-foreground'}`}>
       {status || 'active'}
     </span>
   );
 }
 
-function Stat({ label, value, color = 'text-slate-800' }) {
+function Stat({ label, value, color = 'text-ink' }) {
   return (
-    <div className="bg-white rounded-lg border border-slate-200 px-4 py-2.5 shadow-sm">
+    <div className="bg-white rounded-lg border border-border px-4 py-2.5 shadow-sm">
       <div className={`text-xl font-bold ${color}`}>{value}</div>
-      <div className="text-xs text-slate-400">{label}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
     </div>
   );
 }
@@ -169,8 +169,8 @@ export default function PlatformUsers() {
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Users</h1>
-          <p className="text-sm text-slate-500">Full visibility & control across every school</p>
+          <h1 className="text-2xl font-bold text-ink">Users</h1>
+          <p className="text-sm text-muted-foreground">Full visibility & control across every school</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" className="gap-1.5" onClick={exportCsv}><Download className="w-4 h-4" /> Export</Button>
@@ -183,25 +183,25 @@ export default function PlatformUsers() {
         <Stat label="Total users" value={stats?.totalUsers ?? total ?? '—'} />
         <Stat label="Active" value={stats?.activeUsers ?? '—'} color="text-emerald-600" />
         <Stat label="Suspended" value={stats?.suspendedUsers ?? 0} color="text-red-600" />
-        <Stat label="New this month" value={stats?.newUsersThisMonth ?? 0} color="text-blue-600" />
+        <Stat label="New this month" value={stats?.newUsersThisMonth ?? 0} color="text-najdi-700" />
       </div>
 
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[220px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Search name or email…" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="pl-10 h-9" />
-          {isFetching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin text-slate-300" />}
+          {isFetching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin text-muted-foreground" />}
         </div>
-        <select className="h-9 rounded-md border border-slate-200 px-3 text-sm bg-white" value={role} onChange={(e) => setRole(e.target.value)}>
+        <select className="h-9 rounded-md border border-border px-3 text-sm bg-white" value={role} onChange={(e) => setRole(e.target.value)}>
           <option value="">All roles</option>
           {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
-        <select className="h-9 rounded-md border border-slate-200 px-3 text-sm bg-white" value={status} onChange={(e) => setStatus(e.target.value)}>
+        <select className="h-9 rounded-md border border-border px-3 text-sm bg-white" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">All statuses</option>
           {USER_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-        <select className="h-9 rounded-md border border-slate-200 px-3 text-sm bg-white" value={tenantFilter} onChange={(e) => setTenantFilter(e.target.value)}>
+        <select className="h-9 rounded-md border border-border px-3 text-sm bg-white" value={tenantFilter} onChange={(e) => setTenantFilter(e.target.value)}>
           <option value="">All schools</option>
           {tenants.map((t) => <option key={t.id} value={t.id}>{t.name_en || t.name_ar}</option>)}
         </select>
@@ -209,35 +209,35 @@ export default function PlatformUsers() {
 
       {/* Bulk bar */}
       {selected.size > 0 && (
-        <div className="flex items-center gap-2 flex-wrap bg-slate-900 text-white rounded-lg px-4 py-2.5 text-sm">
+        <div className="flex items-center gap-2 flex-wrap bg-najdi-900 text-white rounded-lg px-4 py-2.5 text-sm">
           <span className="font-medium">{selected.size} selected</span>
-          <span className="text-slate-500">·</span>
+          <span className="text-muted-foreground">·</span>
           <button className="hover:text-emerald-300 flex items-center gap-1" onClick={() => bulk('activate')}><Play className="w-3.5 h-3.5" /> Activate</button>
           <button className="hover:text-amber-300 flex items-center gap-1" onClick={() => bulk('deactivate')}><Pause className="w-3.5 h-3.5" /> Deactivate</button>
           <button className="hover:text-red-300 flex items-center gap-1" onClick={() => bulk('suspend')}><Ban className="w-3.5 h-3.5" /> Suspend</button>
-          <select className="h-7 rounded bg-slate-800 border border-slate-700 px-2 text-xs" defaultValue="" onChange={(e) => { if (e.target.value) { bulk('set_role', e.target.value); e.target.value = ''; } }}>
+          <select className="h-7 rounded bg-najdi-900 border border-najdi-900 px-2 text-xs" defaultValue="" onChange={(e) => { if (e.target.value) { bulk('set_role', e.target.value); e.target.value = ''; } }}>
             <option value="">Set role…</option>
             {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
           <button className="hover:text-red-300 flex items-center gap-1" onClick={() => bulk('delete')}><Trash2 className="w-3.5 h-3.5" /> Delete</button>
-          <button className="ml-auto text-slate-400 hover:text-white" onClick={() => setSelected(new Set())}><X className="w-4 h-4" /></button>
+          <button className="ml-auto text-muted-foreground hover:text-white" onClick={() => setSelected(new Set())}><X className="w-4 h-4" /></button>
         </div>
       )}
 
       {/* Table */}
       {isLoading ? (
-        <div className="flex justify-center py-16"><div className="animate-spin w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full" /></div>
+        <div className="flex justify-center py-16"><div className="animate-spin w-8 h-8 border-4 border-border border-t-najdi-700 rounded-full" /></div>
       ) : users.length === 0 ? (
-        <Card><CardContent className="py-16 text-center"><Users className="w-12 h-12 text-slate-200 mx-auto mb-3" /><p className="text-slate-400">No users match your filters</p></CardContent></Card>
+        <Card><CardContent className="py-16 text-center"><Users className="w-12 h-12 text-najdi-100 mx-auto mb-3" /><p className="text-muted-foreground">No users match your filters</p></CardContent></Card>
       ) : (
         <Card className="border-0 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-sand border-b border-border">
                 <tr>
-                  <th className="px-4 py-3 w-8"><input type="checkbox" checked={allSelected} onChange={toggleAll} className="rounded border-slate-300" /></th>
+                  <th className="px-4 py-3 w-8"><input type="checkbox" checked={allSelected} onChange={toggleAll} className="rounded border-border" /></th>
                   {['User', 'Role', 'School', 'Status', 'Last login', 'Joined', ''].map((h) => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">{h}</th>
+                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -246,36 +246,36 @@ export default function PlatformUsers() {
                   const tenant = tenantMap[u.tenant_id];
                   const busy = busyId === u.id;
                   return (
-                    <tr key={u.id} className={`hover:bg-slate-50 ${selected.has(u.id) ? 'bg-emerald-50/40' : ''}`}>
+                    <tr key={u.id} className={`hover:bg-sand ${selected.has(u.id) ? 'bg-emerald-50/40' : ''}`}>
                       <td className="px-4 py-3">
-                        {!u.is_platform_owner && <input type="checkbox" checked={selected.has(u.id)} onChange={() => toggleOne(u.id)} className="rounded border-slate-300" />}
+                        {!u.is_platform_owner && <input type="checkbox" checked={selected.has(u.id)} onChange={() => toggleOne(u.id)} className="rounded border-border" />}
                       </td>
                       <td className="px-4 py-3">
                         <button className="text-left group" onClick={() => setDetailUser(u)}>
-                          <p className="font-medium text-slate-800 group-hover:text-emerald-700 flex items-center gap-1.5">
+                          <p className="font-medium text-ink group-hover:text-emerald-700 flex items-center gap-1.5">
                             {u.full_name}
                             {u.is_platform_owner && <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" title="Platform owner" />}
                           </p>
-                          <p className="text-xs text-slate-400">{u.email}</p>
+                          <p className="text-xs text-muted-foreground">{u.email}</p>
                         </button>
                       </td>
                       <td className="px-4 py-3"><Badge variant="outline" className="text-xs">{u.user_role || '—'}</Badge></td>
-                      <td className="px-4 py-3 text-xs text-slate-500">
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
                         {tenant ? (tenant.name_en || tenant.name_ar) : u.is_platform_owner ? 'Platform' : '—'}
                         {u.is_trial_user && <span className="ml-1 text-amber-500" title="Trial user">·trial</span>}
                       </td>
                       <td className="px-4 py-3"><StatusPill status={u.status} />{u.email_confirmed === false && <span title="Email not confirmed" className="ml-1 text-amber-500">●</span>}</td>
-                      <td className="px-4 py-3 text-xs text-slate-400">{u.last_sign_in_at ? format(new Date(u.last_sign_in_at), 'MMM d, yyyy') : 'Never'}</td>
-                      <td className="px-4 py-3 text-xs text-slate-400">{u.created_at ? format(new Date(u.created_at), 'MMM d, yyyy') : '—'}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{u.last_sign_in_at ? format(new Date(u.last_sign_in_at), 'MMM d, yyyy') : 'Never'}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{u.created_at ? format(new Date(u.created_at), 'MMM d, yyyy') : '—'}</td>
                       <td className="px-4 py-3 text-right">
                         {u.is_platform_owner ? (
-                          <span className="text-xs text-slate-300">—</span>
+                          <span className="text-xs text-muted-foreground">—</span>
                         ) : busy ? (
-                          <Loader2 className="w-4 h-4 animate-spin text-slate-300 inline" />
+                          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground inline" />
                         ) : (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0"><MoreVertical className="w-4 h-4 text-slate-400" /></Button>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0"><MoreVertical className="w-4 h-4 text-muted-foreground" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-52">
                               <DropdownMenuLabel className="text-xs">{u.full_name}</DropdownMenuLabel>
@@ -307,7 +307,7 @@ export default function PlatformUsers() {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between px-4 py-2.5 border-t border-slate-100 text-xs text-slate-500">
+          <div className="flex items-center justify-between px-4 py-2.5 border-t border-border text-xs text-muted-foreground">
             <span>{total.toLocaleString()} user{total === 1 ? '' : 's'} · page {page} of {totalPages}</span>
             <div className="flex items-center gap-1">
               <Button size="sm" variant="outline" className="h-7 px-2" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}><ChevronLeft className="w-4 h-4" /></Button>
@@ -337,18 +337,18 @@ export default function PlatformUsers() {
 function UserDetailDrawer({ user, tenant, onClose, onEdit, onResetPassword, onMagicLink, onStatus }) {
   if (!user) return null;
   const Row = ({ label, children }) => (
-    <div className="flex items-start justify-between py-2 border-b border-slate-100 last:border-0">
-      <span className="text-xs text-slate-400">{label}</span>
-      <span className="text-sm text-slate-700 text-right max-w-[60%]">{children}</span>
+    <div className="flex items-start justify-between py-2 border-b border-border last:border-0">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-sm text-ink text-right max-w-[60%]">{children}</span>
     </div>
   );
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-slate-900/30" onClick={onClose} />
+      <div className="absolute inset-0 bg-najdi-900/30" onClick={onClose} />
       <div className="relative w-full max-w-md bg-white shadow-xl h-full overflow-y-auto">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-          <h3 className="font-semibold text-slate-800">User details</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h3 className="font-semibold text-ink">User details</h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-muted-foreground"><X className="w-5 h-5" /></button>
         </div>
         <div className="p-5 space-y-5">
           <div className="flex items-center gap-3">
@@ -356,8 +356,8 @@ function UserDetailDrawer({ user, tenant, onClose, onEdit, onResetPassword, onMa
               {(user.full_name || user.email || '?').slice(0, 2).toUpperCase()}
             </div>
             <div>
-              <p className="font-semibold text-slate-800 flex items-center gap-1.5">{user.full_name}{user.is_platform_owner && <ShieldCheck className="w-4 h-4 text-emerald-600" />}</p>
-              <p className="text-xs text-slate-400">{user.email}</p>
+              <p className="font-semibold text-ink flex items-center gap-1.5">{user.full_name}{user.is_platform_owner && <ShieldCheck className="w-4 h-4 text-emerald-600" />}</p>
+              <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
           </div>
 

@@ -140,7 +140,7 @@ export default function Vendors() {
 
   const columns = [
     { header: isRTL ? 'الرمز' : 'Code', cell: (row) => <span className="font-mono text-sm">{row.vendor_code}</span> },
-    { header: t('vendor'), cell: (row) => <div><p className="font-medium">{row.name_ar}</p>{row.name_en && <p className="text-sm text-slate-500">{row.name_en}</p>}</div> },
+    { header: t('vendor'), cell: (row) => <div><p className="font-medium">{row.name_ar}</p>{row.name_en && <p className="text-sm text-muted-foreground">{row.name_en}</p>}</div> },
     { header: isRTL ? 'النوع' : 'Type', cell: (row) => t(row.vendor_type) || row.vendor_type },
     { header: t('phone'), accessorKey: 'phone' },
     { header: isRTL ? 'الرقم الضريبي' : 'VAT', accessorKey: 'vat_number' },
@@ -180,7 +180,7 @@ export default function Vendors() {
       </Tabs>
 
       <div className="relative max-w-md">
-        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
         <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${isRTL ? 'pr-10' : 'pl-10'} bg-white`} />
       </div>
 

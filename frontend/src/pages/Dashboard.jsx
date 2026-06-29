@@ -29,7 +29,7 @@ import DashboardHeader from '../components/dashboard/DashboardHeader';
 import GettingStartedPanel from '../components/dashboard/GettingStartedPanel';
 
 const SectionLabel = ({ children }) => (
-  <h2 className="text-slate-500 mb-3 text-xs font-bold uppercase tracking-widest">{children}</h2>
+  <h2 className="text-muted-foreground mb-3 text-xs font-bold uppercase tracking-widest">{children}</h2>
 );
 
 export default function Dashboard() {
@@ -96,23 +96,23 @@ export default function Dashboard() {
         <DashboardHeader user={user} tenant={tenant} isRTL={isRTL} />
         <SectionLabel>{isRTL ? 'أبنائي' : 'My Children'}</SectionLabel>
         {linkedStudents.length === 0 ? (
-          <Card className="p-8 text-center text-slate-400">{isRTL ? 'لا يوجد طلاب مرتبطون بحسابك بعد.' : 'No students are linked to your account yet.'}</Card>
+          <Card className="p-8 text-center text-muted-foreground">{isRTL ? 'لا يوجد طلاب مرتبطون بحسابك بعد.' : 'No students are linked to your account yet.'}</Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {linkedStudents.map((student) => (
               <Card key={student.id} className="p-6 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="font-semibold text-slate-900">{isRTL ? student.name_ar : student.name_en || student.name_ar}</h3>
-                    <p className="text-sm text-slate-600 mt-1">{student.grade}</p>
+                    <h3 className="font-semibold text-ink">{isRTL ? student.name_ar : student.name_en || student.name_ar}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{student.grade}</p>
                     <StatusBadge status={student.status} className="mt-2" />
                   </div>
-                  <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                  <div className="w-12 h-12 bg-najdi-700 rounded-full flex items-center justify-center">
                     <GraduationCap className="w-6 h-6 text-white" />
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-slate-100 flex gap-3">
-                  <Link to={createPageUrl(`Students?id=${student.id}`)} className="text-sm text-blue-600 font-medium hover:underline inline-flex items-center gap-1">
+                <div className="mt-4 pt-4 border-t border-border flex gap-3">
+                  <Link to={createPageUrl(`Students?id=${student.id}`)} className="text-sm text-najdi-700 font-medium hover:underline inline-flex items-center gap-1">
                     {isRTL ? 'عرض التفاصيل' : 'View Details'} <ArrowUpRight className="w-4 h-4" />
                   </Link>
                   <Link to={createPageUrl('Fees')} className="text-sm text-emerald-600 font-medium hover:underline inline-flex items-center gap-1">
@@ -159,15 +159,15 @@ export default function Dashboard() {
 
         <div>
           <SectionLabel>{isRTL ? 'آخر الإعلانات' : 'Recent Announcements'}</SectionLabel>
-          <Card className="divide-y divide-slate-100">
+          <Card className="divide-y divide-border">
             {recentAnnouncements.length === 0 ? (
-              <div className="p-6 text-center text-slate-400 text-sm">{isRTL ? 'لا توجد إعلانات' : 'No announcements yet'}</div>
+              <div className="p-6 text-center text-muted-foreground text-sm">{isRTL ? 'لا توجد إعلانات' : 'No announcements yet'}</div>
             ) : recentAnnouncements.map((a) => (
               <div key={a.id} className="p-4 flex items-start gap-3">
-                <Megaphone className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                <Megaphone className="w-4 h-4 text-najdi-500 mt-0.5 flex-shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-800 truncate">{a.subject || a.title || (isRTL ? 'إعلان' : 'Announcement')}</p>
-                  <p className="text-xs text-slate-500 truncate">{a.body || a.message || ''}</p>
+                  <p className="text-sm font-medium text-ink truncate">{a.subject || a.title || (isRTL ? 'إعلان' : 'Announcement')}</p>
+                  <p className="text-xs text-muted-foreground truncate">{a.body || a.message || ''}</p>
                 </div>
               </div>
             ))}
@@ -232,7 +232,7 @@ export default function Dashboard() {
             <Link to={createPageUrl('GovernmentRelations')}>
               <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-colors">
                 <AlertTriangle className="w-7 h-7 text-red-500 flex-shrink-0" />
-                <div><div className="text-lg font-bold text-red-700">{expiredIqamaCount}</div><div className="text-xs text-slate-500">{isRTL ? 'إقامات منتهية' : 'Expired Iqamas'}</div></div>
+                <div><div className="text-lg font-bold text-red-700">{expiredIqamaCount}</div><div className="text-xs text-muted-foreground">{isRTL ? 'إقامات منتهية' : 'Expired Iqamas'}</div></div>
               </div>
             </Link>
           )}
@@ -240,7 +240,7 @@ export default function Dashboard() {
             <Link to={createPageUrl('GovernmentRelations')}>
               <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl hover:bg-amber-100 transition-colors">
                 <Clock className="w-7 h-7 text-amber-500 flex-shrink-0" />
-                <div><div className="text-lg font-bold text-amber-700">{expiringIqama30}</div><div className="text-xs text-slate-500">{isRTL ? 'إقامات تنتهي 30 يوم' : 'Iqamas Expiring 30d'}</div></div>
+                <div><div className="text-lg font-bold text-amber-700">{expiringIqama30}</div><div className="text-xs text-muted-foreground">{isRTL ? 'إقامات تنتهي 30 يوم' : 'Iqamas Expiring 30d'}</div></div>
               </div>
             </Link>
           )}
@@ -248,7 +248,7 @@ export default function Dashboard() {
             <Link to={createPageUrl('GovernmentRelations')}>
               <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-colors">
                 <AlertCircle className="w-7 h-7 text-red-500 flex-shrink-0" />
-                <div><div className="text-lg font-bold text-red-700">{violations.length}</div><div className="text-xs text-slate-500">{isRTL ? 'مخالفات مفتوحة' : 'Open Violations'}</div></div>
+                <div><div className="text-lg font-bold text-red-700">{violations.length}</div><div className="text-xs text-muted-foreground">{isRTL ? 'مخالفات مفتوحة' : 'Open Violations'}</div></div>
               </div>
             </Link>
           )}

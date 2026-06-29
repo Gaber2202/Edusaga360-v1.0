@@ -194,7 +194,7 @@ export default function JournalEntries() {
     { header: t('actions'), cell: (row) => (
       <div className="flex gap-1">
         {row.status === 'draft' && (
-          <Button size="sm" variant="ghost" onClick={() => handleApprove(row)} className="text-blue-600">
+          <Button size="sm" variant="ghost" onClick={() => handleApprove(row)} className="text-najdi-700">
             <Check className="w-4 h-4 me-1" /> {t('approve')}
           </Button>
         )}
@@ -268,7 +268,7 @@ export default function JournalEntries() {
               <div className="border rounded-lg overflow-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-50">
+                    <TableRow className="bg-sand">
                       <TableHead className="w-[300px]">{isRTL ? 'الحساب' : 'Account'}</TableHead>
                       <TableHead className="w-[200px]">{t('description')}</TableHead>
                       <TableHead className="w-[120px]">{t('debit')}</TableHead>
@@ -303,7 +303,7 @@ export default function JournalEntries() {
                         </TableCell>
                       </TableRow>
                     ))}
-                    <TableRow className="bg-slate-50 font-semibold">
+                    <TableRow className="bg-sand font-semibold">
                       <TableCell colSpan={2}>{isRTL ? 'الإجمالي' : 'Total'}</TableCell>
                       <TableCell className={totalDebit !== totalCredit ? 'text-red-600' : 'text-emerald-600'}>{totalDebit.toFixed(2)}</TableCell>
                       <TableCell className={totalDebit !== totalCredit ? 'text-red-600' : 'text-emerald-600'}>{totalCredit.toFixed(2)}</TableCell>

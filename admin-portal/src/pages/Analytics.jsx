@@ -15,9 +15,9 @@ function ChartCard({ title, children, hasData }) {
   return (
     <Card className="border-0 shadow-sm">
       <CardContent className="p-5">
-        <h3 className="font-semibold text-slate-800 mb-4">{title}</h3>
+        <h3 className="font-semibold text-ink mb-4">{title}</h3>
         {hasData ? children : (
-          <div className="flex flex-col items-center py-10 text-slate-400"><Activity className="w-8 h-8 mb-2" /><p className="text-sm">No data yet</p></div>
+          <div className="flex flex-col items-center py-10 text-muted-foreground"><Activity className="w-8 h-8 mb-2" /><p className="text-sm">No data yet</p></div>
         )}
       </CardContent>
     </Card>
@@ -52,8 +52,8 @@ export default function Analytics() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Platform Analytics</h1>
-        <p className="text-sm text-slate-500">Growth, revenue, and usage across all schools</p>
+        <h1 className="text-2xl font-bold text-ink">Platform Analytics</h1>
+        <p className="text-sm text-muted-foreground">Growth, revenue, and usage across all schools</p>
       </div>
 
       {/* Headline numbers */}
@@ -64,7 +64,7 @@ export default function Analytics() {
           { label: 'Active schools', value: stats?.activeTenants ?? 0 },
           { label: 'Trials', value: stats?.trialTenants ?? 0 },
         ].map((k) => (
-          <Card key={k.label} className="border-0 shadow-sm"><CardContent className="p-5"><p className="text-sm text-slate-500">{k.label}</p><p className="text-2xl font-bold text-slate-800 mt-0.5">{k.value}</p></CardContent></Card>
+          <Card key={k.label} className="border-0 shadow-sm"><CardContent className="p-5"><p className="text-sm text-muted-foreground">{k.label}</p><p className="text-2xl font-bold text-ink mt-0.5">{k.value}</p></CardContent></Card>
         ))}
       </div>
 

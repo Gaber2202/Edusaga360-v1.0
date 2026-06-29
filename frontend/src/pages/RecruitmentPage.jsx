@@ -394,7 +394,7 @@ export default function RecruitmentPage() {
 
   const applicantColumns = [
     { header: isRTL ? 'رقم المتقدم' : 'Applicant #', cell: (row) => <span className="font-mono text-sm">{row.applicant_number}</span> },
-    { header: isRTL ? 'الاسم' : 'Name', cell: (row) => <div><p className="font-medium">{row.full_name_ar}</p><p className="text-sm text-slate-500">{row.full_name_en}</p></div> },
+    { header: isRTL ? 'الاسم' : 'Name', cell: (row) => <div><p className="font-medium">{row.full_name_ar}</p><p className="text-sm text-muted-foreground">{row.full_name_en}</p></div> },
     { header: t('email'), accessorKey: 'email' },
     { header: t('phone'), accessorKey: 'phone' },
     { header: isRTL ? 'الخبرة' : 'Experience', cell: (row) => `${row.years_of_experience || 0} ${isRTL ? 'سنوات' : 'years'}` },
@@ -474,7 +474,7 @@ export default function RecruitmentPage() {
         <TabsContent value="requests" className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between gap-3">
             <div className="relative flex-1 max-w-md">
-              <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+              <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
               <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${isRTL ? 'pr-10' : 'pl-10'} bg-white`} />
             </div>
             <Button onClick={() => { resetRequestForm(); setShowRequestForm(true); }} className="gap-2">
@@ -488,7 +488,7 @@ export default function RecruitmentPage() {
         <TabsContent value="applicants" className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between gap-3">
             <div className="relative flex-1 max-w-md">
-              <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+              <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
               <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${isRTL ? 'pr-10' : 'pl-10'} bg-white`} />
             </div>
             <Button onClick={() => { resetApplicantForm(); setShowApplicantForm(true); }} className="gap-2">
@@ -537,8 +537,8 @@ export default function RecruitmentPage() {
                 <Sparkles className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-slate-900">{isRTL ? 'الفرز الذكي للمرشحين — Yamen AI' : 'AI Candidate Shortlisting — Yamen AI'}</h3>
-                <p className="text-sm text-slate-500">{isRTL ? 'تحليل السيرة الذاتية وتصنيف المتقدمين تلقائياً' : 'CV parsing & automatic applicant ranking'}</p>
+                <h3 className="font-semibold text-ink">{isRTL ? 'الفرز الذكي للمرشحين — Yamen AI' : 'AI Candidate Shortlisting — Yamen AI'}</h3>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'تحليل السيرة الذاتية وتصنيف المتقدمين تلقائياً' : 'CV parsing & automatic applicant ranking'}</p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2 mb-4">
@@ -549,14 +549,14 @@ export default function RecruitmentPage() {
                 </Button>
               ))}
               {recruitments.filter(r => r.status === 'approved').length === 0 && (
-                <p className="text-sm text-slate-400">{isRTL ? 'لا توجد طلبات توظيف معتمدة للتحليل' : 'No approved requisitions to analyze'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'لا توجد طلبات توظيف معتمدة للتحليل' : 'No approved requisitions to analyze'}</p>
               )}
             </div>
             {aiRankings.length > 0 && (
               <div className="space-y-3">
                 <h4 className="font-semibold text-sm">{isRTL ? 'نتائج التصنيف الذكي' : 'AI Rankings'}</h4>
                 {aiRankings.map((r, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border">
+                  <div key={i} className="flex items-start gap-3 p-3 bg-sand rounded-lg border">
                     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
                       <span className="font-bold text-purple-700">#{i+1}</span>
                     </div>
@@ -565,7 +565,7 @@ export default function RecruitmentPage() {
                         <span className="font-medium">{r.name}</span>
                         <Badge className="bg-purple-100 text-purple-700">{r.score}/100</Badge>
                       </div>
-                      <p className="text-sm text-slate-600 mt-1">{r.reasoning}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{r.reasoning}</p>
                     </div>
                   </div>
                 ))}
@@ -580,8 +580,8 @@ export default function RecruitmentPage() {
             <h3 className="font-semibold text-lg">{isRTL ? 'بوابة التوظيف العامة' : 'Public Careers Portal'}</h3>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'وظائف منشورة' : 'Published Jobs'}</p><p className="text-2xl font-bold text-blue-600">{careerPostings.filter(p => p.is_published).length}</p></Card>
-            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'طلبات التوظيف المعتمدة' : 'Approved Requisitions'}</p><p className="text-2xl font-bold text-emerald-600">{recruitments.filter(r => r.status === 'approved').length}</p></Card>
+            <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'وظائف منشورة' : 'Published Jobs'}</p><p className="text-2xl font-bold text-najdi-700">{careerPostings.filter(p => p.is_published).length}</p></Card>
+            <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'طلبات التوظيف المعتمدة' : 'Approved Requisitions'}</p><p className="text-2xl font-bold text-emerald-600">{recruitments.filter(r => r.status === 'approved').length}</p></Card>
           </div>
           <Card className="p-4">
             <h4 className="font-semibold mb-3">{isRTL ? 'وظائف قابلة للنشر' : 'Jobs Ready to Publish'}</h4>
@@ -589,10 +589,10 @@ export default function RecruitmentPage() {
               {recruitments.filter(r => r.status === 'approved').map(r => {
                 const isPublished = careerPostings.some(p => p.recruitment_id === r.id && p.is_published);
                 return (
-                  <div key={r.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border">
+                  <div key={r.id} className="flex items-center justify-between p-3 bg-sand rounded-lg border">
                     <div>
                       <p className="font-medium">{r.position_name}</p>
-                      <p className="text-sm text-slate-500">{r.request_number} — {r.employment_type}</p>
+                      <p className="text-sm text-muted-foreground">{r.request_number} — {r.employment_type}</p>
                     </div>
                     {isPublished ? (
                       <Badge className="bg-emerald-100 text-emerald-700">{isRTL ? 'منشور' : 'Published'}</Badge>
@@ -605,7 +605,7 @@ export default function RecruitmentPage() {
                 );
               })}
               {recruitments.filter(r => r.status === 'approved').length === 0 && (
-                <p className="text-center text-slate-400 py-4">{isRTL ? 'لا توجد وظائف معتمدة' : 'No approved positions'}</p>
+                <p className="text-center text-muted-foreground py-4">{isRTL ? 'لا توجد وظائف معتمدة' : 'No approved positions'}</p>
               )}
             </div>
           </Card>
@@ -639,8 +639,8 @@ export default function RecruitmentPage() {
         {/* Interview Scheduling */}
         <TabsContent value="interviews" className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'مقابلات مجدولة' : 'Scheduled'}</p><p className="text-2xl font-bold text-blue-600">{interviews.filter(i => i.status === 'scheduled').length}</p></Card>
-            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'مكتملة' : 'Completed'}</p><p className="text-2xl font-bold text-emerald-600">{interviews.filter(i => i.status === 'completed').length}</p></Card>
+            <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'مقابلات مجدولة' : 'Scheduled'}</p><p className="text-2xl font-bold text-najdi-700">{interviews.filter(i => i.status === 'scheduled').length}</p></Card>
+            <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'مكتملة' : 'Completed'}</p><p className="text-2xl font-bold text-emerald-600">{interviews.filter(i => i.status === 'completed').length}</p></Card>
           </div>
           <Card>
             <Table>
@@ -657,7 +657,7 @@ export default function RecruitmentPage() {
               </TableHeader>
               <TableBody>
                 {interviews.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-slate-400">{isRTL ? 'لا توجد مقابلات' : 'No interviews scheduled'}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">{isRTL ? 'لا توجد مقابلات' : 'No interviews scheduled'}</TableCell></TableRow>
                 ) : interviews.map(i => (
                   <TableRow key={i.id}>
                     <TableCell className="font-medium">{i.applicant_name}</TableCell>
@@ -666,7 +666,7 @@ export default function RecruitmentPage() {
                     <TableCell><Badge variant="outline">{i.platform === 'google_meet' ? 'Google Meet' : i.platform === 'zoom' ? 'Zoom' : i.platform === 'outlook' ? 'Outlook' : isRTL ? 'حضوري' : 'In-Person'}</Badge></TableCell>
                     <TableCell>{i.interviewer_name || '-'}</TableCell>
                     <TableCell><StatusBadge status={i.status} /></TableCell>
-                    <TableCell>{i.meeting_link ? <a href={i.meeting_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-sm"><Video className="w-4 h-4 inline me-1" />{isRTL ? 'انضم' : 'Join'}</a> : '-'}</TableCell>
+                    <TableCell>{i.meeting_link ? <a href={i.meeting_link} target="_blank" rel="noopener noreferrer" className="text-najdi-700 underline text-sm"><Video className="w-4 h-4 inline me-1" />{isRTL ? 'انضم' : 'Join'}</a> : '-'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -676,8 +676,8 @@ export default function RecruitmentPage() {
             <h4 className="font-semibold mb-3">{isRTL ? 'مرشحون بانتظار جدولة مقابلة' : 'Candidates Awaiting Interview'}</h4>
             <div className="space-y-2">
               {applicants.filter(a => a.status === 'screening' || a.status === 'applied').map(a => (
-                <div key={a.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border">
-                  <div><p className="font-medium">{a.full_name_ar}</p><p className="text-sm text-slate-500">{a.email}</p></div>
+                <div key={a.id} className="flex items-center justify-between p-3 bg-sand rounded-lg border">
+                  <div><p className="font-medium">{a.full_name_ar}</p><p className="text-sm text-muted-foreground">{a.email}</p></div>
                   <Button size="sm" onClick={() => setShowInterviewScheduler(a)} className="gap-2">
                     <CalendarDays className="w-4 h-4" />{isRTL ? 'جدولة' : 'Schedule'}
                   </Button>
@@ -690,11 +690,11 @@ export default function RecruitmentPage() {
         {/* Centralized Candidate Database */}
         <TabsContent value="candidate_db" className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'إجمالي المرشحين' : 'Total Candidates'}</p><p className="text-2xl font-bold">{applicants.length}</p></Card>
-            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'مقبولين' : 'Applied'}</p><p className="text-2xl font-bold text-blue-600">{applicants.filter(a => a.status === 'applied').length}</p></Card>
-            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'تمت المقابلة' : 'Interviewed'}</p><p className="text-2xl font-bold text-amber-600">{applicants.filter(a => a.status === 'interviewed').length}</p></Card>
-            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'عرض وظيفي' : 'Offered'}</p><p className="text-2xl font-bold text-emerald-600">{applicants.filter(a => a.status === 'offered').length}</p></Card>
-            <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'تم التوظيف' : 'Hired'}</p><p className="text-2xl font-bold text-purple-600">{applicants.filter(a => a.status === 'hired').length}</p></Card>
+            <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي المرشحين' : 'Total Candidates'}</p><p className="text-2xl font-bold">{applicants.length}</p></Card>
+            <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'مقبولين' : 'Applied'}</p><p className="text-2xl font-bold text-najdi-700">{applicants.filter(a => a.status === 'applied').length}</p></Card>
+            <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'تمت المقابلة' : 'Interviewed'}</p><p className="text-2xl font-bold text-amber-600">{applicants.filter(a => a.status === 'interviewed').length}</p></Card>
+            <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'عرض وظيفي' : 'Offered'}</p><p className="text-2xl font-bold text-emerald-600">{applicants.filter(a => a.status === 'offered').length}</p></Card>
+            <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'تم التوظيف' : 'Hired'}</p><p className="text-2xl font-bold text-purple-600">{applicants.filter(a => a.status === 'hired').length}</p></Card>
           </div>
           <Card>
             <Table>
@@ -713,8 +713,8 @@ export default function RecruitmentPage() {
                 {applicants.map(a => {
                   const avgScore = ((a.interview_technical_score || 0) + (a.interview_communication_score || 0) + (a.interview_culture_score || 0)) / 3;
                   return (
-                    <TableRow key={a.id} className="cursor-pointer hover:bg-slate-50" onClick={() => setShowApplicantDetails(a)}>
-                      <TableCell><div><p className="font-medium">{a.full_name_ar}</p><p className="text-xs text-slate-500">{a.full_name_en}</p></div></TableCell>
+                    <TableRow key={a.id} className="cursor-pointer hover:bg-sand" onClick={() => setShowApplicantDetails(a)}>
+                      <TableCell><div><p className="font-medium">{a.full_name_ar}</p><p className="text-xs text-muted-foreground">{a.full_name_en}</p></div></TableCell>
                       <TableCell className="text-sm">{a.email}</TableCell>
                       <TableCell>{a.specialization || '-'}</TableCell>
                       <TableCell>{a.years_of_experience || 0} {isRTL ? 'سنة' : 'yr'}</TableCell>
@@ -815,7 +815,7 @@ export default function RecruitmentPage() {
           <div className="space-y-6">
             {/* Basic Info */}
             <div>
-              <h3 className="font-semibold text-slate-700 mb-3 text-sm border-b pb-1">{isRTL ? 'البيانات الأساسية' : 'Basic Information'}</h3>
+              <h3 className="font-semibold text-ink mb-3 text-sm border-b pb-1">{isRTL ? 'البيانات الأساسية' : 'Basic Information'}</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{isRTL ? 'طلب التوظيف' : 'Job Requisition'} *</Label>
@@ -888,7 +888,7 @@ export default function RecruitmentPage() {
 
             {/* Work & Assignment */}
             <div>
-              <h3 className="font-semibold text-slate-700 mb-3 text-sm border-b pb-1">{isRTL ? 'بيانات العمل' : 'Work Details'}</h3>
+              <h3 className="font-semibold text-ink mb-3 text-sm border-b pb-1">{isRTL ? 'بيانات العمل' : 'Work Details'}</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{isRTL ? 'القسم' : 'Department'}</Label>
@@ -924,7 +924,7 @@ export default function RecruitmentPage() {
 
             {/* Qualifications */}
             <div>
-              <h3 className="font-semibold text-slate-700 mb-3 text-sm border-b pb-1">{isRTL ? 'المؤهلات' : 'Qualifications'}</h3>
+              <h3 className="font-semibold text-ink mb-3 text-sm border-b pb-1">{isRTL ? 'المؤهلات' : 'Qualifications'}</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{isRTL ? 'المستوى التعليمي' : 'Education Level'}</Label>
@@ -951,7 +951,7 @@ export default function RecruitmentPage() {
 
             {/* Salary */}
             <div>
-              <h3 className="font-semibold text-slate-700 mb-3 text-sm border-b pb-1">{isRTL ? 'الراتب' : 'Salary'}</h3>
+              <h3 className="font-semibold text-ink mb-3 text-sm border-b pb-1">{isRTL ? 'الراتب' : 'Salary'}</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{isRTL ? 'الراتب الحالي (ر.س)' : 'Current Salary (SAR)'}</Label>
@@ -966,7 +966,7 @@ export default function RecruitmentPage() {
 
             {/* Documents */}
             <div>
-              <h3 className="font-semibold text-slate-700 mb-3 text-sm border-b pb-1">{isRTL ? 'المستندات' : 'Documents'}</h3>
+              <h3 className="font-semibold text-ink mb-3 text-sm border-b pb-1">{isRTL ? 'المستندات' : 'Documents'}</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{isRTL ? 'رابط السيرة الذاتية' : 'CV URL'}</Label>
@@ -981,7 +981,7 @@ export default function RecruitmentPage() {
 
             {/* Interview Scores */}
             <div>
-              <h3 className="font-semibold text-slate-700 mb-3 text-sm border-b pb-1">{isRTL ? 'نتائج المقابلة' : 'Interview Scores'} (0–10)</h3>
+              <h3 className="font-semibold text-ink mb-3 text-sm border-b pb-1">{isRTL ? 'نتائج المقابلة' : 'Interview Scores'} (0–10)</h3>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>{isRTL ? 'التقني' : 'Technical'}</Label>
@@ -1023,24 +1023,24 @@ export default function RecruitmentPage() {
             </DialogHeader>
             <div className="space-y-5">
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div><Label className="text-slate-500">{isRTL ? 'الاسم' : 'Name'}</Label><p className="font-medium">{showApplicantDetails.full_name_ar}</p></div>
-                <div><Label className="text-slate-500">{t('email')}</Label><p>{showApplicantDetails.email}</p></div>
-                <div><Label className="text-slate-500">{t('phone')}</Label><p>{showApplicantDetails.phone}</p></div>
-                <div><Label className="text-slate-500">{t('nationality')}</Label><p>{showApplicantDetails.nationality || '-'}</p></div>
-                <div><Label className="text-slate-500">{isRTL ? 'المستوى التعليمي' : 'Education'}</Label><p>{showApplicantDetails.education_level || '-'}</p></div>
-                <div><Label className="text-slate-500">{isRTL ? 'سنوات الخبرة' : 'Experience'}</Label><p>{showApplicantDetails.years_of_experience || 0} {isRTL ? 'سنوات' : 'years'}</p></div>
-                <div><Label className="text-slate-500">{isRTL ? 'الراتب المتوقع' : 'Expected Salary'}</Label><p className="font-medium text-emerald-600">{showApplicantDetails.expected_salary?.toLocaleString() || '-'} {isRTL ? 'ر.س' : 'SAR'}</p></div>
-                <div className="col-span-2"><Label className="text-slate-500">{t('status')}</Label><StatusBadge status={showApplicantDetails.status} /></div>
+                <div><Label className="text-muted-foreground">{isRTL ? 'الاسم' : 'Name'}</Label><p className="font-medium">{showApplicantDetails.full_name_ar}</p></div>
+                <div><Label className="text-muted-foreground">{t('email')}</Label><p>{showApplicantDetails.email}</p></div>
+                <div><Label className="text-muted-foreground">{t('phone')}</Label><p>{showApplicantDetails.phone}</p></div>
+                <div><Label className="text-muted-foreground">{t('nationality')}</Label><p>{showApplicantDetails.nationality || '-'}</p></div>
+                <div><Label className="text-muted-foreground">{isRTL ? 'المستوى التعليمي' : 'Education'}</Label><p>{showApplicantDetails.education_level || '-'}</p></div>
+                <div><Label className="text-muted-foreground">{isRTL ? 'سنوات الخبرة' : 'Experience'}</Label><p>{showApplicantDetails.years_of_experience || 0} {isRTL ? 'سنوات' : 'years'}</p></div>
+                <div><Label className="text-muted-foreground">{isRTL ? 'الراتب المتوقع' : 'Expected Salary'}</Label><p className="font-medium text-emerald-600">{showApplicantDetails.expected_salary?.toLocaleString() || '-'} {isRTL ? 'ر.س' : 'SAR'}</p></div>
+                <div className="col-span-2"><Label className="text-muted-foreground">{t('status')}</Label><StatusBadge status={showApplicantDetails.status} /></div>
               </div>
 
               {/* Interview Scores */}
               {(showApplicantDetails.interview_technical_score > 0 || showApplicantDetails.interview_communication_score > 0) && (
-                <div className="bg-slate-50 rounded-lg p-4">
-                  <p className="font-semibold text-slate-700 mb-3 text-sm">{isRTL ? 'نتائج المقابلة' : 'Interview Scores'}</p>
+                <div className="bg-sand rounded-lg p-4">
+                  <p className="font-semibold text-ink mb-3 text-sm">{isRTL ? 'نتائج المقابلة' : 'Interview Scores'}</p>
                   <div className="grid grid-cols-3 gap-3 text-center text-sm">
-                    <div className="bg-white rounded-lg p-2 border"><p className="text-2xl font-bold text-blue-600">{showApplicantDetails.interview_technical_score || 0}</p><p className="text-xs text-slate-500">{isRTL ? 'تقني' : 'Technical'}</p></div>
-                    <div className="bg-white rounded-lg p-2 border"><p className="text-2xl font-bold text-purple-600">{showApplicantDetails.interview_communication_score || 0}</p><p className="text-xs text-slate-500">{isRTL ? 'تواصل' : 'Communication'}</p></div>
-                    <div className="bg-white rounded-lg p-2 border"><p className="text-2xl font-bold text-emerald-600">{showApplicantDetails.interview_culture_score || 0}</p><p className="text-xs text-slate-500">{isRTL ? 'انسجام' : 'Culture Fit'}</p></div>
+                    <div className="bg-white rounded-lg p-2 border"><p className="text-2xl font-bold text-najdi-700">{showApplicantDetails.interview_technical_score || 0}</p><p className="text-xs text-muted-foreground">{isRTL ? 'تقني' : 'Technical'}</p></div>
+                    <div className="bg-white rounded-lg p-2 border"><p className="text-2xl font-bold text-purple-600">{showApplicantDetails.interview_communication_score || 0}</p><p className="text-xs text-muted-foreground">{isRTL ? 'تواصل' : 'Communication'}</p></div>
+                    <div className="bg-white rounded-lg p-2 border"><p className="text-2xl font-bold text-emerald-600">{showApplicantDetails.interview_culture_score || 0}</p><p className="text-xs text-muted-foreground">{isRTL ? 'انسجام' : 'Culture Fit'}</p></div>
                   </div>
                 </div>
               )}

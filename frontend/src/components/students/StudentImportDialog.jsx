@@ -146,7 +146,7 @@ export default function StudentImportDialog({ open, onClose, onSuccess }) {
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileSpreadsheet className="w-5 h-5 text-blue-600" />
+            <FileSpreadsheet className="w-5 h-5 text-najdi-700" />
             {tt('استيراد الطلاب من ملف', 'Import Students from File')}
           </DialogTitle>
         </DialogHeader>
@@ -154,14 +154,14 @@ export default function StudentImportDialog({ open, onClose, onSuccess }) {
         {step === 'upload' && (
           <div className="space-y-5">
             {/* Template download */}
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 flex items-start gap-3">
-              <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+            <div className="rounded-xl border border-najdi-100 bg-najdi-50 p-4 flex items-start gap-3">
+              <Info className="w-5 h-5 text-najdi-500 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-semibold text-blue-900">{tt('ابدأ بتنزيل القالب', 'Start with the template')}</p>
-                <p className="text-xs text-blue-700 mt-0.5">
+                <p className="text-sm font-semibold text-najdi-900">{tt('ابدأ بتنزيل القالب', 'Start with the template')}</p>
+                <p className="text-xs text-najdi-900 mt-0.5">
                   {tt('حمّل القالب، أدخل بيانات الطلاب، ثم ارفع الملف.', 'Download the template, fill in student data, then upload.')}
                 </p>
-                <Button size="sm" variant="outline" onClick={downloadTemplate} className="mt-2 gap-1.5 border-blue-300 text-blue-700 hover:bg-blue-100">
+                <Button size="sm" variant="outline" onClick={downloadTemplate} className="mt-2 gap-1.5 border-najdi-100 text-najdi-900 hover:bg-najdi-50">
                   <Download className="w-3.5 h-3.5" />
                   {tt('تنزيل قالب CSV', 'Download CSV Template')}
                 </Button>
@@ -170,16 +170,16 @@ export default function StudentImportDialog({ open, onClose, onSuccess }) {
 
             {/* File drop zone */}
             <div
-              className="border-2 border-dashed border-slate-300 rounded-xl p-10 text-center hover:border-blue-400 transition-colors cursor-pointer"
+              className="border-2 border-dashed border-border rounded-xl p-10 text-center hover:border-najdi-500 transition-colors cursor-pointer"
               onClick={() => fileRef.current?.click()}
             >
-              <Upload className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-              <p className="font-semibold text-slate-700">{tt('اضغط لاختيار ملف CSV', 'Click to select a CSV file')}</p>
-              <p className="text-xs text-slate-400 mt-1">{tt('أو اسحب الملف وأفلته هنا', 'or drag and drop')}</p>
+              <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+              <p className="font-semibold text-ink">{tt('اضغط لاختيار ملف CSV', 'Click to select a CSV file')}</p>
+              <p className="text-xs text-muted-foreground mt-1">{tt('أو اسحب الملف وأفلته هنا', 'or drag and drop')}</p>
               <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={handleFile} className="hidden" />
             </div>
 
-            <p className="text-xs text-slate-400 text-center">
+            <p className="text-xs text-muted-foreground text-center">
               {tt('الأعمدة المطلوبة: name_ar, grade', 'Required columns: name_ar, grade')}
             </p>
           </div>
@@ -206,26 +206,26 @@ export default function StudentImportDialog({ open, onClose, onSuccess }) {
             )}
 
             {/* Preview table */}
-            <div className="overflow-x-auto rounded-lg border border-slate-200 max-h-64">
+            <div className="overflow-x-auto rounded-lg border border-border max-h-64">
               <table className="w-full text-xs">
-                <thead className="bg-slate-50 sticky top-0">
+                <thead className="bg-sand sticky top-0">
                   <tr>
-                    <th className="px-3 py-2 text-start font-semibold text-slate-600">#</th>
-                    <th className="px-3 py-2 text-start font-semibold text-slate-600">{tt('الاسم', 'Name')}</th>
-                    <th className="px-3 py-2 text-start font-semibold text-slate-600">{tt('الصف', 'Grade')}</th>
-                    <th className="px-3 py-2 text-start font-semibold text-slate-600">{tt('البريد الإلكتروني للوالد', 'Guardian Email')}</th>
-                    <th className="px-3 py-2 text-start font-semibold text-slate-600">{tt('الحالة', 'Status')}</th>
+                    <th className="px-3 py-2 text-start font-semibold text-muted-foreground">#</th>
+                    <th className="px-3 py-2 text-start font-semibold text-muted-foreground">{tt('الاسم', 'Name')}</th>
+                    <th className="px-3 py-2 text-start font-semibold text-muted-foreground">{tt('الصف', 'Grade')}</th>
+                    <th className="px-3 py-2 text-start font-semibold text-muted-foreground">{tt('البريد الإلكتروني للوالد', 'Guardian Email')}</th>
+                    <th className="px-3 py-2 text-start font-semibold text-muted-foreground">{tt('الحالة', 'Status')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.slice(0, 50).map((r, i) => {
                     const rowErrors = validateRow(r, i);
                     return (
-                      <tr key={i} className={rowErrors.length > 0 ? 'bg-red-50' : 'hover:bg-slate-50'}>
-                        <td className="px-3 py-1.5 text-slate-400">{i + 1}</td>
+                      <tr key={i} className={rowErrors.length > 0 ? 'bg-red-50' : 'hover:bg-sand'}>
+                        <td className="px-3 py-1.5 text-muted-foreground">{i + 1}</td>
                         <td className="px-3 py-1.5 font-medium">{r.name_ar || r.name_en || '—'}</td>
                         <td className="px-3 py-1.5">{r.grade || '—'}</td>
-                        <td className="px-3 py-1.5 text-slate-500">{r.guardian_email || '—'}</td>
+                        <td className="px-3 py-1.5 text-muted-foreground">{r.guardian_email || '—'}</td>
                         <td className="px-3 py-1.5">
                           {rowErrors.length > 0
                             ? <span className="text-red-600 flex items-center gap-1"><XCircle className="w-3 h-3" />{tt('خطأ', 'Error')}</span>
@@ -237,11 +237,11 @@ export default function StudentImportDialog({ open, onClose, onSuccess }) {
                 </tbody>
               </table>
             </div>
-            {rows.length > 50 && <p className="text-xs text-slate-400 text-center">{tt(`عرض أول 50 صف من ${rows.length}`, `Showing first 50 of ${rows.length} rows`)}</p>}
+            {rows.length > 50 && <p className="text-xs text-muted-foreground text-center">{tt(`عرض أول 50 صف من ${rows.length}`, `Showing first 50 of ${rows.length} rows`)}</p>}
 
             <div className="flex justify-between gap-3 pt-2 border-t">
               <Button variant="outline" onClick={reset}>{tt('رجوع', 'Back')}</Button>
-              <Button onClick={runImport} disabled={validCount === 0} className="gap-1.5 bg-blue-600 hover:bg-blue-700">
+              <Button onClick={runImport} disabled={validCount === 0} className="gap-1.5 bg-najdi-700 hover:bg-najdi-900">
                 {tt(`استيراد ${validCount} طالب`, `Import ${validCount} Students`)}
                 <ArrowRight className="w-4 h-4" />
               </Button>
@@ -251,9 +251,9 @@ export default function StudentImportDialog({ open, onClose, onSuccess }) {
 
         {step === 'importing' && (
           <div className="py-16 text-center space-y-3">
-            <Loader2 className="w-10 h-10 text-blue-600 animate-spin mx-auto" />
-            <p className="font-semibold text-slate-700">{tt('جارٍ الاستيراد...', 'Importing students...')}</p>
-            <p className="text-sm text-slate-400">{tt('قد يستغرق هذا لحظة', 'This may take a moment')}</p>
+            <Loader2 className="w-10 h-10 text-najdi-700 animate-spin mx-auto" />
+            <p className="font-semibold text-ink">{tt('جارٍ الاستيراد...', 'Importing students...')}</p>
+            <p className="text-sm text-muted-foreground">{tt('قد يستغرق هذا لحظة', 'This may take a moment')}</p>
           </div>
         )}
 
@@ -261,13 +261,13 @@ export default function StudentImportDialog({ open, onClose, onSuccess }) {
           <div className="py-10 text-center space-y-4">
             <CheckCircle2 className="w-14 h-14 text-emerald-500 mx-auto" />
             <div>
-              <p className="text-xl font-bold text-slate-800">{tt('اكتمل الاستيراد', 'Import Complete')}</p>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-xl font-bold text-ink">{tt('اكتمل الاستيراد', 'Import Complete')}</p>
+              <p className="text-sm text-muted-foreground mt-1">
                 <span className="text-emerald-600 font-semibold">{results.ok} {tt('ناجح', 'succeeded')}</span>
                 {results.failed > 0 && <span className="text-red-500 font-semibold ms-2">{results.failed} {tt('فشل', 'failed')}</span>}
               </p>
             </div>
-            <Button onClick={() => { reset(); onClose(); }} className="bg-slate-900 hover:bg-slate-800">
+            <Button onClick={() => { reset(); onClose(); }} className="bg-najdi-900 hover:bg-najdi-900">
               {tt('إغلاق', 'Close')}
             </Button>
           </div>

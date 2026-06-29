@@ -170,7 +170,7 @@ export default function SalaryComponents() {
       <TableBody>
         {data.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} className="text-center py-8 text-slate-400">
+            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
               {isRTL ? 'لا توجد عناصر' : 'No components'}
             </TableCell>
           </TableRow>
@@ -181,7 +181,7 @@ export default function SalaryComponents() {
               <TableCell>
                 <div>
                   <p>{comp.name_ar}</p>
-                  {comp.name_en && <p className="text-xs text-slate-500">{comp.name_en}</p>}
+                  {comp.name_en && <p className="text-xs text-muted-foreground">{comp.name_en}</p>}
                 </div>
               </TableCell>
               <TableCell>
@@ -204,7 +204,7 @@ export default function SalaryComponents() {
                 {comp.affects_gosi ? (
                   <Badge className="bg-emerald-100 text-emerald-700">{isRTL ? 'نعم' : 'Yes'}</Badge>
                 ) : (
-                  <span className="text-slate-400">-</span>
+                  <span className="text-muted-foreground">-</span>
                 )}
               </TableCell>
               <TableCell>
@@ -230,7 +230,7 @@ export default function SalaryComponents() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-xl font-semibold">{isRTL ? 'عناصر الراتب' : 'Salary Components'}</h2>
-          <p className="text-sm text-slate-500">{isRTL ? 'إدارة المكتسبات والاستقطاعات' : 'Manage earnings and deductions'}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'إدارة المكتسبات والاستقطاعات' : 'Manage earnings and deductions'}</p>
         </div>
         <Button onClick={() => handleOpenDialog()}>
           <Plus className="w-4 h-4 me-2" />

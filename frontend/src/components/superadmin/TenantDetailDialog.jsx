@@ -34,8 +34,8 @@ const ROLE_COLORS = {
   admin: 'bg-red-100 text-red-700',
   hr_admin: 'bg-purple-100 text-purple-700',
   hr_officer: 'bg-purple-50 text-purple-600',
-  finance: 'bg-blue-100 text-blue-700',
-  accountant: 'bg-blue-50 text-blue-600',
+  finance: 'bg-najdi-50 text-najdi-900',
+  accountant: 'bg-najdi-50 text-najdi-700',
   branch_manager: 'bg-amber-100 text-amber-700',
   teacher: 'bg-green-100 text-green-700',
 };
@@ -123,7 +123,7 @@ function TenantUsersTab({ tenant, isRTL }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">
           {tenantUsers.length} / {tenant.max_users || '∞'} {isRTL ? 'مستخدم' : 'users'}
         </p>
         <Button size="sm" onClick={() => setInviteOpen(true)} className="gap-2">
@@ -134,28 +134,28 @@ function TenantUsersTab({ tenant, isRTL }) {
 
       <div className="max-h-64 overflow-y-auto rounded-lg border divide-y">
         {isLoading ? (
-          <div className="p-6 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-slate-400" /></div>
+          <div className="p-6 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-muted-foreground" /></div>
         ) : tenantUsers.length === 0 ? (
-          <div className="p-6 text-center text-sm text-slate-400">{isRTL ? 'لا يوجد مستخدمون' : 'No users'}</div>
+          <div className="p-6 text-center text-sm text-muted-foreground">{isRTL ? 'لا يوجد مستخدمون' : 'No users'}</div>
         ) : tenantUsers.map(u => {
           const role = u.user_role || u.role || 'user';
           return (
-            <div key={u.id} className="flex items-center justify-between gap-3 px-3 py-2.5 bg-white hover:bg-slate-50">
+            <div key={u.id} className="flex items-center justify-between gap-3 px-3 py-2.5 bg-white hover:bg-sand">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-semibold text-slate-600 shrink-0">
+                <div className="w-8 h-8 rounded-full bg-sand-alt flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0">
                   {(u.full_name || u.email || '?')[0].toUpperCase()}
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{u.full_name || '—'}</p>
-                  <p className="text-xs text-slate-500 truncate">{u.email}</p>
+                  <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <Badge className={`text-xs ${ROLE_COLORS[role] || 'bg-slate-100 text-slate-600'}`}>
+                <Badge className={`text-xs ${ROLE_COLORS[role] || 'bg-sand-alt text-muted-foreground'}`}>
                   {getRoleLabel(u)}
                 </Badge>
                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditUser({ ...u })}>
-                  <Edit2 className="w-3.5 h-3.5 text-slate-400" />
+                  <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
                 </Button>
                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleRemoveFromTenant(u)}>
                   <Trash2 className="w-3.5 h-3.5 text-red-400" />
@@ -171,7 +171,7 @@ function TenantUsersTab({ tenant, isRTL }) {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-blue-600" />
+              <UserPlus className="w-5 h-5 text-najdi-700" />
               {isRTL ? 'دعوة مستخدم لـ' : 'Invite User to'} {isRTL ? tenant.name_ar : tenant.name_en}
             </DialogTitle>
           </DialogHeader>
@@ -179,7 +179,7 @@ function TenantUsersTab({ tenant, isRTL }) {
             <div className="space-y-1.5">
               <Label>{isRTL ? 'البريد الإلكتروني *' : 'Email *'}</Label>
               <div className="relative">
-                <Mail className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+                <Mail className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
                 <Input type="email" className={isRTL ? 'pr-9' : 'pl-9'} placeholder="user@school.com"
                   value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
               </div>
@@ -214,7 +214,7 @@ function TenantUsersTab({ tenant, isRTL }) {
           </DialogHeader>
           {editUser && (
             <div className="space-y-4 py-2">
-              <p className="text-sm text-slate-600">{editUser.full_name || editUser.email}</p>
+              <p className="text-sm text-muted-foreground">{editUser.full_name || editUser.email}</p>
               <div className="space-y-1.5">
                 <Label>{isRTL ? 'الدور' : 'Role'}</Label>
                 <Select value={editUser.user_role || editUser.role || 'user'}
@@ -316,10 +316,10 @@ export default function TenantDetailDialog({ tenant, users, open, onClose, onUpd
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 flex-wrap">
-            <Building2 className="w-5 h-5 text-blue-600" />
+            <Building2 className="w-5 h-5 text-najdi-700" />
             {isRTL ? tenant.name_ar : tenant.name_en}
-            <Badge className={statusColors[tenant.status] || 'bg-slate-100'}>{tenant.status}</Badge>
-            <span className="text-sm text-slate-400 font-mono">{tenant.tenant_code}</span>
+            <Badge className={statusColors[tenant.status] || 'bg-sand-alt'}>{tenant.status}</Badge>
+            <span className="text-sm text-muted-foreground font-mono">{tenant.tenant_code}</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -348,11 +348,11 @@ export default function TenantDetailDialog({ tenant, users, open, onClose, onUpd
                 { label: isRTL ? 'الإيرادات' : 'Revenue', value: `${(tenant.monthly_revenue || 0).toLocaleString()} SAR`, icon: DollarSign },
                 { label: isRTL ? 'الخطة' : 'Plan', value: isRTL ? plan.nameAr : plan.nameEn, icon: Shield },
               ].map((s, i) => (
-                <Card key={i} className="bg-slate-50">
+                <Card key={i} className="bg-sand">
                   <CardContent className="p-3 flex items-center gap-2">
-                    <s.icon className="w-4 h-4 text-slate-400" />
+                    <s.icon className="w-4 h-4 text-muted-foreground" />
                     <div>
-                      <p className="text-xs text-slate-500">{s.label}</p>
+                      <p className="text-xs text-muted-foreground">{s.label}</p>
                       <p className="text-sm font-semibold">{s.value}</p>
                     </div>
                   </CardContent>
@@ -360,14 +360,14 @@ export default function TenantDetailDialog({ tenant, users, open, onClose, onUpd
               ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-sm bg-slate-50 rounded-lg p-4">
-              <div><span className="text-slate-500">{isRTL ? 'البريد' : 'Email'}:</span> <span className="font-medium">{tenant.admin_email || '-'}</span></div>
-              <div><span className="text-slate-500">{isRTL ? 'الهاتف' : 'Phone'}:</span> <span>{tenant.phone || '-'}</span></div>
-              <div><span className="text-slate-500">{isRTL ? 'المدينة' : 'City'}:</span> <span>{tenant.city || '-'}</span></div>
-              <div><span className="text-slate-500">{isRTL ? 'تاريخ الإنشاء' : 'Created'}:</span> <span>{tenant.created_at ? format(new Date(tenant.created_at), 'dd/MM/yyyy') : '-'}</span></div>
+            <div className="grid grid-cols-2 gap-3 text-sm bg-sand rounded-lg p-4">
+              <div><span className="text-muted-foreground">{isRTL ? 'البريد' : 'Email'}:</span> <span className="font-medium">{tenant.admin_email || '-'}</span></div>
+              <div><span className="text-muted-foreground">{isRTL ? 'الهاتف' : 'Phone'}:</span> <span>{tenant.phone || '-'}</span></div>
+              <div><span className="text-muted-foreground">{isRTL ? 'المدينة' : 'City'}:</span> <span>{tenant.city || '-'}</span></div>
+              <div><span className="text-muted-foreground">{isRTL ? 'تاريخ الإنشاء' : 'Created'}:</span> <span>{tenant.created_at ? format(new Date(tenant.created_at), 'dd/MM/yyyy') : '-'}</span></div>
               {tenant.trial_end_date && (
                 <div className="col-span-2">
-                  <span className="text-slate-500">{isRTL ? 'انتهاء التجربة' : 'Trial Ends'}:</span>
+                  <span className="text-muted-foreground">{isRTL ? 'انتهاء التجربة' : 'Trial Ends'}:</span>
                   <span className="font-medium ms-2">{format(new Date(tenant.trial_end_date), 'dd/MM/yyyy')}</span>
                   {new Date(tenant.trial_end_date) < new Date() && (
                     <Badge className="bg-red-100 text-red-600 ms-2">{isRTL ? 'منتهي' : 'Expired'}</Badge>
@@ -382,13 +382,13 @@ export default function TenantDetailDialog({ tenant, users, open, onClose, onUpd
                 {(tenant.enabled_modules || []).map(m => {
                   const mod = ALL_MODULES.find(am => am.key === m);
                   return (
-                    <Badge key={m} className="bg-blue-50 text-blue-700">
+                    <Badge key={m} className="bg-najdi-50 text-najdi-900">
                       {mod ? (isRTL ? mod.nameAr : mod.nameEn) : m}
                     </Badge>
                   );
                 })}
                 {(!tenant.enabled_modules || tenant.enabled_modules.length === 0) && (
-                  <span className="text-sm text-slate-400">{isRTL ? 'جميع الوحدات' : 'All modules'}</span>
+                  <span className="text-sm text-muted-foreground">{isRTL ? 'جميع الوحدات' : 'All modules'}</span>
                 )}
               </div>
             </div>
@@ -418,7 +418,7 @@ export default function TenantDetailDialog({ tenant, users, open, onClose, onUpd
                   {isRTL ? 'تغيير' : 'Change'}
                 </Button>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 {isRTL ? 'تغيير الخطة يحدّث حدود الاستخدام والوحدات المتاحة تلقائياً' : 'Changing the plan automatically updates usage limits and available modules'}
               </p>
             </div>

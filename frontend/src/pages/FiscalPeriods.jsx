@@ -128,7 +128,7 @@ export default function FiscalPeriods() {
     { header: isRTL ? 'من تاريخ' : 'Start Date', cell: (row) => format(new Date(row.start_date), 'dd/MM/yyyy') },
     { header: isRTL ? 'إلى تاريخ' : 'End Date', cell: (row) => format(new Date(row.end_date), 'dd/MM/yyyy') },
     { header: t('status'), cell: (row) => {
-      const colors = { open: 'bg-emerald-100 text-emerald-700', closed: 'bg-red-100 text-red-700', future: 'bg-slate-100 text-slate-700' };
+      const colors = { open: 'bg-emerald-100 text-emerald-700', closed: 'bg-red-100 text-red-700', future: 'bg-sand-alt text-ink' };
       const labels = { open: isRTL ? 'مفتوحة' : 'Open', closed: isRTL ? 'مغلقة' : 'Closed', future: isRTL ? 'مستقبلية' : 'Future' };
       return <Badge className={colors[row.status]}>{labels[row.status]}</Badge>;
     }},

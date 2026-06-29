@@ -26,7 +26,7 @@ export default function LoginGate() {
 
   return (
     <div
-      className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4"
+      className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-sand via-najdi-50 to-sand p-4"
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       <style>{`
@@ -34,13 +34,13 @@ export default function LoginGate() {
         * { font-family: ${isRTL ? "'IBM Plex Sans Arabic', sans-serif" : "'Inter', sans-serif"}; }
       `}</style>
 
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-100 p-8 text-center space-y-6">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-border p-8 text-center space-y-6">
         {/* Language toggle */}
         <div className="flex justify-end">
           <button
             type="button"
             onClick={() => setLang((l) => (l === 'ar' ? 'en' : 'ar'))}
-            className="text-xs text-slate-500 hover:text-slate-700"
+            className="text-xs text-muted-foreground hover:text-ink"
           >
             {isRTL ? 'English' : 'العربية'}
           </button>
@@ -53,8 +53,8 @@ export default function LoginGate() {
             alt="EduSaga 360"
             className="h-14 w-auto mx-auto mb-4"
           />
-          <h1 className="text-2xl font-bold text-slate-900">EduSaga 360</h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-ink">EduSaga 360</h1>
+          <p className="text-muted-foreground text-sm mt-1">
             {t('منصة إدارة المدارس', 'School Management Platform')}
           </p>
         </div>
@@ -63,11 +63,11 @@ export default function LoginGate() {
         <div className="space-y-2">
           <button
             onClick={handleRegister}
-            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors text-sm"
+            className="w-full py-3 px-4 bg-najdi-700 hover:bg-najdi-900 text-white font-semibold rounded-xl transition-colors text-sm"
           >
             {t('📩 تسجيل مدرسة جديدة', '📩 Register your school')}
           </button>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-muted-foreground">
             {t(
               'تجربة مجانية 30 يوماً — لا بطاقة ائتمان مطلوبة',
               '30-day free trial — no credit card required',
@@ -78,9 +78,9 @@ export default function LoginGate() {
         {/* Divider */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200" />
+            <div className="w-full border-t border-border" />
           </div>
-          <div className="relative flex justify-center text-xs text-slate-400 bg-white px-3">
+          <div className="relative flex justify-center text-xs text-muted-foreground bg-white px-3">
             {t('لديك حساب؟', 'Already a customer?')}
           </div>
         </div>
@@ -89,11 +89,11 @@ export default function LoginGate() {
         <div>
           <button
             onClick={handleLogin}
-            className="w-full py-2.5 px-4 border border-blue-200 text-blue-600 font-medium rounded-xl hover:bg-blue-50 transition-colors text-sm"
+            className="w-full py-2.5 px-4 border border-najdi-100 text-najdi-700 font-medium rounded-xl hover:bg-najdi-50 transition-colors text-sm"
           >
             {t('تسجيل الدخول →', 'Sign in →')}
           </button>
-          <p className="text-xs text-slate-400 mt-2">
+          <p className="text-xs text-muted-foreground mt-2">
             {t(
               'يجب أن يكون حسابك معتمداً قبل تسجيل الدخول.',
               'Your account must be approved before you can sign in.',

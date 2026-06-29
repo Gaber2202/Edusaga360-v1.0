@@ -72,7 +72,7 @@ export default function SystemSmokeTest() {
   // Admin only
   if (userRole !== 'admin') {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-sand flex items-center justify-center">
         <Card className="max-w-md w-full p-6">
           <div className="flex items-center gap-3 mb-4">
             <AlertTriangle className="w-6 h-6 text-red-600" />
@@ -134,7 +134,7 @@ export default function SystemSmokeTest() {
       case 'error':
         return <AlertTriangle className="w-5 h-5 text-red-600" />;
       default:
-        return <Clock className="w-5 h-5 text-slate-400" />;
+        return <Clock className="w-5 h-5 text-muted-foreground" />;
     }
   };
 
@@ -146,7 +146,7 @@ export default function SystemSmokeTest() {
       case 'error':
         return 'bg-red-50 border-red-200';
       default:
-        return 'bg-slate-50 border-slate-200';
+        return 'bg-sand border-border';
     }
   };
 
@@ -167,7 +167,7 @@ export default function SystemSmokeTest() {
             <CardContent className="pt-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-green-600 mb-1">{passCount}</div>
-                <p className="text-sm text-slate-600">{isRTL ? 'نجحت' : 'Passed'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'نجحت' : 'Passed'}</p>
               </div>
             </CardContent>
           </Card>
@@ -175,15 +175,15 @@ export default function SystemSmokeTest() {
             <CardContent className="pt-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-red-600 mb-1">{failCount}</div>
-                <p className="text-sm text-slate-600">{isRTL ? 'فشلت' : 'Failed'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'فشلت' : 'Failed'}</p>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-slate-900 mb-1">{results.length}</div>
-                <p className="text-sm text-slate-600">{isRTL ? 'الإجمالي' : 'Total'}</p>
+                <div className="text-3xl font-bold text-ink mb-1">{results.length}</div>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'الإجمالي' : 'Total'}</p>
               </div>
             </CardContent>
           </Card>
@@ -192,8 +192,8 @@ export default function SystemSmokeTest() {
 
       {/* Last Run Time */}
       {lastRun && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-sm text-slate-600">
+        <div className="bg-najdi-50 border border-najdi-100 rounded-lg p-3">
+          <p className="text-sm text-muted-foreground">
             {isRTL ? 'آخر تشغيل: ' : 'Last run: '}
             <span className="font-mono">{lastRun.toLocaleTimeString()}</span>
           </p>
@@ -204,7 +204,7 @@ export default function SystemSmokeTest() {
       <Button
         onClick={runTests}
         disabled={running}
-        className="gap-2 bg-slate-900 hover:bg-slate-800"
+        className="gap-2 bg-najdi-900 hover:bg-najdi-900"
         size="lg"
       >
         {running && <Loader2 className="w-5 h-5 animate-spin" />}
@@ -221,19 +221,19 @@ export default function SystemSmokeTest() {
                 <div className="flex items-start gap-3 flex-1">
                   {getStatusIcon(result.status)}
                   <div className="flex-1">
-                    <h3 className="font-semibold text-slate-900">
+                    <h3 className="font-semibold text-ink">
                       {isRTL ? result.nameAr : result.name}
                     </h3>
-                    <p className="text-sm text-slate-600 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       {result.message}
                       {result.duration && (
-                        <span className="ms-2 text-xs text-slate-500">
+                        <span className="ms-2 text-xs text-muted-foreground">
                           ({result.duration}ms)
                         </span>
                       )}
                     </p>
                     {result.details && Object.keys(result.details).length > 0 && (
-                      <pre className="text-xs bg-slate-50 p-2 rounded mt-2 overflow-auto max-h-24 text-slate-700">
+                      <pre className="text-xs bg-sand p-2 rounded mt-2 overflow-auto max-h-24 text-ink">
                         {JSON.stringify(result.details, null, 2)}
                       </pre>
                     )}

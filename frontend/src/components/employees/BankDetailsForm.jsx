@@ -30,13 +30,13 @@ export default function BankDetailsForm({ value = {}, onChange, readOnly = false
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-2">
-        <Landmark className="w-4 h-4 text-blue-600" />
-        <h3 className="font-semibold text-slate-800 text-sm">{isRTL ? 'التفاصيل البنكية' : 'Bank Details'}</h3>
+        <Landmark className="w-4 h-4 text-najdi-700" />
+        <h3 className="font-semibold text-ink text-sm">{isRTL ? 'التفاصيل البنكية' : 'Bank Details'}</h3>
       </div>
 
       {/* Reference info */}
       {(nationalId) && (
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-600">
+        <div className="bg-sand border border-border rounded-lg p-3 text-xs text-muted-foreground">
           <span className="font-semibold">{isRTL ? 'رقم الهوية / الإقامة:' : 'ID / Iqama:'}</span> {nationalId}
         </div>
       )}

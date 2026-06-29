@@ -241,7 +241,7 @@ export default function Employees() {
 
   const columns = [
     { header: isRTL ? 'الرقم الوظيفي' : 'Employee ID', cell: (row) => <span className="font-mono text-sm">{row.employee_id}</span> },
-    { header: isRTL ? 'الاسم' : 'Name', cell: (row) => <div><p className="font-medium">{row.name_ar}</p><p className="text-sm text-slate-500">{row.name_en}</p></div> },
+    { header: isRTL ? 'الاسم' : 'Name', cell: (row) => <div><p className="font-medium">{row.name_ar}</p><p className="text-sm text-muted-foreground">{row.name_en}</p></div> },
     { header: isRTL ? 'الجنسية' : 'Nationality', cell: (row) => (
       <div className="flex items-center gap-2">
         <span>{row.nationality}</span>
@@ -290,7 +290,7 @@ export default function Employees() {
       </Tabs>
 
       <div className="relative max-w-md">
-        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
         <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${isRTL ? 'pr-10' : 'pl-10'} bg-white`} />
       </div>
 
@@ -427,7 +427,7 @@ export default function Employees() {
 
               {/* Company & Visa Section */}
               <div className="border-t pt-4 mt-4">
-                <h3 className="font-semibold text-slate-900 mb-4">{isRTL ? 'شركة الإقامة / التأشيرة' : 'Residency / Visa Company'}</h3>
+                <h3 className="font-semibold text-ink mb-4">{isRTL ? 'شركة الإقامة / التأشيرة' : 'Residency / Visa Company'}</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>{isRTL ? 'شركة الإقامة' : 'Visa Company'}</Label>
@@ -456,7 +456,7 @@ export default function Employees() {
 
               {/* MOE License Section */}
               <div className="border-t pt-4 mt-4">
-                <h3 className="font-semibold text-slate-900 mb-4">{isRTL ? 'ترخيص وزارة التعليم' : 'MOE License'}</h3>
+                <h3 className="font-semibold text-ink mb-4">{isRTL ? 'ترخيص وزارة التعليم' : 'MOE License'}</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>{isRTL ? 'تاريخ انتهاء الترخيص' : 'License Expiry Date'}</Label>
@@ -503,19 +503,19 @@ export default function Employees() {
               </TabsList>
               <TabsContent value="general" className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-              <div><Label className="text-slate-500">{isRTL ? 'الرقم الوظيفي' : 'Employee ID'}</Label><p className="font-medium">{showDetails.employee_id}</p></div>
-              <div><Label className="text-slate-500">{isRTL ? 'الاسم' : 'Name'}</Label><p className="font-medium">{showDetails.name_ar}</p></div>
-              <div><Label className="text-slate-500">{isRTL ? 'البريد الإلكتروني الوظيفي' : 'Work Email'}</Label><p>{showDetails.email || '-'}</p></div>
-              <div><Label className="text-slate-500">{isRTL ? 'البريد الإلكتروني الشخصي' : 'Personal Email'}</Label><p>{showDetails.personal_email || '-'}</p></div>
-              <div><Label className="text-slate-500">{t('phone')}</Label><p>{showDetails.phone}</p></div>
-              <div><Label className="text-slate-500">{t('nationalId')}</Label><p>{showDetails.national_id}</p></div>
-                  <div><Label className="text-slate-500">{isRTL ? 'تاريخ التعيين' : 'Hire Date'}</Label><p>{showDetails.hire_date ? format(new Date(showDetails.hire_date), 'dd/MM/yyyy') : '-'}</p></div>
-                  <div><Label className="text-slate-500">{isRTL ? 'الجنسية' : 'Nationality'}</Label><p>{showDetails.nationality || '-'}</p></div>
-                  <div><Label className="text-slate-500">{isRTL ? 'القسم' : 'Department'}</Label><p>{departments.find(d => d.id === showDetails.department_id)?.name_ar || '-'}</p></div>
+              <div><Label className="text-muted-foreground">{isRTL ? 'الرقم الوظيفي' : 'Employee ID'}</Label><p className="font-medium">{showDetails.employee_id}</p></div>
+              <div><Label className="text-muted-foreground">{isRTL ? 'الاسم' : 'Name'}</Label><p className="font-medium">{showDetails.name_ar}</p></div>
+              <div><Label className="text-muted-foreground">{isRTL ? 'البريد الإلكتروني الوظيفي' : 'Work Email'}</Label><p>{showDetails.email || '-'}</p></div>
+              <div><Label className="text-muted-foreground">{isRTL ? 'البريد الإلكتروني الشخصي' : 'Personal Email'}</Label><p>{showDetails.personal_email || '-'}</p></div>
+              <div><Label className="text-muted-foreground">{t('phone')}</Label><p>{showDetails.phone}</p></div>
+              <div><Label className="text-muted-foreground">{t('nationalId')}</Label><p>{showDetails.national_id}</p></div>
+                  <div><Label className="text-muted-foreground">{isRTL ? 'تاريخ التعيين' : 'Hire Date'}</Label><p>{showDetails.hire_date ? format(new Date(showDetails.hire_date), 'dd/MM/yyyy') : '-'}</p></div>
+                  <div><Label className="text-muted-foreground">{isRTL ? 'الجنسية' : 'Nationality'}</Label><p>{showDetails.nationality || '-'}</p></div>
+                  <div><Label className="text-muted-foreground">{isRTL ? 'القسم' : 'Department'}</Label><p>{departments.find(d => d.id === showDetails.department_id)?.name_ar || '-'}</p></div>
                   {showDetails.license_expiry_date && (
                     <div className="col-span-2">
-                      <Label className="text-slate-500">{isRTL ? 'تاريخ انتهاء ترخيص MOE' : 'MOE License Expiry'}</Label>
-                      <p className={`font-medium ${new Date(showDetails.license_expiry_date) < new Date(Date.now() + 60*24*60*60*1000) ? 'text-amber-600' : 'text-slate-900'}`}>
+                      <Label className="text-muted-foreground">{isRTL ? 'تاريخ انتهاء ترخيص MOE' : 'MOE License Expiry'}</Label>
+                      <p className={`font-medium ${new Date(showDetails.license_expiry_date) < new Date(Date.now() + 60*24*60*60*1000) ? 'text-amber-600' : 'text-ink'}`}>
                         {format(new Date(showDetails.license_expiry_date), 'dd/MM/yyyy')}
                       </p>
                     </div>

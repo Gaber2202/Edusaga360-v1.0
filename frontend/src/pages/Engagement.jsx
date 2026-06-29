@@ -163,10 +163,10 @@ export default function Engagement() {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'إعلانات نشطة' : 'Active Announcements'}</p><p className="text-2xl font-bold text-blue-600">{announcements.filter(a => a.status === 'published').length}</p></Card>
-        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'استبيانات مفتوحة' : 'Open Surveys'}</p><p className="text-2xl font-bold text-emerald-600">{surveys.filter(s => s.status === 'active').length}</p></Card>
-        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'ردود الاستبيانات' : 'Survey Responses'}</p><p className="text-2xl font-bold text-purple-600">{surveyResponses.length}</p></Card>
-        <Card className="p-4"><p className="text-sm text-slate-500">eNPS</p><p className={`text-2xl font-bold ${eNPSScore !== null ? (eNPSScore > 0 ? 'text-emerald-600' : 'text-red-600') : 'text-slate-400'}`}>{eNPSScore !== null ? eNPSScore : '-'}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'إعلانات نشطة' : 'Active Announcements'}</p><p className="text-2xl font-bold text-najdi-700">{announcements.filter(a => a.status === 'published').length}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'استبيانات مفتوحة' : 'Open Surveys'}</p><p className="text-2xl font-bold text-emerald-600">{surveys.filter(s => s.status === 'active').length}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'ردود الاستبيانات' : 'Survey Responses'}</p><p className="text-2xl font-bold text-purple-600">{surveyResponses.length}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">eNPS</p><p className={`text-2xl font-bold ${eNPSScore !== null ? (eNPSScore > 0 ? 'text-emerald-600' : 'text-red-600') : 'text-muted-foreground'}`}>{eNPSScore !== null ? eNPSScore : '-'}</p></Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -196,8 +196,8 @@ export default function Engagement() {
                       <Badge className={ann.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>{ann.status === 'published' ? (isRTL ? 'منشور' : 'Published') : (isRTL ? 'مجدول' : 'Scheduled')}</Badge>
                     </div>
                     <h3 className="font-semibold text-lg">{isRTL ? ann.title_ar : ann.title_en || ann.title_ar}</h3>
-                    <p className="text-sm text-slate-600 mt-1 line-clamp-2">{isRTL ? ann.body_ar : ann.body_en || ann.body_ar}</p>
-                    <div className="flex items-center gap-4 mt-3 text-sm text-slate-400">
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{isRTL ? ann.body_ar : ann.body_en || ann.body_ar}</p>
+                    <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
                       <span>{ann.created_at ? format(new Date(ann.created_at), 'dd/MM/yyyy') : ''}</span>
                       {ann.allow_reactions && <span className="flex items-center gap-1"><ThumbsUp className="w-3 h-3" />{ann.reactions?.likes || 0}</span>}
                       {ann.allow_comments && <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" />{ann.comments_count || 0}</span>}
@@ -207,7 +207,7 @@ export default function Engagement() {
               </Card>
             ))}
             {announcements.length === 0 && !loadingAnnouncements && (
-              <Card className="p-8 text-center text-slate-400">{isRTL ? 'لا توجد إعلانات' : 'No announcements yet'}</Card>
+              <Card className="p-8 text-center text-muted-foreground">{isRTL ? 'لا توجد إعلانات' : 'No announcements yet'}</Card>
             )}
           </div>
         </TabsContent>
@@ -239,11 +239,11 @@ export default function Engagement() {
                   <TableCell><Badge variant="outline">{s.survey_type === 'enps' ? 'eNPS' : s.survey_type === 'pulse' ? (isRTL ? 'نبض' : 'Pulse') : (isRTL ? 'عام' : 'General')}</Badge></TableCell>
                   <TableCell>{s.is_anonymous ? (isRTL ? 'نعم' : 'Yes') : (isRTL ? 'لا' : 'No')}</TableCell>
                   <TableCell>{s.responses_count || 0}</TableCell>
-                  <TableCell><Badge className={s.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}>{s.status === 'active' ? (isRTL ? 'نشط' : 'Active') : (isRTL ? 'مغلق' : 'Closed')}</Badge></TableCell>
+                  <TableCell><Badge className={s.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-sand-alt text-ink'}>{s.status === 'active' ? (isRTL ? 'نشط' : 'Active') : (isRTL ? 'مغلق' : 'Closed')}</Badge></TableCell>
                 </TableRow>
               ))}
               {surveys.length === 0 && (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-slate-400">{isRTL ? 'لا توجد استبيانات' : 'No surveys'}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">{isRTL ? 'لا توجد استبيانات' : 'No surveys'}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -256,7 +256,7 @@ export default function Engagement() {
               <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center"><Bot className="w-5 h-5 text-purple-600" /></div>
               <div>
                 <h3 className="font-semibold">{isRTL ? 'مساعد يامن الذكي — مكتب المساعدة' : 'Yamen AI — HR Helpdesk'}</h3>
-                <p className="text-sm text-slate-500">{isRTL ? 'اسأل أي سؤال عن الموارد البشرية والسياسات والإجازات' : 'Ask any HR, policy, leave, or benefits question'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'اسأل أي سؤال عن الموارد البشرية والسياسات والإجازات' : 'Ask any HR, policy, leave, or benefits question'}</p>
               </div>
             </div>
             <div className="flex gap-2 mb-4">

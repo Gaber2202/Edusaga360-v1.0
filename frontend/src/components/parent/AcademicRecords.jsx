@@ -51,7 +51,7 @@ export default function AcademicRecords({ student }) {
   if (!student) {
     return (
       <Card>
-        <CardContent className="py-6 text-center text-slate-600">
+        <CardContent className="py-6 text-center text-muted-foreground">
           {isRTL ? 'يرجى اختيار طالب' : 'Please select a student'}
         </CardContent>
       </Card>
@@ -68,7 +68,7 @@ export default function AcademicRecords({ student }) {
       present: 'bg-green-100 text-green-800',
       absent: 'bg-red-100 text-red-800',
       late: 'bg-yellow-100 text-yellow-800',
-      excused: 'bg-blue-100 text-blue-800',
+      excused: 'bg-najdi-50 text-najdi-900',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
@@ -85,19 +85,19 @@ export default function AcademicRecords({ student }) {
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-slate-600">{isRTL ? 'الاسم' : 'Name'}</p>
+              <p className="text-sm text-muted-foreground">{isRTL ? 'الاسم' : 'Name'}</p>
               <p className="font-medium">{isRTL ? student.name_ar : student.name_en || student.name_ar}</p>
             </div>
             <div>
-              <p className="text-sm text-slate-600">{isRTL ? 'الصف' : 'Grade'}</p>
+              <p className="text-sm text-muted-foreground">{isRTL ? 'الصف' : 'Grade'}</p>
               <p className="font-medium">{student.grade}</p>
             </div>
             <div>
-              <p className="text-sm text-slate-600">{isRTL ? 'الشعبة' : 'Section'}</p>
+              <p className="text-sm text-muted-foreground">{isRTL ? 'الشعبة' : 'Section'}</p>
               <p className="font-medium">{student.section}</p>
             </div>
             <div>
-              <p className="text-sm text-slate-600">{isRTL ? 'الحالة' : 'Status'}</p>
+              <p className="text-sm text-muted-foreground">{isRTL ? 'الحالة' : 'Status'}</p>
               <Badge className="mt-1">
                 {isRTL 
                   ? student.status === 'active' ? 'نشط' : 'غير نشط'
@@ -119,35 +119,35 @@ export default function AcademicRecords({ student }) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-slate-900">{attendanceRate}%</p>
-              <p className="text-xs text-slate-600">{isRTL ? 'معدل الحضور' : 'Attendance Rate'}</p>
+              <p className="text-2xl font-bold text-ink">{attendanceRate}%</p>
+              <p className="text-xs text-muted-foreground">{isRTL ? 'معدل الحضور' : 'Attendance Rate'}</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-green-600">{presentDays}</p>
-              <p className="text-xs text-slate-600">{isRTL ? 'أيام حاضر' : 'Days Present'}</p>
+              <p className="text-xs text-muted-foreground">{isRTL ? 'أيام حاضر' : 'Days Present'}</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-red-600">
                 {attendance.filter(a => a.status === 'absent').length}
               </p>
-              <p className="text-xs text-slate-600">{isRTL ? 'أيام غائب' : 'Days Absent'}</p>
+              <p className="text-xs text-muted-foreground">{isRTL ? 'أيام غائب' : 'Days Absent'}</p>
             </div>
           </div>
 
           {/* Recent Attendance */}
           {loading ? (
             <div className="flex justify-center py-4">
-              <Loader2 className="w-5 h-5 animate-spin text-slate-900" />
+              <Loader2 className="w-5 h-5 animate-spin text-ink" />
             </div>
           ) : attendance.length > 0 ? (
             <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">
+              <p className="text-sm font-medium text-ink">
                 {isRTL ? 'السجل الحديث (آخر 10 أيام)' : 'Recent Records (Last 10 Days)'}
               </p>
               <div className="space-y-1 max-h-40 overflow-y-auto">
                 {attendance.slice(0, 10).map((record) => (
-                  <div key={record.id} className="flex items-center justify-between py-1 px-2 bg-slate-50 rounded">
-                    <span className="text-sm text-slate-600">
+                  <div key={record.id} className="flex items-center justify-between py-1 px-2 bg-sand rounded">
+                    <span className="text-sm text-muted-foreground">
                       {new Date(record.date).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}
                     </span>
                     <Badge className={statusBadgeColor(record.status)}>
@@ -158,7 +158,7 @@ export default function AcademicRecords({ student }) {
               </div>
             </div>
           ) : (
-            <p className="text-center py-4 text-slate-500 text-sm">
+            <p className="text-center py-4 text-muted-foreground text-sm">
               {isRTL ? 'لا توجد بيانات حضور' : 'No attendance records'}
             </p>
           )}
@@ -175,27 +175,27 @@ export default function AcademicRecords({ student }) {
         <CardContent>
           {loading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-slate-900" />
+              <Loader2 className="w-5 h-5 animate-spin text-ink" />
             </div>
           ) : grades.length > 0 ? (
             <div className="space-y-3">
               {grades.map((grade) => (
-                <div key={grade.id} className="border border-slate-200 rounded p-3">
+                <div key={grade.id} className="border border-border rounded p-3">
                   <div className="flex justify-between items-start mb-1">
-                    <span className="font-medium text-slate-900">{grade.subject || grade.assessment_name}</span>
-                    <span className="text-lg font-bold text-blue-600">{grade.score || grade.grade}/100</span>
+                    <span className="font-medium text-ink">{grade.subject || grade.assessment_name}</span>
+                    <span className="text-lg font-bold text-najdi-700">{grade.score || grade.grade}/100</span>
                   </div>
                   {grade.teacher_notes && (
-                    <p className="text-sm text-slate-600 mt-2">{grade.teacher_notes}</p>
+                    <p className="text-sm text-muted-foreground mt-2">{grade.teacher_notes}</p>
                   )}
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {new Date(grade.created_at).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}
                   </p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-center py-8 text-slate-500">
+            <p className="text-center py-8 text-muted-foreground">
               {isRTL ? 'لم يتم تسجيل أي درجات حتى الآن' : 'No grades recorded yet'}
             </p>
           )}

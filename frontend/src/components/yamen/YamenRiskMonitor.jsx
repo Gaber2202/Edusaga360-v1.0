@@ -13,7 +13,7 @@ function ScoreBar({ value, color: _color }) {
   const c = value >= 70 ? 'bg-red-500' : value >= 40 ? 'bg-amber-500' : 'bg-emerald-500';
   return (
     <div className="flex items-center gap-2">
-      <div className="w-20 bg-slate-700 rounded-full h-1.5 flex-shrink-0">
+      <div className="w-20 bg-ink rounded-full h-1.5 flex-shrink-0">
         <div className={`h-1.5 rounded-full ${c}`} style={{ width: `${value}%` }} />
       </div>
       <span className={`text-xs font-medium w-7 text-end ${value >= 70 ? 'text-red-400' : value >= 40 ? 'text-amber-400' : 'text-emerald-400'}`}>{value}%</span>
@@ -92,7 +92,7 @@ export default function YamenRiskMonitor({ isRTL }) {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
           <Input value={search} onChange={e => setSearch(e.target.value)} placeholder={isRTL ? 'بحث...' : 'Search...'} className={isRTL ? 'pr-10' : 'pl-10'} />
         </div>
         <Select value={riskFilter} onValueChange={setRiskFilter}>
@@ -108,7 +108,7 @@ export default function YamenRiskMonitor({ isRTL }) {
         </Select>
       </div>
 
-      <p className="text-xs text-slate-400">{filtered.length} {isRTL ? 'موظف' : 'employees'}</p>
+      <p className="text-xs text-muted-foreground">{filtered.length} {isRTL ? 'موظف' : 'employees'}</p>
 
       <div className="space-y-3">
         {filtered.map(emp => {
@@ -125,23 +125,23 @@ export default function YamenRiskMonitor({ isRTL }) {
                         {emp.overall}% {riskLevel === 'high' ? (isRTL ? 'عالي' : 'High') : riskLevel === 'medium' ? (isRTL ? 'متوسط' : 'Medium') : (isRTL ? 'منخفض' : 'Low')}
                       </Badge>
                     </div>
-                    <p className="text-xs text-slate-400 mb-3">{emp.employee_id}</p>
+                    <p className="text-xs text-muted-foreground mb-3">{emp.employee_id}</p>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                       <div>
-                        <p className="text-slate-400 mb-1 flex items-center gap-1"><Clock className="w-3 h-3" />{isRTL ? 'الحضور' : 'Attendance'}</p>
+                        <p className="text-muted-foreground mb-1 flex items-center gap-1"><Clock className="w-3 h-3" />{isRTL ? 'الحضور' : 'Attendance'}</p>
                         <ScoreBar value={emp.attRisk} />
                       </div>
                       <div>
-                        <p className="text-slate-400 mb-1 flex items-center gap-1"><Shield className="w-3 h-3" />{isRTL ? 'الامتثال' : 'Compliance'}</p>
+                        <p className="text-muted-foreground mb-1 flex items-center gap-1"><Shield className="w-3 h-3" />{isRTL ? 'الامتثال' : 'Compliance'}</p>
                         <ScoreBar value={emp.compRisk} />
                       </div>
                       <div>
-                        <p className="text-slate-400 mb-1 flex items-center gap-1"><DollarSign className="w-3 h-3" />{isRTL ? 'الرواتب' : 'Payroll'}</p>
+                        <p className="text-muted-foreground mb-1 flex items-center gap-1"><DollarSign className="w-3 h-3" />{isRTL ? 'الرواتب' : 'Payroll'}</p>
                         <ScoreBar value={emp.payRisk} />
                       </div>
                       <div>
-                        <p className="text-slate-400 mb-1 flex items-center gap-1"><TrendingDown className="w-3 h-3" />{isRTL ? 'الأداء' : 'Performance'}</p>
+                        <p className="text-muted-foreground mb-1 flex items-center gap-1"><TrendingDown className="w-3 h-3" />{isRTL ? 'الأداء' : 'Performance'}</p>
                         <ScoreBar value={emp.perfRisk} />
                       </div>
                     </div>
@@ -149,7 +149,7 @@ export default function YamenRiskMonitor({ isRTL }) {
                     {emp.flags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-3">
                         {emp.flags.map((f, i) => (
-                          <span key={i} className="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">{f}</span>
+                          <span key={i} className="text-xs bg-ink text-muted-foreground px-2 py-0.5 rounded-full">{f}</span>
                         ))}
                       </div>
                     )}
@@ -160,7 +160,7 @@ export default function YamenRiskMonitor({ isRTL }) {
           );
         })}
         {filtered.length === 0 && (
-          <p className="text-center text-slate-400 py-10">{isRTL ? 'لا توجد نتائج' : 'No results found'}</p>
+          <p className="text-center text-muted-foreground py-10">{isRTL ? 'لا توجد نتائج' : 'No results found'}</p>
         )}
       </div>
     </div>

@@ -212,7 +212,7 @@ export default function BankExports() {
   };
 
   const statusColors = {
-    generated: 'bg-blue-100 text-blue-700',
+    generated: 'bg-najdi-50 text-najdi-900',
     submitted: 'bg-amber-100 text-amber-700',
     processed: 'bg-emerald-100 text-emerald-700',
     failed: 'bg-red-100 text-red-700',
@@ -239,7 +239,7 @@ export default function BankExports() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-xl font-semibold">{isRTL ? 'ملفات البنك' : 'Bank Exports'}</h2>
-          <p className="text-sm text-slate-500">{isRTL ? 'إنشاء وإدارة ملفات تحويل الرواتب' : 'Generate and manage salary transfer files'}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'إنشاء وإدارة ملفات تحويل الرواتب' : 'Generate and manage salary transfer files'}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setShowProfileDialog(true)}>
@@ -264,9 +264,9 @@ export default function BankExports() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
             {SAUDI_BANKS.map(bank => (
-              <div key={bank.code} className="p-3 bg-slate-50 rounded-lg text-center">
+              <div key={bank.code} className="p-3 bg-sand rounded-lg text-center">
                 <p className="font-semibold text-sm">{bank.code}</p>
-                <p className="text-xs text-slate-500 mt-1">{isRTL ? bank.name_ar : bank.name_en}</p>
+                <p className="text-xs text-muted-foreground mt-1">{isRTL ? bank.name_ar : bank.name_en}</p>
               </div>
             ))}
           </div>
@@ -304,7 +304,7 @@ export default function BankExports() {
                   </TableRow>
                 ) : filteredExports.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-slate-400">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       {isRTL ? 'لا توجد ملفات' : 'No exports found'}
                     </TableCell>
                   </TableRow>
@@ -359,7 +359,7 @@ export default function BankExports() {
               <TableBody>
                 {profiles.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-slate-400">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       {isRTL ? 'لا توجد ملفات تعريف' : 'No profiles found'}
                     </TableCell>
                   </TableRow>
@@ -374,11 +374,11 @@ export default function BankExports() {
                         {profile.wps_compatible ? (
                           <Check className="w-4 h-4 text-emerald-600" />
                         ) : (
-                          <span className="text-slate-400">-</span>
+                          <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge className={profile.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}>
+                        <Badge className={profile.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-sand-alt text-ink'}>
                           {profile.is_active ? (isRTL ? 'نشط' : 'Active') : (isRTL ? 'غير نشط' : 'Inactive')}
                         </Badge>
                       </TableCell>

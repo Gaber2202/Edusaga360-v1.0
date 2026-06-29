@@ -14,8 +14,8 @@ import { toast } from 'sonner';
 import { format, addDays } from 'date-fns';
 
 const OFFER_STATUS_COLORS = {
-  draft: 'bg-slate-100 text-slate-700',
-  sent: 'bg-blue-100 text-blue-700',
+  draft: 'bg-sand-alt text-ink',
+  sent: 'bg-najdi-50 text-najdi-900',
   viewed: 'bg-purple-100 text-purple-700',
   accepted: 'bg-emerald-100 text-emerald-700',
   rejected: 'bg-red-100 text-red-700',
@@ -196,9 +196,9 @@ Both must be complete, professional, and include all the above details. Include 
           </DialogHeader>
 
           <div className="space-y-5">
-            <div className="bg-slate-50 rounded-lg p-4 grid grid-cols-2 gap-4 text-sm">
-              <div><span className="text-slate-500">{isRTL ? 'المتقدم' : 'Candidate'}:</span> <strong>{applicant?.full_name_ar}</strong></div>
-              <div><span className="text-slate-500">{isRTL ? 'البريد' : 'Email'}:</span> {applicant?.email}</div>
+            <div className="bg-sand rounded-lg p-4 grid grid-cols-2 gap-4 text-sm">
+              <div><span className="text-muted-foreground">{isRTL ? 'المتقدم' : 'Candidate'}:</span> <strong>{applicant?.full_name_ar}</strong></div>
+              <div><span className="text-muted-foreground">{isRTL ? 'البريد' : 'Email'}:</span> {applicant?.email}</div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -238,7 +238,7 @@ Both must be complete, professional, and include all the above details. Include 
             </div>
 
             <div className="border-t pt-4">
-              <h4 className="font-semibold text-slate-700 mb-3">{isRTL ? 'الراتب والمزايا' : 'Salary & Benefits'}</h4>
+              <h4 className="font-semibold text-ink mb-3">{isRTL ? 'الراتب والمزايا' : 'Salary & Benefits'}</h4>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{isRTL ? 'الراتب الأساسي (ر.س)' : 'Basic Salary (SAR)'}</Label>
@@ -265,7 +265,7 @@ Both must be complete, professional, and include all the above details. Include 
 
             <div className="border-t pt-4 space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="font-semibold text-slate-700">{isRTL ? 'نص خطاب العرض' : 'Offer Letter Text'}</h4>
+                <h4 className="font-semibold text-ink">{isRTL ? 'نص خطاب العرض' : 'Offer Letter Text'}</h4>
                 <Button variant="outline" size="sm" className="gap-2 text-purple-700 border-purple-200" onClick={generateOfferText} disabled={generating || !form.job_title || !form.basic_salary}>
                   {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Bot className="w-3 h-3" />}
                   {isRTL ? 'توليد بالذكاء الاصطناعي' : 'AI Generate'}

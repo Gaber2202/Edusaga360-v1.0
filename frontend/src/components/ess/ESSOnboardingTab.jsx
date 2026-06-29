@@ -31,7 +31,7 @@ export default function ESSOnboardingTab({ employee }) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -39,11 +39,11 @@ export default function ESSOnboardingTab({ employee }) {
   if (!onboarding) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <GraduationCap className="w-14 h-14 text-slate-300 mb-4" />
-        <p className="text-slate-500 text-lg font-medium">
+        <GraduationCap className="w-14 h-14 text-muted-foreground mb-4" />
+        <p className="text-muted-foreground text-lg font-medium">
           {isRTL ? 'لا يوجد برنامج إلحاق نشط' : 'No active onboarding program'}
         </p>
-        <p className="text-slate-400 text-sm mt-1">
+        <p className="text-muted-foreground text-sm mt-1">
           {isRTL ? 'سيتواصل معك HR لتفعيل برنامج الإلحاق' : 'HR will activate your onboarding program soon'}
         </p>
       </div>
@@ -105,28 +105,28 @@ export default function ESSOnboardingTab({ employee }) {
           <div className="flex flex-col md:flex-row md:items-center gap-6">
             <div className="flex-1 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-semibold text-slate-700">
+                <span className="font-semibold text-ink">
                   {isRTL ? 'إجمالي التقدم' : 'Overall Progress'}
                 </span>
                 <span className={`text-2xl font-bold ${statusColor}`}>{overallPct}%</span>
               </div>
               <Progress value={overallPct} className="h-3" />
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 {completed} / {total} {isRTL ? 'مهمة مكتملة' : 'tasks completed'}
               </p>
             </div>
             <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <p className="text-xl font-bold text-blue-600">{docsComplete}/{docs.length}</p>
-                <p className="text-xs text-slate-500">{isRTL ? 'المستندات' : 'Documents'}</p>
+              <div className="p-3 bg-najdi-50 rounded-lg">
+                <p className="text-xl font-bold text-najdi-700">{docsComplete}/{docs.length}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'المستندات' : 'Documents'}</p>
               </div>
               <div className="p-3 bg-purple-50 rounded-lg">
                 <p className="text-xl font-bold text-purple-600">{policiesAcked}/{policies.length}</p>
-                <p className="text-xs text-slate-500">{isRTL ? 'السياسات' : 'Policies'}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'السياسات' : 'Policies'}</p>
               </div>
               <div className="p-3 bg-emerald-50 rounded-lg">
                 <p className="text-xl font-bold text-emerald-600">{trainingsComplete}/{trainings.length}</p>
-                <p className="text-xs text-slate-500">{isRTL ? 'التدريب' : 'Training'}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'التدريب' : 'Training'}</p>
               </div>
             </div>
           </div>
@@ -160,14 +160,14 @@ export default function ESSOnboardingTab({ employee }) {
             </CardHeader>
             <CardContent>
               {docs.length === 0 ? (
-                <p className="text-slate-400 text-center py-6">{isRTL ? 'لا توجد مستندات' : 'No documents assigned'}</p>
+                <p className="text-muted-foreground text-center py-6">{isRTL ? 'لا توجد مستندات' : 'No documents assigned'}</p>
               ) : (
                 <div className="space-y-3">
                   {docs.map((doc) => (
-                    <div key={doc.id} className={`flex items-start gap-3 p-3 rounded-lg border ${doc.completed ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
+                    <div key={doc.id} className={`flex items-start gap-3 p-3 rounded-lg border ${doc.completed ? 'bg-emerald-50 border-emerald-200' : 'bg-sand border-border'}`}>
                       {doc.completed
                         ? <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" />
-                        : <Circle className="w-5 h-5 text-slate-400 mt-0.5 flex-shrink-0" />
+                        : <Circle className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                       }
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm">{isRTL ? doc.ar : doc.en}</p>
@@ -182,7 +182,7 @@ export default function ESSOnboardingTab({ employee }) {
                             {isRTL ? 'تم الإكمال:' : 'Completed:'} {format(new Date(doc.completed_date), 'dd/MM/yyyy')}
                           </p>
                         )}
-                        {doc.notes && <p className="text-xs text-slate-500 mt-0.5">{doc.notes}</p>}
+                        {doc.notes && <p className="text-xs text-muted-foreground mt-0.5">{doc.notes}</p>}
                       </div>
                       <div className="flex-shrink-0">
                         {doc.document_url ? (
@@ -215,14 +215,14 @@ export default function ESSOnboardingTab({ employee }) {
             </CardHeader>
             <CardContent>
               {policies.length === 0 ? (
-                <p className="text-slate-400 text-center py-6">{isRTL ? 'لا توجد سياسات' : 'No policies assigned'}</p>
+                <p className="text-muted-foreground text-center py-6">{isRTL ? 'لا توجد سياسات' : 'No policies assigned'}</p>
               ) : (
                 <div className="space-y-3">
                   {policies.map((policy) => (
-                    <div key={policy.id} className={`flex items-start gap-3 p-3 rounded-lg border ${policy.acknowledged ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
+                    <div key={policy.id} className={`flex items-start gap-3 p-3 rounded-lg border ${policy.acknowledged ? 'bg-emerald-50 border-emerald-200' : 'bg-sand border-border'}`}>
                       {policy.acknowledged
                         ? <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" />
-                        : <Circle className="w-5 h-5 text-slate-400 mt-0.5 flex-shrink-0" />
+                        : <Circle className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                       }
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm">{isRTL ? policy.ar : policy.en}</p>
@@ -239,7 +239,7 @@ export default function ESSOnboardingTab({ employee }) {
                         {!policy.acknowledged ? (
                           <Button
                             size="sm"
-                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
+                            className="bg-najdi-700 hover:bg-najdi-900 text-white text-xs"
                             onClick={() => setPolicyDialog(policy)}
                           >
                             {isRTL ? 'قراءة والإقرار' : 'Read & Sign'}
@@ -269,18 +269,18 @@ export default function ESSOnboardingTab({ employee }) {
             </CardHeader>
             <CardContent>
               {trainings.length === 0 ? (
-                <p className="text-slate-400 text-center py-6">{isRTL ? 'لا توجد تدريبات' : 'No training assigned'}</p>
+                <p className="text-muted-foreground text-center py-6">{isRTL ? 'لا توجد تدريبات' : 'No training assigned'}</p>
               ) : (
                 <div className="space-y-3">
                   {trainings.map((training) => (
-                    <div key={training.id} className={`flex items-start gap-3 p-3 rounded-lg border ${training.completed ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
+                    <div key={training.id} className={`flex items-start gap-3 p-3 rounded-lg border ${training.completed ? 'bg-emerald-50 border-emerald-200' : 'bg-sand border-border'}`}>
                       {training.completed
                         ? <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" />
                         : <Clock className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
                       }
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm">{isRTL ? training.ar : training.en}</p>
-                        <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                           {training.deadline && (
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
@@ -324,11 +324,11 @@ export default function ESSOnboardingTab({ employee }) {
             </DialogHeader>
             <div className="py-4">
               {(isRTL ? policyDialog.body_ar : policyDialog.body_en) ? (
-                <div className="prose prose-sm max-w-none text-slate-700 whitespace-pre-wrap rounded-lg bg-slate-50 p-4 border">
+                <div className="prose prose-sm max-w-none text-ink whitespace-pre-wrap rounded-lg bg-sand p-4 border">
                   {isRTL ? policyDialog.body_ar : policyDialog.body_en}
                 </div>
               ) : (
-                <p className="text-slate-500 text-center py-6">
+                <p className="text-muted-foreground text-center py-6">
                   {isRTL ? 'محتوى السياسة غير متاح. يرجى التواصل مع HR.' : 'Policy content not available. Please contact HR.'}
                 </p>
               )}

@@ -191,14 +191,14 @@ export default function LoansManagement() {
 
   const statusColors = {
     pending: 'bg-amber-100 text-amber-700',
-    manager_approved: 'bg-blue-100 text-blue-700',
+    manager_approved: 'bg-najdi-50 text-najdi-900',
     hr_approved: 'bg-indigo-100 text-indigo-700',
     finance_approved: 'bg-purple-100 text-purple-700',
     disbursed: 'bg-cyan-100 text-cyan-700',
     active: 'bg-emerald-100 text-emerald-700',
     completed: 'bg-green-100 text-green-700',
     cancelled: 'bg-red-100 text-red-700',
-    written_off: 'bg-slate-100 text-slate-700'
+    written_off: 'bg-sand-alt text-ink'
   };
 
   const statusLabels = {
@@ -233,7 +233,7 @@ export default function LoansManagement() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-xl font-semibold">{isRTL ? 'القروض والسلف' : 'Loans & Advances'}</h2>
-          <p className="text-sm text-slate-500">{isRTL ? 'إدارة قروض الموظفين' : 'Manage employee loans'}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'إدارة قروض الموظفين' : 'Manage employee loans'}</p>
         </div>
         <Button onClick={() => setShowNewLoan(true)}>
           <Plus className="w-4 h-4 me-2" />
@@ -245,25 +245,25 @@ export default function LoansManagement() {
       <div className="grid grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-slate-500">{isRTL ? 'إجمالي القروض' : 'Total Loans'}</p>
+            <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي القروض' : 'Total Loans'}</p>
             <p className="text-2xl font-bold">{stats.total}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-slate-500">{isRTL ? 'طلبات معلقة' : 'Pending'}</p>
+            <p className="text-sm text-muted-foreground">{isRTL ? 'طلبات معلقة' : 'Pending'}</p>
             <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-slate-500">{isRTL ? 'قروض نشطة' : 'Active'}</p>
+            <p className="text-sm text-muted-foreground">{isRTL ? 'قروض نشطة' : 'Active'}</p>
             <p className="text-2xl font-bold text-emerald-600">{stats.active}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-slate-500">{isRTL ? 'الرصيد المتبقي' : 'Outstanding Balance'}</p>
+            <p className="text-sm text-muted-foreground">{isRTL ? 'الرصيد المتبقي' : 'Outstanding Balance'}</p>
             <p className="text-2xl font-bold">{stats.totalAmount.toLocaleString()}</p>
           </CardContent>
         </Card>
@@ -303,7 +303,7 @@ export default function LoansManagement() {
               </TableRow>
             ) : filteredLoans.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-slate-400">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   {isRTL ? 'لا توجد قروض' : 'No loans found'}
                 </TableCell>
               </TableRow>
@@ -449,9 +449,9 @@ export default function LoansManagement() {
             </div>
 
             {newLoan.loan_amount && newLoan.installment_count && (
-              <Card className="bg-slate-50">
+              <Card className="bg-sand">
                 <CardContent className="p-4">
-                  <p className="text-sm text-slate-500">{isRTL ? 'القسط الشهري' : 'Monthly Installment'}</p>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'القسط الشهري' : 'Monthly Installment'}</p>
                   <p className="text-2xl font-bold">
                     {Math.ceil(parseFloat(newLoan.loan_amount) / newLoan.installment_count).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}
                   </p>

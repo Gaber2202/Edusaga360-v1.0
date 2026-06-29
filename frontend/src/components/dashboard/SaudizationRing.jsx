@@ -16,7 +16,7 @@ export default function SaudizationRing({ pct, isRTL, animDelay = 0 }) {
         className={`bg-gradient-to-br ${gradClass} border rounded-xl p-4 flex flex-col gap-2 h-full hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 animate-fade-in-up`}
         style={{ animationDelay: `${animDelay}ms` }}
       >
-        <div className="text-xs text-slate-500 font-semibold">{isRTL ? 'نسبة السعودة' : 'Saudization'}</div>
+        <div className="text-xs text-muted-foreground font-semibold">{isRTL ? 'نسبة السعودة' : 'Saudization'}</div>
         <div className="flex items-center justify-center py-1">
           <svg width="72" height="72" viewBox="0 0 72 72">
             <circle cx="36" cy="36" r={r} fill="none" stroke="#e2e8f0" strokeWidth="6" />

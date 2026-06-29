@@ -10,12 +10,12 @@ import { formatMoney, planLabel } from '../lib/plans';
 
 function KPI({ title, value, sub, icon: Icon, color, to }) {
   const colors = {
-    blue: 'bg-blue-50 text-blue-600',
+    blue: 'bg-najdi-50 text-najdi-700',
     emerald: 'bg-emerald-50 text-emerald-600',
     amber: 'bg-amber-50 text-amber-600',
     purple: 'bg-purple-50 text-purple-600',
     red: 'bg-red-50 text-red-600',
-    slate: 'bg-slate-100 text-slate-600',
+    slate: 'bg-sand-alt text-muted-foreground',
   };
   const inner = (
     <CardContent className="p-5 flex items-start gap-4">
@@ -23,9 +23,9 @@ function KPI({ title, value, sub, icon: Icon, color, to }) {
         <Icon className="w-5 h-5" />
       </div>
       <div>
-        <p className="text-sm text-slate-500">{title}</p>
-        <p className="text-2xl font-bold text-slate-800 mt-0.5">{value ?? '—'}</p>
-        {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+        <p className="text-sm text-muted-foreground">{title}</p>
+        <p className="text-2xl font-bold text-ink mt-0.5">{value ?? '—'}</p>
+        {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
       </div>
     </CardContent>
   );
@@ -40,7 +40,7 @@ const STATUS_STYLES = {
   active: 'bg-emerald-100 text-emerald-700',
   trial: 'bg-amber-100 text-amber-700',
   suspended: 'bg-red-100 text-red-700',
-  pending_approval: 'bg-blue-100 text-blue-700',
+  pending_approval: 'bg-najdi-50 text-najdi-900',
 };
 
 export default function Dashboard() {
@@ -57,8 +57,8 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Platform Overview</h1>
-        <p className="text-sm text-slate-500 mt-1">Real-time metrics across all schools</p>
+        <h1 className="text-2xl font-bold text-ink">Platform Overview</h1>
+        <p className="text-sm text-muted-foreground mt-1">Real-time metrics across all schools</p>
       </div>
 
       {/* KPIs */}
@@ -87,7 +87,7 @@ export default function Dashboard() {
             </Link>
           )}
           {(stats?.pendingTenants ?? 0) > 0 && (
-            <Link to="/tenants" className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 text-sm text-blue-700 hover:bg-blue-100">
+            <Link to="/tenants" className="flex items-center gap-2 bg-najdi-50 border border-najdi-100 rounded-lg px-4 py-2 text-sm text-najdi-900 hover:bg-najdi-50">
               <AlertCircle className="w-4 h-4" />
               {stats.pendingTenants} tenant{stats.pendingTenants > 1 ? 's' : ''} awaiting approval
             </Link>
@@ -111,36 +111,36 @@ export default function Dashboard() {
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold text-slate-800">Recent Schools</CardTitle>
-            <Link to="/tenants" className="text-sm text-blue-600 hover:underline">View all</Link>
+            <CardTitle className="text-base font-semibold text-ink">Recent Schools</CardTitle>
+            <Link to="/tenants" className="text-sm text-najdi-700 hover:underline">View all</Link>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           {tenants.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-8">No schools registered yet</p>
+            <p className="text-sm text-muted-foreground text-center py-8">No schools registered yet</p>
           ) : (
             <table className="w-full">
-              <thead className="border-b border-slate-100">
+              <thead className="border-b border-border">
                 <tr>
                   {['School', 'Plan', 'Status', 'Joined'].map(h => (
-                    <th key={h} className="text-left px-5 py-2.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">{h}</th>
+                    <th key={h} className="text-left px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {tenants.map(t => (
-                  <tr key={t.id} className="hover:bg-slate-50">
+                  <tr key={t.id} className="hover:bg-sand">
                     <td className="px-5 py-3">
-                      <p className="text-sm font-medium text-slate-800">{t.name_en || t.name_ar}</p>
-                      <p className="text-xs text-slate-400">{t.admin_email || t.tenant_code}</p>
+                      <p className="text-sm font-medium text-ink">{t.name_en || t.name_ar}</p>
+                      <p className="text-xs text-muted-foreground">{t.admin_email || t.tenant_code}</p>
                     </td>
-                    <td className="px-5 py-3 text-xs text-slate-600">{planLabel(t.plan_code || t.plan)}</td>
+                    <td className="px-5 py-3 text-xs text-muted-foreground">{planLabel(t.plan_code || t.plan)}</td>
                     <td className="px-5 py-3">
-                      <Badge className={`text-xs ${STATUS_STYLES[t.status] || 'bg-slate-100 text-slate-700'}`}>
+                      <Badge className={`text-xs ${STATUS_STYLES[t.status] || 'bg-sand-alt text-ink'}`}>
                         {t.status}
                       </Badge>
                     </td>
-                    <td className="px-5 py-3 text-xs text-slate-400">
+                    <td className="px-5 py-3 text-xs text-muted-foreground">
                       {t.created_at ? format(new Date(t.created_at), 'MMM d, yyyy') : '—'}
                     </td>
                   </tr>

@@ -125,8 +125,8 @@ export default function QuickPOS({ students, wallets, menuItems, getTenantIdForC
         <div className="space-y-3">
           <div className="text-center py-4">
             <Scan className="w-12 h-12 text-orange-400 mx-auto mb-2 animate-pulse" />
-            <p className="font-semibold text-slate-700 text-lg">{isRTL ? 'امسح بطاقة الطالب' : 'Scan Student ID'}</p>
-            <p className="text-xs text-slate-400 mt-1">{isRTL ? 'أو أدخل رقم الطالب يدوياً' : 'Or type student ID manually'}</p>
+            <p className="font-semibold text-ink text-lg">{isRTL ? 'امسح بطاقة الطالب' : 'Scan Student ID'}</p>
+            <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'أو أدخل رقم الطالب يدوياً' : 'Or type student ID manually'}</p>
           </div>
           <Input
             ref={scanRef}
@@ -161,8 +161,8 @@ export default function QuickPOS({ students, wallets, menuItems, getTenantIdForC
               const inCart = cart.find(c => c.item.id === item.id);
               return (
                 <button key={item.id} onClick={() => addToCart(item)}
-                  className={`flex flex-col p-3 rounded-xl border-2 text-start transition-all ${inCart ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:border-orange-300'}`}>
-                  <p className="font-semibold text-sm text-slate-800 leading-tight">{item.name_ar}</p>
+                  className={`flex flex-col p-3 rounded-xl border-2 text-start transition-all ${inCart ? 'border-orange-500 bg-orange-50' : 'border-border hover:border-orange-300'}`}>
+                  <p className="font-semibold text-sm text-ink leading-tight">{item.name_ar}</p>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-orange-600 font-bold">{item.price} SAR</span>
                     {inCart && <span className="text-xs bg-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-bold">×{inCart.qty}</span>}
@@ -186,7 +186,7 @@ export default function QuickPOS({ students, wallets, menuItems, getTenantIdForC
               ))}
               <div className="border-t pt-1 flex justify-between font-bold text-base">
                 <span>{isRTL ? 'الإجمالي' : 'Total'}</span>
-                <span className={cartTotal > wallet.balance ? 'text-red-600' : 'text-slate-800'}>{cartTotal.toFixed(2)} SAR</span>
+                <span className={cartTotal > wallet.balance ? 'text-red-600' : 'text-ink'}>{cartTotal.toFixed(2)} SAR</span>
               </div>
             </div>
           )}
@@ -211,9 +211,9 @@ export default function QuickPOS({ students, wallets, menuItems, getTenantIdForC
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
           <p className="text-lg font-bold text-green-700">{isRTL ? 'تم الدفع!' : 'Payment Done!'}</p>
-          <p className="text-sm text-slate-500 text-center">
+          <p className="text-sm text-muted-foreground text-center">
             {student?.name_ar} — {cartTotal.toFixed(2)} SAR<br />
-            <span className="text-xs text-slate-400">{isRTL ? 'سيتلقى ولي الأمر إشعاراً فورياً' : 'Parent notified in real time'}</span>
+            <span className="text-xs text-muted-foreground">{isRTL ? 'سيتلقى ولي الأمر إشعاراً فورياً' : 'Parent notified in real time'}</span>
           </p>
         </div>
       )}

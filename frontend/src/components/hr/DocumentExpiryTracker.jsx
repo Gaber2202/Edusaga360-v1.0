@@ -63,16 +63,16 @@ export default function DocumentExpiryTracker({ isRTL }) {
     expired: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', icon: AlertTriangle, iconColor: 'text-red-500', badgeBg: 'bg-red-100 text-red-700', label: { ar: 'منتهية الصلاحية', en: 'EXPIRED' } },
     critical: { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', icon: AlertTriangle, iconColor: 'text-orange-500', badgeBg: 'bg-orange-100 text-orange-700', label: { ar: 'حرجة (30 يوم)', en: 'Critical (30d)' } },
     warning: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', icon: Clock, iconColor: 'text-amber-500', badgeBg: 'bg-amber-100 text-amber-700', label: { ar: 'تحذير (60 يوم)', en: 'Warning (60d)' } },
-    notice: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', icon: FileText, iconColor: 'text-blue-500', badgeBg: 'bg-blue-100 text-blue-700', label: { ar: 'تنبيه (90 يوم)', en: 'Notice (90d)' } },
+    notice: { bg: 'bg-najdi-50', border: 'border-najdi-100', text: 'text-najdi-900', icon: FileText, iconColor: 'text-najdi-500', badgeBg: 'bg-najdi-50 text-najdi-900', label: { ar: 'تنبيه (90 يوم)', en: 'Notice (90d)' } },
   };
 
-  if (isLoading) return <div className="py-8 text-center text-slate-400 text-sm">{isRTL ? 'جاري التحميل...' : 'Loading...'}</div>;
+  if (isLoading) return <div className="py-8 text-center text-muted-foreground text-sm">{isRTL ? 'جاري التحميل...' : 'Loading...'}</div>;
 
   if (expiryItems.length === 0) {
     return (
       <div className="flex items-center justify-center py-12 flex-col gap-2">
         <CheckCircle className="w-10 h-10 text-emerald-400" />
-        <p className="text-slate-500 text-sm">{isRTL ? 'جميع الوثائق سارية المفعول ✓' : 'All documents are valid ✓'}</p>
+        <p className="text-muted-foreground text-sm">{isRTL ? 'جميع الوثائق سارية المفعول ✓' : 'All documents are valid ✓'}</p>
       </div>
     );
   }
@@ -113,7 +113,7 @@ export default function DocumentExpiryTracker({ isRTL }) {
                 {items.map((item, i) => (
                   <div key={i} className={`flex items-center justify-between p-3 rounded-xl border ${cfg.bg} ${cfg.border}`}>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-800 truncate">{item.employeeName} <span className="text-slate-400 text-xs">({item.employeeId})</span></p>
+                      <p className="text-sm font-medium text-ink truncate">{item.employeeName} <span className="text-muted-foreground text-xs">({item.employeeId})</span></p>
                       <p className={`text-xs ${cfg.text}`}>{item.doc} — {isRTL ? 'ينتهي:' : 'Expires:'} {format(item.expDate, 'dd/MM/yyyy')}</p>
                     </div>
                     <Badge className={`${cfg.badgeBg} flex-shrink-0 ms-2 text-xs`}>

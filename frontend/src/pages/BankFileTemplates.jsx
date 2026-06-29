@@ -176,12 +176,12 @@ export default function BankFileTemplates() {
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-slate-400" />
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
                 </TableCell>
               </TableRow>
             ) : templates.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-slate-400">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   {isRTL ? 'لا توجد قوالب' : 'No templates found'}
                 </TableCell>
               </TableRow>
@@ -192,7 +192,7 @@ export default function BankFileTemplates() {
                   <TableCell>
                     <div>
                       <p className="font-medium">{isRTL ? template.template_name_ar : template.template_name_en}</p>
-                      <p className="text-xs text-slate-500">v{template.version}</p>
+                      <p className="text-xs text-muted-foreground">v{template.version}</p>
                     </div>
                   </TableCell>
                   <TableCell>{isRTL ? template.bank_name_ar : template.bank_name_en}</TableCell>
@@ -213,7 +213,7 @@ export default function BankFileTemplates() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={template.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}>
+                    <Badge className={template.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-sand-alt text-ink'}>
                       {template.is_active ? (isRTL ? 'نشط' : 'Active') : (isRTL ? 'معطل' : 'Inactive')}
                     </Badge>
                   </TableCell>

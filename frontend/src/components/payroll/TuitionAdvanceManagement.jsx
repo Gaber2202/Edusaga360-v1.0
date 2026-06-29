@@ -206,7 +206,7 @@ export default function TuitionAdvanceManagement() {
 
   const statusColors = {
     pending: 'bg-amber-100 text-amber-700',
-    manager_approved: 'bg-blue-100 text-blue-700',
+    manager_approved: 'bg-najdi-50 text-najdi-900',
     hr_approved: 'bg-indigo-100 text-indigo-700',
     finance_approved: 'bg-purple-100 text-purple-700',
     active: 'bg-emerald-100 text-emerald-700',
@@ -244,7 +244,7 @@ export default function TuitionAdvanceManagement() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-xl font-semibold">{isRTL ? 'سلف الرسوم الدراسية' : 'Tuition Advances'}</h2>
-          <p className="text-sm text-slate-500">{isRTL ? 'إدارة سلف رسوم أبناء الموظفين' : 'Manage employee children tuition advances'}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'إدارة سلف رسوم أبناء الموظفين' : 'Manage employee children tuition advances'}</p>
         </div>
         <Button onClick={() => setShowNewAdvance(true)}>
           <Plus className="w-4 h-4 me-2" />
@@ -253,13 +253,13 @@ export default function TuitionAdvanceManagement() {
       </div>
 
       {/* Info Banner */}
-      <Card className="bg-blue-50 border-blue-200">
+      <Card className="bg-najdi-50 border-najdi-100">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <School className="w-5 h-5 text-blue-600 mt-0.5" />
+            <School className="w-5 h-5 text-najdi-700 mt-0.5" />
             <div>
-              <p className="font-medium text-blue-800">{isRTL ? 'كيف تعمل سلفة الرسوم؟' : 'How Tuition Advance Works'}</p>
-              <p className="text-sm text-blue-700 mt-1">
+              <p className="font-medium text-najdi-900">{isRTL ? 'كيف تعمل سلفة الرسوم؟' : 'How Tuition Advance Works'}</p>
+              <p className="text-sm text-najdi-900 mt-1">
                 {isRTL 
                   ? 'يتم تسوية فاتورة الطالب فوراً عند الاعتماد، ويظهر في كشف حساب الطالب "مدفوع عبر ميزة الموظف". يتم استقطاع الأقساط من راتب الموظف شهرياً.'
                   : 'Student invoice is settled immediately upon approval. Student account shows "Paid via Employee Benefit". Monthly installments are deducted from employee salary.'
@@ -274,25 +274,25 @@ export default function TuitionAdvanceManagement() {
       <div className="grid grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-slate-500">{isRTL ? 'إجمالي السلف' : 'Total Advances'}</p>
+            <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي السلف' : 'Total Advances'}</p>
             <p className="text-2xl font-bold">{stats.total}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-slate-500">{isRTL ? 'طلبات معلقة' : 'Pending'}</p>
+            <p className="text-sm text-muted-foreground">{isRTL ? 'طلبات معلقة' : 'Pending'}</p>
             <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-slate-500">{isRTL ? 'سلف نشطة' : 'Active'}</p>
+            <p className="text-sm text-muted-foreground">{isRTL ? 'سلف نشطة' : 'Active'}</p>
             <p className="text-2xl font-bold text-emerald-600">{stats.active}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-sm text-slate-500">{isRTL ? 'الرصيد المتبقي' : 'Outstanding'}</p>
+            <p className="text-sm text-muted-foreground">{isRTL ? 'الرصيد المتبقي' : 'Outstanding'}</p>
             <p className="text-2xl font-bold">{stats.totalAmount.toLocaleString()}</p>
           </CardContent>
         </Card>
@@ -333,7 +333,7 @@ export default function TuitionAdvanceManagement() {
               </TableRow>
             ) : filteredAdvances.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-slate-400">
+                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   {isRTL ? 'لا توجد سلف' : 'No advances found'}
                 </TableCell>
               </TableRow>
@@ -345,7 +345,7 @@ export default function TuitionAdvanceManagement() {
                   <TableCell>
                     <div>
                       <p>{advance.student_name}</p>
-                      <p className="text-xs text-slate-500">{advance.student_grade}</p>
+                      <p className="text-xs text-muted-foreground">{advance.student_grade}</p>
                     </div>
                   </TableCell>
                   <TableCell>{advance.academic_year}</TableCell>

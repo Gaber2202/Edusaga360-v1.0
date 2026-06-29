@@ -28,7 +28,7 @@ export default function ViolationsPenalties() {
 
   const violationTypes = { iqama: isRTL ? 'إقامة' : 'Iqama', gosi: isRTL ? 'تأمينات' : 'GOSI', wps: isRTL ? 'حماية الأجور' : 'WPS', labor_law: isRTL ? 'نظام العمل' : 'Labor Law', saudization: isRTL ? 'توطين' : 'Saudization', other: isRTL ? 'أخرى' : 'Other' };
   const authorities = { mol: 'MOL', gosi: 'GOSI', zatca: 'ZATCA', hrsd: 'HRSD', moi: 'MOI', other: isRTL ? 'أخرى' : 'Other' };
-  const statusColors = { open: 'bg-red-100 text-red-700', appealing: 'bg-amber-100 text-amber-700', paid: 'bg-emerald-100 text-emerald-700', waived: 'bg-blue-100 text-blue-700', closed: 'bg-slate-100 text-slate-700' };
+  const statusColors = { open: 'bg-red-100 text-red-700', appealing: 'bg-amber-100 text-amber-700', paid: 'bg-emerald-100 text-emerald-700', waived: 'bg-najdi-50 text-najdi-900', closed: 'bg-sand-alt text-ink' };
   const statusLabels = { open: isRTL ? 'مفتوح' : 'Open', appealing: isRTL ? 'طعن' : 'Appealing', paid: isRTL ? 'مدفوع' : 'Paid', waived: isRTL ? 'متنازل' : 'Waived', closed: isRTL ? 'مغلق' : 'Closed' };
 
   const columns = [
@@ -38,7 +38,7 @@ export default function ViolationsPenalties() {
     { header: isRTL ? 'المبلغ' : 'Amount', cell: r => <span className="font-semibold text-red-600">{(r.amount_sar || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span> },
     { header: isRTL ? 'تاريخ الاستحقاق' : 'Due Date', accessorKey: 'due_date' },
     { header: isRTL ? 'رقم المرجع' : 'Reference', accessorKey: 'reference_number' },
-    { header: isRTL ? 'الحالة' : 'Status', cell: r => <Badge className={statusColors[r.status] || 'bg-slate-100 text-slate-700'}>{statusLabels[r.status] || r.status}</Badge> },
+    { header: isRTL ? 'الحالة' : 'Status', cell: r => <Badge className={statusColors[r.status] || 'bg-sand-alt text-ink'}>{statusLabels[r.status] || r.status}</Badge> },
   ];
 
   const handleSave = async () => {
@@ -71,8 +71,8 @@ export default function ViolationsPenalties() {
           <div className="text-sm text-emerald-600">{isRTL ? 'مدفوعة' : 'Paid'}</div>
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <div className="text-2xl font-bold text-slate-700">{violations.length}</div>
-          <div className="text-sm text-slate-500">{isRTL ? 'الإجمالي' : 'Total'}</div>
+          <div className="text-2xl font-bold text-ink">{violations.length}</div>
+          <div className="text-sm text-muted-foreground">{isRTL ? 'الإجمالي' : 'Total'}</div>
         </CardContent></Card>
       </div>
 

@@ -149,8 +149,8 @@ export default function PayslipsManagement() {
 
   const getStatusBadge = (status) => {
     const configs = {
-      not_sent: { color: 'bg-slate-100 text-slate-700', icon: Clock, label: isRTL ? 'لم يُرسل' : 'Not Sent' },
-      sent: { color: 'bg-blue-100 text-blue-700', icon: Send, label: isRTL ? 'تم الإرسال' : 'Sent' },
+      not_sent: { color: 'bg-sand-alt text-ink', icon: Clock, label: isRTL ? 'لم يُرسل' : 'Not Sent' },
+      sent: { color: 'bg-najdi-50 text-najdi-900', icon: Send, label: isRTL ? 'تم الإرسال' : 'Sent' },
       delivered: { color: 'bg-green-100 text-green-700', icon: CheckCircle, label: isRTL ? 'تم التوصيل' : 'Delivered' },
       failed: { color: 'bg-red-100 text-red-700', icon: XCircle, label: isRTL ? 'فشل' : 'Failed' }
     };
@@ -180,10 +180,10 @@ export default function PayslipsManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">
+          <h2 className="text-2xl font-bold text-ink">
             {isRTL ? 'قسائم الراتب' : 'Payslips'}
           </h2>
-          <p className="text-slate-600 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             {isRTL ? 'إدارة وإرسال قسائم الرواتب' : 'Manage and send payslips'}
           </p>
         </div>
@@ -231,7 +231,7 @@ export default function PayslipsManagement() {
 
       {/* Bulk Actions */}
       {selectedPayslips.length > 0 && (
-        <Card className="bg-slate-50 border-slate-300">
+        <Card className="bg-sand border-border">
           <CardContent className="py-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">
@@ -292,13 +292,13 @@ export default function PayslipsManagement() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   {isRTL ? 'جاري التحميل...' : 'Loading...'}
                 </TableCell>
               </TableRow>
             ) : filteredPayslips.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   {isRTL ? 'لا توجد قسائم' : 'No payslips found'}
                 </TableCell>
               </TableRow>

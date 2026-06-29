@@ -102,19 +102,19 @@ export default function Facilities() {
   const workOrderColumns = [
     { key: 'work_order_number', label: isRTL ? 'رقم الأمر' : 'WO #' },
     { key: 'work_order_type', label: isRTL ? 'النوع' : 'Type', render: (_, row) => {
-      const colors = { preventive: 'bg-blue-100', corrective: 'bg-yellow-100', emergency: 'bg-red-100' };
+      const colors = { preventive: 'bg-najdi-50', corrective: 'bg-yellow-100', emergency: 'bg-red-100' };
       return <Badge className={colors[row.work_order_type]}>{row.work_order_type}</Badge>;
     }},
     { key: 'asset_name', label: isRTL ? 'الأصل' : 'Asset' },
     { key: 'location', label: isRTL ? 'الموقع' : 'Location' },
     { key: 'priority', label: isRTL ? 'الأولوية' : 'Priority', render: (_, row) => {
-      const colors = { low: 'bg-gray-100', medium: 'bg-blue-100', high: 'bg-orange-100', critical: 'bg-red-100' };
+      const colors = { low: 'bg-gray-100', medium: 'bg-najdi-50', high: 'bg-orange-100', critical: 'bg-red-100' };
       return <Badge className={colors[row.priority]}>{row.priority}</Badge>;
     }},
     { key: 'status', label: isRTL ? 'الحالة' : 'Status', render: (_, row) => {
       const colors = { 
         pending: 'bg-gray-100', 
-        scheduled: 'bg-blue-100',
+        scheduled: 'bg-najdi-50',
         in_progress: 'bg-yellow-100',
         completed: 'bg-green-100',
         on_hold: 'bg-purple-100'
@@ -135,7 +135,7 @@ export default function Facilities() {
     }},
     { key: 'location', label: isRTL ? 'الموقع' : 'Location' },
     { key: 'condition', label: isRTL ? 'الحالة' : 'Condition', render: (_, row) => {
-      const colors = { excellent: 'bg-green-100', good: 'bg-blue-100', fair: 'bg-yellow-100', poor: 'bg-orange-100', critical: 'bg-red-100' };
+      const colors = { excellent: 'bg-green-100', good: 'bg-najdi-50', fair: 'bg-yellow-100', poor: 'bg-orange-100', critical: 'bg-red-100' };
       return <Badge className={colors[row.condition]}>{row.condition}</Badge>;
     }},
     { key: 'status', label: isRTL ? 'التشغيل' : 'Status', render: (_, row) => {
@@ -165,7 +165,7 @@ export default function Facilities() {
           title={isRTL ? 'أوامر عمل معلقة' : 'Pending Work Orders'}
           value={openWorkOrders}
           icon={Wrench}
-          iconClassName="bg-blue-50"
+          iconClassName="bg-najdi-50"
         />
         <StatCard
           title={isRTL ? 'قيد التنفيذ' : 'In Progress'}

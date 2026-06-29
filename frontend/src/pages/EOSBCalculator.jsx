@@ -161,8 +161,8 @@ export default function EOSBCalculator() {
   return (
     <div className="max-w-3xl space-y-5">
       <div>
-        <h1 className="text-xl font-bold text-slate-800">{isRTL ? 'حاسبة نهاية الخدمة (EOSB)' : 'End of Service Benefit (EOSB) Calculator'}</h1>
-        <p className="text-sm text-slate-500">{isRTL ? 'المادة 84 من نظام العمل السعودي — احتساب فوري دقيق' : 'Saudi Labor Law Article 84 — instant precise calculation'}</p>
+        <h1 className="text-xl font-bold text-ink">{isRTL ? 'حاسبة نهاية الخدمة (EOSB)' : 'End of Service Benefit (EOSB) Calculator'}</h1>
+        <p className="text-sm text-muted-foreground">{isRTL ? 'المادة 84 من نظام العمل السعودي — احتساب فوري دقيق' : 'Saudi Labor Law Article 84 — instant precise calculation'}</p>
       </div>
 
       <Card>
@@ -183,11 +183,11 @@ export default function EOSBCalculator() {
           </div>
 
           {employee && (
-            <div className="bg-slate-50 rounded-xl p-4 grid grid-cols-2 gap-3 text-sm">
-              <div><span className="text-slate-500">{isRTL ? 'تاريخ التعيين:' : 'Hire Date:'}</span><span className="font-medium ms-2">{employee.hire_date ? format(new Date(employee.hire_date), 'dd/MM/yyyy') : '—'}</span></div>
-              <div><span className="text-slate-500">{isRTL ? 'الراتب الأساسي:' : 'Basic Salary:'}</span><span className="font-medium ms-2">SAR {SAR(employee.basic_salary)}</span></div>
-              <div><span className="text-slate-500">{isRTL ? 'النوع:' : 'Type:'}</span><span className="font-medium ms-2">{employee.employment_type}</span></div>
-              <div><span className="text-slate-500">{isRTL ? 'العقد:' : 'Contract:'}</span><span className="font-medium ms-2">{employee.contract_type}</span></div>
+            <div className="bg-sand rounded-xl p-4 grid grid-cols-2 gap-3 text-sm">
+              <div><span className="text-muted-foreground">{isRTL ? 'تاريخ التعيين:' : 'Hire Date:'}</span><span className="font-medium ms-2">{employee.hire_date ? format(new Date(employee.hire_date), 'dd/MM/yyyy') : '—'}</span></div>
+              <div><span className="text-muted-foreground">{isRTL ? 'الراتب الأساسي:' : 'Basic Salary:'}</span><span className="font-medium ms-2">SAR {SAR(employee.basic_salary)}</span></div>
+              <div><span className="text-muted-foreground">{isRTL ? 'النوع:' : 'Type:'}</span><span className="font-medium ms-2">{employee.employment_type}</span></div>
+              <div><span className="text-muted-foreground">{isRTL ? 'العقد:' : 'Contract:'}</span><span className="font-medium ms-2">{employee.contract_type}</span></div>
             </div>
           )}
 
@@ -246,8 +246,8 @@ export default function EOSBCalculator() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Service summary */}
-            <div className="bg-slate-50 rounded-xl p-3 flex items-center gap-3">
-              <Clock className="w-5 h-5 text-slate-400 flex-shrink-0" />
+            <div className="bg-sand rounded-xl p-3 flex items-center gap-3">
+              <Clock className="w-5 h-5 text-muted-foreground flex-shrink-0" />
               <div className="text-sm">
                 <span className="font-semibold">{result.totalYears.toFixed(2)}</span>
                 {isRTL ? ' سنة خدمة (' : ' years of service ('}
@@ -261,18 +261,18 @@ export default function EOSBCalculator() {
 
             {/* EOSB breakdown */}
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{isRTL ? 'تفصيل مستحق نهاية الخدمة' : 'EOSB Breakdown'}</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'تفصيل مستحق نهاية الخدمة' : 'EOSB Breakdown'}</p>
               {result.breakdown.map((b, i) => (
-                <div key={i} className="flex justify-between text-sm py-1 border-b border-slate-100">
-                  <span className="text-slate-600">{isRTL ? b.label.ar : b.label.en}</span>
+                <div key={i} className="flex justify-between text-sm py-1 border-b border-border">
+                  <span className="text-muted-foreground">{isRTL ? b.label.ar : b.label.en}</span>
                   <span className="font-mono">SAR {SAR(b.amount)}</span>
                 </div>
               ))}
               <div className="flex justify-between text-sm font-semibold">
                 <span>{isRTL ? 'مستحق كامل (قبل التطبيق)' : 'Full EOSB (before multiplier)'}</span>
-                <span className="font-mono text-slate-700">SAR {SAR(result.fullEOSB)}</span>
+                <span className="font-mono text-ink">SAR {SAR(result.fullEOSB)}</span>
               </div>
-              <div className="flex justify-between text-sm font-bold text-blue-700">
+              <div className="flex justify-between text-sm font-bold text-najdi-900">
                 <span>{isRTL ? `مكافأة نهاية الخدمة المستحقة (${(result.multiplier * 100).toFixed(0)}%)` : `EOSB Due (${(result.multiplier * 100).toFixed(0)}%)`}</span>
                 <span className="font-mono">SAR {SAR(result.eosbDue)}</span>
               </div>
@@ -283,16 +283,16 @@ export default function EOSBCalculator() {
             {/* Other components */}
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between">
-                <span className="text-slate-600">{isRTL ? '+ تعويض الإجازة المتبقية' : '+ Leave Encashment'}</span>
+                <span className="text-muted-foreground">{isRTL ? '+ تعويض الإجازة المتبقية' : '+ Leave Encashment'}</span>
                 <span className="font-mono text-emerald-600">+ SAR {SAR(result.leaveEncashment)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-600">{isRTL ? '+ راتب الأيام العاملة هذا الشهر' : '+ Current Month Unpaid Salary'}</span>
+                <span className="text-muted-foreground">{isRTL ? '+ راتب الأيام العاملة هذا الشهر' : '+ Current Month Unpaid Salary'}</span>
                 <span className="font-mono text-emerald-600">+ SAR {SAR(result.unpaidSalary)}</span>
               </div>
               {result.loanDeduction > 0 && (
                 <div className="flex justify-between">
-                  <span className="text-slate-600">{isRTL ? '- قروض/سلف مستحقة' : '- Outstanding Loans'}</span>
+                  <span className="text-muted-foreground">{isRTL ? '- قروض/سلف مستحقة' : '- Outstanding Loans'}</span>
                   <span className="font-mono text-red-600">− SAR {SAR(result.loanDeduction)}</span>
                 </div>
               )}
@@ -301,7 +301,7 @@ export default function EOSBCalculator() {
             {/* Net */}
             <div className={`p-4 rounded-xl ${result.netSettlement >= 0 ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}>
               <div className="flex items-center justify-between">
-                <span className="font-bold text-lg text-slate-800">{isRTL ? 'صافي المستحق النهائي' : 'NET FINAL SETTLEMENT'}</span>
+                <span className="font-bold text-lg text-ink">{isRTL ? 'صافي المستحق النهائي' : 'NET FINAL SETTLEMENT'}</span>
                 <span className={`font-bold text-2xl ${result.netSettlement >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                   SAR {SAR(Math.abs(result.netSettlement))}
                   {result.netSettlement < 0 && <span className="text-sm ms-1">({isRTL ? 'يستحق من الموظف' : 'owed by employee'})</span>}
@@ -317,7 +317,7 @@ export default function EOSBCalculator() {
               <div className="text-sm">
                 <span className="font-medium">{isRTL ? 'الموعد النهائي للصرف (5 أيام قانونية):' : 'Payment deadline (5 working days):'}</span>
                 <span className="ms-2 font-bold">{format(result.paymentDeadline, 'dd/MM/yyyy')}</span>
-                <span className="ms-2 text-slate-500">
+                <span className="ms-2 text-muted-foreground">
                   ({result.daysToDeadline > 0 ? `${result.daysToDeadline} ${isRTL ? 'يوم متبقي' : 'days remaining'}` : (isRTL ? 'انتهى الموعد!' : 'Deadline passed!')})
                 </span>
               </div>

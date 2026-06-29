@@ -231,7 +231,7 @@ export default function YamenHRChat({ isRTL, isHRMode }) {
           {isHRMode ? <Bot className="w-4 h-4 text-emerald-400" /> : <Lock className="w-4 h-4 text-amber-400" />}
         </div>
         <div>
-          <p className="text-sm font-semibold text-slate-200">YAMEN</p>
+          <p className="text-sm font-semibold text-najdi-100">YAMEN</p>
           <p className={`text-xs ${isHRMode ? 'text-emerald-400' : 'text-amber-400'}`}>
             {isHRMode
               ? (isRTL ? 'وضع الموارد البشرية — صلاحيات كاملة' : 'HR Mode — Full Intelligence')
@@ -257,13 +257,13 @@ export default function YamenHRChat({ isRTL, isHRMode }) {
       <div className="flex-1 overflow-y-auto space-y-4 p-4">
         {messages.map((msg, i) => (
           <div key={i} className={`flex gap-3 ${msg.role === 'user' ? (isRTL ? '' : 'flex-row-reverse') : ''}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${msg.role === 'assistant' ? 'bg-emerald-900/50 border border-emerald-700' : 'bg-slate-700 border border-slate-600'}`}>
-              {msg.role === 'assistant' ? <Bot className="w-4 h-4 text-emerald-400" /> : <User className="w-4 h-4 text-slate-300" />}
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${msg.role === 'assistant' ? 'bg-emerald-900/50 border border-emerald-700' : 'bg-ink border border-najdi-900'}`}>
+              {msg.role === 'assistant' ? <Bot className="w-4 h-4 text-emerald-400" /> : <User className="w-4 h-4 text-muted-foreground" />}
             </div>
             <div className={`max-w-[78%] flex flex-col gap-1 ${msg.role === 'user' ? (isRTL ? 'items-start' : 'items-end') : 'items-start'}`}>
               <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap break-words ${
                 msg.role === 'assistant'
-                  ? `bg-[hsl(220,18%,15%)] border border-[hsl(220,14%,22%)] text-slate-200 rounded-tl-sm ${msg.error ? 'border-red-700/60' : ''}`
+                  ? `bg-[hsl(220,18%,15%)] border border-[hsl(220,14%,22%)] text-najdi-100 rounded-tl-sm ${msg.error ? 'border-red-700/60' : ''}`
                   : 'bg-emerald-700/25 border border-emerald-700/40 text-emerald-50 rounded-tr-sm'
               }`} dir="auto">
                 {msg.content.split(/(\*\*[^*]+\*\*)/g).map((part, idx) => 
@@ -272,7 +272,7 @@ export default function YamenHRChat({ isRTL, isHRMode }) {
                     : <span key={idx}>{part}</span>
                 )}
               </div>
-              <span className="text-xs text-slate-600 px-1">{format(msg.timestamp, 'HH:mm')}</span>
+              <span className="text-xs text-muted-foreground px-1">{format(msg.timestamp, 'HH:mm')}</span>
             </div>
           </div>
         ))}
@@ -287,7 +287,7 @@ export default function YamenHRChat({ isRTL, isHRMode }) {
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '150ms' }} />
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
-              <span className="text-xs text-slate-400">{isRTL ? 'يامن يفكر...' : 'YAMEN is thinking...'}</span>
+              <span className="text-xs text-muted-foreground">{isRTL ? 'يامن يفكر...' : 'YAMEN is thinking...'}</span>
             </div>
           </div>
         )}
@@ -328,7 +328,7 @@ export default function YamenHRChat({ isRTL, isHRMode }) {
             onKeyDown={handleKeyDown}
             placeholder={isRTL ? 'اسأل يامن...' : 'Ask YAMEN anything...'}
             rows={2}
-            className="flex-1 resize-none bg-[hsl(220,16%,16%)] border-[hsl(220,14%,24%)] text-slate-200 placeholder:text-slate-500 focus:border-emerald-600 rounded-xl text-sm"
+            className="flex-1 resize-none bg-[hsl(220,16%,16%)] border-[hsl(220,14%,24%)] text-najdi-100 placeholder:text-muted-foreground focus:border-emerald-600 rounded-xl text-sm"
             dir="auto"
           />
           <Button
@@ -339,7 +339,7 @@ export default function YamenHRChat({ isRTL, isHRMode }) {
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </Button>
         </div>
-        <p className="text-xs text-slate-600 mt-1.5 text-center">{isRTL ? 'Enter للإرسال • Shift+Enter لسطر جديد' : 'Enter to send • Shift+Enter for new line'}</p>
+        <p className="text-xs text-muted-foreground mt-1.5 text-center">{isRTL ? 'Enter للإرسال • Shift+Enter لسطر جديد' : 'Enter to send • Shift+Enter for new line'}</p>
       </div>
     </div>
   );

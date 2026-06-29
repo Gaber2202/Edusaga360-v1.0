@@ -31,27 +31,27 @@ export default function GovernmentRelations() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 flex items-center gap-4 shadow-sm">
+      <div className="bg-white border border-border rounded-xl p-6 flex items-center gap-4 shadow-sm">
         <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center flex-shrink-0">
           <Shield className="w-6 h-6 text-emerald-600" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl font-bold text-ink">
             {isRTL ? 'العلاقات الحكومية' : 'Government Relations'}
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">
+          <p className="text-muted-foreground text-sm mt-0.5">
             {isRTL ? 'إدارة الامتثال الحكومي والخدمات التنظيمية — السوق السعودي' : 'Government Compliance & Regulatory Services — Saudi Market'}
           </p>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} dir={isRTL ? 'rtl' : 'ltr'}>
-        <TabsList className="flex flex-wrap h-auto gap-1 bg-white border border-slate-200 p-1 rounded-lg shadow-sm">
+        <TabsList className="flex flex-wrap h-auto gap-1 bg-white border border-border p-1 rounded-lg shadow-sm">
           {tabs.map(tab => (
             <TabsTrigger
               key={tab.id}
               value={tab.id}
-              className="text-xs sm:text-sm px-3 py-2 font-medium text-slate-600 hover:text-slate-900 data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-sm rounded-md transition-all"
+              className="text-xs sm:text-sm px-3 py-2 font-medium text-muted-foreground hover:text-ink data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-sm rounded-md transition-all"
             >
               {isRTL ? tab.ar : tab.en}
             </TabsTrigger>

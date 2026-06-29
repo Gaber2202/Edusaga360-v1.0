@@ -128,7 +128,7 @@ export default function HolidayCalendar() {
       cell: (row) => (
         <div>
           <p className="font-medium">{row.holiday_name_ar}</p>
-          <p className="text-sm text-slate-500">{row.holiday_name_en}</p>
+          <p className="text-sm text-muted-foreground">{row.holiday_name_en}</p>
         </div>
       )
     },
@@ -149,12 +149,12 @@ export default function HolidayCalendar() {
           school_holiday: isRTL ? 'إجازة مدرسية' : 'School Holiday',
           optional_observance: isRTL ? 'إجازة اختيارية' : 'Optional'
         };
-        return <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">{types[row.holiday_type]}</span>;
+        return <span className="text-xs bg-najdi-50 text-najdi-900 px-2 py-1 rounded">{types[row.holiday_type]}</span>;
       }
     },
     {
       header: isRTL ? 'الحالة' : 'Status',
-      cell: (row) => <span className={row.is_active ? 'text-green-600' : 'text-slate-400'}>{row.is_active ? (isRTL ? 'نشط' : 'Active') : (isRTL ? 'غير نشط' : 'Inactive')}</span>
+      cell: (row) => <span className={row.is_active ? 'text-green-600' : 'text-muted-foreground'}>{row.is_active ? (isRTL ? 'نشط' : 'Active') : (isRTL ? 'غير نشط' : 'Inactive')}</span>
     },
     {
       header: t('actions'),

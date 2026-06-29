@@ -65,9 +65,9 @@ export default function AdmissionsDashboard({ applications, branches: _branches 
             <Icon className="w-5 h-5" />
           </div>
         </div>
-        <div className="text-2xl font-bold text-slate-800">{value}</div>
-        <div className="text-sm text-slate-500 mt-1">{title}</div>
-        {sub && <div className="text-xs text-slate-400 mt-0.5">{sub}</div>}
+        <div className="text-2xl font-bold text-ink">{value}</div>
+        <div className="text-sm text-muted-foreground mt-1">{title}</div>
+        {sub && <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>}
       </CardContent>
     </Card>
   );
@@ -76,7 +76,7 @@ export default function AdmissionsDashboard({ applications, branches: _branches 
     <div className="space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <KPICard title={isRTL ? 'إجمالي الطلبات' : 'Total Applications'} value={total} icon={Users} color="bg-blue-100 text-blue-600" />
+        <KPICard title={isRTL ? 'إجمالي الطلبات' : 'Total Applications'} value={total} icon={Users} color="bg-najdi-50 text-najdi-700" />
         <KPICard title={isRTL ? 'قيد المعالجة' : 'In Progress'} value={pending} icon={Clock} color="bg-amber-100 text-amber-600" />
         <KPICard title={isRTL ? 'نسبة القبول' : 'Acceptance Rate'} value={`${acceptanceRate}%`} icon={TrendingUp} color="bg-green-100 text-green-600" />
         <KPICard title={isRTL ? 'متوسط المدة (أيام)' : 'Avg. Days'} value={avgDays} icon={Clock} color="bg-purple-100 text-purple-600" />
@@ -159,12 +159,12 @@ export default function AdmissionsDashboard({ applications, branches: _branches 
             ].map((row, i) => (
               <div key={i}>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-slate-600">{row.label}</span>
-                  <span className="font-semibold text-slate-800">{row.value}</span>
+                  <span className="text-muted-foreground">{row.label}</span>
+                  <span className="font-semibold text-ink">{row.value}</span>
                 </div>
-                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-2 bg-sand-alt rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${row.green ? 'bg-emerald-500' : row.red ? 'bg-red-400' : 'bg-blue-500'}`}
+                    className={`h-full rounded-full transition-all ${row.green ? 'bg-emerald-500' : row.red ? 'bg-red-400' : 'bg-najdi-500'}`}
                     style={{ width: `${row.bar}%` }}
                   />
                 </div>

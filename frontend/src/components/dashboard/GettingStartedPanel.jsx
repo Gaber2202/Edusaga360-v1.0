@@ -124,7 +124,7 @@ export default function GettingStartedPanel({ isRTL, tenant, counts = {} }) {
   };
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-blue-200/60 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white shadow-lg">
+    <div className="relative overflow-hidden rounded-2xl border border-najdi-100/60 bg-gradient-to-br from-najdi-700 via-blue-700 to-indigo-800 text-white shadow-lg">
       {/* Decorative glow */}
       <div className="pointer-events-none absolute -top-16 -right-16 w-56 h-56 rounded-full bg-white/10 blur-2xl" />
       <div className="pointer-events-none absolute -bottom-20 -left-10 w-56 h-56 rounded-full bg-indigo-400/20 blur-2xl" />
@@ -149,7 +149,7 @@ export default function GettingStartedPanel({ isRTL, tenant, counts = {} }) {
               </h2>
               <Sparkles className="w-4 h-4 text-amber-300" />
             </div>
-            <p className="text-sm text-blue-100/90 mt-0.5">
+            <p className="text-sm text-najdi-100/90 mt-0.5">
               {tt(
                 'لنُجهّز مدرستك في بضع خطوات. ابدأ بدعوة فريقك.',
                 'Let\'s get your school set up in a few steps. Start by inviting your team.',
@@ -164,7 +164,7 @@ export default function GettingStartedPanel({ isRTL, tenant, counts = {} }) {
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <span className="text-xs font-semibold text-blue-50 tabular-nums">
+              <span className="text-xs font-semibold text-white tabular-nums">
                 {completed}/{steps.length} {tt('مكتمل', 'done')}
               </span>
             </div>
@@ -191,20 +191,20 @@ export default function GettingStartedPanel({ isRTL, tenant, counts = {} }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <StepIcon className="w-3.5 h-3.5 text-blue-200" />
+                    <StepIcon className="w-3.5 h-3.5 text-najdi-100" />
                     <p className="text-sm font-semibold truncate">{step.title}</p>
                   </div>
-                  <p className="text-xs text-blue-100/70 truncate">{step.desc}</p>
+                  <p className="text-xs text-najdi-100/70 truncate">{step.desc}</p>
                 </div>
                 {!step.done && (
                   step.href ? (
                     <Link to={step.href}>
-                      <Button size="sm" variant="secondary" className="h-7 text-xs gap-1 bg-white text-blue-700 hover:bg-blue-50">
+                      <Button size="sm" variant="secondary" className="h-7 text-xs gap-1 bg-white text-najdi-900 hover:bg-najdi-50">
                         {step.cta} <ArrowRight className={`w-3 h-3 ${isRTL ? 'rotate-180' : ''}`} />
                       </Button>
                     </Link>
                   ) : (
-                    <Button size="sm" variant="secondary" onClick={step.action} className="h-7 text-xs gap-1 bg-white text-blue-700 hover:bg-blue-50">
+                    <Button size="sm" variant="secondary" onClick={step.action} className="h-7 text-xs gap-1 bg-white text-najdi-900 hover:bg-najdi-50">
                       {step.cta} <ArrowRight className={`w-3 h-3 ${isRTL ? 'rotate-180' : ''}`} />
                     </Button>
                   )
@@ -216,9 +216,9 @@ export default function GettingStartedPanel({ isRTL, tenant, counts = {} }) {
 
         {/* Inline invite form */}
         {inviteOpen && (
-          <div className="mt-4 rounded-xl bg-white p-4 text-slate-800 shadow-inner">
+          <div className="mt-4 rounded-xl bg-white p-4 text-ink shadow-inner">
             <div className="flex items-center gap-2 mb-3">
-              <UserPlus className="w-4 h-4 text-blue-600" />
+              <UserPlus className="w-4 h-4 text-najdi-700" />
               <h3 className="text-sm font-bold">{tt('دعوة عضو فريق', 'Invite a team member')}</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -246,7 +246,7 @@ export default function GettingStartedPanel({ isRTL, tenant, counts = {} }) {
               </Select>
             </div>
             <div className="flex items-center justify-between gap-3 mt-3">
-              <p className="text-xs text-slate-400 flex items-center gap-1">
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <Users className="w-3 h-3" />
                 {tt('ستتم مراجعة الدعوات في الفترة التجريبية.', 'Invitations are reviewed during your trial.')}
               </p>
@@ -254,7 +254,7 @@ export default function GettingStartedPanel({ isRTL, tenant, counts = {} }) {
                 <Button size="sm" variant="ghost" onClick={() => setInviteOpen(false)} className="h-8 text-xs">
                   {tt('إلغاء', 'Cancel')}
                 </Button>
-                <Button size="sm" onClick={submitInvite} disabled={sending} className="h-8 text-xs gap-1.5 bg-blue-600 hover:bg-blue-700">
+                <Button size="sm" onClick={submitInvite} disabled={sending} className="h-8 text-xs gap-1.5 bg-najdi-700 hover:bg-najdi-900">
                   {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
                   {tt('إرسال الدعوة', 'Send invite')}
                 </Button>
@@ -264,7 +264,7 @@ export default function GettingStartedPanel({ isRTL, tenant, counts = {} }) {
         )}
 
         {/* Footer link to full user management */}
-        <div className="mt-4 flex items-center justify-between text-xs text-blue-100/80">
+        <div className="mt-4 flex items-center justify-between text-xs text-najdi-100/80">
           <Link to={createPageUrl('UserManagement')} className="inline-flex items-center gap-1 hover:text-white transition-colors font-medium">
             <Users className="w-3.5 h-3.5" />
             {tt('إدارة المستخدمين', 'Manage all users')}

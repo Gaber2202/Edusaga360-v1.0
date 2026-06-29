@@ -39,8 +39,8 @@ function AttendanceGauge({ pct, isRTL }) {
 
 function EmptyChartState({ isRTL }) {
   return (
-    <div className="flex flex-col items-center justify-center py-6 text-slate-400">
-      <BarChart3 className="w-8 h-8 mb-2 text-slate-300" />
+    <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
+      <BarChart3 className="w-8 h-8 mb-2 text-muted-foreground" />
       <p className="text-xs">{isRTL ? 'لا توجد بيانات بعد' : 'No data yet'}</p>
     </div>
   );
@@ -92,12 +92,12 @@ export default function DashboardAnalytics({ students, invoices, employees: _emp
 
   return (
     <div>
-      <h2 className="text-slate-700 mb-3 text-sm font-bold uppercase tracking-wide">{isRTL ? 'التحليلات والإحصاءات' : 'Analytics & Insights'}</h2>
+      <h2 className="text-ink mb-3 text-sm font-bold uppercase tracking-wide">{isRTL ? 'التحليلات والإحصاءات' : 'Analytics & Insights'}</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
 
         <Card className="col-span-1">
           <CardHeader className="pb-2 px-4 pt-4">
-            <CardTitle className="text-xs font-bold text-slate-600 uppercase tracking-wide">{isRTL ? 'تطور التسجيل (6 أشهر)' : 'Enrollment Trend (6 Mo)'}</CardTitle>
+            <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{isRTL ? 'تطور التسجيل (6 أشهر)' : 'Enrollment Trend (6 Mo)'}</CardTitle>
           </CardHeader>
           <CardContent className="px-2 pb-3">
             {hasEnrollmentData ? (
@@ -118,7 +118,7 @@ export default function DashboardAnalytics({ students, invoices, employees: _emp
 
         <Card className="col-span-1">
           <CardHeader className="pb-2 px-4 pt-4">
-            <CardTitle className="text-xs font-bold text-slate-600 uppercase tracking-wide">{isRTL ? 'حالة التحصيل (ألف ر.س)' : 'Fee Collection (K SAR)'}</CardTitle>
+            <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{isRTL ? 'حالة التحصيل (ألف ر.س)' : 'Fee Collection (K SAR)'}</CardTitle>
           </CardHeader>
           <CardContent className="px-2 pb-3 flex items-center justify-center">
             {feeData.length > 0 && feeData.some(d => d.value > 0) ? (
@@ -139,7 +139,7 @@ export default function DashboardAnalytics({ students, invoices, employees: _emp
 
         <Card className="col-span-1">
           <CardHeader className="pb-0 px-4 pt-4">
-            <CardTitle className="text-xs font-bold text-slate-600 uppercase tracking-wide">{isRTL ? 'الحضور اليوم' : 'Attendance Today'}</CardTitle>
+            <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{isRTL ? 'الحضور اليوم' : 'Attendance Today'}</CardTitle>
           </CardHeader>
           <CardContent className="px-2 pb-3">
             {attendancePct > 0 ? (
@@ -152,7 +152,7 @@ export default function DashboardAnalytics({ students, invoices, employees: _emp
 
         <Card className="col-span-1">
           <CardHeader className="pb-2 px-4 pt-4">
-            <CardTitle className="text-xs font-bold text-slate-600 uppercase tracking-wide">{isRTL ? 'الرواتب vs الميزانية (ألف)' : 'Payroll vs Budget (K)'}</CardTitle>
+            <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{isRTL ? 'الرواتب vs الميزانية (ألف)' : 'Payroll vs Budget (K)'}</CardTitle>
           </CardHeader>
           <CardContent className="px-2 pb-3">
             {payrollData.length > 0 ? (

@@ -19,7 +19,7 @@ const HR_ROLES = ['admin', 'hr_admin', 'hr_officer', 'creator'];
 const SEVERITY_CONFIG = {
   critical: { color: 'bg-red-50 border-red-300 text-red-800',   icon: XCircle,      iconColor: 'text-red-600' },
   warning:  { color: 'bg-amber-50 border-amber-300 text-amber-800', icon: AlertTriangle, iconColor: 'text-amber-600' },
-  info:     { color: 'bg-blue-50 border-blue-300 text-blue-800', icon: Info,         iconColor: 'text-blue-600' },
+  info:     { color: 'bg-najdi-50 border-najdi-100 text-najdi-900', icon: Info,         iconColor: 'text-najdi-700' },
   ok:       { color: 'bg-green-50 border-green-300 text-green-800', icon: CheckCircle2, iconColor: 'text-green-600' },
 };
 
@@ -43,12 +43,12 @@ function CompliancePanel({ isRTL }) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">{isRTL ? 'الامتثال التلقائي' : 'Compliance Autopilot'}</h2>
-          <p className="text-sm text-slate-500">{isRTL ? 'مراجعة فورية لمخاطر الامتثال — إقامات، GOSI، فواتير، إجازات' : 'Instant compliance health check — iqama, GOSI, fees, leave'}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'مراجعة فورية لمخاطر الامتثال — إقامات، GOSI، فواتير، إجازات' : 'Instant compliance health check — iqama, GOSI, fees, leave'}</p>
         </div>
         <button
           onClick={run}
           disabled={loading}
-          className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 bg-najdi-900 hover:bg-ink text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           {loading ? (isRTL ? 'جاري الفحص...' : 'Checking…') : (isRTL ? 'فحص الآن' : 'Run Check')}
@@ -106,20 +106,20 @@ function CompliancePanel({ isRTL }) {
           </div>
 
           {data.summary && (
-            <div className="bg-slate-50 border rounded-xl p-4">
-              <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">{isRTL ? 'ملخص يامن' : 'YAMEN Summary'}</p>
-              <p className="text-sm text-slate-700 whitespace-pre-line">{data.summary}</p>
+            <div className="bg-sand border rounded-xl p-4">
+              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">{isRTL ? 'ملخص يامن' : 'YAMEN Summary'}</p>
+              <p className="text-sm text-ink whitespace-pre-line">{data.summary}</p>
             </div>
           )}
 
-          <p className="text-xs text-slate-400 text-center">
+          <p className="text-xs text-muted-foreground text-center">
             {isRTL ? `آخر فحص: ${data.alerts?.checked_on ?? '—'}` : `Last checked: ${data.alerts?.checked_on ?? '—'}`}
           </p>
         </>
       )}
 
       {!data && !loading && (
-        <div className="border-2 border-dashed border-slate-200 rounded-xl p-10 text-center text-slate-400">
+        <div className="border-2 border-dashed border-border rounded-xl p-10 text-center text-muted-foreground">
           <Shield className="w-10 h-10 mx-auto mb-3 opacity-30" />
           <p className="text-sm">{isRTL ? 'اضغط "فحص الآن" لمراجعة حالة الامتثال' : 'Click "Run Check" to scan for compliance issues'}</p>
         </div>
@@ -165,10 +165,10 @@ export default function YamenAI() {
   return (
     <div className="space-y-0">
       {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-2xl mb-6 bg-gradient-to-r from-slate-800 to-slate-700 border border-slate-600 p-6">
+      <div className="relative overflow-hidden rounded-2xl mb-6 bg-gradient-to-r from-slate-800 to-najdi-900 border border-najdi-900 p-6">
         {/* Background glow */}
         <div className="absolute top-0 left-0 w-64 h-64 bg-emerald-500/8 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-48 h-48 bg-blue-500/8 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-48 h-48 bg-najdi-500/8 rounded-full blur-3xl pointer-events-none" />
 
         <div className={`relative flex items-center gap-5 ${isRTL ? 'flex-row-reverse' : ''}`}>
           {/* Icon */}
@@ -191,7 +191,7 @@ export default function YamenAI() {
                 AI
               </span>
             </div>
-            <p className="text-slate-300 text-sm font-medium">
+            <p className="text-muted-foreground text-sm font-medium">
               {isRTL ? 'المساعد الذكي للموارد البشرية' : 'AI HR Companion'}
             </p>
             <div className={`flex items-center gap-1.5 mt-2 ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
@@ -212,7 +212,7 @@ export default function YamenAI() {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-1 flex-wrap p-1 bg-slate-100 border border-slate-200 rounded-xl mb-6">
+      <div className="flex gap-1 flex-wrap p-1 bg-sand-alt border border-border rounded-xl mb-6">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -222,8 +222,8 @@ export default function YamenAI() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 isActive
-                  ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
-                  : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
+                  ? 'bg-white text-ink shadow-sm border border-border'
+                  : 'text-muted-foreground hover:text-ink hover:bg-white/60'
               }`}
             >
               <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-emerald-600' : ''}`} />

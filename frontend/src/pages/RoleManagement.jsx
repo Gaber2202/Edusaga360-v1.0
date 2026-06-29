@@ -261,10 +261,10 @@ export default function RoleManagement() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       ) : roles.length === 0 ? (
-        <Card className="p-12 text-center text-slate-500">
+        <Card className="p-12 text-center text-muted-foreground">
           {isRTL ? 'لا توجد أدوار بعد' : 'No roles yet'}
         </Card>
       ) : (
@@ -288,16 +288,16 @@ export default function RoleManagement() {
                 }
               >
                 <div className="flex items-start gap-4">
-                  <div className="w-11 h-11 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-11 h-11 bg-sand-alt rounded-xl flex items-center justify-center flex-shrink-0">
                     {role.is_creator_role ? (
                       <Crown className="w-5 h-5 text-amber-500" />
                     ) : (
-                      <Shield className="w-5 h-5 text-slate-600" />
+                      <Shield className="w-5 h-5 text-muted-foreground" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-slate-900 truncate">
+                      <h3 className="font-semibold text-ink truncate">
                         {isRTL ? role.name_ar : role.name_en}
                       </h3>
                       {role.is_system_role && (
@@ -306,10 +306,10 @@ export default function RoleManagement() {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5 font-mono truncate">
+                    <p className="text-xs text-muted-foreground mt-0.5 font-mono truncate">
                       {role.role_code}
                     </p>
-                    <p className="text-xs text-slate-500 mt-2">
+                    <p className="text-xs text-muted-foreground mt-2">
                       {isRTL
                         ? `${mods} وحدة • ${acts} صلاحية`
                         : `${mods} modules • ${acts} actions`}
@@ -486,7 +486,7 @@ export default function RoleManagement() {
               <TabsContent value="modules" className="space-y-3 pt-3">
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="relative flex-1 min-w-[200px]">
-                    <Search className="w-4 h-4 absolute top-2.5 start-2.5 text-slate-400 pointer-events-none" />
+                    <Search className="w-4 h-4 absolute top-2.5 start-2.5 text-muted-foreground pointer-events-none" />
                     <Input
                       value={moduleSearch}
                       onChange={(e) => setModuleSearch(e.target.value)}
@@ -521,7 +521,7 @@ export default function RoleManagement() {
                   return (
                     <div key={group.key} className="border rounded-lg p-3">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-sm text-slate-700">
+                        <h4 className="font-medium text-sm text-ink">
                           {isRTL ? group.nameAr : group.nameEn}
                         </h4>
                         <div className="flex gap-1">
@@ -545,7 +545,7 @@ export default function RoleManagement() {
                         {groupModules.map((m) => (
                           <label
                             key={m.key}
-                            className="flex items-center gap-2 text-sm cursor-pointer select-none p-2 rounded hover:bg-slate-50"
+                            className="flex items-center gap-2 text-sm cursor-pointer select-none p-2 rounded hover:bg-sand"
                           >
                             <Checkbox
                               checked={!!form.module_access[m.key]}
@@ -597,7 +597,7 @@ export default function RoleManagement() {
                           <div className="font-medium">
                             {isRTL ? a.nameAr : a.nameEn}
                           </div>
-                          <div className="text-xs text-slate-400 font-mono">{a.key}</div>
+                          <div className="text-xs text-muted-foreground font-mono">{a.key}</div>
                         </TableCell>
                         <TableCell className="text-end">
                           <Checkbox

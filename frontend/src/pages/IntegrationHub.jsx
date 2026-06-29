@@ -52,11 +52,11 @@ const MODULE_MAP = [
 ];
 
 const MODULE_COLORS = {
-  Admissions: 'bg-blue-500', SIS: 'bg-indigo-500', Fees: 'bg-emerald-500',
+  Admissions: 'bg-najdi-500', SIS: 'bg-indigo-500', Fees: 'bg-emerald-500',
   Finance: 'bg-green-700', Contracts: 'bg-violet-500', Communications: 'bg-orange-500',
   CRM: 'bg-pink-500', Clinic: 'bg-red-500', Attendance: 'bg-amber-500',
   Transport: 'bg-sky-500', Library: 'bg-teal-500', Canteen: 'bg-lime-600',
-  Payroll: 'bg-cyan-600', HR: 'bg-slate-600', Expenses: 'bg-yellow-600',
+  Payroll: 'bg-cyan-600', HR: 'bg-ink', Expenses: 'bg-yellow-600',
   Assets: 'bg-stone-600', CPD: 'bg-purple-500', Procurement: 'bg-orange-700',
 };
 
@@ -64,7 +64,7 @@ const STATUS_CONFIG = {
   success: { color: 'text-emerald-600', bg: 'bg-emerald-100', icon: CheckCircle2, label: { ar: 'نجح', en: 'Success' } },
   partial: { color: 'text-amber-600', bg: 'bg-amber-100', icon: AlertTriangle, label: { ar: 'جزئي', en: 'Partial' } },
   failed: { color: 'text-red-600', bg: 'bg-red-100', icon: XCircle, label: { ar: 'فشل', en: 'Failed' } },
-  processing: { color: 'text-blue-600', bg: 'bg-blue-100', icon: Clock, label: { ar: 'جارٍ', en: 'Processing' } },
+  processing: { color: 'text-najdi-700', bg: 'bg-najdi-50', icon: Clock, label: { ar: 'جارٍ', en: 'Processing' } },
 };
 
 export default function IntegrationHub() {
@@ -116,11 +116,11 @@ export default function IntegrationHub() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-ink flex items-center gap-2">
             <Zap className="w-7 h-7 text-emerald-500" />
             {isRTL ? 'مركز التكامل' : 'Integration Hub'}
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             {isRTL ? 'حافلة الأحداث الداخلية — تتدفق البيانات تلقائياً بين جميع الوحدات' : 'Internal event bus — data flows automatically across all modules'}
           </p>
         </div>
@@ -133,8 +133,8 @@ export default function IntegrationHub() {
       {/* Stats Strip */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: isRTL ? 'إجمالي الأحداث' : 'Total Events', value: stats.total, color: 'text-slate-700', icon: Activity },
-          { label: isRTL ? 'نجحت اليوم' : 'Today', value: stats.today, color: 'text-blue-600', icon: BarChart3 },
+          { label: isRTL ? 'إجمالي الأحداث' : 'Total Events', value: stats.total, color: 'text-ink', icon: Activity },
+          { label: isRTL ? 'نجحت اليوم' : 'Today', value: stats.today, color: 'text-najdi-700', icon: BarChart3 },
           { label: isRTL ? 'ناجحة' : 'Success', value: stats.success, color: 'text-emerald-600', icon: CheckCircle2 },
           { label: isRTL ? 'جزئية' : 'Partial', value: stats.partial, color: 'text-amber-600', icon: AlertTriangle },
           { label: isRTL ? 'فشلت' : 'Failed', value: stats.failed, color: 'text-red-600', icon: XCircle },
@@ -144,7 +144,7 @@ export default function IntegrationHub() {
               <s.icon className={`w-4 h-4 ${s.color}`} />
               <span className={`text-2xl font-bold ${s.color}`}>{s.value}</span>
             </div>
-            <p className="text-xs text-slate-500">{s.label}</p>
+            <p className="text-xs text-muted-foreground">{s.label}</p>
           </Card>
         ))}
       </div>
@@ -174,7 +174,7 @@ export default function IntegrationHub() {
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+              <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
               <Input
                 placeholder={isRTL ? 'بحث بالحدث أو الوحدة...' : 'Search event or module...'}
                 value={search}
@@ -205,7 +205,7 @@ export default function IntegrationHub() {
             </Select>
           </div>
 
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-muted-foreground">
             {isRTL ? `آخر تحديث: ${dataUpdatedAt ? format(new Date(dataUpdatedAt), 'HH:mm:ss') : '-'}` : `Last updated: ${dataUpdatedAt ? format(new Date(dataUpdatedAt), 'HH:mm:ss') : '-'}`}
             {' · '}
             {filteredLogs.length} {isRTL ? 'حدث' : 'events'}
@@ -214,21 +214,21 @@ export default function IntegrationHub() {
           {/* Log Table */}
           <div className="rounded-lg border overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b">
+              <thead className="bg-sand border-b">
                 <tr>
-                  <th className="text-start py-2.5 px-3 font-medium text-slate-600">{isRTL ? 'الوقت' : 'Time'}</th>
-                  <th className="text-start py-2.5 px-3 font-medium text-slate-600">{isRTL ? 'الحدث' : 'Event'}</th>
-                  <th className="text-start py-2.5 px-3 font-medium text-slate-600">{isRTL ? 'المصدر' : 'Source'}</th>
-                  <th className="text-start py-2.5 px-3 font-medium text-slate-600">{isRTL ? 'الأهداف' : 'Targets'}</th>
-                  <th className="text-start py-2.5 px-3 font-medium text-slate-600">{isRTL ? 'الحالة' : 'Status'}</th>
+                  <th className="text-start py-2.5 px-3 font-medium text-muted-foreground">{isRTL ? 'الوقت' : 'Time'}</th>
+                  <th className="text-start py-2.5 px-3 font-medium text-muted-foreground">{isRTL ? 'الحدث' : 'Event'}</th>
+                  <th className="text-start py-2.5 px-3 font-medium text-muted-foreground">{isRTL ? 'المصدر' : 'Source'}</th>
+                  <th className="text-start py-2.5 px-3 font-medium text-muted-foreground">{isRTL ? 'الأهداف' : 'Targets'}</th>
+                  <th className="text-start py-2.5 px-3 font-medium text-muted-foreground">{isRTL ? 'الحالة' : 'Status'}</th>
                   <th className="py-2.5 px-3" />
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {isLoading ? (
-                  <tr><td colSpan={6} className="py-12 text-center text-slate-400">{isRTL ? 'جارٍ التحميل...' : 'Loading...'}</td></tr>
+                  <tr><td colSpan={6} className="py-12 text-center text-muted-foreground">{isRTL ? 'جارٍ التحميل...' : 'Loading...'}</td></tr>
                 ) : filteredLogs.length === 0 ? (
-                  <tr><td colSpan={6} className="py-12 text-center text-slate-400">
+                  <tr><td colSpan={6} className="py-12 text-center text-muted-foreground">
                     <Activity className="w-8 h-8 mx-auto mb-2 opacity-30" />
                     {isRTL ? 'لا توجد أحداث مسجلة بعد' : 'No events logged yet — fire your first integration!'}
                   </td></tr>
@@ -239,25 +239,25 @@ export default function IntegrationHub() {
 
                   return (
                     <React.Fragment key={log.id}>
-                      <tr className="hover:bg-slate-50 cursor-pointer" onClick={() => setExpandedRow(isExpanded ? null : log.id)}>
-                        <td className="py-2.5 px-3 font-mono text-xs text-slate-500">
+                      <tr className="hover:bg-sand cursor-pointer" onClick={() => setExpandedRow(isExpanded ? null : log.id)}>
+                        <td className="py-2.5 px-3 font-mono text-xs text-muted-foreground">
                           {log.timestamp ? format(new Date(log.timestamp), 'MM-dd HH:mm:ss') : '-'}
                         </td>
                         <td className="py-2.5 px-3">
-                          <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono">{log.event_type}</code>
+                          <code className="text-xs bg-sand-alt px-1.5 py-0.5 rounded font-mono">{log.event_type}</code>
                         </td>
                         <td className="py-2.5 px-3">
-                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium text-white ${MODULE_COLORS[log.source_module] || 'bg-slate-500'}`}>
+                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium text-white ${MODULE_COLORS[log.source_module] || 'bg-sand0'}`}>
                             {log.source_module}
                           </span>
                         </td>
                         <td className="py-2.5 px-3">
                           <div className="flex flex-wrap gap-1">
                             {(log.target_modules || []).slice(0, 3).map(t => (
-                              <span key={t} className={`text-xs px-1.5 py-0.5 rounded text-white ${MODULE_COLORS[t] || 'bg-slate-400'}`}>{t}</span>
+                              <span key={t} className={`text-xs px-1.5 py-0.5 rounded text-white ${MODULE_COLORS[t] || 'bg-sand-alt'}`}>{t}</span>
                             ))}
                             {(log.target_modules || []).length > 3 && (
-                              <span className="text-xs text-slate-400">+{log.target_modules.length - 3}</span>
+                              <span className="text-xs text-muted-foreground">+{log.target_modules.length - 3}</span>
                             )}
                           </div>
                         </td>
@@ -268,22 +268,22 @@ export default function IntegrationHub() {
                           </div>
                         </td>
                         <td className="py-2.5 px-3">
-                          <Eye className="w-4 h-4 text-slate-400" />
+                          <Eye className="w-4 h-4 text-muted-foreground" />
                         </td>
                       </tr>
                       {isExpanded && (
-                        <tr className="bg-slate-50">
+                        <tr className="bg-sand">
                           <td colSpan={6} className="px-6 py-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                               <div>
-                                <p className="font-semibold text-slate-700 mb-1">{isRTL ? 'البيانات المرسلة' : 'Payload'}</p>
-                                <pre className="bg-slate-900 text-emerald-300 rounded p-3 overflow-auto max-h-40 text-xs">
+                                <p className="font-semibold text-ink mb-1">{isRTL ? 'البيانات المرسلة' : 'Payload'}</p>
+                                <pre className="bg-najdi-900 text-emerald-300 rounded p-3 overflow-auto max-h-40 text-xs">
                                   {log.payload ? JSON.stringify(JSON.parse(log.payload), null, 2) : '{}'}
                                 </pre>
                               </div>
                               <div>
-                                <p className="font-semibold text-slate-700 mb-1">{isRTL ? 'نتائج المعالجة' : 'Handler Results'}</p>
-                                <pre className="bg-slate-900 text-sky-300 rounded p-3 overflow-auto max-h-40 text-xs">
+                                <p className="font-semibold text-ink mb-1">{isRTL ? 'نتائج المعالجة' : 'Handler Results'}</p>
+                                <pre className="bg-najdi-900 text-sky-300 rounded p-3 overflow-auto max-h-40 text-xs">
                                   {log.result_summary ? JSON.stringify(JSON.parse(log.result_summary), null, 2) : 'pending...'}
                                 </pre>
                                 {log.retry_count > 0 && (
@@ -304,21 +304,21 @@ export default function IntegrationHub() {
 
         {/* ── INTEGRATION MAP ── */}
         <TabsContent value="map" className="space-y-4">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             {isRTL ? 'خريطة تدفق الأحداث بين الوحدات — كل حدث يُطلق تحديثات تلقائية في الوحدات المرتبطة' : 'Event flow map — each event triggers automatic updates across linked modules'}
           </p>
           <div className="space-y-2">
             {MODULE_MAP.map((entry, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-lg border hover:border-slate-300 transition-colors">
-                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold text-white w-28 text-center ${MODULE_COLORS[entry.source] || 'bg-slate-500'}`}>
+              <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-lg border hover:border-border transition-colors">
+                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold text-white w-28 text-center ${MODULE_COLORS[entry.source] || 'bg-sand0'}`}>
                   {entry.source}
                 </span>
-                <ArrowRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                <code className="text-xs bg-slate-100 px-2 py-1 rounded font-mono w-52 text-slate-700">{entry.event}</code>
-                <ArrowRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <code className="text-xs bg-sand-alt px-2 py-1 rounded font-mono w-52 text-ink">{entry.event}</code>
+                <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 <div className="flex flex-wrap gap-1.5">
                   {entry.targets.map(t => (
-                    <span key={t} className={`px-2 py-0.5 rounded text-xs font-medium text-white ${MODULE_COLORS[t] || 'bg-slate-400'}`}>{t}</span>
+                    <span key={t} className={`px-2 py-0.5 rounded text-xs font-medium text-white ${MODULE_COLORS[t] || 'bg-sand-alt'}`}>{t}</span>
                   ))}
                 </div>
               </div>
@@ -334,7 +334,7 @@ export default function IntegrationHub() {
               return (
                 <Card key={mod.name} className="p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold text-white ${MODULE_COLORS[mod.name] || 'bg-slate-500'}`}>
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold text-white ${MODULE_COLORS[mod.name] || 'bg-sand0'}`}>
                       {mod.name}
                     </span>
                     <span className={`text-sm font-bold ${successRate === 100 ? 'text-emerald-600' : successRate >= 80 ? 'text-amber-600' : 'text-red-600'}`}>
@@ -343,20 +343,20 @@ export default function IntegrationHub() {
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-center text-xs">
                     <div>
-                      <p className="text-lg font-bold text-slate-700">{mod.fired}</p>
-                      <p className="text-slate-500">{isRTL ? 'أُطلق' : 'Fired'}</p>
+                      <p className="text-lg font-bold text-ink">{mod.fired}</p>
+                      <p className="text-muted-foreground">{isRTL ? 'أُطلق' : 'Fired'}</p>
                     </div>
                     <div>
                       <p className="text-lg font-bold text-emerald-600">{mod.success}</p>
-                      <p className="text-slate-500">{isRTL ? 'نجح' : 'OK'}</p>
+                      <p className="text-muted-foreground">{isRTL ? 'نجح' : 'OK'}</p>
                     </div>
                     <div>
                       <p className="text-lg font-bold text-red-600">{mod.failed}</p>
-                      <p className="text-slate-500">{isRTL ? 'فشل' : 'Failed'}</p>
+                      <p className="text-muted-foreground">{isRTL ? 'فشل' : 'Failed'}</p>
                     </div>
                   </div>
                   {mod.fired > 0 && (
-                    <div className="mt-3 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="mt-3 h-1.5 bg-sand-alt rounded-full overflow-hidden">
                       <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${successRate}%` }} />
                     </div>
                   )}
@@ -371,26 +371,26 @@ export default function IntegrationHub() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
               { num: 1, title: isRTL ? 'مصدر واحد للطالب' : 'Single Student Master', desc: isRTL ? 'SIS هو المصدر الوحيد لبيانات الطالب. جميع الوحدات تقرأ منه فقط.' : 'SIS is the only source of student truth. All modules reference by student_id.', icon: Database, color: 'text-indigo-600' },
-              { num: 2, title: isRTL ? 'مصدر واحد للموظف' : 'Single Employee Master', desc: isRTL ? 'نظام الموارد البشرية هو المصدر الوحيد لبيانات الموظف.' : 'HR & Payroll is the only source of staff truth.', icon: Database, color: 'text-slate-600' },
+              { num: 2, title: isRTL ? 'مصدر واحد للموظف' : 'Single Employee Master', desc: isRTL ? 'نظام الموارد البشرية هو المصدر الوحيد لبيانات الموظف.' : 'HR & Payroll is the only source of staff truth.', icon: Database, color: 'text-muted-foreground' },
               { num: 3, title: isRTL ? 'دفتر أستاذ مركزي' : 'Single Financial Ledger', desc: isRTL ? 'Finance/GL يستقبل جميع الحركات المالية. لا وحدة تحتفظ بسجلاتها المالية.' : 'Finance/GL receives ALL money movements. No module maintains its own financial records.', icon: BarChart3, color: 'text-green-700' },
               { num: 4, title: isRTL ? 'محرك إشعارات واحد' : 'Single Notification Engine', desc: isRTL ? 'Communications تتولى جميع الرسائل الصادرة. لا وحدة ترسل مباشرة.' : 'Communications handles all outbound messages. No module sends WhatsApp/email directly.', icon: Activity, color: 'text-orange-600' },
-              { num: 5, title: isRTL ? 'بوابة أولياء واحدة' : 'Single Parent Interface', desc: isRTL ? 'Parent Portal يجمع جميع بيانات أولياء الأمور. لا دخول للوحدات الفردية.' : 'Parent Portal aggregates all parent-facing data. Parents never access individual modules.', icon: Shield, color: 'text-blue-600' },
+              { num: 5, title: isRTL ? 'بوابة أولياء واحدة' : 'Single Parent Interface', desc: isRTL ? 'Parent Portal يجمع جميع بيانات أولياء الأمور. لا دخول للوحدات الفردية.' : 'Parent Portal aggregates all parent-facing data. Parents never access individual modules.', icon: Shield, color: 'text-najdi-700' },
               { num: 6, title: isRTL ? 'مسار التدقيق' : 'Audit Trail', desc: isRTL ? 'كل حدث عبر الوحدات مُسجَّل مع: المصدر، النوع، البيانات، الوقت، النجاح/الفشل.' : 'Every cross-module event is logged with: source module, event type, payload, timestamp, success/failure.', icon: Shield, color: 'text-amber-600' },
               { num: 7, title: isRTL ? 'معالجة الأخطاء' : 'Failure Handling', desc: isRTL ? '3 محاولات متصاعدة → تنبيه IT → قائمة انتظار → لا يُسقط أي حدث مالي.' : '3 retries with backoff → IT Admin alert after 3 failures → Event queued for replay → NEVER drop financial events.', icon: AlertTriangle, color: 'text-red-600' },
               { num: 8, title: isRTL ? 'الأداء' : 'Performance', desc: isRTL ? 'جميع الأحداث تتسع خلال 5 ثواني. Parent Portal يعكس أي تغيير خلال 30 ثانية.' : 'All cross-module events propagate within 5 seconds. Parent Portal reflects any action within 30 seconds.', icon: Zap, color: 'text-emerald-600' },
             ].map(rule => (
               <div key={rule.num} className="flex gap-4 p-4 bg-white rounded-lg border">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-600">
+                  <div className="w-8 h-8 rounded-full bg-sand-alt flex items-center justify-center text-sm font-bold text-muted-foreground">
                     {rule.num}
                   </div>
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <rule.icon className={`w-4 h-4 ${rule.color}`} />
-                    <p className="font-semibold text-slate-800 text-sm">{rule.title}</p>
+                    <p className="font-semibold text-ink text-sm">{rule.title}</p>
                   </div>
-                  <p className="text-xs text-slate-500 leading-relaxed">{rule.desc}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{rule.desc}</p>
                 </div>
               </div>
             ))}

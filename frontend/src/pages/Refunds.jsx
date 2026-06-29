@@ -267,7 +267,7 @@ export default function Refunds() {
           </>
         )}
         {row.status === 'approved' && (
-          <Button size="sm" onClick={() => handleExecute(row)} className="bg-blue-600 hover:bg-blue-700">
+          <Button size="sm" onClick={() => handleExecute(row)} className="bg-najdi-700 hover:bg-najdi-900">
             <ArrowLeftRight className="w-4 h-4 me-1" />
             {isRTL ? 'تنفيذ' : 'Execute'}
           </Button>
@@ -298,7 +298,7 @@ export default function Refunds() {
       </Tabs>
 
       <div className="relative max-w-md">
-        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
         <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${isRTL ? 'pr-10' : 'pl-10'} bg-white`} />
       </div>
 

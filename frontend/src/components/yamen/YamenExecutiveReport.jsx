@@ -97,22 +97,22 @@ export default function YamenExecutiveReport({ isRTL }) {
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card><CardContent className="p-4">
-          <p className="text-xs text-slate-400">{isRTL ? 'صحة الموارد البشرية' : 'HR Health'}</p>
+          <p className="text-xs text-muted-foreground">{isRTL ? 'صحة الموارد البشرية' : 'HR Health'}</p>
           <p className={`text-3xl font-bold ${stats.healthScore >= 70 ? 'text-emerald-400' : stats.healthScore >= 50 ? 'text-amber-400' : 'text-red-400'}`}>{stats.healthScore}%</p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <p className="text-xs text-slate-400">{isRTL ? 'السعودة' : 'Saudization'}</p>
+          <p className="text-xs text-muted-foreground">{isRTL ? 'السعودة' : 'Saudization'}</p>
           <p className={`text-3xl font-bold ${stats.saudizationPct >= 40 ? 'text-emerald-400' : 'text-amber-400'}`}>{stats.saudizationPct}%</p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <p className="text-xs text-slate-400">{isRTL ? 'إجمالي الرواتب' : 'Monthly Payroll'}</p>
+          <p className="text-xs text-muted-foreground">{isRTL ? 'إجمالي الرواتب' : 'Monthly Payroll'}</p>
           <p className="text-2xl font-bold text-white">{stats.totalPayroll > 0 ? (stats.totalPayroll / 1000).toFixed(0) + 'K' : '-'}</p>
-          <p className="text-xs text-slate-500">SAR</p>
+          <p className="text-xs text-muted-foreground">SAR</p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <p className="text-xs text-slate-400">{isRTL ? 'عالي المخاطر' : 'High Risk'}</p>
+          <p className="text-xs text-muted-foreground">{isRTL ? 'عالي المخاطر' : 'High Risk'}</p>
           <p className="text-3xl font-bold text-red-400">{stats.highRiskCount}</p>
-          <p className="text-xs text-slate-500">{isRTL ? 'من' : 'of'} {stats.active}</p>
+          <p className="text-xs text-muted-foreground">{isRTL ? 'من' : 'of'} {stats.active}</p>
         </CardContent></Card>
       </div>
 
@@ -130,7 +130,7 @@ export default function YamenExecutiveReport({ isRTL }) {
                   <Bar dataKey="total" fill="#10b981" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer> :
-            <p className="text-slate-400 text-center py-10 text-sm">{isRTL ? 'لا توجد بيانات' : 'No data'}</p>}
+            <p className="text-muted-foreground text-center py-10 text-sm">{isRTL ? 'لا توجد بيانات' : 'No data'}</p>}
           </CardContent>
         </Card>
 
@@ -165,9 +165,9 @@ export default function YamenExecutiveReport({ isRTL }) {
         </CardHeader>
         <CardContent>
           {aiSummary ?
-          <div className="text-slate-800 text-sm leading-7 whitespace-pre-wrap" dir={isRTL ? 'rtl' : 'ltr'}>{aiSummary}</div> :
+          <div className="text-ink text-sm leading-7 whitespace-pre-wrap" dir={isRTL ? 'rtl' : 'ltr'}>{aiSummary}</div> :
 
-          <p className="text-slate-400 text-sm text-center py-6">
+          <p className="text-muted-foreground text-sm text-center py-6">
               {isRTL ? 'اضغط "توليد التقرير" للحصول على الملخص التنفيذي من يامن' : 'Click "Generate Report" to get YAMEN\'s executive summary'}
             </p>
           }

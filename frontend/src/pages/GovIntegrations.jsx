@@ -201,7 +201,7 @@ export default function GovIntegrations() {
                           <CardTitle className="text-lg">
                             {isRTL ? integration.name_ar : integration.name_en}
                           </CardTitle>
-                          <p className="text-sm text-slate-500">
+                          <p className="text-sm text-muted-foreground">
                             {isRTL ? integration.description_ar : integration.description_en}
                           </p>
                         </div>
@@ -211,8 +211,8 @@ export default function GovIntegrations() {
                   <CardContent>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-500">{isRTL ? 'الحالة' : 'Status'}</span>
-                        <Badge className={status === 'connected' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}>
+                        <span className="text-sm text-muted-foreground">{isRTL ? 'الحالة' : 'Status'}</span>
+                        <Badge className={status === 'connected' ? 'bg-emerald-100 text-emerald-700' : 'bg-sand-alt text-ink'}>
                           {status === 'connected' ? (
                             <><CheckCircle className="w-3 h-3 me-1" /> {isRTL ? 'متصل' : 'Connected'}</>
                           ) : (
@@ -222,7 +222,7 @@ export default function GovIntegrations() {
                       </div>
                       
                       {connector?.last_sync && (
-                        <div className="text-xs text-slate-500">
+                        <div className="text-xs text-muted-foreground">
                           {isRTL ? 'آخر مزامنة:' : 'Last sync:'} {format(new Date(connector.last_sync), 'dd/MM/yyyy HH:mm')}
                         </div>
                       )}
@@ -267,11 +267,11 @@ export default function GovIntegrations() {
             </CardHeader>
             <CardContent>
               {syncLogs.length === 0 ? (
-                <p className="text-slate-500 text-center py-8">{isRTL ? 'لا توجد سجلات' : 'No logs available'}</p>
+                <p className="text-muted-foreground text-center py-8">{isRTL ? 'لا توجد سجلات' : 'No logs available'}</p>
               ) : (
                 <div className="space-y-2">
                   {syncLogs.map(log => (
-                    <div key={log.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                    <div key={log.id} className="flex items-center justify-between p-3 bg-sand rounded-lg">
                       <div className="flex items-center gap-3">
                         {log.status === 'success' ? (
                           <CheckCircle className="w-5 h-5 text-emerald-600" />
@@ -282,10 +282,10 @@ export default function GovIntegrations() {
                         )}
                         <div>
                           <p className="font-medium">{log.integration_name}</p>
-                          <p className="text-sm text-slate-500">{log.message}</p>
+                          <p className="text-sm text-muted-foreground">{log.message}</p>
                         </div>
                       </div>
-                      <div className="text-sm text-slate-500">
+                      <div className="text-sm text-muted-foreground">
                         {format(new Date(log.created_at), 'dd/MM/yyyy HH:mm')}
                       </div>
                     </div>

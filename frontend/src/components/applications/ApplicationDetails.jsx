@@ -32,8 +32,8 @@ const PIPELINE_STAGES = [
 ];
 
 const STATUS_COLORS = {
-  inquiry: 'bg-slate-100 text-slate-700', submitted: 'bg-blue-100 text-blue-700',
-  pending: 'bg-blue-100 text-blue-700', under_review: 'bg-yellow-100 text-yellow-700',
+  inquiry: 'bg-sand-alt text-ink', submitted: 'bg-najdi-50 text-najdi-900',
+  pending: 'bg-najdi-50 text-najdi-900', under_review: 'bg-yellow-100 text-yellow-700',
   assessment: 'bg-purple-100 text-purple-700', interview: 'bg-indigo-100 text-indigo-700',
   committee: 'bg-orange-100 text-orange-700', accepted: 'bg-green-100 text-green-700',
   waitlist: 'bg-teal-100 text-teal-700', enrolled: 'bg-emerald-100 text-emerald-700',
@@ -43,11 +43,11 @@ const STATUS_COLORS = {
 function InfoRow({ label, value, icon: Icon }) {
   if (!value) return null;
   return (
-    <div className="flex items-start gap-3 py-2 border-b border-slate-100 last:border-0">
-      {Icon && <Icon className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />}
+    <div className="flex items-start gap-3 py-2 border-b border-border last:border-0">
+      {Icon && <Icon className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />}
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-slate-500">{label}</p>
-        <p className="text-sm text-slate-800 font-medium">{value}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-sm text-ink font-medium">{value}</p>
       </div>
     </div>
   );
@@ -132,11 +132,11 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
 
   const StarRating = ({ label, field }) => (
     <div className="flex items-center justify-between py-2">
-      <span className="text-sm text-slate-600">{label}</span>
+      <span className="text-sm text-muted-foreground">{label}</span>
       <div className="flex gap-1">
         {[1,2,3,4,5].map(n => (
           <button key={n} onClick={() => setEvalScores(s => ({...s, [field]: n}))}>
-            <Star className={`w-5 h-5 ${n <= evalScores[field] ? 'text-amber-400 fill-amber-400' : 'text-slate-200'}`} />
+            <Star className={`w-5 h-5 ${n <= evalScores[field] ? 'text-amber-400 fill-amber-400' : 'text-najdi-100'}`} />
           </button>
         ))}
       </div>
@@ -147,21 +147,21 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
         {/* Header */}
-        <div className="px-6 pt-5 pb-4 border-b border-slate-200 flex-shrink-0">
+        <div className="px-6 pt-5 pb-4 border-b border-border flex-shrink-0">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-najdi-700 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                 {application.student_name_ar?.[0] || '?'}
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-800">{application.student_name_ar}</h2>
-                {application.student_name_en && <p className="text-sm text-slate-500">{application.student_name_en}</p>}
+                <h2 className="text-lg font-bold text-ink">{application.student_name_ar}</h2>
+                {application.student_name_en && <p className="text-sm text-muted-foreground">{application.student_name_en}</p>}
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[application.status] || 'bg-slate-100 text-slate-600'}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[application.status] || 'bg-sand-alt text-muted-foreground'}`}>
                     {isRTL ? (PIPELINE_STAGES.find(s=>s.key===application.status)?.label_ar || application.status) : (PIPELINE_STAGES.find(s=>s.key===application.status)?.label_en || application.status)}
                   </span>
-                  <span className="text-xs text-slate-400 font-mono">{application.application_number}</span>
-                  <span className="text-xs text-slate-400 flex items-center gap-1">
+                  <span className="text-xs text-muted-foreground font-mono">{application.application_number}</span>
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Clock className="w-3 h-3" />{days} {isRTL ? 'يوم' : 'days'}
                   </span>
                   {days > 30 && <span className="text-xs text-red-500 flex items-center gap-1"><AlertTriangle className="w-3 h-3" />{isRTL ? 'متأخر' : 'Overdue'}</span>}
@@ -188,7 +188,7 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
-          <div className="px-6 border-b border-slate-200 flex-shrink-0">
+          <div className="px-6 border-b border-border flex-shrink-0">
             <TabsList className="bg-transparent border-0 h-10 gap-0 p-0">
               {[
                 { id: 'overview', ar: 'نظرة عامة', en: 'Overview' },
@@ -199,7 +199,7 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
               ].map(tab => (
                 <TabsTrigger
                   key={tab.id} value={tab.id}
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-600 px-4 h-10"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-najdi-700 data-[state=active]:bg-transparent data-[state=active]:text-najdi-700 px-4 h-10"
                 >
                   {isRTL ? tab.ar : tab.en}
                 </TabsTrigger>
@@ -213,10 +213,10 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Student Info */}
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-ink mb-3 flex items-center gap-2">
                     <User className="w-4 h-4" />{isRTL ? 'بيانات الطالب' : 'Student Information'}
                   </h3>
-                  <div className="bg-slate-50 rounded-lg px-4 py-2">
+                  <div className="bg-sand rounded-lg px-4 py-2">
                     <InfoRow label={isRTL ? 'الاسم بالعربي' : 'Name (Arabic)'} value={application.student_name_ar} />
                     <InfoRow label={isRTL ? 'الاسم بالإنجليزي' : 'Name (English)'} value={application.student_name_en} />
                     <InfoRow label={isRTL ? 'تاريخ الميلاد' : 'Date of Birth'} value={application.date_of_birth ? format(new Date(application.date_of_birth), 'dd/MM/yyyy') : ''} />
@@ -230,10 +230,10 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
 
                 {/* Guardian Info */}
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-ink mb-3 flex items-center gap-2">
                     <Users className="w-4 h-4" />{isRTL ? 'بيانات ولي الأمر' : 'Guardian Information'}
                   </h3>
-                  <div className="bg-slate-50 rounded-lg px-4 py-2">
+                  <div className="bg-sand rounded-lg px-4 py-2">
                     <InfoRow label={isRTL ? 'الاسم' : 'Name'} value={application.guardian_name_ar} />
                     <InfoRow label={isRTL ? 'صلة القرابة' : 'Relationship'} value={application.guardian_relationship} />
                     <InfoRow label={isRTL ? 'الهاتف' : 'Phone'} value={application.guardian_phone} icon={Phone} />
@@ -254,8 +254,8 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
                 {/* Notes */}
                 {application.internal_notes && (
                   <div className="md:col-span-2">
-                    <h3 className="text-sm font-semibold text-slate-700 mb-2">{isRTL ? 'الملاحظات الداخلية' : 'Internal Notes'}</h3>
-                    <div className="bg-slate-50 rounded-lg p-3 text-sm text-slate-700 whitespace-pre-wrap">{application.internal_notes}</div>
+                    <h3 className="text-sm font-semibold text-ink mb-2">{isRTL ? 'الملاحظات الداخلية' : 'Internal Notes'}</h3>
+                    <div className="bg-sand rounded-lg p-3 text-sm text-ink whitespace-pre-wrap">{application.internal_notes}</div>
                   </div>
                 )}
               </div>
@@ -264,7 +264,7 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
             {/* DOCUMENTS TAB */}
             <TabsContent value="documents" className="p-6 m-0">
               <div className="space-y-4">
-                <h3 className="font-semibold text-slate-700">{isRTL ? 'قائمة الوثائق المطلوبة' : 'Required Documents Checklist'}</h3>
+                <h3 className="font-semibold text-ink">{isRTL ? 'قائمة الوثائق المطلوبة' : 'Required Documents Checklist'}</h3>
                 {[
                   { key: 'birth_cert', ar: 'شهادة الميلاد', en: 'Birth Certificate' },
                   { key: 'passport', ar: 'نسخة جواز السفر', en: 'Passport Copy' },
@@ -278,10 +278,10 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
                 ].map(doc => {
                   const uploaded = application.documents?.some(d => d.type === doc.key);
                   return (
-                    <div key={doc.key} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <div key={doc.key} className="flex items-center justify-between p-3 bg-sand rounded-lg border border-border">
                       <div className="flex items-center gap-3">
-                        <FileText className="w-4 h-4 text-slate-400" />
-                        <span className="text-sm text-slate-700">{isRTL ? doc.ar : doc.en}</span>
+                        <FileText className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-ink">{isRTL ? doc.ar : doc.en}</span>
                       </div>
                       <span className={`text-xs px-2 py-1 rounded-full font-medium ${uploaded ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                         {uploaded ? (isRTL ? '✓ مرفوع' : '✓ Uploaded') : (isRTL ? '✗ مفقود' : '✗ Missing')}
@@ -291,11 +291,11 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
                 })}
                 {application.documents && application.documents.length > 0 && (
                   <div className="pt-2">
-                    <h4 className="text-sm font-semibold text-slate-600 mb-2">{isRTL ? 'الوثائق المرفوعة' : 'Uploaded Files'}</h4>
+                    <h4 className="text-sm font-semibold text-muted-foreground mb-2">{isRTL ? 'الوثائق المرفوعة' : 'Uploaded Files'}</h4>
                     {application.documents.map((doc, i) => (
-                      <div key={i} className="flex items-center justify-between p-2 hover:bg-slate-50 rounded">
+                      <div key={i} className="flex items-center justify-between p-2 hover:bg-sand rounded">
                         <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-blue-500" />
+                          <FileText className="w-4 h-4 text-najdi-500" />
                           <span className="text-sm">{doc.name}</span>
                         </div>
                         {doc.url && (
@@ -313,7 +313,7 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
             {/* INTERVIEW TAB */}
             <TabsContent value="interview" className="p-6 m-0">
               <div className="space-y-6">
-                <h3 className="font-semibold text-slate-700">{isRTL ? 'جدولة المقابلة' : 'Schedule Interview'}</h3>
+                <h3 className="font-semibold text-ink">{isRTL ? 'جدولة المقابلة' : 'Schedule Interview'}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label>{isRTL ? 'نوع المقابلة' : 'Interview Type'}</Label>
@@ -363,8 +363,8 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
             {/* EVALUATION TAB */}
             <TabsContent value="evaluation" className="p-6 m-0">
               <div className="space-y-4">
-                <h3 className="font-semibold text-slate-700">{isRTL ? 'نموذج تقييم المقابلة' : 'Interview Evaluation Form'}</h3>
-                <div className="bg-slate-50 rounded-lg p-4 space-y-1 divide-y divide-slate-200">
+                <h3 className="font-semibold text-ink">{isRTL ? 'نموذج تقييم المقابلة' : 'Interview Evaluation Form'}</h3>
+                <div className="bg-sand rounded-lg p-4 space-y-1 divide-y divide-border">
                   <StarRating label={isRTL ? 'مهارات التواصل' : 'Communication Skills'} field="communication" />
                   <StarRating label={isRTL ? 'الاستعداد الأكاديمي' : 'Academic Readiness'} field="academic" />
                   <StarRating label={isRTL ? 'السلوك والمواقف' : 'Behavior & Attitude'} field="behavior" />
@@ -392,7 +392,7 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
                     </SelectContent>
                   </Select>
                 </div>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Button className="bg-najdi-700 hover:bg-najdi-900 text-white">
                   <CheckCircle className="w-4 h-4 me-2" />
                   {isRTL ? 'حفظ التقييم' : 'Save Evaluation'}
                 </Button>
@@ -404,7 +404,7 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
               <div className="space-y-6">
                 {/* Stage progress */}
                 <div>
-                  <h3 className="font-semibold text-slate-700 mb-4">{isRTL ? 'مراحل خط السير' : 'Pipeline Progress'}</h3>
+                  <h3 className="font-semibold text-ink mb-4">{isRTL ? 'مراحل خط السير' : 'Pipeline Progress'}</h3>
                   <div className="space-y-2">
                     {PIPELINE_STAGES.filter(s => !['waitlist','rejected'].includes(s.key)).map((stage, i) => {
                       const stageIndex = PIPELINE_STAGES.findIndex(s => s.key === (application.status || 'inquiry'));
@@ -412,14 +412,14 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
                       const isPast = currentIndex < stageIndex;
                       const isCurrent = stage.key === application.status;
                       return (
-                        <div key={stage.key} className={`flex items-center gap-3 p-3 rounded-lg ${isCurrent ? 'bg-blue-50 border border-blue-200' : isPast ? 'opacity-60' : 'opacity-40'}`}>
-                          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isCurrent ? 'bg-blue-600 text-white' : isPast ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                        <div key={stage.key} className={`flex items-center gap-3 p-3 rounded-lg ${isCurrent ? 'bg-najdi-50 border border-najdi-100' : isPast ? 'opacity-60' : 'opacity-40'}`}>
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isCurrent ? 'bg-najdi-700 text-white' : isPast ? 'bg-emerald-500 text-white' : 'bg-sand-alt text-muted-foreground'}`}>
                             {isPast ? '✓' : i + 1}
                           </div>
-                          <span className={`text-sm font-medium ${isCurrent ? 'text-blue-700' : 'text-slate-600'}`}>
+                          <span className={`text-sm font-medium ${isCurrent ? 'text-najdi-900' : 'text-muted-foreground'}`}>
                             {isRTL ? stage.label_ar : stage.label_en}
                           </span>
-                          {isCurrent && <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full ms-auto">{isRTL ? 'الحالية' : 'Current'}</span>}
+                          {isCurrent && <span className="text-xs bg-najdi-50 text-najdi-700 px-2 py-0.5 rounded-full ms-auto">{isRTL ? 'الحالية' : 'Current'}</span>}
                         </div>
                       );
                     })}
@@ -428,8 +428,8 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
 
                 {/* Stage change */}
                 {canManage && (
-                  <div className="border-t border-slate-200 pt-4 space-y-3">
-                    <h4 className="text-sm font-semibold text-slate-700">{isRTL ? 'تغيير المرحلة' : 'Change Stage'}</h4>
+                  <div className="border-t border-border pt-4 space-y-3">
+                    <h4 className="text-sm font-semibold text-ink">{isRTL ? 'تغيير المرحلة' : 'Change Stage'}</h4>
                     <Select value={newStatus} onValueChange={setNewStatus}>
                       <SelectTrigger>
                         <SelectValue placeholder={isRTL ? 'اختر المرحلة...' : 'Select stage...'} />

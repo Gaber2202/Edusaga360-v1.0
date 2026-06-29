@@ -64,7 +64,7 @@ export default function YamenDocumentGenerator({ isRTL }) {
 
   if (generatedDoc) {
     return (
-      <div className="space-y-3 p-4 bg-slate-900 rounded-xl border border-slate-700">
+      <div className="space-y-3 p-4 bg-najdi-900 rounded-xl border border-najdi-900">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-emerald-400">
             <CheckCircle className="w-4 h-4" />
@@ -72,13 +72,13 @@ export default function YamenDocumentGenerator({ isRTL }) {
           </div>
           <button
             onClick={() => setGeneratedDoc(null)}
-            className="text-xs text-slate-400 hover:text-slate-200"
+            className="text-xs text-muted-foreground hover:text-najdi-100"
           >
             {isRTL ? 'جديد' : 'New'}
           </button>
         </div>
 
-        <div className="bg-slate-800 p-3 rounded text-sm text-slate-200 whitespace-pre-wrap max-h-64 overflow-y-auto">
+        <div className="bg-najdi-900 p-3 rounded text-sm text-najdi-100 whitespace-pre-wrap max-h-64 overflow-y-auto">
           {generatedDoc}
         </div>
 
@@ -109,12 +109,12 @@ export default function YamenDocumentGenerator({ isRTL }) {
   if (selectedTemplate) {
     const template = documentTemplates[selectedTemplate];
     return (
-      <div className="space-y-3 p-4 bg-slate-900 rounded-xl border border-slate-700">
+      <div className="space-y-3 p-4 bg-najdi-900 rounded-xl border border-najdi-900">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-200">{template.name}</h3>
+          <h3 className="text-sm font-semibold text-najdi-100">{template.name}</h3>
           <button
             onClick={() => setSelectedTemplate(null)}
-            className="text-xs text-slate-400 hover:text-slate-200"
+            className="text-xs text-muted-foreground hover:text-najdi-100"
           >
             {isRTL ? 'رجوع' : 'Back'}
           </button>
@@ -123,14 +123,14 @@ export default function YamenDocumentGenerator({ isRTL }) {
         <div className="space-y-2">
           {template.variables.map(varName => (
             <div key={varName}>
-              <label className="text-xs text-slate-400 block mb-1">
+              <label className="text-xs text-muted-foreground block mb-1">
                 {varName.charAt(0).toUpperCase() + varName.slice(1)}
               </label>
               <input
                 type="text"
                 value={variables[varName] || ''}
                 onChange={(e) => handleVariableChange(varName, e.target.value)}
-                className="w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded text-xs text-slate-200 placeholder:text-slate-600"
+                className="w-full px-2 py-1.5 bg-najdi-900 border border-najdi-900 rounded text-xs text-najdi-100 placeholder:text-muted-foreground"
                 placeholder={`Enter ${varName}...`}
               />
             </div>
@@ -159,16 +159,16 @@ export default function YamenDocumentGenerator({ isRTL }) {
   }
 
   return (
-    <div className="space-y-2 p-4 bg-slate-900 rounded-xl border border-slate-700">
-      <div className="text-sm font-semibold text-slate-200 mb-3">{isRTL ? 'اختر قالب' : 'Select Template'}</div>
+    <div className="space-y-2 p-4 bg-najdi-900 rounded-xl border border-najdi-900">
+      <div className="text-sm font-semibold text-najdi-100 mb-3">{isRTL ? 'اختر قالب' : 'Select Template'}</div>
       <div className="grid grid-cols-2 gap-2">
         {Object.entries(documentTemplates).map(([key, template]) => (
           <button
             key={key}
             onClick={() => setSelectedTemplate(key)}
-            className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded text-xs text-slate-200 text-left transition"
+            className="p-2 bg-najdi-900 hover:bg-ink border border-najdi-900 rounded text-xs text-najdi-100 text-left transition"
           >
-            <FileText className="w-3 h-3 mb-1 text-blue-400" />
+            <FileText className="w-3 h-3 mb-1 text-najdi-500" />
             <div className="font-medium">{template.name}</div>
           </button>
         ))}

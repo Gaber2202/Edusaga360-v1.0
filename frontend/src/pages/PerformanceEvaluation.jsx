@@ -45,8 +45,8 @@ const BUILTIN_TEMPLATES = {
 };
 
 const STATUS_COLORS = {
-  draft: 'bg-slate-100 text-slate-700',
-  submitted: 'bg-blue-100 text-blue-700',
+  draft: 'bg-sand-alt text-ink',
+  submitted: 'bg-najdi-50 text-najdi-900',
   reviewed: 'bg-amber-100 text-amber-700',
   approved: 'bg-purple-100 text-purple-700',
   completed: 'bg-emerald-100 text-emerald-700',
@@ -206,11 +206,11 @@ export default function PerformanceEvaluation() {
 
       {/* KPI Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'إجمالي التقييمات' : 'Total Evals'}</p><p className="text-2xl font-bold">{evaluations.length}</p></Card>
-        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'مكتملة' : 'Completed'}</p><p className="text-2xl font-bold text-emerald-600">{evaluations.filter(e => e.status === 'completed').length}</p></Card>
-        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'قيد المراجعة' : 'In Review'}</p><p className="text-2xl font-bold text-amber-600">{evaluations.filter(e => ['submitted','reviewed'].includes(e.status)).length}</p></Card>
-        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'متوسط الدرجات' : 'Avg Score'}</p><p className="text-2xl font-bold text-blue-600">{evaluations.length > 0 ? Math.round(evaluations.reduce((s, e) => s + (e.total_score || 0), 0) / evaluations.length) : 0}%</p></Card>
-        <Card className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'أداء ممتاز' : 'Outstanding'}</p><p className="text-2xl font-bold text-purple-600">{evaluations.filter(e => e.rating === 'outstanding' || e.rating === 'exceeds_expectations').length}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي التقييمات' : 'Total Evals'}</p><p className="text-2xl font-bold">{evaluations.length}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'مكتملة' : 'Completed'}</p><p className="text-2xl font-bold text-emerald-600">{evaluations.filter(e => e.status === 'completed').length}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'قيد المراجعة' : 'In Review'}</p><p className="text-2xl font-bold text-amber-600">{evaluations.filter(e => ['submitted','reviewed'].includes(e.status)).length}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'متوسط الدرجات' : 'Avg Score'}</p><p className="text-2xl font-bold text-najdi-700">{evaluations.length > 0 ? Math.round(evaluations.reduce((s, e) => s + (e.total_score || 0), 0) / evaluations.length) : 0}%</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'أداء ممتاز' : 'Outstanding'}</p><p className="text-2xl font-bold text-purple-600">{evaluations.filter(e => e.rating === 'outstanding' || e.rating === 'exceeds_expectations').length}</p></Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -239,16 +239,16 @@ export default function PerformanceEvaluation() {
                 {isLoading ? (
                   <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></TableCell></TableRow>
                 ) : filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-slate-400">{isRTL ? 'لا توجد تقييمات' : 'No evaluations'}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{isRTL ? 'لا توجد تقييمات' : 'No evaluations'}</TableCell></TableRow>
                 ) : filtered.map(ev => (
-                  <TableRow key={ev.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => setViewEval(ev)}>
+                  <TableRow key={ev.id} className="hover:bg-sand cursor-pointer" onClick={() => setViewEval(ev)}>
                     <TableCell className="font-medium">{ev.employee_name}</TableCell>
                     <TableCell>{ev.evaluation_period}</TableCell>
                     <TableCell>
-                      <span className="font-bold text-blue-700">{ev.total_score || 0}%</span>
+                      <span className="font-bold text-najdi-900">{ev.total_score || 0}%</span>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm text-slate-600">{ev.rating?.replace(/_/g, ' ')}</span>
+                      <span className="text-sm text-muted-foreground">{ev.rating?.replace(/_/g, ' ')}</span>
                     </TableCell>
                     <TableCell>
                       <Badge className={STATUS_COLORS[ev.status]}>
@@ -280,16 +280,16 @@ export default function PerformanceEvaluation() {
         <TabsContent value="360feedback" className="mt-4 space-y-4">
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center"><Users className="w-5 h-5 text-blue-600" /></div>
+              <div className="w-10 h-10 rounded-xl bg-najdi-50 flex items-center justify-center"><Users className="w-5 h-5 text-najdi-700" /></div>
               <div>
                 <h3 className="font-semibold">{isRTL ? 'تقييم 360 درجة' : '360-Degree Feedback'}</h3>
-                <p className="text-sm text-slate-500">{isRTL ? 'تقييم ذاتي، من الأقران، المرؤوسين، والمدير' : 'Self, peer, upward, and manager evaluations'}</p>
+                <p className="text-sm text-muted-foreground">{isRTL ? 'تقييم ذاتي، من الأقران، المرؤوسين، والمدير' : 'Self, peer, upward, and manager evaluations'}</p>
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <Card className="p-4 bg-blue-50 border-blue-200">
-                <p className="text-sm text-blue-700 font-medium">{isRTL ? 'تقييم ذاتي' : 'Self Assessment'}</p>
-                <p className="text-xs text-blue-500 mt-1">{isRTL ? 'الموظف يقيّم نفسه' : 'Employee evaluates themselves'}</p>
+              <Card className="p-4 bg-najdi-50 border-najdi-100">
+                <p className="text-sm text-najdi-900 font-medium">{isRTL ? 'تقييم ذاتي' : 'Self Assessment'}</p>
+                <p className="text-xs text-najdi-500 mt-1">{isRTL ? 'الموظف يقيّم نفسه' : 'Employee evaluates themselves'}</p>
               </Card>
               <Card className="p-4 bg-emerald-50 border-emerald-200">
                 <p className="text-sm text-emerald-700 font-medium">{isRTL ? 'تقييم الأقران' : 'Peer Review'}</p>
@@ -325,13 +325,13 @@ export default function PerformanceEvaluation() {
                       <TableCell><Badge variant="outline">{isRTL ? 'في الانتظار' : 'Pending'}</Badge></TableCell>
                       <TableCell><Badge variant="outline">{isRTL ? 'في الانتظار' : 'Pending'}</Badge></TableCell>
                       <TableCell><Badge variant="outline">{isRTL ? 'في الانتظار' : 'Pending'}</Badge></TableCell>
-                      <TableCell>{avgScore !== null ? <span className="font-bold text-blue-600">{avgScore}%</span> : <Badge variant="outline">{isRTL ? 'في الانتظار' : 'Pending'}</Badge>}</TableCell>
-                      <TableCell>{avgScore !== null ? <Badge className="bg-blue-100 text-blue-700">{avgScore}%</Badge> : '-'}</TableCell>
+                      <TableCell>{avgScore !== null ? <span className="font-bold text-najdi-700">{avgScore}%</span> : <Badge variant="outline">{isRTL ? 'في الانتظار' : 'Pending'}</Badge>}</TableCell>
+                      <TableCell>{avgScore !== null ? <Badge className="bg-najdi-50 text-najdi-900">{avgScore}%</Badge> : '-'}</TableCell>
                     </TableRow>
                   );
                 })}
                 {employees.length === 0 && (
-                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-slate-400">{isRTL ? 'لا توجد بيانات' : 'No data'}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{isRTL ? 'لا توجد بيانات' : 'No data'}</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -351,11 +351,11 @@ export default function PerformanceEvaluation() {
                 {['outstanding', 'exceeds_expectations', 'meets_expectations', 'needs_improvement', 'unsatisfactory'].map(rating => {
                   const count = evaluations.filter(e => e.rating === rating).length;
                   const pct = evaluations.length > 0 ? Math.round((count / evaluations.length) * 100) : 0;
-                  const colors = { outstanding: 'bg-purple-500', exceeds_expectations: 'bg-blue-500', meets_expectations: 'bg-emerald-500', needs_improvement: 'bg-amber-500', unsatisfactory: 'bg-red-500' };
+                  const colors = { outstanding: 'bg-purple-500', exceeds_expectations: 'bg-najdi-500', meets_expectations: 'bg-emerald-500', needs_improvement: 'bg-amber-500', unsatisfactory: 'bg-red-500' };
                   return (
                     <div key={rating} className="flex items-center gap-3">
                       <span className="text-sm w-40 truncate">{rating.replace(/_/g, ' ')}</span>
-                      <div className="flex-1 bg-slate-100 rounded-full h-4">
+                      <div className="flex-1 bg-sand-alt rounded-full h-4">
                         <div className={`${colors[rating]} h-4 rounded-full transition-all`} style={{ width: `${pct}%` }} />
                       </div>
                       <span className="text-sm font-medium w-12 text-end">{count} ({pct}%)</span>
@@ -368,16 +368,16 @@ export default function PerformanceEvaluation() {
               <h4 className="font-semibold mb-4">{isRTL ? 'الموظفون الأعلى أداءً' : 'Top Performers'}</h4>
               <div className="space-y-2">
                 {evaluations.filter(e => e.status === 'completed').sort((a, b) => (b.total_score || 0) - (a.total_score || 0)).slice(0, 8).map((ev, i) => (
-                  <div key={ev.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                  <div key={ev.id} className="flex items-center justify-between p-2 bg-sand rounded-lg">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">{i+1}</span>
+                      <span className="w-6 h-6 rounded-full bg-najdi-50 text-najdi-900 text-xs font-bold flex items-center justify-center">{i+1}</span>
                       <span className="text-sm font-medium">{ev.employee_name}</span>
                     </div>
-                    <Badge className={ev.total_score >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}>{ev.total_score}%</Badge>
+                    <Badge className={ev.total_score >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-najdi-50 text-najdi-900'}>{ev.total_score}%</Badge>
                   </div>
                 ))}
                 {evaluations.filter(e => e.status === 'completed').length === 0 && (
-                  <p className="text-center text-slate-400 py-4">{isRTL ? 'لا توجد تقييمات مكتملة' : 'No completed evaluations'}</p>
+                  <p className="text-center text-muted-foreground py-4">{isRTL ? 'لا توجد تقييمات مكتملة' : 'No completed evaluations'}</p>
                 )}
               </div>
             </Card>
@@ -387,7 +387,7 @@ export default function PerformanceEvaluation() {
                 {['draft', 'submitted', 'reviewed', 'approved', 'completed'].map(status => {
                   const count = evaluations.filter(e => e.status === status).length;
                   return (
-                    <div key={status} className="text-center p-3 rounded-lg bg-slate-50 border">
+                    <div key={status} className="text-center p-3 rounded-lg bg-sand border">
                       <Badge className={STATUS_COLORS[status]}>{isRTL ? STATUS_LABELS[status]?.ar : STATUS_LABELS[status]?.en}</Badge>
                       <p className="text-2xl font-bold mt-2">{count}</p>
                     </div>
@@ -464,7 +464,7 @@ export default function PerformanceEvaluation() {
               <div className="border rounded-lg overflow-hidden">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-50">
+                    <TableRow className="bg-sand">
                       <TableHead>{isRTL ? 'المعيار' : 'Criterion'}</TableHead>
                       <TableHead>{isRTL ? 'الوزن%' : 'Weight%'}</TableHead>
                       <TableHead>{isRTL ? 'الدرجة (1-5)' : 'Score (1-5)'}</TableHead>
@@ -491,7 +491,7 @@ export default function PerformanceEvaluation() {
                 </Table>
               </div>
               <div className="flex justify-end">
-                <span className="text-sm font-semibold text-blue-700">
+                <span className="text-sm font-semibold text-najdi-900">
                   {isRTL ? 'الإجمالي:' : 'Total:'} {form.total_score}% — {form.rating?.replace(/_/g, ' ')}
                 </span>
               </div>
@@ -513,7 +513,7 @@ export default function PerformanceEvaluation() {
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowDialog(false)}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
             <Button variant="outline" onClick={() => handleSave('draft')} disabled={saving}>{isRTL ? 'حفظ مسودة' : 'Save Draft'}</Button>
-            <Button onClick={() => handleSave('submitted')} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={() => handleSave('submitted')} disabled={saving} className="bg-najdi-700 hover:bg-najdi-900">
               {saving && <Loader2 className="w-4 h-4 animate-spin me-2" />}
               {isRTL ? 'إرسال للمراجعة' : 'Submit for Review'}
             </Button>
@@ -531,7 +531,7 @@ export default function PerformanceEvaluation() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <Badge className={STATUS_COLORS[viewEval.status]}>{isRTL ? STATUS_LABELS[viewEval.status]?.ar : STATUS_LABELS[viewEval.status]?.en}</Badge>
-                <span className="text-2xl font-bold text-blue-700">{viewEval.total_score}%</span>
+                <span className="text-2xl font-bold text-najdi-900">{viewEval.total_score}%</span>
               </div>
               <div className="space-y-1">
                 {(viewEval.kpi_scores || []).map((k, i) => (
@@ -545,7 +545,7 @@ export default function PerformanceEvaluation() {
               {viewEval.development_plan && <div><Label>{isRTL ? 'خطة التطوير' : 'Development Plan'}</Label><p className="text-sm mt-1">{viewEval.development_plan}</p></div>}
               <div className="flex flex-col gap-2 pt-2">
                 {viewEval.status !== 'completed' && (
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => handleAdvance(viewEval)}>
+                  <Button className="w-full bg-najdi-700 hover:bg-najdi-900" onClick={() => handleAdvance(viewEval)}>
                     <CheckCircle2 className="w-4 h-4 me-2" />
                     {isRTL ? 'تقدم إلى المرحلة التالية' : 'Advance to Next Stage'}
                   </Button>
@@ -661,18 +661,18 @@ function CriteriaTemplatesTab({ isRTL }) {
       <div className="grid gap-4">
         {isLoading ? <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" /></div>
         : templates.length === 0 ? (
-          <div className="text-center py-10 text-slate-400">{isRTL ? 'لا توجد قوالب مخصصة بعد' : 'No custom templates yet'}</div>
+          <div className="text-center py-10 text-muted-foreground">{isRTL ? 'لا توجد قوالب مخصصة بعد' : 'No custom templates yet'}</div>
         ) : templates.map(t => (
           <Card key={t.id}>
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-semibold">{isRTL ? t.template_name_ar : (t.template_name_en || t.template_name_ar)}</p>
-                  <p className="text-sm text-slate-500">{t.role_type} • {t.criteria?.length || 0} {isRTL ? 'معيار' : 'criteria'}</p>
+                  <p className="text-sm text-muted-foreground">{t.role_type} • {t.criteria?.length || 0} {isRTL ? 'معيار' : 'criteria'}</p>
                 </div>
                 <div className="flex gap-1">
                   <Button size="sm" variant="ghost" title={isRTL ? 'نسخ' : 'Duplicate'} onClick={() => duplicateTemplate(t)}>
-                    <Copy className="w-4 h-4 text-slate-400" />
+                    <Copy className="w-4 h-4 text-muted-foreground" />
                   </Button>
                   <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handleDelete(t.id)}>
                     <XCircle className="w-4 h-4" />
@@ -706,22 +706,22 @@ function CriteriaTemplatesTab({ isRTL }) {
             {/* Names + Role */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-300">{isRTL ? 'اسم القالب (عربي)' : 'Template Name (AR)'} *</label>
+                <label className="text-sm font-medium text-muted-foreground">{isRTL ? 'اسم القالب (عربي)' : 'Template Name (AR)'} *</label>
                 <Input value={form.template_name_ar} onChange={e => setForm(p => ({ ...p, template_name_ar: e.target.value }))} dir="rtl" placeholder="اسم القالب" />
               </div>
               <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-300">{isRTL ? 'اسم القالب (إنجليزي)' : 'Template Name (EN)'}</label>
+                <label className="text-sm font-medium text-muted-foreground">{isRTL ? 'اسم القالب (إنجليزي)' : 'Template Name (EN)'}</label>
                 <Input value={form.template_name_en} onChange={e => setForm(p => ({ ...p, template_name_en: e.target.value }))} placeholder="Template name" />
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-300">{isRTL ? 'نوع الوظيفة / الدور' : 'Role / Job Type'} *</label>
+              <label className="text-sm font-medium text-muted-foreground">{isRTL ? 'نوع الوظيفة / الدور' : 'Role / Job Type'} *</label>
               <Input value={form.role_type} onChange={e => setForm(p => ({ ...p, role_type: e.target.value }))} placeholder={isRTL ? 'مثال: معلم، سائق، إداري' : 'e.g. Teacher, Driver, Admin'} />
             </div>
 
             {/* Weight header */}
             <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-slate-200">{isRTL ? 'المعايير والأوزان' : 'Criteria & Weights'}</label>
+              <label className="text-sm font-semibold text-najdi-100">{isRTL ? 'المعايير والأوزان' : 'Criteria & Weights'}</label>
               <div className="flex items-center gap-3">
                 <Button variant="outline" size="sm" onClick={autoDistribute} type="button">
                   {isRTL ? 'توزيع تلقائي' : 'Auto-distribute'}
@@ -735,7 +735,7 @@ function CriteriaTemplatesTab({ isRTL }) {
             {/* Criteria rows */}
             <div className="space-y-2">
               {/* Column headers */}
-              <div className="grid grid-cols-[24px_1fr_1fr_80px_56px] gap-2 px-1 text-xs text-slate-500">
+              <div className="grid grid-cols-[24px_1fr_1fr_80px_56px] gap-2 px-1 text-xs text-muted-foreground">
                 <span></span>
                 <span>{isRTL ? 'المعيار (عربي)' : 'Criterion (AR)'}</span>
                 <span>{isRTL ? 'المعيار (إنجليزي)' : 'Criterion (EN)'}</span>
@@ -746,10 +746,10 @@ function CriteriaTemplatesTab({ isRTL }) {
                 <div key={i} className="grid grid-cols-[24px_1fr_1fr_80px_56px] gap-2 items-center">
                   {/* Reorder buttons */}
                   <div className="flex flex-col gap-0.5">
-                    <button type="button" onClick={() => moveCriterion(i, -1)} disabled={i === 0} className="text-slate-500 hover:text-slate-300 disabled:opacity-20">
+                    <button type="button" onClick={() => moveCriterion(i, -1)} disabled={i === 0} className="text-muted-foreground hover:text-muted-foreground disabled:opacity-20">
                       <MoveUp className="w-3 h-3" />
                     </button>
-                    <button type="button" onClick={() => moveCriterion(i, 1)} disabled={i === form.criteria.length - 1} className="text-slate-500 hover:text-slate-300 disabled:opacity-20">
+                    <button type="button" onClick={() => moveCriterion(i, 1)} disabled={i === form.criteria.length - 1} className="text-muted-foreground hover:text-muted-foreground disabled:opacity-20">
                       <MoveDown className="w-3 h-3" />
                     </button>
                   </div>
@@ -757,7 +757,7 @@ function CriteriaTemplatesTab({ isRTL }) {
                   <Input value={c.kpi_name_en} onChange={e => updateCriterion(i, 'kpi_name_en', e.target.value)} placeholder="English name" className="text-sm" />
                   <div className="flex items-center gap-1">
                     <Input type="number" min="0" max="100" value={c.weight} onChange={e => updateCriterion(i, 'weight', Number(e.target.value))} className="text-sm px-2" />
-                    <span className="text-xs text-slate-400">%</span>
+                    <span className="text-xs text-muted-foreground">%</span>
                   </div>
                   <Button type="button" variant="ghost" size="sm" onClick={() => removeCriterion(i)} className="text-red-400 hover:text-red-300 px-2" disabled={form.criteria.length <= 1}>
                     <XCircle className="w-4 h-4" />
@@ -771,14 +771,14 @@ function CriteriaTemplatesTab({ isRTL }) {
 
             {/* Preview */}
             {form.criteria.some(c => c.kpi_name_ar) && (
-              <div className="rounded-lg border border-slate-700 p-3 bg-slate-900/40">
-                <p className="text-xs text-slate-400 mb-2">{isRTL ? 'معاينة التوزيع' : 'Distribution Preview'}</p>
+              <div className="rounded-lg border border-najdi-900 p-3 bg-najdi-900/40">
+                <p className="text-xs text-muted-foreground mb-2">{isRTL ? 'معاينة التوزيع' : 'Distribution Preview'}</p>
                 {form.criteria.filter(c => c.kpi_name_ar).map((c, i) => (
                   <div key={i} className="flex items-center gap-2 mb-1">
-                    <div className="flex-1 bg-slate-700 rounded-full h-2">
+                    <div className="flex-1 bg-ink rounded-full h-2">
                       <div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${c.weight}%` }} />
                     </div>
-                    <span className="text-xs text-slate-300 w-32 truncate">{isRTL ? c.kpi_name_ar : (c.kpi_name_en || c.kpi_name_ar)}</span>
+                    <span className="text-xs text-muted-foreground w-32 truncate">{isRTL ? c.kpi_name_ar : (c.kpi_name_en || c.kpi_name_ar)}</span>
                     <span className="text-xs font-bold text-emerald-400 w-10 text-end">{c.weight}%</span>
                   </div>
                 ))}
@@ -787,7 +787,7 @@ function CriteriaTemplatesTab({ isRTL }) {
           </div>
 
           {/* Sticky footer */}
-          <div className="flex-shrink-0 border-t border-slate-700 pt-4 flex justify-end gap-3 mt-2">
+          <div className="flex-shrink-0 border-t border-najdi-900 pt-4 flex justify-end gap-3 mt-2">
             <Button variant="outline" onClick={() => setShowDialog(false)}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
             <Button onClick={handleSave} disabled={saving || !weightOk}>
               {saving && <Loader2 className="w-4 h-4 animate-spin me-2" />}
@@ -820,7 +820,7 @@ function WarningsTab({ isRTL, selectedBranchId, filterByBranch, employees }) {
   const filtered = filterByBranch(warnings);
 
   const TYPE_LABELS = {
-    verbal: { ar: 'إنذار شفهي', en: 'Verbal', color: 'bg-blue-100 text-blue-700' },
+    verbal: { ar: 'إنذار شفهي', en: 'Verbal', color: 'bg-najdi-50 text-najdi-900' },
     written: { ar: 'إنذار كتابي', en: 'Written', color: 'bg-amber-100 text-amber-700' },
     final: { ar: 'إنذار نهائي', en: 'Final', color: 'bg-orange-100 text-orange-700' },
     termination_recommendation: { ar: 'توصية بإنهاء الخدمة', en: 'Termination Rec.', color: 'bg-red-100 text-red-700' },
@@ -870,7 +870,7 @@ function WarningsTab({ isRTL, selectedBranchId, filterByBranch, employees }) {
             {isLoading ? (
               <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></TableCell></TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8 text-slate-400">{isRTL ? 'لا توجد إنذارات' : 'No warnings'}</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">{isRTL ? 'لا توجد إنذارات' : 'No warnings'}</TableCell></TableRow>
             ) : filtered.map(w => (
               <TableRow key={w.id}>
                 <TableCell className="font-medium">{w.employee_name}</TableCell>

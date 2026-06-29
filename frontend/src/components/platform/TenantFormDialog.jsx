@@ -54,13 +54,13 @@ function generateCode(nameEn) {
 function ModuleToggle({ mod, checked, onChange, isRTL }) {
   return (
     <label className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors
-      ${checked ? 'border-blue-400 bg-blue-50' : 'border-slate-200 bg-white hover:bg-slate-50'}`}>
+      ${checked ? 'border-najdi-500 bg-najdi-50' : 'border-border bg-white hover:bg-sand'}`}>
       <input type="checkbox" className="hidden" checked={checked} onChange={e => onChange(mod.key, e.target.checked)} />
       <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0
-        ${checked ? 'bg-blue-600' : 'bg-white border border-slate-300'}`}>
+        ${checked ? 'bg-najdi-700' : 'bg-white border border-border'}`}>
         {checked && <Check className="w-3 h-3 text-white" />}
       </div>
-      <span className="text-xs font-medium text-slate-700">{isRTL ? mod.labelAr : mod.labelEn}</span>
+      <span className="text-xs font-medium text-ink">{isRTL ? mod.labelAr : mod.labelEn}</span>
     </label>
   );
 }
@@ -202,11 +202,11 @@ export default function TenantFormDialog({ open, onClose, tenant, isRTL }) {
         </DialogHeader>
 
         {/* Section tabs */}
-        <div className="flex gap-1 bg-slate-100 rounded-lg p-1 flex-shrink-0">
+        <div className="flex gap-1 bg-sand-alt rounded-lg p-1 flex-shrink-0">
           {sections.map(s => (
             <button key={s.id} onClick={() => setActiveSection(s.id)}
               className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors
-                ${activeSection === s.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                ${activeSection === s.id ? 'bg-white text-ink shadow-sm' : 'text-muted-foreground hover:text-ink'}`}>
               <s.icon className="w-3.5 h-3.5" />
               {s.title}
             </button>
@@ -220,7 +220,7 @@ export default function TenantFormDialog({ open, onClose, tenant, isRTL }) {
             <div className="space-y-4">
               {/* School Names */}
               <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase mb-2">{label('اسم المدرسة', 'School Name')}</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">{label('اسم المدرسة', 'School Name')}</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label>{label('اسم المدرسة بالعربي', 'School Name (Arabic)')}</Label>
@@ -247,7 +247,7 @@ export default function TenantFormDialog({ open, onClose, tenant, isRTL }) {
                     <RefreshCw className="w-4 h-4" />
                   </Button>
                 </div>
-                <p className="text-xs text-slate-400 mt-1">{label('يُنشأ تلقائياً من الاسم — يمكنك تعديله', 'Auto-generated from name — you can edit it')}</p>
+                <p className="text-xs text-muted-foreground mt-1">{label('يُنشأ تلقائياً من الاسم — يمكنك تعديله', 'Auto-generated from name — you can edit it')}</p>
               </div>
 
               {/* City & Phone */}
@@ -297,8 +297,8 @@ export default function TenantFormDialog({ open, onClose, tenant, isRTL }) {
               )}
 
               {/* Resource Limits */}
-              <div className="border-t border-slate-100 pt-3">
-                <p className="text-xs font-semibold text-slate-400 uppercase mb-2">{label('حدود الموارد', 'Resource Limits')}</p>
+              <div className="border-t border-border pt-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">{label('حدود الموارد', 'Resource Limits')}</p>
                 <div className="grid grid-cols-4 gap-2">
                   <div><Label className="text-xs">{label('موظفون', 'Employees')}</Label><Input type="number" value={form.max_employees} onChange={e => set('max_employees', +e.target.value)} /></div>
                   <div><Label className="text-xs">{label('طلاب', 'Students')}</Label><Input type="number" value={form.max_students} onChange={e => set('max_students', +e.target.value)} /></div>
@@ -319,8 +319,8 @@ export default function TenantFormDialog({ open, onClose, tenant, isRTL }) {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-slate-700">{label('الوحدات المفعّلة لهذا المستأجر', 'Enabled Modules for this Tenant')}</p>
-                  <p className="text-xs text-slate-400">{label('هذه الوحدات ستظهر لمسؤول المستأجر', 'These modules will be visible to the tenant admin')}</p>
+                  <p className="text-sm font-semibold text-ink">{label('الوحدات المفعّلة لهذا المستأجر', 'Enabled Modules for this Tenant')}</p>
+                  <p className="text-xs text-muted-foreground">{label('هذه الوحدات ستظهر لمسؤول المستأجر', 'These modules will be visible to the tenant admin')}</p>
                 </div>
                 <Badge variant="outline" className="text-xs">
                   {(form.enabled_modules || []).length} / {ALL_MODULES.length}
@@ -356,7 +356,7 @@ export default function TenantFormDialog({ open, onClose, tenant, isRTL }) {
             <div className="space-y-5">
               {/* Admin account */}
               <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase mb-2">{label('حساب المسؤول', 'Admin Account')}</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">{label('حساب المسؤول', 'Admin Account')}</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label>{label('إيميل المسؤول', 'Admin Email')}</Label>
@@ -370,12 +370,12 @@ export default function TenantFormDialog({ open, onClose, tenant, isRTL }) {
               </div>
 
               {/* User limit */}
-              <div className="border border-slate-200 rounded-xl p-4 space-y-3">
+              <div className="border border-border rounded-xl p-4 space-y-3">
                 <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-slate-500" />
-                  <p className="text-sm font-semibold text-slate-700">{label('حد المستخدمين', 'User Limit')}</p>
+                  <Users className="w-4 h-4 text-muted-foreground" />
+                  <p className="text-sm font-semibold text-ink">{label('حد المستخدمين', 'User Limit')}</p>
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-muted-foreground">
                   {label(
                     'تحديد الحد الأقصى لعدد المستخدمين الذين يمكن لمسؤول المستأجر دعوتهم',
                     'Set the maximum number of users the tenant admin can invite to their school'
@@ -389,13 +389,13 @@ export default function TenantFormDialog({ open, onClose, tenant, isRTL }) {
                     onChange={e => set('max_users', +e.target.value)}
                     min={1}
                   />
-                  <span className="text-xs text-slate-500">{label('مستخدم كحد أقصى', 'max users')}</span>
+                  <span className="text-xs text-muted-foreground">{label('مستخدم كحد أقصى', 'max users')}</span>
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   {[100, 500, 1000, 4000, 10000].map(n => (
                     <button key={n} onClick={() => set('max_users', n)}
                       className={`text-xs px-3 py-1 rounded-full border transition-colors
-                        ${form.max_users === n ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                        ${form.max_users === n ? 'bg-najdi-700 text-white border-najdi-700' : 'border-border text-muted-foreground hover:bg-sand'}`}>
                       {n.toLocaleString()}
                     </button>
                   ))}
@@ -403,10 +403,10 @@ export default function TenantFormDialog({ open, onClose, tenant, isRTL }) {
               </div>
 
               {/* Send invitation */}
-              <div className={`border rounded-xl p-4 space-y-3 ${inviteSent ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200'}`}>
+              <div className={`border rounded-xl p-4 space-y-3 ${inviteSent ? 'border-emerald-300 bg-emerald-50' : 'border-border'}`}>
                 <div className="flex items-center gap-2">
-                  <Send className={`w-4 h-4 ${inviteSent ? 'text-emerald-600' : 'text-slate-500'}`} />
-                  <p className="text-sm font-semibold text-slate-700">{label('إرسال دعوة الدخول', 'Send Invitation')}</p>
+                  <Send className={`w-4 h-4 ${inviteSent ? 'text-emerald-600' : 'text-muted-foreground'}`} />
+                  <p className="text-sm font-semibold text-ink">{label('إرسال دعوة الدخول', 'Send Invitation')}</p>
                 </div>
                 {inviteSent ? (
                   <div className="flex items-center gap-2 text-emerald-700 text-sm">
@@ -415,7 +415,7 @@ export default function TenantFormDialog({ open, onClose, tenant, isRTL }) {
                   </div>
                 ) : (
                   <>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-muted-foreground">
                       {label(
                         'سيتلقى المسؤول إيميل دعوة للدخول للنظام. يتم الإرسال تلقائياً عند حفظ المستأجر الجديد.',
                         'The admin will receive an invitation email to access the platform. Sent automatically when saving a new tenant.'
@@ -434,7 +434,7 @@ export default function TenantFormDialog({ open, onClose, tenant, isRTL }) {
                       </Button>
                     )}
                     {!isEdit && (
-                      <p className="text-xs text-blue-600 font-medium">
+                      <p className="text-xs text-najdi-700 font-medium">
                         ✓ {label('ستُرسل الدعوة تلقائياً عند الحفظ', 'Invitation will be sent automatically on save')}
                       </p>
                     )}
@@ -445,10 +445,10 @@ export default function TenantFormDialog({ open, onClose, tenant, isRTL }) {
           )}
         </div>
 
-        <div className="flex justify-between items-center pt-3 border-t border-slate-200 flex-shrink-0">
-          <div className="text-xs text-slate-400">
+        <div className="flex justify-between items-center pt-3 border-t border-border flex-shrink-0">
+          <div className="text-xs text-muted-foreground">
             {!isEdit && form.admin_email && (
-              <span className="flex items-center gap-1 text-blue-600">
+              <span className="flex items-center gap-1 text-najdi-700">
                 <Send className="w-3 h-3" />
                 {label(`سيتم دعوة ${form.admin_email}`, `Will invite ${form.admin_email}`)}
               </span>

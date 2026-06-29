@@ -20,13 +20,13 @@ import {
 } from '../ui/dropdown-menu';
 
 const STATUS_CONFIG = {
-  draft:    { label_ar: 'مسودة',        label_en: 'Draft',    cls: 'bg-slate-100 text-slate-600'  },
-  issued:   { label_ar: 'صادرة',        label_en: 'Issued',   cls: 'bg-blue-100 text-blue-700'   },
+  draft:    { label_ar: 'مسودة',        label_en: 'Draft',    cls: 'bg-sand-alt text-muted-foreground'  },
+  issued:   { label_ar: 'صادرة',        label_en: 'Issued',   cls: 'bg-najdi-50 text-najdi-900'   },
   sent:     { label_ar: 'مرسلة',        label_en: 'Sent',     cls: 'bg-indigo-100 text-indigo-700'},
   partial:  { label_ar: 'مدفوع جزئياً', label_en: 'Partial',  cls: 'bg-yellow-100 text-yellow-700'},
   paid:     { label_ar: 'مدفوع',        label_en: 'Paid',     cls: 'bg-green-100 text-green-700'  },
   overdue:  { label_ar: 'متأخر',        label_en: 'Overdue',  cls: 'bg-red-100 text-red-700'     },
-  cancelled:{ label_ar: 'ملغاة',        label_en: 'Cancelled',cls: 'bg-slate-100 text-slate-400'  },
+  cancelled:{ label_ar: 'ملغاة',        label_en: 'Cancelled',cls: 'bg-sand-alt text-muted-foreground'  },
   refunded: { label_ar: 'مسترد',        label_en: 'Refunded', cls: 'bg-purple-100 text-purple-700'},
 };
 
@@ -117,7 +117,7 @@ export default function FeesInvoiceList({
   };
 
   const StatusBadge = ({ status }) => {
-    const cfg = STATUS_CONFIG[status] || { label_ar: status, label_en: status, cls: 'bg-slate-100 text-slate-600' };
+    const cfg = STATUS_CONFIG[status] || { label_ar: status, label_en: status, cls: 'bg-sand-alt text-muted-foreground' };
     return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cfg.cls}`}>{isRTL ? cfg.label_ar : cfg.label_en}</span>;
   };
 
@@ -125,7 +125,7 @@ export default function FeesInvoiceList({
     <div className="space-y-5">
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title={isRTL ? 'إجمالي الرسوم' : 'Total Fees'} value={`${stats.total.toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}`} icon={DollarSign} iconClassName="bg-slate-100" />
+        <StatCard title={isRTL ? 'إجمالي الرسوم' : 'Total Fees'} value={`${stats.total.toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}`} icon={DollarSign} iconClassName="bg-sand-alt" />
         <StatCard title={isRTL ? 'المحصل' : 'Collected'} value={`${stats.paid.toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}`} icon={CheckCircle} iconClassName="bg-emerald-50" />
         <StatCard title={isRTL ? 'المتبقي' : 'Outstanding'} value={`${stats.pending.toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}`} icon={Banknote} iconClassName="bg-amber-50" />
         <StatCard title={isRTL ? 'متأخرة' : 'Overdue'} value={stats.overdue} icon={AlertCircle} iconClassName="bg-red-50" />
@@ -133,7 +133,7 @@ export default function FeesInvoiceList({
 
       {/* Status tabs */}
       <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-        <TabsList className="bg-white border border-slate-200 flex-wrap h-auto gap-1">
+        <TabsList className="bg-white border border-border flex-wrap h-auto gap-1">
           {[
             ['all', 'الكل', 'All'],
             ['issued', 'صادرة', 'Issued'],
@@ -142,7 +142,7 @@ export default function FeesInvoiceList({
             ['overdue', 'متأخر', 'Overdue'],
             ['cancelled', 'ملغاة', 'Cancelled'],
           ].map(([val, ar, en]) => (
-            <TabsTrigger key={val} value={val} className="data-[state=active]:bg-slate-900 data-[state=active]:text-white text-xs">
+            <TabsTrigger key={val} value={val} className="data-[state=active]:bg-najdi-900 data-[state=active]:text-white text-xs">
               {isRTL ? ar : en} ({statusCounts[val] || 0})
             </TabsTrigger>
           ))}
@@ -152,7 +152,7 @@ export default function FeesInvoiceList({
       {/* Filters + actions */}
       <div className="flex gap-3 flex-wrap items-center">
         <div className="relative flex-1 min-w-48">
-          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
           <Input
             placeholder={isRTL ? 'بحث بالاسم أو رقم الفاتورة...' : 'Search by name or invoice #...'}
             value={search} onChange={e => setSearch(e.target.value)}
@@ -161,7 +161,7 @@ export default function FeesInvoiceList({
         </div>
         <Select value={gradeFilter} onValueChange={setGradeFilter}>
           <SelectTrigger className="w-36 bg-white h-9">
-            <Filter className="w-3.5 h-3.5 me-1.5 text-slate-400" />
+            <Filter className="w-3.5 h-3.5 me-1.5 text-muted-foreground" />
             <SelectValue placeholder={isRTL ? 'الصف' : 'Grade'} />
           </SelectTrigger>
           <SelectContent>
@@ -173,7 +173,7 @@ export default function FeesInvoiceList({
           <Download className="w-3.5 h-3.5" />
           {isRTL ? 'تصدير' : 'Export'}
         </Button>
-        <span className="text-xs text-slate-400">{filtered.length} {isRTL ? 'فاتورة' : 'invoices'}</span>
+        <span className="text-xs text-muted-foreground">{filtered.length} {isRTL ? 'فاتورة' : 'invoices'}</span>
       </div>
 
       {/* Table */}
@@ -197,10 +197,10 @@ export default function FeesInvoiceList({
             <TableBody>
               {loading ? (
                 <TableRow><TableCell colSpan={10} className="text-center py-12">
-                  <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                  <div className="w-8 h-8 border-4 border-najdi-500 border-t-transparent rounded-full animate-spin mx-auto" />
                 </TableCell></TableRow>
               ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={10} className="text-center py-12 text-slate-400">
+                <TableRow><TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
                   {isRTL ? 'لا توجد فواتير' : 'No invoices found'}
                 </TableCell></TableRow>
               ) : (
@@ -211,31 +211,31 @@ export default function FeesInvoiceList({
                   return (
                     <TableRow
                       key={inv.id}
-                      className="cursor-pointer hover:bg-slate-50"
+                      className="cursor-pointer hover:bg-sand"
                       onClick={() => { window.location.href = createPageUrl('InvoiceDetails') + '?id=' + inv.id; }}
                     >
-                      <TableCell><span className="font-mono text-xs text-slate-600">{inv.invoice_number}</span></TableCell>
+                      <TableCell><span className="font-mono text-xs text-muted-foreground">{inv.invoice_number}</span></TableCell>
                       <TableCell>
-                        <p className="font-medium text-slate-800 text-sm">{inv.student_name}</p>
-                        {inv.academic_year && <p className="text-xs text-slate-400">{inv.academic_year}</p>}
+                        <p className="font-medium text-ink text-sm">{inv.student_name}</p>
+                        {inv.academic_year && <p className="text-xs text-muted-foreground">{inv.academic_year}</p>}
                       </TableCell>
-                      <TableCell><span className="text-sm text-slate-600">{inv.grade}</span></TableCell>
+                      <TableCell><span className="text-sm text-muted-foreground">{inv.grade}</span></TableCell>
                       <TableCell className="text-end font-semibold text-sm">{inv.total_amount?.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</TableCell>
                       <TableCell className="text-end text-emerald-600 text-sm">{(inv.paid_amount || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</TableCell>
                       <TableCell className="text-end">
-                        <span className={`text-sm font-medium ${balance > 0 ? 'text-red-600' : 'text-slate-400'}`}>
+                        <span className={`text-sm font-medium ${balance > 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
                           {balance.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span className={`text-xs ${inv.status === 'overdue' ? 'text-red-600 font-medium' : 'text-slate-500'}`}>
+                        <span className={`text-xs ${inv.status === 'overdue' ? 'text-red-600 font-medium' : 'text-muted-foreground'}`}>
                           {inv.due_date ? format(new Date(inv.due_date), 'dd/MM/yyyy') : '-'}
                         </span>
                       </TableCell>
                       <TableCell><StatusBadge status={inv.status} /></TableCell>
                       <TableCell onClick={e => e.stopPropagation()}>
                         {methods && methodKeys.length === 1 ? (
-                          <div className="flex items-center gap-1 text-slate-600">
+                          <div className="flex items-center gap-1 text-muted-foreground">
                             {PAY_METHOD_ICONS[methodKeys[0]] || <CreditCard className="w-3 h-3" />}
                             <span className="text-xs">{isRTL ? PAY_METHOD_LABEL[methodKeys[0]]?.ar : PAY_METHOD_LABEL[methodKeys[0]]?.en || methodKeys[0]}</span>
                           </div>
@@ -255,7 +255,7 @@ export default function FeesInvoiceList({
                               ))}
                             </PopoverContent>
                           </Popover>
-                        ) : <span className="text-slate-300 text-xs">—</span>}
+                        ) : <span className="text-muted-foreground text-xs">—</span>}
                       </TableCell>
                       <TableCell onClick={e => e.stopPropagation()}>
                         <DropdownMenu>

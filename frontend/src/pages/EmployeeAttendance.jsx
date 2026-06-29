@@ -113,11 +113,11 @@ export default function EmployeeAttendance() {
   };
 
   const columns = [
-    { header: isRTL ? 'الموظف' : 'Employee', cell: (row) => <div><p className="font-medium">{row.name_ar}</p><p className="text-sm text-slate-500">{row.employee_id}</p></div> },
+    { header: isRTL ? 'الموظف' : 'Employee', cell: (row) => <div><p className="font-medium">{row.name_ar}</p><p className="text-sm text-muted-foreground">{row.employee_id}</p></div> },
     { header: isRTL ? 'القسم' : 'Department', cell: (row) => departments.find(d => d.id === row.department_id)?.name_ar || '-' },
     { header: isRTL ? 'الحضور' : 'Attendance', cell: (row) => {
       const status = getAttendanceStatus(row.id);
-      return status ? <StatusBadge status={status} /> : <span className="text-slate-400">{isRTL ? 'لم يتم التسجيل' : 'Not marked'}</span>;
+      return status ? <StatusBadge status={status} /> : <span className="text-muted-foreground">{isRTL ? 'لم يتم التسجيل' : 'Not marked'}</span>;
     }},
     { header: t('actions'), cell: (row) => {
       const status = getAttendanceStatus(row.id);
@@ -128,7 +128,7 @@ export default function EmployeeAttendance() {
             const labels = { present: isRTL ? 'حاضر' : 'Present', absent: isRTL ? 'غائب' : 'Absent', late: isRTL ? 'متأخر' : 'Late', excused: isRTL ? 'بعذر' : 'Excused' };
             const icons = { present: CheckCircle, absent: XCircle, late: Clock, excused: Clock };
             const IconComp = icons[s];
-            const colors = { present: 'bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-500', absent: 'bg-red-500 hover:bg-red-600 text-white border-red-500', late: 'bg-amber-500 hover:bg-amber-600 text-white border-amber-500', excused: 'bg-blue-500 hover:bg-blue-600 text-white border-blue-500' };
+            const colors = { present: 'bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-500', absent: 'bg-red-500 hover:bg-red-600 text-white border-red-500', late: 'bg-amber-500 hover:bg-amber-600 text-white border-amber-500', excused: 'bg-najdi-500 hover:bg-najdi-700 text-white border-najdi-500' };
             return (
               <Button key={s} size="sm"
                 className={status === s ? colors[s] : ''}
@@ -161,10 +161,10 @@ export default function EmployeeAttendance() {
       />
 
       <div className="grid grid-cols-4 gap-4">
-        <Card><CardContent className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'إجمالي الموظفين' : 'Total'}</p><p className="text-2xl font-bold">{stats.total}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'حاضر' : 'Present'}</p><p className="text-2xl font-bold text-emerald-600">{stats.present}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'غائب' : 'Absent'}</p><p className="text-2xl font-bold text-red-600">{stats.absent}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-sm text-slate-500">{isRTL ? 'متأخر' : 'Late'}</p><p className="text-2xl font-bold text-amber-600">{stats.late}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الموظفين' : 'Total'}</p><p className="text-2xl font-bold">{stats.total}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'حاضر' : 'Present'}</p><p className="text-2xl font-bold text-emerald-600">{stats.present}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'غائب' : 'Absent'}</p><p className="text-2xl font-bold text-red-600">{stats.absent}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'متأخر' : 'Late'}</p><p className="text-2xl font-bold text-amber-600">{stats.late}</p></CardContent></Card>
       </div>
 
       <div className="flex flex-wrap items-end gap-3">

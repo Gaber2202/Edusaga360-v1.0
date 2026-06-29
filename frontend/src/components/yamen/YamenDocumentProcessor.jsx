@@ -58,13 +58,13 @@ Respond in JSON format.`;
   };
 
   return (
-    <div className="space-y-4 p-4 bg-slate-900 rounded-xl border border-slate-700">
-      <div className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-        <FileText className="w-4 h-4 text-blue-400" />
+    <div className="space-y-4 p-4 bg-najdi-900 rounded-xl border border-najdi-900">
+      <div className="text-sm font-semibold text-najdi-100 flex items-center gap-2">
+        <FileText className="w-4 h-4 text-najdi-500" />
         {isRTL ? 'معالج المستندات بالذكاء الاصطناعي' : 'AI Document Processor'}
       </div>
 
-      <div className="border-2 border-dashed border-slate-600 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition">
+      <div className="border-2 border-dashed border-najdi-900 rounded-lg p-6 text-center cursor-pointer hover:border-najdi-500 transition">
         <input
           type="file"
           onChange={handleFileUpload}
@@ -75,19 +75,19 @@ Respond in JSON format.`;
         />
         <label htmlFor="doc-upload" className="cursor-pointer flex flex-col items-center gap-2">
           {processing ? (
-            <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
+            <Loader2 className="w-6 h-6 text-najdi-500 animate-spin" />
           ) : (
-            <Upload className="w-6 h-6 text-slate-400" />
+            <Upload className="w-6 h-6 text-muted-foreground" />
           )}
-          <span className="text-sm text-slate-300">
+          <span className="text-sm text-muted-foreground">
             {isRTL ? 'اسحب ملف أو اضغط هنا' : 'Drag or click to upload'}
           </span>
-          <span className="text-xs text-slate-500">{isRTL ? 'الصور وملفات PDF' : 'Images & PDFs'}</span>
+          <span className="text-xs text-muted-foreground">{isRTL ? 'الصور وملفات PDF' : 'Images & PDFs'}</span>
         </label>
       </div>
 
       {selectedFile && (
-        <div className="text-xs text-slate-400">{isRTL ? 'الملف:' : 'File:'} {selectedFile}</div>
+        <div className="text-xs text-muted-foreground">{isRTL ? 'الملف:' : 'File:'} {selectedFile}</div>
       )}
 
       {error && (
@@ -104,16 +104,16 @@ Respond in JSON format.`;
             {isRTL ? 'تم التحليل' : 'Analysis Complete'}
           </div>
 
-          <div className="space-y-2 text-xs text-slate-300">
+          <div className="space-y-2 text-xs text-muted-foreground">
             <div>
-              <span className="text-slate-400">{isRTL ? 'نوع المستند:' : 'Type:'}</span>
+              <span className="text-muted-foreground">{isRTL ? 'نوع المستند:' : 'Type:'}</span>
               <span className="ml-2">{result.documentType}</span>
             </div>
 
             {result.extractedData && Object.keys(result.extractedData).length > 0 && (
               <div>
-                <span className="text-slate-400 block mb-1">{isRTL ? 'البيانات المستخرجة:' : 'Extracted Data:'}</span>
-                <pre className="bg-slate-800/50 p-2 rounded text-xs overflow-auto max-h-32">
+                <span className="text-muted-foreground block mb-1">{isRTL ? 'البيانات المستخرجة:' : 'Extracted Data:'}</span>
+                <pre className="bg-najdi-900/50 p-2 rounded text-xs overflow-auto max-h-32">
                   {JSON.stringify(result.extractedData, null, 2)}
                 </pre>
               </div>
@@ -131,7 +131,7 @@ Respond in JSON format.`;
             )}
 
             <div>
-              <span className="text-slate-400">{isRTL ? 'الحالة:' : 'Status:'}</span>
+              <span className="text-muted-foreground">{isRTL ? 'الحالة:' : 'Status:'}</span>
               <span className={`ml-2 ${result.verificationStatus === 'verified' ? 'text-emerald-400' : 'text-amber-400'}`}>
                 {result.verificationStatus}
               </span>

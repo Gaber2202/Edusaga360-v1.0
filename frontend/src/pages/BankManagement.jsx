@@ -127,7 +127,7 @@ export default function BankManagement() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={bank.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100'}>
+                    <Badge className={bank.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-sand-alt'}>
                       {bank.is_active ? (isRTL ? 'نشط' : 'Active') : (isRTL ? 'معطل' : 'Inactive')}
                     </Badge>
                   </TableCell>

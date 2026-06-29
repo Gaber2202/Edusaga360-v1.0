@@ -136,7 +136,7 @@ export default function AssetRentals() {
     toast.success(isRTL ? 'تم تسجيل الإرجاع' : 'Returned');
   };
 
-  const statusColors = { active: 'bg-emerald-100 text-emerald-700', returned: 'bg-slate-100 text-slate-700', overdue: 'bg-red-100 text-red-700', cancelled: 'bg-slate-100 text-slate-500' };
+  const statusColors = { active: 'bg-emerald-100 text-emerald-700', returned: 'bg-sand-alt text-ink', overdue: 'bg-red-100 text-red-700', cancelled: 'bg-sand-alt text-muted-foreground' };
   const statusLabels = { active: { ar: 'نشط', en: 'Active' }, returned: { ar: 'مُرجع', en: 'Returned' }, overdue: { ar: 'متأخر', en: 'Overdue' }, cancelled: { ar: 'ملغي', en: 'Cancelled' } };
 
   const RentalTable = ({ data, showStudent, showVendor }) => (
@@ -158,16 +158,16 @@ export default function AssetRentals() {
           {isLoading ? (
             <TableRow><TableCell colSpan={8} className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></TableCell></TableRow>
           ) : data.length === 0 ? (
-            <TableRow><TableCell colSpan={8} className="text-center py-8 text-slate-400">{isRTL ? 'لا توجد بيانات' : 'No data'}</TableCell></TableRow>
+            <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{isRTL ? 'لا توجد بيانات' : 'No data'}</TableCell></TableRow>
           ) : data.map(r => (
             <TableRow key={r.id}>
-              <TableCell><div><p className="font-medium">{r.asset_name_ar}</p><p className="text-xs text-slate-400">{r.asset_code}</p></div></TableCell>
+              <TableCell><div><p className="font-medium">{r.asset_name_ar}</p><p className="text-xs text-muted-foreground">{r.asset_code}</p></div></TableCell>
               {showStudent && <TableCell>{r.student_name || '—'}</TableCell>}
               {showVendor && <TableCell>{r.vendor_name || '—'}</TableCell>}
               <TableCell>{r.rental_start_date}</TableCell>
               <TableCell>{r.rental_end_date || '—'}</TableCell>
               <TableCell>{r.rental_fee ? `${r.rental_fee.toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}` : '—'}</TableCell>
-              <TableCell><Badge className={statusColors[r.status] || 'bg-slate-100'}>{isRTL ? statusLabels[r.status]?.ar : statusLabels[r.status]?.en || r.status}</Badge></TableCell>
+              <TableCell><Badge className={statusColors[r.status] || 'bg-sand-alt'}>{isRTL ? statusLabels[r.status]?.ar : statusLabels[r.status]?.en || r.status}</Badge></TableCell>
               <TableCell>
                 {r.status === 'active' && (
                   <Button size="sm" variant="outline" onClick={() => handleReturn(r)}>
@@ -303,7 +303,7 @@ export default function AssetRentals() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDialog(false)}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
-            <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleSave} disabled={saving} className="bg-najdi-700 hover:bg-najdi-900">
               {saving && <Loader2 className="w-4 h-4 animate-spin me-2" />}
               {isRTL ? 'حفظ' : 'Save'}
             </Button>

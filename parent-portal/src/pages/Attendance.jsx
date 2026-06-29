@@ -7,12 +7,12 @@ export default function Attendance() {
   const { t } = useLanguage();
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">{t('attendanceRecords')}</h1>
+      <h1 className="text-2xl font-bold text-ink">{t('attendanceRecords')}</h1>
       <Card>
         <CardContent className="py-12 text-center">
-          <ClipboardCheck className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500">{t('attendanceWillAppear')}</p>
-          <p className="text-xs text-slate-400 mt-1">{t('attendanceDataNote')}</p>
+          <ClipboardCheck className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground">{t('attendanceWillAppear')}</p>
+          <p className="text-xs text-muted-foreground mt-1">{t('attendanceDataNote')}</p>
         </CardContent>
       </Card>
     </div>
