@@ -77,15 +77,15 @@
 | ID | Severity | Finding | Status |
 |----|----------|---------|--------|
 | 4A-1 | CRITICAL | PII plain TEXT — `national_id`, `iqama_number`, `passport_number`, `bank_iban` unencrypted | Open |
-| 4B-1 | CRITICAL | `/api/files/upload` endpoint missing — 11 call sites broken | Open |
+| 4B-1 | CRITICAL | `/api/files/upload` endpoint missing — 11 call sites broken | FIXED |
 | 4C-1 | CRITICAL | `audit_logs` FOR ALL policy allowed DELETE by tenant users | FIXED |
 | 4A-2 | HIGH | `employees` SELECT * exposes PII/salary in 8+ non-payroll components | Open |
-| 4B-2 | HIGH | Files use `getPublicUrl` — permanent public URLs, no bucket RLS | Open |
-| 4B-3 | HIGH | File type validation is client-side only | Open |
+| 4B-2 | HIGH | Files use `getPublicUrl` — permanent public URLs, no bucket RLS | FIXED |
+| 4B-3 | HIGH | File type validation is client-side only | FIXED |
 | 4C-2 | HIGH | `AuditService.jsx` wrote to non-existent columns — all audit writes silently failing | FIXED |
 | 4C-3 | HIGH | `ip_address` hardcoded to `'client'` — real IP never captured | Partial |
 | 4C-4 | HIGH | Missing audit logging: payroll runs, login, role changes, exports | Open |
-| 4B-4 | MEDIUM | No file size limits on upload forms | Open |
+| 4B-4 | MEDIUM | No file size limits on upload forms | FIXED |
 
 ---
 
@@ -111,17 +111,24 @@
 
 | Severity | Found | Fixed | Open |
 |----------|-------|-------|------|
-| CRITICAL | 8 | 5 | 3 |
-| HIGH | 18 | 10 | 8 |
-| MEDIUM | 17 | 4 | 13 |
+| CRITICAL | 8 | 6 | 2 |
+| HIGH | 18 | 12 | 6 |
+| MEDIUM | 17 | 5 | 12 |
 | LOW | 5 | 0 | 5 |
-| **Total** | **48** | **19** | **29** |
+| **Total** | **48** | **23** | **25** |
+
+> **Update 2026-06-29:** File-upload security cluster closed — `4B-1` (server-side
+> `/api/files/upload` with magic-byte + size validation), `4B-3`, `4B-4`, and
+> `4B-2` (signed URLs + `tenant-files` bucket RLS policies, migration
+> `20260629_tenant_files_bucket_rls.sql`). Platform-owner uploads and HEIC/CSV
+> types also fixed.
 
 ---
 
 ## Open Critical Items (Must Fix Before Production)
 
 1. **PII encryption** — pgcrypto / Supabase Vault for `national_id`, `iqama_number`, `passport_number`, `bank_iban`
-2. **File upload endpoint** — create `/api/files/upload` with server-side validation
-3. **`users.tenant_id` NOT NULL** — backfill nulls then enforce constraint
-4. **Duplicate `fee_structures`** — reconcile schema conflict in new migration
+2. **`users.tenant_id` NOT NULL** — backfill nulls then enforce constraint
+3. **Duplicate `fee_structures`** — reconcile schema conflict in new migration
+
+✅ ~~**File upload endpoint** — create `/api/files/upload` with server-side validation~~ — done 2026-06-29.

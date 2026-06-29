@@ -1,6 +1,6 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useLanguage } from '../LanguageContext';
-import { uploadFileApi } from '../../api/supabaseClient';
+import { uploadFileApi, getSignedUrlApi } from '../../api/supabaseClient';
 import { Button } from './button';
 import { X, Upload, Camera, FileText, Image, Download, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -44,6 +44,36 @@ export default function AttachmentUploader({
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
+
+  // Signed URLs expire (~1h). Persisted attachments keep a permanent `path`, so
+  // re-mint a fresh URL on mount for display/download. Keyed by path; an
+  // in-flight set prevents duplicate requests / render loops.
+  const [freshUrls, setFreshUrls] = useState({});
+  const inFlight = useRef(new Set());
+
+  const refreshUrl = useCallback(async (path) => {
+    if (!path || inFlight.current.has(path)) return;
+    inFlight.current.add(path);
+    try {
+      const url = await getSignedUrlApi(path);
+      if (url) setFreshUrls((prev) => ({ ...prev, [path]: url }));
+    } catch (err) {
+      console.error('[AttachmentUploader] could not refresh signed URL', err);
+    } finally {
+      inFlight.current.delete(path);
+    }
+  }, []);
+
+  useEffect(() => {
+    for (const att of attachments) {
+      if (att.path && !freshUrls[att.path]) refreshUrl(att.path);
+    }
+  }, [attachments, freshUrls, refreshUrl]);
+
+  const urlFor = useCallback(
+    (att) => (att.path && freshUrls[att.path]) || att.signedUrl,
+    [freshUrls],
+  );
 
   const validateFile = useCallback((file) => {
     if (file.size > MAX_FILE_SIZE) {
@@ -216,6 +246,7 @@ export default function AttachmentUploader({
           {attachments.map((att, index) => {
             const Icon = getFileIcon(att.type);
             const isImage = att.type?.startsWith('image/');
+            const displayUrl = urlFor(att);
 
             return (
               <div
@@ -223,11 +254,12 @@ export default function AttachmentUploader({
                 className="flex items-center gap-3 rounded-lg border border-border bg-white p-2 group"
               >
                 {/* Thumbnail or icon */}
-                {isImage && att.signedUrl ? (
+                {isImage && displayUrl ? (
                   <img
-                    src={att.signedUrl}
+                    src={displayUrl}
                     alt={att.name}
                     className="w-10 h-10 rounded object-cover flex-shrink-0"
+                    onError={() => att.path && refreshUrl(att.path)}
                   />
                 ) : (
                   <div className="w-10 h-10 rounded bg-sand-alt flex items-center justify-center flex-shrink-0">
@@ -245,9 +277,9 @@ export default function AttachmentUploader({
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  {att.signedUrl && (
+                  {displayUrl && (
                     <a
-                      href={att.signedUrl}
+                      href={displayUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       download={att.name}
