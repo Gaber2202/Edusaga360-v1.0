@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import BillActions from '../components/procurement/BillActions';
+import AttachmentUploader from '../components/ui/AttachmentUploader';
 import jsPDF from 'jspdf';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { createJournalEntry } from '../api/journalEntry';
@@ -40,7 +41,8 @@ export default function APBills() {
     payment_date: format(new Date(), 'yyyy-MM-dd'),
     payment_method: 'bank_transfer',
     reference_number: '',
-    notes: ''
+    notes: '',
+    attachments: []
   });
 
   const { data: bills = [], isLoading } = useQuery({
@@ -87,7 +89,8 @@ export default function APBills() {
       payment_date: format(new Date(), 'yyyy-MM-dd'),
       payment_method: 'bank_transfer',
       reference_number: '',
-      notes: ''
+      notes: '',
+      attachments: []
     });
     setShowPaymentDialog(true);
   };
@@ -192,6 +195,7 @@ export default function APBills() {
         payment_method: paymentData.payment_method,
         reference_number: paymentData.reference_number,
         notes: paymentData.notes,
+        attachments: paymentData.attachments,
         status: 'completed',
         paid_by: user?.email
       });
@@ -362,6 +366,15 @@ export default function APBills() {
                 <div className="space-y-2">
                   <Label>{isRTL ? 'رقم المرجع' : 'Reference #'}</Label>
                   <Input value={paymentData.reference_number} onChange={(e) => setPaymentData(p => ({...p, reference_number: e.target.value}))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>{isRTL ? 'إثبات الدفع / المرفقات' : 'Payment Proof / Attachments'}</Label>
+                  <AttachmentUploader
+                    attachments={paymentData.attachments}
+                    onChange={(atts) => setPaymentData(p => ({...p, attachments: atts}))}
+                    compact
+                    maxFiles={5}
+                  />
                 </div>
               </div>
             </div>

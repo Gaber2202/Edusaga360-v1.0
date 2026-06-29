@@ -1,5 +1,6 @@
 import { Router, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 import { z } from 'zod';
 import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/auth.js';
 import {
@@ -7,6 +8,11 @@ import {
   generateUBLXml,
   generateInvoiceHash,
   generateZATCAInvoicePDF,
+  signInvoice,
+  generatePIH,
+  reportInvoice,
+  clearInvoice,
+  complianceCheck,
   InvoiceData,
   TenantData,
 } from '../services/zatca.js';
@@ -33,11 +39,14 @@ const GenerateZATCASchema = z.object({
   invoice_number: z.string(),
   issue_date: z.string(),
   invoice_type: z.enum(['standard', 'credit_note']).optional(),
+  zatca_invoice_type: z.enum(['standard', 'simplified']).optional(),
   subtotal: z.number().min(0),
   vat_amount: z.number().min(0),
   total_amount: z.number().min(0),
   student_name: z.string().optional(),
   student_id: z.string().optional(),
+  buyer_vat_number: z.string().optional(),
+  buyer_address: z.string().optional(),
   items: z.array(InvoiceItemSchema).optional(),
   discount_amount: z.number().optional(),
   notes: z.string().optional(),
@@ -57,6 +66,35 @@ async function getTenantData(tenantId: string): Promise<TenantData> {
   return (data as TenantData) || {};
 }
 
+/**
+ * Get the next ICV (Invoice Counter Value) for a tenant and increment it.
+ * Uses the zatca_invoices table to track the counter.
+ */
+async function getNextICV(tenantId: string): Promise<number> {
+  const { data } = await supabase
+    .from('zatca_invoices')
+    .select('icv')
+    .eq('tenant_id', tenantId)
+    .order('icv', { ascending: false })
+    .limit(1);
+
+  return (data?.[0]?.icv || 0) + 1;
+}
+
+/**
+ * Get the previous invoice hash for PIH chaining.
+ */
+async function getPreviousInvoiceHash(tenantId: string): Promise<string | undefined> {
+  const { data } = await supabase
+    .from('zatca_invoices')
+    .select('invoice_hash')
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  return data?.[0]?.invoice_hash || undefined;
+}
+
 // ---------------------------------------------------------------------------
 // POST /api/invoices/generate-zatca
 // ---------------------------------------------------------------------------
@@ -71,23 +109,53 @@ invoiceRouter.post('/generate-zatca', requireRole(FINANCE_ROLES), async (req: Au
       });
     }
 
-    const invoice: InvoiceData = parsed.data;
     const tenantId = req.user!.tenant_id;
-
     if (!tenantId) {
       return res.status(400).json({ message: 'Tenant ID not found in token' });
     }
 
     const tenant = await getTenantData(tenantId);
+    const icv = await getNextICV(tenantId);
+    const previousHash = await getPreviousInvoiceHash(tenantId);
+    const uuid = crypto.randomUUID();
+
+    const invoice: InvoiceData = {
+      ...parsed.data,
+      uuid,
+      icv,
+      previous_invoice_hash: previousHash,
+    };
 
     // Generate ZATCA artifacts
-    const qr_code = generateTLVQR(invoice, tenant);
     const ubl_xml = generateUBLXml(invoice, tenant);
     const invoice_hash = generateInvoiceHash(ubl_xml);
+    const signature = signInvoice(invoice_hash);
+    const pih = generatePIH(previousHash);
+    const qr_code = generateTLVQR(invoice, tenant, signature);
 
-    // Generate PDF and encode as base64
+    // Generate PDF with proper Arabic rendering
     const pdfBuffer = await generateZATCAInvoicePDF(invoice, tenant);
     const pdf_base64 = pdfBuffer.toString('base64');
+
+    // Submit to ZATCA API based on invoice type
+    const isSimplified = invoice.zatca_invoice_type === 'simplified';
+    const xmlBase64 = Buffer.from(ubl_xml, 'utf8').toString('base64');
+
+    let zatcaResponse = null;
+    let zatcaStatus = 'generated';
+
+    try {
+      if (isSimplified) {
+        zatcaResponse = await reportInvoice(xmlBase64, invoice_hash, uuid);
+        zatcaStatus = zatcaResponse.reportingStatus === 'REPORTED' ? 'reported' : 'generated';
+      } else {
+        zatcaResponse = await clearInvoice(xmlBase64, invoice_hash, uuid);
+        zatcaStatus = zatcaResponse.clearanceStatus === 'CLEARED' ? 'cleared' : 'generated';
+      }
+    } catch {
+      // ZATCA API failure is non-fatal — we still store the invoice locally
+      zatcaStatus = 'api_error';
+    }
 
     // Upsert zatca_invoices record
     const zatcaRecord = {
@@ -100,7 +168,13 @@ invoiceRouter.post('/generate-zatca', requireRole(FINANCE_ROLES), async (req: Au
       qr_code,
       invoice_hash,
       ubl_xml,
-      zatca_status: 'generated' as const,
+      signature,
+      uuid,
+      icv,
+      pih,
+      zatca_status: zatcaStatus,
+      zatca_response: zatcaResponse ? JSON.stringify(zatcaResponse) : null,
+      cleared_xml: zatcaResponse?.clearedInvoice || null,
       tenant_id: tenantId,
       created_at: new Date().toISOString(),
     };
@@ -111,7 +185,6 @@ invoiceRouter.post('/generate-zatca', requireRole(FINANCE_ROLES), async (req: Au
 
     if (upsertError) {
       console.error('Failed to upsert zatca_invoices:', upsertError);
-      // Non-fatal — still return the generated data
     }
 
     return res.status(200).json({
@@ -119,10 +192,79 @@ invoiceRouter.post('/generate-zatca', requireRole(FINANCE_ROLES), async (req: Au
       invoice_hash,
       ubl_xml,
       pdf_base64,
+      uuid,
+      icv,
+      signature,
+      zatca_status: zatcaStatus,
+      zatca_response: zatcaResponse,
     });
   } catch (err) {
     console.error('Failed to generate ZATCA invoice:', err);
     return res.status(500).json({ message: 'Failed to generate ZATCA invoice' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/invoices/zatca-compliance-check
+// ---------------------------------------------------------------------------
+
+invoiceRouter.post('/zatca-compliance-check', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const parsed = GenerateZATCASchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: 'Validation failed', errors: parsed.error.flatten() });
+    }
+
+    const tenantId = req.user!.tenant_id;
+    if (!tenantId) {
+      return res.status(400).json({ message: 'Tenant ID not found' });
+    }
+
+    const tenant = await getTenantData(tenantId);
+    const uuid = crypto.randomUUID();
+
+    const invoice: InvoiceData = { ...parsed.data, uuid, icv: 1 };
+    const xml = generateUBLXml(invoice, tenant);
+    const hash = generateInvoiceHash(xml);
+    const xmlBase64 = Buffer.from(xml, 'utf8').toString('base64');
+
+    const result = await complianceCheck(xmlBase64, hash, uuid);
+
+    return res.status(200).json({ uuid, invoice_hash: hash, compliance_result: result });
+  } catch (err) {
+    console.error('ZATCA compliance check failed:', err);
+    return res.status(500).json({ message: 'Compliance check failed' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/invoices/:id/zatca-status
+// ---------------------------------------------------------------------------
+
+invoiceRouter.get('/:id/zatca-status', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const tenantId = req.user!.tenant_id;
+
+    if (!tenantId) {
+      return res.status(400).json({ message: 'Tenant ID not found' });
+    }
+
+    const { data, error } = await supabase
+      .from('zatca_invoices')
+      .select('zatca_status, qr_code, invoice_hash, uuid, icv, signature, cleared_xml, zatca_response, created_at')
+      .eq('invoice_id', id)
+      .eq('tenant_id', tenantId)
+      .single();
+
+    if (error || !data) {
+      return res.status(404).json({ message: 'ZATCA record not found for this invoice' });
+    }
+
+    return res.status(200).json(data);
+  } catch (err) {
+    console.error('Failed to get ZATCA status:', err);
+    return res.status(500).json({ message: 'Failed to get ZATCA status' });
   }
 });
 
@@ -151,9 +293,7 @@ invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Re
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
-    // Parents may only download invoices for their own linked children. (RLS
-    // scopes to the tenant; this narrows a parent to their students so one
-    // family cannot fetch another family's invoice by guessing its id.)
+    // Parents may only download invoices for their own linked children.
     if (req.user!.role === 'parent') {
       const { data: parent } = await supabase
         .from('users')

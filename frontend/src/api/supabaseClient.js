@@ -230,3 +230,43 @@ export async function callApi(endpoint, data, options = {}) {
   if (options.responseType === 'blob') return response.blob();
   return response.json();
 }
+
+/**
+ * Upload a file via multipart/form-data to the backend.
+ * Returns { path, signedUrl } on success.
+ */
+export async function uploadFileApi(file) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/files/upload`, {
+      method: 'POST',
+      headers: {
+        ...(session?.access_token && {
+          Authorization: `Bearer ${session.access_token}`,
+        }),
+      },
+      body: formData,
+    });
+  } catch (e) {
+    const err = new Error(`Upload failed: ${e.message}`);
+    err.isNetworkError = true;
+    throw err;
+  }
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({ message: response.statusText }));
+    const err = new Error(body.message || body.error || `Upload error: ${response.status}`);
+    err.status = response.status;
+    err.body = body;
+    throw err;
+  }
+
+  return response.json();
+}
