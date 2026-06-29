@@ -8,14 +8,16 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
 import { Switch } from '../components/ui/switch';
 import { toast } from 'sonner';
 import PageHeader from '../components/ui/PageHeader';
-import { Plus, Copy, Loader2, Edit2, Send } from 'lucide-react';
+import { Plus, Copy, Loader2, Edit2, Send, ClipboardCheck } from 'lucide-react';
 import { logAuditEvent } from '../components/AuditService';
 import SendIntakeLink from '../components/intake/SendIntakeLink';
+import DocumentVerificationQueue from '../components/intake/DocumentVerificationQueue';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 
 export default function ParentIntakeManagement() {
@@ -23,10 +25,25 @@ export default function ParentIntakeManagement() {
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
 
+  const [activeTab, setActiveTab] = useState('links');
   const [showForm, setShowForm] = useState(false);
   const [editingLink, setEditingLink] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showSendDialog, setShowSendDialog] = useState(null);
+
+  // Count pending verifications for badge
+  const { data: pendingCount = 0 } = useQuery({
+    queryKey: ['pendingVerificationsCount', tenantId],
+    queryFn: async () => {
+      const data = await fetchData(
+        tenantQuery('applications')
+          .select('id', { count: 'exact', head: true })
+          .match(tenantFilter({ document_status: 'pending_physical_verification' }))
+      );
+      return data?.length || 0;
+    },
+    enabled: hasTenantAccess,
+  });
 
   const [formData, setFormData] = useState({
     name_ar: '',
@@ -120,14 +137,33 @@ export default function ParentIntakeManagement() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={isRTL ? 'روابط تسجيل أولياء الأمور' : 'Parent Intake Links'}
-        subtitle={isRTL ? 'إدارة روابط التسجيل الإلكتروني' : 'Manage parent intake links'}
-        action
+        title={isRTL ? 'إدارة تسجيل أولياء الأمور' : 'Parent Intake Management'}
+        subtitle={isRTL ? 'إدارة روابط التسجيل والتحقق من المستندات' : 'Manage intake links and document verification'}
+        action={activeTab === 'links'}
         actionLabel={isRTL ? 'رابط جديد' : 'New Link'}
         actionIcon={Plus}
         onAction={() => setShowForm(true)}
       />
 
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="links">
+            {isRTL ? 'الروابط' : 'Links'}
+          </TabsTrigger>
+          <TabsTrigger value="verification" className="flex items-center gap-2">
+            <ClipboardCheck className="w-4 h-4" />
+            {isRTL ? 'التحقق من المستندات' : 'Doc Verification'}
+            {pendingCount > 0 && (
+              <Badge className="bg-amber-500 text-white text-xs px-1.5 py-0 min-w-[1.25rem] h-5">{pendingCount}</Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="verification" className="mt-4">
+          <DocumentVerificationQueue />
+        </TabsContent>
+
+        <TabsContent value="links" className="mt-4">
       <Card>
         <div className="overflow-x-auto" dir={isRTL ? 'rtl' : 'ltr'}>
           <Table className="table-fixed w-full">
@@ -285,6 +321,8 @@ export default function ParentIntakeManagement() {
           onOpenChange={(open) => !open && setShowSendDialog(null)} 
         />
       )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
