@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
+import { tenantQuery, fetchData, uploadFileApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -42,8 +42,8 @@ export default function GovDocuments() {
     if (!file) return;
     setUploading(true);
     try {
-      const { file_url } = await callApi('/api/files/upload', { file });
-      setForm(p => ({ ...p, file_url }));
+      const result = await uploadFileApi(file);
+      setForm(p => ({ ...p, file_url: result.signedUrl || result.path }));
       toast.success(isRTL ? 'تم رفع الملف' : 'File uploaded');
     } catch {
       toast.error(isRTL ? 'فشل رفع الملف' : 'Upload failed');

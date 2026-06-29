@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery, fetchData, callApi } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData, callApi, uploadFileApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent } from '../components/ui/card';
@@ -140,8 +140,9 @@ export default function AttendanceDevices() {
     setSaving(true);
     try {
       // Upload and parse file
-      const { file_url } = await callApi('/api/files/upload', { file: uploadFile });
-      
+      const uploadResult = await uploadFileApi(uploadFile);
+      const file_url = uploadResult.signedUrl || uploadResult.path;
+
       // Extract data from CSV
       const result = await callApi('/api/files/extract-data', {
         file_url,

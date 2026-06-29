@@ -46,6 +46,12 @@ function AppCard({ app, stage, onView, isRTL }) {
       </div>
       <div className="mt-2 flex items-center justify-between gap-2 flex-wrap">
         <span className="text-xs bg-sand-alt text-muted-foreground px-2 py-0.5 rounded font-medium">{app.applying_for_grade}</span>
+        {app.document_status === 'pending_physical_verification' && (
+          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-medium flex items-center gap-1">
+            <AlertTriangle className="w-3 h-3" />
+            {isRTL ? 'مستندات ناقصة' : 'Docs missing'}
+          </span>
+        )}
         {app.application_number && (
           <span className="text-xs text-muted-foreground font-mono">{app.application_number}</span>
         )}

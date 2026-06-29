@@ -161,6 +161,18 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
                     {isRTL ? (PIPELINE_STAGES.find(s=>s.key===application.status)?.label_ar || application.status) : (PIPELINE_STAGES.find(s=>s.key===application.status)?.label_en || application.status)}
                   </span>
                   <span className="text-xs text-muted-foreground font-mono">{application.application_number}</span>
+                  {application.document_status === 'pending_physical_verification' && (
+                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      {isRTL ? 'مستندات ناقصة' : 'Docs Pending'}
+                    </span>
+                  )}
+                  {application.document_status === 'documents_complete' && (
+                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" />
+                      {isRTL ? 'مستندات مكتملة' : 'Docs Complete'}
+                    </span>
+                  )}
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Clock className="w-3 h-3" />{days} {isRTL ? 'يوم' : 'days'}
                   </span>
