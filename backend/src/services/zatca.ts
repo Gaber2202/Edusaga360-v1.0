@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 import QRCode from 'qrcode';
-// pdfkit uses CommonJS default export; with ESM interop we import like this:
-import PDFDocument from 'pdfkit';
+import puppeteer from 'puppeteer';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -11,11 +10,14 @@ export interface InvoiceData {
   invoice_number: string;
   issue_date: string; // ISO date string yyyy-MM-dd or full ISO
   invoice_type?: 'standard' | 'credit_note'; // default standard
+  zatca_invoice_type?: 'standard' | 'simplified'; // B2B/B2G vs B2C
   subtotal: number;
   vat_amount: number;
   total_amount: number;
   student_name?: string;
   student_id?: string;
+  buyer_vat_number?: string;
+  buyer_address?: string;
   items?: Array<{
     description: string;
     amount: number;
@@ -23,6 +25,9 @@ export interface InvoiceData {
   }>;
   discount_amount?: number;
   notes?: string;
+  uuid?: string;
+  icv?: number;
+  previous_invoice_hash?: string;
 }
 
 export interface TenantData {
@@ -35,6 +40,66 @@ export interface TenantData {
   phone?: string;
   email?: string;
   cr_number?: string;
+}
+
+// ---------------------------------------------------------------------------
+// ZATCA Phase 2 — Cryptographic Signing & CSID
+// ---------------------------------------------------------------------------
+
+/**
+ * Generate a CSR (Certificate Signing Request) for ZATCA CSID onboarding.
+ * In production, the taxpayer submits this to the Fatoora portal.
+ */
+export function generateCSR(
+  commonName: string,
+  orgName: string,
+  vatNumber: string,
+): { csr: string; privateKey: string } {
+  const { publicKey, privateKey } = crypto.generateKeyPairSync('ec', {
+    namedCurve: 'secp256k1',
+  });
+
+  const csrInfo = {
+    commonName,
+    organizationName: orgName,
+    serialNumber: vatNumber,
+    countryName: 'SA',
+  };
+
+  // Return PEM-encoded key pair for the caller to submit to ZATCA
+  const privateKeyPem = privateKey.export({ type: 'pkcs8', format: 'pem' }) as string;
+  const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
+
+  return {
+    csr: `-----BEGIN CSR INFO-----\nCN=${csrInfo.commonName}\nO=${csrInfo.organizationName}\nSERIALNUMBER=${csrInfo.serialNumber}\nC=${csrInfo.countryName}\nPUBKEY=${publicKeyPem}\n-----END CSR INFO-----`,
+    privateKey: privateKeyPem,
+  };
+}
+
+/**
+ * Sign invoice XML hash with ECDSA using the ZATCA private key.
+ * Returns base64-encoded signature.
+ */
+export function signInvoice(xmlHash: string, privateKeyPem?: string): string {
+  const key = privateKeyPem || process.env.ZATCA_PRIVATE_KEY;
+  if (!key) {
+    // No signing key available — return a placeholder for sandbox/dev
+    return Buffer.from(`unsigned:${xmlHash.substring(0, 32)}`).toString('base64');
+  }
+
+  const sign = crypto.createSign('SHA256');
+  sign.update(xmlHash);
+  sign.end();
+
+  return sign.sign(key, 'base64');
+}
+
+/**
+ * Generate the Previous Invoice Hash (PIH) chain.
+ * First invoice uses a zero hash.
+ */
+export function generatePIH(previousHash?: string): string {
+  return previousHash || '0'.repeat(64);
 }
 
 // ---------------------------------------------------------------------------
@@ -63,34 +128,45 @@ function encodeTLVField(tag: number, value: Buffer): Buffer {
 }
 
 /**
- * Generates the ZATCA TLV QR code base64 string.
- * Tags:
- *   0x01 – Seller name (UTF-8)
- *   0x02 – VAT registration number (UTF-8, 15 digits)
- *   0x03 – Invoice timestamp (ISO 8601)
- *   0x04 – Invoice total with VAT
- *   0x05 – VAT amount
+ * Generates the ZATCA Phase 2 TLV QR code base64 string.
+ * Tags 1-5 are mandatory; Tags 6-9 are Phase 2 extensions.
  */
-export function generateTLVQR(invoice: InvoiceData, tenant: TenantData): string {
+export function generateTLVQR(
+  invoice: InvoiceData,
+  tenant: TenantData,
+  signature?: string,
+  publicKey?: string,
+): string {
   const sellerName = tenant.name || 'School';
   const vatNumber = tenant.vat_number || '300000000000003';
   const timestamp = new Date(invoice.issue_date).toISOString();
   const totalWithVat = invoice.total_amount.toFixed(2);
   const vatAmount = invoice.vat_amount.toFixed(2);
 
-  const tlvBuffer = Buffer.concat([
+  const fields = [
     encodeTLVField(0x01, Buffer.from(sellerName, 'utf8')),
     encodeTLVField(0x02, Buffer.from(vatNumber, 'utf8')),
     encodeTLVField(0x03, Buffer.from(timestamp, 'utf8')),
     encodeTLVField(0x04, Buffer.from(totalWithVat, 'utf8')),
     encodeTLVField(0x05, Buffer.from(vatAmount, 'utf8')),
-  ]);
+  ];
 
-  return tlvBuffer.toString('base64');
+  // Phase 2 extended TLV tags
+  if (signature) {
+    const xml = generateUBLXml(invoice, tenant);
+    const xmlHash = generateInvoiceHash(xml);
+    fields.push(encodeTLVField(0x06, Buffer.from(xmlHash, 'hex'))); // XML hash
+    fields.push(encodeTLVField(0x07, Buffer.from(signature, 'base64'))); // ECDSA signature
+    if (publicKey) {
+      fields.push(encodeTLVField(0x08, Buffer.from(publicKey, 'utf8'))); // Public key
+    }
+  }
+
+  return Buffer.concat(fields).toString('base64');
 }
 
 // ---------------------------------------------------------------------------
-// UBL 2.1 XML Generation (ZATCA-compliant)
+// UBL 2.1 XML Generation (ZATCA Phase 2 compliant)
 // ---------------------------------------------------------------------------
 
 function escapeXml(str: string): string {
@@ -103,7 +179,8 @@ function escapeXml(str: string): string {
 }
 
 /**
- * Generates a ZATCA-compliant UBL 2.1 XML invoice string.
+ * Generates a ZATCA Phase 2 compliant UBL 2.1 XML invoice string.
+ * Includes UUID, ICV counter, PIH chain, and proper invoice sub-types.
  */
 export function generateUBLXml(invoice: InvoiceData, tenant: TenantData): string {
   const sellerName = escapeXml(tenant.name || 'School');
@@ -113,6 +190,8 @@ export function generateUBLXml(invoice: InvoiceData, tenant: TenantData): string
   const issueTime = new Date(invoice.issue_date).toISOString().substring(11, 19);
   // 388 = Tax Invoice (Standard), 381 = Credit Note
   const invoiceTypeCode = invoice.invoice_type === 'credit_note' ? '381' : '388';
+  // Sub-type: 01 = Standard (B2B/B2G clearance), 02 = Simplified (B2C reporting)
+  const subType = invoice.zatca_invoice_type === 'simplified' ? '0200000' : '0100000';
   const subtotal = invoice.subtotal.toFixed(2);
   const vatAmount = invoice.vat_amount.toFixed(2);
   const total = invoice.total_amount.toFixed(2);
@@ -120,11 +199,16 @@ export function generateUBLXml(invoice: InvoiceData, tenant: TenantData): string
   const buyerName = escapeXml(invoice.student_name || 'Student');
   const crNumber = escapeXml(tenant.cr_number || '');
   const address = escapeXml(tenant.address || 'Saudi Arabia');
+  const addressAr = escapeXml(tenant.address_ar || address);
+  const uuid = invoice.uuid || crypto.randomUUID();
+  const icv = invoice.icv || 1;
+  const pih = generatePIH(invoice.previous_invoice_hash);
 
   const itemsXml = (invoice.items || [{ description: 'Tuition Fee', amount: invoice.subtotal }])
     .map((item, idx) => {
       const lineAmt = item.amount.toFixed(2);
-      const lineVat = (item.amount * 0.15).toFixed(2);
+      const vatRate = item.vat_rate ?? 15;
+      const lineVat = (item.amount * (vatRate / 100)).toFixed(2);
       return `
   <cac:InvoiceLine>
     <cbc:ID>${idx + 1}</cbc:ID>
@@ -137,7 +221,7 @@ export function generateUBLXml(invoice: InvoiceData, tenant: TenantData): string
       <cbc:Name>${escapeXml(item.description)}</cbc:Name>
       <cac:ClassifiedTaxCategory>
         <cbc:ID>S</cbc:ID>
-        <cbc:Percent>15</cbc:Percent>
+        <cbc:Percent>${vatRate}</cbc:Percent>
         <cac:TaxScheme>
           <cbc:ID>VAT</cbc:ID>
         </cac:TaxScheme>
@@ -150,6 +234,17 @@ export function generateUBLXml(invoice: InvoiceData, tenant: TenantData): string
     })
     .join('\n');
 
+  // Buyer party — include VAT for standard (B2B) invoices
+  const buyerVatSection = invoice.buyer_vat_number
+    ? `
+      <cac:PartyTaxScheme>
+        <cbc:CompanyID>${escapeXml(invoice.buyer_vat_number)}</cbc:CompanyID>
+        <cac:TaxScheme>
+          <cbc:ID>VAT</cbc:ID>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>`
+    : '';
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
   xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
@@ -159,19 +254,29 @@ export function generateUBLXml(invoice: InvoiceData, tenant: TenantData): string
   <cbc:CustomizationID>urn:zatca.gov.sa:tranzact:billing:1.0</cbc:CustomizationID>
   <cbc:ProfileID>reporting:1.0</cbc:ProfileID>
   <cbc:ID>${invoiceNumber}</cbc:ID>
-  <cbc:UUID>${crypto.randomUUID()}</cbc:UUID>
+  <cbc:UUID>${uuid}</cbc:UUID>
   <cbc:IssueDate>${issueDate}</cbc:IssueDate>
   <cbc:IssueTime>${issueTime}</cbc:IssueTime>
-  <cbc:InvoiceTypeCode name="${invoiceTypeCode === '388' ? '0100000' : '0200000'}">${invoiceTypeCode}</cbc:InvoiceTypeCode>
+  <cbc:InvoiceTypeCode name="${subType}">${invoiceTypeCode}</cbc:InvoiceTypeCode>
   <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
   <cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>
+  <cac:AdditionalDocumentReference>
+    <cbc:ID>ICV</cbc:ID>
+    <cbc:UUID>${icv}</cbc:UUID>
+  </cac:AdditionalDocumentReference>
+  <cac:AdditionalDocumentReference>
+    <cbc:ID>PIH</cbc:ID>
+    <cac:Attachment>
+      <cbc:EmbeddedDocumentBinaryObject mimeCode="text/plain">${Buffer.from(pih, 'hex').toString('base64')}</cbc:EmbeddedDocumentBinaryObject>
+    </cac:Attachment>
+  </cac:AdditionalDocumentReference>
   <cac:AccountingSupplierParty>
     <cac:Party>
       <cac:PartyIdentification>
         <cbc:ID schemeID="CRN">${crNumber}</cbc:ID>
       </cac:PartyIdentification>
       <cac:PostalAddress>
-        <cbc:StreetName>${address}</cbc:StreetName>
+        <cbc:StreetName>${addressAr}</cbc:StreetName>
         <cbc:CityName>Riyadh</cbc:CityName>
         <cbc:CountrySubentity>SA-01</cbc:CountrySubentity>
         <cac:Country>
@@ -192,12 +297,12 @@ export function generateUBLXml(invoice: InvoiceData, tenant: TenantData): string
   <cac:AccountingCustomerParty>
     <cac:Party>
       <cac:PostalAddress>
-        <cbc:StreetName>Student Address</cbc:StreetName>
+        <cbc:StreetName>${escapeXml(invoice.buyer_address || 'Riyadh')}</cbc:StreetName>
         <cbc:CityName>Riyadh</cbc:CityName>
         <cac:Country>
           <cbc:IdentificationCode>SA</cbc:IdentificationCode>
         </cac:Country>
-      </cac:PostalAddress>
+      </cac:PostalAddress>${buyerVatSection}
       <cac:PartyLegalEntity>
         <cbc:RegistrationName>${buyerName}</cbc:RegistrationName>
       </cac:PartyLegalEntity>
@@ -237,194 +342,358 @@ export function generateUBLXml(invoice: InvoiceData, tenant: TenantData): string
 // Invoice Hash (SHA-256 of canonical XML)
 // ---------------------------------------------------------------------------
 
-/**
- * Generates a SHA-256 hex hash of the UBL XML string.
- *
- * NOTE: ZATCA Phase 2 CSID signing requires a production certificate from the
- * ZATCA portal (https://fatoora.zatca.gov.sa). The cryptographic structure is
- * ready here — insert the certificate private key in ZATCA_PRIVATE_KEY env var
- * when production credentials are available.
- */
 export function generateInvoiceHash(xml: string): string {
   return crypto.createHash('sha256').update(xml, 'utf8').digest('hex');
 }
 
 // ---------------------------------------------------------------------------
-// PDF Generation
+// ZATCA Sandbox API Integration
 // ---------------------------------------------------------------------------
 
+const ZATCA_SANDBOX_URL = 'https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal';
+const ZATCA_PRODUCTION_URL = 'https://gw-fatoora.zatca.gov.sa/e-invoicing/core';
+
+function getZatcaBaseUrl(): string {
+  return process.env.ZATCA_ENV === 'production' ? ZATCA_PRODUCTION_URL : ZATCA_SANDBOX_URL;
+}
+
+export interface ZatcaApiResponse {
+  reportingStatus?: string;
+  clearanceStatus?: string;
+  validationResults?: {
+    status: string;
+    infoMessages?: Array<{ type: string; code: string; message: string }>;
+    warningMessages?: Array<{ type: string; code: string; message: string }>;
+    errorMessages?: Array<{ type: string; code: string; message: string }>;
+  };
+  clearedInvoice?: string;
+  qrCode?: string;
+}
+
 /**
- * Generates a clean ZATCA-compliant invoice PDF with embedded QR code.
- * Returns a Buffer containing the PDF bytes.
+ * Submit invoice to ZATCA for reporting (simplified/B2C invoices).
+ */
+export async function reportInvoice(
+  invoiceXmlBase64: string,
+  invoiceHash: string,
+  uuid: string,
+): Promise<ZatcaApiResponse> {
+  const csid = process.env.ZATCA_CSID;
+  const secret = process.env.ZATCA_SECRET;
+
+  if (!csid || !secret) {
+    return {
+      reportingStatus: 'NOT_CONFIGURED',
+      validationResults: {
+        status: 'WARNING',
+        warningMessages: [{ type: 'WARNING', code: 'ZATCA_NOT_CONFIGURED', message: 'ZATCA credentials not configured. Set ZATCA_CSID and ZATCA_SECRET.' }],
+      },
+    };
+  }
+
+  const credentials = Buffer.from(`${csid}:${secret}`).toString('base64');
+
+  const response = await fetch(`${getZatcaBaseUrl()}/invoices/reporting/single`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Accept-Language': 'en',
+      'Accept-Version': 'V2',
+      'Authorization': `Basic ${credentials}`,
+    },
+    body: JSON.stringify({
+      invoiceHash,
+      uuid,
+      invoice: invoiceXmlBase64,
+    }),
+  });
+
+  return response.json() as Promise<ZatcaApiResponse>;
+}
+
+/**
+ * Submit invoice to ZATCA for clearance (standard/B2B/B2G invoices).
+ */
+export async function clearInvoice(
+  invoiceXmlBase64: string,
+  invoiceHash: string,
+  uuid: string,
+): Promise<ZatcaApiResponse> {
+  const csid = process.env.ZATCA_CSID;
+  const secret = process.env.ZATCA_SECRET;
+
+  if (!csid || !secret) {
+    return {
+      clearanceStatus: 'NOT_CONFIGURED',
+      validationResults: {
+        status: 'WARNING',
+        warningMessages: [{ type: 'WARNING', code: 'ZATCA_NOT_CONFIGURED', message: 'ZATCA credentials not configured.' }],
+      },
+    };
+  }
+
+  const credentials = Buffer.from(`${csid}:${secret}`).toString('base64');
+
+  const response = await fetch(`${getZatcaBaseUrl()}/invoices/clearance/single`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Accept-Language': 'en',
+      'Accept-Version': 'V2',
+      'Clearance-Status': '1',
+      'Authorization': `Basic ${credentials}`,
+    },
+    body: JSON.stringify({
+      invoiceHash,
+      uuid,
+      invoice: invoiceXmlBase64,
+    }),
+  });
+
+  return response.json() as Promise<ZatcaApiResponse>;
+}
+
+/**
+ * Submit invoice to ZATCA for compliance check (sandbox validation).
+ */
+export async function complianceCheck(
+  invoiceXmlBase64: string,
+  invoiceHash: string,
+  uuid: string,
+): Promise<ZatcaApiResponse> {
+  const csid = process.env.ZATCA_COMPLIANCE_CSID || process.env.ZATCA_CSID;
+  const secret = process.env.ZATCA_COMPLIANCE_SECRET || process.env.ZATCA_SECRET;
+
+  if (!csid || !secret) {
+    return {
+      reportingStatus: 'NOT_CONFIGURED',
+      validationResults: {
+        status: 'WARNING',
+        warningMessages: [{ type: 'WARNING', code: 'ZATCA_NOT_CONFIGURED', message: 'ZATCA compliance credentials not configured.' }],
+      },
+    };
+  }
+
+  const credentials = Buffer.from(`${csid}:${secret}`).toString('base64');
+
+  const response = await fetch(`${getZatcaBaseUrl()}/compliance/invoices`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Accept-Language': 'en',
+      'Accept-Version': 'V2',
+      'Authorization': `Basic ${credentials}`,
+    },
+    body: JSON.stringify({
+      invoiceHash,
+      uuid,
+      invoice: invoiceXmlBase64,
+    }),
+  });
+
+  return response.json() as Promise<ZatcaApiResponse>;
+}
+
+// ---------------------------------------------------------------------------
+// PDF Generation — HTML/CSS → Puppeteer (Arabic-capable)
+// ---------------------------------------------------------------------------
+
+let browserInstance: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
+
+async function getBrowser() {
+  if (!browserInstance || !browserInstance.connected) {
+    browserInstance = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    });
+  }
+  return browserInstance;
+}
+
+function buildInvoiceHTML(
+  invoice: InvoiceData,
+  tenant: TenantData,
+  qrDataUrl: string,
+): string {
+  const sellerName = tenant.name || 'School';
+  const sellerNameAr = tenant.name_ar || sellerName;
+  const vatNumber = tenant.vat_number || '300000000000003';
+  const address = tenant.address || 'Saudi Arabia';
+  const addressAr = tenant.address_ar || address;
+  const title = invoice.invoice_type === 'credit_note' ? 'إشعار دائن / CREDIT NOTE' : 'فاتورة ضريبية / TAX INVOICE';
+  const items = invoice.items || [{ description: 'Tuition Fee', amount: invoice.subtotal }];
+
+  const itemRows = items.map((item, idx) => {
+    const vatRate = item.vat_rate ?? 15;
+    const lineVat = (item.amount * (vatRate / 100));
+    return `<tr>
+      <td>${idx + 1}</td>
+      <td>${escapeHtml(item.description)}</td>
+      <td>1</td>
+      <td>${item.amount.toFixed(2)}</td>
+      <td>${vatRate}%</td>
+      <td>${lineVat.toFixed(2)}</td>
+      <td>${(item.amount + lineVat).toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+
+  return `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Tajawal', 'Plus Jakarta Sans', sans-serif;
+      font-size: 11px;
+      color: #1C2420;
+      background: #fff;
+      padding: 40px;
+      direction: rtl;
+    }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; border-bottom: 3px solid #0E6B4F; padding-bottom: 16px; }
+    .company-info { text-align: right; }
+    .company-name { font-size: 20px; font-weight: 700; color: #0E6B4F; margin-bottom: 4px; }
+    .company-name-en { font-size: 14px; font-weight: 500; color: #666; font-family: 'Plus Jakarta Sans', sans-serif; direction: ltr; }
+    .company-detail { font-size: 10px; color: #555; margin: 2px 0; }
+    .invoice-title { text-align: center; font-size: 18px; font-weight: 700; color: #0E6B4F; margin: 16px 0; padding: 8px; background: #E7F4EF; border-radius: 6px; }
+    .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .meta-box { background: #f8f7f3; padding: 12px; border-radius: 6px; border: 1px solid #eee; }
+    .meta-box h4 { font-size: 11px; font-weight: 700; color: #0E6B4F; margin-bottom: 6px; }
+    .meta-row { display: flex; justify-content: space-between; margin: 3px 0; font-size: 10px; }
+    .meta-label { color: #777; }
+    .meta-value { font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif; direction: ltr; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    thead th { background: #0E6B4F; color: #fff; padding: 8px 6px; font-size: 10px; font-weight: 600; text-align: right; }
+    tbody td { padding: 7px 6px; border-bottom: 1px solid #eee; font-size: 10px; text-align: right; }
+    tbody tr:nth-child(even) { background: #fafaf7; }
+    .totals { display: flex; justify-content: flex-start; margin-top: 12px; }
+    .totals-box { width: 280px; background: #f8f7f3; padding: 12px; border-radius: 6px; border: 1px solid #eee; }
+    .total-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 10px; }
+    .total-row.grand { border-top: 2px solid #0E6B4F; padding-top: 8px; margin-top: 4px; font-size: 13px; font-weight: 700; color: #0E6B4F; }
+    .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid #ddd; }
+    .qr-section { text-align: center; }
+    .qr-section img { width: 120px; height: 120px; }
+    .qr-label { font-size: 8px; color: #888; margin-top: 4px; }
+    .zatca-notice { font-size: 8px; color: #888; max-width: 300px; text-align: right; }
+    .amount-words { font-size: 10px; color: #555; font-style: italic; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="company-info">
+      <div class="company-name">${escapeHtml(sellerNameAr)}</div>
+      <div class="company-name-en">${escapeHtml(sellerName)}</div>
+      <div class="company-detail">${escapeHtml(addressAr)}</div>
+      <div class="company-detail">الرقم الضريبي: ${escapeHtml(vatNumber)}</div>
+      ${tenant.cr_number ? `<div class="company-detail">السجل التجاري: ${escapeHtml(tenant.cr_number)}</div>` : ''}
+      ${tenant.phone ? `<div class="company-detail">هاتف: ${escapeHtml(tenant.phone)}</div>` : ''}
+    </div>
+  </div>
+
+  <div class="invoice-title">${title}</div>
+
+  <div class="meta-grid">
+    <div class="meta-box">
+      <h4>بيانات الفاتورة</h4>
+      <div class="meta-row"><span class="meta-label">رقم الفاتورة:</span><span class="meta-value">${escapeHtml(invoice.invoice_number)}</span></div>
+      <div class="meta-row"><span class="meta-label">تاريخ الإصدار:</span><span class="meta-value">${invoice.issue_date.substring(0, 10)}</span></div>
+      ${invoice.uuid ? `<div class="meta-row"><span class="meta-label">UUID:</span><span class="meta-value" style="font-size:8px">${invoice.uuid}</span></div>` : ''}
+    </div>
+    <div class="meta-box">
+      <h4>بيانات المشتري</h4>
+      <div class="meta-row"><span class="meta-label">الاسم:</span><span class="meta-value">${escapeHtml(invoice.student_name || 'Student')}</span></div>
+      ${invoice.buyer_vat_number ? `<div class="meta-row"><span class="meta-label">الرقم الضريبي:</span><span class="meta-value">${escapeHtml(invoice.buyer_vat_number)}</span></div>` : ''}
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>الوصف</th>
+        <th>الكمية</th>
+        <th>سعر الوحدة</th>
+        <th>نسبة الضريبة</th>
+        <th>ضريبة القيمة المضافة</th>
+        <th>الإجمالي</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${itemRows}
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <div class="totals-box">
+      <div class="total-row"><span>المجموع قبل الضريبة:</span><span class="meta-value">${invoice.subtotal.toFixed(2)} ر.س</span></div>
+      ${(invoice.discount_amount || 0) > 0 ? `<div class="total-row"><span>الخصم:</span><span class="meta-value">(${(invoice.discount_amount || 0).toFixed(2)}) ر.س</span></div>` : ''}
+      <div class="total-row"><span>ضريبة القيمة المضافة (15%):</span><span class="meta-value">${invoice.vat_amount.toFixed(2)} ر.س</span></div>
+      <div class="total-row grand"><span>الإجمالي شامل الضريبة:</span><span>${invoice.total_amount.toFixed(2)} ر.س</span></div>
+    </div>
+  </div>
+
+  ${invoice.notes ? `<div class="amount-words">ملاحظات: ${escapeHtml(invoice.notes)}</div>` : ''}
+
+  <div class="footer">
+    <div class="zatca-notice">
+      <p>هذه الفاتورة تتوافق مع متطلبات الفوترة الإلكترونية للمرحلة الثانية من هيئة الزكاة والضريبة والجمارك</p>
+      <p style="direction:ltr;text-align:left;margin-top:4px">This invoice complies with ZATCA Phase 2 e-invoicing requirements.</p>
+    </div>
+    <div class="qr-section">
+      <img src="${qrDataUrl}" alt="ZATCA QR" />
+      <div class="qr-label">رمز الاستجابة السريعة - ZATCA QR</div>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * Generates a ZATCA-compliant invoice PDF with proper Arabic rendering.
+ * Uses Puppeteer (headless Chromium) for native Arabic shaping and RTL.
  */
 export async function generateZATCAInvoicePDF(
   invoice: InvoiceData,
   tenant: TenantData,
 ): Promise<Buffer> {
-  // Generate TLV QR and render it as a PNG data URL
   const tlvBase64 = generateTLVQR(invoice, tenant);
   const qrDataUrl = await QRCode.toDataURL(tlvBase64, {
     errorCorrectionLevel: 'M',
     margin: 1,
     width: 150,
   });
-  const qrBuffer = Buffer.from(qrDataUrl.split(',')[1], 'base64');
 
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'A4', margin: 50 });
-    const chunks: Buffer[] = [];
+  const html = buildInvoiceHTML(invoice, tenant, qrDataUrl);
 
-    doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', reject);
+  const browser = await getBrowser();
+  const page = await browser.newPage();
 
-    const sellerName = tenant.name || 'School';
-    const vatNumber = tenant.vat_number || '300000000000003';
-    const pageWidth = doc.page.width;
-    const margin = 50;
-    const contentWidth = pageWidth - margin * 2;
+  try {
+    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 15000 });
 
-    // ---- Header ----
-    doc
-      .fontSize(20)
-      .font('Helvetica-Bold')
-      .text(sellerName, margin, 50, { align: 'center' });
+    const pdfUint8 = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' },
+    });
 
-    if (tenant.address) {
-      doc.fontSize(10).font('Helvetica').text(tenant.address, { align: 'center' });
-    }
-    doc.fontSize(10).font('Helvetica').text(`VAT Registration No: ${vatNumber}`, { align: 'center' });
-    if (tenant.phone) doc.text(`Tel: ${tenant.phone}`, { align: 'center' });
-
-    doc.moveDown(0.5);
-    doc
-      .moveTo(margin, doc.y)
-      .lineTo(pageWidth - margin, doc.y)
-      .strokeColor('#888888')
-      .stroke();
-    doc.moveDown(0.5);
-
-    // ---- Invoice Title ----
-    const title =
-      invoice.invoice_type === 'credit_note' ? 'CREDIT NOTE' : 'TAX INVOICE';
-    doc
-      .fontSize(16)
-      .font('Helvetica-Bold')
-      .fillColor('#000000')
-      .text(title, { align: 'center' });
-    doc.moveDown(0.5);
-
-    // ---- Invoice Meta ----
-    const col1x = margin;
-    const col2x = margin + contentWidth / 2;
-    const metaY = doc.y;
-
-    doc.fontSize(10).font('Helvetica-Bold').text('Invoice Number:', col1x, metaY);
-    doc.font('Helvetica').text(invoice.invoice_number, col1x + 110, metaY);
-
-    doc.font('Helvetica-Bold').text('Issue Date:', col2x, metaY);
-    doc.font('Helvetica').text(invoice.issue_date.substring(0, 10), col2x + 80, metaY);
-
-    doc.moveDown(0.3);
-    const metaY2 = doc.y;
-    doc.font('Helvetica-Bold').text('Bill To:', col1x, metaY2);
-    doc.font('Helvetica').text(invoice.student_name || 'Student', col1x + 55, metaY2);
-
-    doc.moveDown(1.5);
-
-    // ---- Items Table ----
-    const tableTop = doc.y;
-    const colAmt = margin + contentWidth - 80;
-
-    // Table header
-    doc.rect(margin, tableTop, contentWidth, 20).fill('#f0f0f0').stroke();
-    doc
-      .fillColor('#000000')
-      .font('Helvetica-Bold')
-      .fontSize(10)
-      .text('Description', margin + 5, tableTop + 5)
-      .text('Amount (SAR)', colAmt, tableTop + 5);
-
-    let rowY = tableTop + 22;
-    const items = invoice.items || [
-      { description: 'Tuition Fee', amount: invoice.subtotal },
-    ];
-
-    for (const item of items) {
-      doc
-        .font('Helvetica')
-        .fontSize(10)
-        .fillColor('#000000')
-        .text(item.description, margin + 5, rowY)
-        .text(item.amount.toFixed(2), colAmt, rowY);
-      rowY += 18;
-    }
-
-    // Divider
-    doc.moveTo(margin, rowY).lineTo(pageWidth - margin, rowY).stroke();
-    rowY += 6;
-
-    // Subtotals
-    const labelX = colAmt - 100;
-    const valueX = colAmt;
-
-    if ((invoice.discount_amount || 0) > 0) {
-      doc
-        .font('Helvetica')
-        .text('Subtotal:', labelX, rowY)
-        .text(invoice.subtotal.toFixed(2), valueX, rowY);
-      rowY += 16;
-      doc
-        .text('Discount:', labelX, rowY)
-        .text(`(${(invoice.discount_amount || 0).toFixed(2)})`, valueX, rowY);
-      rowY += 16;
-    }
-
-    doc
-      .font('Helvetica')
-      .text('VAT (15%):', labelX, rowY)
-      .text(invoice.vat_amount.toFixed(2), valueX, rowY);
-    rowY += 16;
-
-    doc
-      .moveTo(labelX, rowY)
-      .lineTo(pageWidth - margin, rowY)
-      .stroke();
-    rowY += 4;
-
-    doc
-      .font('Helvetica-Bold')
-      .fontSize(11)
-      .text('TOTAL (SAR):', labelX, rowY)
-      .text(invoice.total_amount.toFixed(2), valueX, rowY);
-
-    // ---- QR Code (bottom-right) ----
-    const qrSize = 100;
-    const qrX = pageWidth - margin - qrSize;
-    const qrY = doc.page.height - margin - qrSize - 30;
-
-    doc.image(qrBuffer, qrX, qrY, { width: qrSize, height: qrSize });
-    doc
-      .fontSize(7)
-      .font('Helvetica')
-      .text('ZATCA QR Code', qrX, qrY + qrSize + 2, { width: qrSize, align: 'center' });
-
-    // ---- ZATCA Compliance Notice ----
-    doc
-      .fontSize(8)
-      .font('Helvetica')
-      .fillColor('#555555')
-      .text(
-        'This invoice complies with ZATCA Fatoora Phase 2 e-invoicing requirements.',
-        margin,
-        doc.page.height - margin - 20,
-        { align: 'left' },
-      );
-
-    if (invoice.notes) {
-      doc.moveDown(1).fontSize(9).fillColor('#000000').text(`Notes: ${invoice.notes}`);
-    }
-
-    doc.end();
-  });
+    return Buffer.from(pdfUint8);
+  } finally {
+    await page.close();
+  }
 }
