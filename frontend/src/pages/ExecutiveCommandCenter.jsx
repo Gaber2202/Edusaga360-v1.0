@@ -10,15 +10,19 @@ import { Button } from '../components/ui/button';
 import StatCard from '../components/ui/StatCard';
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell
+  ResponsiveContainer, PieChart, Pie, Cell,
+  RadialBarChart, RadialBar,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  AreaChart, Area, Legend
 } from 'recharts';
 import {
   Crown, RefreshCw, TrendingUp, DollarSign, Users, Building2,
   AlertTriangle, ShieldCheck, ShieldAlert, ShieldX, Sparkles, Clock
 } from 'lucide-react';
 
-const COLORS = { blue: '#3B82F6', green: '#10B981', amber: '#F59E0B', red: '#EF4444', purple: '#8B5CF6', slate: '#64748B' };
-const PIE_COLORS = [COLORS.blue, COLORS.green, COLORS.amber, COLORS.red, COLORS.purple];
+const COLORS = { najdi: '#0E6B4F', green: '#16A077', amber: '#E0A82E', red: '#D1493F', purple: '#8B5CF6', gold: '#C8A451', info: '#2C7BB0', ink: '#1C2420' };
+const PIE_COLORS = [COLORS.najdi, COLORS.green, COLORS.gold, COLORS.red, COLORS.purple];
+const PILLAR_COLORS = { retention: '#0E6B4F', engagement: '#2C7BB0', collection: '#C8A451', growth: '#16A077', financial: '#8B5CF6' };
 
 function fmtNumber(n, isRTL) {
   if (n === null || n === undefined) return '—';
@@ -291,30 +295,122 @@ export default function ExecutiveCommandCenter() {
   );
 }
 
+function VitalityGauge({ score }) {
+  const gaugeColor = score >= 70 ? COLORS.green : score >= 40 ? COLORS.amber : COLORS.red;
+  const gaugeData = [{ name: 'score', value: score || 0, fill: gaugeColor }];
+
+  return (
+    <div className="relative w-40 h-40">
+      <ResponsiveContainer width="100%" height="100%">
+        <RadialBarChart cx="50%" cy="50%" innerRadius="70%" outerRadius="100%" startAngle={180} endAngle={0} barSize={12} data={gaugeData}>
+          <RadialBar background clockWise dataKey="value" cornerRadius={6} />
+        </RadialBarChart>
+      </ResponsiveContainer>
+      <div className="absolute inset-0 flex flex-col items-center justify-center mt-4">
+        <span className="text-4xl font-bold text-white">{score ?? '—'}</span>
+        <span className="text-xs text-white/60">/100</span>
+      </div>
+    </div>
+  );
+}
+
+function PillarRadar({ subScores, isRTL }) {
+  const radarData = [
+    { pillar: isRTL ? 'الاستبقاء' : 'Retention', value: subScores?.retention || 0, fullMark: 100 },
+    { pillar: isRTL ? 'الالتزام' : 'Engagement', value: subScores?.engagement || subScores?.compliance || 0, fullMark: 100 },
+    { pillar: isRTL ? 'التحصيل' : 'Collection', value: subScores?.collections || 0, fullMark: 100 },
+    { pillar: isRTL ? 'النمو' : 'Growth', value: subScores?.growth || 0, fullMark: 100 },
+    { pillar: isRTL ? 'المالية' : 'Financial', value: subScores?.financial || 0, fullMark: 100 },
+  ];
+
+  return (
+    <ResponsiveContainer width="100%" height={200}>
+      <RadarChart data={radarData}>
+        <PolarGrid stroke="rgba(255,255,255,0.15)" />
+        <PolarAngleAxis dataKey="pillar" tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 11 }} />
+        <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
+        <Radar dataKey="value" stroke={COLORS.gold} fill={COLORS.gold} fillOpacity={0.3} strokeWidth={2} />
+      </RadarChart>
+    </ResponsiveContainer>
+  );
+}
+
+function MiniSparkline({ data, color, height = 40 }) {
+  if (!data || data.length === 0) return null;
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <AreaChart data={data} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
+        <defs>
+          <linearGradient id={`spark-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={color} stopOpacity={0.2} />
+            <stop offset="95%" stopColor={color} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <Area type="monotone" dataKey="value" stroke={color} fill={`url(#spark-${color.replace('#', '')})`} strokeWidth={1.5} dot={false} />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
+function KPICard({ title, value, delta, sparkData, color, isRTL }) {
+  const deltaColor = delta > 0 ? 'text-emerald-500' : delta < 0 ? 'text-red-500' : 'text-muted-foreground';
+  const deltaIcon = delta > 0 ? '▲' : delta < 0 ? '▼' : '';
+
+  return (
+    <Card className="border-0 shadow-sm overflow-hidden">
+      <CardContent className="p-4">
+        <p className="text-xs text-muted-foreground mb-1">{title}</p>
+        <div className="flex items-end justify-between gap-2">
+          <div>
+            <p className="text-xl font-bold text-ink">{value}</p>
+            {delta !== undefined && delta !== null && (
+              <span className={`text-xs font-medium ${deltaColor}`}>
+                {deltaIcon} {Math.abs(delta).toFixed(1)}%
+              </span>
+            )}
+          </div>
+          <div className="w-24 flex-shrink-0">
+            <MiniSparkline data={sparkData} color={color || COLORS.najdi} />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBrief, isRTL, t }) {
-  const { vitality, financials, collections, campus_vitality = [], strategic_alerts = [] } = data;
+  const { vitality, financials, collections, campus_vitality = [], strategic_alerts = [], revenue_trend = [], collection_trend = [] } = data;
+
+  const collectionRate = collections?.collection_rate_pct;
+  const isCollectionCritical = collectionRate !== undefined && collectionRate !== null && collectionRate === 0;
 
   return (
     <div className="space-y-6">
-      <Card className="border-0 shadow-sm bg-gradient-to-br from-najdi-900 to-najdi-900 text-white">
+      {/* 1. Hero — Group Vitality Index with Radial Gauge + Radar Chart */}
+      <Card className="border-0 shadow-lg bg-gradient-to-br from-najdi-900 via-[#0a5a42] to-najdi-900 text-white">
         <CardContent className="p-6">
+          <p className="text-xs uppercase tracking-wide text-white/60 mb-4">
+            {isRTL ? 'مؤشر حيوية المجموعة' : 'Group Vitality Index'}
+          </p>
           <div className="flex flex-col md:flex-row md:items-center gap-6">
-            <div className="flex-shrink-0 text-center">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">{t('groupVitalityIndex')}</p>
-              <p className="text-5xl font-bold">{vitality?.score ?? '—'}</p>
-              <p className="text-xs text-muted-foreground mt-1">/100</p>
+            <div className="flex-shrink-0">
+              <VitalityGauge score={vitality?.score} />
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 flex-1">
+            <div className="flex-1">
+              <PillarRadar subScores={vitality?.sub_scores} isRTL={isRTL} />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-1 gap-2 flex-shrink-0">
               {[
-                ['financialScore', vitality?.sub_scores?.financial],
-                ['growthScore', vitality?.sub_scores?.growth],
-                ['collectionsScore', vitality?.sub_scores?.collections],
-                ['complianceScore', vitality?.sub_scores?.compliance],
-                ['retentionScore', vitality?.sub_scores?.retention],
-              ].map(([key, val]) => (
-                <div key={key} className="bg-white/10 rounded-lg p-3">
-                  <p className="text-[11px] text-muted-foreground mb-1">{t(key)}</p>
-                  <p className="text-lg font-semibold">{val ?? '—'}</p>
+                [isRTL ? 'الاستبقاء' : 'Retention', vitality?.sub_scores?.retention, PILLAR_COLORS.retention],
+                [isRTL ? 'الالتزام' : 'Engagement', vitality?.sub_scores?.engagement || vitality?.sub_scores?.compliance, PILLAR_COLORS.engagement],
+                [isRTL ? 'التحصيل' : 'Collection', vitality?.sub_scores?.collections, PILLAR_COLORS.collection],
+                [isRTL ? 'النمو' : 'Growth', vitality?.sub_scores?.growth, PILLAR_COLORS.growth],
+                [isRTL ? 'المالية' : 'Financial', vitality?.sub_scores?.financial, PILLAR_COLORS.financial],
+              ].map(([label, val, color]) => (
+                <div key={label} className="flex items-center gap-2 text-xs">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
+                  <span className="text-white/70">{label}</span>
+                  <span className={`font-semibold ms-auto ${val === 0 ? 'text-red-400' : ''}`}>{val ?? '—'}</span>
                 </div>
               ))}
             </div>
@@ -322,20 +418,151 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
         </CardContent>
       </Card>
 
+      {/* 2. KPI Strip — Revenue, EBITDA, Collection Rate with sparklines */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <KPICard
+          title={isRTL ? 'الإيرادات' : 'Revenue'}
+          value={fmtSAR(financials?.revenue, isRTL)}
+          delta={financials?.revenue_delta_pct}
+          sparkData={revenue_trend?.map((v, i) => ({ name: i, value: v.revenue || v }))}
+          color={COLORS.najdi}
+          isRTL={isRTL}
+        />
+        <KPICard
+          title={isRTL ? 'الأرباح قبل الفوائد والضرائب والإهلاك' : 'EBITDA'}
+          value={fmtSAR(financials?.ebitda, isRTL)}
+          delta={financials?.ebitda_delta_pct}
+          sparkData={revenue_trend?.map((v, i) => ({ name: i, value: v.ebitda || 0 }))}
+          color={COLORS.green}
+          isRTL={isRTL}
+        />
+        <KPICard
+          title={isRTL ? 'نسبة التحصيل' : 'Collection Rate'}
+          value={isCollectionCritical
+            ? <span className="text-red-500 font-bold">{fmtPct(0)}</span>
+            : fmtPct(collectionRate)
+          }
+          delta={collections?.collection_delta_pct}
+          sparkData={collection_trend?.map((v, i) => ({ name: i, value: v.rate || v }))}
+          color={isCollectionCritical ? COLORS.red : COLORS.gold}
+          isRTL={isRTL}
+        />
+      </div>
+
+      {/* Collection = 0 red alert */}
+      {isCollectionCritical && (
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200">
+          <ShieldX className="w-5 h-5 text-red-600 flex-shrink-0" />
+          <p className="text-sm font-medium text-red-700">
+            {isRTL ? 'تنبيه: نسبة التحصيل 0% — يتطلب إجراء فوري' : 'Alert: Collection rate is 0% — immediate action required'}
+          </p>
+        </div>
+      )}
+
+      {/* 3. Trend Block — Revenue vs EBITDA over 12 months + Collection rate trend */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">
+              {isRTL ? 'الإيرادات مقابل الأرباح (12 شهر)' : 'Revenue vs EBITDA (12 months)'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(!revenue_trend || revenue_trend.length === 0) ? <EmptyState isRTL={isRTL} /> : (
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={revenue_trend}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+                  <XAxis dataKey="label" fontSize={10} tick={{ fill: COLORS.ink }} />
+                  <YAxis fontSize={10} tick={{ fill: COLORS.ink }} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="revenue" name={isRTL ? 'الإيرادات' : 'Revenue'} fill={COLORS.najdi} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="ebitda" name={isRTL ? 'الأرباح' : 'EBITDA'} fill={COLORS.green} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">
+              {isRTL ? 'اتجاه نسبة التحصيل' : 'Collection Rate Trend'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(!collection_trend || collection_trend.length === 0) ? <EmptyState isRTL={isRTL} /> : (
+              <ResponsiveContainer width="100%" height={240}>
+                <AreaChart data={collection_trend}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+                  <XAxis dataKey="label" fontSize={10} tick={{ fill: COLORS.ink }} />
+                  <YAxis domain={[0, 100]} fontSize={10} tick={{ fill: COLORS.ink }} />
+                  <Tooltip />
+                  <defs>
+                    <linearGradient id="collGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={COLORS.gold} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={COLORS.gold} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <Area type="monotone" dataKey="rate" name={isRTL ? 'نسبة التحصيل' : 'Collection %'} stroke={COLORS.gold} fill="url(#collGrad)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 4. Branch Vitality — ranked bars */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base">
+            {isRTL ? 'حيوية الفروع' : 'Branch Vitality'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {campus_vitality.length === 0 ? <EmptyState isRTL={isRTL} /> : (
+            <div className="space-y-3">
+              {[...campus_vitality].sort((a, b) => (b.score || 0) - (a.score || 0)).map((c) => {
+                const barColor = c.score >= 70 ? COLORS.green : c.score >= 40 ? COLORS.amber : COLORS.red;
+                const collColor = (c.collection_rate || 0) === 0 ? 'text-red-600 font-bold' : 'text-muted-foreground';
+                return (
+                  <div key={c.branch_id} className="flex items-center gap-4">
+                    <span className="w-32 text-sm text-ink truncate">{isRTL ? c.name_ar : c.name_en}</span>
+                    <div className="flex-1 h-6 bg-sand-alt rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${Math.min(c.score || 0, 100)}%`, background: barColor }}
+                      />
+                    </div>
+                    <span className="w-10 text-sm font-semibold text-ink text-center">{c.score ?? '—'}</span>
+                    <span className={`w-16 text-xs text-center ${collColor}`}>
+                      {fmtPct(c.collection_rate)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 5. AI Board Brief (YAMEN AI) */}
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
             <Sparkles className="w-4 h-4 text-purple-500" />
-            {t('boardBrief')}
+            {isRTL ? 'موجز مجلس الإدارة — YAMEN AI' : 'AI Board Brief — YAMEN AI'}
           </CardTitle>
           <Button variant="outline" size="sm" onClick={onRefreshBrief} disabled={briefRefreshing} className="gap-2">
             <RefreshCw className={`w-4 h-4 ${briefRefreshing ? 'animate-spin' : ''}`} />
-            {t('refreshBrief')}
+            {isRTL ? 'إنشاء الموجز' : 'Generate Brief'}
           </Button>
         </CardHeader>
         <CardContent>
           {briefLoading ? (
-            <div className="flex items-center justify-center h-24"><RefreshCw className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+            <div className="flex items-center justify-center h-24">
+              <RefreshCw className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
           ) : brief ? (
             <div className="space-y-4">
               <p className="text-sm text-ink leading-relaxed">
@@ -354,65 +581,64 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
               </div>
             </div>
           ) : (
-            <EmptyState isRTL={isRTL} />
-          )}
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard title={t('revenue')} value={fmtSAR(financials?.revenue, isRTL)} icon={DollarSign} iconClassName="bg-najdi-50" />
-        <StatCard title={t('ebitda')} value={fmtSAR(financials?.ebitda, isRTL)} icon={TrendingUp} iconClassName="bg-emerald-50" />
-        <StatCard title={t('collectionRate')} value={fmtPct(collections?.collection_rate_pct)} icon={ShieldCheck} iconClassName="bg-purple-50" />
-      </div>
-
-      <Card className="border-0 shadow-sm">
-        <CardHeader><CardTitle className="text-base">{t('campusVitality')}</CardTitle></CardHeader>
-        <CardContent>
-          {campus_vitality.length === 0 ? <EmptyState isRTL={isRTL} /> : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                    <th className="py-2 font-medium">{isRTL ? 'الفرع' : 'Campus'}</th>
-                    <th className="py-2 font-medium">{t('collectionRate')}</th>
-                    <th className="py-2 font-medium">{isRTL ? 'النتيجة' : 'Score'}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {campus_vitality.map((c) => (
-                    <tr key={c.branch_id} className="border-b border-sand">
-                      <td className="py-2 text-ink">{isRTL ? c.name_ar : c.name_en}</td>
-                      <td className="py-2 text-ink">{fmtPct(c.collection_rate)}</td>
-                      <td className="py-2">
-                        <Badge variant="outline" className={c.score >= 70 ? 'text-emerald-600 border-emerald-200' : c.score >= 40 ? 'text-amber-600 border-amber-200' : 'text-red-600 border-red-200'}>
-                          {c.score}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="border-2 border-dashed border-border rounded-xl p-8 text-center">
+              <Sparkles className="w-8 h-8 text-purple-300 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground mb-3">
+                {isRTL ? 'اضغط "إنشاء الموجز" لتوليد تقرير AI للمجلس' : 'Click "Generate Brief" to create an AI board report'}
+              </p>
+              <Button variant="outline" size="sm" onClick={onRefreshBrief} disabled={briefRefreshing} className="gap-2">
+                <Sparkles className="w-4 h-4" />
+                {isRTL ? 'إنشاء الموجز' : 'Generate Brief'}
+              </Button>
             </div>
           )}
         </CardContent>
       </Card>
 
+      {/* 6. Strategic Alerts with severity badges */}
       <Card className="border-0 shadow-sm">
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-500" />{t('strategicAlerts')}</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
+            {isRTL ? 'تنبيهات استراتيجية' : 'Strategic Alerts'}
+          </CardTitle>
+        </CardHeader>
         <CardContent>
-          {strategic_alerts.length === 0 ? <EmptyState isRTL={isRTL} /> : (
+          {strategic_alerts.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground text-sm">
+              {isRTL ? 'لا توجد تنبيهات حالياً' : 'No alerts at this time'}
+            </div>
+          ) : (
             <ul className="space-y-2">
-              {strategic_alerts.map((a, i) => (
-                <li key={i} className="flex items-start gap-3 p-3 rounded-lg border border-border">
-                  <Badge variant="outline" className={
-                    a.severity === 'high' ? 'text-red-600 border-red-200' :
-                    a.severity === 'medium' ? 'text-amber-600 border-amber-200' : 'text-muted-foreground border-border'
-                  }>
-                    {a.category}
-                  </Badge>
-                  <span className="text-sm text-ink">{isRTL ? a.message_ar : a.message_en}</span>
-                </li>
-              ))}
+              {strategic_alerts
+                .sort((a, b) => {
+                  const severityOrder = { high: 0, critical: 0, medium: 1, warning: 1, low: 2, info: 2 };
+                  return (severityOrder[a.severity] ?? 2) - (severityOrder[b.severity] ?? 2);
+                })
+                .map((a, i) => {
+                  const severityCls = {
+                    high: 'text-red-700 bg-red-50 border-red-200',
+                    critical: 'text-red-700 bg-red-50 border-red-200',
+                    medium: 'text-amber-700 bg-amber-50 border-amber-200',
+                    warning: 'text-amber-700 bg-amber-50 border-amber-200',
+                    low: 'text-muted-foreground bg-sand border-border',
+                    info: 'text-blue-700 bg-blue-50 border-blue-200',
+                  }[a.severity] || 'text-muted-foreground bg-sand border-border';
+
+                  return (
+                    <li key={i} className={`flex items-start gap-3 p-3 rounded-lg border ${severityCls.split(' ').slice(2).join(' ')}`}>
+                      <Badge className={`text-[10px] px-2 py-0.5 ${severityCls}`}>
+                        {(a.severity || 'info').toUpperCase()}
+                      </Badge>
+                      <div className="flex-1">
+                        <span className="text-sm font-medium text-ink">{isRTL ? a.message_ar : a.message_en}</span>
+                        {a.category && (
+                          <span className="text-xs text-muted-foreground ms-2">[{a.category}]</span>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
             </ul>
           )}
         </CardContent>
@@ -456,7 +682,7 @@ function CFODashboard({ data, isRTL, t }) {
                 <XAxis dataKey="label" fontSize={12} />
                 <YAxis fontSize={12} />
                 <Tooltip />
-                <Bar dataKey="value" fill={COLORS.blue} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="value" fill={COLORS.najdi} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -472,7 +698,7 @@ function CFODashboard({ data, isRTL, t }) {
                   <XAxis dataKey="label" fontSize={12} />
                   <YAxis fontSize={12} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="revenue" stroke={COLORS.blue} strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="revenue" stroke={COLORS.najdi} strokeWidth={2} dot={false} />
                   <Line type="monotone" dataKey="ebitda" stroke={COLORS.green} strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
@@ -691,7 +917,7 @@ function CHRODashboard({ data, isRTL, t }) {
                   <XAxis dataKey={isRTL ? 'name_ar' : 'name_en'} fontSize={11} />
                   <YAxis fontSize={12} />
                   <Tooltip />
-                  <Bar dataKey="count" fill={COLORS.blue} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" fill={COLORS.najdi} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
