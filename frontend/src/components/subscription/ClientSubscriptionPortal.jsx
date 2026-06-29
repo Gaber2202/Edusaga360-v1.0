@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { tenantQuery } from '../../api/supabaseClient';
-import { submitClientTenantRequest } from '../../api/tenantRequest';
+import { tenantQuery, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useTenant } from '../TenantContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -14,9 +13,19 @@ import { Textarea } from '../ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { toast } from 'sonner';
 import {
-  Crown, Users, Check, AlertCircle, Zap, CheckCircle, Lock, ArrowUpRight, ArrowDownRight, Loader2
+  Crown, Users, Check, AlertCircle, Zap, CheckCircle, Lock, ArrowUpRight, ArrowDownRight, Loader2,
+  CreditCard, Building2, Upload, ExternalLink, Copy, FileText
 } from 'lucide-react';
 import { PLAN_DEFINITIONS } from '../../hooks/useModuleAccess';
+import AttachmentUploader from '../ui/AttachmentUploader';
+
+const VAT_RATE = 0.15;
+const PER_SEAT_PRICE = 500;
+
+function formatSAR(amount, isRTL) {
+  const formatted = amount.toLocaleString('en-SA');
+  return isRTL ? `${formatted} ر.س` : `SAR ${formatted}`;
+}
 
 export default function ClientSubscriptionPortal() {
   const { isRTL } = useLanguage();
@@ -27,8 +36,33 @@ export default function ClientSubscriptionPortal() {
   const [addUsersDialogOpen, setAddUsersDialogOpen] = useState(false);
   const [additionalUsers, setAdditionalUsers] = useState(1);
   const [requestReason, setRequestReason] = useState('');
+  // Payment flow state
+  const [paymentStep, setPaymentStep] = useState(null); // null | 'choose_method' | 'wire_details' | 'proof_uploaded'
+  const [paymentMethod, setPaymentMethod] = useState(null); // 'online' | 'wire_transfer'
+  const [currentOrderId, setCurrentOrderId] = useState(null);
+  const [transferRef, setTransferRef] = useState('');
+  const [transferDate, setTransferDate] = useState('');
+  const [proofAttachments, setProofAttachments] = useState([]);
+  const [orderContext, setOrderContext] = useState(null); // { type, plan_code, seats, total }
 
-  // Fetch upgrade requests
+  // Fetch subscription orders
+  const { data: subscriptionOrders = [] } = useQuery({
+    queryKey: ['subscription-orders', tenant?.id],
+    queryFn: async () => {
+      if (!tenant?.id) return [];
+      const data = await callApi('/api/subscription/orders', {}, { method: 'GET' });
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: !!tenant?.id,
+  });
+
+  // Fetch bank details
+  const { data: bankDetails } = useQuery({
+    queryKey: ['bank-details'],
+    queryFn: () => callApi('/api/subscription/bank-details', {}, { method: 'GET' }),
+  });
+
+  // Fetch upgrade requests (legacy)
   const { data: upgradeRequests = [] } = useQuery({
     queryKey: ['upgrade-requests', tenant?.id],
     queryFn: async () => {
@@ -42,7 +76,7 @@ export default function ClientSubscriptionPortal() {
     enabled: !!tenant?.id,
   });
 
-  // Fetch user requests
+  // Fetch user requests (legacy)
   const { data: userRequests = [] } = useQuery({
     queryKey: ['user-requests', tenant?.id],
     queryFn: async () => {
@@ -58,62 +92,136 @@ export default function ClientSubscriptionPortal() {
 
   const PLAN_ORDER = ['free_trial', 'starter', 'growth', 'enterprise'];
 
-  // Upgrade or downgrade plan mutation
+  // Create subscription order + proceed to payment
+  const createOrderMutation = useMutation({
+    mutationFn: async ({ orderType, planCode, seats, method }) => {
+      const payload = {
+        order_type: orderType,
+        plan_code: planCode,
+        additional_seats: seats,
+        payment_method: method,
+      };
+      return await callApi('/api/subscription/orders', payload);
+    },
+    onSuccess: (result, vars) => {
+      const orderId = result?.order?.id;
+      setCurrentOrderId(orderId);
+      queryClient.invalidateQueries({ queryKey: ['subscription-orders'] });
+
+      if (vars.method === 'online') {
+        // Generate payment link
+        generatePaymentLink(orderId);
+      } else {
+        setPaymentStep('wire_details');
+      }
+    },
+    onError: () => {
+      toast.error(isRTL ? 'فشل إنشاء الطلب' : 'Failed to create order');
+    },
+  });
+
+  // Generate Moyasar payment link
+  const generatePaymentLink = async (orderId) => {
+    try {
+      const result = await callApi(`/api/subscription/orders/${orderId}/payment-link`, {
+        callback_url: `${window.location.origin}/subscription?order_id=${orderId}&payment=complete`,
+      });
+      if (result?.payment_url) {
+        window.open(result.payment_url, '_blank');
+        toast.success(isRTL ? 'تم فتح رابط الدفع' : 'Payment link opened');
+        resetPaymentFlow();
+      } else {
+        toast.error(isRTL ? 'فشل إنشاء رابط الدفع' : 'Failed to generate payment link');
+      }
+    } catch {
+      toast.error(isRTL ? 'بوابة الدفع غير متاحة حالياً' : 'Payment gateway not available');
+    }
+  };
+
+  // Upload transfer proof
+  const uploadProofMutation = useMutation({
+    mutationFn: async () => {
+      if (!proofAttachments.length || !currentOrderId) throw new Error('Missing proof');
+      return await callApi(`/api/subscription/orders/${currentOrderId}/upload-proof`, {
+        proof_url: proofAttachments[0]?.url || proofAttachments[0]?.path,
+        proof_file_name: proofAttachments[0]?.name,
+        transfer_reference: transferRef || undefined,
+        transfer_date: transferDate || undefined,
+      });
+    },
+    onSuccess: () => {
+      toast.success(isRTL ? 'تم رفع إيصال التحويل — سيتم المراجعة خلال 24 ساعة' : 'Transfer proof uploaded — will be reviewed within 24 hours');
+      queryClient.invalidateQueries({ queryKey: ['subscription-orders'] });
+      resetPaymentFlow();
+    },
+    onError: () => {
+      toast.error(isRTL ? 'فشل رفع الإيصال' : 'Failed to upload proof');
+    },
+  });
+
+  // Legacy upgrade mutation (for plan downgrade only)
   const upgradeMutation = useMutation({
     mutationFn: async (planCode) => {
       const currentTier = PLAN_ORDER.indexOf(tenant?.plan_code);
       const requestedTier = PLAN_ORDER.indexOf(planCode);
-      const request_type = requestedTier >= currentTier ? 'plan_upgrade' : 'plan_downgrade';
-      return await submitClientTenantRequest({ request_type, requested_plan: planCode });
+      if (requestedTier < currentTier) {
+        // Downgrade — legacy request
+        const { submitClientTenantRequest } = await import('../../api/tenantRequest');
+        return await submitClientTenantRequest({ request_type: 'plan_downgrade', requested_plan: planCode });
+      }
+      // For upgrades, use the new payment flow
+      return null;
     },
     onSuccess: (_, planCode) => {
       queryClient.invalidateQueries({ queryKey: ['upgrade-requests'] });
       setUpgradeDialogOpen(false);
       setSelectedPlan(null);
-      const currentTier = PLAN_ORDER.indexOf(tenant?.plan_code);
-      const requestedTier = PLAN_ORDER.indexOf(planCode);
-      const isDowngrade = requestedTier < currentTier;
-      toast.success(isRTL
-        ? (isDowngrade ? 'تم إرسال طلب التخفيض' : 'تم إرسال طلب الترقية')
-        : (isDowngrade ? 'Downgrade request submitted' : 'Upgrade request submitted')
-      );
+      toast.success(isRTL ? 'تم إرسال طلب التخفيض' : 'Downgrade request submitted');
     },
     onError: () => {
       toast.error(isRTL ? 'فشل الطلب' : 'Request failed');
     }
   });
 
-  // Request additional users mutation. Auto-approval and seat-bumping are
-  // decided server-side; the response tells us which path the request took.
-  const requestUsersMutation = useMutation({
-    mutationFn: async () => {
-      return await submitClientTenantRequest({
-        request_type: 'additional_users',
-        additional_users: additionalUsers,
-        reason: requestReason,
-      });
-    },
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['user-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['tenant'] });
+  function resetPaymentFlow() {
+    setPaymentStep(null);
+    setPaymentMethod(null);
+    setCurrentOrderId(null);
+    setTransferRef('');
+    setTransferDate('');
+    setProofAttachments([]);
+    setOrderContext(null);
+    setUpgradeDialogOpen(false);
+    setAddUsersDialogOpen(false);
+    setSelectedPlan(null);
+  }
 
-      if (result?.request?.auto_approved) {
-        toast.success(isRTL ? 'تمت الموافقة - تمت إضافة المستخدمين' : 'Approved - Users added');
-      } else {
-        toast.success(isRTL ? 'تم إرسال الطلب للموافقة' : 'Request sent for approval');
-      }
-
-      setAddUsersDialogOpen(false);
-      setAdditionalUsers(1);
-      setRequestReason('');
-    },
-    onError: () => {
-      toast.error(isRTL ? 'فشل الطلب' : 'Request failed');
+  function startPaymentFlow(orderType, planCode, seats) {
+    let subtotal = 0;
+    if (orderType === 'plan_upgrade' && planCode && PLAN_DEFINITIONS[planCode]) {
+      subtotal = PLAN_DEFINITIONS[planCode].priceYearly;
+    } else if (orderType === 'add_seats' && seats) {
+      subtotal = seats * PER_SEAT_PRICE;
     }
-  });
+    const vat = Math.round(subtotal * VAT_RATE * 100) / 100;
+    setOrderContext({ type: orderType, plan_code: planCode, seats, subtotal, vat, total: subtotal + vat });
+    setPaymentStep('choose_method');
+  }
 
-  const pendingUpgrade = upgradeRequests.find(r => r.status === 'pending');
-  const pendingUserRequest = userRequests.find(r => r.status === 'pending');
+  function confirmPaymentMethod() {
+    if (!paymentMethod || !orderContext) return;
+    createOrderMutation.mutate({
+      orderType: orderContext.type,
+      planCode: orderContext.plan_code,
+      seats: orderContext.seats,
+      method: paymentMethod,
+    });
+  }
+
+  const pendingUpgrade = upgradeRequests.find(r => r.status === 'pending')
+    || subscriptionOrders.find(o => (o.order_type === 'plan_upgrade') && ['pending_payment', 'awaiting_verification'].includes(o.status));
+  const pendingUserRequest = userRequests.find(r => r.status === 'pending')
+    || subscriptionOrders.find(o => (o.order_type === 'add_seats') && ['pending_payment', 'awaiting_verification'].includes(o.status));
 
   if (tenantLoading) {
     return (
@@ -200,14 +308,14 @@ export default function ClientSubscriptionPortal() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Users className="w-5 h-5 text-najdi-700" />
-              {isRTL ? 'طلب مستخدمين إضافيين' : 'Request Additional Users'}
+              {isRTL ? 'إضافة مقاعد' : 'Add Seats'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
               {isRTL 
-                ? `لديك ${availableUsers} مقعد متاح في خطتك الحالية`
-                : `You have ${availableUsers} available seats in your current plan`}
+                ? `لديك ${availableUsers} مقعد متاح | ${PER_SEAT_PRICE} ر.س / مقعد / سنة`
+                : `${availableUsers} seats available | SAR ${PER_SEAT_PRICE} / seat / yr`}
             </p>
             {pendingUserRequest && (
               <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs">
@@ -222,7 +330,7 @@ export default function ClientSubscriptionPortal() {
               disabled={pendingUserRequest}
               className="w-full"
             >
-              {isRTL ? 'طلب مستخدمين' : 'Request Users'}
+              {isRTL ? 'إضافة مقاعد' : 'Add Seats'}
             </Button>
           </CardContent>
         </Card>
@@ -237,7 +345,7 @@ export default function ClientSubscriptionPortal() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              {isRTL ? 'ترقية أو تخفيض خطتك — تتم الموافقة من قبل المسؤول' : 'Upgrade or downgrade — requires admin approval'}
+              {isRTL ? 'ترقية أو تخفيض خطتك — دفع إلكتروني أو تحويل بنكي' : 'Upgrade or downgrade — pay online or wire transfer'}
             </p>
             {pendingUpgrade && (
               <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs">
@@ -347,24 +455,55 @@ export default function ClientSubscriptionPortal() {
         </CardContent>
       </Card>
 
-      {/* Subscription History */}
+      {/* Subscription Orders History */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">
-            {isRTL ? 'سجل الطلبات' : 'Request History'}
+          <CardTitle className="text-lg flex items-center gap-2">
+            <FileText className="w-5 h-5 text-najdi-700" />
+            {isRTL ? 'أوامر الاشتراك' : 'Subscription Orders'}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {[...(upgradeRequests || []), ...(userRequests || [])].length === 0 ? (
+          {[...subscriptionOrders, ...(upgradeRequests || []), ...(userRequests || [])].length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <AlertCircle className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm">{isRTL ? 'لا يوجد سجل طلبات بعد' : 'No request history yet'}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {isRTL ? 'ستظهر هنا طلبات الترقية وإضافة المستخدمين' : 'Upgrade and user requests will appear here'}
-              </p>
+              <p className="text-sm">{isRTL ? 'لا يوجد سجل طلبات بعد' : 'No order history yet'}</p>
             </div>
           ) : (
             <div className="space-y-3">
+              {subscriptionOrders.map(order => {
+                const statusColors = {
+                  pending_payment: 'bg-amber-100 text-amber-800',
+                  awaiting_verification: 'bg-blue-100 text-blue-800',
+                  paid: 'bg-emerald-100 text-emerald-800',
+                  verified: 'bg-emerald-100 text-emerald-800',
+                  rejected: 'bg-red-100 text-red-800',
+                };
+                const statusLabels = {
+                  pending_payment: isRTL ? 'في انتظار الدفع' : 'Pending Payment',
+                  awaiting_verification: isRTL ? 'في انتظار التحقق' : 'Awaiting Verification',
+                  paid: isRTL ? 'مدفوع' : 'Paid',
+                  verified: isRTL ? 'تم التحقق' : 'Verified',
+                  rejected: isRTL ? 'مرفوض' : 'Rejected',
+                };
+                return (
+                  <div key={order.id} className="flex items-center justify-between bg-sand rounded-lg p-3">
+                    <div>
+                      <p className="text-sm font-medium text-ink">
+                        {(order.order_type || order.type) === 'plan_upgrade'
+                          ? (isRTL ? `ترقية إلى ${order.plan_code}` : `Upgrade to ${order.plan_code}`)
+                          : (isRTL ? `إضافة ${order.additional_seats || '—'} مقعد` : `Add ${order.additional_seats || '—'} seats`)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {order.total_amount ? formatSAR(order.total_amount, isRTL) : '—'} &middot; {order.created_at ? new Date(order.created_at).toLocaleDateString() : '—'}
+                      </p>
+                    </div>
+                    <Badge className={statusColors[order.status] || 'bg-sand-alt text-ink'}>
+                      {statusLabels[order.status] || order.status}
+                    </Badge>
+                  </div>
+                );
+              })}
               {[...(upgradeRequests || []), ...(userRequests || [])].map(req => (
                 <div key={req.id} className="flex items-center justify-between bg-sand rounded-lg p-3">
                   <div>
@@ -393,169 +532,427 @@ export default function ClientSubscriptionPortal() {
           <p className="text-sm text-amber-800 flex items-center gap-2">
             <AlertCircle className="w-4 h-4" />
             {isRTL
-              ? 'تتم معالجة تغييرات الخطة خلال 24 ساعة. للاستفسارات حول الفواتير تواصل مع info@edusaga360.com'
-              : 'Plan changes are processed within 24 hours. For billing inquiries contact info@edusaga360.com'}
+              ? 'للاستفسارات حول الفواتير تواصل مع info@edusaga360.com'
+              : 'For billing inquiries contact info@edusaga360.com'}
           </p>
         </CardContent>
       </Card>
 
-      {/* Upgrade Plan Dialog */}
-      <Dialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
+      {/* Upgrade Plan Dialog — with payment flow */}
+      <Dialog open={upgradeDialogOpen} onOpenChange={(open) => { if (!open) resetPaymentFlow(); else setUpgradeDialogOpen(true); }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Zap className="w-5 h-5 text-purple-600" />
-              {isRTL ? 'اختر خطة جديدة' : 'Choose a Plan'}
+              {paymentStep === 'choose_method'
+                ? (isRTL ? 'اختر طريقة الدفع' : 'Choose Payment Method')
+                : paymentStep === 'wire_details'
+                  ? (isRTL ? 'تحويل بنكي' : 'Wire Transfer')
+                  : (isRTL ? 'اختر خطة جديدة' : 'Choose a Plan')}
             </DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            {availableChangePlans.map(([code, plan]) => {
-              const planTier = plan.tier ?? 0;
-              const isUpgrade = planTier > currentTier;
-              const isDowngrade = planTier < currentTier;
-              return (
-                <Card
-                  key={code}
-                  className={`cursor-pointer border-2 transition-all ${
-                    selectedPlan === code ? 'border-purple-500 bg-purple-50' : 'border-border hover:border-purple-300'
-                  }`}
-                  onClick={() => setSelectedPlan(code)}
+
+          {/* Step 1: Plan selection */}
+          {!paymentStep && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+                {availableChangePlans.map(([code, plan]) => {
+                  const planTier = plan.tier ?? 0;
+                  const isUpgrade = planTier > currentTier;
+                  const isDowngrade = planTier < currentTier;
+                  return (
+                    <Card
+                      key={code}
+                      className={`cursor-pointer border-2 transition-all ${
+                        selectedPlan === code ? 'border-najdi-700 bg-najdi-50' : 'border-border hover:border-najdi-300'
+                      }`}
+                      onClick={() => setSelectedPlan(code)}
+                    >
+                      <CardContent className="pt-6">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-lg font-bold text-ink">
+                            {isRTL ? plan.nameAr : plan.nameEn}
+                          </h3>
+                          {isUpgrade && (
+                            <Badge className="bg-emerald-100 text-emerald-700">
+                              <ArrowUpRight className="w-3 h-3 me-1" />
+                              {isRTL ? 'ترقية' : 'Upgrade'}
+                            </Badge>
+                          )}
+                          {isDowngrade && (
+                            <Badge variant="outline" className="border-amber-300 text-amber-700">
+                              <ArrowDownRight className="w-3 h-3 me-1" />
+                              {isRTL ? 'تخفيض' : 'Downgrade'}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm font-semibold text-ink mb-3">
+                          {plan.priceYearly > 0
+                            ? `${plan.priceYearly.toLocaleString()} ${isRTL ? 'ر.س / سنة' : 'SAR / yr'}`
+                            : (isRTL ? 'حسب الطلب' : 'Custom')}
+                        </p>
+                        <ul className="space-y-2 text-xs text-muted-foreground">
+                          <li className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            {isRTL ? `${plan.maxEmployees} موظف` : `${plan.maxEmployees} staff users`}
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            {isRTL ? `${plan.maxUsers.toLocaleString()} وصول عام` : `${plan.maxUsers.toLocaleString()} general access`}
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            {isRTL ? `حتى ${plan.maxBranches} فرع` : `Up to ${plan.maxBranches} branches`}
+                          </li>
+                        </ul>
+                        {isDowngrade && (
+                          <p className="mt-3 text-xs text-amber-600 bg-amber-50 rounded p-2">
+                            {isRTL ? 'التخفيض يتطلب موافقة المسؤول' : 'Downgrade requires admin approval'}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={resetPaymentFlow}>
+                  {isRTL ? 'إلغاء' : 'Cancel'}
+                </Button>
+                <Button
+                  disabled={!selectedPlan}
+                  onClick={() => {
+                    const plan = PLAN_DEFINITIONS[selectedPlan];
+                    const planTier = plan?.tier ?? 0;
+                    if (planTier < currentTier) {
+                      upgradeMutation.mutate(selectedPlan);
+                    } else {
+                      startPaymentFlow('plan_upgrade', selectedPlan, null);
+                    }
+                  }}
                 >
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-bold text-ink">
-                        {isRTL ? plan.nameAr : plan.nameEn}
-                      </h3>
-                      {isUpgrade && (
-                        <Badge className="bg-emerald-100 text-emerald-700">
-                          <ArrowUpRight className="w-3 h-3 me-1" />
-                          {isRTL ? 'ترقية' : 'Upgrade'}
-                        </Badge>
+                  {selectedPlan && (PLAN_DEFINITIONS[selectedPlan]?.tier ?? 0) < currentTier
+                    ? (isRTL ? 'طلب التخفيض' : 'Request Downgrade')
+                    : (isRTL ? 'متابعة للدفع' : 'Continue to Payment')}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {/* Step 2: Payment method selection */}
+          {paymentStep === 'choose_method' && orderContext && (
+            <>
+              <div className="py-4 space-y-4">
+                {/* Order summary */}
+                <div className="bg-sand rounded-lg p-4 space-y-2">
+                  <p className="text-sm font-semibold text-ink">
+                    {isRTL ? 'ملخص الطلب' : 'Order Summary'}
+                  </p>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      {orderContext.type === 'plan_upgrade'
+                        ? (isRTL ? `ترقية إلى ${orderContext.plan_code}` : `Upgrade to ${orderContext.plan_code}`)
+                        : (isRTL ? `${orderContext.seats} مقعد إضافي` : `${orderContext.seats} additional seats`)}
+                    </span>
+                    <span className="text-ink">{formatSAR(orderContext.subtotal, isRTL)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{isRTL ? 'ضريبة القيمة المضافة (15%)' : 'VAT (15%)'}</span>
+                    <span className="text-ink">{formatSAR(orderContext.vat, isRTL)}</span>
+                  </div>
+                  <div className="border-t border-border pt-2 flex justify-between text-sm font-bold">
+                    <span className="text-ink">{isRTL ? 'الإجمالي' : 'Total'}</span>
+                    <span className="text-najdi-900">{formatSAR(orderContext.total, isRTL)}</span>
+                  </div>
+                </div>
+
+                {/* Payment method cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <Card
+                    className={`cursor-pointer border-2 transition-all ${paymentMethod === 'online' ? 'border-najdi-700 bg-najdi-50' : 'border-border hover:border-najdi-300'}`}
+                    onClick={() => setPaymentMethod('online')}
+                  >
+                    <CardContent className="pt-5 text-center">
+                      <CreditCard className="w-8 h-8 mx-auto text-najdi-700 mb-2" />
+                      <p className="font-semibold text-ink text-sm">{isRTL ? 'دفع إلكتروني' : 'Pay Online'}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {isRTL ? 'مدى / فيزا / ماستركارد / Apple Pay' : 'Mada / Visa / MC / Apple Pay'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card
+                    className={`cursor-pointer border-2 transition-all ${paymentMethod === 'wire_transfer' ? 'border-najdi-700 bg-najdi-50' : 'border-border hover:border-najdi-300'}`}
+                    onClick={() => setPaymentMethod('wire_transfer')}
+                  >
+                    <CardContent className="pt-5 text-center">
+                      <Building2 className="w-8 h-8 mx-auto text-najdi-700 mb-2" />
+                      <p className="font-semibold text-ink text-sm">{isRTL ? 'تحويل بنكي' : 'Wire Transfer'}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {isRTL ? 'حوالة مصرفية إلى حساب الشركة' : 'Bank transfer to company account'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setPaymentStep(null); setPaymentMethod(null); }}>
+                  {isRTL ? 'رجوع' : 'Back'}
+                </Button>
+                <Button
+                  disabled={!paymentMethod || createOrderMutation.isPending}
+                  onClick={confirmPaymentMethod}
+                >
+                  {createOrderMutation.isPending && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                  {paymentMethod === 'online'
+                    ? (isRTL ? 'ادفع الآن' : 'Pay Now')
+                    : (isRTL ? 'عرض تفاصيل الحساب' : 'Show Account Details')}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {/* Step 3: Wire transfer details + proof upload */}
+          {paymentStep === 'wire_details' && (
+            <>
+              <div className="py-4 space-y-4">
+                {/* Bank details */}
+                {bankDetails && (
+                  <div className="bg-najdi-50 border border-najdi-200 rounded-lg p-4 space-y-3">
+                    <p className="text-sm font-semibold text-najdi-900 flex items-center gap-2">
+                      <Building2 className="w-4 h-4" />
+                      {isRTL ? 'تفاصيل الحساب البنكي' : 'Bank Account Details'}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <p className="text-muted-foreground">{isRTL ? 'اسم الحساب' : 'Account Name'}</p>
+                        <p className="font-medium text-ink">{isRTL ? bankDetails.account_name_ar : bankDetails.account_name}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">{isRTL ? 'البنك' : 'Bank'}</p>
+                        <p className="font-medium text-ink">{isRTL ? bankDetails.bank_name_ar : bankDetails.bank_name}</p>
+                      </div>
+                      {bankDetails.iban && (
+                        <div className="col-span-2">
+                          <p className="text-muted-foreground">IBAN</p>
+                          <p className="font-mono font-medium text-ink flex items-center gap-2">
+                            {bankDetails.iban}
+                            <button
+                              onClick={() => { navigator.clipboard.writeText(bankDetails.iban); toast.success(isRTL ? 'تم النسخ' : 'Copied'); }}
+                              className="text-najdi-700 hover:text-najdi-900"
+                            >
+                              <Copy className="w-3 h-3" />
+                            </button>
+                          </p>
+                        </div>
                       )}
-                      {isDowngrade && (
-                        <Badge variant="outline" className="border-amber-300 text-amber-700">
-                          <ArrowDownRight className="w-3 h-3 me-1" />
-                          {isRTL ? 'تخفيض' : 'Downgrade'}
-                        </Badge>
+                      {bankDetails.swift && (
+                        <div>
+                          <p className="text-muted-foreground">SWIFT</p>
+                          <p className="font-mono font-medium text-ink">{bankDetails.swift}</p>
+                        </div>
                       )}
                     </div>
-                    <p className="text-sm font-semibold text-ink mb-3">
-                      {plan.priceYearly > 0
-                        ? `${plan.priceYearly.toLocaleString()} ${isRTL ? 'ر.س / سنة' : 'SAR / yr'}`
-                        : (isRTL ? 'حسب الطلب' : 'Custom')}
-                    </p>
-                    <ul className="space-y-2 text-xs text-muted-foreground">
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        {isRTL ? `${plan.maxEmployees} موظف (مستخدم كامل)` : `${plan.maxEmployees} staff (full users)`}
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        {isRTL ? `${plan.maxUsers.toLocaleString()} وصول عام` : `${plan.maxUsers.toLocaleString()} general access`}
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        {isRTL ? `حتى ${plan.maxBranches} فرع` : `Up to ${plan.maxBranches} branches`}
-                      </li>
-                      {plan.aiEnabled ? (
-                        <li className="flex items-center gap-2">
-                          <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                          {isRTL ? 'قدرات الذكاء الاصطناعي' : 'AI Capabilities'}
-                        </li>
-                      ) : (
-                        <li className="flex items-center gap-2 text-muted-foreground">
-                          <Lock className="w-4 h-4 flex-shrink-0" />
-                          {isRTL ? 'بدون ذكاء اصطناعي' : 'No AI'}
-                        </li>
-                      )}
-                      <li className="flex items-center gap-2 text-muted-foreground">
-                        <Check className={`w-4 h-4 flex-shrink-0 ${plan.support === 'dedicated' ? 'text-green-600' : 'text-amber-400'}`} />
-                        {plan.support === 'dedicated'
-                          ? (isRTL ? 'دعم مخصص + SLA' : 'Dedicated Support + SLA')
-                          : (isRTL ? 'الدعم كإضافة' : 'Support as add-on')}
-                      </li>
-                    </ul>
-                    {isDowngrade && (
-                      <p className="mt-3 text-xs text-amber-600 bg-amber-50 rounded p-2">
-                        {isRTL ? 'التخفيض يتطلب موافقة المسؤول وقد يقلل الحدود المتاحة' : 'Downgrade requires admin approval and may reduce limits'}
-                      </p>
+                    {orderContext && (
+                      <div className="border-t border-najdi-200 pt-2">
+                        <p className="text-xs font-semibold text-najdi-900">
+                          {isRTL ? 'المبلغ المطلوب تحويله:' : 'Amount to transfer:'} {formatSAR(orderContext.total, isRTL)}
+                        </p>
+                      </div>
                     )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setUpgradeDialogOpen(false)}>
-              {isRTL ? 'إلغاء' : 'Cancel'}
-            </Button>
-            <Button
-              onClick={() => upgradeMutation.mutate(selectedPlan)}
-              disabled={!selectedPlan || upgradeMutation.isPending}
-            >
-              {upgradeMutation.isPending && <Loader2 className="w-4 h-4 animate-spin me-2" />}
-              {selectedPlan && (PLAN_DEFINITIONS[selectedPlan]?.tier ?? 0) < currentTier
-                ? (isRTL ? 'طلب التخفيض' : 'Request Downgrade')
-                : (isRTL ? 'طلب الترقية' : 'Request Upgrade')}
-            </Button>
-          </DialogFooter>
+                    <p className="text-xs text-najdi-700">
+                      {isRTL ? bankDetails.notes_ar : bankDetails.notes_en}
+                    </p>
+                  </div>
+                )}
+
+                {/* Transfer details */}
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label>{isRTL ? 'رقم مرجع التحويل' : 'Transfer Reference'}</Label>
+                    <Input
+                      value={transferRef}
+                      onChange={e => setTransferRef(e.target.value)}
+                      placeholder={isRTL ? 'رقم العملية / المرجع البنكي' : 'Transaction / bank reference number'}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>{isRTL ? 'تاريخ التحويل' : 'Transfer Date'}</Label>
+                    <Input
+                      type="date"
+                      value={transferDate}
+                      onChange={e => setTransferDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>{isRTL ? 'إيصال التحويل *' : 'Transfer Receipt *'}</Label>
+                    <AttachmentUploader
+                      attachments={proofAttachments}
+                      onChange={setProofAttachments}
+                      maxFiles={3}
+                      storageBucket="attachments"
+                      storagePath={`subscription-proofs/${tenant?.id}`}
+                    />
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setPaymentStep('choose_method'); setProofAttachments([]); }}>
+                  {isRTL ? 'رجوع' : 'Back'}
+                </Button>
+                <Button
+                  disabled={!proofAttachments.length || uploadProofMutation.isPending}
+                  onClick={() => uploadProofMutation.mutate()}
+                >
+                  {uploadProofMutation.isPending && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                  <Upload className="w-4 h-4 me-1" />
+                  {isRTL ? 'إرسال الإيصال للمراجعة' : 'Submit Proof for Review'}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
-      {/* Request Users Dialog */}
-      <Dialog open={addUsersDialogOpen} onOpenChange={setAddUsersDialogOpen}>
-        <DialogContent className="max-w-sm">
+      {/* Request Users Dialog — with payment */}
+      <Dialog open={addUsersDialogOpen} onOpenChange={(open) => { if (!open) resetPaymentFlow(); else setAddUsersDialogOpen(true); }}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="w-5 h-5 text-najdi-700" />
-              {isRTL ? 'طلب مستخدمين إضافيين' : 'Request Additional Users'}
+              {isRTL ? 'إضافة مقاعد' : 'Add Seats'}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="p-3 bg-najdi-50 border border-najdi-100 rounded-lg text-xs text-najdi-900">
-              {isRTL 
-                ? `المقاعد المتاحة: ${availableUsers} | ستتم الموافقة تلقائياً على ما يصل إلى ${availableUsers} مستخدم`
-                : `Available seats: ${availableUsers} | Auto-approved up to ${availableUsers} users`}
-            </div>
 
-            <div className="space-y-1.5">
-              <Label>{isRTL ? 'عدد المستخدمين الإضافيين *' : 'Number of Users *'}</Label>
-              <Input
-                type="number"
-                min="1"
-                value={additionalUsers}
-                onChange={e => setAdditionalUsers(parseInt(e.target.value) || 1)}
-              />
-              {additionalUsers > availableUsers && (
-                <p className="text-xs text-amber-600 flex items-center gap-1 mt-1">
-                  <AlertCircle className="w-3 h-3" />
-                  {isRTL ? 'سيتطلب موافقة يدوية من الإدارة' : 'Will require manual approval'}
-                </p>
-              )}
-            </div>
+          {!paymentStep && (
+            <>
+              <div className="space-y-4 py-4">
+                <div className="p-3 bg-najdi-50 border border-najdi-100 rounded-lg text-xs text-najdi-900">
+                  {isRTL 
+                    ? `المقاعد المتاحة: ${availableUsers} | السعر لكل مقعد: ${PER_SEAT_PRICE} ر.س / سنة`
+                    : `Available seats: ${availableUsers} | Price per seat: SAR ${PER_SEAT_PRICE} / yr`}
+                </div>
 
-            <div className="space-y-1.5">
-              <Label>{isRTL ? 'سبب الطلب' : 'Reason for Request'}</Label>
-              <Textarea
-                placeholder={isRTL ? 'اشرح لماذا تحتاج مستخدمين إضافيين...' : 'Explain why you need additional users...'}
-                value={requestReason}
-                onChange={e => setRequestReason(e.target.value)}
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAddUsersDialogOpen(false)}>
-              {isRTL ? 'إلغاء' : 'Cancel'}
-            </Button>
-            <Button
-              onClick={() => requestUsersMutation.mutate()}
-              disabled={requestUsersMutation.isPending}
-            >
-              {requestUsersMutation.isPending && <Loader2 className="w-4 h-4 animate-spin me-2" />}
-              {isRTL ? 'إرسال الطلب' : 'Submit Request'}
-            </Button>
-          </DialogFooter>
+                <div className="space-y-1.5">
+                  <Label>{isRTL ? 'عدد المقاعد الإضافية *' : 'Number of Additional Seats *'}</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={additionalUsers}
+                    onChange={e => setAdditionalUsers(parseInt(e.target.value) || 1)}
+                  />
+                </div>
+
+                {additionalUsers > 0 && (
+                  <div className="bg-sand rounded-lg p-3 space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{additionalUsers} {isRTL ? 'مقعد' : 'seats'} × {formatSAR(PER_SEAT_PRICE, isRTL)}</span>
+                      <span className="text-ink">{formatSAR(additionalUsers * PER_SEAT_PRICE, isRTL)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{isRTL ? 'ض.ق.م 15%' : 'VAT 15%'}</span>
+                      <span className="text-ink">{formatSAR(Math.round(additionalUsers * PER_SEAT_PRICE * VAT_RATE * 100) / 100, isRTL)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold border-t border-border pt-1">
+                      <span className="text-ink">{isRTL ? 'الإجمالي' : 'Total'}</span>
+                      <span className="text-najdi-900">{formatSAR(Math.round(additionalUsers * PER_SEAT_PRICE * (1 + VAT_RATE) * 100) / 100, isRTL)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={resetPaymentFlow}>
+                  {isRTL ? 'إلغاء' : 'Cancel'}
+                </Button>
+                <Button
+                  disabled={!additionalUsers || additionalUsers < 1}
+                  onClick={() => startPaymentFlow('add_seats', null, additionalUsers)}
+                >
+                  {isRTL ? 'متابعة للدفع' : 'Continue to Payment'}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {/* Reuse payment method + wire details steps from upgrade dialog context */}
+          {paymentStep === 'choose_method' && orderContext && (
+            <>
+              <div className="py-4 space-y-4">
+                <div className="bg-sand rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between text-sm font-bold">
+                    <span className="text-ink">{isRTL ? 'الإجمالي' : 'Total'}</span>
+                    <span className="text-najdi-900">{formatSAR(orderContext.total, isRTL)}</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Card
+                    className={`cursor-pointer border-2 transition-all ${paymentMethod === 'online' ? 'border-najdi-700 bg-najdi-50' : 'border-border hover:border-najdi-300'}`}
+                    onClick={() => setPaymentMethod('online')}
+                  >
+                    <CardContent className="pt-4 text-center">
+                      <CreditCard className="w-6 h-6 mx-auto text-najdi-700 mb-1" />
+                      <p className="font-semibold text-ink text-xs">{isRTL ? 'دفع إلكتروني' : 'Pay Online'}</p>
+                    </CardContent>
+                  </Card>
+                  <Card
+                    className={`cursor-pointer border-2 transition-all ${paymentMethod === 'wire_transfer' ? 'border-najdi-700 bg-najdi-50' : 'border-border hover:border-najdi-300'}`}
+                    onClick={() => setPaymentMethod('wire_transfer')}
+                  >
+                    <CardContent className="pt-4 text-center">
+                      <Building2 className="w-6 h-6 mx-auto text-najdi-700 mb-1" />
+                      <p className="font-semibold text-ink text-xs">{isRTL ? 'تحويل بنكي' : 'Wire Transfer'}</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setPaymentStep(null); setPaymentMethod(null); }}>
+                  {isRTL ? 'رجوع' : 'Back'}
+                </Button>
+                <Button disabled={!paymentMethod || createOrderMutation.isPending} onClick={confirmPaymentMethod}>
+                  {createOrderMutation.isPending && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                  {paymentMethod === 'online' ? (isRTL ? 'ادفع الآن' : 'Pay Now') : (isRTL ? 'عرض تفاصيل الحساب' : 'Show Account Details')}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {paymentStep === 'wire_details' && (
+            <>
+              <div className="py-4 space-y-4">
+                {bankDetails && (
+                  <div className="bg-najdi-50 border border-najdi-200 rounded-lg p-3 space-y-2 text-xs">
+                    <p className="font-semibold text-najdi-900">{isRTL ? bankDetails.bank_name_ar : bankDetails.bank_name}</p>
+                    <p className="text-ink">{isRTL ? bankDetails.account_name_ar : bankDetails.account_name}</p>
+                    {bankDetails.iban && <p className="font-mono text-ink">IBAN: {bankDetails.iban}</p>}
+                    {orderContext && (
+                      <p className="font-semibold text-najdi-900 pt-1 border-t border-najdi-200">
+                        {isRTL ? 'المبلغ:' : 'Amount:'} {formatSAR(orderContext.total, isRTL)}
+                      </p>
+                    )}
+                  </div>
+                )}
+                <div className="space-y-1.5">
+                  <Label>{isRTL ? 'إيصال التحويل *' : 'Transfer Receipt *'}</Label>
+                  <AttachmentUploader
+                    attachments={proofAttachments}
+                    onChange={setProofAttachments}
+                    maxFiles={3}
+                    storageBucket="attachments"
+                    storagePath={`subscription-proofs/${tenant?.id}`}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setPaymentStep('choose_method'); setProofAttachments([]); }}>
+                  {isRTL ? 'رجوع' : 'Back'}
+                </Button>
+                <Button disabled={!proofAttachments.length || uploadProofMutation.isPending} onClick={() => uploadProofMutation.mutate()}>
+                  {uploadProofMutation.isPending && <Loader2 className="w-4 h-4 animate-spin me-2" />}
+                  {isRTL ? 'إرسال الإيصال' : 'Submit Proof'}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
