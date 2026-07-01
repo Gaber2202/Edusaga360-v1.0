@@ -2,19 +2,42 @@
 import { isExpired, isExpiringWithin, daysUntilExpiry } from '../../lib/dateCompare';
 
 /**
+ * Strip Markdown formatting markers so AI output renders as clean plain text.
+ * Every Yamen surface shows the model's text in a `whitespace-pre-wrap` block
+ * (and exports it verbatim to .txt) — none of them render Markdown — so leftover
+ * `**bold**`, `# headings`, and `` `code` `` markers show up as literal noise.
+ * This removes the markers while preserving the words, line breaks, and lists.
+ * Deliberately conservative: only doubled `**`/`__` emphasis is unwrapped, so a
+ * lone asterisk (e.g. "3 * 4") is left untouched.
+ */
+export function stripMarkdown(text) {
+  if (typeof text !== 'string') return text;
+  return text
+    .replace(/```[a-zA-Z]*\n?/g, '')   // opening code fences
+    .replace(/`([^`]+)`/g, '$1')        // inline code
+    .replace(/\*\*(.+?)\*\*/gs, '$1')   // **bold**
+    .replace(/__(.+?)__/gs, '$1')       // __bold__
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '') // # headings
+    .replace(/^\s*[*+]\s+/gm, '- ')     // normalise bullet markers to "- "
+    .replace(/\*\*/g, '')               // any stray leftover "**"
+    .replace(/^>\s?/gm, '');            // blockquote markers
+}
+
+/**
  * Safely extract the assistant's text from an /api/ai/invoke-llm result.
  * The endpoint returns `{ response, provider }` on success; rendering that
  * object directly throws React error #31. Always pass AI results through this
- * before putting them in state / JSX.
+ * before putting them in state / JSX. Output is Markdown-scrubbed so the plain
+ * text surfaces (and .txt downloads) stay clean.
  */
 export function extractAiText(res) {
   if (res == null) return '';
-  if (typeof res === 'string') return res;
-  if (typeof res.response === 'string') return res.response;
+  if (typeof res === 'string') return stripMarkdown(res);
+  if (typeof res.response === 'string') return stripMarkdown(res.response);
   if (res.response != null) {
-    return typeof res.response === 'object' ? JSON.stringify(res.response, null, 2) : String(res.response);
+    return typeof res.response === 'object' ? JSON.stringify(res.response, null, 2) : stripMarkdown(String(res.response));
   }
-  if (typeof res.text === 'string') return res.text;
+  if (typeof res.text === 'string') return stripMarkdown(res.text);
   return '';
 }
 

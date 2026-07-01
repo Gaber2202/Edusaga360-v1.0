@@ -24,6 +24,29 @@ const daysAgoStr = (days: number) => new Date(Date.now() - days * DAY_MS).toISOS
 const clamp = (n: number, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, n));
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+// Period-over-period percentage change. Returns null when there is no prior
+// value to compare against, so the client can render "—" instead of a
+// misleading 0% / Infinity.
+export function pctDelta(current: number, previous: number): number | null {
+  if (!previous) return null;
+  return round2(((current - previous) / Math.abs(previous)) * 100);
+}
+
+// Strip Markdown emphasis/heading/code markers so AI-authored narrative and
+// action text renders cleanly in the plain-text dashboard (no literal "**").
+export function stripMarkdown(text: string): string {
+  if (typeof text !== 'string') return text;
+  return text
+    .replace(/```[a-zA-Z]*\n?/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\*\*(.+?)\*\*/gs, '$1')
+    .replace(/__(.+?)__/gs, '$1')
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    .replace(/^\s*[*+]\s+/gm, '- ')
+    .replace(/\*\*/g, '')
+    .trim();
+}
+
 // Platform owners have no tenant_id of their own (they oversee every tenant),
 // so they must explicitly pick which school's dashboard to view via ?tenant_id=.
 // Regular tenant users always use their own JWT-issued tenant_id — the query
@@ -182,6 +205,48 @@ async function getCollections(tenant_id: string) {
   return { total_invoiced: totalInvoiced, total_collected: totalCollected, collection_rate: round2(collectionRate * 100), score, rows };
 }
 
+// Trailing-N-month trends built from REAL invoice + approved-expense rows.
+//   revenue  = paid_amount on invoices dated in the month (cash actually in)
+//   ebitda   = revenue − approved expenses dated in the month
+//   rate     = collected / invoiced for invoices dated in the month
+// Powers the CEO KPI sparklines and the Revenue-vs-EBITDA / Collection-rate
+// trend charts, which were previously never sent to the client.
+async function getMonthlyTrends(tenant_id: string, months = 12) {
+  const since = daysAgoStr(months * 31 + 5);
+  const [invRes, expRes] = await Promise.all([
+    supabase.from('invoices').select('total_amount, paid_amount, date').eq('tenant_id', tenant_id).gte('date', since),
+    supabase.from('expenses').select('amount, date').eq('tenant_id', tenant_id).eq('status', 'approved').gte('date', since),
+  ]);
+  const revByMonth = new Map<string, number>();
+  const invByMonth = new Map<string, number>();
+  const expByMonth = new Map<string, number>();
+  for (const r of (invRes.data ?? []) as any[]) {
+    const key = (r.date ?? '').slice(0, 7);
+    if (!key) continue;
+    revByMonth.set(key, (revByMonth.get(key) ?? 0) + Number(r.paid_amount ?? 0));
+    invByMonth.set(key, (invByMonth.get(key) ?? 0) + Number(r.total_amount ?? 0));
+  }
+  for (const r of (expRes.data ?? []) as any[]) {
+    const key = (r.date ?? '').slice(0, 7);
+    if (!key) continue;
+    expByMonth.set(key, (expByMonth.get(key) ?? 0) + Number(r.amount ?? 0));
+  }
+  const revenue_trend: { label: string; revenue: number; ebitda: number }[] = [];
+  const collection_trend: { label: string; rate: number }[] = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    const key = d.toISOString().slice(0, 7);
+    const rev = round2(revByMonth.get(key) ?? 0);
+    const exp = round2(expByMonth.get(key) ?? 0);
+    const invoiced = invByMonth.get(key) ?? 0;
+    const collected = revByMonth.get(key) ?? 0;
+    revenue_trend.push({ label: key, revenue: rev, ebitda: round2(rev - exp) });
+    collection_trend.push({ label: key, rate: invoiced > 0 ? round2((collected / invoiced) * 100) : 0 });
+  }
+  return { revenue_trend, collection_trend };
+}
+
 // Matches the is-Saudi convention used elsewhere (payroll.ts, benchmarks.ts) —
 // there is no boolean is_saudi column, only the free-text nationality field.
 function isSaudi(nationality: string | null | undefined): boolean {
@@ -304,7 +369,18 @@ execRouter.get('/ceo', requireExecAccess('ceo'), async (req: AuthenticatedReques
 
   try {
     const { vitality, financials, growth, collections, compliance, retention } = await buildVitality(tenant_id);
-    const branches = await getBranches(tenant_id);
+    const [branches, trends] = await Promise.all([
+      getBranches(tenant_id),
+      getMonthlyTrends(tenant_id, 12),
+    ]);
+    const { revenue_trend, collection_trend } = trends;
+
+    // Period-over-period deltas from the trailing trend (last full month vs the
+    // month before it) — real movement, not a fabricated figure.
+    const n = revenue_trend.length;
+    const revenueDelta = pctDelta(revenue_trend[n - 1]?.revenue ?? 0, revenue_trend[n - 2]?.revenue ?? 0);
+    const ebitdaDelta = pctDelta(revenue_trend[n - 1]?.ebitda ?? 0, revenue_trend[n - 2]?.ebitda ?? 0);
+    const collectionDelta = pctDelta(collection_trend[n - 1]?.rate ?? 0, collection_trend[n - 2]?.rate ?? 0);
 
     // Per-campus vitality: same financial+collections lens, scoped by branch_id.
     const campusVitality = await Promise.all(
@@ -331,12 +407,20 @@ execRouter.get('/ceo', requireExecAccess('ceo'), async (req: AuthenticatedReques
 
     await writeExecAudit(req, 'exec_dashboard_view', { persona: 'ceo' }, tenant_id);
 
+    // Drop the internal `rows` (full invoice list) from the collections payload —
+    // the client only needs the aggregates, and shipping every invoice is both
+    // wasteful and needless data exposure. Expose `collection_rate_pct` (the name
+    // the CEO KPI card reads) plus the period delta.
+    const { rows: _collRows, ...collectionsPublic } = collections;
+
     res.json({
       vitality,
-      financials,
+      financials: { ...financials, revenue_delta_pct: revenueDelta, ebitda_delta_pct: ebitdaDelta },
       growth,
-      collections,
+      collections: { ...collectionsPublic, collection_rate_pct: collections.collection_rate, collection_delta_pct: collectionDelta },
       campus_vitality: campusVitality,
+      revenue_trend,
+      collection_trend,
       strategic_alerts: strategicAlerts,
     });
   } catch (err) {
@@ -642,7 +726,14 @@ function parseBriefResponse(raw: string): BoardBrief | null {
       Array.isArray(parsed.actions_en) && parsed.actions_en.length === 3 &&
       Array.isArray(parsed.actions_ar) && parsed.actions_ar.length === 3
     ) {
-      return parsed;
+      // Scrub any stray Markdown the model emitted so the brief renders as clean
+      // plain text (no literal "**") in the board-brief card.
+      return {
+        narrative_en: stripMarkdown(parsed.narrative_en),
+        narrative_ar: stripMarkdown(parsed.narrative_ar),
+        actions_en: parsed.actions_en.map((a: string) => stripMarkdown(String(a))),
+        actions_ar: parsed.actions_ar.map((a: string) => stripMarkdown(String(a))),
+      };
     }
     return null;
   } catch {
@@ -692,11 +783,12 @@ execRouter.get('/ceo/brief', requireExecAccess('ceo'), async (req: Authenticated
 
   try {
     const { data: cached } = await supabase.from('exec_brief_cache').select('*').eq('tenant_id', tenant_id).eq('period', period).maybeSingle();
-    if (cached) return res.json(cached);
-
-    const brief = await generateAndCacheBrief(tenant_id, period, req.user!.id);
-    if (!brief) return res.status(503).json({ error: 'No AI provider available to generate the board brief' });
-    res.json(brief);
+    // IMPORTANT — token discipline: GET only ever returns an EXISTING brief. It
+    // must never call the LLM, because this endpoint is fetched automatically
+    // whenever the CEO dashboard mounts. The brief is generated ONLY when the
+    // user explicitly clicks "Generate Brief" (POST /ceo/brief/refresh). When no
+    // brief exists yet we return null so the client shows the generate CTA.
+    res.json(cached ?? null);
   } catch (err) {
     console.error('Board brief error:', err);
     res.status(500).json({ error: 'Failed to load board brief' });
