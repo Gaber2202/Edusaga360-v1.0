@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AuthenticatedRequest } from '../middleware/auth.js';
 import { sanitizeSearchTerm } from '../lib/sanitize.js';
+import { decryptSecret } from '../lib/aiCrypto.js';
 
 export const aiRouter = Router();
 
@@ -514,10 +515,14 @@ async function runTool(name: string, input: Record<string, unknown>, tenantId: s
 
 export interface Message { role: 'user' | 'assistant'; content: string | unknown[] }
 
+/** Accumulates total tokens consumed across an agentic run, for metering. */
+export interface UsageSink { tokens: number }
+
 export async function callClaudeWithTools(
   messages: Message[],
   tenantId: string,
   systemPrompt: string,
+  usage?: UsageSink,
 ): Promise<string> {
   const claudeKey = getClaudeKey();
   if (!claudeKey) throw new Error('ANTHROPIC_API_KEY not set');
@@ -548,6 +553,7 @@ export async function callClaudeWithTools(
     }
 
     const data = await res.json() as any;
+    if (usage) usage.tokens += (data.usage?.input_tokens ?? 0) + (data.usage?.output_tokens ?? 0);
 
     if (data.stop_reason === 'end_turn') {
       // Final text response
@@ -600,6 +606,7 @@ export async function callGeminiWithTools(
   messages: Message[],
   tenantId: string,
   systemPrompt: string,
+  usage?: UsageSink,
 ): Promise<string> {
   const geminiKey = getGeminiKey();
   if (!geminiKey) throw new Error('GOOGLE_AI_API_KEY not set');
@@ -630,6 +637,10 @@ export async function callGeminiWithTools(
     }
 
     const data = await res.json() as any;
+    if (usage) {
+      const u = data.usageMetadata;
+      usage.tokens += u?.totalTokenCount ?? ((u?.promptTokenCount ?? 0) + (u?.candidatesTokenCount ?? 0));
+    }
     const candidate = data.candidates?.[0];
     if (!candidate) return 'No response from Gemini.';
 
@@ -675,6 +686,7 @@ export async function callOpenAICompatibleWithTools(
   tenantId: string,
   systemPrompt: string,
   cfg: OpenAICompatConfig,
+  usage?: UsageSink,
 ): Promise<string> {
   // Build OpenAI-style message list (system + history).
   const oaMessages: any[] = [
@@ -705,6 +717,10 @@ export async function callOpenAICompatibleWithTools(
     }
 
     const data = await res.json() as any;
+    if (usage) {
+      const u = data.usage;
+      usage.tokens += u?.total_tokens ?? ((u?.prompt_tokens ?? 0) + (u?.completion_tokens ?? 0));
+    }
     const message = data.choices?.[0]?.message;
     if (!message) return 'No response generated.';
 
@@ -790,30 +806,88 @@ async function probeActiveProvider(): Promise<Record<string, unknown>> {
 // ─── Provider resolution ──────────────────────────────────────────────────────
 // Ordered list of providers to attempt for a request, honouring AI_PROVIDER.
 
-export interface ProviderRunner { name: string; run: () => Promise<string> }
+export interface ProviderResult { text: string; tokens: number }
+export interface ProviderRunner { name: string; run: () => Promise<ProviderResult> }
 
 /** Map a provider def to a runnable, choosing the adapter by wire format. */
 function runnerForDef(def: ProviderDef, messages: Message[], tenantId: string): ProviderRunner {
-  if (def.format === 'gemini') {
-    return { name: def.name, run: () => callGeminiWithTools(messages, tenantId, SYSTEM_PROMPT) };
-  }
-  if (def.format === 'anthropic') {
-    return { name: def.name, run: () => callClaudeWithTools(messages, tenantId, SYSTEM_PROMPT) };
-  }
-  // openai-compatible: OpenAI, Groq, Azure, and any custom local/regional model.
-  const cfg: OpenAICompatConfig = {
-    name: def.name,
-    apiKey: def.apiKey,
-    baseUrl: def.baseUrl ?? 'https://api.openai.com/v1',
-    model: def.model,
+  const run = async (): Promise<ProviderResult> => {
+    const usage: UsageSink = { tokens: 0 };
+    let text: string;
+    if (def.format === 'gemini') {
+      text = await callGeminiWithTools(messages, tenantId, SYSTEM_PROMPT, usage);
+    } else if (def.format === 'anthropic') {
+      text = await callClaudeWithTools(messages, tenantId, SYSTEM_PROMPT, usage);
+    } else {
+      // openai-compatible: OpenAI, Groq, Azure, and any custom local/regional model.
+      const cfg: OpenAICompatConfig = {
+        name: def.name,
+        apiKey: def.apiKey,
+        baseUrl: def.baseUrl ?? 'https://api.openai.com/v1',
+        model: def.model,
+      };
+      text = await callOpenAICompatibleWithTools(messages, tenantId, SYSTEM_PROMPT, cfg, usage);
+    }
+    return { text, tokens: usage.tokens };
   };
-  return { name: def.name, run: () => callOpenAICompatibleWithTools(messages, tenantId, SYSTEM_PROMPT, cfg) };
+  return { name: def.name, run };
 }
 
 export function resolveProviders(messages: Message[], tenantId: string): ProviderRunner[] {
   return orderedProviderDefs()
     .filter((d) => d.configured)
     .map((d) => runnerForDef(d, messages, tenantId));
+}
+
+// ─── Per-tenant provider resolution ───────────────────────────────────────────
+// A tenant can be routed to its OWN LLM(s) (e.g. a KSA-hosted model with the
+// tenant's own credentials). Tenant providers are tried FIRST, in priority
+// order; the platform (env) providers remain as a fallback so chat still works
+// if a tenant has none configured or its endpoint fails.
+
+/** Load a tenant's configured providers from the DB, decrypting their keys. */
+export async function loadTenantProviderDefs(tenantId: string): Promise<ProviderDef[]> {
+  const { data, error } = await supabase
+    .from('tenant_ai_providers')
+    .select('name, format, base_url, model, api_key_enc, is_active, priority')
+    .eq('tenant_id', tenantId)
+    .eq('is_active', true)
+    .order('priority', { ascending: true });
+  if (error || !data) return [];
+
+  const defs: ProviderDef[] = [];
+  for (const row of data as Array<Record<string, unknown>>) {
+    let apiKey = '';
+    if (row.api_key_enc) {
+      try {
+        apiKey = decryptSecret(row.api_key_enc as string);
+      } catch (e) {
+        // A key we can't decrypt (rotated master key, tamper) must not silently
+        // fall through to a keyless call — skip this provider.
+        console.error(`[ai] failed to decrypt key for tenant provider "${row.name}":`, e instanceof Error ? e.message : e);
+        continue;
+      }
+    }
+    const format = (row.format as ProviderFormat) ?? 'openai';
+    defs.push({
+      name: String(row.name),
+      format,
+      model: String(row.model),
+      apiKey,
+      baseUrl: (row.base_url as string) ?? undefined,
+      keyEnvVar: 'tenant_ai_providers',
+      configured: true,
+      custom: true,
+    });
+  }
+  return defs;
+}
+
+/** Providers to attempt for a tenant request: tenant-specific first, env fallback. */
+export async function resolveProvidersForTenant(messages: Message[], tenantId: string): Promise<ProviderRunner[]> {
+  const tenantDefs = await loadTenantProviderDefs(tenantId);
+  const tenantRunners = tenantDefs.map((d) => runnerForDef(d, messages, tenantId));
+  return [...tenantRunners, ...resolveProviders(messages, tenantId)];
 }
 
 // ─── Friendly error mapping ───────────────────────────────────────────────────
@@ -888,6 +962,48 @@ Rules:
 - Format numbers clearly (e.g. SAR 45,000 not 45000)
 - Never invent data`;
 
+// ─── Token metering & per-tenant limits ──────────────────────────────────────
+
+function currentPeriod(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+export interface QuotaState { allowed: boolean; limit: number | null; used: number }
+
+/** Read a tenant's monthly token quota state (limit null = unlimited). */
+export async function checkTokenQuota(tenantId: string): Promise<QuotaState> {
+  const { data, error } = await supabase
+    .from('tenants')
+    .select('yamen_ai_token_limit, yamen_ai_tokens_used_this_month, yamen_ai_usage_period')
+    .eq('id', tenantId)
+    .maybeSingle();
+  if (error || !data) return { allowed: true, limit: null, used: 0 }; // fail-open on read error
+  const limit = (data.yamen_ai_token_limit as number | null) ?? null;
+  // A stale period means the month rolled over — treat usage as reset.
+  const used = data.yamen_ai_usage_period === currentPeriod()
+    ? Number(data.yamen_ai_tokens_used_this_month ?? 0)
+    : 0;
+  if (limit == null) return { allowed: true, limit: null, used };
+  return { allowed: used < limit, limit, used };
+}
+
+/** Record token usage for a tenant (atomic, monthly-resetting). Best-effort. */
+async function recordTokenUsage(tenantId: string, tokens: number): Promise<void> {
+  if (tokens <= 0) return;
+  const { error } = await supabase.rpc('record_ai_usage', { p_tenant_id: tenantId, p_tokens: tokens });
+  if (error) console.warn('[ai] record_ai_usage failed:', error.message);
+}
+
+function quotaExceededMessage(limit: number, used: number): string {
+  return (
+    `تم بلوغ حد رموز الذكاء الاصطناعي لهذا الشهر (${used.toLocaleString()} من ${limit.toLocaleString()}). ` +
+    'يرجى التواصل مع مزوّد المنصّة لرفع الحد.\n\n' +
+    `Monthly AI token limit reached (${used.toLocaleString()} of ${limit.toLocaleString()}). ` +
+    'Please contact your platform provider to raise the limit.'
+  );
+}
+
 // ─── POST /api/ai/invoke-llm ──────────────────────────────────────────────────
 
 aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) => {
@@ -902,6 +1018,16 @@ aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) =>
     if (mode === 'compliance_check') {
       const result = await runTool('get_compliance_alerts', { days_ahead: 30 }, tenant_id);
       return res.json({ response: JSON.stringify(result, null, 2), tool_used: 'get_compliance_alerts' });
+    }
+
+    // Enforce the tenant's monthly token limit before spending any tokens.
+    const quota = await checkTokenQuota(tenant_id);
+    if (!quota.allowed) {
+      return res.json({
+        provider: 'quota_exceeded',
+        error_type: 'token_limit_reached',
+        response: quotaExceededMessage(quota.limit ?? 0, quota.used),
+      });
     }
 
     // Build conversation messages
@@ -928,8 +1054,9 @@ aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) =>
       });
     }
 
-    // Ordered providers to attempt (honours AI_PROVIDER; all support tool use).
-    const runners = resolveProviders(history, tenant_id);
+    // Ordered providers to attempt: the tenant's own LLM(s) first, then the
+    // platform providers as fallback. All support tool use.
+    const runners = await resolveProvidersForTenant(history, tenant_id);
 
     // Genuine no-provider case — the ONLY situation that warrants "add a key".
     if (runners.length === 0) {
@@ -949,8 +1076,9 @@ aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) =>
     const providerErrors: string[] = [];
     for (const runner of runners) {
       try {
-        const response = await runner.run();
-        return res.json({ response, provider: runner.name });
+        const result = await runner.run();
+        await recordTokenUsage(tenant_id, result.tokens);
+        return res.json({ response: result.text, provider: runner.name, tokens_used: result.tokens });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         console.warn(`[ai] ${runner.name} failed:`, msg);
@@ -995,7 +1123,7 @@ aiRouter.post('/compliance-alerts', async (req: AuthenticatedRequest, res: Respo
       content: `Based on these compliance alerts for our school, write a short executive summary (3-5 bullet points) in Arabic. Be direct about critical items first:\n\n${JSON.stringify(alerts, null, 2)}`,
     }];
     for (const runner of resolveProviders(summaryMessages, tenant_id)) {
-      try { summary = await runner.run(); break; } catch { /* try next provider */ }
+      try { summary = (await runner.run()).text; break; } catch { /* try next provider */ }
     }
 
     return res.json({ alerts, summary });

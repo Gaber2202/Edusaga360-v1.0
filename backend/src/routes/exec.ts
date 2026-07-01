@@ -658,7 +658,7 @@ async function generateAndCacheBrief(tenant_id: string, period: string, generate
   let usedProvider: string | null = null;
   for (const runner of resolveProviders(buildBriefPrompt(metrics), tenant_id)) {
     try {
-      const raw = await runner.run();
+      const raw = (await runner.run()).text;
       const parsed = parseBriefResponse(raw);
       if (parsed) {
         brief = parsed;
