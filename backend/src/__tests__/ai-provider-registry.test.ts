@@ -57,7 +57,7 @@ describe('Yamen AI — custom (local/regional) provider', () => {
     process.env.AI_CUSTOM_PROVIDERS = KSA_LOCAL;
     process.env.KSA_LLM_KEY = 'sk-ksa-123';
 
-    const fetchMock = vi.fn(async () =>
+    const fetchMock = vi.fn(async (_url?: unknown, _init?: unknown) =>
       okJson({ choices: [{ message: { role: 'assistant', content: 'أهلاً، لديك ٥ معلمين.' } }] }),
     );
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
@@ -98,7 +98,7 @@ describe('Yamen AI — custom (local/regional) provider', () => {
     process.env.KSA_LLM_KEY = 'sk-ksa-123';
     process.env.AI_PROVIDER = 'ksa-local';
 
-    const fetchMock = vi.fn(async () => okJson({ choices: [{ message: { content: 'ok' } }] }));
+    const fetchMock = vi.fn(async (_url?: unknown, _init?: unknown) => okJson({ choices: [{ message: { content: 'ok' } }] }));
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
     try {
       const res = await request(makeApp()).post('/ai/invoke-llm').send({ prompt: 'hi' });
