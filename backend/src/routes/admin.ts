@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import { AuthenticatedRequest, authMiddleware } from '../middleware/auth.js';
 import { isEmailConfigured, sendInviteEmail, sendPasswordResetEmail } from '../services/email.js';
 import { sanitizeSearchTerm } from '../lib/sanitize.js';
+import { encryptSecret, isAiCryptoConfigured } from '../lib/aiCrypto.js';
 
 export const adminRouter = Router();
 
@@ -835,4 +836,121 @@ adminRouter.get('/audit-log', async (req: AuthenticatedRequest, res) => {
   const { data, error } = await q;
   if (error) return res.status(500).json({ message: error.message });
   return res.json({ log: data || [] });
+});
+
+// ─── Per-tenant Yamen AI configuration ────────────────────────────────────────
+// Super-admin manages each tenant's LLM provider(s) and monthly token limit.
+// Provider API keys are encrypted at rest and never returned to the client.
+
+const CURRENT_PERIOD = () => {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`;
+};
+
+/** GET tenant AI config: providers (keys masked), token limit, current usage. */
+adminRouter.get('/tenants/:id/ai', async (req: AuthenticatedRequest, res) => {
+  if (!await requirePlatformOwner(req, res)) return;
+  const id = String(req.params.id);
+
+  const [{ data: tenant, error: tErr }, { data: providers, error: pErr }] = await Promise.all([
+    supabase.from('tenants')
+      .select('yamen_ai_token_limit, yamen_ai_tokens_used_this_month, yamen_ai_used_this_month, yamen_ai_usage_period')
+      .eq('id', id).maybeSingle(),
+    supabase.from('tenant_ai_providers')
+      .select('id, name, format, base_url, model, api_key_enc, is_active, priority, created_at')
+      .eq('tenant_id', id).order('priority', { ascending: true }),
+  ]);
+  if (tErr) return res.status(500).json({ message: tErr.message });
+  if (pErr) return res.status(500).json({ message: pErr.message });
+
+  const periodCurrent = tenant?.yamen_ai_usage_period === CURRENT_PERIOD();
+  return res.json({
+    encryption_configured: isAiCryptoConfigured(),
+    token_limit: tenant?.yamen_ai_token_limit ?? null,      // null = unlimited
+    tokens_used_this_month: periodCurrent ? Number(tenant?.yamen_ai_tokens_used_this_month ?? 0) : 0,
+    requests_this_month: periodCurrent ? Number(tenant?.yamen_ai_used_this_month ?? 0) : 0,
+    usage_period: tenant?.yamen_ai_usage_period ?? null,
+    providers: (providers ?? []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      format: p.format,
+      base_url: p.base_url,
+      model: p.model,
+      is_active: p.is_active,
+      priority: p.priority,
+      has_key: !!p.api_key_enc,   // never return the key itself
+      created_at: p.created_at,
+    })),
+  });
+});
+
+/** Set (or clear) a tenant's monthly token limit. null/0 → unlimited. */
+adminRouter.put('/tenants/:id/ai/limit', async (req: AuthenticatedRequest, res) => {
+  if (!await requirePlatformOwner(req, res)) return;
+  const id = String(req.params.id);
+  const schema = z.object({ token_limit: z.number().int().nonnegative().nullable() });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: 'Validation failed', errors: parsed.error.flatten() });
+  const token_limit = parsed.data.token_limit && parsed.data.token_limit > 0 ? parsed.data.token_limit : null;
+
+  const { data, error } = await supabase.from('tenants')
+    .update({ yamen_ai_token_limit: token_limit, updated_at: new Date().toISOString() })
+    .eq('id', id).select('id, name_en').single();
+  if (error) return res.status(500).json({ message: error.message });
+  await writeAudit(req, { action: 'tenant.ai_set_token_limit', target_type: 'tenant', target_id: id, target_label: data.name_en, tenant_id: id, metadata: { token_limit } });
+  return res.json({ token_limit });
+});
+
+/** Add a custom LLM provider for a tenant (API key encrypted at rest). */
+adminRouter.post('/tenants/:id/ai/providers', async (req: AuthenticatedRequest, res) => {
+  if (!await requirePlatformOwner(req, res)) return;
+  const id = String(req.params.id);
+  const schema = z.object({
+    name: z.string().min(1).max(60).regex(/^[a-z0-9-]+$/, 'lowercase letters, numbers and hyphens only'),
+    format: z.enum(['openai', 'gemini', 'anthropic']).default('openai'),
+    base_url: z.string().url().optional(),
+    model: z.string().min(1).max(120),
+    api_key: z.string().max(400).optional(),
+    priority: z.number().int().min(0).max(1000).optional(),
+    is_active: z.boolean().optional(),
+  });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: 'Validation failed', errors: parsed.error.flatten() });
+  const { name, format, base_url, model, api_key, priority, is_active } = parsed.data;
+
+  // OpenAI-compatible providers require a base URL to reach the endpoint.
+  if (format === 'openai' && !base_url) {
+    return res.status(400).json({ message: 'base_url is required for openai-compatible providers' });
+  }
+  // A key can only be stored if the encryption master key is configured.
+  let api_key_enc: string | null = null;
+  if (api_key) {
+    if (!isAiCryptoConfigured()) {
+      return res.status(400).json({ message: 'AI_CONFIG_ENC_KEY is not set on the backend — cannot store a provider key securely' });
+    }
+    api_key_enc = encryptSecret(api_key);
+  }
+
+  const { data, error } = await supabase.from('tenant_ai_providers').insert({
+    tenant_id: id, name, format, base_url: base_url ?? null, model,
+    api_key_enc, priority: priority ?? 100, is_active: is_active ?? true,
+  }).select('id, name, format, base_url, model, is_active, priority, created_at').single();
+  if (error) {
+    if (error.code === '23505') return res.status(409).json({ message: `A provider named "${name}" already exists for this tenant` });
+    return res.status(500).json({ message: error.message });
+  }
+  await writeAudit(req, { action: 'tenant.ai_add_provider', target_type: 'tenant', target_id: id, tenant_id: id, metadata: { name, format, model } });
+  return res.json({ provider: { ...data, has_key: !!api_key_enc } });
+});
+
+/** Remove a tenant's custom LLM provider. */
+adminRouter.delete('/tenants/:id/ai/providers/:providerId', async (req: AuthenticatedRequest, res) => {
+  if (!await requirePlatformOwner(req, res)) return;
+  const id = String(req.params.id);
+  const providerId = String(req.params.providerId);
+  const { data, error } = await supabase.from('tenant_ai_providers')
+    .delete().eq('id', providerId).eq('tenant_id', id).select('name').single();
+  if (error) return res.status(500).json({ message: error.message });
+  await writeAudit(req, { action: 'tenant.ai_remove_provider', target_type: 'tenant', target_id: id, tenant_id: id, metadata: { name: data?.name, provider_id: providerId } });
+  return res.json({ success: true });
 });

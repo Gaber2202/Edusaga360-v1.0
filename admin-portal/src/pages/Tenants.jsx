@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { callApi } from '../lib/supabase';
 import { STATUS_COLORS, PLAN_COLORS, planLabel, trialDaysLeft, formatMoney, ROLES } from '../lib/plans';
 import ConvertToPaidDialog from '../components/ConvertToPaidDialog';
+import TenantAiDialog from '../components/TenantAiDialog';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -11,7 +12,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import {
   Search, Pause, Play, Trash2, Calendar, Building2, ChevronDown, ChevronUp,
-  Users, Edit2, X, Check, RefreshCw, Sparkles,
+  Users, Edit2, X, Check, RefreshCw, Sparkles, Bot,
 } from 'lucide-react';
 
 function UserRow({ user, onRefresh }) {
@@ -91,6 +92,7 @@ function TenantCard({ tenant, qc }) {
   const [expanded, setExpanded] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [convertOpen, setConvertOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const [form, setForm] = useState({
     status: tenant.status,
     plan_code: tenant.plan_code || tenant.plan || '',
@@ -191,6 +193,7 @@ function TenantCard({ tenant, qc }) {
               {tenant.status === 'suspended' ? <Play className="w-4 h-4 text-emerald-600" /> : <Pause className="w-4 h-4 text-amber-500" />}
             </Button>
             <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setExpanded(!expanded)} title="Manage users"><Users className="w-4 h-4 text-najdi-500" /></Button>
+            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setAiOpen(true)} title="Yamen AI settings"><Bot className="w-4 h-4 text-najdi-500" /></Button>
             <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={deleteTenant} title="Delete"><Trash2 className="w-4 h-4 text-red-400" /></Button>
             <button onClick={() => setExpanded(!expanded)} className="text-muted-foreground hover:text-muted-foreground">{expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</button>
           </div>
@@ -253,6 +256,7 @@ function TenantCard({ tenant, qc }) {
       </CardContent>
 
       <ConvertToPaidDialog tenant={tenant} open={convertOpen} onOpenChange={setConvertOpen} />
+      <TenantAiDialog tenant={tenant} open={aiOpen} onOpenChange={setAiOpen} />
     </Card>
   );
 }
