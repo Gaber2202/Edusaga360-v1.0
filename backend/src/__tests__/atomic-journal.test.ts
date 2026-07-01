@@ -53,7 +53,7 @@ describe('makeLedger().postJournal', () => {
   it('posts a group-level (NULL branch) entry when none is supplied', async () => {
     await postJournal('tenant-A', 'user-1', 'CHQ-001', 'Cheque cleared', LINES);
 
-    expect(db.rpcCallsFor('post_journal')[0].params.p_branch_id).toBeNull();
+    expect(db.rpcCallsFor('post_journal')[0].params).toMatchObject({ p_branch_id: null });
   });
 
   it('swallows a function error (best-effort, non-fatal posting)', async () => {
