@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AuthenticatedRequest } from '../middleware/auth.js';
+import { sanitizeSearchTerm } from '../lib/sanitize.js';
 
 export const marketplaceRouter = Router();
 
@@ -41,7 +42,10 @@ marketplaceRouter.get('/vendors', async (req: AuthenticatedRequest, res) => {
 
   if (category)             q = q.eq('category', category);
   if (verified === 'true')  q = q.eq('is_verified', true);
-  if (search)               q = q.or(`name_en.ilike.%${search}%,name_ar.ilike.%${search}%,description_en.ilike.%${search}%`);
+  if (search) {
+    const safe = sanitizeSearchTerm(search);
+    if (safe) q = q.or(`name_en.ilike.%${safe}%,name_ar.ilike.%${safe}%,description_en.ilike.%${safe}%`);
+  }
 
   const { data, error } = await q;
   if (error) return res.status(500).json({ error: error.message });

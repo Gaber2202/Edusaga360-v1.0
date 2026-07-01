@@ -48,6 +48,15 @@ export interface QueryContext {
 
 export type Resolver = (ctx: QueryContext) => SupabaseResult | undefined;
 
+/** A recorded `supabase.rpc(fn, params)` call. */
+export interface RpcCall {
+  fn: string;
+  params?: unknown;
+}
+
+/** Resolves the `{ data, error }` returned by a mocked `.rpc()` call. */
+export type RpcResolver = (fn: string, params?: unknown) => SupabaseResult | undefined;
+
 // PostgREST filter / modifier methods that simply return the builder for chaining.
 const CHAIN_METHODS = [
   'eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'ilike', 'in', 'is',
@@ -118,12 +127,19 @@ export interface SupabaseStub {
     admin: { createUser: ReturnType<typeof vi.fn> };
   };
   from: ReturnType<typeof vi.fn>;
+  rpc: ReturnType<typeof vi.fn>;
   /** Live QueryContext for every `.from()` made since the last reset. */
   calls: QueryContext[];
+  /** Every `.rpc()` call made since the last reset. */
+  rpcCalls: RpcCall[];
   setResolver: (resolver: Resolver) => void;
+  /** Decide what a `.rpc(fn, params)` call resolves to (default: no-op success). */
+  setRpcResolver: (resolver: RpcResolver) => void;
   reset: () => void;
   /** All recorded contexts for a given table. */
   filtersFor: (table: string) => QueryContext[];
+  /** All recorded `.rpc()` calls for a given function name. */
+  rpcCallsFor: (fn: string) => RpcCall[];
   /** True if every query against `table` was scoped by eq('tenant_id', tenantId). */
   everyQueryScopedToTenant: (table: string, tenantId: string) => boolean;
 }
@@ -134,12 +150,24 @@ export interface SupabaseStub {
  */
 export function createSupabaseStub(initialResolver: Resolver = () => ({})): SupabaseStub {
   let resolver = initialResolver;
+  const initialRpcResolver: RpcResolver = () => ({});
+  let rpcResolver = initialRpcResolver;
   const calls: QueryContext[] = [];
+  const rpcCalls: RpcCall[] = [];
 
   const from = vi.fn((table: string) => {
     const builder = makeBuilder(table, () => resolver);
     calls.push((builder as { __ctx: QueryContext }).__ctx);
     return builder;
+  });
+
+  // Postgres function calls (e.g. post_journal). Records the call and resolves
+  // via the rpc resolver — defaults to a no-op success so best-effort callers
+  // that ignore the result keep working without extra test setup.
+  const rpc = vi.fn((fn: string, params?: unknown) => {
+    rpcCalls.push({ fn, params });
+    const r = rpcResolver(fn, params) ?? {};
+    return Promise.resolve({ data: r.data ?? null, error: r.error ?? null });
   });
 
   const auth = {
@@ -148,13 +176,22 @@ export function createSupabaseStub(initialResolver: Resolver = () => ({})): Supa
   };
 
   return {
-    client: { from, auth },
+    client: { from, auth, rpc },
     auth,
     from: from as unknown as ReturnType<typeof vi.fn>,
+    rpc: rpc as unknown as ReturnType<typeof vi.fn>,
     calls,
+    rpcCalls,
     setResolver: (r: Resolver) => { resolver = r; },
-    reset: () => { calls.length = 0; resolver = initialResolver; },
+    setRpcResolver: (r: RpcResolver) => { rpcResolver = r; },
+    reset: () => {
+      calls.length = 0;
+      rpcCalls.length = 0;
+      resolver = initialResolver;
+      rpcResolver = initialRpcResolver;
+    },
     filtersFor: (table: string) => calls.filter((c) => c.table === table),
+    rpcCallsFor: (fn: string) => rpcCalls.filter((c) => c.fn === fn),
     everyQueryScopedToTenant: (table: string, tenantId: string) => {
       const tableCalls = calls.filter((c) => c.table === table);
       if (tableCalls.length === 0) return false;
