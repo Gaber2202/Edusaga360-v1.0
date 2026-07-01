@@ -44,6 +44,18 @@ describe('makeLedger().postJournal', () => {
     });
   });
 
+  it('attributes the entry to a branch when one is supplied', async () => {
+    await postJournal('tenant-A', 'user-1', 'CHQ-001', 'Cheque cleared', LINES, 'branch-9');
+
+    expect(db.rpcCallsFor('post_journal')[0].params).toMatchObject({ p_branch_id: 'branch-9' });
+  });
+
+  it('posts a group-level (NULL branch) entry when none is supplied', async () => {
+    await postJournal('tenant-A', 'user-1', 'CHQ-001', 'Cheque cleared', LINES);
+
+    expect(db.rpcCallsFor('post_journal')[0].params).toMatchObject({ p_branch_id: null });
+  });
+
   it('swallows a function error (best-effort, non-fatal posting)', async () => {
     db.setRpcResolver(() => ({ error: { message: 'CoA missing' } }));
     await expect(
