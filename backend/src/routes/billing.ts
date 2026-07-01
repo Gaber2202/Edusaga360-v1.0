@@ -142,6 +142,7 @@ async function postJournal(
   reference: string,
   description: string,
   lines: { account_code: string; debit: number; credit: number; description: string }[],
+  branch_id?: string | null,
 ) {
   const { error } = await supabase.rpc('post_journal', {
     p_tenant_id: tenant_id,
@@ -149,6 +150,7 @@ async function postJournal(
     p_reference: reference,
     p_description: description,
     p_lines: lines,
+    p_branch_id: branch_id ?? null,
   });
   if (error) console.warn('[billing] post_journal failed:', error.message);
 }
@@ -464,11 +466,12 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
     // Verify student
     const { data: student, error: studentErr } = await supabase
       .from('students')
-      .select('id, name_en, name_ar, grade_id, guardian_id, grades(name_en)')
+      .select('id, name_en, name_ar, grade_id, branch_id, guardian_id, grades(name_en)')
       .eq('id', student_id)
       .eq('tenant_id', tenant_id)
       .single();
     if (studentErr || !student) return res.status(404).json({ error: 'Student not found' });
+    const studentBranchId = (student as Record<string, unknown>).branch_id as string | null ?? null;
 
     // Fetch fee categories for VAT treatment lookup (only for lines that have category_id)
     const categoryIds = [...new Set(fee_lines.map((l) => l.category_id).filter(Boolean))] as string[];
@@ -568,6 +571,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
 
     const extendedPayload = {
       tenant_id,
+      branch_id: studentBranchId,
       student_id,
       invoice_number: invoiceNumber,
       academic_year,
@@ -599,6 +603,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       console.warn('[billing] Extended insert failed, using base schema:', extError.message);
       const basePayload = {
         tenant_id,
+        branch_id: studentBranchId,
         student_id,
         invoice_number: invoiceNumber,
         date: today,
@@ -705,7 +710,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
         { account_code: '12', debit: totalAmount, credit: 0, description: `A/R — ${invoiceNumber}` },
         { account_code: '41', debit: 0, credit: sar(subtotal - totalDiscount), description: `Revenue — ${invoiceNumber}` },
         { account_code: '24', debit: 0, credit: vatAmount, description: `VAT Payable (15%) — ${invoiceNumber}` },
-      ]);
+      ], studentBranchId);
     } catch (journalErr) {
       console.warn('[billing] GL journal post failed:', (journalErr as Error).message);
     }
@@ -876,6 +881,7 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
       .from('invoices')
       .insert({
         tenant_id,
+        branch_id: original.branch_id ?? null,
         student_id: original.student_id,
         invoice_number: cnNumber,
         academic_year: original.academic_year,
@@ -925,7 +931,7 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
     await postJournal(tenant_id, req.user!.id, cnNumber, `Credit Note ${cnNumber}`, [
       { account_code: '41', debit: amount, credit: 0, description: `Revenue reversal — ${cnNumber}` },
       { account_code: '12', debit: 0, credit: amount, description: `A/R credit — ${cnNumber}` },
-    ]);
+    ], original.branch_id ?? null);
 
     return res.status(201).json(cn);
   } catch (err) {
@@ -962,7 +968,7 @@ billingRouter.post('/payments', async (req: AuthenticatedRequest, res: Response)
 
     const { data: payment, error: pmtErr } = await supabase
       .from('payments')
-      .insert({ tenant_id, invoice_id, amount, method: payment_method, reference: reference ?? null, date: today, status: 'completed' })
+      .insert({ tenant_id, branch_id: invoice.branch_id ?? null, invoice_id, amount, method: payment_method, reference: reference ?? null, date: today, status: 'completed' })
       .select()
       .single();
     if (pmtErr) throw pmtErr;
@@ -989,7 +995,7 @@ billingRouter.post('/payments', async (req: AuthenticatedRequest, res: Response)
     await postJournal(tenant_id, req.user!.id, reference ?? `PMT-${invoice_id.slice(0, 8)}`, `Payment — ${invoice.invoice_number}`, [
       { account_code: '11', debit: amount, credit: 0, description: `${payment_method} received` },
       { account_code: '12', debit: 0, credit: amount, description: `A/R cleared — ${invoice.invoice_number}` },
-    ]);
+    ], invoice.branch_id ?? null);
 
     return res.status(201).json({ payment, invoice: { id: invoice_id, paid_amount: newPaid, status: newStatus, remaining_balance: Math.max(0, sar(invoice.total_amount - newPaid)) } });
   } catch (err) {
@@ -1039,6 +1045,7 @@ async function createInvoiceForStudent(
   academic_year: string,
   fee_lines: { category_id: string; description_en: string; description_ar: string; amount: number; quantity: number }[],
   due_date?: string,
+  branch_id?: string | null,
 ): Promise<void> {
   const categoryIds = [...new Set(fee_lines.map((l) => l.category_id))];
   const { data: categories } = await supabase.from('fee_categories').select('id, vat_treatment').in('id', categoryIds).eq('tenant_id', tenant_id);
@@ -1074,7 +1081,7 @@ async function createInvoiceForStudent(
   const invoice_hash = generateInvoiceHash(ubl_xml);
 
   const { data: invoice, error } = await supabase.from('invoices').insert({
-    tenant_id, student_id, invoice_number: invoiceNumber, academic_year, date: today,
+    tenant_id, branch_id: branch_id ?? null, student_id, invoice_number: invoiceNumber, academic_year, date: today,
     due_date: due_date ?? null, subtotal, vat_amount: vatAmount, total_amount: totalAmount,
     paid_amount: 0, status: 'issued', items: enrichedLines, qr_code, invoice_hash,
   }).select().single();
@@ -1090,7 +1097,7 @@ async function createInvoiceForStudent(
     { account_code: '12', debit: totalAmount, credit: 0, description: `A/R — ${invoiceNumber}` },
     { account_code: '41', debit: 0, credit: subtotal, description: `Revenue — ${invoiceNumber}` },
     { account_code: '24', debit: 0, credit: vatAmount, description: `VAT — ${invoiceNumber}` },
-  ]);
+  ], branch_id ?? null);
 }
 
 // ─── POST /api/billing/bulk-invoices — Bulk generation ───────────────────────
@@ -1198,7 +1205,7 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
         }));
 
         // Create invoice directly via shared helper
-        await createInvoiceForStudent(tenant_id, req.user!.id, student.id, academic_year, feeLines, due_date);
+        await createInvoiceForStudent(tenant_id, req.user!.id, student.id, academic_year, feeLines, due_date, student.branch_id ?? null);
         created++;
       } catch (e) {
         errors.push(`${student.id}: ${(e as Error).message}`);

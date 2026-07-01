@@ -36,6 +36,7 @@ interface InvoiceRow {
   invoice_number: string;
   total_amount: number;
   paid_amount: number;
+  branch_id?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -79,6 +80,7 @@ async function applyToInvoice(tenant_id: string, userId: string, cheque: ChequeR
     .from('payments')
     .insert({
       tenant_id,
+      branch_id: inv.branch_id ?? null,
       invoice_id: cheque.invoice_id,
       amount: cheque.amount,
       method: 'cheque',
@@ -96,7 +98,7 @@ async function applyToInvoice(tenant_id: string, userId: string, cheque: ChequeR
   await postJournal(tenant_id, userId, cheque.cheque_number, `Cheque cleared — ${inv.invoice_number}`, [
     { account_code: '11', debit: cheque.amount, credit: 0, description: `Cheque ${cheque.cheque_number} cleared` },
     { account_code: '12', debit: 0, credit: cheque.amount, description: `A/R cleared — ${inv.invoice_number}` },
-  ]);
+  ], inv.branch_id ?? null);
 
   return { invoice_id: cheque.invoice_id, paid_amount: newPaid, status: newStatus, payment_id: (payment as { id?: string } | null)?.id ?? null };
 }
@@ -120,7 +122,7 @@ async function reverseFromInvoice(tenant_id: string, userId: string, cheque: Che
   await postJournal(tenant_id, userId, cheque.cheque_number, `Cheque bounced — ${inv.invoice_number}`, [
     { account_code: '12', debit: cheque.amount, credit: 0, description: `A/R reinstated — ${inv.invoice_number}` },
     { account_code: '11', debit: 0, credit: cheque.amount, description: `Cheque ${cheque.cheque_number} bounced` },
-  ]);
+  ], inv.branch_id ?? null);
 
   return { invoice_id: cheque.invoice_id, paid_amount: newPaid, status: newStatus, reversed: true };
 }

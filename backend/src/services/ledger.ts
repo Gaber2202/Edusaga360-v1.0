@@ -39,6 +39,9 @@ export function makeLedger(supabase: SupabaseClient) {
    * Post a balanced journal entry atomically. If the chart of accounts is not
    * configured (any account missing), the function resolves nothing and returns
    * null and the entry is skipped silently — exactly like billing.
+   *
+   * `branch_id` attributes the entry to a branch (multi-CR school groups); pass
+   * null/undefined for a group-level entry.
    */
   async function postJournal(
     tenant_id: string,
@@ -46,6 +49,7 @@ export function makeLedger(supabase: SupabaseClient) {
     reference: string,
     description: string,
     lines: JournalLine[],
+    branch_id?: string | null,
   ): Promise<void> {
     const { error } = await supabase.rpc('post_journal', {
       p_tenant_id: tenant_id,
@@ -53,6 +57,7 @@ export function makeLedger(supabase: SupabaseClient) {
       p_reference: reference,
       p_description: description,
       p_lines: lines,
+      p_branch_id: branch_id ?? null,
     });
     if (error) console.warn('[ledger] post_journal failed:', error.message);
   }

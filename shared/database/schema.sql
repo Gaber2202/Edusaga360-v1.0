@@ -237,6 +237,7 @@ CREATE TABLE fiscal_periods (
 CREATE TABLE journal_entries (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id UUID NOT NULL REFERENCES tenants(id),
+  branch_id UUID REFERENCES branches(id), -- NULL = group-level / consolidated
   date DATE NOT NULL,
   reference TEXT,
   description TEXT NOT NULL,
@@ -251,6 +252,7 @@ CREATE TABLE journal_entries (
 CREATE TABLE journal_entry_lines (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id UUID NOT NULL REFERENCES tenants(id),
+  branch_id UUID REFERENCES branches(id), -- mirrors the parent journal_entries.branch_id
   journal_entry_id UUID NOT NULL REFERENCES journal_entries(id) ON DELETE CASCADE,
   account_id UUID REFERENCES chart_of_accounts(id),
   debit NUMERIC(15,2) DEFAULT 0,
@@ -299,6 +301,7 @@ CREATE TABLE fee_structures (
 CREATE TABLE invoices (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id UUID NOT NULL REFERENCES tenants(id),
+  branch_id UUID REFERENCES branches(id), -- inherited from the student's branch
   student_id UUID REFERENCES students(id),
   invoice_number TEXT,
   date DATE NOT NULL,
@@ -315,6 +318,7 @@ CREATE TABLE invoices (
 CREATE TABLE payments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id UUID NOT NULL REFERENCES tenants(id),
+  branch_id UUID REFERENCES branches(id), -- inherited from the invoice's branch
   invoice_id UUID REFERENCES invoices(id),
   amount NUMERIC(15,2) NOT NULL,
   method TEXT, -- cash, bank_transfer, card, online
@@ -892,8 +896,12 @@ CREATE INDEX idx_employees_tenant ON employees(tenant_id);
 CREATE INDEX idx_employees_branch ON employees(branch_id);
 CREATE INDEX idx_invoices_tenant ON invoices(tenant_id);
 CREATE INDEX idx_invoices_student ON invoices(student_id);
+CREATE INDEX idx_invoices_branch ON invoices(branch_id);
 CREATE INDEX idx_journal_entries_tenant ON journal_entries(tenant_id);
+CREATE INDEX idx_journal_entries_branch ON journal_entries(branch_id);
+CREATE INDEX idx_journal_entry_lines_branch ON journal_entry_lines(branch_id);
 CREATE INDEX idx_payments_tenant ON payments(tenant_id);
+CREATE INDEX idx_payments_branch ON payments(branch_id);
 CREATE INDEX idx_leave_requests_tenant ON leave_requests(tenant_id);
 CREATE INDEX idx_leave_requests_employee ON leave_requests(employee_id);
 CREATE INDEX idx_audit_logs_tenant ON audit_logs(tenant_id);
