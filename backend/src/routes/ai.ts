@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { AuthenticatedRequest } from '../middleware/auth.js';
+import { sanitizeSearchTerm } from '../lib/sanitize.js';
 
 export const aiRouter = Router();
 
@@ -353,7 +354,7 @@ async function runTool(name: string, input: Record<string, unknown>, tenantId: s
     }
 
     case 'search_employee': {
-      const query = String(input.query ?? '');
+      const query = sanitizeSearchTerm(String(input.query ?? ''));
       const { data, error } = await supabase
         .from('employees')
         .select('id, employee_number, name_en, name_ar, job_title_name, department_name, nationality, status, basic_salary, hire_date, iqama_expiry')

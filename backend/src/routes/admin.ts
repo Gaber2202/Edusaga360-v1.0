@@ -4,6 +4,7 @@ import { z } from 'zod';
 import crypto from 'crypto';
 import { AuthenticatedRequest, authMiddleware } from '../middleware/auth.js';
 import { isEmailConfigured, sendInviteEmail, sendPasswordResetEmail } from '../services/email.js';
+import { sanitizeSearchTerm } from '../lib/sanitize.js';
 
 export const adminRouter = Router();
 
@@ -370,7 +371,7 @@ adminRouter.get('/users', async (req: AuthenticatedRequest, res) => {
   if (role) q = q.eq('user_role', role);
   if (status) q = q.eq('status', status);
   if (search) {
-    const safe = search.replace(/[%,()]/g, ' ').trim();
+    const safe = sanitizeSearchTerm(search);
     if (safe) q = q.or(`email.ilike.%${safe}%,name.ilike.%${safe}%`);
   }
   q = q.range((page - 1) * pageSize, page * pageSize - 1);
@@ -828,7 +829,7 @@ adminRouter.get('/audit-log', async (req: AuthenticatedRequest, res) => {
   if (action) q = q.eq('action', action);
   if (target_type) q = q.eq('target_type', target_type);
   if (search) {
-    const safe = search.replace(/[%,()]/g, ' ').trim();
+    const safe = sanitizeSearchTerm(search);
     if (safe) q = q.or(`actor_email.ilike.%${safe}%,target_label.ilike.%${safe}%,action.ilike.%${safe}%`);
   }
   const { data, error } = await q;

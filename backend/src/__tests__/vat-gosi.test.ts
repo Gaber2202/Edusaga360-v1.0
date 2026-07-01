@@ -82,16 +82,17 @@ describe('calculateGOSI — Saudi national', () => {
 });
 
 describe('calculateGOSI — expat', () => {
-  it('basic 10,000 SAR: employee 150, employer 200', () => {
+  it('basic 10,000 SAR: no employee deduction, employer 200', () => {
     const result = calculateGOSI(10_000, 'expat');
-    expect(result.employeeContribution).toBeCloseTo(150);  // 10000 * 1.5%
-    expect(result.employerContribution).toBeCloseTo(200);  // 10000 * 2%
+    // Expats are not in the GOSI pension branch — no employee deduction.
+    expect(result.employeeContribution).toBeCloseTo(0);
+    expect(result.employerContribution).toBeCloseTo(200);  // 10000 * 2% Occupational Hazards
   });
 
-  it('no cap: basic 50,000 → calculated on full 50,000', () => {
+  it('no cap: basic 50,000 → employer contribution on full 50,000', () => {
     const result = calculateGOSI(50_000, 'expat');
     expect(result.cappedSalary).toBe(50_000);
-    expect(result.employeeContribution).toBeCloseTo(50_000 * 0.015);
+    expect(result.employeeContribution).toBeCloseTo(0);
     expect(result.employerContribution).toBeCloseTo(50_000 * 0.02);
   });
 

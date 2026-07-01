@@ -19,6 +19,7 @@ import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/auth.js';
+import { sanitizeSearchTerm } from '../lib/sanitize.js';
 import {
   generateTLVQR,
   generateUBLXml,
@@ -74,6 +75,34 @@ async function generateInvoiceNumber(tenant_id: string): Promise<string> {
   const seq = ((count ?? 0) + 1).toString().padStart(6, '0');
   const year = new Date().getFullYear();
   return `INV-${year}-${seq}`;
+}
+
+/**
+ * Resolve this tenant's ZATCA hash-chain position for a NEW invoice: the
+ * previous invoice's hash (PIH) and the next ICV counter.
+ *
+ * Must be called BEFORE building/hashing the UBL XML — the PIH has to be
+ * embedded in the document that gets hashed, otherwise every invoice chains off
+ * the zero hash and ZATCA's tamper-detection chain is broken.
+ *
+ * NOTE: this read is not yet atomic with the subsequent zatca_submissions
+ * insert, so two concurrent invoices for the same tenant can read the same PIH
+ * and fork the chain. Making the assignment transactional (advisory lock or a
+ * Postgres sequence) is tracked as a separate follow-up.
+ */
+async function getZatcaChain(
+  tenant_id: string,
+): Promise<{ previous_invoice_hash?: string; icv: number }> {
+  const { data, count } = await supabase
+    .from('zatca_submissions')
+    .select('invoice_hash', { count: 'exact' })
+    .eq('tenant_id', tenant_id)
+    .order('created_at', { ascending: false })
+    .limit(1);
+  return {
+    previous_invoice_hash: data?.[0]?.invoice_hash ?? undefined,
+    icv: (count ?? 0) + 1,
+  };
 }
 
 /** Lookup GL account id (best-effort, non-fatal) */
@@ -330,7 +359,8 @@ billingRouter.get('/students', async (req: AuthenticatedRequest, res: Response) 
     .limit(rowLimit);
 
   if (search) {
-    q = q.or(`name_en.ilike.%${search}%,name_ar.ilike.%${search}%,student_id.ilike.%${search}%`);
+    const safe = sanitizeSearchTerm(search);
+    if (safe) q = q.or(`name_en.ilike.%${safe}%,name_ar.ilike.%${safe}%,student_id.ilike.%${safe}%`);
   }
 
   const { data, error } = await q;
@@ -547,19 +577,16 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       })),
     };
 
+    // Resolve the ZATCA hash-chain position BEFORE hashing so the PIH and ICV
+    // are embedded in the signed UBL document.
+    const chain = await getZatcaChain(tenant_id);
+    invoiceData.previous_invoice_hash = chain.previous_invoice_hash;
+    invoiceData.icv = chain.icv;
+    const previous_hash = chain.previous_invoice_hash ?? '';
+
     const qr_code = generateTLVQR(invoiceData, tenant as TenantData);
     const ubl_xml = generateUBLXml(invoiceData, tenant as TenantData);
     const invoice_hash = generateInvoiceHash(ubl_xml);
-
-    // Fetch previous hash for chaining
-    const { data: lastZatca } = await supabase
-      .from('zatca_submissions')
-      .select('invoice_hash')
-      .eq('tenant_id', tenant_id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-    const previous_hash = lastZatca?.invoice_hash ?? '';
 
     // Insert invoice — try extended schema first, fall back to base columns
     const studentGrade = (student as Record<string, unknown>).grades
@@ -904,10 +931,12 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
       vat_amount: 0,
       total_amount: -amount,
     };
+    // Chain the credit note before hashing (same PIH/ICV rule as invoices).
+    const chain = await getZatcaChain(tenant_id);
+    creditInvoiceData.previous_invoice_hash = chain.previous_invoice_hash;
+    creditInvoiceData.icv = chain.icv;
     const ubl_xml = generateUBLXml(creditInvoiceData, tenant as TenantData);
     const invoice_hash = generateInvoiceHash(ubl_xml);
-
-    const { data: lastSub } = await supabase.from('zatca_submissions').select('invoice_hash').eq('tenant_id', tenant_id).order('created_at', { ascending: false }).limit(1).single();
 
     await supabase.from('zatca_submissions').insert({
       tenant_id,
@@ -915,7 +944,7 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
       invoice_number: cnNumber,
       submission_type: 'credit_note',
       invoice_hash,
-      previous_hash: lastSub?.invoice_hash ?? '',
+      previous_hash: chain.previous_invoice_hash ?? '',
       ubl_xml,
       zatca_status: 'pending',
     });
@@ -1058,7 +1087,16 @@ async function createInvoiceForStudent(
   const today = new Date().toISOString().split('T')[0];
 
   const tenant = await getTenant(tenant_id);
-  const invoiceData: InvoiceData = { invoice_number: invoiceNumber, issue_date: today, subtotal, vat_amount: vatAmount, total_amount: totalAmount };
+  const chain = await getZatcaChain(tenant_id);
+  const invoiceData: InvoiceData = {
+    invoice_number: invoiceNumber,
+    issue_date: today,
+    subtotal,
+    vat_amount: vatAmount,
+    total_amount: totalAmount,
+    previous_invoice_hash: chain.previous_invoice_hash,
+    icv: chain.icv,
+  };
   const qr_code = generateTLVQR(invoiceData, tenant as TenantData);
   const ubl_xml = generateUBLXml(invoiceData, tenant as TenantData);
   const invoice_hash = generateInvoiceHash(ubl_xml);
@@ -1072,7 +1110,8 @@ async function createInvoiceForStudent(
 
   await supabase.from('zatca_submissions').insert({
     tenant_id, invoice_id: invoice.id, invoice_number: invoiceNumber,
-    submission_type: 'reporting', invoice_hash, ubl_xml, qr_code, zatca_status: 'pending',
+    submission_type: 'reporting', invoice_hash, previous_hash: chain.previous_invoice_hash ?? '',
+    ubl_xml, qr_code, zatca_status: 'pending',
   });
 
   await postJournal(tenant_id, created_by, invoiceNumber, `Bulk Invoice ${invoiceNumber}`, [
