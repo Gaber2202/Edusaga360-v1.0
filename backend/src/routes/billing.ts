@@ -105,19 +105,6 @@ async function getZatcaChain(
   };
 }
 
-/** Lookup GL account id (best-effort, non-fatal) */
-async function findAccount(tenant_id: string, codePrefix: string): Promise<string | null> {
-  const { data } = await supabase
-    .from('chart_of_accounts')
-    .select('id')
-    .eq('tenant_id', tenant_id)
-    .ilike('code', `${codePrefix}%`)
-    .eq('is_active', true)
-    .limit(1)
-    .single();
-  return data?.id ?? null;
-}
-
 /** Get tenant billing profile */
 async function getTenant(tenant_id: string): Promise<TenantData & Record<string, unknown>> {
   const { data } = await supabase
@@ -141,7 +128,14 @@ async function getTenant(tenant_id: string): Promise<TenantData & Record<string,
   } as TenantData & Record<string, unknown>;
 }
 
-/** Post double-entry journal (best-effort, non-fatal) */
+/**
+ * Post a balanced double-entry journal (best-effort, non-fatal).
+ *
+ * Delegates to the post_journal Postgres function so the header and lines are
+ * written in a single transaction — a partial failure can no longer leave an
+ * orphaned/unbalanced entry. If the chart of accounts is not configured the
+ * function resolves nothing and returns null, and we skip silently as before.
+ */
 async function postJournal(
   tenant_id: string,
   created_by: string,
@@ -149,36 +143,14 @@ async function postJournal(
   description: string,
   lines: { account_code: string; debit: number; credit: number; description: string }[],
 ) {
-  const total = sar(lines.reduce((s, l) => s + l.debit, 0));
-  const accountIds = await Promise.all(lines.map((l) => findAccount(tenant_id, l.account_code)));
-  if (accountIds.some((id) => !id)) return; // CoA not configured — skip silently
-
-  const { data: je, error } = await supabase
-    .from('journal_entries')
-    .insert({
-      tenant_id,
-      date: new Date().toISOString().split('T')[0],
-      reference,
-      description,
-      total_debit: total,
-      total_credit: total,
-      status: 'posted',
-      created_by,
-    })
-    .select()
-    .single();
-  if (error || !je) return;
-
-  await supabase.from('journal_entry_lines').insert(
-    lines.map((l, i) => ({
-      tenant_id,
-      journal_entry_id: je.id,
-      account_id: accountIds[i],
-      debit: l.debit,
-      credit: l.credit,
-      description: l.description,
-    })),
-  );
+  const { error } = await supabase.rpc('post_journal', {
+    p_tenant_id: tenant_id,
+    p_created_by: created_by,
+    p_reference: reference,
+    p_description: description,
+    p_lines: lines,
+  });
+  if (error) console.warn('[billing] post_journal failed:', error.message);
 }
 
 /** Resolve applicable discount rules for a student, returning total discount amount */
