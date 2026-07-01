@@ -18,7 +18,7 @@ const db = createSupabaseStub();
 vi.mock('@supabase/supabase-js', () => ({ createClient: () => db.client }));
 
 const { requireExecAccess, hasImplicitViewAll, getAccessiblePersonas } = await import('../middleware/execAccess.js');
-const { execRouter, computeVitalityIndex } = await import('../routes/exec.js');
+const { execRouter, computeVitalityIndex, pctDelta, stripMarkdown } = await import('../routes/exec.js');
 
 beforeEach(() => {
   db.reset();
@@ -285,5 +285,42 @@ describe('computeVitalityIndex', () => {
   it('a single dominant weight collapses the composite to that sub-score', () => {
     const onlyFinancial = { financial: 100, growth: 0, collections: 0, compliance: 0, retention: 0 };
     expect(computeVitalityIndex(onlyFinancial, subscores).score).toBe(subscores.financial);
+  });
+});
+
+// ── pctDelta — period-over-period change used by CEO KPI deltas ──────────────
+
+describe('pctDelta', () => {
+  it('returns null when there is no prior value (avoids a misleading 0%/Infinity)', () => {
+    expect(pctDelta(100, 0)).toBeNull();
+  });
+  it('computes a positive change correctly', () => {
+    expect(pctDelta(120, 100)).toBe(20);
+  });
+  it('computes a negative change correctly', () => {
+    expect(pctDelta(80, 100)).toBe(-20);
+  });
+  it('uses the magnitude of the previous value as the base (−100 → −50 is a +50% improvement)', () => {
+    expect(pctDelta(-50, -100)).toBe(50);
+  });
+});
+
+// ── stripMarkdown — clean plain-text briefs / reports (no literal "**") ───────
+
+describe('stripMarkdown', () => {
+  it('unwraps **bold** without leaving markers', () => {
+    expect(stripMarkdown('Revenue is **up 12%** this month')).toBe('Revenue is up 12% this month');
+  });
+  it('removes stray/unbalanced ** markers', () => {
+    expect(stripMarkdown('**Summary: strong quarter')).toBe('Summary: strong quarter');
+  });
+  it('strips heading markers but keeps the text', () => {
+    expect(stripMarkdown('## Board Brief')).toBe('Board Brief');
+  });
+  it('unwraps inline `code` spans', () => {
+    expect(stripMarkdown('collection rate `95%`')).toBe('collection rate 95%');
+  });
+  it('leaves a lone asterisk (e.g. multiplication) untouched', () => {
+    expect(stripMarkdown('3 * 4 = 12')).toBe('3 * 4 = 12');
   });
 });
