@@ -12,10 +12,15 @@ const supabase = createClient(
 );
 
 // ─── Model config ─────────────────────────────────────────────────────────────
-// Providers are auto-detected in priority order (Gemini → Claude → Groq →
-// OpenAI), or pinned explicitly with AI_PROVIDER. Env vars are read per-request
-// so Railway variable changes take effect without a code change. All four
-// providers support full tool use (live school-data queries).
+// Yamen's brain is PLUGGABLE. Built-in providers (Gemini, Claude, Groq, OpenAI)
+// are auto-detected in priority order, joined by any number of CUSTOM
+// OpenAI-compatible endpoints declared via AI_CUSTOM_PROVIDERS. That means a
+// deployment can add / remove / swap the LLM — including pointing Yamen at a
+// local or regional model (e.g. a KSA-hosted LLM) — purely through environment
+// configuration, with no code change. Pin one with AI_PROVIDER, or set an
+// explicit failover chain with AI_PROVIDER_ORDER. Env is read per-request so
+// changes take effect without a redeploy. Every provider supports full tool use
+// (live school-data queries).
 
 function getGeminiKey() {
   return process.env.GOOGLE_AI_API_KEY
@@ -56,21 +61,140 @@ export function getOpenAIConfig(): OpenAICompatConfig | null {
   };
 }
 
-const KNOWN_PROVIDERS = ['gemini', 'claude', 'groq', 'openai'] as const;
-type ProviderName = (typeof KNOWN_PROVIDERS)[number];
+// ─── Provider registry (config-driven) ───────────────────────────────────────
+// A provider is described by a ProviderDef. The registry is assembled per
+// request from (a) the four built-ins and (b) custom endpoints parsed from
+// AI_CUSTOM_PROVIDERS, so "add / remove / change the LLM" is a configuration
+// change, never a code change.
 
-// Optional explicit provider override — set AI_PROVIDER=groq to pin Groq without
-// removing the Gemini key. When unset, providers are auto-detected.
+type ProviderFormat = 'gemini' | 'anthropic' | 'openai';
+
+interface ProviderDef {
+  name: string;
+  format: ProviderFormat; // wire protocol used to talk to the model
+  model: string;
+  apiKey: string;         // '' is allowed for keyless local endpoints (openai format)
+  baseUrl?: string;       // openai format only
+  keyEnvVar: string;      // env var that supplies the key (for diagnostics/messages)
+  configured: boolean;    // usable right now
+  custom: boolean;        // declared via AI_CUSTOM_PROVIDERS
+}
+
+const BUILTIN_PROVIDER_NAMES = ['gemini', 'claude', 'groq', 'openai'] as const;
+
+/** The four built-in providers, in default priority order. */
+function builtinProviderDefs(): ProviderDef[] {
+  const groq = getGroqConfig();
+  const openai = getOpenAIConfig();
+  return [
+    { name: 'gemini', format: 'gemini', model: getGeminiModel(), apiKey: getGeminiKey(), keyEnvVar: 'GOOGLE_AI_API_KEY', configured: !!getGeminiKey(), custom: false },
+    { name: 'claude', format: 'anthropic', model: CLAUDE_MODEL, apiKey: getClaudeKey(), keyEnvVar: 'ANTHROPIC_API_KEY', configured: !!getClaudeKey(), custom: false },
+    { name: 'groq', format: 'openai', model: groq?.model ?? 'llama-3.3-70b-versatile', apiKey: getGroqKey(), baseUrl: groq?.baseUrl ?? 'https://api.groq.com/openai/v1', keyEnvVar: 'GROQ_API_KEY', configured: !!getGroqKey(), custom: false },
+    { name: 'openai', format: 'openai', model: openai?.model ?? 'gpt-4o-mini', apiKey: getOpenAIKey(), baseUrl: openai?.baseUrl ?? 'https://api.openai.com/v1', keyEnvVar: 'OPENAI_API_KEY', configured: !!getOpenAIKey(), custom: false },
+  ];
+}
+
+interface CustomProviderConfig {
+  name?: string;
+  base_url?: string; baseUrl?: string;
+  model?: string;
+  api_key?: string; apiKey?: string;
+  api_key_env?: string; apiKeyEnv?: string;
+  format?: string;
+}
+
+/**
+ * Parse AI_CUSTOM_PROVIDERS — a JSON array of OpenAI-compatible (by default)
+ * endpoints. Example (a KSA-hosted local model):
+ *   AI_CUSTOM_PROVIDERS='[{"name":"ksa-local","base_url":"https://llm.example.sa/v1","model":"jais-30b","api_key_env":"KSA_LLM_KEY"}]'
+ * A local endpoint may be keyless — omit api_key/api_key_env and it is treated
+ * as configured. Reserved built-in names are ignored.
+ */
+function parseCustomProviders(): ProviderDef[] {
+  const raw = (process.env.AI_CUSTOM_PROVIDERS || '').trim();
+  if (!raw) return [];
+  let arr: CustomProviderConfig[];
+  try {
+    const parsed = JSON.parse(raw);
+    arr = Array.isArray(parsed) ? parsed : [];
+  } catch {
+    console.warn('[ai] AI_CUSTOM_PROVIDERS is not valid JSON — ignoring');
+    return [];
+  }
+  const reserved = new Set<string>(BUILTIN_PROVIDER_NAMES);
+  const defs: ProviderDef[] = [];
+  for (const c of arr) {
+    const name = (c.name || '').trim().toLowerCase();
+    const baseUrl = (c.baseUrl || c.base_url || '').trim();
+    const model = (c.model || '').trim();
+    if (!name || reserved.has(name)) { console.warn(`[ai] custom provider "${c.name ?? ''}" skipped (missing or reserved name)`); continue; }
+    if (!baseUrl || !model) { console.warn(`[ai] custom provider "${name}" skipped (base_url and model are required)`); continue; }
+    const keyEnv = (c.apiKeyEnv || c.api_key_env || '').trim();
+    const apiKey = keyEnv ? (process.env[keyEnv] || '') : (c.apiKey || c.api_key || '');
+    const format: ProviderFormat = c.format === 'gemini' || c.format === 'anthropic' ? c.format : 'openai';
+    defs.push({
+      name,
+      format,
+      model,
+      apiKey,
+      baseUrl,
+      keyEnvVar: keyEnv || 'AI_CUSTOM_PROVIDERS',
+      // Only require a key when the config declared where to find one; local
+      // endpoints are frequently keyless.
+      configured: keyEnv ? !!apiKey : true,
+      custom: true,
+    });
+  }
+  return defs;
+}
+
+/** Full registry: built-ins first (priority order), then customs as declared. */
+function allProviderDefs(): ProviderDef[] {
+  return [...builtinProviderDefs(), ...parseCustomProviders()];
+}
+
+function findProviderDef(name: string): ProviderDef | undefined {
+  const key = name.trim().toLowerCase();
+  return allProviderDefs().find((d) => d.name === key);
+}
+
+/** Every provider name the platform currently knows about (for messages). */
+function knownProviderNames(): string[] {
+  return allProviderDefs().map((d) => d.name);
+}
+
+function isKnownProvider(name: string): boolean {
+  return !!findProviderDef(name);
+}
+
+// Optional explicit provider override — set AI_PROVIDER=groq (or a custom name)
+// to pin a single provider. When unset, providers are auto-detected.
 function getForcedProvider() { return (process.env.AI_PROVIDER || '').trim().toLowerCase(); }
 
-function providerConfigured(p: string): boolean {
-  switch (p) {
-    case 'gemini': return !!getGeminiKey();
-    case 'claude': return !!getClaudeKey();
-    case 'groq':   return !!getGroqKey();
-    case 'openai': return !!getOpenAIKey();
-    default:       return false;
-  }
+// Optional failover chain, e.g. AI_PROVIDER_ORDER="ksa-local,openai,groq".
+// Takes effect only when AI_PROVIDER is not pinned.
+function getProviderOrder(): string[] {
+  return (process.env.AI_PROVIDER_ORDER || '')
+    .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+}
+
+function providerConfigured(name: string): boolean {
+  return findProviderDef(name)?.configured ?? false;
+}
+
+function envVarFor(name: string): string {
+  return findProviderDef(name)?.keyEnvVar ?? 'AI_PROVIDER';
+}
+
+/** Ordered provider DEFS to attempt for a request (honours AI_PROVIDER / _ORDER). */
+function orderedProviderDefs(): ProviderDef[] {
+  const all = allProviderDefs();
+  const byName = (n: string) => all.find((d) => d.name === n);
+  const forced = getForcedProvider();
+  if (forced) { const d = byName(forced); return d ? [d] : []; }
+  const explicit = getProviderOrder();
+  if (explicit.length) return explicit.map(byName).filter((d): d is ProviderDef => !!d);
+  return all; // default: built-ins in priority order, then customs
 }
 
 // The provider that will actually serve a request (honours AI_PROVIDER), or
@@ -78,15 +202,7 @@ function providerConfigured(p: string): boolean {
 function activeProviderName(): string {
   const forced = getForcedProvider();
   if (forced) return providerConfigured(forced) ? forced : `${forced} (key missing)`;
-  return KNOWN_PROVIDERS.find(providerConfigured) ?? 'none';
-}
-
-function envVarFor(p: string): string {
-  return p === 'gemini' ? 'GOOGLE_AI_API_KEY'
-    : p === 'claude' ? 'ANTHROPIC_API_KEY'
-    : p === 'groq' ? 'GROQ_API_KEY'
-    : p === 'openai' ? 'OPENAI_API_KEY'
-    : 'AI_PROVIDER';
+  return orderedProviderDefs().find((d) => d.configured)?.name ?? 'none';
 }
 
 // ─── Tool definitions (Claude tool_use format) ───────────────────────────────
@@ -654,15 +770,20 @@ async function probeOpenAICompatible(cfg: OpenAICompatConfig): Promise<{ ok: boo
 // Probe whichever provider would actually serve a request.
 async function probeActiveProvider(): Promise<Record<string, unknown>> {
   const forced = getForcedProvider();
-  const provider = forced || KNOWN_PROVIDERS.find(providerConfigured);
+  const provider = forced || orderedProviderDefs().find((d) => d.configured)?.name;
   if (!provider) return { skipped: true, reason: 'no provider configured' };
-  if (!providerConfigured(provider)) {
+  const def = findProviderDef(provider);
+  if (!def || !def.configured) {
     return { provider, skipped: true, reason: `${envVarFor(provider)} not set` };
   }
-  if (provider === 'gemini') return { provider, ...(await probeGemini()) };
-  if (provider === 'claude') return { provider, skipped: true, reason: 'no lightweight probe; sent on first chat' };
-  const cfg = provider === 'groq' ? getGroqConfig() : provider === 'openai' ? getOpenAIConfig() : null;
-  if (!cfg) return { provider, skipped: true, reason: 'unknown provider' };
+  if (def.format === 'gemini') return { provider, ...(await probeGemini()) };
+  if (def.format === 'anthropic') return { provider, skipped: true, reason: 'no lightweight probe; sent on first chat' };
+  const cfg: OpenAICompatConfig = {
+    name: def.name,
+    apiKey: def.apiKey,
+    baseUrl: def.baseUrl ?? 'https://api.openai.com/v1',
+    model: def.model,
+  };
   return { provider, ...(await probeOpenAICompatible(cfg)) };
 }
 
@@ -671,18 +792,28 @@ async function probeActiveProvider(): Promise<Record<string, unknown>> {
 
 export interface ProviderRunner { name: string; run: () => Promise<string> }
 
-export function resolveProviders(messages: Message[], tenantId: string): ProviderRunner[] {
-  const make: Record<ProviderName, () => ProviderRunner | null> = {
-    gemini: () => getGeminiKey() ? { name: 'gemini', run: () => callGeminiWithTools(messages, tenantId, SYSTEM_PROMPT) } : null,
-    claude: () => getClaudeKey() ? { name: 'claude', run: () => callClaudeWithTools(messages, tenantId, SYSTEM_PROMPT) } : null,
-    groq:   () => { const c = getGroqConfig();   return c ? { name: 'groq',   run: () => callOpenAICompatibleWithTools(messages, tenantId, SYSTEM_PROMPT, c) } : null; },
-    openai: () => { const c = getOpenAIConfig(); return c ? { name: 'openai', run: () => callOpenAICompatibleWithTools(messages, tenantId, SYSTEM_PROMPT, c) } : null; },
+/** Map a provider def to a runnable, choosing the adapter by wire format. */
+function runnerForDef(def: ProviderDef, messages: Message[], tenantId: string): ProviderRunner {
+  if (def.format === 'gemini') {
+    return { name: def.name, run: () => callGeminiWithTools(messages, tenantId, SYSTEM_PROMPT) };
+  }
+  if (def.format === 'anthropic') {
+    return { name: def.name, run: () => callClaudeWithTools(messages, tenantId, SYSTEM_PROMPT) };
+  }
+  // openai-compatible: OpenAI, Groq, Azure, and any custom local/regional model.
+  const cfg: OpenAICompatConfig = {
+    name: def.name,
+    apiKey: def.apiKey,
+    baseUrl: def.baseUrl ?? 'https://api.openai.com/v1',
+    model: def.model,
   };
-  const forced = getForcedProvider();
-  const order: string[] = forced ? [forced] : [...KNOWN_PROVIDERS];
-  return order
-    .map((k) => (KNOWN_PROVIDERS.includes(k as ProviderName) ? make[k as ProviderName]() : null))
-    .filter((r): r is ProviderRunner => r !== null);
+  return { name: def.name, run: () => callOpenAICompatibleWithTools(messages, tenantId, SYSTEM_PROMPT, cfg) };
+}
+
+export function resolveProviders(messages: Message[], tenantId: string): ProviderRunner[] {
+  return orderedProviderDefs()
+    .filter((d) => d.configured)
+    .map((d) => runnerForDef(d, messages, tenantId));
 }
 
 // ─── Friendly error mapping ───────────────────────────────────────────────────
@@ -779,15 +910,16 @@ aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) =>
 
     // Misconfigured AI_PROVIDER override — name the exact problem.
     const forced = getForcedProvider();
-    if (forced && !KNOWN_PROVIDERS.includes(forced as ProviderName)) {
+    if (forced && !isKnownProvider(forced)) {
+      const supported = knownProviderNames().join(', ');
       return res.json({
         provider: 'misconfigured',
         response:
-          `AI_PROVIDER="${forced}" غير معروف. القيم المدعومة: ${KNOWN_PROVIDERS.join(', ')}.\n\n` +
-          `Unknown AI_PROVIDER="${forced}". Supported values: ${KNOWN_PROVIDERS.join(', ')}.`,
+          `AI_PROVIDER="${forced}" غير معروف. القيم المدعومة: ${supported}.\n\n` +
+          `Unknown AI_PROVIDER="${forced}". Supported values: ${supported}.`,
       });
     }
-    if (forced && KNOWN_PROVIDERS.includes(forced as ProviderName) && !providerConfigured(forced)) {
+    if (forced && isKnownProvider(forced) && !providerConfigured(forced)) {
       return res.json({
         provider: 'misconfigured',
         response:
@@ -896,9 +1028,22 @@ aiRouter.get('/diagnostics', async (_req: AuthenticatedRequest, res: Response) =
     : process.env.Gemini_EduSaga360 ? 'Gemini_EduSaga360'
     : null;
 
+  const customProviders = parseCustomProviders().map((d) => ({
+    name: d.name,
+    format: d.format,
+    model: d.model,
+    base_url: d.baseUrl ?? null,
+    key_detected: !!d.apiKey,
+    key_source: d.keyEnvVar,
+    configured: d.configured,
+  }));
+
   const detected = {
     ai_provider_override: getForcedProvider() || null,
+    ai_provider_order: getProviderOrder().length ? getProviderOrder() : null,
     active: activeProviderName(),
+    // Order Yamen will actually try, given the current configuration.
+    resolution_order: orderedProviderDefs().filter((d) => d.configured).map((d) => d.name),
     gemini: !!getGeminiKey(),
     gemini_key_source: geminiKeySource,
     gemini_model: getGeminiModel(),
@@ -907,6 +1052,7 @@ aiRouter.get('/diagnostics', async (_req: AuthenticatedRequest, res: Response) =
     groq_model: getGroqConfig()?.model ?? null,
     openai: !!getOpenAIKey(),
     openai_model: getOpenAIConfig()?.model ?? null,
+    custom_providers: customProviders,
   };
 
   // Live probe of whichever provider would actually serve a request.
