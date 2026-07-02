@@ -120,7 +120,6 @@
     text-size-adjust: 100%;
   }
 
-  /* Ensure touch targets are at least 44px on mobile */
   button, [role="button"] {
     touch-action: manipulation;
   }
@@ -135,10 +134,42 @@
     -webkit-appearance: none;
     appearance: none;
   }
+}
 
-  /* Firefox scrollbar */
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: hsl(var(--border)) transparent;
+/*
+ * Touch-target enforcement (WCAG 2.5.5 — 44x44px).
+ * Scoped to coarse pointers so desktop density is untouched. Applies globally
+ * to every interactive control so pages inherit correct tap sizes without
+ * per-component edits. font-size:16px is a belt-and-suspenders guard against
+ * iOS Safari auto-zoom on focus for any native input that bypasses the primitive.
+ */
+@media (pointer: coarse) {
+  button,
+  [role="button"],
+  a[role="button"],
+  [role="tab"],
+  [role="menuitem"],
+  [role="menuitemcheckbox"],
+  [role="option"] {
+    min-height: 44px;
   }
+
+  /* Icon-only square controls need width too (no visible text label). */
+  button:has(> svg:only-child),
+  a[role="button"]:has(> svg:only-child) {
+    min-width: 44px;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]),
+  textarea,
+  select {
+    min-height: 44px;
+    font-size: 16px;
+  }
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
 }
