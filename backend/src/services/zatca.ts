@@ -2,6 +2,16 @@ import crypto from 'crypto';
 import QRCode from 'qrcode';
 import puppeteer from 'puppeteer';
 import { runPdfJob } from '../lib/pdfConcurrency.js';
+import { formatHijri } from '../lib/hijri.js';
+
+/** Umm al-Qura issue date for the invoice; never throws (bad dates → ''). */
+function safeHijriDate(iso: string): string {
+  try {
+    return formatHijri(iso.substring(0, 10), 'ar');
+  } catch {
+    return '';
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -526,6 +536,7 @@ function buildInvoiceHTML(
   const addressAr = tenant.address_ar || address;
   const title = invoice.invoice_type === 'credit_note' ? 'إشعار دائن / CREDIT NOTE' : 'فاتورة ضريبية / TAX INVOICE';
   const items = invoice.items || [{ description: 'Tuition Fee', amount: invoice.subtotal }];
+  const hijriIssueDate = safeHijriDate(invoice.issue_date);
 
   const itemRows = items.map((item, idx) => {
     const vatRate = item.vat_rate ?? 15;
@@ -604,7 +615,8 @@ function buildInvoiceHTML(
     <div class="meta-box">
       <h4>بيانات الفاتورة</h4>
       <div class="meta-row"><span class="meta-label">رقم الفاتورة:</span><span class="meta-value">${escapeHtml(invoice.invoice_number)}</span></div>
-      <div class="meta-row"><span class="meta-label">تاريخ الإصدار:</span><span class="meta-value">${invoice.issue_date.substring(0, 10)}</span></div>
+      <div class="meta-row"><span class="meta-label">تاريخ الإصدار (م):</span><span class="meta-value">${invoice.issue_date.substring(0, 10)}</span></div>
+      <div class="meta-row"><span class="meta-label">تاريخ الإصدار (هـ):</span><span class="meta-value">${escapeHtml(hijriIssueDate)}</span></div>
       ${invoice.uuid ? `<div class="meta-row"><span class="meta-label">UUID:</span><span class="meta-value" style="font-size:8px">${invoice.uuid}</span></div>` : ''}
     </div>
     <div class="meta-box">
