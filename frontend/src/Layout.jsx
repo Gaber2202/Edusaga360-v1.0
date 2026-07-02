@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { supabase } from './api/supabaseClient';
@@ -29,6 +30,7 @@ import {
   SelectValue,
 } from './components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from './components/ui/sheet';
+import PullToRefresh from './components/ui/PullToRefresh';
 import {
   Collapsible,
   CollapsibleContent,
@@ -101,6 +103,7 @@ function LayoutContent({ children, currentPageName }) {
   const { user, userRole, canAccess: _canAccess, loading, isTrial, isCreator } = useRole();
   const { tenant, isTenantActive, isModuleEnabled: _isModuleEnabled } = useTenant();
   const { branches, selectedBranchId, selectBranch } = useBranch();
+  const queryClient = useQueryClient();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
@@ -371,6 +374,16 @@ function LayoutContent({ children, currentPageName }) {
   // Primary bottom-nav slots come from whatever the user can actually reach —
   // never a hardcoded list that shows RBAC-blocked pages. Cap at 4 + "More".
   const bottomNavItems = filteredNavigation.filter(navTarget).slice(0, 4);
+
+  // Pull-to-refresh: refetch every active query so the current screen's data
+  // updates regardless of which page is mounted. Small floor so the spinner
+  // reads as a deliberate refresh rather than a flicker.
+  const handleRefresh = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries(),
+      new Promise((resolve) => setTimeout(resolve, 400)),
+    ]);
+  };
 
   const handleLogout = async () => {
     try {
@@ -729,14 +742,20 @@ function LayoutContent({ children, currentPageName }) {
         )}
 
         {/* Page Content.
-            Bottom padding clears the fixed mobile bottom nav (3.5rem) PLUS the
-            iOS home-indicator safe-area inset, so the last row of content and
-            any action buttons scroll fully above the nav instead of hiding
-            behind it (where the nav also used to swallow taps). */}
-        <main className="flex-1 w-full p-2 sm:p-4 lg:p-6 bg-sand overflow-hidden overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-6">
-          <div className="w-full min-h-full">
-            <TenantAccessGate>{children}</TenantAccessGate>
-          </div>
+            PullToRefresh is the scroll container. Bottom padding clears the
+            fixed mobile bottom nav (3.5rem) PLUS the iOS home-indicator
+            safe-area inset, so the last row of content and any action buttons
+            scroll fully above the nav instead of hiding behind it (where the
+            nav also used to swallow taps). */}
+        <main className="flex-1 w-full bg-sand overflow-hidden flex flex-col min-h-0">
+          <PullToRefresh
+            onRefresh={handleRefresh}
+            className="flex-1 w-full overflow-y-auto p-2 sm:p-4 lg:p-6 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-6"
+          >
+            <div className="w-full min-h-full">
+              <TenantAccessGate>{children}</TenantAccessGate>
+            </div>
+          </PullToRefresh>
         </main>
 
         {/* Mobile Bottom Navigation — role-aware, derived from accessible menu.
