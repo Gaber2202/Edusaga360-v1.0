@@ -16,6 +16,7 @@ import {
   InvoiceData,
   TenantData,
 } from '../services/zatca.js';
+import { PdfQueueSaturatedError } from '../lib/pdfConcurrency.js';
 
 export const invoiceRouter = Router();
 
@@ -332,6 +333,10 @@ invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Re
 
     return res.send(pdfBuffer);
   } catch (err) {
+    if (err instanceof PdfQueueSaturatedError) {
+      res.setHeader('Retry-After', '5');
+      return res.status(503).json({ message: err.message, code: err.code });
+    }
     console.error('Failed to generate invoice PDF:', err);
     return res.status(500).json({ message: 'Failed to generate invoice PDF' });
   }
