@@ -849,8 +849,8 @@ export default function Contracts() {
               <>
                 <div>
                   <h4 className="font-semibold mb-3">{t('services')}</h4>
-                  <div className="border rounded-lg overflow-hidden">
-                    <table className="w-full">
+                  <div className="border rounded-lg overflow-x-auto">
+                    <table className="w-full min-w-[480px]">
                       <thead className="bg-sand">
                         <tr>
                           <th className="p-2 text-start">{isRTL ? 'الخدمة' : 'Service'}</th>

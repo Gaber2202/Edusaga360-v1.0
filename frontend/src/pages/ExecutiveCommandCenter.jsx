@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import { Button } from '../components/ui/button';
 import StatCard from '../components/ui/StatCard';
+import ExportMenu from '../components/ui/ExportMenu';
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
@@ -88,6 +89,7 @@ function DataQualityNote({ quality, isRTL }) {
 
 export default function ExecutiveCommandCenter() {
   const { t, isRTL } = useLanguage();
+  const dashboardRef = useRef(null);
 
   const [access, setAccess] = useState(null);
   const [accessLoading, setAccessLoading] = useState(true);
@@ -219,7 +221,7 @@ export default function ExecutiveCommandCenter() {
   }
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} className="p-4 md:p-6 space-y-6">
+    <div dir={isRTL ? 'rtl' : 'ltr'} className="p-4 md:p-6 space-y-6" ref={dashboardRef}>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-najdi-900 flex items-center justify-center">
@@ -231,7 +233,8 @@ export default function ExecutiveCommandCenter() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <ExportMenu targetRef={dashboardRef} filename="executive-command-center" />
           {requiresTenantSelection && (
             <>
               <span className="text-sm text-muted-foreground">{isRTL ? 'المدرسة' : 'School'}</span>

@@ -130,8 +130,48 @@ export function DataTable({
     );
   }
 
+  // On phones the horizontal-scroll table loses too much context, so render a
+  // stacked card per row instead. A column can set `primary: true` to headline
+  // the card, `hideOnMobileCard: true` to drop from cards, and columns with no
+  // header (e.g. an actions column) render full-width without a label.
+  const primaryCol = columns.find((c) => c.primary) || columns[0];
+  const cardBodyCols = columns.filter((c) => c !== primaryCol && !c.hideOnMobileCard);
+
   return (
-    <div className="bg-white rounded-xl border border-border overflow-hidden">
+    <>
+    {/* Mobile: stacked cards */}
+    <div className="md:hidden space-y-3" dir={isRTL ? 'rtl' : 'ltr'}>
+      {sortedData.map((row, i) => (
+        <div
+          key={row.id || i}
+          onClick={() => onRowClick && onRowClick(row)}
+          className={`bg-white rounded-xl border border-border p-4 ${onRowClick ? 'cursor-pointer active:bg-sand' : ''}`}
+        >
+          {primaryCol && (
+            <div className="font-semibold text-ink text-base mb-2 break-words">
+              {primaryCol.cell ? primaryCol.cell(row) : row[primaryCol.accessorKey]}
+            </div>
+          )}
+          <dl className="grid grid-cols-2 gap-x-3 gap-y-2">
+            {cardBodyCols.map((col, j) => {
+              const value = col.cell ? col.cell(row) : row[col.accessorKey];
+              const noLabel = !col.header;
+              return (
+                <div key={j} className={`min-w-0 ${noLabel ? 'col-span-2' : ''}`}>
+                  {!noLabel && (
+                    <dt className="text-xs text-muted-foreground truncate">{col.header}</dt>
+                  )}
+                  <dd className="text-sm text-ink break-words">{value}</dd>
+                </div>
+              );
+            })}
+          </dl>
+        </div>
+      ))}
+    </div>
+
+    {/* Tablet / desktop: table with horizontal scroll + sticky header */}
+    <div className="hidden md:block bg-white rounded-xl border border-border overflow-hidden">
       <div className="overflow-x-auto" dir={isRTL ? 'rtl' : 'ltr'}>
         <Table className="w-full" style={{ minWidth: '600px' }}>
           <TableHeader className="sticky top-0 z-10 bg-sand">
@@ -181,6 +221,7 @@ export function DataTable({
         </Table>
       </div>
     </div>
+    </>
   );
 }
 

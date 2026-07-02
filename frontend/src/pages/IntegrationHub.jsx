@@ -212,8 +212,8 @@ export default function IntegrationHub() {
           </p>
 
           {/* Log Table */}
-          <div className="rounded-lg border overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="rounded-lg border overflow-x-auto">
+            <table className="w-full text-sm min-w-[560px]">
               <thead className="bg-sand border-b">
                 <tr>
                   <th className="text-start py-2.5 px-3 font-medium text-muted-foreground">{isRTL ? 'الوقت' : 'Time'}</th>
