@@ -472,11 +472,15 @@ function LayoutContent({ children, currentPageName }) {
   );
 
   return (
-    <div className={`flex h-screen bg-sand ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className={`flex h-[100dvh] bg-sand ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       <style>{`
-        html, body, #root { 
+        html, body, #root {
           width: 100%;
-          height: 100%;
+          /* Use the dynamic viewport height so the app is exactly as tall as the
+             *visible* area on mobile — 100vh includes the space behind the
+             browser toolbar, which pushed the bottom nav (and the last row of
+             page content/buttons) off-screen where overflow:hidden trapped it. */
+          height: 100dvh;
           margin: 0;
           padding: 0;
           overflow: hidden;
@@ -724,15 +728,21 @@ function LayoutContent({ children, currentPageName }) {
           </div>
         )}
 
-        {/* Page Content */}
-        <main className="flex-1 w-full p-2 sm:p-4 lg:p-6 bg-sand overflow-hidden overflow-y-auto pb-16 lg:pb-6">
-          <div className="w-full h-full">
+        {/* Page Content.
+            Bottom padding clears the fixed mobile bottom nav (3.5rem) PLUS the
+            iOS home-indicator safe-area inset, so the last row of content and
+            any action buttons scroll fully above the nav instead of hiding
+            behind it (where the nav also used to swallow taps). */}
+        <main className="flex-1 w-full p-2 sm:p-4 lg:p-6 bg-sand overflow-hidden overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-6">
+          <div className="w-full min-h-full">
             <TenantAccessGate>{children}</TenantAccessGate>
           </div>
         </main>
 
-        {/* Mobile Bottom Navigation — role-aware, derived from accessible menu */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-border flex items-stretch justify-around h-14 px-1 safe-area-pb">
+        {/* Mobile Bottom Navigation — role-aware, derived from accessible menu.
+            Height = icon row (3.5rem) + safe-area inset below, so the icons are
+            never squeezed by the home indicator. */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-border flex items-stretch justify-around h-[calc(3.5rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] px-1">
           {bottomNavItems.map((item) => {
             const Icon = item.icon;
             const active = isNavActive(item);
