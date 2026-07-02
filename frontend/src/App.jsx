@@ -1,27 +1,19 @@
+import React, { Suspense } from 'react';
 import { Toaster } from './components/ui/sonner';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClientInstance } from './lib/query-client';
 import NavigationTracker from './lib/NavigationTracker';
-import { pagesConfig } from './pages.config';
+import Layout from './Layout.jsx';
+import { getPageLoaders } from './pageModules';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import UserNotRegisteredError from './components/UserNotRegisteredError';
-import SuperAdminDashboard from './pages/SuperAdminDashboard';
-import SubscriptionManagement from './pages/SubscriptionManagement';
-import ClientSubscription from './pages/ClientSubscription';
+// Public / auth-entry pages stay eagerly imported — they're on the
+// unauthenticated critical path and are rendered outside the Suspense boundary.
 import OnboardingWizard from './pages/OnboardingWizard';
 import RegistrationWizard from './pages/RegistrationWizard';
 import ParentSignContractPage from './pages/ParentSignContract';
-import FinanceDashboard from './pages/FinanceDashboard';
-import TrialBalance from './pages/TrialBalance';
-import MonthEndClose from './pages/MonthEndClose';
-import FinancialStatements from './pages/FinancialStatements';
-import HRManagerDashboard from './pages/HRManagerDashboard';
-import EOSBCalculator from './pages/EOSBCalculator';
-import IntegrationHub from './pages/IntegrationHub';
-import AdminMessaging from './pages/AdminMessaging';
-
 import InstitutionSetup from './pages/InstitutionSetup';
 import Register from './pages/Register';
 import SetupAccount from './pages/SetupAccount';
@@ -31,9 +23,33 @@ import ResetPassword from './pages/ResetPassword';
 import { useRole } from './components/RoleContext';
 import { isPlatformOwner } from './lib/authHelpers';
 
-const { Pages, Layout, mainPage } = pagesConfig;
-const mainPageKey = mainPage ?? Object.keys(Pages)[0];
-const MainPage = mainPageKey ? Pages[mainPageKey] : () => <></>;
+// Every page under ./pages is lazy-loaded (its own chunk) and rendered inside a
+// Suspense boundary, so navigating to a route only downloads that page.
+const Pages = Object.fromEntries(
+  Object.entries(getPageLoaders()).map(([name, loader]) => [name, React.lazy(loader)])
+);
+const mainPageKey = 'Dashboard';
+const MainPage = Pages[mainPageKey] ?? (() => <></>);
+
+// Lazy pages that also have explicit (guarded / aliased) routes below.
+const SuperAdminDashboard = Pages.SuperAdminDashboard;
+const SubscriptionManagement = Pages.SubscriptionManagement;
+const ClientSubscription = Pages.ClientSubscription;
+const FinanceDashboard = Pages.FinanceDashboard;
+const TrialBalance = Pages.TrialBalance;
+const MonthEndClose = Pages.MonthEndClose;
+const FinancialStatements = Pages.FinancialStatements;
+const HRManagerDashboard = Pages.HRManagerDashboard;
+const EOSBCalculator = Pages.EOSBCalculator;
+const IntegrationHub = Pages.IntegrationHub;
+const AdminMessaging = Pages.AdminMessaging;
+
+// Spinner shown while a lazy page chunk downloads.
+const PageFallback = () => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="w-8 h-8 border-4 border-border border-t-najdi-700 rounded-full animate-spin"></div>
+  </div>
+);
 
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
@@ -109,6 +125,7 @@ const AuthenticatedApp = () => {
   }
 
   return (
+    <Suspense fallback={<PageFallback />}>
     <Routes>
       <Route path="/" element={
         <LayoutWrapper currentPageName={mainPageKey}>
@@ -156,6 +173,7 @@ const AuthenticatedApp = () => {
 
       <Route path="*" element={<PageNotFound />} />
     </Routes>
+    </Suspense>
   );
 };
 

@@ -1,13 +1,12 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import { pagesConfig } from '../pages.config';
+import { pageNames } from '../pageModules';
 
 export default function NavigationTracker() {
     const location = useLocation();
     const { isAuthenticated } = useAuth();
-    const { Pages, mainPage } = pagesConfig;
-    const mainPageKey = mainPage ?? Object.keys(Pages)[0];
+    const mainPageKey = 'Dashboard';
 
     // Log user activity when navigating to a page
     useEffect(() => {
@@ -21,9 +20,8 @@ export default function NavigationTracker() {
             // Remove leading slash and get the first segment
             const pathSegment = pathname.replace(/^\//, '').split('/')[0];
 
-            // Try case-insensitive lookup in Pages config
-            const pageKeys = Object.keys(Pages);
-            const matchedKey = pageKeys.find(
+            // Try case-insensitive lookup against known page names
+            const matchedKey = pageNames.find(
                 key => key.toLowerCase() === pathSegment.toLowerCase()
             );
 
