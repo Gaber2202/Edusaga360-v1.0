@@ -363,6 +363,15 @@ function LayoutContent({ children, currentPageName }) {
     return item;
   });
 
+  // Resolve a tappable target page for a top-level nav item (its own page, or
+  // the first accessible child). Used to build a role-aware mobile bottom nav.
+  const navTarget = (item) => item.page || item.children?.find((c) => c.page)?.page;
+  const isNavActive = (item) =>
+    item.page === currentPageName || item.children?.some((c) => c.page === currentPageName);
+  // Primary bottom-nav slots come from whatever the user can actually reach —
+  // never a hardcoded list that shows RBAC-blocked pages. Cap at 4 + "More".
+  const bottomNavItems = filteredNavigation.filter(navTarget).slice(0, 4);
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -596,6 +605,26 @@ function LayoutContent({ children, currentPageName }) {
                   </div>
                 </div>
               </div>
+              {/* Branch selector — surfaced here since it's hidden from the
+                  compact mobile header, so branch switching stays reachable. */}
+              {branches.length > 0 && (
+                <div className="px-3 py-3 border-b border-border flex-shrink-0">
+                  <Select value={selectedBranchId || 'all'} onValueChange={selectBranch}>
+                    <SelectTrigger className="w-full bg-white text-sm">
+                      <Building2 className="w-4 h-4 flex-shrink-0" />
+                      <SelectValue placeholder={t('selectBranch')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('allBranches')}</SelectItem>
+                      {branches.map(branch => (
+                        <SelectItem key={branch.id} value={branch.id}>
+                          {isRTL ? branch.name_ar : branch.name_en || branch.name_ar}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="flex-1 overflow-y-auto">
                 <NavItems mobile />
               </div>
@@ -702,23 +731,31 @@ function LayoutContent({ children, currentPageName }) {
           </div>
         </main>
 
-        {/* Mobile Bottom Navigation */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-border flex items-center justify-around h-14 px-2 safe-area-pb">
-          {[
-            { icon: LayoutDashboard, page: 'Dashboard', labelAr: 'الرئيسية', label: 'Home' },
-            { icon: Users, page: 'Students', labelAr: 'الطلاب', label: 'Students' },
-            { icon: CreditCard, page: 'Fees', labelAr: 'الرسوم', label: 'Fees' },
-            { icon: Users, page: 'Employees', labelAr: 'الموظفون', label: 'Staff' },
-            { icon: Settings, page: 'Settings', labelAr: 'الإعدادات', label: 'Settings' },
-          ].map(({ icon: Icon, page, label, labelAr }) => {
-            const active = currentPageName === page;
+        {/* Mobile Bottom Navigation — role-aware, derived from accessible menu */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-border flex items-stretch justify-around h-14 px-1 safe-area-pb">
+          {bottomNavItems.map((item) => {
+            const Icon = item.icon;
+            const active = isNavActive(item);
             return (
-              <Link key={page} to={createPageUrl(page)} className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${active ? 'text-najdi-700' : 'text-muted-foreground'}`}>
-                <Icon className="w-5 h-5" />
-                <span className="text-[10px] font-medium">{isRTL ? labelAr : label}</span>
+              <Link
+                key={item.name}
+                to={createPageUrl(navTarget(item))}
+                className={`flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 px-1 py-1.5 rounded-lg transition-colors ${active ? 'text-najdi-700' : 'text-muted-foreground'}`}
+              >
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                <span className="text-[11px] font-medium leading-none truncate max-w-full">{t(item.name)}</span>
               </Link>
             );
           })}
+          {/* "More" opens the full slide-out drawer so every module stays reachable */}
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            className="flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 px-1 py-1.5 rounded-lg text-muted-foreground transition-colors"
+          >
+            <Menu className="w-5 h-5 flex-shrink-0" />
+            <span className="text-[11px] font-medium leading-none truncate max-w-full">{isRTL ? 'المزيد' : 'More'}</span>
+          </button>
         </nav>
       </div>
 

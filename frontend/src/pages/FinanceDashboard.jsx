@@ -9,6 +9,7 @@ import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import ChartState from '../components/ui/ChartState';
 import { format, startOfYear } from 'date-fns';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -60,23 +61,29 @@ export default function FinanceDashboard() {
   const ytdStart = format(startOfYear(new Date()), 'yyyy-MM-dd');
   const today = format(new Date(), 'yyyy-MM-dd');
 
-  const { data: journalEntries = [] } = useQuery({
+  const { data: journalEntries = [], isLoading: jeLoading, isError: jeError, refetch: refetchJe } = useQuery({
     queryKey: ['je-dashboard', tenantId],
     queryFn: () => fetchData(tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter({ status: 'posted' })))),
     enabled: hasTenantAccess,
   });
 
-  const { data: invoices = [] } = useQuery({
+  const { data: invoices = [], isLoading: invLoading, isError: invError, refetch: refetchInv } = useQuery({
     queryKey: ['invoices-dashboard', tenantId],
     queryFn: () => fetchData(tenantQuery('invoices').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 
-  const { data: payments = [] } = useQuery({
+  const { data: payments = [], isLoading: payLoading, isError: payError, refetch: refetchPay } = useQuery({
     queryKey: ['payments-dashboard', tenantId],
     queryFn: () => fetchData(tenantQuery('payments').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
+
+  // Aggregate signals for the analytics charts so a silently-failed query shows
+  // an error/retry state instead of a misleading all-zero chart.
+  const chartsLoading = jeLoading || invLoading || payLoading;
+  const chartsError = jeError || invError || payError;
+  const refetchCharts = () => { refetchJe(); refetchInv(); refetchPay(); };
 
   const { data: apBills = [] } = useQuery({
     queryKey: ['apbills-dashboard', tenantId],
@@ -289,17 +296,19 @@ export default function FinanceDashboard() {
             <CardTitle className="text-sm">{isRTL ? 'الإيرادات مقابل التحصيل (شهري)' : 'Revenue vs Collections (Monthly)'}</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={monthlyData} margin={{ top: 0, right: 0, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="month" tickFormatter={fmtM} tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} tickFormatter={v => (v/1000).toFixed(0) + 'K'} />
-                <Tooltip formatter={(v) => SAR(v)} labelFormatter={fmtM} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="revenue" name={isRTL ? 'الإيرادات' : 'Revenue'} fill="#10b981" radius={[4,4,0,0]} />
-                <Bar dataKey="collected" name={isRTL ? 'المحصّل' : 'Collected'} fill="#3b82f6" radius={[4,4,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <ChartState loading={chartsLoading} error={chartsError} isEmpty={!monthlyData.length} height={220} onRetry={refetchCharts}>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={monthlyData} margin={{ top: 0, right: 0, left: -10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="month" tickFormatter={fmtM} tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} tickFormatter={v => (v/1000).toFixed(0) + 'K'} />
+                  <Tooltip formatter={(v) => SAR(v)} labelFormatter={fmtM} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="revenue" name={isRTL ? 'الإيرادات' : 'Revenue'} fill="#10b981" radius={[4,4,0,0]} />
+                  <Bar dataKey="collected" name={isRTL ? 'المحصّل' : 'Collected'} fill="#3b82f6" radius={[4,4,0,0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartState>
           </CardContent>
         </Card>
 
@@ -309,7 +318,7 @@ export default function FinanceDashboard() {
             <CardTitle className="text-sm">{isRTL ? 'توزيع الإيرادات' : 'Revenue Breakdown'}</CardTitle>
           </CardHeader>
           <CardContent>
-            {revenuePie.length > 0 ? (
+            <ChartState loading={chartsLoading} error={chartsError} isEmpty={!revenuePie.length} height={220} onRetry={refetchCharts}>
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie data={revenuePie} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={10}>
@@ -318,11 +327,7 @@ export default function FinanceDashboard() {
                   <Tooltip formatter={(v) => SAR(v)} />
                 </PieChart>
               </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-[220px] text-muted-foreground text-sm">
-                {isRTL ? 'لا بيانات' : 'No data'}
-              </div>
-            )}
+            </ChartState>
           </CardContent>
         </Card>
       </div>
