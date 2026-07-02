@@ -296,11 +296,15 @@ intakeRouter.post('/verify-documents/:applicationId', requireRole(['admin', 'adm
       return res.status(400).json({ error: 'verified_documents array required' });
     }
 
-    // Fetch current application
+    // Fetch current application — RF-006: scope to the caller's tenant so a
+    // staff user cannot verify/mutate another tenant's application by guessing
+    // its id (IDOR). A cross-tenant id now resolves to 404, not another school's
+    // record.
     const { data: app, error: appError } = await supabase
       .from('applications')
       .select('*')
       .eq('id', applicationId)
+      .eq('tenant_id', req.user!.tenant_id)
       .single();
 
     if (appError || !app) return res.status(404).json({ error: 'Application not found' });
@@ -324,22 +328,23 @@ intakeRouter.post('/verify-documents/:applicationId', requireRole(['admin', 'adm
     const newDocStatus = allComplete ? 'documents_complete' : 'pending_physical_verification';
     const newPipelineStage = allComplete ? 'under_review' : app.pipeline_stage;
 
-    // Update application
+    // Update application — RF-006: keep the write tenant-scoped (defence in depth).
     await supabase.from('applications').update({
       documents: allDocs,
       document_status: newDocStatus,
       missing_documents: stillMissing,
       pipeline_stage: newPipelineStage,
       ...(allComplete ? { document_verified_at: new Date().toISOString(), document_verified_by: verifierId } : {}),
-    }).eq('id', applicationId);
+    }).eq('id', applicationId).eq('tenant_id', req.user!.tenant_id);
 
-    // Update student record if exists
+    // Update student record if exists — RF-006: scope by tenant, not just the
+    // body-derived application_number, so we never flip another tenant's student.
     if (app.application_number) {
       await supabase.from('students').update({
         doc_status: newDocStatus,
         missing_documents: stillMissing,
         ...(allComplete ? { status: 'active' } : {}),
-      }).eq('application_id', applicationId);
+      }).eq('application_id', applicationId).eq('tenant_id', req.user!.tenant_id);
     }
 
     // Audit

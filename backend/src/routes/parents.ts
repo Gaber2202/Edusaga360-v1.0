@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { sendEmail, isEmailConfigured } from '../services/email.js';
+import { AuthenticatedRequest } from '../middleware/auth.js';
 
 export const parentsRouter = Router();
 
@@ -32,7 +33,7 @@ const InviteParentSchema = z.object({
  * Creates a guardian record, a Supabase Auth user (invited via email),
  * and a users table record with role=parent and linked_student_ids.
  */
-parentsRouter.post('/invite', async (req, res) => {
+parentsRouter.post('/invite', async (req: AuthenticatedRequest, res) => {
   try {
     const parsed = InviteParentSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -45,6 +46,18 @@ parentsRouter.post('/invite', async (req, res) => {
     }
 
     const d = parsed.data;
+
+    // RF-006: the tenant is the caller's authenticated tenant, NOT whatever the
+    // body claims. Without this, a staff user in tenant A could pass tenant B's
+    // id and read/link/write B's guardians and students (cross-tenant IDOR).
+    // Platform owners (no tenant_id) may act on any tenant by design.
+    if (!req.user!.is_platform_owner && d.tenant_id !== req.user!.tenant_id) {
+      return res.status(403).json({
+        success: false,
+        error: 'TENANT_MISMATCH',
+        message: 'tenant_id does not match the authenticated tenant',
+      });
+    }
 
     // 1. Check if a parent user already exists for this email + tenant
     const { data: existingUsers } = await supabase
@@ -114,7 +127,8 @@ parentsRouter.post('/invite', async (req, res) => {
       await supabase
         .from('students')
         .update({ guardian_id: guardian.id })
-        .eq('id', d.student_id);
+        .eq('id', d.student_id)
+        .eq('tenant_id', d.tenant_id); // RF-006: never write a student outside the tenant
     }
 
     // 4. Create Supabase Auth user via invite (sends magic link email)
