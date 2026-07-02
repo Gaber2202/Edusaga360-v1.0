@@ -700,7 +700,11 @@ export async function generateZATCAInvoicePDF(
     const browser = await getBrowser();
     const page = await browser.newPage();
     try {
-      await page.setContent(html, { waitUntil: 'networkidle0', timeout: 15000 });
+      // The invoice HTML is fully self-contained (inline CSS, data-URI QR) — there
+      // are no external requests, so wait for 'load' rather than 'networkidle0'.
+      // networkidle0 adds a pointless 500ms idle wait and, on a cold browser, can
+      // blow the timeout for a document that is already fully rendered.
+      await page.setContent(html, { waitUntil: 'load', timeout: 30000 });
 
       const pdfUint8 = await page.pdf({
         format: 'A4',
