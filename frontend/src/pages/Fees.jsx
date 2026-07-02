@@ -187,7 +187,8 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
 
       {/* Table */}
       <div className="rounded-xl border border-border overflow-hidden bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[760px]">
           <thead className="bg-sand border-b border-border">
             <tr>
               <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'رقم الفاتورة' : 'Invoice #'}</th>
@@ -270,6 +271,7 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Pagination */}
@@ -374,7 +376,8 @@ function ArrearsTab({ token, isRTL, tenantId }) {
 
       {/* Overdue invoices */}
       <div className="rounded-xl border border-border overflow-hidden bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[560px]">
           <thead className="bg-sand border-b border-border">
             <tr>
               <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase">{isRTL ? 'الطالب' : 'Student'}</th>
@@ -410,6 +413,7 @@ function ArrearsTab({ token, isRTL, tenantId }) {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
@@ -511,7 +515,8 @@ function FeeStructuresTab({ token, isRTL, tenantId }) {
       </div>
 
       <div className="rounded-xl border border-border overflow-hidden bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[560px]">
           <thead className="bg-sand border-b border-border">
             <tr>
               <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase">{isRTL ? 'الفئة' : 'Category'}</th>
@@ -542,6 +547,7 @@ function FeeStructuresTab({ token, isRTL, tenantId }) {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       <Dialog open={showForm} onOpenChange={setShowForm}>

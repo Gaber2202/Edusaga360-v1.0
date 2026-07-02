@@ -278,8 +278,8 @@ export default function TrainingDevelopment() {
           {expiringCerts.length === 0 ? (
             <Card className="p-8 text-center text-muted-foreground">{isRTL ? 'لا توجد شهادات تنتهي خلال 60 يومًا' : 'No certifications expiring within 60 days'}</Card>
           ) : (
-            <Card className="overflow-hidden">
-              <table className="w-full text-sm">
+            <Card className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[560px]">
                 <thead className="bg-sand">
                   <tr>
                     <th className="text-start p-3">{isRTL ? 'الموظف' : 'Employee'}</th>
