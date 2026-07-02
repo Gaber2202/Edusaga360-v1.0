@@ -2,7 +2,7 @@
  * FinanceDashboard — AC#8: CFO real-time KPIs without asking Finance team
  * AC#9: Anomaly detection flagging duplicate payments / unusual transactions
  */
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
@@ -10,6 +10,8 @@ import { useBranch } from '../components/BranchContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import ChartState from '../components/ui/ChartState';
+import ExportMenu from '../components/ui/ExportMenu';
+import { useIsMobile } from '../hooks/use-mobile';
 import { format, startOfYear } from 'date-fns';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -58,6 +60,8 @@ export default function FinanceDashboard() {
   const { branchFilter } = useBranch();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
 
+  const dashboardRef = useRef(null);
+  const isMobile = useIsMobile();
   const ytdStart = format(startOfYear(new Date()), 'yyyy-MM-dd');
   const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -255,11 +259,14 @@ export default function FinanceDashboard() {
   const fmtM = (m) => m?.slice(5, 7) + '/' + m?.slice(0, 4);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" ref={dashboardRef}>
       {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-ink">{isRTL ? 'لوحة تحكم المالية' : 'Finance Dashboard'}</h1>
-        <p className="text-sm text-muted-foreground">{isRTL ? 'مؤشرات مالية لحظية — لا حاجة لطلب تقرير' : 'Real-time financial KPIs — no report requests needed'}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold text-ink">{isRTL ? 'لوحة تحكم المالية' : 'Finance Dashboard'}</h1>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'مؤشرات مالية لحظية — لا حاجة لطلب تقرير' : 'Real-time financial KPIs — no report requests needed'}</p>
+        </div>
+        <ExportMenu targetRef={dashboardRef} filename="finance-dashboard" className="flex-shrink-0" />
       </div>
 
       {/* Anomaly alerts */}
@@ -321,10 +328,25 @@ export default function FinanceDashboard() {
             <ChartState loading={chartsLoading} error={chartsError} isEmpty={!revenuePie.length} height={220} onRetry={refetchCharts}>
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
-                  <Pie data={revenuePie} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={10}>
+                  <Pie
+                    data={revenuePie}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={isMobile ? 45 : 55}
+                    outerRadius={isMobile ? 70 : 85}
+                    dataKey="value"
+                    labelLine={false}
+                    fontSize={10}
+                    /* On phones, category names overflow the slice labels, so
+                       show just the percentage and move names to the legend. */
+                    label={isMobile
+                      ? ({ percent }) => `${(percent * 100).toFixed(0)}%`
+                      : ({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
                     {revenuePie.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
                   <Tooltip formatter={(v) => SAR(v)} />
+                  {isMobile && <Legend wrapperStyle={{ fontSize: 11 }} />}
                 </PieChart>
               </ResponsiveContainer>
             </ChartState>
