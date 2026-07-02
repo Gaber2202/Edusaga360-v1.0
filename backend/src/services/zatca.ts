@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import QRCode from 'qrcode';
 import puppeteer from 'puppeteer';
+import { runPdfJob } from '../lib/pdfConcurrency.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -680,20 +681,24 @@ export async function generateZATCAInvoicePDF(
 
   const html = buildInvoiceHTML(invoice, tenant, qrDataUrl);
 
-  const browser = await getBrowser();
-  const page = await browser.newPage();
+  // RF-001a: render behind the concurrency gate so a burst can't spawn
+  // unbounded Chromium pages and OOM-kill the shared API process. When the
+  // gate is saturated this throws PdfQueueSaturatedError (→ HTTP 503).
+  return runPdfJob(async () => {
+    const browser = await getBrowser();
+    const page = await browser.newPage();
+    try {
+      await page.setContent(html, { waitUntil: 'networkidle0', timeout: 15000 });
 
-  try {
-    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 15000 });
+      const pdfUint8 = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' },
+      });
 
-    const pdfUint8 = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' },
-    });
-
-    return Buffer.from(pdfUint8);
-  } finally {
-    await page.close();
-  }
+      return Buffer.from(pdfUint8);
+    } finally {
+      await page.close();
+    }
+  });
 }
