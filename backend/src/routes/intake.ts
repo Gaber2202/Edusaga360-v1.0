@@ -9,15 +9,11 @@
  */
 
 import { Router, Response } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.js';
 import { AuthenticatedRequest, requireRole } from '../middleware/auth.js';
 
 export const intakeRouter = Router();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
 
 // Default required documents for KSA schools
 const DEFAULT_REQUIRED_DOCS = [

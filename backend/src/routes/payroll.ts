@@ -1,14 +1,10 @@
 import { Router } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import { AuthenticatedRequest, requireRole, PAYROLL_ROLES } from '../middleware/auth.js';
 
 export const payrollRouter = Router();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
 
 // ─── GOSI Rates (Saudi Labour Law / GOSI regulations) ─────────────────────
 //

@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import { AuthenticatedRequest } from '../middleware/auth.js';
 import { sanitizeSearchTerm } from '../lib/sanitize.js';
@@ -7,10 +7,6 @@ import { decryptSecret } from '../lib/aiCrypto.js';
 
 export const aiRouter = Router();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
 
 // ─── Model config ─────────────────────────────────────────────────────────────
 // Yamen's brain is PLUGGABLE. Built-in providers (Gemini, Claude, Groq, OpenAI)

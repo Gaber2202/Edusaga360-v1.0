@@ -1,14 +1,10 @@
 import { Router } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import { AuthenticatedRequest } from '../middleware/auth.js';
 
 export const notificationsRouter = Router();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
 
 const INFOBIP_API_KEY = process.env.INFOBIP_API_KEY;
 const INFOBIP_BASE_URL = 'https://5wy37y.api.infobip.com';  // per Infobip account base URL

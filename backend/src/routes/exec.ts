@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import { AuthenticatedRequest } from '../middleware/auth.js';
 import {
@@ -13,10 +13,6 @@ import { resolveProviders, Message } from './ai.js';
 
 export const execRouter = Router();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
 
 const DAY_MS = 86400000;
 const todayStr = () => new Date().toISOString().slice(0, 10);

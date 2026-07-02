@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.js';
 import crypto from 'crypto';
 import { z } from 'zod';
 import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/auth.js';
@@ -20,10 +20,6 @@ import { PdfQueueSaturatedError } from '../lib/pdfConcurrency.js';
 
 export const invoiceRouter = Router();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
 
 // ---------------------------------------------------------------------------
 // Validation schemas

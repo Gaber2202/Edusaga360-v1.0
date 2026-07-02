@@ -1,15 +1,11 @@
 import { Router, Request } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { sendEmail } from '../services/email.js';
 
 export const registrationRouter = Router();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
 
 const ADMIN_EMAIL = 'info@edusaga360.com';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://edusaga-360-production.vercel.app';

@@ -1,15 +1,11 @@
 import { Router } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.js';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { isEmailConfigured, sendPasswordResetEmail } from '../services/email.js';
 
 export const authRouter = Router();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://edusaga-360-production.vercel.app';
 

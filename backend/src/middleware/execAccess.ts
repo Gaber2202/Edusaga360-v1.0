@@ -1,11 +1,7 @@
 import { Response, NextFunction } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.js';
 import { AuthenticatedRequest } from './auth.js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
 
 export const EXEC_PERSONAS = ['ceo', 'cfo', 'coo', 'chro'] as const;
 export type ExecPersona = (typeof EXEC_PERSONAS)[number];
