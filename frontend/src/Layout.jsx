@@ -587,7 +587,7 @@ function LayoutContent({ children, currentPageName }) {
           {/* Mobile Menu */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden">
+              <Button variant="ghost" size="icon" className="lg:hidden" aria-label={isRTL ? 'فتح القائمة' : 'Open menu'}>
                 <Menu className="w-5 h-5" />
               </Button>
             </SheetTrigger>
@@ -661,7 +661,7 @@ function LayoutContent({ children, currentPageName }) {
             )}
 
             {/* Cmd+K Search */}
-            <Button variant="ghost" size="icon" onClick={() => setCmdOpen(true)} className="hidden sm:flex text-muted-foreground hover:text-ink h-9 w-9" title={isRTL ? 'بحث (Ctrl+K)' : 'Search (Ctrl+K)'}>
+            <Button variant="ghost" size="icon" onClick={() => setCmdOpen(true)} className="hidden sm:flex text-muted-foreground hover:text-ink h-9 w-9" title={isRTL ? 'بحث (Ctrl+K)' : 'Search (Ctrl+K)'} aria-label={isRTL ? 'بحث' : 'Search'}>
               <Search className="w-4 h-4" />
             </Button>
 
@@ -670,7 +670,7 @@ function LayoutContent({ children, currentPageName }) {
 
             {/* Dark Mode Toggle */}
             {/* Language Toggle */}
-            <Button variant="ghost" size="icon" onClick={toggleLanguage} className="text-muted-foreground hover:text-ink h-9 w-9">
+            <Button variant="ghost" size="icon" onClick={toggleLanguage} className="text-muted-foreground hover:text-ink h-9 w-9" aria-label={isRTL ? 'تغيير اللغة' : 'Toggle language'}>
               <Globe className="w-4 h-4" />
             </Button>
 

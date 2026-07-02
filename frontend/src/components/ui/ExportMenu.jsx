@@ -80,7 +80,7 @@ export default function ExportMenu({ targetRef, filename = 'export', className }
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" disabled={busy} className={className} data-no-export>
+        <Button variant="outline" size="sm" disabled={busy} className={className} data-no-export aria-label={isRTL ? 'تصدير' : 'Export'}>
           {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
           <span className="ms-2 hidden sm:inline">{isRTL ? 'تصدير' : 'Export'}</span>
         </Button>
