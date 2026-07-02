@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { sendEmail, isEmailConfigured } from '../services/email.js';
@@ -7,10 +7,6 @@ import { AuthenticatedRequest } from '../middleware/auth.js';
 
 export const parentsRouter = Router();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
 
 const PARENT_PORTAL_URL = process.env.PARENT_PORTAL_URL || 'https://edusaga-360-parent-portal.vercel.app';
 

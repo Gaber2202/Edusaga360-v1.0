@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/auth.js';
 import { makeLedger, sar } from '../services/ledger.js';
@@ -14,10 +14,6 @@ import {
 
 export const chequeRouter = Router();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
 
 const { postJournal } = makeLedger(supabase);
 

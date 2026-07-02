@@ -1,15 +1,11 @@
 import { Router } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { AuthenticatedRequest } from '../middleware/auth.js';
 
 export const tenantUsersRouter = Router();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
 
 const TRIAL_USER_CAP = 3; // total users allowed per tenant during trial (incl. admin)
 

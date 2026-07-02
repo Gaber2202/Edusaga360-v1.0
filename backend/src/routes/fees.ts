@@ -1,14 +1,10 @@
 import { Router } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import { AuthenticatedRequest } from '../middleware/auth.js';
 
 export const feesRouter = Router();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
 
 // VAT rate is always 15% — enforced server-side, never trusted from client
 const VAT_RATE = 0.15;

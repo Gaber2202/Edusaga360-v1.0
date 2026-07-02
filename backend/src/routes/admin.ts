@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { AuthenticatedRequest, authMiddleware } from '../middleware/auth.js';
@@ -13,10 +13,6 @@ export const adminRouter = Router();
 // requires a valid token even if the caller omits it in index.ts.
 adminRouter.use(authMiddleware);
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://edusaga-360-production.vercel.app';
 

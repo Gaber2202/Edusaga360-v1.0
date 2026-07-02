@@ -1,15 +1,11 @@
 import { Router } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import { AuthenticatedRequest } from '../middleware/auth.js';
 import { sanitizeSearchTerm } from '../lib/sanitize.js';
 
 export const marketplaceRouter = Router();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
 
 const CATEGORIES = ['books', 'uniforms', 'technology', 'maintenance', 'catering', 'transport', 'hr_services', 'other'] as const;
 

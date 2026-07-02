@@ -12,17 +12,13 @@
  */
 
 import { Router, Response } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.js';
 import { randomUUID } from 'crypto';
 import { AuthenticatedRequest } from '../middleware/auth.js';
 
 export const filesRouter = Router();
 
 // ── Supabase client (service-role — required for private bucket writes) ──────
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const BUCKET = 'tenant-files';
