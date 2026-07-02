@@ -1,0 +1,4 @@
+# Never commit captured auth/session state or run artifacts
+.auth/
+playwright-report/
+test-results/
