@@ -101,3 +101,36 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: cd backend && npm ci
       - run: cd backend && npm test
+
+  secret-scan:
+    name: Secret Scan (gitleaks)
+    runs-on: ubuntu-latest
+    # gitleaks-action reads the PR's commit list, which needs pull-requests: read.
+    # The workflow-level default (contents: read) is not enough on its own.
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Blocking: a committed secret must fail CI before it reaches main.
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dependency-audit:
+    name: Dependency Audit (advisory)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # Advisory (non-blocking): surfaces known CVEs at high+ severity without
+      # blocking merges on unfixable transitive advisories. Review the summary.
+      - name: npm audit (frontend)
+        run: cd frontend && npm audit --audit-level=high || true
+      - name: npm audit (backend)
+        run: cd backend && npm audit --audit-level=high || true
