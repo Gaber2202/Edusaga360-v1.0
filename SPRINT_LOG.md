@@ -24,6 +24,18 @@ Top-priority remaining code item (P1 security). Closes prior findings 2B-2/3B-1.
   (2 unrelated full-suite failures are pre-existing puppeteer PDF timeouts under
   parallel load — verified passing 17/17 in isolation.)
 
+### Integration readiness — OpenAPI 3.1 spec published
+- Published `docs/api/openapi.yaml` (OpenAPI 3.1) covering the core operations,
+  grounded in the real route handlers: health, fees invoices/payments, ZATCA
+  submit, subscription payment-link + webhook, leave submit/approve, admin
+  tenants — with the bearer-JWT security scheme, error envelope, rate limits, and
+  tenant-isolation documented. Validated (parses, all `$ref`s resolve). Linked
+  from `docs/compliance/API_GUIDE.md`.
+- **Deliberately NOT done this session:** the payment-path *adapter refactor*
+  (Moyasar behind a `PaymentProvider` interface + Tap/HyperPay). It touches live
+  money code and is better done in a fresh, focused pass than rushed — flagged as
+  the next engineering item.
+
 ---
 
 ## Day 2 — 2026-07-04 (in progress)

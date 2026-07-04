@@ -1,0 +1,291 @@
+openapi: 3.1.0
+info:
+  title: EduSaga 360 API
+  version: "1.0.0"
+  description: |
+    REST API for EduSaga 360 — multi-tenant K-12 school ERP.
+
+    **Status & scope.** This spec documents the *current* backend surface
+    (Express, deployed on Railway). It is **unversioned** today; a stable
+    `/api/v1/*` surface is planned. Endpoints and schemas here reflect the live
+    route handlers under `backend/src/routes/` and are accurate at the time of
+    writing, but treat unversioned endpoints as subject to change.
+
+    **Authentication.** All non-public endpoints require a Supabase-issued JWT as
+    a Bearer token. Tenant scope and role are read server-side from the token's
+    `app_metadata` (never from user-writable metadata). A request with no valid
+    token returns 401; a valid token with no tenant returns 403.
+
+    **Tenant isolation.** Every query is scoped to the caller's `tenant_id`,
+    backed by row-level security on all tables. A caller can only ever read or
+    write their own tenant's data.
+
+    **Rate limits.** Authenticated API: 120 requests/minute. Public registration:
+    5 requests / 15 minutes. `429` responses carry standard `RateLimit-*` headers.
+servers:
+  - url: https://api.edusaga360.com
+    description: Production (illustrative host)
+  - url: http://localhost:3001
+    description: Local development
+
+tags:
+  - name: Health
+  - name: Fees & Billing
+  - name: Subscription & Payments
+  - name: HR / Leave
+  - name: Platform Admin
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/health:
+    get:
+      tags: [Health]
+      summary: Liveness probe + active AI provider
+      security: []
+      responses:
+        "200":
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  timestamp: { type: string, format: date-time }
+                  version: { type: string, example: "1.0.0" }
+                  ai_provider: { type: string, example: groq }
+
+  /api/fees/invoices:
+    post:
+      tags: [Fees & Billing]
+      summary: Create an invoice (VAT enforced server-side at 15%)
+      description: Requires a finance role (admin, cfo, accountant, finance).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateInvoice" }
+      responses:
+        "201": { description: Invoice created, content: { application/json: { schema: { $ref: "#/components/schemas/Invoice" } } } }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Student not found, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+    get:
+      tags: [Fees & Billing]
+      summary: List invoices (paginated)
+      parameters:
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: limit, in: query, schema: { type: integer, default: 20, maximum: 100 } }
+        - { name: status, in: query, schema: { type: string } }
+        - { name: student_id, in: query, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: A page of invoices }
+
+  /api/fees/payments:
+    post:
+      tags: [Fees & Billing]
+      summary: Record a payment against an invoice
+      description: Requires a finance role. Amount is validated against the outstanding balance server-side.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RecordPayment" }
+      responses:
+        "201": { description: Payment recorded }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Invoice not found }
+
+  /api/billing/invoices/{id}/zatca-submit:
+    post:
+      tags: [Fees & Billing]
+      summary: Submit an invoice to ZATCA (clearance for B2B, reporting for B2C)
+      description: Requires a finance role. See docs/compliance/ZATCA_PHASE2.md.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: Submission result (status pending/reported/cleared/error) }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Invoice not found }
+
+  /api/subscription/orders/{id}/payment-link:
+    post:
+      tags: [Subscription & Payments]
+      summary: Create a Moyasar hosted payment link for a subscription order
+      description: Requires the admin role. Returns a hosted Moyasar invoice URL.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                callback_url: { type: string, format: uri, description: Where Moyasar redirects the browser after payment. }
+      responses:
+        "200":
+          description: Payment link created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment_url: { type: string, format: uri }
+                  moyasar_invoice_id: { type: string }
+        "400": { description: Order not in pending_payment state }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "502": { description: Payment gateway error }
+
+  /api/subscription/webhook/moyasar:
+    post:
+      tags: [Subscription & Payments]
+      summary: Moyasar payment webhook (server-to-server)
+      description: |
+        Applies a plan/seat upgrade when a payment is confirmed. Verifies a shared
+        secret (`MOYASAR_WEBHOOK_SECRET`) and the paid amount server-side before
+        applying anything; idempotent. Not for public/manual use.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id: { type: string }
+                status: { type: string, example: paid }
+                amount: { type: integer, description: Paid amount in halalas. }
+                secret_token: { type: string }
+                metadata:
+                  type: object
+                  properties:
+                    order_id: { type: string }
+                    tenant_id: { type: string }
+                    type: { type: string, example: subscription }
+      responses:
+        "200": { description: Received (and applied when valid) }
+        "400": { description: Amount mismatch — not applied }
+        "401": { description: Invalid or missing webhook secret }
+        "404": { description: Order not found }
+
+  /api/leave/submit:
+    post:
+      tags: [HR / Leave]
+      summary: Submit a leave request (self-service — any authenticated employee)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SubmitLeave" }
+      responses:
+        "201": { description: Leave request created with resolved approval chain }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "409": { description: Overlapping leave request exists }
+
+  /api/leave/requests/{id}/approve:
+    post:
+      tags: [HR / Leave]
+      summary: Approve a leave request (HR / manager / admin only)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: { note: { type: string, maxLength: 500 } }
+      responses:
+        "200": { description: Advanced a level or finally approved }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { description: Request not in an approvable state }
+
+  /api/admin/tenants:
+    get:
+      tags: [Platform Admin]
+      summary: List all tenants (platform owner only)
+      responses:
+        "200": { description: Tenants with live seat counts }
+        "403": { description: Platform owner access required }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase-issued access token. Role/tenant read from app_metadata.
+
+  responses:
+    ValidationError:
+      description: Request body failed validation
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: Authenticated but lacks the required role
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    Error:
+      type: object
+      description: |
+        Error envelope. Handlers return `message` or `error`, plus (on validation)
+        an `errors` object. A single standardized envelope is planned for /v1.
+      properties:
+        message: { type: string }
+        error: { type: string }
+        errors: { type: object, additionalProperties: true }
+
+    FeeItem:
+      type: object
+      required: [description, amount]
+      properties:
+        description: { type: string, minLength: 1 }
+        amount: { type: number, exclusiveMinimum: 0 }
+
+    CreateInvoice:
+      type: object
+      required: [student_id, fee_items]
+      properties:
+        student_id: { type: string, format: uuid }
+        fee_items:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/FeeItem" }
+        discount: { type: number, minimum: 0, default: 0 }
+        due_date: { type: string, format: date }
+
+    RecordPayment:
+      type: object
+      required: [invoice_id, amount, payment_method]
+      properties:
+        invoice_id: { type: string, format: uuid }
+        amount: { type: number, exclusiveMinimum: 0 }
+        payment_method: { type: string, enum: [cash, bank_transfer, card, online] }
+        reference: { type: string }
+
+    SubmitLeave:
+      type: object
+      required: [leave_type_id, start_date, end_date]
+      properties:
+        leave_type_id: { type: string, format: uuid }
+        start_date: { type: string, format: date }
+        end_date: { type: string, format: date }
+        reason: { type: string, maxLength: 1000 }
+
+    Invoice:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        invoice_number: { type: string, example: "INV-2026-000042" }
+        total_amount: { type: number }
+        vat_amount: { type: number }
+        vat_rate: { type: number, example: 0.15 }
+        status: { type: string, example: issued }

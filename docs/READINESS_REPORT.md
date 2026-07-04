@@ -31,7 +31,7 @@ Arrows show movement from sprint start → after Day 1 + Day 2 merges.
 | CI/CD | **8.5** (↑ 8) | Lint + typecheck + build + test both apps; secret scan (blocking) + dep audit (advisory) added and **green**. Staging/prod deploy workflows exist. |
 | Observability | 5 | Frontend Sentry wired behind env; backend logging structured but console-based; no backend error tracker yet (BLOCKERS). |
 | ZATCA Compliance | 7 | UBL/QR/signing logic present with golden-file tests; not validated against the live simulation portal (no sandbox creds). |
-| Integration Readiness | 6 | Payments abstracted around Moyasar; gov integrations are honest stubs behind interfaces; no published OpenAPI spec yet. |
+| Integration Readiness | **6.5** (↑ 6) | Payments around Moyasar; gov integrations honest stubs; **OpenAPI 3.1 spec now published** (`docs/api/openapi.yaml`). Payment adapter refactor + `/v1` still pending. |
 | Documentation | 8 | Extensive existing docs + this sprint's audit trail (`AUDIT_REPORT`, `RLS_AUDIT`, `BLOCKERS`, `SPRINT_LOG`); compliance guide set not yet produced. |
 
 **Overall: production-capable for a controlled client demo, with a short,

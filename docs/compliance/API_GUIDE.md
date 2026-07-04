@@ -10,9 +10,14 @@ All business endpoints live under `/api/*`. Authentication is a **Supabase JWT**
 (Bearer token); tenant scope and role come from the token's `app_metadata`.
 
 **Current maturity (honest):**
-- ⛔ There is **no versioned `/api/v1/…` surface** yet and **no published OpenAPI
-  3.1 spec** — these are named in the sprint plan as still-to-do. Endpoints today
-  are the internal app API; treat them as **unversioned and subject to change**.
+- ✅ A machine-readable **OpenAPI 3.1 spec** is published at
+  [`docs/api/openapi.yaml`](../api/openapi.yaml), covering the core operations
+  (health, fees/invoices/payments, ZATCA submit, subscription payment-link +
+  webhook, leave submit/approve, admin tenants). Load it into Swagger UI, Postman,
+  or Insomnia to explore.
+- ⛔ There is still **no versioned `/api/v1/…` surface** — the spec documents the
+  current **unversioned** app API; treat those endpoints as subject to change
+  until `/v1` is cut.
 - ✅ Auth, tenant isolation, and rate limiting are in place.
 
 ## Authentication
@@ -104,7 +109,8 @@ during the readiness sprint).
 
 ## Gaps (planned `/v1` work)
 
-- ⛔ Versioned `/api/v1/*` surface + **OpenAPI 3.1** spec (`docs/api/openapi.yaml`).
+- ✅ **OpenAPI 3.1 spec published** (`docs/api/openapi.yaml`). ⛔ Versioned
+  `/api/v1/*` surface still pending (would freeze a stable contract).
 - ⛔ Per-tenant **API keys** (in addition to JWT).
 - 🟡 Standardised error envelope across all routes.
 - 🟡 A **sandbox tenant** + example collection for integrators.
