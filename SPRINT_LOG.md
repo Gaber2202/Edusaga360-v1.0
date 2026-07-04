@@ -46,6 +46,13 @@ higher-risk and will be checkpointed before applying.
   policy — risk with no reward. Documented in `docs/RLS_AUDIT.md`; intentionally
   left as-is.
 
+### Compliance guide set (DONE)
+- Produced `docs/compliance/` — five client-facing guides grounded in the actual
+  code, honest about live vs stub: **ZATCA_PHASE2**, **PDPL**, **PAYMENTS**,
+  **GOVERNMENT_INTEGRATIONS**, **API_GUIDE** (+ README index). Notable honest
+  flags surfaced: **data residency is Seoul, not KSA** (PDPL), gov integrations
+  are UI stubs, and no `/v1`/OpenAPI surface yet.
+
 ### Not done (documented, deliberately deferred)
 - **multiple_permissive_policies (258)**: each table having both `tenant_isolation`
   and `platform_owner_access` as permissive policies for the same command. Minor

@@ -9,23 +9,35 @@ observed state, not aspiration.
 
 ---
 
+## Sprint execution status (2026-07-04)
+
+- **PR #98 (Day 1) — MERGED to `main`.** Payment P0 fix + live security audit.
+- **PR #99 (Day 2) — MERGED to `main`.** Database performance (indexes + RLS).
+- **Live DB changes applied + verified** (founder-authorized): PII functions
+  locked to `service_role`; 10 FK indexes added, 1 duplicate dropped; 17 RLS
+  policies wrapped in `(select …)` with tenant isolation proven unchanged.
+
 ## Scorecard (0–10)
+
+Arrows show movement from sprint start → after Day 1 + Day 2 merges.
 
 | Area | Score | Basis |
 |------|:----:|-------|
-| Security | 7.5 | Strong auth model (app_metadata-only claims), rate limiting, helmet/CORS allowlist; one P0 payment gap fixed this pass; uneven backend RBAC remains (2B-2). |
-| Tenant Isolation | 8 | Service-role + explicit `tenant_id` scoping, RLS on 43 tables, dedicated isolation tests (`rf006-tenant-idor`, `tenant-isolation`, `rbac-isolation`). `FORCE RLS` not yet enabled (RLS-01). |
-| Schema / Performance | 7.5 | 27 ordered migrations, recent `performance_indexes` migration, atomic journal posting; some nullable tenant columns remain (1B-01). |
+| Security | **8** (↑ 7.5) | Payment P0 fixed & merged; anon-executable PII functions locked down live; gitleaks secret scan blocking in CI. Uneven backend RBAC remains (2B-2). |
+| Tenant Isolation | **8.5** (↑ 8) | Service-role + explicit `tenant_id` scoping; **all 69 tables RLS-enabled (live-verified)**; 17 policies optimized with isolation proven identical (70/16/92 probe). `FORCE RLS` still not enabled (RLS-01). |
+| Schema / Performance | **8.5** (↑ 7.5) | 10 unindexed FKs fixed + duplicate index removed + per-row RLS re-eval eliminated on the real cases — all applied live & verified. Some nullable tenant columns remain (1B-01). |
 | Frontend Quality | 7 | React 18 + code-split routes, RTL/bilingual, prior mobile-audit pass; not re-audited this sprint. |
-| Test Coverage | 8 | **311 backend tests green**, incl. money paths (VAT/GOSI, fees, billing, ZATCA golden-file) and tenant isolation; frontend has a vitest suite (run in CI). |
-| CI/CD | 8 | Lint + typecheck + build + test for both apps; added secret scan (blocking) + dep audit (advisory) this pass. Staging/prod deploy workflows exist. |
-| Observability | 5 | Frontend Sentry wired behind env; backend logging is structured but console-based; no backend error tracker yet (BLOCKERS). |
+| Test Coverage | 8 | **311 backend tests green**, incl. money paths (VAT/GOSI, fees, billing, ZATCA golden-file), tenant isolation, and the new webhook-integrity tests; frontend vitest suite runs in CI. |
+| CI/CD | **8.5** (↑ 8) | Lint + typecheck + build + test both apps; secret scan (blocking) + dep audit (advisory) added and **green**. Staging/prod deploy workflows exist. |
+| Observability | 5 | Frontend Sentry wired behind env; backend logging structured but console-based; no backend error tracker yet (BLOCKERS). |
 | ZATCA Compliance | 7 | UBL/QR/signing logic present with golden-file tests; not validated against the live simulation portal (no sandbox creds). |
 | Integration Readiness | 6 | Payments abstracted around Moyasar; gov integrations are honest stubs behind interfaces; no published OpenAPI spec yet. |
-| Documentation | 8 | Extensive existing docs + this sprint's audit trail; compliance guide set not yet produced. |
+| Documentation | 8 | Extensive existing docs + this sprint's audit trail (`AUDIT_REPORT`, `RLS_AUDIT`, `BLOCKERS`, `SPRINT_LOG`); compliance guide set not yet produced. |
 
 **Overall: production-capable for a controlled client demo, with a short,
-named list of pre-launch items.** Not "everything in the master prompt is done."
+named list of pre-launch items.** Day 1 and the Day-2 database work are merged and
+live-verified. Not "everything in the master prompt is done" — integration
+adapters, compliance guides, and load testing remain (see 30-day plan).
 
 ---
 
