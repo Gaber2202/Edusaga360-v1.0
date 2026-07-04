@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
-import { AuthenticatedRequest } from '../middleware/auth.js';
+import { AuthenticatedRequest, requireRole, HR_ROLES } from '../middleware/auth.js';
 
 export const attendancePolicyRouter = Router();
 
@@ -162,7 +162,7 @@ attendancePolicyRouter.get('/', async (req: AuthenticatedRequest, res) => {
 
 // ─── POST /api/attendance-policy — create policy ──────────────────────────────
 
-attendancePolicyRouter.post('/', async (req: AuthenticatedRequest, res) => {
+attendancePolicyRouter.post('/', requireRole(HR_ROLES), async (req: AuthenticatedRequest, res) => {
   const tenant_id = req.user!.tenant_id!;
   const parsed = PolicySchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Validation failed', errors: parsed.error.flatten() });
@@ -184,7 +184,7 @@ attendancePolicyRouter.post('/', async (req: AuthenticatedRequest, res) => {
 
 // ─── PUT /api/attendance-policy/:id — update policy ──────────────────────────
 
-attendancePolicyRouter.put('/:id', async (req: AuthenticatedRequest, res) => {
+attendancePolicyRouter.put('/:id', requireRole(HR_ROLES), async (req: AuthenticatedRequest, res) => {
   const tenant_id = req.user!.tenant_id!;
   const { id } = req.params;
   const parsed = PolicySchema.partial().safeParse(req.body);
@@ -209,7 +209,7 @@ attendancePolicyRouter.put('/:id', async (req: AuthenticatedRequest, res) => {
 
 // ─── DELETE /api/attendance-policy/:id ───────────────────────────────────────
 
-attendancePolicyRouter.delete('/:id', async (req: AuthenticatedRequest, res) => {
+attendancePolicyRouter.delete('/:id', requireRole(HR_ROLES), async (req: AuthenticatedRequest, res) => {
   const tenant_id = req.user!.tenant_id!;
   const { id } = req.params;
   const { error } = await supabase
@@ -223,7 +223,7 @@ attendancePolicyRouter.delete('/:id', async (req: AuthenticatedRequest, res) => 
 
 // ─── POST /api/attendance-policy/records — bulk mark attendance ───────────────
 
-attendancePolicyRouter.post('/records', async (req: AuthenticatedRequest, res) => {
+attendancePolicyRouter.post('/records', requireRole(HR_ROLES), async (req: AuthenticatedRequest, res) => {
   const tenant_id = req.user!.tenant_id!;
   const parsed = MarkAttendanceSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Validation failed', errors: parsed.error.flatten() });
@@ -275,7 +275,7 @@ attendancePolicyRouter.get('/records', async (req: AuthenticatedRequest, res) =>
 // applies the tenant's policy, and returns per-employee deduction amounts
 // ready to be merged into payslip_lines.
 
-attendancePolicyRouter.post('/apply', async (req: AuthenticatedRequest, res) => {
+attendancePolicyRouter.post('/apply', requireRole(HR_ROLES), async (req: AuthenticatedRequest, res) => {
   try {
     const parsed = ApplySchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: 'Validation failed', errors: parsed.error.flatten() });

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
-import { AuthenticatedRequest } from '../middleware/auth.js';
+import { AuthenticatedRequest, requireRole, STAFF_ROLES } from '../middleware/auth.js';
 
 export const notificationsRouter = Router();
 
@@ -157,7 +157,7 @@ async function logCommunication(
 
 // ─── POST /api/notifications/whatsapp — send single message ──────────────────
 
-notificationsRouter.post('/whatsapp', async (req: AuthenticatedRequest, res) => {
+notificationsRouter.post('/whatsapp', requireRole(STAFF_ROLES), async (req: AuthenticatedRequest, res) => {
   const parsed = SendWhatsAppSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Validation failed', errors: parsed.error.flatten() });
 
@@ -188,7 +188,7 @@ notificationsRouter.post('/whatsapp', async (req: AuthenticatedRequest, res) => 
 
 // ─── POST /api/notifications/whatsapp/bulk ────────────────────────────────────
 
-notificationsRouter.post('/whatsapp/bulk', async (req: AuthenticatedRequest, res) => {
+notificationsRouter.post('/whatsapp/bulk', requireRole(STAFF_ROLES), async (req: AuthenticatedRequest, res) => {
   const parsed = BulkWhatsAppSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Validation failed', errors: parsed.error.flatten() });
 
@@ -240,7 +240,7 @@ notificationsRouter.post('/whatsapp/bulk', async (req: AuthenticatedRequest, res
 
 // ─── POST /api/notifications/in-app ──────────────────────────────────────────
 
-notificationsRouter.post('/in-app', async (req: AuthenticatedRequest, res) => {
+notificationsRouter.post('/in-app', requireRole(STAFF_ROLES), async (req: AuthenticatedRequest, res) => {
   const parsed = InAppNotificationSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Validation failed', errors: parsed.error.flatten() });
 

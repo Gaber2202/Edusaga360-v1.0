@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
-import { AuthenticatedRequest } from '../middleware/auth.js';
+import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/auth.js';
 
 export const feesRouter = Router();
 
@@ -76,7 +76,7 @@ async function findAccount(
 
 // ─── POST /api/fees/invoices — Create invoice with server-enforced VAT ─────
 
-feesRouter.post('/invoices', async (req: AuthenticatedRequest, res) => {
+feesRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res) => {
   try {
     const parsed = CreateInvoiceSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -224,7 +224,7 @@ feesRouter.post('/invoices', async (req: AuthenticatedRequest, res) => {
 
 // ─── POST /api/fees/payments — Record payment against an invoice ───────────
 
-feesRouter.post('/payments', async (req: AuthenticatedRequest, res) => {
+feesRouter.post('/payments', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res) => {
   try {
     const parsed = RecordPaymentSchema.safeParse(req.body);
     if (!parsed.success) {

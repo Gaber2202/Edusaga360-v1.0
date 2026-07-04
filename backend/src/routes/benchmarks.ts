@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
-import { AuthenticatedRequest } from '../middleware/auth.js';
+import { AuthenticatedRequest, requireRole, EXEC_ROLES } from '../middleware/auth.js';
 
 export const benchmarksRouter = Router();
 
@@ -67,7 +67,7 @@ async function computeSnapshot(tenantId: string): Promise<Record<string, unknown
 
 // ─── POST /api/benchmarks/snapshot — recompute this tenant's snapshot ────────
 
-benchmarksRouter.post('/snapshot', async (req: AuthenticatedRequest, res) => {
+benchmarksRouter.post('/snapshot', requireRole(EXEC_ROLES), async (req: AuthenticatedRequest, res) => {
   try {
     const tenant_id  = req.user!.tenant_id!;
     const snapshot   = await computeSnapshot(tenant_id);

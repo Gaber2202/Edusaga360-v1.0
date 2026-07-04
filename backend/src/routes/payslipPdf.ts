@@ -4,7 +4,7 @@ import { z } from 'zod';
 import PDFDocument from 'pdfkit';
 import https from 'https';
 import http from 'http';
-import { AuthenticatedRequest } from '../middleware/auth.js';
+import { AuthenticatedRequest, requireRole, PAYROLL_ROLES } from '../middleware/auth.js';
 
 export const payslipPdfRouter = Router();
 
@@ -200,7 +200,7 @@ async function generatePayslipPdf(data: PayslipData): Promise<Buffer> {
   });
 }
 
-payslipPdfRouter.post('/payslip-pdf', async (req: AuthenticatedRequest, res) => {
+payslipPdfRouter.post('/payslip-pdf', requireRole(PAYROLL_ROLES), async (req: AuthenticatedRequest, res) => {
   try {
     const parsed = PayslipPdfSchema.safeParse(req.body);
     if (!parsed.success) {

@@ -5,6 +5,27 @@
 
 ---
 
+## Priority follow-up — Backend RBAC hardening (2026-07-04)
+
+Top-priority remaining code item (P1 security). Closes prior findings 2B-2/3B-1.
+
+- **Audited every `/api/*` router** for server-side role enforcement. Found 5
+  files with privileged mutations reachable by ANY authenticated user — and since
+  `parent`/`unassigned` are real roles, by external parents (create invoices,
+  record payments, pull any employee's payslip incl. salary + IBAN, send bulk
+  WhatsApp, edit HR policy, recompute salary benchmarks).
+- **Gated each** with the existing `requireRole()` middleware:
+  fees→FINANCE, payslip→PAYROLL, attendancePolicy→HR, notifications→STAFF (new
+  role set = all staff minus parent/unassigned), benchmarks→EXEC (new).
+  Self-service endpoints left open by design. `admin.ts` re-verified already
+  fully guarded.
+- **14 new tests** (`rbac-route-guards.test.ts`): denied→403, allowed→passes,
+  platform-owner bypass. Typecheck + lint clean. Affected-route suites green.
+  (2 unrelated full-suite failures are pre-existing puppeteer PDF timeouts under
+  parallel load — verified passing 17/17 in isolation.)
+
+---
+
 ## Day 2 — 2026-07-04 (in progress)
 
 ### Plan

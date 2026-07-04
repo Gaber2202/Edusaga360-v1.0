@@ -58,6 +58,22 @@ export const HR_ROLES = ['admin', 'hr_head', 'hr_admin', 'hr_officer'];
 export const FINANCE_ROLES = ['admin', 'cfo', 'accountant', 'finance'];
 export const PAYROLL_ROLES = ['admin', 'hr_head', 'hr_admin'];
 
+// Internal-staff roles — every provisioned staff role. Used to gate actions any
+// staff member may perform but EXTERNAL (`parent`) or not-yet-provisioned
+// (`unassigned`) users must not (e.g. sending school communications). This is the
+// full role taxonomy from frontend/src/lib/authHelpers.js MINUS parent+unassigned.
+// Deliberately broad to avoid breaking legitimate staff; narrow per-feature if a
+// tighter policy is desired.
+export const STAFF_ROLES = [
+  'admin', 'ceo', 'coo', 'chro', 'cfo', 'branch_manager',
+  'hr_head', 'hr_admin', 'hr_officer', 'accountant', 'finance', 'collections',
+  'crm_agent', 'content_manager', 'admissions', 'teacher', 'procurement',
+  'facilities_manager', 'auditor', 'it_admin', 'it_support', 'it_user', 'creator',
+];
+
+// Executive / leadership roles — analytics and cross-cutting snapshots.
+export const EXEC_ROLES = ['admin', 'ceo', 'coo', 'cfo', 'chro'];
+
 /**
  * Middleware factory — deny request with 403 if req.user.role is not in allowedRoles.
  * Platform owners bypass role checks (they have full access).

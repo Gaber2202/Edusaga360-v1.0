@@ -181,11 +181,39 @@ keep it that way.
   user-writable `user_metadata` — **confirmed** (`middleware/auth.ts:42-48`),
   closing the self-escalation path (prior 2B-3 / 2A-3).
 
-## Carried-over open items (from `findings_log.md`, not addressed this pass)
+### RBAC-01 — backend route RBAC coverage sweep (P1, FIXED — closes 2B-2/3B-1)
 
-- **2B-2 / 3B-1 (P1):** backend route-level RBAC is uneven — some routers rely on
-  frontend gating. `requireRole()` exists and is used in places (e.g. finance
-  routes) but is not applied uniformly. Recommend a coverage sweep.
+A full audit of the `/api/*` routers found 5 files exposing **privileged
+mutations with no server-side role check** — reachable by any authenticated
+tenant user, and since `parent`/`unassigned` are real roles, by external parents:
+
+| Route | Endpoint(s) | Now gated to |
+|-------|-------------|--------------|
+| `fees.ts` | `POST /invoices`, `POST /payments` (create invoices, record payments + journal entries) | `FINANCE_ROLES` |
+| `payslipPdf.ts` | `POST /payslip-pdf` (exposes any employee's salary + bank IBAN) | `PAYROLL_ROLES` |
+| `attendancePolicy.ts` | `POST /`, `PUT /:id`, `DELETE /:id`, `POST /records`, `POST /apply` | `HR_ROLES` |
+| `notifications.ts` | `POST /whatsapp`, `/whatsapp/bulk`, `/in-app` (external + broadcast messaging) | `STAFF_ROLES` (new) |
+| `benchmarks.ts` | `POST /snapshot` (school-wide salary + fee-collection aggregates) | `EXEC_ROLES` (new) |
+
+Applied via the existing `requireRole()` middleware (same pattern as `payroll.ts`
+/ `billing.ts`). Self-service endpoints (e.g. `notifications /my/*`, leave
+`/submit`, own-balance reads) intentionally stay open. `admin.ts` was re-verified
+as already fully guarded (`requirePlatformOwner` on every handler). Covered by 14
+new tests (`rbac-route-guards.test.ts`): denied role → 403, allowed role passes,
+platform owner bypasses.
+
+> **STAFF_ROLES assumption (confirm with product):** notifications-send is gated
+> to "any provisioned staff role" (the full taxonomy minus `parent`/`unassigned`)
+> to avoid breaking legitimate senders while closing the external-user hole. If a
+> tighter comms policy is wanted (e.g. admin + front-office only), narrow
+> `STAFF_ROLES` usage on those three routes.
+
+## Carried-over open items (from `findings_log.md`)
+
+- **2A-1 (P2):** JWT forwarded as a URL query parameter on some paths.
+- **1B-01 (P2):** `users.tenant_id` still nullable (no NOT NULL constraint).
+- **INT-01:** government integrations remain stubs (documented in
+  `docs/compliance/GOVERNMENT_INTEGRATIONS.md`).
 - **2A-1 (P2):** JWT forwarded as a URL query parameter on some paths.
 - **1B-01 (P2):** `users.tenant_id` still nullable (no NOT NULL constraint).
 - **INT-01:** government integrations (GOSI/Qiwa/Nafath/Noor) remain UI stubs —
