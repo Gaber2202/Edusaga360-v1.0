@@ -89,10 +89,30 @@ are from the live performance advisor.
 3. **`multiple_permissive_policies` (258)** — consolidate; large but mechanical.
 4. **`unused_index` (98)** + **`duplicate_index` (1)** — drop after a usage window.
 
-> Why not fixed in this pass: each is a schema change to live tenant-security
-> objects. Per the sprint's prime directives, these are documented with exact fix
-> patterns rather than applied blind. They are the core of the Day-2/Day-3 DB
-> performance work.
+### Day-2 remediation outcome (2026-07-04)
+
+- **`unindexed_foreign_keys` (10) + `duplicate_index` (1): FIXED, applied live +
+  verified.** Migration `20260704_fk_covering_indexes.sql`. Advisor → 0 / 0.
+- **`auth_rls_initplan`: 54 → 37.** A live audit found only **17** policies with a
+  *bare* `auth.jwt()`/`auth.uid()` (true per-row re-evaluation). Those 17 were
+  wrapped in `(select …)` via `ALTER POLICY` (migration
+  `20260704_rls_initplan_wrap.sql`), applied live in 2 batches, with tenant
+  isolation verified **identical** before/after (audit_logs probe: A=70, B=16,
+  owner=92).
+- **The remaining 37 are a linter false positive — intentionally left as-is.**
+  They already wrap auth in an uncorrelated subquery,
+  e.g. `((tenant_id)::text = ( SELECT ((auth.jwt() -> 'app_metadata') ->> 'tenant_id')))`.
+  `EXPLAIN` on `students` confirms these run as **InitPlan** (evaluated **once per
+  query**, not per row):
+  `Filter: ((tenant_id)::text = (InitPlan 1).col1) … InitPlan 1 -> Result`.
+  The advisor flags them only because auth isn't in its preferred literal
+  `(select auth.fn())` position. Rewriting would yield **no runtime gain** while
+  churning every core tenant-isolation policy — not worth the risk. Left as-is by
+  design.
+- **`multiple_permissive_policies` (258): deferred.** Real cost is minor (two
+  InitPlan checks OR'd per query); consolidating core isolation policies is a
+  larger, higher-risk refactor best done in a dedicated reviewed effort, not
+  rushed live.
 
 ## Other security-advisor findings
 

@@ -5,6 +5,58 @@
 
 ---
 
+## Day 2 — 2026-07-04 (in progress)
+
+### Plan
+Day-2 focus is the database-performance work surfaced by the live audit
+(`docs/RLS_AUDIT.md`), in safest-first order: (1) covering indexes for unindexed
+foreign keys, (2) duplicate-index cleanup, (3) the RLS policy rewrites
+(`auth_rls_initplan` + permissive-policy consolidation) — the last of which is
+higher-risk and will be checkpointed before applying.
+
+### Done (actuals)
+- **RLSPERF-02 — FK covering indexes (DONE, applied live + verified).** Added
+  covering indexes for all **10** foreign keys the advisor flagged as unindexed
+  (cheque_status_history, dunning_log ×2, fee_structures ×4, invoice_discounts,
+  payment_plans, special_care_fees) and dropped **1** duplicate index on
+  `fee_structures`. Migration `20260704_fk_covering_indexes.sql`. Re-ran the live
+  performance advisor: **`unindexed_foreign_keys` 10 → 0, `duplicate_index` 1 → 0.**
+  (New indexes briefly show as "unused" until first queried — expected.)
+
+### Post-merge live changes applied this session (with founder authorization)
+- Applied `20260704_revoke_anon_pii_function_execute.sql` to the live DB.
+  Verified: `encrypt_*_pii()` EXECUTE now `service_role`/`postgres` only; the
+  3 SECURITY DEFINER `anon`/`authenticated` advisor warnings are **cleared**.
+- Merged PR #98 into `main` after all 8 CI checks passed (incl. the fixed
+  gitleaks job).
+
+- **RLSPERF-03 — RLS `auth_rls_initplan` wrap (DONE for the real cases, applied
+  live + verified).** The advisor showed 54; a live audit found **only 17**
+  policies still had a *bare* `auth.jwt()`/`auth.uid()` (genuine per-row
+  re-evaluation). Wrapped those 17 in `(select …)` via `ALTER POLICY` (no
+  drop-window), in 2 batches. Migration `20260704_rls_initplan_wrap.sql`.
+  **Isolation verified identical** with an `authenticated`-role probe on
+  audit_logs — tenant A = 70, tenant B = 16, platform owner = 92 — before AND
+  after both batches. Advisor: **54 → 37.**
+- **The remaining 37 are a false positive — NOT churned (deliberate).** Those
+  policies already wrap auth in an uncorrelated `(select (auth.jwt() -> …))`.
+  `EXPLAIN` on `students` proves they already run as **InitPlan** (evaluated once
+  per query, not per row). Rewriting them to the linter's preferred literal shape
+  would give **zero runtime benefit** while churning every core tenant-isolation
+  policy — risk with no reward. Documented in `docs/RLS_AUDIT.md`; intentionally
+  left as-is.
+
+### Not done (documented, deliberately deferred)
+- **multiple_permissive_policies (258)**: each table having both `tenant_isolation`
+  and `platform_owner_access` as permissive policies for the same command. Minor
+  cost (two InitPlan checks OR'd) vs. real risk of consolidating core isolation
+  policies — deferred to a dedicated, carefully-reviewed effort rather than
+  rushed live.
+- Founder dashboard actions still pending: set `MOYASAR_WEBHOOK_SECRET`, enable
+  Auth leaked-password protection.
+
+---
+
 ## Scope note (read first)
 
 EduSaga 360 has already been through several prior hardening passes (see
