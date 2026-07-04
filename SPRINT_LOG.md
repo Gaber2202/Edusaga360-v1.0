@@ -5,6 +5,29 @@
 
 ---
 
+## DevOps / DR / Load hardening (2026-07-04)
+
+Closed three definition-of-done gaps — all docs + a load script, zero runtime risk:
+
+- **`docs/DEVOPS.md`** — environments, the real CI/deploy pipeline, and 5 concrete
+  gaps found by reading the workflows (prod auto-deploys on push to `main` with
+  **no approval gate**; backend deploy step **commented out**; **no migration
+  step**; **no post-deploy smoke**; staging shares the prod Supabase project) plus
+  the branch-protection settings that make "CI blocks bad merges" actually true.
+- **`docs/RUNBOOK.md`** — 1-page incident runbook for the 3 scenarios (Moyasar
+  down → wire-transfer fallback; ZATCA rejecting → billing unaffected, retry;
+  DB connection exhaustion → pooler + kill runaway queries) + a backups/PITR/DR
+  section and recovery order.
+- **`load/k6-smoke.js` + `docs/LOAD_TEST.md`** — k6 script ramping to the 500-
+  concurrent target on the read hot path (invoice-list), login done once (not
+  hammered), payment-init opt-in only (mints real gateway invoices). Script
+  syntax-validated; **results honestly marked TBD** (no staging target here).
+- New operational to-dos (branch protection, prod approval gate, PITR, run the
+  load test) logged in `BLOCKERS.md` — they need repo settings / dashboard / a
+  staging target, not code.
+
+---
+
 ## Priority follow-up — Backend RBAC hardening (2026-07-04)
 
 Top-priority remaining code item (P1 security). Closes prior findings 2B-2/3B-1.

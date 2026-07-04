@@ -57,3 +57,20 @@ with a live adapter when credentials exist.
 need breaking major upgrades. Needs a regression budget: bump, run full suite +
 build, and manually verify the email path (nodemailer) and dev server before
 merging. Not force-applied blind this pass.
+
+## DevOps / DR / Load — founder or ops actions (from docs/DEVOPS.md, RUNBOOK.md, LOAD_TEST.md)
+
+These need repo-settings, dashboard, or a staging target — not code:
+
+- **Branch protection** (GitHub repo settings): require PR + passing CI checks +
+  no direct push to `main`. Today CI runs on PRs but nothing enforces green before
+  merge. (docs/DEVOPS.md)
+- **Production approval gate** (DEP-2): add a GitHub `production` Environment with
+  required reviewers so prod deploys pause for a human click.
+- **Backend deploy wiring** (DEP-1): either wire the Railway deploy step or delete
+  the commented-out dead job so the pipeline reflects reality.
+- **Separate staging Supabase project** (DEP-5) so staging never touches prod data.
+- **Verify Supabase backups + enable PITR** (RUNBOOK.md) — could not read the
+  plan/PITR status via API; confirm in the dashboard and test one restore.
+- **Run the k6 load test** (docs/LOAD_TEST.md) against staging with a seeded
+  load-test tenant, and record the numbers. Not run here — no staging target.
