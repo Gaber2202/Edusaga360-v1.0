@@ -90,12 +90,13 @@ export async function triggerOnboardingForEmployee(employee, applicant) {
     notes: '',
   };
 
-  const created = await tenantQuery('onboardings').insert(onboardingRecord);
+  const { data: created, error } = await tenantQuery('onboardings').insert(onboardingRecord).select().single();
+  if (error) throw error;
 
   await logAuditEvent({
     action: AuditActions.CREATE,
     entityType: 'Onboarding',
-    entityId: created.id,
+    entityId: created?.id,
     newValues: { employee_id: employee.id, employee_name: employee.name_ar, trigger: 'auto_conversion' },
   });
 

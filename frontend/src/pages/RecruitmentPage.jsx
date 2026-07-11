@@ -256,11 +256,12 @@ export default function RecruitmentPage() {
       };
 
       if (editingRequest?.id) {
-        await tenantQuery('recruitments').update(data);
+        await tenantQuery('recruitments').update(data).eq('id', editingRequest.id);
         await logAuditEvent({ action: AuditActions.UPDATE, entityType: 'Recruitment', entityId: editingRequest.id, oldValues: editingRequest, newValues: data });
       } else {
-        const created = await tenantQuery('recruitments').insert(data);
-        await logAuditEvent({ action: AuditActions.CREATE, entityType: 'Recruitment', entityId: created.id, newValues: data });
+        const { data: created, error } = await tenantQuery('recruitments').insert(data).select().single();
+        if (error) throw error;
+        await logAuditEvent({ action: AuditActions.CREATE, entityType: 'Recruitment', entityId: created?.id, newValues: data });
       }
 
       queryClient.invalidateQueries({ queryKey: ['recruitments'] });
@@ -291,8 +292,9 @@ export default function RecruitmentPage() {
         status: 'applied'
       };
 
-      const created = await tenantQuery('applicants').insert(data);
-      await logAuditEvent({ action: AuditActions.CREATE, entityType: 'Applicant', entityId: created.id, newValues: data });
+      const { data: created, error } = await tenantQuery('applicants').insert(data).select().single();
+      if (error) throw error;
+      await logAuditEvent({ action: AuditActions.CREATE, entityType: 'Applicant', entityId: created?.id, newValues: data });
 
       queryClient.invalidateQueries({ queryKey: ['applicants'] });
       setShowApplicantForm(false);
@@ -307,7 +309,7 @@ export default function RecruitmentPage() {
 
   const handleSubmitRequest = async (recruitment) => {
     try {
-      await tenantQuery('recruitments').update({ status: 'submitted' });
+      await tenantQuery('recruitments').update({ status: 'submitted' }).eq('id', recruitment.id);
       try { await logAuditEvent({ action: AuditActions.UPDATE, entityType: 'Recruitment', entityId: recruitment.id, newValues: { status: 'submitted' } }); } catch (_) {}
       queryClient.invalidateQueries({ queryKey: ['recruitments'] });
       toast.success(isRTL ? 'تم إرسال الطلب' : 'Request submitted');
@@ -319,7 +321,7 @@ export default function RecruitmentPage() {
   const handleApproveRequest = async (recruitment, action) => {
     try {
       const newStatus = action === 'approve' ? 'approved' : 'rejected';
-      await tenantQuery('recruitments').update({ status: newStatus });
+      await tenantQuery('recruitments').update({ status: newStatus }).eq('id', recruitment.id);
       try { await logAuditEvent({ action: AuditActions.UPDATE, entityType: 'Recruitment', entityId: recruitment.id, newValues: { status: newStatus } }); } catch (_) {}
       queryClient.invalidateQueries({ queryKey: ['recruitments'] });
       toast.success(isRTL ? (action === 'approve' ? 'تم الاعتماد' : 'تم الرفض') : (action === 'approve' ? 'Approved' : 'Rejected'));
@@ -330,7 +332,7 @@ export default function RecruitmentPage() {
 
   const handleApplicantAction = async (applicant, newStatus) => {
     try {
-      await tenantQuery('applicants').update({ status: newStatus });
+      await tenantQuery('applicants').update({ status: newStatus }).eq('id', applicant.id);
       try { await logAuditEvent({ action: AuditActions.UPDATE, entityType: 'Applicant', entityId: applicant.id, newValues: { status: newStatus } }); } catch (_) {}
       queryClient.invalidateQueries({ queryKey: ['applicants'] });
       toast.success(isRTL ? 'تم التحديث' : 'Updated successfully');

@@ -62,7 +62,7 @@ export default function CompanyTransferDialog({ open, onClose, employee, compani
         ? { visa_company_id: formData.to_company_id }
         : { employing_company_id: formData.to_company_id };
       
-      await tenantQuery('employees').update(updateData);
+      await tenantQuery('employees').update(updateData).eq('id', employee.id);
 
       // Log audit
       await logAuditEvent({

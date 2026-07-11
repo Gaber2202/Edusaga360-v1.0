@@ -258,8 +258,9 @@ export default function ESSPortal() {
     setSaving(true);
     try {
       await tenantQuery('employees').update({
-        email: user.email
-      });
+        email: user.email,
+        user_id: user.id,
+      }).eq('id', linkEmployeeId);
       
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       setShowLinkDialog(false);

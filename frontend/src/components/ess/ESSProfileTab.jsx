@@ -84,8 +84,9 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
   };
 
   const handleSaveBank = async () => {
+    if (!employee?.id) return;
     setSaving(true);
-    await tenantQuery('employees').update(bankForm);
+    await tenantQuery('employees').update(bankForm).eq('id', employee.id);
     queryClient.invalidateQueries({ queryKey: ['employees'] });
     toast.success(isRTL ? 'تم حفظ البيانات البنكية' : 'Bank details saved');
     setShowBankDialog(false);
