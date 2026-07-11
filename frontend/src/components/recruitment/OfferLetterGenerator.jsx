@@ -120,7 +120,7 @@ Both must be complete, professional, and include all the above details. Include 
         offer_status: 'sent',
         offer_data: offerData,
         status: 'offered',
-      });
+      }).eq('id', applicant.id);
 
       if (applicant.email) {
         await callApi('/api/email/send', {
@@ -142,7 +142,7 @@ Both must be complete, professional, and include all the above details. Include 
   };
 
   const handleUpdateStatus = async (newStatus) => {
-    await tenantQuery('applicants').update({ offer_status: newStatus, status: newStatus === 'accepted' ? 'offered' : applicant.status });
+    await tenantQuery('applicants').update({ offer_status: newStatus, status: newStatus === 'accepted' ? 'offered' : applicant.status }).eq('id', applicant.id);
     setOfferStatus(newStatus);
     onOfferCreated?.();
     toast.success(isRTL ? 'تم تحديث الحالة' : 'Status updated');

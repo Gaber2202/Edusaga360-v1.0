@@ -58,6 +58,7 @@ export default function Employees() {
     manager_id: '',
     hire_date: format(new Date(), 'yyyy-MM-dd'),
     contract_end_date: '',
+    end_date: '',
     employment_type: 'full_time',
     contract_type: 'permanent',
     work_schedule: 'morning',
@@ -115,6 +116,10 @@ export default function Employees() {
       toast.error(isRTL ? 'يرجى ملء الحقول المطلوبة' : 'Please fill in required fields');
       return;
     }
+    if (!formData.branch_id) {
+      toast.error(isRTL ? 'يرجى اختيار الفرع' : 'Please select a branch');
+      return;
+    }
     
     setSaving(true);
     try {
@@ -144,8 +149,11 @@ export default function Employees() {
       const data = { 
         ...formData, 
         employee_id: empId, 
-        branch_id: selectedBranchId || 'all',
+        branch_id: formData.branch_id || selectedBranchId || null,
         tenant_id: tenantId,
+        // Empty date strings must be NULL, never '' (invalid DATE input).
+        contract_end_date: formData.contract_end_date || null,
+        end_date: formData.end_date || null,
         is_saudi: isSaudi,
         is_gosi_applicable: isSaudi || !!formData.iqama_number,
         bank_name: bd.bank_name || formData.bank_name || '',
@@ -161,11 +169,12 @@ export default function Employees() {
       };
 
       if (editingEmployee?.id) {
-        await tenantQuery('employees').update(data);
+        await tenantQuery('employees').update(data).eq('id', editingEmployee.id);
         await logAuditEvent({ action: AuditActions.UPDATE, entityType: 'Employee', entityId: editingEmployee.id, oldValues: editingEmployee, newValues: data });
       } else {
-        const created = await tenantQuery('employees').insert(data);
-        await logAuditEvent({ action: AuditActions.CREATE, entityType: 'Employee', entityId: created.id, newValues: data });
+        const { data: created, error } = await tenantQuery('employees').insert(data).select().single();
+        if (error) throw error;
+        await logAuditEvent({ action: AuditActions.CREATE, entityType: 'Employee', entityId: created?.id, newValues: data });
       }
 
       await queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -202,6 +211,7 @@ export default function Employees() {
       manager_id: employee.manager_id || '',
       hire_date: employee.hire_date || format(new Date(), 'yyyy-MM-dd'),
       contract_end_date: employee.contract_end_date || '',
+      end_date: employee.end_date || '',
       contract_type: employee.contract_type || 'permanent',
       employment_type: employee.employment_type || 'full_time',
       work_schedule: employee.work_schedule || 'morning',
@@ -233,7 +243,7 @@ export default function Employees() {
       date_of_birth: '', gender: 'male', nationality: 'Saudi', branch_id: '', 
       employing_company_id: '', visa_company_id: '', visa_type: '',
       department_id: '', job_title_id: '',
-      manager_id: '', hire_date: format(new Date(), 'yyyy-MM-dd'), contract_end_date: '', contract_type: 'permanent', employment_type: 'full_time',
+      manager_id: '', hire_date: format(new Date(), 'yyyy-MM-dd'), contract_end_date: '', end_date: '', contract_type: 'permanent', employment_type: 'full_time',
       work_schedule: 'morning', salary: 0, bank_account: '', iban: '', bank_name: '', bank_details: {}, emergency_contact_name: '',
       emergency_contact_phone: '', status: 'active', notes: '', license_expiry_date: '', compensation: {}
     });
@@ -286,6 +296,7 @@ export default function Employees() {
           <TabsTrigger value="on_leave">{isRTL ? 'في إجازة' : 'On Leave'}</TabsTrigger>
           <TabsTrigger value="suspended">{isRTL ? 'موقوف' : 'Suspended'}</TabsTrigger>
           <TabsTrigger value="terminated">{isRTL ? 'منتهي الخدمة' : 'Terminated'}</TabsTrigger>
+          <TabsTrigger value="retired">{isRTL ? 'متقاعد' : 'Retired'}</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -423,6 +434,25 @@ export default function Employees() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label>{isRTL ? 'حالة الموظف' : 'Employment Status'}</Label>
+                <Select value={formData.status} onValueChange={(v) => setFormData(p => ({...p, status: v, end_date: (v === 'terminated' || v === 'retired') ? (p.end_date || format(new Date(), 'yyyy-MM-dd')) : ''}))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">{isRTL ? 'نشط' : 'Active'}</SelectItem>
+                    <SelectItem value="on_leave">{isRTL ? 'في إجازة' : 'On Leave'}</SelectItem>
+                    <SelectItem value="suspended">{isRTL ? 'موقوف' : 'Suspended'}</SelectItem>
+                    <SelectItem value="terminated">{isRTL ? 'منتهي الخدمة' : 'Terminated'}</SelectItem>
+                    <SelectItem value="retired">{isRTL ? 'متقاعد' : 'Retired'}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {(formData.status === 'terminated' || formData.status === 'retired') && (
+                <div className="space-y-2">
+                  <Label>{isRTL ? 'تاريخ انتهاء الخدمة' : 'End of Service Date'}</Label>
+                  <Input type="date" value={formData.end_date || ''} onChange={(e) => setFormData(p => ({...p, end_date: e.target.value}))} min={formData.hire_date} />
+                </div>
+              )}
               </div>
 
               {/* Company & Visa Section */}

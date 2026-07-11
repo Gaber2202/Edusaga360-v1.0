@@ -83,9 +83,15 @@ export default function ConvertToEmployee({ applicant, recruitment, employees, o
     try {
       const empId = `EMP-${Date.now().toString(36).toUpperCase()}`;
 
+      // `work_email` is a form-only field used to seed the login `email`; it is
+      // not an employees column. Empty selects must be NULL, not '' (UUID FKs).
+      const { work_email, manager_id, department_id, ...restForm } = form;
+
       const employeeData = {
-        ...form,
-        email: form.work_email,
+        ...restForm,
+        manager_id: manager_id || null,
+        department_id: department_id || null,
+        email: work_email,
         employee_id: empId,
         total_salary: totalSalary,
         salary: totalSalary,
@@ -103,7 +109,8 @@ export default function ConvertToEmployee({ applicant, recruitment, employees, o
         },
       };
 
-      const created = await tenantQuery('employees').insert(employeeData);
+      const { data: created, error: insertError } = await tenantQuery('employees').insert(employeeData).select().single();
+      if (insertError) throw insertError;
       await logAuditEvent({ action: AuditActions.CREATE, entityType: 'Employee', entityId: created.id, newValues: employeeData });
 
       // Send system invitation to the work email
@@ -132,7 +139,7 @@ export default function ConvertToEmployee({ applicant, recruitment, employees, o
         status: 'hired',
         converted_employee_id: created.id,
         converted_date: new Date().toISOString(),
-      });
+      }).eq('id', applicant.id);
 
       // Trigger automated onboarding
       await triggerOnboardingForEmployee(created, applicant);
