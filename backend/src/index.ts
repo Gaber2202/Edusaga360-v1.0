@@ -33,6 +33,7 @@ import { intakeRouter } from './routes/intake.js';
 import { apiKeysRouter } from './routes/apiKeys.js';
 import { apiKeyAuth } from './middleware/apiKeyAuth.js';
 import { externalApiRouter } from './routes/external/v1.js';
+import { atsRouter } from './routes/ats.js';
 
 dotenv.config();
 
@@ -158,6 +159,8 @@ app.use('/api/subscription',        apiLimiter, authMiddleware, tenantMiddleware
 app.use('/api/intake',              apiLimiter, authMiddleware, tenantMiddleware, intakeRouter);
 // API key management (control plane for the external /api/v1 data plane above).
 app.use('/api/api-keys',            apiLimiter, authMiddleware, tenantMiddleware, apiKeysRouter);
+// ATS integration — connect/sync an external Applicant Tracking System into HR.
+app.use('/api/ats',                 apiLimiter, authMiddleware, tenantMiddleware, atsRouter);
 
 app.use(
   (
