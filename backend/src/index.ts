@@ -34,6 +34,7 @@ import { apiKeysRouter } from './routes/apiKeys.js';
 import { apiKeyAuth } from './middleware/apiKeyAuth.js';
 import { externalApiRouter } from './routes/external/v1.js';
 import { atsRouter } from './routes/ats.js';
+import { emailConnectorsRouter } from './routes/emailConnectors.js';
 
 dotenv.config();
 
@@ -161,6 +162,8 @@ app.use('/api/intake',              apiLimiter, authMiddleware, tenantMiddleware
 app.use('/api/api-keys',            apiLimiter, authMiddleware, tenantMiddleware, apiKeysRouter);
 // ATS integration — connect/sync an external Applicant Tracking System into HR.
 app.use('/api/ats',                 apiLimiter, authMiddleware, tenantMiddleware, atsRouter);
+// Email integration — connect a school mailbox for outbound send + inbound sync.
+app.use('/api/email',               apiLimiter, authMiddleware, tenantMiddleware, emailConnectorsRouter);
 
 app.use(
   (
