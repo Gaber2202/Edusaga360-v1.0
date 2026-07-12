@@ -70,9 +70,9 @@ Content-Type: application/json
 Response (**the only time `api_key` is returned**):
 
 ```json
-{ "id": "…", "name": "Legacy SIS migration", "key_prefix": "esk_live_ab12cd34",
+{ "id": "…", "name": "Legacy SIS migration", "key_prefix": "esk_live_xxxxxxxx",
   "scopes": ["students:read","students:write"], "expires_at": "2027-01-01T00:00:00Z",
-  "created_at": "…", "api_key": "esk_live_ab12cd34…" }
+  "created_at": "…", "api_key": "esk_live_xxxxxxxxxxxxxxxxxxxxxxxx" }
 ```
 
 | Method & path | Purpose |

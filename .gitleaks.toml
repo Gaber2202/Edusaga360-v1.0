@@ -1,0 +1,20 @@
+# gitleaks configuration for EduSaga 360.
+#
+# Extends the default ruleset (so all real secret detectors stay active) and
+# allowlists illustrative, non-secret placeholder tokens that appear in
+# documentation and tests. EduSaga external API keys are prefixed `esk_live_` /
+# `esk_test_`; the values shown in docs/tests are fabricated examples, never real
+# credentials. Product source (backend/src/routes|services|lib, frontend/src, …)
+# is still fully scanned.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "EduSaga documentation examples + placeholder API keys (non-secret)"
+paths = [
+  '''docs/.*\.md''',
+]
+regexes = [
+  # EduSaga example API keys (esk_live_… / esk_test_…) used in docs and tests.
+  '''esk_(live|test)_[A-Za-z0-9]+''',
+]
