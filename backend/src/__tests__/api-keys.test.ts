@@ -54,6 +54,19 @@ describe('lib/apiKeys', () => {
   });
 });
 
+describe('GET /api/api-keys/scopes', () => {
+  it('returns the grantable scope list to an admin', async () => {
+    const res = await request(app(admin)).get('/api/api-keys/scopes');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toContain('students:read');
+  });
+
+  it('denies a non-admin', async () => {
+    const res = await request(app(teacher)).get('/api/api-keys/scopes');
+    expect(res.status).toBe(403);
+  });
+});
+
 describe('POST /api/api-keys', () => {
   it('denies a non-admin (teacher) with 403', async () => {
     const res = await request(app(teacher))

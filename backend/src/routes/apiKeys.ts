@@ -15,12 +15,17 @@ import { z } from 'zod';
 import { supabase } from '../lib/supabase.js';
 import { AuthenticatedRequest, requireRole } from '../middleware/auth.js';
 import { generateApiKey } from '../lib/apiKeys.js';
-import { isValidScope } from '../lib/apiScopes.js';
+import { API_SCOPES, isValidScope } from '../lib/apiScopes.js';
 
 export const apiKeysRouter = Router();
 
 // Key management is an admin-only, security-sensitive action.
 const ADMIN_ONLY = ['admin'];
+
+// GET /api/api-keys/scopes — the grantable scope list (drives the create UI).
+apiKeysRouter.get('/scopes', requireRole(ADMIN_ONLY), (_req, res) => {
+  res.json({ data: API_SCOPES });
+});
 
 const CreateKeySchema = z.object({
   name: z.string().min(1).max(120),
