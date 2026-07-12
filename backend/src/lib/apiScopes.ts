@@ -14,6 +14,9 @@ export const API_SCOPES = [
   'students:read',
   'students:write',
   'staff:read',
+  'staff:write',
+  'guardians:read',
+  'guardians:write',
   'invoices:read',
 ] as const;
 

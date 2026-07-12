@@ -44,8 +44,11 @@ A key is granted an explicit allow-list of scopes. An endpoint returns `403`
 |---|---|
 | `students:read` | List students |
 | `students:write` | Create / upsert students |
-| `staff:read` | (reserved — staff read, coming next) |
-| `invoices:read` | (reserved — invoice read, coming next) |
+| `staff:read` | List employees |
+| `staff:write` | Create / upsert employees |
+| `guardians:read` | List guardians |
+| `guardians:write` | Create / upsert guardians |
+| `invoices:read` | List fee invoices |
 
 Scopes are defined in `backend/src/lib/apiScopes.ts`; add one there before
 gating an endpoint with it.
@@ -110,6 +113,41 @@ Content-Type: application/json
 ```json
 { "data": { "id": "…" }, "created": true }
 ```
+
+### Staff (employees)
+
+| Method & path | Scope | Description |
+|---|---|---|
+| `GET /api/v1/staff` | `staff:read` | Paginated list (`?limit=&offset=`) |
+| `POST /api/v1/staff` | `staff:write` | Create an employee |
+
+`POST /api/v1/staff` is **idempotent on `employee_number`** (the natural key
+every HR/payroll system carries), so re-running an HR migration is safe.
+
+```http
+POST /api/v1/staff
+X-API-Key: esk_live_…
+Content-Type: application/json
+
+{ "employee_number": "E-1042", "name_en": "Sara Noor", "email": "sara@school.sa",
+  "employment_type": "full_time", "join_date": "2022-09-01", "basic_salary": 8000 }
+```
+
+### Guardians
+
+| Method & path | Scope | Description |
+|---|---|---|
+| `GET /api/v1/guardians` | `guardians:read` | Paginated list |
+| `POST /api/v1/guardians` | `guardians:write` | Create a guardian (idempotent on `national_id`) |
+
+### Invoices (read-only)
+
+| Method & path | Scope | Description |
+|---|---|---|
+| `GET /api/v1/invoices` | `invoices:read` | Paginated list; filters: `?student_id=&status=` |
+
+Invoices are **read-only** here — they are created through the finance module's
+own ledger-posting flow, not imported blind.
 
 ## 5. Errors
 
