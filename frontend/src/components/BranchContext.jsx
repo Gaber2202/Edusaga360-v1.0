@@ -18,11 +18,11 @@ export function BranchProvider({ children }) {
     queryKey: ['branches', tenantId],
     queryFn: async () => {
       if (isPlatformOwner) {
-        const { data } = await tenantQuery('branches').select('*').match({ is_active: true });
+        const { data } = await tenantQuery('branches').select('*').match({ status: 'active' });
         return data || [];
       }
       if (!tenantId) return [];
-      const { data } = await tenantQuery('branches').select('*').match({ is_active: true, tenant_id: tenantId });
+      const { data } = await tenantQuery('branches').select('*').match({ status: 'active', tenant_id: tenantId });
       return data || [];
     },
     enabled: isPlatformOwner || !!tenantId,
