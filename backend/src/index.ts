@@ -30,6 +30,11 @@ import { filesRouter } from './routes/files.js';
 import { execRouter } from './routes/exec.js';
 import { subscriptionRouter } from './routes/subscription.js';
 import { intakeRouter } from './routes/intake.js';
+import { apiKeysRouter } from './routes/apiKeys.js';
+import { apiKeyAuth } from './middleware/apiKeyAuth.js';
+import { externalApiRouter } from './routes/external/v1.js';
+import { atsRouter } from './routes/ats.js';
+import { emailConnectorsRouter } from './routes/emailConnectors.js';
 
 dotenv.config();
 
@@ -49,6 +54,28 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(helmet());
+
+// ── External Integration API (/api/v1) ────────────────────────────────────────
+// Server-to-server surface for third-party / legacy / ATS / email integrations.
+// Authenticated by tenant-scoped API keys (NOT Supabase JWTs) and deliberately
+// mounted BEFORE the first-party browser CORS wall below: external callers are
+// not bound by the origin allow-list. It gets its own open CORS, JSON parser and
+// rate limiter, and each key is tenant-scoped and scope-gated inside the router.
+const externalApiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'rate_limited', message: 'Too many requests, slow down.' },
+});
+app.use(
+  '/api/v1',
+  cors({ origin: true }),
+  express.json({ limit: '256kb' }),
+  externalApiLimiter,
+  apiKeyAuth,
+  externalApiRouter,
+);
 
 // CORS — explicit list + Vercel preview pattern
 const allowedOrigins = [
@@ -131,6 +158,12 @@ app.use('/api/files',               apiLimiter, authMiddleware, tenantMiddleware
 app.use('/api/exec',                apiLimiter, authMiddleware, tenantMiddleware, execRouter);
 app.use('/api/subscription',        apiLimiter, authMiddleware, tenantMiddleware, subscriptionRouter);
 app.use('/api/intake',              apiLimiter, authMiddleware, tenantMiddleware, intakeRouter);
+// API key management (control plane for the external /api/v1 data plane above).
+app.use('/api/api-keys',            apiLimiter, authMiddleware, tenantMiddleware, apiKeysRouter);
+// ATS integration — connect/sync an external Applicant Tracking System into HR.
+app.use('/api/ats',                 apiLimiter, authMiddleware, tenantMiddleware, atsRouter);
+// Email integration — connect a school mailbox for outbound send + inbound sync.
+app.use('/api/email',               apiLimiter, authMiddleware, tenantMiddleware, emailConnectorsRouter);
 
 app.use(
   (
