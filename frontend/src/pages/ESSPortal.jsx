@@ -121,13 +121,13 @@ export default function ESSPortal() {
 
   const { data: departments = [] } = useQuery({
     queryKey: ['departments', tenantId],
-    queryFn: () => fetchData(tenantQuery('departments').select('*').match(tenantFilter({ is_active: true }))),
+    queryFn: () => fetchData(tenantQuery('departments').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 
   const { data: jobTitles = [] } = useQuery({
     queryKey: ['jobTitles', tenantId],
-    queryFn: () => fetchData(tenantQuery('job_titles').select('*').match(tenantFilter({ is_active: true }))),
+    queryFn: () => fetchData(tenantQuery('job_titles').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 

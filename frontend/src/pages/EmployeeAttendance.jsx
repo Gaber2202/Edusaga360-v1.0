@@ -35,7 +35,7 @@ export default function EmployeeAttendance() {
 
   const { data: departments = [] } = useQuery({
     queryKey: ['departments', tenantId],
-    queryFn: () => fetchData(tenantQuery('departments').select('*').match(tenantFilter({ is_active: true }))),
+    queryFn: () => fetchData(tenantQuery('departments').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 

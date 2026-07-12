@@ -73,7 +73,7 @@ export default function ParentIntake() {
 
   const { data: _branches = [] } = useQuery({
     queryKey: ['branches'],
-    queryFn: () => fetchData(tenantQuery('branches').select('*').match({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('branches').select('*').match({ status: 'active' })),
   });
 
   const { data: academicYears = [] } = useQuery({

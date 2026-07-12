@@ -33,9 +33,7 @@ export default function Branches() {
     address: '',
     phone: '',
     email: '',
-    vat_number: '',
-    cr_number: '',
-    is_active: true
+    status: 'active'
   });
 
   const { data: branches = [], isLoading } = useQuery({
@@ -56,11 +54,12 @@ export default function Branches() {
       const data = { ...formData, code: branchCode, tenant_id: tenantId };
 
       if (editingBranch?.id) {
-        await tenantQuery('branches').update(data);
+        await tenantQuery('branches').update(data).eq('id', editingBranch.id);
         await logAuditEvent({ action: AuditActions.UPDATE, entityType: 'Branch', entityId: editingBranch.id, oldValues: editingBranch, newValues: data });
       } else {
-        const created = await tenantQuery('branches').insert(data);
-        await logAuditEvent({ action: AuditActions.CREATE, entityType: 'Branch', entityId: created.id, newValues: data });
+        const { data: created, error } = await tenantQuery('branches').insert(data).select().single();
+        if (error) throw error;
+        await logAuditEvent({ action: AuditActions.CREATE, entityType: 'Branch', entityId: created?.id, newValues: data });
       }
 
       queryClient.invalidateQueries({ queryKey: ['branches'] });
@@ -85,9 +84,7 @@ export default function Branches() {
       address: branch.address || '',
       phone: branch.phone || '',
       email: branch.email || '',
-      vat_number: branch.vat_number || '',
-      cr_number: branch.cr_number || '',
-      is_active: branch.is_active !== false
+      status: branch.status || 'active'
     });
     setShowForm(true);
   };
@@ -96,7 +93,7 @@ export default function Branches() {
     setEditingBranch(null);
     setFormData({
       code: '', name_ar: '', name_en: '', city: '', address: '', phone: '',
-      email: '', vat_number: '', cr_number: '', is_active: true
+      email: '', status: 'active'
     });
   };
 
@@ -105,7 +102,7 @@ export default function Branches() {
     { header: isRTL ? 'اسم الفرع' : 'Branch Name', cell: (row) => <div><p className="font-medium">{row.name_ar}</p><p className="text-sm text-muted-foreground">{row.name_en}</p></div> },
     { header: isRTL ? 'المدينة' : 'City', cell: (row) => <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-muted-foreground" /><span>{row.city}</span></div> },
     { header: isRTL ? 'الهاتف' : 'Phone', cell: (row) => row.phone ? <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-muted-foreground" /><span>{row.phone}</span></div> : '-' },
-    { header: t('status'), cell: (row) => <StatusBadge status={row.is_active ? 'active' : 'inactive'} /> },
+    { header: t('status'), cell: (row) => <StatusBadge status={row.status || 'inactive'} /> },
     { header: t('actions'), cell: (row) => (
       <Button size="sm" variant="ghost" onClick={() => handleEdit(row)}>
         {t('edit')}
@@ -158,21 +155,13 @@ export default function Branches() {
                 <Label>{t('email')}</Label>
                 <Input type="email" value={formData.email} onChange={(e) => setFormData(p => ({...p, email: e.target.value}))} />
               </div>
-              <div className="space-y-2">
-                <Label>{isRTL ? 'الرقم الضريبي' : 'VAT Number'}</Label>
-                <Input value={formData.vat_number} onChange={(e) => setFormData(p => ({...p, vat_number: e.target.value}))} />
-              </div>
-              <div className="space-y-2">
-                <Label>{isRTL ? 'السجل التجاري' : 'CR Number'}</Label>
-                <Input value={formData.cr_number} onChange={(e) => setFormData(p => ({...p, cr_number: e.target.value}))} />
-              </div>
             </div>
             <div className="space-y-2">
               <Label>{t('address')}</Label>
               <Textarea value={formData.address} onChange={(e) => setFormData(p => ({...p, address: e.target.value}))} rows={2} />
             </div>
             <div className="flex items-center gap-2">
-              <Switch checked={formData.is_active} onCheckedChange={(v) => setFormData(p => ({...p, is_active: v}))} />
+              <Switch checked={formData.status === 'active'} onCheckedChange={(v) => setFormData(p => ({...p, status: v ? 'active' : 'inactive'}))} />
               <Label>{t('active')}</Label>
             </div>
           </div>

@@ -71,7 +71,7 @@ export default function Facilities() {
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
-    queryFn: () => fetchData(tenantQuery('branches').select('*').match(tenantFilter({ is_active: true }))),
+    queryFn: () => fetchData(tenantQuery('branches').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 
