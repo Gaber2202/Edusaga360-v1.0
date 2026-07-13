@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { KeyRound, Users, Mail, Building2 } from 'lucide-react';
+import { KeyRound, Users, Mail, Building2, MessageSquare } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import PageHeader from '../components/ui/PageHeader';
 import { useLanguage } from '../components/LanguageContext';
@@ -7,6 +7,7 @@ import { useRole } from '../components/RoleContext';
 import ApiKeysTab from '../components/integrations/ApiKeysTab';
 import AtsConnectorsTab from '../components/integrations/AtsConnectorsTab';
 import EmailConnectorsTab from '../components/integrations/EmailConnectorsTab';
+import MessagingConnectorsTab from '../components/integrations/MessagingConnectorsTab';
 import PlatformManagedCatalog from '../components/integrations/PlatformManagedCatalog';
 
 /**
@@ -68,6 +69,11 @@ export default function Integrations() {
               <Mail className="w-4 h-4" />{T('Email', 'البريد')}
             </TabsTrigger>
           )}
+          {canIt && (
+            <TabsTrigger value="messaging" className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />{T('SMS / WhatsApp', 'الرسائل وواتساب')}
+            </TabsTrigger>
+          )}
           <TabsTrigger value="platform" className="flex items-center gap-2">
             <Building2 className="w-4 h-4" />{T('Platform-managed', 'المُدارة بواسطة المنصة')}
           </TabsTrigger>
@@ -76,6 +82,7 @@ export default function Integrations() {
         {canIt && <TabsContent value="api-keys" className="mt-4"><ApiKeysTab /></TabsContent>}
         {canHr && <TabsContent value="ats" className="mt-4"><AtsConnectorsTab /></TabsContent>}
         {canIt && <TabsContent value="email" className="mt-4"><EmailConnectorsTab /></TabsContent>}
+        {canIt && <TabsContent value="messaging" className="mt-4"><MessagingConnectorsTab /></TabsContent>}
         <TabsContent value="platform" className="mt-4"><PlatformManagedCatalog /></TabsContent>
       </Tabs>
     </div>
