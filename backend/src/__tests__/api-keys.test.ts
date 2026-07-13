@@ -65,6 +65,12 @@ describe('GET /api/api-keys/scopes', () => {
     const res = await request(app(teacher)).get('/api/api-keys/scopes');
     expect(res.status).toBe(403);
   });
+
+  it('allows an it_admin (technical role that owns integrations)', async () => {
+    const itAdmin = { id: 'u3', email: 'it@school.sa', tenant_id: 'tenant-A', role: 'it_admin' };
+    const res = await request(app(itAdmin)).get('/api/api-keys/scopes');
+    expect(res.status).toBe(200);
+  });
 });
 
 describe('POST /api/api-keys', () => {

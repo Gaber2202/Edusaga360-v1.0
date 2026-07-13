@@ -20,8 +20,10 @@ import { resolveTenantId } from '../lib/resolveTenant.js';
 
 export const apiKeysRouter = Router();
 
-// Key management is an admin-only, security-sensitive action.
-const ADMIN_ONLY = ['admin'];
+// Integration keys are managed by the school admin or a dedicated IT admin — the
+// technical roles that own the Integrations area. (Platform owners bypass via
+// requireRole.)
+const MANAGE_ROLES = ['admin', 'it_admin'];
 
 /** Optional explicit tenant for platform-owner callers (query string). */
 function queryTenant(req: AuthenticatedRequest): string | undefined {
@@ -30,7 +32,7 @@ function queryTenant(req: AuthenticatedRequest): string | undefined {
 }
 
 // GET /api/api-keys/scopes — the grantable scope list (drives the create UI).
-apiKeysRouter.get('/scopes', requireRole(ADMIN_ONLY), (_req, res) => {
+apiKeysRouter.get('/scopes', requireRole(MANAGE_ROLES), (_req, res) => {
   res.json({ data: API_SCOPES });
 });
 
@@ -46,7 +48,7 @@ const CreateKeySchema = z.object({
 });
 
 // POST /api/api-keys — mint a new key. Returns the plaintext secret ONCE.
-apiKeysRouter.post('/', requireRole(ADMIN_ONLY), async (req: AuthenticatedRequest, res: Response) => {
+apiKeysRouter.post('/', requireRole(MANAGE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
   const parsed = CreateKeySchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: 'validation_error', details: parsed.error.flatten() });
@@ -80,7 +82,7 @@ apiKeysRouter.post('/', requireRole(ADMIN_ONLY), async (req: AuthenticatedReques
 });
 
 // GET /api/api-keys — list this tenant's keys (metadata only, never the secret).
-apiKeysRouter.get('/', requireRole(ADMIN_ONLY), async (req: AuthenticatedRequest, res: Response) => {
+apiKeysRouter.get('/', requireRole(MANAGE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
   const { tenantId, error: tenantError } = await resolveTenantId(req, queryTenant(req));
   if (!tenantId) return res.status(400).json({ error: 'no_tenant', message: tenantError });
 
@@ -95,7 +97,7 @@ apiKeysRouter.get('/', requireRole(ADMIN_ONLY), async (req: AuthenticatedRequest
 });
 
 // DELETE /api/api-keys/:id — revoke a key (soft: sets revoked_at). Idempotent.
-apiKeysRouter.delete('/:id', requireRole(ADMIN_ONLY), async (req: AuthenticatedRequest, res: Response) => {
+apiKeysRouter.delete('/:id', requireRole(MANAGE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
   const { tenantId, error: tenantError } = await resolveTenantId(req, queryTenant(req));
   if (!tenantId) return res.status(400).json({ error: 'no_tenant', message: tenantError });
 

@@ -256,13 +256,13 @@ function LayoutContent({ children, currentPageName }) {
       roles: ['admin', 'finance', 'branch_manager', 'auditor', 'accountant']
     },
     { 
-    name: 'integrations', 
-    icon: Link2, 
-    roles: ['admin', 'hr_admin', 'finance'],
+    name: 'integrations',
+    icon: Link2,
+    roles: ['admin', 'it_admin', 'hr_admin', 'finance'],
     children: [
-      { name: 'integrations', icon: Link2, page: 'Integrations', roles: ['admin'] },
+      { name: 'integrations', icon: Link2, page: 'Integrations', roles: ['admin', 'it_admin'] },
       { name: 'govIntegrations', icon: Shield, page: 'GovIntegrations', roles: ['admin', 'hr_admin', 'finance'] },
-      { name: 'integrationHub', icon: Zap, page: 'IntegrationHub', roles: ['admin'] },
+      { name: 'integrationHub', icon: Zap, page: 'IntegrationHub', roles: ['admin', 'it_admin'] },
     ]
     },
 
