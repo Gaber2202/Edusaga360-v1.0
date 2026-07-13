@@ -139,3 +139,57 @@ describe('DELETE /api/api-keys/:id', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('tenant resolution ("No tenant" fix)', () => {
+  const platformOwner = { id: 'po1', email: 'owner@edusaga.sa', role: 'admin', is_platform_owner: true };
+  const tenantlessAdmin = { id: 'u7', email: 'stale@school.sa', role: 'admin' }; // no tenant_id on token
+
+  it('tells a platform owner to name a tenant instead of a bare no_tenant', async () => {
+    const res = await request(app(platformOwner))
+      .post('/api/api-keys')
+      .send({ name: 'k', scopes: ['students:read'] });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('no_tenant');
+    expect(res.body.message).toMatch(/tenant_id/i);
+  });
+
+  it('lets a platform owner create a key for an explicit tenant', async () => {
+    db.setResolver((ctx) =>
+      ctx.table === 'api_keys' && ctx.op === 'insert'
+        ? { data: { id: 'k1', name: 'k', key_prefix: 'esk_test_x', scopes: ['students:read'], expires_at: null, created_at: 'now' } }
+        : { data: null },
+    );
+    const res = await request(app(platformOwner))
+      .post('/api/api-keys')
+      .send({ name: 'k', scopes: ['students:read'], tenant_id: '11111111-1111-1111-1111-111111111111' });
+    expect(res.status).toBe(201);
+    expect(res.body.api_key).toMatch(/^esk_/);
+    const insert = db.filtersFor('api_keys').find((c) => c.op === 'insert')!;
+    expect((insert.payload as { tenant_id: string }).tenant_id).toBe('11111111-1111-1111-1111-111111111111');
+  });
+
+  it('falls back to users.tenant_id when the token lacks the claim', async () => {
+    db.setResolver((ctx) => {
+      if (ctx.table === 'users' && ctx.op === 'select') return { data: { tenant_id: 'tenant-Z' } };
+      if (ctx.table === 'api_keys' && ctx.op === 'insert') {
+        return { data: { id: 'k2', name: 'k', key_prefix: 'esk_test_y', scopes: ['students:read'], expires_at: null, created_at: 'now' } };
+      }
+      return { data: null };
+    });
+    const res = await request(app(tenantlessAdmin))
+      .post('/api/api-keys')
+      .send({ name: 'k', scopes: ['students:read'] });
+    expect(res.status).toBe(201);
+    const insert = db.filtersFor('api_keys').find((c) => c.op === 'insert')!;
+    expect((insert.payload as { tenant_id: string }).tenant_id).toBe('tenant-Z');
+  });
+
+  it('gives a clear error when no tenant can be resolved at all', async () => {
+    db.setResolver(() => ({ data: null })); // users lookup returns nothing
+    const res = await request(app(tenantlessAdmin))
+      .post('/api/api-keys')
+      .send({ name: 'k', scopes: ['students:read'] });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/not linked to a school/i);
+  });
+});
