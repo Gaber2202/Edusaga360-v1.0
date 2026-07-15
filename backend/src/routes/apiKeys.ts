@@ -16,14 +16,23 @@ import { supabase } from '../lib/supabase.js';
 import { AuthenticatedRequest, requireRole } from '../middleware/auth.js';
 import { generateApiKey } from '../lib/apiKeys.js';
 import { API_SCOPES, isValidScope } from '../lib/apiScopes.js';
+import { resolveTenantId } from '../lib/resolveTenant.js';
 
 export const apiKeysRouter = Router();
 
-// Key management is an admin-only, security-sensitive action.
-const ADMIN_ONLY = ['admin'];
+// Integration keys are managed by the school admin or a dedicated IT admin — the
+// technical roles that own the Integrations area. (Platform owners bypass via
+// requireRole.)
+const MANAGE_ROLES = ['admin', 'it_admin'];
+
+/** Optional explicit tenant for platform-owner callers (query string). */
+function queryTenant(req: AuthenticatedRequest): string | undefined {
+  const t = req.query.tenant_id;
+  return typeof t === 'string' && t ? t : undefined;
+}
 
 // GET /api/api-keys/scopes — the grantable scope list (drives the create UI).
-apiKeysRouter.get('/scopes', requireRole(ADMIN_ONLY), (_req, res) => {
+apiKeysRouter.get('/scopes', requireRole(MANAGE_ROLES), (_req, res) => {
   res.json({ data: API_SCOPES });
 });
 
@@ -34,18 +43,20 @@ const CreateKeySchema = z.object({
     .min(1, 'At least one scope is required')
     .refine((s) => s.every(isValidScope), { message: 'One or more scopes are not recognised' }),
   expires_at: z.string().datetime().optional(),
+  // Platform-owner callers name the target school here; ignored for school users.
+  tenant_id: z.string().uuid().optional(),
 });
 
 // POST /api/api-keys — mint a new key. Returns the plaintext secret ONCE.
-apiKeysRouter.post('/', requireRole(ADMIN_ONLY), async (req: AuthenticatedRequest, res: Response) => {
-  const tenantId = req.user!.tenant_id;
-  if (!tenantId) return res.status(400).json({ error: 'no_tenant' });
-
+apiKeysRouter.post('/', requireRole(MANAGE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
   const parsed = CreateKeySchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: 'validation_error', details: parsed.error.flatten() });
   }
   const { name, scopes, expires_at } = parsed.data;
+
+  const { tenantId, error: tenantError } = await resolveTenantId(req, parsed.data.tenant_id);
+  if (!tenantId) return res.status(400).json({ error: 'no_tenant', message: tenantError });
 
   const key = generateApiKey();
   const { data, error } = await supabase
@@ -71,9 +82,9 @@ apiKeysRouter.post('/', requireRole(ADMIN_ONLY), async (req: AuthenticatedReques
 });
 
 // GET /api/api-keys — list this tenant's keys (metadata only, never the secret).
-apiKeysRouter.get('/', requireRole(ADMIN_ONLY), async (req: AuthenticatedRequest, res: Response) => {
-  const tenantId = req.user!.tenant_id;
-  if (!tenantId) return res.status(400).json({ error: 'no_tenant' });
+apiKeysRouter.get('/', requireRole(MANAGE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  const { tenantId, error: tenantError } = await resolveTenantId(req, queryTenant(req));
+  if (!tenantId) return res.status(400).json({ error: 'no_tenant', message: tenantError });
 
   const { data, error } = await supabase
     .from('api_keys')
@@ -86,9 +97,9 @@ apiKeysRouter.get('/', requireRole(ADMIN_ONLY), async (req: AuthenticatedRequest
 });
 
 // DELETE /api/api-keys/:id — revoke a key (soft: sets revoked_at). Idempotent.
-apiKeysRouter.delete('/:id', requireRole(ADMIN_ONLY), async (req: AuthenticatedRequest, res: Response) => {
-  const tenantId = req.user!.tenant_id;
-  if (!tenantId) return res.status(400).json({ error: 'no_tenant' });
+apiKeysRouter.delete('/:id', requireRole(MANAGE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  const { tenantId, error: tenantError } = await resolveTenantId(req, queryTenant(req));
+  if (!tenantId) return res.status(400).json({ error: 'no_tenant', message: tenantError });
 
   const { data, error } = await supabase
     .from('api_keys')
