@@ -32,6 +32,15 @@ export const atsApi = {
   candidates: () => callApi('/api/ats/candidates', null, GET),
 };
 
+// ── Messaging connectors (SMS / WhatsApp) ─────────────────────────────────────
+export const messagingApi = {
+  providers: () => callApi('/api/messaging/providers', null, GET),
+  listConnectors: () => callApi('/api/messaging/connectors', null, GET),
+  createConnector: (payload) => callApi('/api/messaging/connectors', payload, { method: 'POST' }),
+  send: (id, message) => callApi(`/api/messaging/connectors/${id}/send`, message, { method: 'POST' }),
+  deleteConnector: (id) => callApi(`/api/messaging/connectors/${id}`, null, DELETE),
+};
+
 // ── Email connectors ──────────────────────────────────────────────────────────
 export const emailApi = {
   providers: () => callApi('/api/email/providers', null, GET),
