@@ -93,6 +93,13 @@ describe('channel guard', () => {
     ).rejects.toBeInstanceOf(MessagingError);
   });
 
+  it('blocks a connector pointed at the cloud metadata endpoint (SSRF guard)', async () => {
+    const p = getProvider('infobip')!;
+    await expect(
+      p.send({ config: { base_url: 'http://169.254.169.254', sender: 'X' }, credentials: { api_key: 'k' } }, { to: '966500000000', text: 'x', channel: 'sms' }),
+    ).rejects.toBeInstanceOf(MessagingError);
+  });
+
   it('raises MessagingError on a non-2xx provider response', async () => {
     const p = getProvider('taqnyat')!;
     const fetchImpl = (async () => jsonResponse({}, false, 401)) as unknown as typeof fetch;

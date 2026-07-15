@@ -17,6 +17,7 @@
  *   token         (required unless auth_scheme=None)
  */
 import { EmailError, EmailProvider, NormalizedEmail, asArray, getPath, str } from '../types.js';
+import { assertPublicUrl } from '../../../lib/ssrfGuard.js';
 
 function fieldMapOf(config: Record<string, unknown>): Record<string, string> {
   const fm = config.field_map;
@@ -61,6 +62,11 @@ export const custom: EmailProvider = {
 
   async send(ctx, message) {
     const doFetch = ctx.fetchImpl ?? fetch;
+    try {
+      await assertPublicUrl(String(ctx.config.send_url));
+    } catch (e) {
+      throw new EmailError(`Gateway: ${(e as Error).message}`);
+    }
     let resp: Response;
     try {
       resp = await doFetch(String(ctx.config.send_url), {
@@ -83,6 +89,11 @@ export const custom: EmailProvider = {
     const listPath = str(ctx.config.list_path);
     const doFetch = ctx.fetchImpl ?? fetch;
 
+    try {
+      await assertPublicUrl(messagesUrl);
+    } catch (e) {
+      throw new EmailError(`Gateway: ${(e as Error).message}`);
+    }
     let resp: Response;
     try {
       resp = await doFetch(messagesUrl, { headers: authHeaders(ctx.config, ctx.credentials) });

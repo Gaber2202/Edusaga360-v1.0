@@ -9,6 +9,8 @@
  * Providers do their own HTTP via an injectable fetch (default: global fetch).
  * Nothing here touches the DB.
  */
+import { assertPublicUrl } from '../../lib/ssrfGuard.js';
+
 export type Channel = 'sms' | 'whatsapp';
 
 export interface FieldSpec {
@@ -80,6 +82,13 @@ export async function postAndParse(
   headers: Record<string, string>,
   body: string,
 ): Promise<unknown> {
+  // SSRF guard for admin-configured targets (custom send_url, Infobip base_url).
+  try {
+    await assertPublicUrl(url);
+  } catch (e) {
+    throw new MessagingError(`${label}: ${(e as Error).message}`);
+  }
+
   const doFetch = ctx.fetchImpl ?? fetch;
   let resp: Response;
   try {
