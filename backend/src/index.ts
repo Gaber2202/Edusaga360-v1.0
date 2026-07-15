@@ -35,6 +35,7 @@ import { apiKeyAuth } from './middleware/apiKeyAuth.js';
 import { externalApiRouter } from './routes/external/v1.js';
 import { atsRouter } from './routes/ats.js';
 import { emailConnectorsRouter } from './routes/emailConnectors.js';
+import { messagingRouter } from './routes/messaging.js';
 
 dotenv.config();
 
@@ -164,6 +165,8 @@ app.use('/api/api-keys',            apiLimiter, authMiddleware, tenantMiddleware
 app.use('/api/ats',                 apiLimiter, authMiddleware, tenantMiddleware, atsRouter);
 // Email integration — connect a school mailbox for outbound send + inbound sync.
 app.use('/api/email',               apiLimiter, authMiddleware, tenantMiddleware, emailConnectorsRouter);
+// Messaging integration — connect an SMS / WhatsApp gateway for notifications.
+app.use('/api/messaging',           apiLimiter, authMiddleware, tenantMiddleware, messagingRouter);
 
 app.use(
   (

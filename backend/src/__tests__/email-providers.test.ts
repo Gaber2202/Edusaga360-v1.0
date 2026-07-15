@@ -92,6 +92,13 @@ describe('send()', () => {
     expect(getNested(body, 'message.toRecipients.0.emailAddress.address')).toBe('x@y.com');
   });
 
+  it('blocks a custom gateway pointed at a private address (SSRF guard)', async () => {
+    const p = getProvider('custom')!;
+    await expect(
+      p.send({ config: { send_url: 'http://127.0.0.1:25/send', auth_scheme: 'None' }, credentials: {} }, { to: 'x@y.com', subject: 's', text: 't' }),
+    ).rejects.toBeInstanceOf(EmailError);
+  });
+
   it('raises EmailError on a failed send', async () => {
     const p = getProvider('gmail')!;
     const fetchImpl = (async () => jsonResponse({}, false, 401)) as unknown as typeof fetch;

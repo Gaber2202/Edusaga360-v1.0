@@ -8,6 +8,7 @@
  *                      re-sync updates in place rather than duplicating.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { assertPublicUrl } from '../../lib/ssrfGuard.js';
 import { AtsError, AtsProvider, AtsProviderContext, NormalizedCandidate } from './types.js';
 
 export async function fetchCandidates(
@@ -16,6 +17,14 @@ export async function fetchCandidates(
 ): Promise<NormalizedCandidate[]> {
   const plan = provider.buildPlan(ctx.config, ctx.credentials);
   const doFetch = ctx.fetchImpl ?? fetch;
+
+  // SSRF guard for admin-configured targets (custom base_url, Workday/LinkedIn/
+  // Indeed URLs) before any outbound request.
+  try {
+    await assertPublicUrl(plan.url);
+  } catch (e) {
+    throw new AtsError(`${provider.label}: ${(e as Error).message}`);
+  }
 
   let resp: Response;
   try {

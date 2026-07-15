@@ -124,6 +124,12 @@ describe('fetchCandidates() normalization', () => {
     ]);
   });
 
+  it('blocks a custom connector pointed at a private address (SSRF guard)', async () => {
+    const p = getProvider('custom')!;
+    const config = { base_url: 'http://169.254.169.254/candidates', field_map: { external_id: 'id', full_name: 'name' } };
+    await expect(fetchCandidates(p, { config, credentials: { token: 't' } })).rejects.toBeInstanceOf(AtsError);
+  });
+
   it('raises AtsError on a non-2xx provider response', async () => {
     const p = getProvider('greenhouse')!;
     const fetchImpl = (async () => jsonResponse({}, false, 401)) as unknown as typeof fetch;
