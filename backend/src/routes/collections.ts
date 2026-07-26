@@ -7,6 +7,7 @@ import { createInternalOrAuthMiddleware } from '../middleware/internalAuth.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { SegmentationRunner } from '../services/collections/runner.js';
 import { CollectionMessenger } from '../services/collections/messenger.js';
+import { InstallmentPlanEngine } from '../services/collections/installments.js';
 
 export const collectionsRouter = Router();
 
@@ -211,6 +212,48 @@ collectionsRouter.post('/kill-switch', authMiddleware, tenantMiddleware, require
   } catch (err) {
     console.error('[collections/kill-switch] error:', err);
     return res.status(500).json({ error: 'kill_switch_failed', message: (err as Error).message });
+  }
+});
+
+// ─── POST /api/collections/installment-plan-offers ────────────────────────────
+const CreateOfferSchema = z.object({
+  profile_id: z.string().uuid(),
+  invoice_id: z.string().uuid(),
+  total_amount: z.number().positive(),
+  installment_count: z.number().int().min(1).max(12),
+  first_installment_days: z.number().int().min(0),
+  down_payment_pct: z.number().min(0).max(100),
+  interval_days: z.number().int().min(1).optional(),
+  proposed_by: z.enum(['yamen', 'staff']).default('staff'),
+});
+
+collectionsRouter.post('/installment-plan-offers', authMiddleware, tenantMiddleware, requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const tenantId = req.user!.tenant_id!;
+    const parsed = CreateOfferSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'validation_error', details: parsed.error.flatten() });
+
+    const engine = new InstallmentPlanEngine(supabase);
+    const result = await engine.createOffer(tenantId, parsed.data);
+    return res.json({ ok: true, result });
+  } catch (err) {
+    console.error('[collections/installment-plan-offers] error:', err);
+    return res.status(500).json({ error: 'offer_failed', message: (err as Error).message });
+  }
+});
+
+// ─── POST /api/collections/installment-plan-offers/:id/accept ─────────────────
+collectionsRouter.post('/installment-plan-offers/:id/accept', authMiddleware, tenantMiddleware, requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const tenantId = req.user!.tenant_id! as string;
+    const offerId = req.params.id as string;
+    const acceptedBy: 'guardian' | 'staff' = 'staff';
+    const engine = new InstallmentPlanEngine(supabase);
+    const result = await engine.acceptOffer(tenantId, offerId, acceptedBy);
+    return res.json({ ok: true, result });
+  } catch (err) {
+    console.error('[collections/installment-plan-offers/accept] error:', err);
+    return res.status(500).json({ error: 'accept_failed', message: (err as Error).message });
   }
 });
 
