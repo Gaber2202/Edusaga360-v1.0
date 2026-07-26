@@ -43,6 +43,7 @@ import {
   getBalanceSheet,
   getRevenueByFeeType,
 } from '../services/reports.js';
+import { dispatchWebhook } from '../services/webhookDelivery.js';
 
 export const billingRouter = Router();
 
@@ -1047,6 +1048,8 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
       { account_code: '12', debit: 0, credit: amount, description: `A/R credit — ${cnNumber}` },
     ], original.branch_id ?? null);
 
+    void dispatchWebhook(supabase, tenant_id, 'credit_note.created', { credit_note_id: cn.id, credit_note_number: cnNumber, original_invoice_id: id, original_invoice_number: typeof original.invoice_number === 'string' ? original.invoice_number : String(original.invoice_number ?? ''), amount }, cn.id as string);
+
     return res.status(201).json(cn);
   } catch (err) {
     console.error('credit-note:', err);
@@ -1158,6 +1161,11 @@ billingRouter.post('/payments', async (req: AuthenticatedRequest, res: Response)
       { account_code: '12', debit: 0, credit: amount, description: `A/R cleared — ${invoice.invoice_number}` },
     ], invoice.branch_id ?? null);
 
+    void dispatchWebhook(supabase, tenant_id, 'payment.received', { invoice_id, payment_id: payment.id, amount, method: payment_method }, payment.id);
+    if (newStatus === 'paid') {
+      void dispatchWebhook(supabase, tenant_id, 'invoice.paid', { invoice_id, invoice_number: invoice.invoice_number, total: invoice.total_amount, paid_amount: newPaid }, invoice_id);
+    }
+
     return res.status(201).json({ payment, invoice: { id: invoice_id, paid_amount: newPaid, status: newStatus, remaining_balance: Math.max(0, sar(invoice.total_amount - newPaid)) }, receipt });
   } catch (err) {
     console.error('billing/payments:', err);
@@ -1207,7 +1215,7 @@ interface FeeLineInput {
   quantity: number;
 }
 
-async function createInvoiceForStudent(
+export async function createInvoiceForStudent(
   tenant_id: string,
   created_by: string,
   student_id: string,
@@ -1215,7 +1223,20 @@ async function createInvoiceForStudent(
   fee_lines?: FeeLineInput[],
   due_date?: string,
   branch_id?: string | null,
-  options?: { batch_id?: string; invoice_number?: string; status?: string; recurring_schedule_id?: string },
+  options?: {
+    batch_id?: string;
+    invoice_number?: string;
+    status?: string;
+    recurring_schedule_id?: string;
+    document_type?: InvoiceData['document_type'];
+    invoice_type?: InvoiceData['invoice_type'];
+    buyer_name?: string;
+    buyer_vat_number?: string;
+    buyer_address?: string;
+    supply_date?: string;
+    notes?: string;
+    terms_and_conditions?: string;
+  },
 ): Promise<Record<string, unknown>> {
   const today = new Date().toISOString().split('T')[0];
 
@@ -1316,13 +1337,16 @@ async function createInvoiceForStudent(
   const tenant = await getTenantComplianceData(tenant_id);
   const chain = await getZatcaChain(tenant_id);
 
+  const docType = options?.document_type ?? 'invoice';
+  const invType = options?.invoice_type ?? 'simplified';
+
   const invoiceData: InvoiceData = {
     invoice_number: invoiceNumber,
-    document_type: 'invoice',
-    invoice_type: 'simplified',
-    zatca_invoice_type: 'simplified',
+    document_type: docType,
+    invoice_type: invType,
+    zatca_invoice_type: invType,
     issue_date: today,
-    supply_date: today,
+    supply_date: options?.supply_date ?? today,
     due_date: due_date ?? undefined,
     subtotal,
     discount_amount: totalDiscount,
@@ -1331,12 +1355,16 @@ async function createInvoiceForStudent(
     paid_amount: 0,
     balance: totalAmount,
     student_name: student.name_en,
-    buyer_name: student.name_en,
+    buyer_name: options?.buyer_name || student.name_en,
+    buyer_vat_number: options?.buyer_vat_number,
+    buyer_address: options?.buyer_address,
     student_id,
     items: enrichedLines as InvoiceData['items'],
     uuid: crypto.randomUUID(),
     previous_invoice_hash: chain.previous_invoice_hash,
     icv: chain.icv,
+    notes: options?.notes,
+    terms_and_conditions: options?.terms_and_conditions,
   };
 
   const vatSummary = computeVatSummary(invoiceData);
@@ -1359,11 +1387,13 @@ async function createInvoiceForStudent(
       date: today,
       issue_date: today,
       due_date: due_date ?? null,
-      document_type: 'invoice',
-      invoice_type: 'simplified',
-      zatca_invoice_type: 'simplified',
-      buyer_name: student.name_en,
-      supply_date: today,
+      document_type: docType,
+      invoice_type: invType,
+      zatca_invoice_type: invType,
+      buyer_name: options?.buyer_name || student.name_en,
+      buyer_vat_number: options?.buyer_vat_number ?? null,
+      buyer_address: options?.buyer_address ?? null,
+      supply_date: options?.supply_date ?? today,
       subtotal,
       discount_amount: totalDiscount,
       vat_amount: vatAmount,
@@ -1382,6 +1412,8 @@ async function createInvoiceForStudent(
       zatca_status: 'pending',
       batch_id: options?.batch_id ?? null,
       recurring_schedule_id: options?.recurring_schedule_id ?? null,
+      notes: options?.notes ?? null,
+      terms_and_conditions: options?.terms_and_conditions ?? null,
     })
     .select()
     .single();
@@ -1391,7 +1423,7 @@ async function createInvoiceForStudent(
     tenant_id,
     invoice_id: invoice.id,
     invoice_number: invoiceNumber,
-    submission_type: 'reporting',
+    submission_type: invType === 'standard' ? 'clearance' : 'reporting',
     invoice_hash,
     previous_hash: chain.previous_invoice_hash ?? '',
     ubl_xml,
@@ -1419,6 +1451,8 @@ async function createInvoiceForStudent(
     { account_code: '41', debit: 0, credit: taxableSubtotal, description: `Revenue — ${invoiceNumber}` },
     { account_code: '24', debit: 0, credit: vatAmount, description: `VAT — ${invoiceNumber}` },
   ], studentBranchId ?? null);
+
+  void dispatchWebhook(supabase, tenant_id, 'invoice.created', { invoice_id: invoice.id, invoice_number: invoiceNumber, document_type: docType, total_amount: totalAmount, student_id }, invoice.id as string);
 
   return invoice as Record<string, unknown>;
 }
@@ -1668,6 +1702,8 @@ billingRouter.post('/dunning/trigger', requireRole(FINANCE_ROLES), async (req: A
         // Mark invoice overdue
         await supabase.from('invoices').update({ status: 'overdue' }).eq('id', inv.id).eq('tenant_id', tenant_id).eq('status', 'issued');
 
+        void dispatchWebhook(supabase, tenant_id, 'invoice.overdue', { invoice_id: inv.id, invoice_number: inv.invoice_number, days_overdue: daysOverdue, balance }, inv.id as string);
+
         // In production: call Infobip/other provider
         // const infobipKey = process.env.INFOBIP_API_KEY; — never hardcoded
         // await sendWhatsApp(infobipKey, recipient, msgAr);
@@ -1806,6 +1842,10 @@ billingRouter.post('/moyasar/webhook', async (req: AuthenticatedRequest, res: Re
     if (!pmtErr) {
       // Only update invoice totals on first insert (avoid double-counting retries)
       await supabase.from('invoices').update({ paid_amount: newPaid, status: newStatus }).eq('id', invoice_id);
+      void dispatchWebhook(supabase, tenant_id as string, 'payment.received', { invoice_id, payment_id, amount: amountSAR, method: 'online' }, payment_id as string);
+      if (newStatus === 'paid') {
+        void dispatchWebhook(supabase, tenant_id as string, 'invoice.paid', { invoice_id, invoice_number: (invoice as any).invoice_number, total: (invoice as any).total_amount, paid_amount: newPaid }, invoice_id);
+      }
     }
 
     return res.json({ received: true });
