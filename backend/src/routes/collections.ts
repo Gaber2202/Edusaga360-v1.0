@@ -9,6 +9,8 @@ import { SegmentationRunner } from '../services/collections/runner.js';
 import { CollectionMessenger } from '../services/collections/messenger.js';
 import { InstallmentPlanEngine } from '../services/collections/installments.js';
 import { GuaranteeEngine } from '../services/collections/guarantee.js';
+import { CollectionDashboardService } from '../services/collections/dashboard.js';
+import { CollectionThreadService } from '../services/collections/threads.js';
 
 export const collectionsRouter = Router();
 
@@ -80,6 +82,19 @@ collectionsRouter.post(
     }
   },
 );
+
+// ─── GET /api/collections/dashboard ───────────────────────────────────────────
+collectionsRouter.get('/dashboard', authMiddleware, tenantMiddleware, requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const tenantId = req.user!.tenant_id!;
+    const service = new CollectionDashboardService(supabase);
+    const result = await service.getDashboard(tenantId);
+    return res.json({ ok: true, result });
+  } catch (err) {
+    console.error('[collections/dashboard] error:', err);
+    return res.status(500).json({ error: 'dashboard_failed', message: (err as Error).message });
+  }
+});
 
 // ─── GET /api/collections/profiles ────────────────────────────────────────────
 collectionsRouter.get('/profiles', authMiddleware, tenantMiddleware, requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
@@ -390,5 +405,77 @@ collectionsRouter.get('/guarantee/dashboard', authMiddleware, tenantMiddleware, 
   } catch (err) {
     console.error('[collections/guarantee/dashboard] error:', err);
     return res.status(500).json({ error: 'dashboard_failed', message: (err as Error).message });
+  }
+});
+
+// ─── Thread / messaging routes (Phase 8) ──────────────────────────────────────
+const CreateThreadSchema = z.object({
+  subject: z.string().optional(),
+  guardian_id: z.string().uuid().optional(),
+  user_ids: z.array(z.string().uuid()).optional(),
+  profile_id: z.string().uuid().optional(),
+});
+
+const AddMessageSchema = z.object({
+  body_ar: z.string().optional(),
+  body_en: z.string().optional(),
+  sender_type: z.enum(['staff', 'guardian', 'yamen', 'system']).default('staff'),
+  reply_to_message_id: z.string().uuid().optional(),
+  external_id: z.string().optional(),
+});
+
+collectionsRouter.get('/threads', authMiddleware, tenantMiddleware, requireRole(STAFF_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const tenantId = req.user!.tenant_id!;
+    const service = new CollectionThreadService(supabase);
+    const data = await service.listThreads(tenantId, req.user!.id, undefined, 50);
+    return res.json({ ok: true, data });
+  } catch (err) {
+    console.error('[collections/threads] error:', err);
+    return res.status(500).json({ error: 'threads_failed', message: (err as Error).message });
+  }
+});
+
+collectionsRouter.post('/threads', authMiddleware, tenantMiddleware, requireRole(STAFF_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const tenantId = req.user!.tenant_id!;
+    const parsed = CreateThreadSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'validation_error', details: parsed.error.flatten() });
+
+    const service = new CollectionThreadService(supabase);
+    const result = await service.createThread(tenantId, parsed.data, req.user!.id);
+    return res.json({ ok: true, result });
+  } catch (err) {
+    console.error('[collections/threads] error:', err);
+    return res.status(500).json({ error: 'create_thread_failed', message: (err as Error).message });
+  }
+});
+
+collectionsRouter.get('/threads/:id/messages', authMiddleware, tenantMiddleware, requireRole(STAFF_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const tenantId = req.user!.tenant_id!;
+    const threadId = req.params.id as string;
+    const service = new CollectionThreadService(supabase);
+    const data = await service.listMessages(tenantId, threadId, 100);
+    return res.json({ ok: true, data });
+  } catch (err) {
+    console.error('[collections/threads/messages] error:', err);
+    return res.status(500).json({ error: 'messages_failed', message: (err as Error).message });
+  }
+});
+
+collectionsRouter.post('/threads/:id/messages', authMiddleware, tenantMiddleware, requireRole(STAFF_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const tenantId = req.user!.tenant_id!;
+    const threadId = req.params.id as string;
+    const parsed = AddMessageSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'validation_error', details: parsed.error.flatten() });
+
+    const service = new CollectionThreadService(supabase);
+    await service.addMessage(tenantId, { thread_id: threadId, ...parsed.data, user_id: req.user!.id });
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[collections/threads/messages] error:', err);
+    return res.status(500).json({ error: 'add_message_failed', message: (err as Error).message });
   }
 });

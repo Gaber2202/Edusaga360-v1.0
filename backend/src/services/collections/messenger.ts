@@ -4,6 +4,7 @@ import { decryptSecret, isAiCryptoConfigured } from '../../lib/aiCrypto.js';
 import { sendEmail as sendTransactionalEmail } from '../email.js';
 import { createMoyasarPaymentLink } from './moyasar.js';
 import { writeLedger } from './ledgerWriter.js';
+import { CollectionThreadService } from './threads.js';
 
 export interface SequenceStep {
   step: number;
@@ -69,7 +70,11 @@ interface ProfileWithNames {
 }
 
 export class CollectionMessenger {
-  constructor(private supabase: SupabaseClient, private callbackUrl: string) {}
+  private threadService: CollectionThreadService;
+
+  constructor(private supabase: SupabaseClient, private callbackUrl: string) {
+    this.threadService = new CollectionThreadService(supabase);
+  }
 
   async getSequence(tenantId: string, segment: string): Promise<SequenceStep[]> {
     const { data } = await this.supabase
@@ -267,6 +272,9 @@ export class CollectionMessenger {
       decision: 'sent',
       outcome: { provider: providerId, to, language },
     });
+
+    // Mirror the outbound message into the staff↔parent thread for full case history.
+    await this.threadService.mirrorYamenMessage(msg.tenant_id, msg.profile_id, bodyAr, bodyEn, providerId);
   }
 
   private async sendEmailMessage(to: string, bodyAr: string, bodyEn: string): Promise<void> {
