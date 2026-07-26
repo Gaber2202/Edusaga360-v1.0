@@ -34,6 +34,15 @@ import { createReceiptForPayment } from '../services/receipt.js';
 import { convertToInvoice } from '../services/lifecycle.js';
 import { shareInvoice } from '../services/share.js';
 import type { ShareChannel } from '../services/share.js';
+import {
+  getAgingReport,
+  getExpectedCollections,
+  getGuardianStatement,
+  getTrialBalance,
+  getIncomeStatement,
+  getBalanceSheet,
+  getRevenueByFeeType,
+} from '../services/reports.js';
 
 export const billingRouter = Router();
 
@@ -1811,30 +1820,14 @@ billingRouter.post('/moyasar/webhook', async (req: AuthenticatedRequest, res: Re
 billingRouter.get('/arrears', async (req: AuthenticatedRequest, res: Response) => {
   const tenant_id = await resolveTenantId(req);
   if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
-  const { academic_year } = req.query as Record<string, string>;
-  const today = new Date();
+  const { academic_year, summary } = req.query as Record<string, string>;
+  const isAccountant = req.user?.role === 'accountant';
 
-  let q = supabase
-    .from('invoices')
-    .select('id, invoice_number, student_id, total_amount, paid_amount, due_date, status, students(name_en, name_ar, grade)')
-    .eq('tenant_id', tenant_id)
-    .in('status', ['issued', 'partial', 'overdue'])
-    .lt('due_date', today.toISOString().split('T')[0]);
-  if (academic_year) q = q.eq('academic_year', academic_year);
-
-  const { data, error } = await q;
-  if (error) return res.status(500).json({ error: error.message });
-
-  const buckets = { '1_30': 0, '31_60': 0, '61_90': 0, '90_plus': 0 };
-  const items = (data ?? []).map((inv) => {
-    const daysOverdue = Math.floor((today.getTime() - new Date(inv.due_date).getTime()) / 86400000);
-    const balance = sar((inv.total_amount ?? 0) - (inv.paid_amount ?? 0));
-    const bucket = daysOverdue <= 30 ? '1_30' : daysOverdue <= 60 ? '31_60' : daysOverdue <= 90 ? '61_90' : '90_plus';
-    buckets[bucket as keyof typeof buckets] = sar(buckets[bucket as keyof typeof buckets] + balance);
-    return { ...inv, days_overdue: daysOverdue, outstanding_balance: balance, bucket };
+  const report = await getAgingReport(supabase, tenant_id, {
+    academic_year,
+    includeStudents: !isAccountant && summary !== 'true',
   });
-
-  return res.json({ buckets, items, total_outstanding: sar(Object.values(buckets).reduce((s, v) => s + v, 0)) });
+  return res.json(report);
 });
 
 // ─── GET /api/billing/vat-report — ZATCA VAT summary ────────────────────────
@@ -2000,4 +1993,79 @@ billingRouter.post('/recurring-invoices/generate', requireRole(FINANCE_ROLES), a
     console.error('recurring-invoices/generate:', err);
     return res.status(500).json({ error: 'Recurring generation failed' });
   }
+});
+
+// ─── GET /api/billing/expected-collections — Cash-flow forecast ──────────────
+
+billingRouter.get('/expected-collections', async (req: AuthenticatedRequest, res: Response) => {
+  const tenant_id = await resolveTenantId(req);
+  if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
+  const { from_date, to_date } = req.query as Record<string, string>;
+  if (!from_date || !to_date) return res.status(400).json({ error: 'from_date and to_date required' });
+
+  const report = await getExpectedCollections(supabase, tenant_id, from_date, to_date);
+  return res.json(report);
+});
+
+// ─── GET /api/billing/guardian-statement/:guardian_id ────────────────────────
+
+billingRouter.get('/guardian-statement/:guardian_id', async (req: AuthenticatedRequest, res: Response) => {
+  const tenant_id = await resolveTenantId(req);
+  if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
+  const { guardian_id } = req.params;
+  const { from_date, to_date } = req.query as Record<string, string>;
+  const isAccountant = req.user?.role === 'accountant';
+
+  const statement = await getGuardianStatement(supabase, tenant_id, guardian_id as string, {
+    from_date,
+    to_date,
+    includeStudents: !isAccountant,
+  });
+  return res.json(statement);
+});
+
+// ─── GET /api/billing/trial-balance ────────────────────────────────────────
+
+billingRouter.get('/trial-balance', async (req: AuthenticatedRequest, res: Response) => {
+  const tenant_id = await resolveTenantId(req);
+  if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
+  const { from_date, to_date } = req.query as Record<string, string>;
+
+  const report = await getTrialBalance(supabase, tenant_id, { from_date, to_date });
+  return res.json(report);
+});
+
+// ─── GET /api/billing/income-statement ─────────────────────────────────────
+
+billingRouter.get('/income-statement', async (req: AuthenticatedRequest, res: Response) => {
+  const tenant_id = await resolveTenantId(req);
+  if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
+  const { from_date, to_date } = req.query as Record<string, string>;
+  if (!from_date || !to_date) return res.status(400).json({ error: 'from_date and to_date required' });
+
+  const report = await getIncomeStatement(supabase, tenant_id, from_date, to_date);
+  return res.json(report);
+});
+
+// ─── GET /api/billing/balance-sheet ──────────────────────────────────────────
+
+billingRouter.get('/balance-sheet', async (req: AuthenticatedRequest, res: Response) => {
+  const tenant_id = await resolveTenantId(req);
+  if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
+  const { as_of } = req.query as Record<string, string>;
+
+  const report = await getBalanceSheet(supabase, tenant_id, as_of);
+  return res.json(report);
+});
+
+// ─── GET /api/billing/revenue-by-fee-type ────────────────────────────────────
+
+billingRouter.get('/revenue-by-fee-type', async (req: AuthenticatedRequest, res: Response) => {
+  const tenant_id = await resolveTenantId(req);
+  if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
+  const { from_date, to_date } = req.query as Record<string, string>;
+  if (!from_date || !to_date) return res.status(400).json({ error: 'from_date and to_date required' });
+
+  const report = await getRevenueByFeeType(supabase, tenant_id, from_date, to_date);
+  return res.json(report);
 });
