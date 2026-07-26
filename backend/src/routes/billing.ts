@@ -29,6 +29,9 @@ import {
   InvoiceData,
   TenantData,
 } from '../services/zatca.js';
+import { getTenantComplianceData } from '../services/tenant.js';
+import { createReceiptForPayment } from '../services/receipt.js';
+import { convertToInvoice } from '../services/lifecycle.js';
 
 export const billingRouter = Router();
 
@@ -102,34 +105,6 @@ async function getZatcaChain(
   };
 }
 
-/** Get tenant billing profile (compliance settings first, then tenants fallback) */
-async function getTenant(tenant_id: string): Promise<TenantData & Record<string, unknown>> {
-  const [{ data: compliance }, { data: tenant }] = await Promise.all([
-    supabase.from('tenant_compliance_settings').select('*').eq('tenant_id', tenant_id).maybeSingle(),
-    supabase.from('tenants').select('id, name_en, name_ar, admin_email, city, school_type, logo_url, settings').eq('id', tenant_id).single(),
-  ]);
-  if (!tenant) return {} as TenantData & Record<string, unknown>;
-  const settings = (tenant.settings as Record<string, string>) ?? {};
-  return {
-    ...tenant,
-    id: tenant.id,
-    name: compliance?.legal_name_en || tenant.name_en,
-    name_ar: compliance?.legal_name_ar || tenant.name_ar,
-    legal_name_en: compliance?.legal_name_en || tenant.name_en,
-    legal_name_ar: compliance?.legal_name_ar || tenant.name_ar,
-    vat_number: compliance?.vat_trn || settings.vat_number || '',
-    address: compliance?.address_en || settings.address || tenant.city || '',
-    address_ar: compliance?.address_ar || settings.address_ar || tenant.city || '',
-    address_en: compliance?.address_en || settings.address || tenant.city || '',
-    city: compliance?.city || tenant.city || '',
-    country_code: compliance?.country_code || 'SA',
-    country_subentity_code: compliance?.country_subentity_code || 'SA-01',
-    phone: compliance?.phone || settings.phone || '',
-    email: compliance?.email || tenant.admin_email || '',
-    cr_number: compliance?.cr_number || settings.cr_number || '',
-    logo_url: compliance?.logo_url || tenant.logo_url || '',
-  } as TenantData & Record<string, unknown>;
-}
 
 /**
  * Post a balanced double-entry journal (best-effort, non-fatal).
@@ -476,6 +451,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       document_type, invoice_type,
     } = parsed.data;
     const due_date = rawDueDate && rawDueDate.trim() !== '' ? rawDueDate : null;
+    const isTaxInvoice = !['quotation', 'proforma', 'receipt'].includes(document_type);
 
     // Verify student
     const { data: student, error: studentErr } = await supabase
@@ -569,7 +545,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
     const today = new Date().toISOString().split('T')[0];
 
     // Generate ZATCA artifacts
-    const tenant = await getTenant(tenant_id);
+    const tenant = await getTenantComplianceData(tenant_id);
     const invoiceData: InvoiceData = {
       invoice_number: invoiceNumber,
       document_type: document_type as InvoiceData['document_type'],
@@ -594,19 +570,25 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       uuid: crypto.randomUUID(),
     };
 
-    // Resolve the ZATCA hash-chain position BEFORE hashing so the PIH and ICV
-    // are embedded in the signed UBL document.
-    const chain = await getZatcaChain(tenant_id);
-    invoiceData.previous_invoice_hash = chain.previous_invoice_hash;
-    invoiceData.icv = chain.icv;
-    const previous_hash = chain.previous_invoice_hash ?? '';
-
     const vatSummary = computeVatSummary(invoiceData);
     invoiceData.vat_summary = vatSummary;
 
-    const qr_code = generateTLVQR(invoiceData, tenant as TenantData);
-    const ubl_xml = generateUBLXml(invoiceData, tenant as TenantData);
-    const invoice_hash = generateInvoiceHash(ubl_xml);
+    // ZATCA reporting data is only relevant for formal tax invoices.
+    let chain: { previous_invoice_hash?: string; icv?: number } = {};
+    let qr_code: string | null = null;
+    let ubl_xml: string | null = null;
+    let invoice_hash: string | null = null;
+    let previous_hash: string | null = null;
+    if (isTaxInvoice) {
+      chain = await getZatcaChain(tenant_id);
+      invoiceData.previous_invoice_hash = chain.previous_invoice_hash;
+      invoiceData.icv = chain.icv;
+      previous_hash = chain.previous_invoice_hash ?? null;
+
+      qr_code = generateTLVQR(invoiceData, tenant);
+      ubl_xml = generateUBLXml(invoiceData, tenant);
+      invoice_hash = generateInvoiceHash(ubl_xml);
+    }
 
     // Insert invoice — try extended schema first, fall back to base columns
     const studentGrade = (student as Record<string, unknown>).grades
@@ -638,17 +620,17 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       total_amount: totalAmount,
       balance: totalAmount,
       paid_amount: 0,
-      status: 'issued',
+      status: isTaxInvoice ? 'issued' : 'draft',
       items: enrichedLines,
       vat_summary: vatSummary,
       notes: notesText,
-      zatca_uuid: invoiceData.uuid,
-      icv: invoiceData.icv,
+      zatca_uuid: isTaxInvoice ? invoiceData.uuid : null,
+      icv: isTaxInvoice ? invoiceData.icv : null,
       invoice_hash,
       previous_invoice_hash: previous_hash,
       ubl_xml,
       qr_code,
-      zatca_status: 'pending',
+      zatca_status: isTaxInvoice ? 'pending' : 'not_applicable',
       zatca_response: null,
     };
 
@@ -671,7 +653,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
         due_date: due_date ?? null,
         total_amount: totalAmount,
         paid_amount: 0,
-        status: 'issued',
+        status: isTaxInvoice ? 'issued' : 'draft',
         items: enrichedLines,
         notes: notesText,
       };
@@ -702,33 +684,35 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       if (discErr) console.warn('[billing] discount insert failed:', discErr.message);
     }
 
-    // Log ZATCA submission record (best-effort)
-    const submissionType = (tenant as Record<string, unknown>).customer_type === 'B2B' ? 'clearance' : 'reporting';
+    // ZATCA submission, installments and GL journal only apply to formal invoices.
     let zatcaRecord: Record<string, unknown> | null = null;
-    const { data: zatcaData, error: zatcaErr } = await supabase
-      .from('zatca_submissions')
-      .insert({
-        tenant_id,
-        invoice_id: invoice.id,
-        invoice_number: invoiceNumber,
-        submission_type: submissionType,
-        invoice_hash,
-        previous_hash,
-        ubl_xml,
-        qr_code,
-        zatca_status: 'pending',
-      })
-      .select()
-      .single();
-    if (zatcaErr) {
-      console.warn('[billing] ZATCA insert failed:', zatcaErr.message);
-    } else {
-      zatcaRecord = zatcaData;
+    if (isTaxInvoice) {
+      const submissionType = invoiceData.invoice_type === 'standard' ? 'clearance' : 'reporting';
+      const { data: zatcaData, error: zatcaErr } = await supabase
+        .from('zatca_submissions')
+        .insert({
+          tenant_id,
+          invoice_id: invoice.id,
+          invoice_number: invoiceNumber,
+          submission_type: submissionType,
+          invoice_hash,
+          previous_hash,
+          ubl_xml,
+          qr_code,
+          zatca_status: 'pending',
+        })
+        .select()
+        .single();
+      if (zatcaErr) {
+        console.warn('[billing] ZATCA insert failed:', zatcaErr.message);
+      } else {
+        zatcaRecord = zatcaData;
+      }
     }
 
-    // Generate installment plan if requested
+    // Generate installment plan if requested (tax invoices only)
     let plan = null;
-    if (installment_count > 1 && due_date) {
+    if (isTaxInvoice && installment_count > 1 && due_date) {
       const { data: planData, error: planErr } = await supabase
         .from('payment_plans')
         .insert({
@@ -765,8 +749,8 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       }
     }
 
-    // Double-entry GL journal (best-effort, non-fatal)
-    try {
+    // Double-entry GL journal (best-effort, non-fatal) — tax invoices only
+    if (isTaxInvoice) try {
       await postJournal(tenant_id, req.user!.id, invoiceNumber, `Invoice ${invoiceNumber}`, [
         { account_code: '12', debit: totalAmount, credit: 0, description: `A/R — ${invoiceNumber}` },
         { account_code: '41', debit: 0, credit: sar(subtotal - totalDiscount), description: `Revenue — ${invoiceNumber}` },
@@ -778,7 +762,9 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
 
     return res.status(201).json({
       invoice,
-      zatca: { id: zatcaRecord?.id, qr_code, invoice_hash, status: 'pending' },
+      zatca: isTaxInvoice
+        ? { id: zatcaRecord?.id, qr_code, invoice_hash, status: 'pending' }
+        : { id: null, qr_code: null, invoice_hash: null, status: 'not_applicable' },
       payment_plan: plan,
       discounts_applied: discountDetails,
       summary: { subtotal, total_discount: totalDiscount, vat_amount: vatAmount, total_amount: totalAmount },
@@ -861,11 +847,11 @@ billingRouter.post('/invoices/:id/zatca-submit', requireRole(FINANCE_ROLES), asy
     if (subErr || !sub) return res.status(404).json({ error: 'ZATCA record not found' });
 
     // Generate PDF
-    const tenant = await getTenant(tenant_id);
+    const tenant = await getTenantComplianceData(tenant_id);
     const { data: invoice } = await supabase.from('invoices').select('*').eq('id', id).single();
     const pdfBuffer = await generateZATCAInvoicePDF(
       { invoice_number: invoice?.invoice_number, issue_date: invoice?.date, subtotal: invoice?.subtotal, vat_amount: invoice?.vat_amount, total_amount: invoice?.total_amount } as InvoiceData,
-      tenant as TenantData,
+      tenant,
     );
 
     const baseUrl = process.env.ZATCA_ENV === 'production' ? ZATCA_PROD_URL : ZATCA_SANDBOX_URL;
@@ -971,7 +957,7 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
     if (cnErr) throw cnErr;
 
     // ZATCA credit note submission record
-    const tenant = await getTenant(tenant_id);
+    const tenant = await getTenantComplianceData(tenant_id);
     const creditInvoiceData: InvoiceData = {
       invoice_number: cnNumber,
       issue_date: today,
@@ -989,7 +975,7 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
     const chain = await getZatcaChain(tenant_id);
     creditInvoiceData.previous_invoice_hash = chain.previous_invoice_hash;
     creditInvoiceData.icv = chain.icv;
-    const ubl_xml = generateUBLXml(creditInvoiceData, tenant as TenantData);
+    const ubl_xml = generateUBLXml(creditInvoiceData, tenant);
     const invoice_hash = generateInvoiceHash(ubl_xml);
 
     await supabase.from('zatca_submissions').insert({
@@ -1013,6 +999,38 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
   } catch (err) {
     console.error('credit-note:', err);
     return res.status(500).json({ error: 'Failed to create credit note' });
+  }
+});
+
+// ─── POST /api/billing/documents/:id/convert-to-invoice ─────────────────────
+// 1-click conversion of a quotation or proforma into a formal tax invoice.
+billingRouter.post('/documents/:id/convert-to-invoice', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const tenant_id = req.user!.tenant_id!;
+    const { id } = req.params;
+
+    const { data: original, error } = await supabase
+      .from('invoices')
+      .select('*')
+      .eq('id', id)
+      .eq('tenant_id', tenant_id)
+      .single();
+    if (error || !original) return res.status(404).json({ error: 'Document not found' });
+
+    if (!['quotation', 'proforma'].includes(original.document_type)) {
+      return res.status(400).json({ error: 'Only quotation or proforma can be converted to an invoice' });
+    }
+
+    const tenant = await getTenantComplianceData(tenant_id);
+    const newInvoiceNumber = await generateInvoiceNumber(tenant_id);
+    const chain = await getZatcaChain(tenant_id);
+    const invoice = await convertToInvoice(supabase, original as any, newInvoiceNumber, tenant, chain.previous_invoice_hash ?? undefined, chain.icv);
+
+    // Leave the original draft document intact and link it as the parent.
+    return res.status(201).json({ invoice, parent_id: id, converted_from: original.document_type });
+  } catch (err) {
+    console.error('convert-to-invoice:', err);
+    return res.status(500).json({ error: 'Failed to convert document to invoice' });
   }
 });
 
@@ -1051,6 +1069,21 @@ billingRouter.post('/payments', async (req: AuthenticatedRequest, res: Response)
 
     await supabase.from('invoices').update({ paid_amount: newPaid, status: newStatus, updated_at: new Date().toISOString() }).eq('id', invoice_id).eq('tenant_id', tenant_id);
 
+    // Auto-issue a bilingual receipt for this payment.
+    let receipt: Record<string, unknown> | null = null;
+    try {
+      const tenantData = await getTenantComplianceData(tenant_id);
+      const { receipt: receiptRow, pdf_base64 } = await createReceiptForPayment(
+        supabase,
+        invoice as any,
+        { id: payment.id, amount, method: payment_method, reference: reference ?? payment.id, date: today },
+        tenantData,
+      );
+      receipt = { ...receiptRow, pdf_base64 };
+    } catch (receiptErr) {
+      console.warn('[billing] receipt generation failed:', (receiptErr as Error).message);
+    }
+
     // Update installment if specified
     if (installment_id) {
       await supabase.from('payment_plan_installments').update({ paid_amount: amount, status: 'paid', paid_date: today, invoice_id }).eq('id', installment_id).eq('tenant_id', tenant_id);
@@ -1073,7 +1106,7 @@ billingRouter.post('/payments', async (req: AuthenticatedRequest, res: Response)
       { account_code: '12', debit: 0, credit: amount, description: `A/R cleared — ${invoice.invoice_number}` },
     ], invoice.branch_id ?? null);
 
-    return res.status(201).json({ payment, invoice: { id: invoice_id, paid_amount: newPaid, status: newStatus, remaining_balance: Math.max(0, sar(invoice.total_amount - newPaid)) } });
+    return res.status(201).json({ payment, invoice: { id: invoice_id, paid_amount: newPaid, status: newStatus, remaining_balance: Math.max(0, sar(invoice.total_amount - newPaid)) }, receipt });
   } catch (err) {
     console.error('billing/payments:', err);
     return res.status(500).json({ error: 'Failed to record payment' });
@@ -1141,7 +1174,7 @@ async function createInvoiceForStudent(
   const invoiceNumber = await generateInvoiceNumber(tenant_id);
   const today = new Date().toISOString().split('T')[0];
 
-  const tenant = await getTenant(tenant_id);
+  const tenant = await getTenantComplianceData(tenant_id);
   const chain = await getZatcaChain(tenant_id);
   const invoiceData: InvoiceData = {
     invoice_number: invoiceNumber,
@@ -1156,8 +1189,8 @@ async function createInvoiceForStudent(
     previous_invoice_hash: chain.previous_invoice_hash,
     icv: chain.icv,
   };
-  const qr_code = generateTLVQR(invoiceData, tenant as TenantData);
-  const ubl_xml = generateUBLXml(invoiceData, tenant as TenantData);
+  const qr_code = generateTLVQR(invoiceData, tenant);
+  const ubl_xml = generateUBLXml(invoiceData, tenant);
   const invoice_hash = generateInvoiceHash(ubl_xml);
 
   const { data: invoice, error } = await supabase.from('invoices').insert({

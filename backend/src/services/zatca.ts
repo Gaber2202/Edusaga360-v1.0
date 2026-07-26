@@ -674,7 +674,7 @@ function simplifiedTitle(zatcaType?: string, documentType?: string): string {
     : 'فاتورة ضريبية مبسطة / Simplified Tax Invoice';
 }
 
-function buildInvoiceHTML(invoice: InvoiceData, tenant: TenantData, qrDataUrl: string): string {
+function buildInvoiceHTML(invoice: InvoiceData, tenant: TenantData, qrDataUrl: string, showZatcaFooter = true): string {
   const sellerNameAr = tenant.legal_name_ar || tenant.name_ar || tenant.name || 'المدرسة';
   const sellerNameEn = tenant.legal_name_en || tenant.name || 'School';
   const vatNumber = tenant.vat_number || '300000000000003';
@@ -933,7 +933,7 @@ function buildInvoiceHTML(invoice: InvoiceData, tenant: TenantData, qrDataUrl: s
   ${notesHtml}
   ${termsHtml}
 
-  <div class="footer">
+  ${showZatcaFooter ? `<div class="footer">
     <div class="zatca-notice">
       <p>هذه الفاتورة تتوافق مع متطلبات الفوترة الإلكترونية للمرحلة الثانية من هيئة الزكاة والضريبة والجمارك</p>
       <p style="direction:ltr;text-align:left;margin-top:4px">This invoice complies with ZATCA Phase 2 e-invoicing requirements.</p>
@@ -942,11 +942,28 @@ function buildInvoiceHTML(invoice: InvoiceData, tenant: TenantData, qrDataUrl: s
       <img src="${qrDataUrl}" alt="ZATCA QR" />
       <div class="qr-label">رمز الاستجابة السريعة / ZATCA QR</div>
     </div>
-  </div>
+  </div>` : ''}
 
   <div class="powered">Powered by EduSaga 360</div>
 </body>
 </html>`;
+}
+
+async function setPdfMetadata(pdfBuffer: Buffer, invoice: InvoiceData): Promise<Buffer> {
+  const pdfDoc = await PDFDocument.load(pdfBuffer);
+
+  pdfDoc.setTitle(`${documentTitle(invoice.document_type)} ${invoice.invoice_number}`);
+  pdfDoc.setAuthor(invoice.buyer_name || '');
+  pdfDoc.setSubject(documentTitle(invoice.document_type));
+  pdfDoc.setKeywords(['EduSaga', 'invoice', 'ZATCA']);
+  pdfDoc.setCreationDate(new Date());
+  pdfDoc.setModificationDate(new Date());
+
+  const documentId = crypto.randomBytes(16).toString('hex');
+  const id = PDFHexString.of(documentId);
+  pdfDoc.context.trailerInfo.ID = pdfDoc.context.obj([id, id]);
+
+  return Buffer.from(await pdfDoc.save());
 }
 
 async function attachXmlAndSetMetadata(pdfBuffer: Buffer, xml: string, invoice: InvoiceData): Promise<Buffer> {
@@ -959,7 +976,7 @@ async function attachXmlAndSetMetadata(pdfBuffer: Buffer, xml: string, invoice: 
     modificationDate: new Date(),
   });
 
-  pdfDoc.setTitle(`Invoice ${invoice.invoice_number}`);
+  pdfDoc.setTitle(`${documentTitle(invoice.document_type)} ${invoice.invoice_number}`);
   pdfDoc.setAuthor(invoice.buyer_name || '');
   pdfDoc.setSubject(documentTitle(invoice.document_type));
   pdfDoc.setKeywords(['ZATCA', 'e-invoice', 'EduSaga']);
@@ -977,6 +994,8 @@ async function attachXmlAndSetMetadata(pdfBuffer: Buffer, xml: string, invoice: 
   return Buffer.from(await pdfDoc.save());
 }
 
+const TAX_DOCUMENT_TYPES = new Set(['invoice', 'credit_note', 'debit_note']);
+
 export async function generateZATCAInvoicePDF(
   invoice: InvoiceData,
   tenant: TenantData,
@@ -992,12 +1011,24 @@ export async function generateZATCAInvoicePDF(
     total_amount: invoice.subtotal - (invoice.discount_amount || 0) + vatSummary.total_vat,
   };
 
-  const ublXml = generateUBLXml(enrichedInvoice, tenant);
-  const signature = signInvoice(generateInvoiceHash(ublXml), process.env.ZATCA_PRIVATE_KEY);
-  const tlvBase64 = generateTLVQR(enrichedInvoice, tenant, signature);
+  const isTaxDocument = TAX_DOCUMENT_TYPES.has(enrichedInvoice.document_type || 'invoice');
+
+  let ublXml = '';
+  let tlvBase64 = '';
+
+  if (isTaxDocument) {
+    ublXml = generateUBLXml(enrichedInvoice, tenant);
+    const signature = signInvoice(generateInvoiceHash(ublXml), process.env.ZATCA_PRIVATE_KEY);
+    tlvBase64 = generateTLVQR(enrichedInvoice, tenant, signature);
+  } else {
+    // Non-tax documents (quotation, proforma, receipt) still get a QR with the
+    // 5 basic fields but no cryptographic signature/UBL attachment.
+    tlvBase64 = generateTLVQR(enrichedInvoice, tenant);
+  }
+
   const qrDataUrl = await QRCode.toDataURL(tlvBase64, { errorCorrectionLevel: 'M', margin: 1, width: 180 });
 
-  const html = buildInvoiceHTML(enrichedInvoice, tenant, qrDataUrl);
+  const html = buildInvoiceHTML(enrichedInvoice, tenant, qrDataUrl, isTaxDocument);
 
   return runPdfJob(async () => {
     const browser = await getBrowser();
@@ -1009,7 +1040,10 @@ export async function generateZATCAInvoicePDF(
         printBackground: true,
         margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' },
       });
-      return attachXmlAndSetMetadata(Buffer.from(puppeteerPdf), ublXml, enrichedInvoice);
+      const pdfBuffer = Buffer.from(puppeteerPdf);
+      return isTaxDocument
+        ? attachXmlAndSetMetadata(pdfBuffer, ublXml, enrichedInvoice)
+        : setPdfMetadata(pdfBuffer, enrichedInvoice);
     } finally {
       await page.close();
     }
