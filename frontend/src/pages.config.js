@@ -136,6 +136,7 @@ import Vendors from './pages/Vendors';
 import WorkflowEngine from './pages/WorkflowEngine';
 import WorkforcePlanning from './pages/WorkforcePlanning';
 import YamenAI from './pages/YamenAI';
+import YamenCollections from './pages/YamenCollections';
 import SchoolClinic from './pages/SchoolClinic';
 import LibraryManagement from './pages/LibraryManagement';
 import CanteenManagement from './pages/CanteenManagement';
@@ -233,6 +234,7 @@ export const PAGES = {
     "WorkflowEngine": WorkflowEngine,
     "WorkforcePlanning": WorkforcePlanning,
     "YamenAI": YamenAI,
+    "YamenCollections": YamenCollections,
     "SchoolClinic": SchoolClinic,
     "LibraryManagement": LibraryManagement,
     "CanteenManagement": CanteenManagement,

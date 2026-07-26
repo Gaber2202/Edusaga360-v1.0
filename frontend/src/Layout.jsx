@@ -202,6 +202,7 @@ function LayoutContent({ children, currentPageName }) {
       children: [
         { name: 'invoices', icon: Receipt, page: 'Fees', roles: ['admin', 'finance', 'collections', 'branch_manager', 'accountant', 'parent'] },
         { name: 'collections', icon: Banknote, page: 'Collections', roles: ['admin', 'finance', 'collections', 'branch_manager'] },
+        { name: 'yamenCollections', icon: RefreshCw, page: 'YamenCollections', roles: ['admin', 'finance', 'collections'] },
         { name: 'chequeManagement', icon: Banknote, page: 'ChequeManagement', roles: ['admin', 'finance', 'collections', 'branch_manager', 'accountant'] },
         { name: 'refunds', icon: RefreshCw, page: 'Refunds', roles: ['admin', 'finance', 'branch_manager'] },
         { name: 'reconciliation', icon: Calculator, page: 'Reconciliation', roles: ['admin', 'finance', 'accountant'] },

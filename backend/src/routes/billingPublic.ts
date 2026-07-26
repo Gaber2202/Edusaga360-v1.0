@@ -118,7 +118,7 @@ billingPublicRouter.post('/moyasar/webhook', async (req, res) => {
     }
 
     // Update invoice totals.
-    const newPaid = sar((invoice.paid_amount as number) + amountSAR);
+    const newPaid = Number((invoice.paid_amount as number) ?? 0) + amountSAR;
     const newStatus = newPaid >= (invoice.total_amount as number) - 0.01 ? 'paid' : 'partial';
     const { error: updErr } = await supabase
       .from('invoices')
@@ -165,7 +165,7 @@ billingPublicRouter.post('/moyasar/webhook', async (req, res) => {
       action_type: 'reconciliation',
       actor: 'system',
       reference_table: 'payments',
-      reference_id: collection_message_id,
+      reference_id: payment_id,
       input_snapshot: { payment_id, invoice_id, amount_halala: amountHalala, amount_sar: amountSAR, metadata },
       decision: 'payment_applied',
       outcome: { invoice_status: newStatus, paid_amount: newPaid },
