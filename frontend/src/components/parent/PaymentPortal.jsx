@@ -30,8 +30,31 @@ export default function PaymentPortal({ student }) {
   const [loading, setLoading]     = useState(false);
   const [expanded, setExpanded]   = useState(null);
   const [payingId, setPayingId]   = useState(null);
+  const [paymentLinks, setPaymentLinks] = useState({});
+  const [loadingLinkId, setLoadingLinkId] = useState(null);
+
+  // Load the invoice-specific Moyasar payment link when a parent expands an unpaid invoice.
+  useEffect(() => {
+    if (!expanded) return;
+    const invoice = invoices.find((inv) => inv.id === expanded);
+    if (!invoice || invoice.status === 'paid' || paymentLinks[expanded]?.paymentUrl) return;
+
+    setLoadingLinkId(expanded);
+    callApi(`/api/invoices/${expanded}/payment-link`, null, { method: 'GET' })
+      .then((result) => {
+        if (result.paymentUrl) {
+          setPaymentLinks((prev) => ({ ...prev, [expanded]: result }));
+        }
+      })
+      .catch((err) => console.error('Error loading payment link:', err))
+      .finally(() => setLoadingLinkId(null));
+  }, [expanded, invoices, paymentLinks]);
 
   const handlePay = async (invoice) => {
+    if (paymentLinks[invoice.id]?.paymentUrl) {
+      window.open(paymentLinks[invoice.id].paymentUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
     setPayingId(invoice.id);
     toast.loading(isRTL ? 'جاري تحميل رابط الدفع...' : 'Loading payment link...');
     try {
@@ -226,6 +249,42 @@ export default function PaymentPortal({ student }) {
                             {isRTL ? 'تحميل PDF' : 'Download PDF'}
                           </Button>
                         </div>
+
+                        {loadingLinkId === invoice.id && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            {isRTL ? 'جاري تحميل رابط الدفع...' : 'Loading payment link...'}
+                          </div>
+                        )}
+
+                        {paymentLinks[invoice.id]?.paymentUrl && (
+                          <div className="p-3 bg-white border rounded-lg space-y-2">
+                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+                              {isRTL ? 'رابط الدفع' : 'Payment link'}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={paymentLinks[invoice.id].paymentUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-sm text-blue-600 hover:underline break-all"
+                              >
+                                {paymentLinks[invoice.id].paymentUrl}
+                              </a>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs"
+                              onClick={() => {
+                                navigator.clipboard.writeText(paymentLinks[invoice.id].paymentUrl);
+                                toast.success(isRTL ? 'تم نسخ رابط الدفع' : 'Payment link copied');
+                              }}
+                            >
+                              {isRTL ? 'نسخ الرابط' : 'Copy link'}
+                            </Button>
+                          </div>
+                        )}
 
                         {invoice.notes && (
                           <p className="text-xs text-muted-foreground italic">{invoice.notes}</p>
