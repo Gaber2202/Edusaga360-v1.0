@@ -4,6 +4,8 @@ import { z } from 'zod';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase.js';
 import { writeLedger } from '../services/collections/ledgerWriter.js';
+import { getTenantComplianceData } from '../services/tenant.js';
+import { createReceiptForPayment } from '../services/receipt.js';
 
 export const billingPublicRouter = Router();
 
@@ -127,6 +129,21 @@ billingPublicRouter.post('/moyasar/webhook', async (req, res) => {
       .eq('tenant_id', tenant_id);
     if (updErr) throw updErr;
 
+    // Auto-issue a bilingual receipt for the online payment.
+    let receipt: Record<string, unknown> | null = null;
+    try {
+      const tenantData = await getTenantComplianceData(tenant_id);
+      const { receipt: receiptRow, pdf_base64 } = await createReceiptForPayment(
+        supabase,
+        invoice as any,
+        { id: payment_id, amount: amountSAR, method: 'online', reference: payment_id, date: new Date().toISOString().split('T')[0] },
+        tenantData,
+      );
+      receipt = { ...receiptRow, pdf_base64 };
+    } catch (receiptErr) {
+      console.warn('[public/billing/moyasar/webhook] receipt generation failed:', (receiptErr as Error).message);
+    }
+
     // Stop active collection sequences for this invoice.
     const { error: stopErr } = await supabase
       .from('collection_messages')
@@ -172,7 +189,7 @@ billingPublicRouter.post('/moyasar/webhook', async (req, res) => {
     });
 
     console.log(`[public/billing/moyasar/webhook] reconciled payment ${payment_id} for invoice ${invoice_id} in ${Date.now() - startMs}ms`);
-    return res.json({ received: true, applied: true, invoice_status: newStatus });
+    return res.json({ received: true, applied: true, invoice_status: newStatus, receipt_id: receipt?.id });
   } catch (err) {
     console.error('[public/billing/moyasar/webhook] error:', err);
     return res.status(500).json({ error: 'webhook_processing_failed', message: (err as Error).message });
