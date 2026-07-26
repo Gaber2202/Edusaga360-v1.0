@@ -26,27 +26,42 @@ export const invoiceRouter = Router();
 // ---------------------------------------------------------------------------
 
 const InvoiceItemSchema = z.object({
-  description: z.string(),
-  amount: z.number().min(0),
+  description: z.string().optional(),
+  description_en: z.string().optional(),
+  description_ar: z.string().optional(),
+  amount: z.number().min(0).optional(),
+  quantity: z.number().min(0).optional().default(1),
+  unit_price_net: z.number().min(0).optional(),
   vat_rate: z.number().optional(),
+  vat_amount: z.number().min(0).optional(),
+  line_total_gross: z.number().min(0).optional(),
+  vat_category: z.enum(['standard', 'zero_rated', 'exempt', 'out_of_scope']).optional().default('standard'),
+  vat_category_code: z.string().optional(),
+  discount: z.number().min(0).optional().default(0),
 });
 
 const GenerateZATCASchema = z.object({
   invoice_id: z.string().optional(),
   invoice_number: z.string(),
   issue_date: z.string(),
-  invoice_type: z.enum(['standard', 'credit_note']).optional(),
-  zatca_invoice_type: z.enum(['standard', 'simplified']).optional(),
+  document_type: z.enum(['invoice', 'quotation', 'proforma', 'credit_note', 'debit_note', 'receipt']).optional().default('invoice'),
+  invoice_type: z.enum(['simplified', 'standard']).optional().default('simplified'),
+  zatca_invoice_type: z.enum(['simplified', 'standard']).optional(),
   subtotal: z.number().min(0),
+  discount_amount: z.number().min(0).optional().default(0),
   vat_amount: z.number().min(0),
   total_amount: z.number().min(0),
+  paid_amount: z.number().min(0).optional(),
   student_name: z.string().optional(),
+  buyer_name: z.string().optional(),
   student_id: z.string().optional(),
   buyer_vat_number: z.string().optional(),
   buyer_address: z.string().optional(),
+  due_date: z.string().optional(),
+  supply_date: z.string().optional(),
   items: z.array(InvoiceItemSchema).optional(),
-  discount_amount: z.number().optional(),
   notes: z.string().optional(),
+  terms_and_conditions: z.string().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -54,13 +69,31 @@ const GenerateZATCASchema = z.object({
 // ---------------------------------------------------------------------------
 
 async function getTenantData(tenantId: string): Promise<TenantData> {
-  const { data } = await supabase
-    .from('tenants')
-    .select('id, name, name_ar, vat_number, address, address_ar, phone, email, cr_number')
-    .eq('id', tenantId)
-    .single();
+  const [{ data: compliance }, { data: tenant }] = await Promise.all([
+    supabase.from('tenant_compliance_settings').select('*').eq('tenant_id', tenantId).maybeSingle(),
+    supabase.from('tenants').select('id, name_en, name_ar, admin_email, city, logo_url, settings').eq('id', tenantId).single(),
+  ]);
 
-  return (data as TenantData) || {};
+  if (!tenant) return {};
+  const settings = (tenant.settings as Record<string, string>) ?? {};
+  return {
+    id: tenant.id,
+    name: compliance?.legal_name_en || tenant.name_en,
+    name_ar: compliance?.legal_name_ar || tenant.name_ar,
+    legal_name_en: compliance?.legal_name_en || tenant.name_en,
+    legal_name_ar: compliance?.legal_name_ar || tenant.name_ar,
+    vat_number: compliance?.vat_trn || settings.vat_number || '',
+    address: compliance?.address_en || settings.address || tenant.city || '',
+    address_ar: compliance?.address_ar || settings.address_ar || tenant.city || '',
+    address_en: compliance?.address_en || settings.address || tenant.city || '',
+    city: compliance?.city || tenant.city || '',
+    country_code: compliance?.country_code || 'SA',
+    country_subentity_code: compliance?.country_subentity_code || 'SA-01',
+    phone: compliance?.phone || settings.phone || '',
+    email: compliance?.email || tenant.admin_email || '',
+    cr_number: compliance?.cr_number || settings.cr_number || '',
+    logo_url: compliance?.logo_url || tenant.logo_url || '',
+  };
 }
 
 /**
@@ -135,7 +168,7 @@ invoiceRouter.post('/generate-zatca', requireRole(FINANCE_ROLES), async (req: Au
     const pdf_base64 = pdfBuffer.toString('base64');
 
     // Submit to ZATCA API based on invoice type
-    const isSimplified = invoice.zatca_invoice_type === 'simplified';
+    const isSimplified = (invoice.invoice_type || invoice.zatca_invoice_type || 'simplified') === 'simplified';
     const xmlBase64 = Buffer.from(ubl_xml, 'utf8').toString('base64');
 
     let zatcaResponse = null;
@@ -307,15 +340,32 @@ invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Re
 
     const invoice: InvoiceData = {
       invoice_number: invoiceRow.invoice_number,
+      document_type: invoiceRow.document_type || 'invoice',
+      invoice_type: invoiceRow.invoice_type || 'simplified',
+      zatca_invoice_type: invoiceRow.zatca_invoice_type || invoiceRow.invoice_type || 'simplified',
       issue_date: invoiceRow.issue_date,
+      supply_date: invoiceRow.supply_date || undefined,
+      due_date: invoiceRow.due_date || undefined,
       subtotal: invoiceRow.subtotal || 0,
+      discount_amount: invoiceRow.discount_amount || 0,
       vat_amount: invoiceRow.vat_amount || 0,
       total_amount: invoiceRow.total_amount || 0,
+      paid_amount: invoiceRow.paid_amount || 0,
+      balance: invoiceRow.balance || 0,
       student_name: invoiceRow.student_name,
+      buyer_name: invoiceRow.buyer_name || invoiceRow.student_name,
       student_id: invoiceRow.student_id,
+      buyer_vat_number: invoiceRow.buyer_vat_number || undefined,
+      buyer_address: invoiceRow.buyer_address || undefined,
       items: invoiceRow.items || undefined,
-      discount_amount: invoiceRow.discount_amount || 0,
+      vat_summary: invoiceRow.vat_summary || undefined,
       notes: invoiceRow.notes || undefined,
+      terms_and_conditions: invoiceRow.terms_and_conditions || undefined,
+      uuid: invoiceRow.zatca_uuid || undefined,
+      icv: invoiceRow.icv || undefined,
+      previous_invoice_hash: invoiceRow.previous_invoice_hash || undefined,
+      original_invoice_number: invoiceRow.original_invoice_number || undefined,
+      parent_document_id: invoiceRow.parent_document_id || undefined,
     };
 
     const pdfBuffer = await generateZATCAInvoicePDF(invoice, tenant);

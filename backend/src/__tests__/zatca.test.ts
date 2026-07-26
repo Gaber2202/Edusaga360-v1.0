@@ -57,6 +57,7 @@ const baseInvoice: InvoiceData = {
   vat_amount: 150,
   total_amount: 1150,
   student_name: 'Sara Ahmed',
+  discount_amount: 0,
 };
 
 const baseTenant: TenantData = {
@@ -124,7 +125,7 @@ describe('generateUBLXml — UBL 2.1 structure & ZATCA codes', () => {
   it('emits a UBL 2.1 invoice with the ZATCA customization id', () => {
     const xml = generateUBLXml(baseInvoice, baseTenant);
     expect(xml).toContain('<cbc:UBLVersionID>2.1</cbc:UBLVersionID>');
-    expect(xml).toContain('urn:zatca.gov.sa:tranzact:billing:1.0');
+    expect(xml).toContain('urn:zatca.gov.sa:specification:schemas:invoice:1.0');
     expect(xml).toContain('<cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>');
   });
 
@@ -135,13 +136,13 @@ describe('generateUBLXml — UBL 2.1 structure & ZATCA codes', () => {
   });
 
   it('uses invoice type code 381 for a credit note', () => {
-    const xml = generateUBLXml({ ...baseInvoice, invoice_type: 'credit_note' }, baseTenant);
+    const xml = generateUBLXml({ ...baseInvoice, document_type: 'credit_note' }, baseTenant);
     expect(xml).toContain('>381</cbc:InvoiceTypeCode>');
   });
 
   it('renders the 15% standard VAT category and SAR monetary totals', () => {
     const xml = generateUBLXml(baseInvoice, baseTenant);
-    expect(xml).toContain('<cbc:Percent>15</cbc:Percent>');
+    expect(xml).toContain('<cbc:Percent>15.00</cbc:Percent>');
     expect(xml).toContain('<cbc:PayableAmount currencyID="SAR">1150.00</cbc:PayableAmount>');
     expect(xml).toContain('<cbc:TaxAmount currencyID="SAR">150.00</cbc:TaxAmount>');
   });
@@ -199,7 +200,7 @@ describe('generateZATCAInvoicePDF', () => {
 
   it('renders a credit note without throwing', async () => {
     const pdf = await generateZATCAInvoicePDF(
-      { ...baseInvoice, invoice_type: 'credit_note', discount_amount: 50 },
+      { ...baseInvoice, document_type: 'credit_note', discount_amount: 50 },
       baseTenant,
     );
     expect(pdf.subarray(0, 5).toString('ascii')).toBe('%PDF-');

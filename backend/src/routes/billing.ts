@@ -25,6 +25,7 @@ import {
   generateUBLXml,
   generateInvoiceHash,
   generateZATCAInvoicePDF,
+  computeVatSummary,
   InvoiceData,
   TenantData,
 } from '../services/zatca.js';
@@ -101,26 +102,32 @@ async function getZatcaChain(
   };
 }
 
-/** Get tenant billing profile */
+/** Get tenant billing profile (compliance settings first, then tenants fallback) */
 async function getTenant(tenant_id: string): Promise<TenantData & Record<string, unknown>> {
-  const { data } = await supabase
-    .from('tenants')
-    .select('id, name_en, name_ar, admin_email, city, school_type, settings')
-    .eq('id', tenant_id)
-    .single();
-  if (!data) return {} as TenantData & Record<string, unknown>;
-  // Map to expected TenantData shape for ZATCA
-  const settings = (data.settings as Record<string, string>) ?? {};
+  const [{ data: compliance }, { data: tenant }] = await Promise.all([
+    supabase.from('tenant_compliance_settings').select('*').eq('tenant_id', tenant_id).maybeSingle(),
+    supabase.from('tenants').select('id, name_en, name_ar, admin_email, city, school_type, logo_url, settings').eq('id', tenant_id).single(),
+  ]);
+  if (!tenant) return {} as TenantData & Record<string, unknown>;
+  const settings = (tenant.settings as Record<string, string>) ?? {};
   return {
-    ...data,
-    name: data.name_en,
-    name_ar: data.name_ar ?? data.name_en,
-    vat_number: settings.vat_number ?? '',
-    address: settings.address ?? data.city ?? '',
-    address_ar: settings.address_ar ?? data.city ?? '',
-    phone: settings.phone ?? '',
-    email: data.admin_email ?? '',
-    cr_number: settings.cr_number ?? '',
+    ...tenant,
+    id: tenant.id,
+    name: compliance?.legal_name_en || tenant.name_en,
+    name_ar: compliance?.legal_name_ar || tenant.name_ar,
+    legal_name_en: compliance?.legal_name_en || tenant.name_en,
+    legal_name_ar: compliance?.legal_name_ar || tenant.name_ar,
+    vat_number: compliance?.vat_trn || settings.vat_number || '',
+    address: compliance?.address_en || settings.address || tenant.city || '',
+    address_ar: compliance?.address_ar || settings.address_ar || tenant.city || '',
+    address_en: compliance?.address_en || settings.address || tenant.city || '',
+    city: compliance?.city || tenant.city || '',
+    country_code: compliance?.country_code || 'SA',
+    country_subentity_code: compliance?.country_subentity_code || 'SA-01',
+    phone: compliance?.phone || settings.phone || '',
+    email: compliance?.email || tenant.admin_email || '',
+    cr_number: compliance?.cr_number || settings.cr_number || '',
+    logo_url: compliance?.logo_url || tenant.logo_url || '',
   } as TenantData & Record<string, unknown>;
 }
 
@@ -267,6 +274,12 @@ const CreateInvoiceSchema = z.object({
   installment_count: z.number().int().positive().optional().default(1),
   notes_ar: z.string().optional(),
   notes_en: z.string().optional(),
+  buyer_name: z.string().optional(),
+  buyer_vat_number: z.string().optional(),
+  buyer_address: z.string().optional(),
+  supply_date: z.string().optional(),
+  document_type: z.enum(['invoice', 'quotation', 'proforma', 'credit_note', 'debit_note', 'receipt']).optional().default('invoice'),
+  invoice_type: z.enum(['simplified', 'standard']).optional().default('simplified'),
 });
 
 const BulkInvoiceSchema = z.object({
@@ -456,7 +469,12 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
 
     const tenant_id = await resolveTenantId(req);
     if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
-    const { student_id, academic_year, fee_lines, due_date: rawDueDate, apply_discounts: shouldApplyDiscounts, installment_count, notes_ar, notes_en } = parsed.data;
+    const {
+      student_id, academic_year, fee_lines, due_date: rawDueDate,
+      apply_discounts: shouldApplyDiscounts, installment_count, notes_ar, notes_en,
+      buyer_name, buyer_vat_number, buyer_address, supply_date,
+      document_type, invoice_type,
+    } = parsed.data;
     const due_date = rawDueDate && rawDueDate.trim() !== '' ? rawDueDate : null;
 
     // Verify student
@@ -481,13 +499,29 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       catMap = Object.fromEntries((categories ?? []).map((c) => [c.id, c]));
     }
 
+    function toVatCategory(treatment?: string): 'standard' | 'exempt' | 'zero_rated' | 'out_of_scope' {
+      if (treatment === 'exempt') return 'exempt';
+      if (treatment === 'zero_rated') return 'zero_rated';
+      if (treatment === 'out_of_scope') return 'out_of_scope';
+      return 'standard';
+    }
+    function toVatCategoryCode(category: 'standard' | 'exempt' | 'zero_rated' | 'out_of_scope'): string {
+      switch (category) {
+        case 'zero_rated': return 'Z';
+        case 'exempt': return 'E';
+        case 'out_of_scope': return 'O';
+        default: return 'S';
+      }
+    }
+
     // Calculate per-line amounts with correct VAT treatment
     let subtotal = 0;
     const enrichedLines = fee_lines.map((line) => {
       const cat = line.category_id ? catMap[line.category_id] : undefined;
       const lineSubtotal = sar(line.amount * (line.quantity ?? 1));
       const vatTreatment: string = cat?.vat_treatment ?? 'standard';
-      const vatRate = vatTreatment === 'standard' ? VAT_RATE_STANDARD : 0;
+      const vatCategory = toVatCategory(vatTreatment);
+      const vatRate = vatCategory === 'standard' ? VAT_RATE_STANDARD : 0;
       const vatAmount = sar(lineSubtotal * vatRate);
       const total = sar(lineSubtotal + vatAmount);
       subtotal = sar(subtotal + lineSubtotal);
@@ -497,12 +531,17 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
         description_ar: line.description_ar,
         category_code: cat?.code ?? 'MANUAL',
         vat_treatment: vatTreatment,
+        vat_category: vatCategory,
+        vat_category_code: toVatCategoryCode(vatCategory),
         quantity: line.quantity ?? 1,
         unit_amount: line.amount,
+        unit_price_net: line.amount,
         subtotal: lineSubtotal,
+        line_total_gross: total,
         vat_rate: vatRate,
         vat_amount: vatAmount,
         total,
+        discount: 0,
       };
     });
 
@@ -533,19 +572,26 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
     const tenant = await getTenant(tenant_id);
     const invoiceData: InvoiceData = {
       invoice_number: invoiceNumber,
+      document_type: document_type as InvoiceData['document_type'],
+      invoice_type: invoice_type as InvoiceData['invoice_type'],
+      zatca_invoice_type: invoice_type as InvoiceData['invoice_type'],
       issue_date: today,
+      supply_date: supply_date ?? undefined,
+      due_date: due_date ?? undefined,
       subtotal,
       discount_amount: totalDiscount,
       vat_amount: vatAmount,
       total_amount: totalAmount,
+      paid_amount: 0,
+      balance: totalAmount,
       student_name: student.name_en,
+      buyer_name: buyer_name || (student as Record<string, unknown>).name_en as string,
       student_id: student_id,
+      buyer_vat_number: buyer_vat_number,
+      buyer_address: buyer_address,
       notes: notes_en,
-      items: enrichedLines.map((l) => ({
-        description: l.description_en,
-        amount: l.subtotal,
-        vat_rate: l.vat_rate,
-      })),
+      items: enrichedLines as InvoiceData['items'],
+      uuid: crypto.randomUUID(),
     };
 
     // Resolve the ZATCA hash-chain position BEFORE hashing so the PIH and ICV
@@ -554,6 +600,9 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
     invoiceData.previous_invoice_hash = chain.previous_invoice_hash;
     invoiceData.icv = chain.icv;
     const previous_hash = chain.previous_invoice_hash ?? '';
+
+    const vatSummary = computeVatSummary(invoiceData);
+    invoiceData.vat_summary = vatSummary;
 
     const qr_code = generateTLVQR(invoiceData, tenant as TenantData);
     const ubl_xml = generateUBLXml(invoiceData, tenant as TenantData);
@@ -576,6 +625,13 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       date: today,
       issue_date: today,
       due_date: due_date ?? null,
+      document_type,
+      invoice_type,
+      zatca_invoice_type: invoice_type,
+      buyer_name: buyer_name || (student as Record<string, unknown>).name_en,
+      buyer_vat_number: buyer_vat_number ?? null,
+      buyer_address: buyer_address ?? null,
+      supply_date: supply_date ?? null,
       subtotal,
       discount_amount: totalDiscount,
       vat_amount: vatAmount,
@@ -584,7 +640,16 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       paid_amount: 0,
       status: 'issued',
       items: enrichedLines,
+      vat_summary: vatSummary,
       notes: notesText,
+      zatca_uuid: invoiceData.uuid,
+      icv: invoiceData.icv,
+      invoice_hash,
+      previous_invoice_hash: previous_hash,
+      ubl_xml,
+      qr_code,
+      zatca_status: 'pending',
+      zatca_response: null,
     };
 
     let invoice: Record<string, unknown>;
@@ -873,6 +938,9 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
     const cnNumber = `CN-${original.invoice_number}`;
     const today = new Date().toISOString().split('T')[0];
 
+    const cnItems = line_adjustments && line_adjustments.length > 0
+      ? line_adjustments.map((l: any) => ({ ...l, vat_category: 'out_of_scope', vat_category_code: 'O', vat_rate: 0, vat_amount: 0, line_total_gross: -(l.amount ?? 0), quantity: l.quantity ?? 1, unit_price_net: -(l.amount ?? 0) / (l.quantity ?? 1) }))
+      : [{ description_en: reason, description_ar: reason_ar, vat_category: 'out_of_scope', vat_category_code: 'O', vat_rate: 0, vat_amount: 0, line_total_gross: -amount, quantity: 1, unit_price_net: -amount, amount: -amount }];
     const { data: cn, error: cnErr } = await supabase
       .from('invoices')
       .insert({
@@ -882,14 +950,21 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
         invoice_number: cnNumber,
         academic_year: original.academic_year,
         date: today,
+        issue_date: today,
+        document_type: 'credit_note',
+        invoice_type: 'simplified',
+        zatca_invoice_type: 'simplified',
+        subtotal: -amount,
+        discount_amount: 0,
+        vat_amount: 0,
         total_amount: -amount,
+        balance: -amount,
         paid_amount: 0,
         status: 'issued',
-        items: line_adjustments ?? [{ description_en: reason, description_ar: reason_ar, amount: -amount }],
-        notes_en: reason,
-        notes_ar: reason_ar,
-        invoice_type: 'credit_note',
-        original_invoice_id: id,
+        items: cnItems,
+        notes: [reason, reason_ar].filter(Boolean).join(' | ') || null,
+        parent_document_id: id,
+        original_invoice_number: String(original.invoice_number ?? ''),
       })
       .select()
       .single();
@@ -900,10 +975,15 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
     const creditInvoiceData: InvoiceData = {
       invoice_number: cnNumber,
       issue_date: today,
-      invoice_type: 'credit_note',
+      document_type: 'credit_note',
+      invoice_type: 'simplified',
+      zatca_invoice_type: 'simplified',
       subtotal: -amount,
+      discount_amount: 0,
       vat_amount: 0,
       total_amount: -amount,
+      original_invoice_number: typeof original.invoice_number === 'string' ? original.invoice_number : (Array.isArray(original.invoice_number) ? original.invoice_number[0] : String(original.invoice_number ?? '')),
+      parent_document_id: id as string,
     };
     // Chain the credit note before hashing (same PIH/ICV rule as invoices).
     const chain = await getZatcaChain(tenant_id);
@@ -1066,7 +1146,11 @@ async function createInvoiceForStudent(
   const invoiceData: InvoiceData = {
     invoice_number: invoiceNumber,
     issue_date: today,
+    document_type: 'invoice',
+    invoice_type: 'simplified',
+    zatca_invoice_type: 'simplified',
     subtotal,
+    discount_amount: 0,
     vat_amount: vatAmount,
     total_amount: totalAmount,
     previous_invoice_hash: chain.previous_invoice_hash,
