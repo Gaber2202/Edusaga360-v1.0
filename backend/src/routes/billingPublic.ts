@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase.js';
 import { writeLedger } from '../services/collections/ledgerWriter.js';
 import { getTenantComplianceData } from '../services/tenant.js';
 import { createReceiptForPayment } from '../services/receipt.js';
+import { verifyShareToken, recordInvoiceView, renderInvoicePdf } from '../services/share.js';
 
 export const billingPublicRouter = Router();
 
@@ -193,6 +194,33 @@ billingPublicRouter.post('/moyasar/webhook', async (req, res) => {
   } catch (err) {
     console.error('[public/billing/moyasar/webhook] error:', err);
     return res.status(500).json({ error: 'webhook_processing_failed', message: (err as Error).message });
+  }
+});
+
+// ─── GET /api/public/billing/invoices/view — secure public invoice view ──────
+// A tokenized, shareable link that renders the invoice PDF and flips the
+// document status to "viewed" with an audit ledger entry.
+billingPublicRouter.get('/invoices/view', async (req, res) => {
+  try {
+    const token = req.query.token as string;
+    if (!token) return res.status(400).json({ error: 'missing_token' });
+
+    const payload = verifyShareToken(token);
+    if (!payload) return res.status(403).json({ error: 'invalid_or_expired_token' });
+
+    const { tenant_id, invoice_id } = payload;
+
+    await recordInvoiceView(supabase, tenant_id, invoice_id);
+
+    const pdfBuffer = await renderInvoicePdf(supabase, tenant_id, invoice_id);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="invoice.pdf"');
+    res.setHeader('Content-Length', pdfBuffer.length);
+    return res.send(pdfBuffer);
+  } catch (err) {
+    console.error('[public/billing/invoices/view] error:', err);
+    return res.status(500).json({ error: 'failed_to_render_invoice' });
   }
 });
 
