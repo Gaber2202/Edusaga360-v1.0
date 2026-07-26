@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { authMiddleware } from './middleware/auth.js';
 import { tenantMiddleware } from './middleware/tenant.js';
+import { supabase } from './lib/supabase.js';
 import { healthRouter } from './routes/health.js';
 import { authRouter } from './routes/auth.js';
 import { journalEntryRouter } from './routes/journalEntries.js';
@@ -36,6 +37,13 @@ import { externalApiRouter } from './routes/external/v1.js';
 import { atsRouter } from './routes/ats.js';
 import { emailConnectorsRouter } from './routes/emailConnectors.js';
 import { messagingRouter } from './routes/messaging.js';
+import { collectionsRouter } from './routes/collections.js';
+import { billingPublicRouter } from './routes/billingPublic.js';
+import cron from 'node-cron';
+import { SegmentationRunner } from './services/collections/runner.js';
+import { CollectionMessenger } from './services/collections/messenger.js';
+import { InstallmentPlanEngine } from './services/collections/installments.js';
+import { GuaranteeEngine } from './services/collections/guarantee.js';
 
 dotenv.config();
 
@@ -134,6 +142,8 @@ const apiLimiter = rateLimit({
 app.use('/api/health', healthRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/registration', registrationLimiter, registrationRouter);
+// Moyasar server-to-server webhook — verified by shared secret, not JWT.
+app.use('/api/public/billing', billingPublicRouter);
 
 // ── Authenticated routes — ALL protected by authMiddleware + tenantMiddleware ──
 // IMPORTANT: Register middleware on each router directly.
@@ -167,6 +177,8 @@ app.use('/api/ats',                 apiLimiter, authMiddleware, tenantMiddleware
 app.use('/api/email',               apiLimiter, authMiddleware, tenantMiddleware, emailConnectorsRouter);
 // Messaging integration — connect an SMS / WhatsApp gateway for notifications.
 app.use('/api/messaging',           apiLimiter, authMiddleware, tenantMiddleware, messagingRouter);
+// YAMEN AI Collections Agent — finance console, segmentation, approval queue.
+app.use('/api/collections',         apiLimiter, collectionsRouter);
 
 app.use(
   (
@@ -182,6 +194,54 @@ app.use(
 
 app.listen(PORT, () => {
   console.log(`EduSaga 360 API server running on port ${PORT}`);
+  const callbackUrl = `${process.env.FRONTEND_URL ?? 'https://parentportal.edusaga360.com'}/payment/complete`;
+
+  if (process.env.COLLECTIONS_CRON_ENABLED === 'true') {
+    // Nightly YAMEN collections job (01:00 KSA): segment, then enqueue reminders.
+    cron.schedule(
+      '0 1 * * *',
+      async () => {
+        try {
+          const runner = new SegmentationRunner(supabase);
+          const messenger = new CollectionMessenger(supabase, callbackUrl);
+          const installmentEngine = new InstallmentPlanEngine(supabase);
+          const guaranteeEngine = new GuaranteeEngine(supabase);
+          const { data: settings } = await supabase
+            .from('collection_settings')
+            .select('tenant_id')
+            .eq('is_enabled', true)
+            .is('kill_switch_activated_at', null);
+          for (const row of settings ?? []) {
+            try {
+              const segResult = await runner.runForTenant(row.tenant_id);
+              const enqueueResult = await messenger.enqueueRemindersForTenant(row.tenant_id);
+              const brokenResult = await installmentEngine.detectBrokenPlans(row.tenant_id);
+              const measureResult = await guaranteeEngine.recordMeasurement(row.tenant_id);
+              console.log(`[cron] collections completed for ${row.tenant_id}:`, { segResult, enqueueResult, brokenResult, measureResult });
+            } catch (err) {
+              console.error(`[cron] collections failed for ${row.tenant_id}:`, err);
+            }
+          }
+        } catch (err) {
+          console.error('[cron] nightly collections failed:', err);
+        }
+      },
+      { timezone: 'Asia/Riyadh' },
+    );
+
+    // Send pending messages every 5 minutes within the tenant send window.
+    cron.schedule('*/5 * * * *', async () => {
+      try {
+        const messenger = new CollectionMessenger(supabase, callbackUrl);
+        const result = await messenger.sendPendingMessages(100);
+        console.log('[cron] send pending messages:', result);
+      } catch (err) {
+        console.error('[cron] send pending messages failed:', err);
+      }
+    });
+
+    console.log('[cron] collections jobs scheduled (segmentation 01:00 KSA, sends every 5 min)');
+  }
 });
 
 export default app;
