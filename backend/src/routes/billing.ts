@@ -32,6 +32,8 @@ import {
 import { getTenantComplianceData } from '../services/tenant.js';
 import { createReceiptForPayment } from '../services/receipt.js';
 import { convertToInvoice } from '../services/lifecycle.js';
+import { shareInvoice } from '../services/share.js';
+import type { ShareChannel } from '../services/share.js';
 
 export const billingRouter = Router();
 
@@ -272,6 +274,13 @@ const RecurringGenerateSchema = z.object({
   due_before: z.string().optional(),
   academic_year: z.string().min(4).optional(),
   dry_run: z.boolean().optional().default(false),
+});
+
+const ShareInvoiceSchema = z.object({
+  channels: z.array(z.enum(['whatsapp', 'email', 'link', 'print'])).min(1),
+  phone: z.string().optional(),
+  email: z.string().email().optional(),
+  expires_in_hours: z.number().int().min(1).max(720).optional().default(168),
 });
 
 const RecordPaymentSchema = z.object({
@@ -907,6 +916,32 @@ billingRouter.post('/invoices/:id/zatca-submit', requireRole(FINANCE_ROLES), asy
   } catch (err) {
     console.error('zatca-submit:', err);
     return res.status(500).json({ error: 'ZATCA submission failed' });
+  }
+});
+
+// ─── POST /api/billing/invoices/:id/share — Share document ───────────────────
+
+
+
+billingRouter.post('/invoices/:id/share', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const tenant_id = req.user!.tenant_id!;
+    const { id } = req.params;
+    const parsed = ShareInvoiceSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+
+    const { channels, phone, email, expires_in_hours } = parsed.data;
+    const results = await shareInvoice(supabase, tenant_id, id as string, channels as ShareChannel[], {
+      phone,
+      email,
+      createdBy: req.user!.id,
+      expiresInHours: expires_in_hours,
+    });
+
+    return res.json({ invoice_id: id, results });
+  } catch (err) {
+    console.error('share-invoice:', err);
+    return res.status(500).json({ error: 'Share failed' });
   }
 });
 

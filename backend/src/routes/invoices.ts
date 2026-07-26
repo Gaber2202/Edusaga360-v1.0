@@ -15,6 +15,7 @@ import {
   complianceCheck,
   InvoiceData,
   TenantData,
+  invoiceDataFromRow,
 } from '../services/zatca.js';
 import { getTenantComplianceData } from '../services/tenant.js';
 import { PdfQueueSaturatedError } from '../lib/pdfConcurrency.js';
@@ -308,35 +309,7 @@ invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Re
 
     const tenant = await getTenantComplianceData(tenantId);
 
-    const invoice: InvoiceData = {
-      invoice_number: invoiceRow.invoice_number,
-      document_type: invoiceRow.document_type || 'invoice',
-      invoice_type: invoiceRow.invoice_type || 'simplified',
-      zatca_invoice_type: invoiceRow.zatca_invoice_type || invoiceRow.invoice_type || 'simplified',
-      issue_date: invoiceRow.issue_date,
-      supply_date: invoiceRow.supply_date || undefined,
-      due_date: invoiceRow.due_date || undefined,
-      subtotal: invoiceRow.subtotal || 0,
-      discount_amount: invoiceRow.discount_amount || 0,
-      vat_amount: invoiceRow.vat_amount || 0,
-      total_amount: invoiceRow.total_amount || 0,
-      paid_amount: invoiceRow.paid_amount || 0,
-      balance: invoiceRow.balance || 0,
-      student_name: invoiceRow.student_name,
-      buyer_name: invoiceRow.buyer_name || invoiceRow.student_name,
-      student_id: invoiceRow.student_id,
-      buyer_vat_number: invoiceRow.buyer_vat_number || undefined,
-      buyer_address: invoiceRow.buyer_address || undefined,
-      items: invoiceRow.items || undefined,
-      vat_summary: invoiceRow.vat_summary || undefined,
-      notes: invoiceRow.notes || undefined,
-      terms_and_conditions: invoiceRow.terms_and_conditions || undefined,
-      uuid: invoiceRow.zatca_uuid || undefined,
-      icv: invoiceRow.icv || undefined,
-      previous_invoice_hash: invoiceRow.previous_invoice_hash || undefined,
-      original_invoice_number: invoiceRow.original_invoice_number || undefined,
-      parent_document_id: invoiceRow.parent_document_id || undefined,
-    };
+    const invoice: InvoiceData = invoiceDataFromRow(invoiceRow as Record<string, unknown>);
 
     const pdfBuffer = await generateZATCAInvoicePDF(invoice, tenant);
 

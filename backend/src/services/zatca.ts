@@ -94,6 +94,40 @@ export interface TenantData {
   logo_url?: string;
 }
 
+export function invoiceDataFromRow(row: Record<string, unknown>): InvoiceData {
+  return {
+    id: row.id as string | undefined,
+    invoice_number: row.invoice_number as string,
+    document_type: (row.document_type as InvoiceData['document_type']) || 'invoice',
+    invoice_type: (row.invoice_type as InvoiceData['invoice_type']) || 'simplified',
+    zatca_invoice_type: (row.zatca_invoice_type as InvoiceData['invoice_type']) || (row.invoice_type as InvoiceData['invoice_type']) || 'simplified',
+    issue_date: row.issue_date as string,
+    supply_date: row.supply_date as string | undefined,
+    due_date: row.due_date as string | undefined,
+    subtotal: Number(row.subtotal ?? 0),
+    discount_amount: Number(row.discount_amount ?? 0),
+    vat_amount: Number(row.vat_amount ?? 0),
+    total_amount: Number(row.total_amount ?? 0),
+    paid_amount: Number(row.paid_amount ?? 0),
+    balance: Number(row.balance ?? 0),
+    student_name: row.student_name as string | undefined,
+    buyer_name: (row.buyer_name as string | undefined) || (row.student_name as string | undefined),
+    student_id: row.student_id as string | undefined,
+    guardian_id: row.guardian_id as string | undefined,
+    buyer_vat_number: row.buyer_vat_number as string | undefined,
+    buyer_address: row.buyer_address as string | undefined,
+    items: (row.items as InvoiceData['items']) || undefined,
+    vat_summary: (row.vat_summary as InvoiceData['vat_summary']) || undefined,
+    notes: row.notes as string | undefined,
+    terms_and_conditions: row.terms_and_conditions as string | undefined,
+    uuid: (row.zatca_uuid as string | undefined) || (row.uuid as string | undefined),
+    icv: (row.icv as number | undefined) || undefined,
+    previous_invoice_hash: row.previous_invoice_hash as string | undefined,
+    original_invoice_number: row.original_invoice_number as string | undefined,
+    parent_document_id: row.parent_document_id as string | undefined,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
