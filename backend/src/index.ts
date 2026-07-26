@@ -45,6 +45,7 @@ import { SegmentationRunner } from './services/collections/runner.js';
 import { CollectionMessenger } from './services/collections/messenger.js';
 import { InstallmentPlanEngine } from './services/collections/installments.js';
 import { GuaranteeEngine } from './services/collections/guarantee.js';
+import { reconcileMoyasarState } from './services/moyasar/moyasarService.js';
 
 dotenv.config();
 
@@ -244,6 +245,29 @@ app.listen(PORT, () => {
     });
 
     console.log('[cron] collections jobs scheduled (segmentation 01:00 KSA, sends every 5 min)');
+  }
+
+  if (process.env.MOYASAR_RECONCILE_ENABLED === 'true') {
+    // Moyasar reconciliation sweep every 15 minutes.
+    cron.schedule('*/15 * * * *', async () => {
+      try {
+        const { data: tenants } = await supabase
+          .from('tenant_compliance_settings')
+          .select('tenant_id')
+          .eq('moyasar_enabled', true);
+        for (const t of tenants ?? []) {
+          try {
+            const report = await reconcileMoyasarState(supabase, t.tenant_id as string);
+            console.log(`[cron] moyasar reconcile ${t.tenant_id}:`, report);
+          } catch (err) {
+            console.error(`[cron] moyasar reconcile failed for ${t.tenant_id}:`, err);
+          }
+        }
+      } catch (err) {
+        console.error('[cron] moyasar reconcile sweep failed:', err);
+      }
+    });
+    console.log('[cron] Moyasar reconciliation sweep scheduled every 15 min');
   }
 });
 

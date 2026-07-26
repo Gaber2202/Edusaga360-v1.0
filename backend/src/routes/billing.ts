@@ -34,6 +34,7 @@ import { createReceiptForPayment } from '../services/receipt.js';
 import { convertToInvoice } from '../services/lifecycle.js';
 import { shareInvoice } from '../services/share.js';
 import type { ShareChannel } from '../services/share.js';
+import { createOrRefreshMoyasarLink, bulkCreateMoyasarInvoices, requestMoyasarRefund, reconcileMoyasarState } from '../services/moyasar/moyasarService.js';
 import {
   getAgingReport,
   getExpectedCollections,
@@ -1765,92 +1766,109 @@ billingRouter.post('/sadad/generate', async (req: AuthenticatedRequest, res: Res
   });
 });
 
-// ─── POST /api/billing/moyasar/initiate — Initiate Moyasar payment ────────────
+// ─── POST /api/billing/moyasar/link — Create or refresh a Moyasar invoice link ─
 
-billingRouter.post('/moyasar/initiate', async (req: AuthenticatedRequest, res: Response) => {
-  const tenant_id = req.user!.tenant_id!;
-  const schema = z.object({
-    invoice_id: z.string().uuid(),
-    payment_method: z.enum(['creditcard', 'mada', 'applepay', 'stcpay']),
-    callback_url: z.string().url(),
-    source: z.record(z.unknown()).optional(),
-  });
-  const parsed = schema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
-
-  const { invoice_id, payment_method, callback_url, source } = parsed.data;
-  const { data: invoice } = await supabase.from('invoices').select('invoice_number, total_amount, student_id').eq('id', invoice_id).eq('tenant_id', tenant_id).single();
-  if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
-
-  const moyasarKey = process.env.MOYASAR_API_KEY;
-  if (!moyasarKey) return res.status(500).json({ error: 'Payment gateway not configured' });
-
-  const amountHalala = Math.round(invoice.total_amount * 100);
-
+billingRouter.post('/moyasar/link', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const response = await fetch('https://api.moyasar.com/v1/payments', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Basic ${Buffer.from(`${moyasarKey}:`).toString('base64')}`,
-      },
-      body: JSON.stringify({
-        amount: amountHalala,
-        currency: 'SAR',
-        description: `EduSaga Invoice ${invoice.invoice_number}`,
-        callback_url,
-        source: source ?? { type: payment_method },
-        metadata: { invoice_id, tenant_id },
-      }),
+    const tenant_id = req.user!.tenant_id!;
+    const schema = z.object({
+      invoice_id: z.string().uuid(),
+      installment_id: z.string().uuid().optional(),
+      callback_url: z.string().url().optional(),
+      success_url: z.string().url().optional(),
+      back_url: z.string().url().optional(),
+      source_type: z.enum(['creditcard', 'mada', 'applepay', 'stcpay', 'samsungpay']).optional(),
     });
-    const data = await response.json() as Record<string, unknown>;
-    if (!response.ok) return res.status(502).json({ error: 'Payment gateway error', details: data });
-    return res.json(data);
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+
+    const baseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3001}`;
+    const { data: student } = await supabase
+      .from('students')
+      .select('name_en, name_ar')
+      .eq('tenant_id', tenant_id)
+      .eq('id', (await supabase.from('invoices').select('student_id').eq('id', parsed.data.invoice_id).eq('tenant_id', tenant_id).single()).data?.student_id as string)
+      .single();
+
+    const result = await createOrRefreshMoyasarLink(supabase, {
+      tenantId: tenant_id,
+      invoiceId: parsed.data.invoice_id,
+      installmentId: parsed.data.installment_id,
+      callbackUrl: parsed.data.callback_url || `${baseUrl}/api/public/billing/moyasar/webhook`,
+      successUrl: parsed.data.success_url || `${baseUrl}/payment/result?status=success`,
+      backUrl: parsed.data.back_url || `${baseUrl}/payment/result?status=pending`,
+      sourceType: parsed.data.source_type,
+      studentFirstName: (student?.name_en as string) || (student?.name_ar as string) || 'Student',
+    });
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    return res.json(result);
   } catch (err) {
-    console.error('moyasar:', err);
-    return res.status(500).json({ error: 'Payment initiation failed' });
+    console.error('moyasar link:', err);
+    return res.status(500).json({ error: 'moyasar_link_failed', message: (err as Error).message });
   }
 });
 
-// ─── POST /api/billing/moyasar/webhook — Handle Moyasar webhook ──────────────
+// ─── POST /api/billing/moyasar/bulk — Bulk-create Moyasar invoice links ───────
 
-billingRouter.post('/moyasar/webhook', async (req: AuthenticatedRequest, res: Response) => {
+billingRouter.post('/moyasar/bulk', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { id: payment_id, status, metadata, amount_format, amount } = req.body as Record<string, unknown>;
-    if (status !== 'paid') return res.json({ received: true });
+    const tenant_id = req.user!.tenant_id!;
+    const schema = z.object({
+      invoice_ids: z.array(z.string().uuid()).min(1).max(50),
+      callback_url: z.string().url().optional(),
+      success_url: z.string().url().optional(),
+      back_url: z.string().url().optional(),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
-    const invoice_id = (metadata as Record<string, string>)?.invoice_id;
-    const tenant_id = (metadata as Record<string, string>)?.tenant_id;
-    if (!invoice_id || !tenant_id) return res.status(400).json({ error: 'Missing metadata' });
-
-    const amountSAR = sar((amount as number) / 100);
-
-    const { data: invoice } = await supabase.from('invoices').select('*').eq('id', invoice_id).eq('tenant_id', tenant_id).single();
-    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
-
-    const newPaid = sar(invoice.paid_amount + amountSAR);
-    const newStatus = newPaid >= invoice.total_amount - 0.01 ? 'paid' : 'partial';
-
-    const { error: pmtErr } = await supabase
-      .from('payments')
-      .insert({ tenant_id, invoice_id, amount: amountSAR, method: 'online', reference: payment_id as string, date: new Date().toISOString().split('T')[0], status: 'completed' });
-
-    // 23505 = unique_violation — payment already recorded, treat as idempotent success
-    if (pmtErr && (pmtErr as any).code !== '23505') throw pmtErr;
-
-    if (!pmtErr) {
-      // Only update invoice totals on first insert (avoid double-counting retries)
-      await supabase.from('invoices').update({ paid_amount: newPaid, status: newStatus }).eq('id', invoice_id);
-      void dispatchWebhook(supabase, tenant_id as string, 'payment.received', { invoice_id, payment_id, amount: amountSAR, method: 'online' }, payment_id as string);
-      if (newStatus === 'paid') {
-        void dispatchWebhook(supabase, tenant_id as string, 'invoice.paid', { invoice_id, invoice_number: (invoice as any).invoice_number, total: (invoice as any).total_amount, paid_amount: newPaid }, invoice_id);
-      }
-    }
-
-    return res.json({ received: true });
+    const baseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3001}`;
+    const result = await bulkCreateMoyasarInvoices(
+      supabase,
+      tenant_id,
+      parsed.data.invoice_ids,
+      parsed.data.callback_url || `${baseUrl}/api/public/billing/moyasar/webhook`,
+      parsed.data.success_url || `${baseUrl}/payment/result?status=success`,
+      parsed.data.back_url || `${baseUrl}/payment/result?status=pending`,
+    );
+    return result.ok ? res.json(result) : res.status(400).json(result);
   } catch (err) {
-    console.error('moyasar webhook:', err);
-    return res.status(500).json({ error: 'Webhook processing failed' });
+    console.error('moyasar bulk:', err);
+    return res.status(500).json({ error: 'moyasar_bulk_failed', message: (err as Error).message });
+  }
+});
+
+// ─── POST /api/billing/moyasar/refund — Request a Moyasar refund ───────────────
+
+billingRouter.post('/moyasar/refund', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const tenant_id = req.user!.tenant_id!;
+    const schema = z.object({
+      payment_id: z.string().uuid(),
+      amount: z.number().positive().optional(),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+
+    const result = await requestMoyasarRefund(supabase, tenant_id, parsed.data.payment_id, parsed.data.amount);
+    return result.ok ? res.json(result) : res.status(400).json(result);
+  } catch (err) {
+    console.error('moyasar refund:', err);
+    return res.status(500).json({ error: 'moyasar_refund_failed', message: (err as Error).message });
+  }
+});
+
+// ─── POST /api/billing/moyasar/reconcile — Manual reconciliation sweep ─────────
+
+billingRouter.post('/moyasar/reconcile', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const tenant_id = req.user!.tenant_id!;
+    const since = (req.query.since as string) || undefined;
+    const report = await reconcileMoyasarState(supabase, tenant_id, since);
+    return res.json(report);
+  } catch (err) {
+    console.error('moyasar reconcile:', err);
+    return res.status(500).json({ error: 'moyasar_reconcile_failed', message: (err as Error).message });
   }
 });
 

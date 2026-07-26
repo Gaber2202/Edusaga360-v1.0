@@ -61,7 +61,15 @@ function resolver(ctx: QueryContext) {
 
   if (ctx.table === 'payments' && ctx.op === 'insert') return { data: { id: 'payment-1' } };
 
-  if (ctx.table === 'students' && ctx.op === 'select' && ctx.single) return { data: { guardian_id: 'guardian-1' } };
+  if (ctx.table === 'moyasar_webhook_events' && ctx.op === 'select' && ctx.single) {
+    const prior = db.filtersFor('moyasar_webhook_events').filter((c) => c.op === 'select' && c.single).length;
+    if (prior > 1) return { data: { id: 'mwe-1' } };
+    return { data: null };
+  }
+  if (ctx.table === 'moyasar_webhook_events' && ctx.op === 'insert') return { data: { id: 'mwe-1' } };
+  if (ctx.table === 'moyasar_payments' && ctx.op === 'upsert') return { data: { id: 'mp-1' } };
+
+  if (ctx.table === 'students' && ctx.op === 'select' && ctx.single) return { data: { guardian_id: 'guardian-1' }};
 
   if (ctx.table === 'collection_profiles' && ctx.op === 'select' && ctx.single) {
     return { data: { id: PROFILE_ID, preferred_language: 'ar', guardian_id: 'guardian-1' } };
