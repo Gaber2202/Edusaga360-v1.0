@@ -27,7 +27,7 @@ export async function getAgingReport(
   const today = todayStr();
   let q = supabase
     .from('invoices')
-    .select('id, invoice_number, student_id, total_amount, paid_amount, due_date, status, students(name_en, name_ar, grade, guardian_id), academic_year')
+    .select('id, invoice_number, student_id, total_amount, paid_amount, due_date, status, students(name_en, name_ar, grade_id, guardian_id), academic_year')
     .eq('tenant_id', tenantId)
     .in('status', ['issued', 'partial', 'overdue', 'viewed']);
   if (options?.academic_year) q = q.eq('academic_year', options.academic_year);
@@ -372,6 +372,7 @@ export async function getRevenueByFeeType(
     .select('subtotal, vat_amount, total_amount, items, grade, branch_id')
     .eq('tenant_id', tenantId)
     .neq('status', 'cancelled')
+    .in('document_type', ['invoice', 'credit_note', 'debit_note'])
     .gte('date', fromDate)
     .lte('date', toDate);
 
