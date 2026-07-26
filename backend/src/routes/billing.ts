@@ -264,6 +264,14 @@ const BulkInvoiceSchema = z.object({
   program: z.string().optional(),
   due_date: z.string().optional(),
   dry_run: z.boolean().optional().default(false),
+  approved: z.boolean().optional().default(false),
+  name: z.string().optional(),
+});
+
+const RecurringGenerateSchema = z.object({
+  due_before: z.string().optional(),
+  academic_year: z.string().min(4).optional(),
+  dry_run: z.boolean().optional().default(false),
 });
 
 const RecordPaymentSchema = z.object({
@@ -1147,70 +1155,228 @@ billingRouter.patch('/installments/:id', async (req: AuthenticatedRequest, res: 
 
 // ─── Shared invoice creation logic (used by single + bulk endpoints) ─────────
 
+interface FeeLineInput {
+  category_id: string;
+  description_en: string;
+  description_ar: string;
+  amount: number;
+  quantity: number;
+}
+
 async function createInvoiceForStudent(
   tenant_id: string,
   created_by: string,
   student_id: string,
   academic_year: string,
-  fee_lines: { category_id: string; description_en: string; description_ar: string; amount: number; quantity: number }[],
+  fee_lines?: FeeLineInput[],
   due_date?: string,
   branch_id?: string | null,
-): Promise<void> {
-  const categoryIds = [...new Set(fee_lines.map((l) => l.category_id))];
-  const { data: categories } = await supabase.from('fee_categories').select('id, vat_treatment').in('id', categoryIds).eq('tenant_id', tenant_id);
+  options?: { batch_id?: string; invoice_number?: string; status?: string; recurring_schedule_id?: string },
+): Promise<Record<string, unknown>> {
+  const today = new Date().toISOString().split('T')[0];
+
+  const { data: student, error: studentErr } = await supabase
+    .from('students')
+    .select('id, name_en, name_ar, grade_id, branch_id, guardian_id, grades(name_en)')
+    .eq('id', student_id)
+    .eq('tenant_id', tenant_id)
+    .single();
+  if (studentErr || !student) throw new Error(`Student not found: ${student_id}`);
+
+  const studentBranchId = branch_id ?? ((student as Record<string, unknown>).branch_id as string | null) ?? null;
+  const studentGrade = (student as Record<string, unknown>).grades
+    ? ((student as Record<string, unknown>).grades as Record<string, string>)?.name_en ?? ''
+    : '';
+
+  let sourceLines = fee_lines;
+  if (!sourceLines || sourceLines.length === 0) {
+    // Fall back to mandatory fee structures for this student's grade.
+    let fsQuery = supabase
+      .from('fee_structures')
+      .select('*, fee_categories(id, vat_treatment, name_ar, name_en, code)')
+      .eq('tenant_id', tenant_id)
+      .eq('academic_year', academic_year)
+      .eq('is_mandatory', true);
+    if (student.grade_id) fsQuery = fsQuery.or(`grade.eq.${student.grade_id},grade.is.null`);
+    const { data: feeStructures } = await fsQuery;
+    sourceLines = (feeStructures ?? []).map((fs) => {
+      const cat = fs.fee_categories as Record<string, unknown> | undefined;
+      return {
+        category_id: (cat?.id as string) ?? fs.category_id,
+        description_en: (cat?.name_en as string) ?? 'Fee',
+        description_ar: (cat?.name_ar as string) ?? 'رسوم',
+        amount: Number(fs.amount ?? 0),
+        quantity: 1,
+      };
+    });
+  }
+
+  const categoryIds = [...new Set(sourceLines.map((l) => l.category_id).filter(Boolean))];
+  const { data: categories } = await supabase
+    .from('fee_categories')
+    .select('id, vat_treatment, name_ar, name_en, code')
+    .in('id', categoryIds)
+    .eq('tenant_id', tenant_id);
   const catMap = Object.fromEntries((categories ?? []).map((c) => [c.id, c]));
 
   let subtotal = 0;
-  const enrichedLines = fee_lines.map((line) => {
+  const enrichedLines: any[] = sourceLines.map((line) => {
     const cat = catMap[line.category_id];
-    const lineSubtotal = sar(line.amount * line.quantity);
-    const vatRate = (cat?.vat_treatment ?? 'standard') === 'standard' ? VAT_RATE_STANDARD : 0;
+    const lineSubtotal = sar(line.amount * (line.quantity ?? 1));
+    const treatment = (cat?.vat_treatment ?? 'standard') as string;
+    const vatRate = treatment === 'standard' ? VAT_RATE_STANDARD : 0;
     subtotal = sar(subtotal + lineSubtotal);
-    return { ...line, subtotal: lineSubtotal, vat_rate: vatRate, vat_amount: sar(lineSubtotal * vatRate), total: sar(lineSubtotal + sar(lineSubtotal * vatRate)) };
+    return {
+      category_id: line.category_id ?? null,
+      category_code: cat?.code ?? 'MANUAL',
+      description_en: line.description_en,
+      description_ar: line.description_ar,
+      vat_treatment: treatment,
+      vat_category: treatment === 'exempt' ? 'exempt' : treatment === 'zero_rated' ? 'zero_rated' : treatment === 'out_of_scope' ? 'out_of_scope' : 'standard',
+      vat_category_code: treatment === 'zero_rated' ? 'Z' : treatment === 'exempt' ? 'E' : treatment === 'out_of_scope' ? 'O' : 'S',
+      quantity: line.quantity ?? 1,
+      unit_amount: line.amount,
+      unit_price_net: line.amount,
+      subtotal: lineSubtotal,
+      vat_rate: vatRate,
+      vat_amount: sar(lineSubtotal * vatRate),
+      line_total_gross: sar(lineSubtotal + sar(lineSubtotal * vatRate)),
+      total: sar(lineSubtotal + sar(lineSubtotal * vatRate)),
+      discount: 0,
+    };
   });
 
-  const vatAmount = sar(enrichedLines.reduce((s, l) => s + l.vat_amount, 0));
-  const totalAmount = sar(subtotal + vatAmount);
-  const invoiceNumber = await generateInvoiceNumber(tenant_id);
-  const today = new Date().toISOString().split('T')[0];
+  // Apply sibling/scholarship discount rules to the subtotal.
+  const primaryCategoryId = sourceLines[0]?.category_id;
+  const { total_discount: totalDiscount, applied: discountDetails } = await applyDiscounts(
+    tenant_id,
+    student_id,
+    academic_year,
+    subtotal,
+    primaryCategoryId,
+  );
 
+  const taxableSubtotal = sar(subtotal - totalDiscount);
+  let vatAmount = 0;
+  for (const l of enrichedLines) {
+    const lineRatio = l.subtotal / (subtotal || 1);
+    const lineVat = sar(taxableSubtotal * lineRatio * l.vat_rate);
+    l.vat_amount = lineVat;
+    l.line_total_gross = sar(taxableSubtotal * lineRatio + lineVat);
+    l.total = l.line_total_gross;
+    vatAmount = sar(vatAmount + lineVat);
+  }
+  const totalAmount = sar(taxableSubtotal + vatAmount);
+
+  const invoiceNumber = options?.invoice_number ?? (await generateInvoiceNumber(tenant_id));
   const tenant = await getTenantComplianceData(tenant_id);
   const chain = await getZatcaChain(tenant_id);
+
   const invoiceData: InvoiceData = {
     invoice_number: invoiceNumber,
-    issue_date: today,
     document_type: 'invoice',
     invoice_type: 'simplified',
     zatca_invoice_type: 'simplified',
+    issue_date: today,
+    supply_date: today,
+    due_date: due_date ?? undefined,
     subtotal,
-    discount_amount: 0,
+    discount_amount: totalDiscount,
     vat_amount: vatAmount,
     total_amount: totalAmount,
+    paid_amount: 0,
+    balance: totalAmount,
+    student_name: student.name_en,
+    buyer_name: student.name_en,
+    student_id,
+    items: enrichedLines as InvoiceData['items'],
+    uuid: crypto.randomUUID(),
     previous_invoice_hash: chain.previous_invoice_hash,
     icv: chain.icv,
   };
+
+  const vatSummary = computeVatSummary(invoiceData);
+  invoiceData.vat_summary = vatSummary;
+
   const qr_code = generateTLVQR(invoiceData, tenant);
   const ubl_xml = generateUBLXml(invoiceData, tenant);
   const invoice_hash = generateInvoiceHash(ubl_xml);
 
-  const { data: invoice, error } = await supabase.from('invoices').insert({
-    tenant_id, branch_id: branch_id ?? null, student_id, invoice_number: invoiceNumber, academic_year, date: today,
-    due_date: due_date ?? null, subtotal, vat_amount: vatAmount, total_amount: totalAmount,
-    paid_amount: 0, status: 'issued', items: enrichedLines, qr_code, invoice_hash,
-  }).select().single();
+  const { data: invoice, error } = await supabase
+    .from('invoices')
+    .insert({
+      tenant_id,
+      branch_id: studentBranchId,
+      student_id,
+      invoice_number: invoiceNumber,
+      academic_year,
+      student_name: student.name_en,
+      grade: studentGrade,
+      date: today,
+      issue_date: today,
+      due_date: due_date ?? null,
+      document_type: 'invoice',
+      invoice_type: 'simplified',
+      zatca_invoice_type: 'simplified',
+      buyer_name: student.name_en,
+      supply_date: today,
+      subtotal,
+      discount_amount: totalDiscount,
+      vat_amount: vatAmount,
+      total_amount: totalAmount,
+      paid_amount: 0,
+      balance: totalAmount,
+      status: options?.status ?? 'issued',
+      items: enrichedLines,
+      vat_summary: vatSummary,
+      zatca_uuid: invoiceData.uuid,
+      icv: invoiceData.icv,
+      invoice_hash,
+      previous_invoice_hash: chain.previous_invoice_hash ?? null,
+      ubl_xml,
+      qr_code,
+      zatca_status: 'pending',
+      batch_id: options?.batch_id ?? null,
+      recurring_schedule_id: options?.recurring_schedule_id ?? null,
+    })
+    .select()
+    .single();
   if (error) throw error;
 
   await supabase.from('zatca_submissions').insert({
-    tenant_id, invoice_id: invoice.id, invoice_number: invoiceNumber,
-    submission_type: 'reporting', invoice_hash, previous_hash: chain.previous_invoice_hash ?? '',
-    ubl_xml, qr_code, zatca_status: 'pending',
+    tenant_id,
+    invoice_id: invoice.id,
+    invoice_number: invoiceNumber,
+    submission_type: 'reporting',
+    invoice_hash,
+    previous_hash: chain.previous_invoice_hash ?? '',
+    ubl_xml,
+    qr_code,
+    zatca_status: 'pending',
   });
+
+  if (discountDetails.length > 0) {
+    const { error: discErr } = await supabase.from('invoice_discounts').insert(
+      discountDetails.map((d) => ({
+        tenant_id,
+        invoice_id: invoice.id,
+        discount_rule_id: d.rule_id,
+        discount_code: d.code,
+        description_ar: d.description_ar,
+        description_en: d.description_en,
+        amount: d.amount,
+      })),
+    );
+    if (discErr) console.warn('[billing] discount insert failed:', discErr.message);
+  }
 
   await postJournal(tenant_id, created_by, invoiceNumber, `Bulk Invoice ${invoiceNumber}`, [
     { account_code: '12', debit: totalAmount, credit: 0, description: `A/R — ${invoiceNumber}` },
-    { account_code: '41', debit: 0, credit: subtotal, description: `Revenue — ${invoiceNumber}` },
+    { account_code: '41', debit: 0, credit: taxableSubtotal, description: `Revenue — ${invoiceNumber}` },
     { account_code: '24', debit: 0, credit: vatAmount, description: `VAT — ${invoiceNumber}` },
-  ], branch_id ?? null);
+  ], studentBranchId ?? null);
+
+  return invoice as Record<string, unknown>;
 }
 
 // ─── POST /api/billing/bulk-invoices — Bulk generation ───────────────────────
@@ -1220,7 +1386,7 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
     const tenant_id = req.user!.tenant_id!;
     const parsed = BulkInvoiceSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
-    const { academic_year, grade, campus_id, due_date, dry_run } = parsed.data;
+    const { academic_year, grade, campus_id, due_date, dry_run, approved, name } = parsed.data;
 
     // Fetch active fee structures
     let fsQuery = supabase
@@ -1245,8 +1411,7 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
 
     // Determine which students already have a (non-cancelled) invoice for this
     // academic year. The same rule drives both the preview and the real run, so
-    // the preview count matches what will actually be created and re-running is
-    // idempotent (no silent duplicates).
+    // re-running is idempotent (no silent duplicates).
     const { data: existing } = await supabase
       .from('invoices')
       .select('student_id')
@@ -1255,13 +1420,11 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
       .neq('status', 'cancelled');
     const existingIds = new Set((existing ?? []).map((e) => e.student_id));
 
-    // Relevant fee structures + gross total (incl. 15% VAT on standard
-    // categories, mirroring createInvoiceForStudent) for a single student.
     const planForStudent = (student: { grade_id?: string | null }) => {
       const relevant = (feeStructures ?? []).filter((fs) => !fs.grade || fs.grade === student.grade_id);
       let gross = 0;
       for (const fs of relevant) {
-        const lineSubtotal = sar(fs.amount ?? 0);
+        const lineSubtotal = sar(Number(fs.amount ?? 0));
         const treatment = (fs.fee_categories as Record<string, unknown>)?.vat_treatment ?? 'standard';
         const vatRate = treatment === 'standard' ? VAT_RATE_STANDARD : 0;
         gross = sar(gross + lineSubtotal + sar(lineSubtotal * vatRate));
@@ -1269,26 +1432,67 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
       return { relevant, gross };
     };
 
-    if (dry_run) {
-      let eligible = 0;
-      let alreadyInvoiced = 0;
-      let skippedNoFees = 0;
-      let estimatedTotal = 0;
-      const recipients: { student_id: string; name_en?: string; name_ar?: string; amount: number }[] = [];
+    let eligible = 0;
+    let alreadyInvoiced = 0;
+    let skippedNoFees = 0;
+    let estimatedTotal = 0;
+    const recipients: { student_id: string; name_en?: string; name_ar?: string; amount: number }[] = [];
 
-      for (const student of students) {
-        if (existingIds.has(student.id)) { alreadyInvoiced++; continue; }
-        const { relevant, gross } = planForStudent(student);
-        if (!relevant.length) { skippedNoFees++; continue; }
-        eligible++;
-        estimatedTotal = sar(estimatedTotal + gross);
-        if (recipients.length < 20) {
-          recipients.push({ student_id: student.id, name_en: student.name_en, name_ar: student.name_ar, amount: gross });
-        }
+    for (const student of students) {
+      if (existingIds.has(student.id)) { alreadyInvoiced++; continue; }
+      const { relevant, gross } = planForStudent(student);
+      if (!relevant.length) { skippedNoFees++; continue; }
+      eligible++;
+      estimatedTotal = sar(estimatedTotal + gross);
+      if (recipients.length < 20) {
+        recipients.push({ student_id: student.id, name_en: student.name_en, name_ar: student.name_ar, amount: gross });
       }
+    }
 
+    if (dry_run) {
       return res.json({
         dry_run: true,
+        student_count: students.length,
+        fee_structures: feeStructures.length,
+        estimated_invoices: eligible,
+        already_invoiced: alreadyInvoiced,
+        skipped_no_fees: skippedNoFees,
+        estimated_total: estimatedTotal,
+        recipients,
+      });
+    }
+
+    // Approval-first batch workflow:
+    // - approved=false (default): create a pending batch, return preview for review.
+    // - approved=true: create/generate invoices inside the batch.
+    const criteria = { academic_year, grade, campus_id, due_date };
+    const batchNumber = `BATCH-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const batchPayload = {
+      tenant_id,
+      batch_number: batchNumber,
+      batch_name: name || `Term invoice batch ${batchNumber}`,
+      criteria,
+      student_count: students.length,
+      excluded_students: [...existingIds],
+      invoice_count: 0,
+      total_amount: 0,
+      total_vat: 0,
+      total_discount: 0,
+      net_total: 0,
+      status: approved ? 'generating' : 'pending',
+      posted_mode: approved ? 'generated' : 'draft',
+      branch_id: campus_id ?? null,
+      created_by: req.user!.id,
+    };
+
+    const { data: batch, error: batchErr } = await supabase.from('invoice_batches').insert(batchPayload).select().single();
+    if (batchErr) throw batchErr;
+
+    if (!approved) {
+      return res.json({
+        approved: false,
+        batch,
+        dry_run: false,
         student_count: students.length,
         fee_structures: feeStructures.length,
         estimated_invoices: eligible,
@@ -1302,6 +1506,10 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
     let created = 0;
     let skipped = 0;
     const errors: string[] = [];
+    const invoiceIds: string[] = [];
+    let totalAmount = 0;
+    let totalVat = 0;
+    let totalDiscount = 0;
 
     for (const student of students) {
       if (existingIds.has(student.id)) { skipped++; continue; }
@@ -1313,19 +1521,45 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
           category_id: (fs.fee_categories as Record<string, unknown>)?.id as string ?? fs.category_id,
           description_en: (fs.fee_categories as Record<string, unknown>)?.name_en as string ?? 'Fee',
           description_ar: (fs.fee_categories as Record<string, unknown>)?.name_ar as string ?? 'رسوم',
-          amount: fs.amount,
+          amount: Number(fs.amount ?? 0),
           quantity: 1,
         }));
 
-        // Create invoice directly via shared helper
-        await createInvoiceForStudent(tenant_id, req.user!.id, student.id, academic_year, feeLines, due_date, student.branch_id ?? null);
+        const invoice = await createInvoiceForStudent(tenant_id, req.user!.id, student.id, academic_year, feeLines, due_date, student.branch_id ?? null, { batch_id: batch.id });
+        invoiceIds.push(invoice.id as string);
+        totalAmount = sar(totalAmount + Number(invoice.total_amount ?? 0));
+        totalVat = sar(totalVat + Number(invoice.vat_amount ?? 0));
+        totalDiscount = sar(totalDiscount + Number(invoice.discount_amount ?? 0));
         created++;
       } catch (e) {
         errors.push(`${student.id}: ${(e as Error).message}`);
       }
     }
 
-    return res.json({ created, skipped, errors });
+    const netTotal = sar(totalAmount - totalDiscount);
+    const { data: updatedBatch } = await supabase
+      .from('invoice_batches')
+      .update({
+        status: 'generated',
+        invoice_count: created,
+        total_amount: totalAmount,
+        total_vat: totalVat,
+        total_discount: totalDiscount,
+        net_total: netTotal,
+      })
+      .eq('id', batch.id)
+      .eq('tenant_id', tenant_id)
+      .select()
+      .single();
+
+    return res.json({
+      approved: true,
+      batch: updatedBatch,
+      created,
+      skipped,
+      errors,
+      totals: { total_amount: totalAmount, total_vat: totalVat, total_discount: totalDiscount, net_total: netTotal },
+    });
   } catch (err) {
     console.error('bulk-invoices:', err);
     return res.status(500).json({ error: 'Bulk generation failed' });
@@ -1607,4 +1841,128 @@ billingRouter.get('/vat-report', async (req: AuthenticatedRequest, res: Response
     credit_notes: { revenue: creditNoteRevenue, vat: creditNoteVAT },
     net_vat_payable: sar(totalVAT - creditNoteVAT),
   });
+});
+
+// ─── POST /api/billing/recurring-invoices/generate ───────────────────────────
+// Generate invoices for all active recurring schedules whose next_due_date is
+// on or before the given date. Supports dry-run preview.
+
+function addFrequency(dateStr: string, frequency: string): string {
+  const d = new Date(dateStr);
+  switch (frequency) {
+    case 'monthly': d.setMonth(d.getMonth() + 1); break;
+    case 'quarterly': d.setMonth(d.getMonth() + 3); break;
+    case 'annual': d.setFullYear(d.getFullYear() + 1); break;
+    case 'termly': d.setMonth(d.getMonth() + 6); break; // two terms per year default
+    default: d.setMonth(d.getMonth() + 1);
+  }
+  return d.toISOString().split('T')[0];
+}
+
+function proratedAmount(
+  amount: number,
+  startDate: string,
+  endDate: string | null | undefined,
+  dueBefore: string,
+  rule: string,
+): number {
+  if (rule !== 'daily' || !endDate) return amount;
+  const start = new Date(startDate).getTime();
+  const end = new Date(endDate).getTime();
+  const due = new Date(dueBefore).getTime();
+  if (end <= start || due <= start) return amount;
+  const fullPeriod = end - start;
+  const activePeriod = Math.min(due, end) - start;
+  if (activePeriod <= 0) return 0;
+  return sar(amount * (activePeriod / fullPeriod));
+}
+
+billingRouter.post('/recurring-invoices/generate', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const tenant_id = req.user!.tenant_id!;
+    const parsed = RecurringGenerateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const { due_before, academic_year, dry_run } = parsed.data;
+
+    const today = new Date().toISOString().split('T')[0];
+    const dueBefore = due_before ?? today;
+
+    let q = supabase
+      .from('recurring_invoice_schedules')
+      .select('*, fee_structures(*, fee_categories(id, vat_treatment, name_ar, name_en, code)), students(branch_id)')
+      .eq('tenant_id', tenant_id)
+      .eq('status', 'active')
+      .lte('next_due_date', dueBefore);
+    if (academic_year) q = q.eq('academic_year', academic_year);
+    const { data: schedules, error } = await q;
+    if (error) throw error;
+
+    const preview: { schedule_id: string; student_id: string; fee_structure_id: string; amount: number; next_due_date: string }[] = [];
+    const generated: string[] = [];
+    let totalAmount = 0;
+    let totalVat = 0;
+    let totalDiscount = 0;
+
+    for (const schedule of schedules ?? []) {
+      const fs = schedule.fee_structures as Record<string, unknown> | undefined;
+      const cat = (fs?.fee_categories ?? {}) as Record<string, unknown>;
+      const baseAmount = Number(schedule.amount ?? 0);
+      const prorated = proratedAmount(baseAmount, schedule.start_date, schedule.end_date, dueBefore, schedule.proration_rule);
+      if (prorated <= 0) continue;
+
+      const feeLines = [{
+        category_id: (cat?.id as string) ?? (fs?.category_id as string) ?? '',
+        description_en: (cat?.name_en as string) ?? (fs?.description_en as string) ?? 'Recurring fee',
+        description_ar: (cat?.name_ar as string) ?? (fs?.description_ar as string) ?? 'رسوم دورية',
+        amount: prorated,
+        quantity: 1,
+      }];
+
+      if (dry_run) {
+        preview.push({
+          schedule_id: schedule.id,
+          student_id: schedule.student_id,
+          fee_structure_id: schedule.fee_structure_id,
+          amount: prorated,
+          next_due_date: schedule.next_due_date,
+        });
+        continue;
+      }
+
+      const invoice = await createInvoiceForStudent(
+        tenant_id,
+        req.user!.id,
+        schedule.student_id,
+        academic_year ?? schedule.academic_year ?? today,
+        feeLines,
+        schedule.next_due_date,
+        (schedule.students as Record<string, unknown> | undefined)?.branch_id as string | null ?? null,
+        { recurring_schedule_id: schedule.id },
+      );
+
+      generated.push(invoice.id as string);
+      totalAmount = sar(totalAmount + Number(invoice.total_amount ?? 0));
+      totalVat = sar(totalVat + Number(invoice.vat_amount ?? 0));
+      totalDiscount = sar(totalDiscount + Number(invoice.discount_amount ?? 0));
+
+      const nextDue = addFrequency(schedule.next_due_date, schedule.frequency);
+      await supabase
+        .from('recurring_invoice_schedules')
+        .update({ last_generated_at: new Date().toISOString(), next_due_date: nextDue, updated_at: new Date().toISOString() })
+        .eq('id', schedule.id)
+        .eq('tenant_id', tenant_id);
+    }
+
+    return res.json({
+      dry_run,
+      due_before: dueBefore,
+      schedule_count: (schedules ?? []).length,
+      generated: dry_run ? preview.length : generated.length,
+      previews: dry_run ? preview : undefined,
+      totals: dry_run ? undefined : { total_amount: totalAmount, total_vat: totalVat, total_discount: totalDiscount },
+    });
+  } catch (err) {
+    console.error('recurring-invoices/generate:', err);
+    return res.status(500).json({ error: 'Recurring generation failed' });
+  }
 });
