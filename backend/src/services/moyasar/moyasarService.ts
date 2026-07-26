@@ -225,36 +225,40 @@ export async function bulkCreateMoyasarInvoices(
 
     const resData = res.data as Record<string, unknown>;
     const createdInvoices = Array.isArray(resData) ? resData : (Array.isArray(resData.invoices) ? resData.invoices : []);
-    for (const m of createdInvoices) {
-      const meta = (m as Record<string, unknown>)?.metadata as Record<string, string> | undefined;
-      const invId = meta?.edusaga_invoice_id || meta?.invoice_id;
-      const moyasarId = (m as Record<string, unknown>)?.id as string | undefined;
-      const paymentUrl = (m as Record<string, unknown>)?.url as string | undefined;
-      const status = (m as Record<string, unknown>)?.status as string | undefined;
-      if (invId && moyasarId) {
-        const ctx = itemMap.get(invId);
-        await supabase.from('moyasar_invoices').insert({
-          tenant_id: tenantId,
-          moyasar_id: moyasarId,
-          edusaga_invoice_id: invId,
-          amount_halala: ctx?.amountHalala ?? 0,
-          status: status || 'initiated',
-          payment_url: paymentUrl,
-          callback_url: callbackUrl,
-          success_url: successUrl,
-          back_url: backUrl,
-          expired_at: expiredAt,
-          metadata: meta || {},
-          version: 1,
-        });
-        results.push({ invoice_id: invId, moyasar_invoice_id: moyasarId, payment_url: paymentUrl, status });
+    const sourceInvIds = Array.from(itemMap.keys());
+    for (let idx = 0; idx < createdInvoices.length; idx++) {
+      const m = createdInvoices[idx] as Record<string, unknown>;
+      const moyasarId = m.id as string;
+      const paymentUrl = m.url as string | undefined;
+      const status = m.status as string | undefined;
+      const meta = (m.metadata as Record<string, string> | undefined) || {};
+      // Prefer metadata mapping, fall back to request order.
+      const invId = meta.edusaga_invoice_id || meta.invoice_id || sourceInvIds[idx];
+      const ctx = invId ? itemMap.get(invId) : undefined;
+      if (!invId || !ctx) {
+        if (sourceInvIds[idx]) results.push({ invoice_id: sourceInvIds[idx], error: 'bulk_response_mismatch' });
+        continue;
       }
+      await supabase.from('moyasar_invoices').insert({
+        tenant_id: tenantId,
+        moyasar_id: moyasarId,
+        edusaga_invoice_id: invId,
+        amount_halala: ctx.amountHalala ?? 0,
+        status: status || 'initiated',
+        payment_url: paymentUrl,
+        callback_url: callbackUrl,
+        success_url: successUrl,
+        back_url: backUrl,
+        expired_at: expiredAt,
+        metadata: { ...meta, tenant_id: tenantId, edusaga_invoice_id: invId },
+        version: 1,
+      });
+      results.push({ invoice_id: invId, moyasar_invoice_id: moyasarId, payment_url: paymentUrl, status });
     }
 
-    const returnedIds = new Set(createdInvoices.map((m: any) => ((m.metadata as Record<string, string>)?.edusaga_invoice_id || (m.metadata as Record<string, string>)?.invoice_id)));
-    for (const [invId] of itemMap) {
-      if (!returnedIds.has(invId)) {
-        results.push({ invoice_id: invId, error: 'not_returned_in_bulk_response' });
+    if (createdInvoices.length < sourceInvIds.length) {
+      for (let idx = createdInvoices.length; idx < sourceInvIds.length; idx++) {
+        results.push({ invoice_id: sourceInvIds[idx], error: 'missing_in_bulk_response' });
       }
     }
   }
@@ -323,23 +327,42 @@ export async function processMoyasarWebhook(
   const eventType = payload.type;
   const data = payload.data;
 
-  // Replay/idempotency guard
+  const moyasarPaymentId = data.id as string;
+  const metadata = (data.metadata as Record<string, string>) || {};
+  let invoiceId: string | undefined = metadata.edusaga_invoice_id || metadata.invoice_id;
+  let tenantId = metadata.tenant_id || '';
+  const installmentId = metadata.installment_id || null;
+  let invoiceStatus: string | undefined;
+
+  // Fallback: if metadata is stripped (e.g. bulk invoices), resolve via moyasar_invoices table.
+  if (data.invoice_id) {
+    const { data: moyasarInvoice } = await supabase
+      .from('moyasar_invoices')
+      .select('edusaga_invoice_id, tenant_id')
+      .eq('moyasar_id', data.invoice_id as string)
+      .maybeSingle();
+    if (moyasarInvoice) {
+      if (!invoiceId) invoiceId = (moyasarInvoice.edusaga_invoice_id as string) || undefined;
+      if (!tenantId) tenantId = (moyasarInvoice.tenant_id as string) || '';
+    }
+  }
+
+  // Replay/idempotency guard (after tenant resolution).
   const { data: existing } = await supabase
     .from('moyasar_webhook_events')
     .select('id')
-    .eq('tenant_id', (data.metadata as Record<string, string>)?.tenant_id || '00000000-0000-0000-0000-000000000000')
+    .eq('tenant_id', tenantId || '00000000-0000-0000-0000-000000000000')
     .eq('event_id', eventId)
     .maybeSingle();
   if (existing) return { received: true, applied: true, already_processed: true };
 
-  const tenantId = ((data.metadata as Record<string, string>)?.tenant_id) || '';
   if (!tenantId) return { received: false, error: 'missing_tenant_id' };
 
   await supabase.from('moyasar_webhook_events').insert({
     tenant_id: tenantId,
     event_id: eventId,
     event_type: eventType,
-    moyasar_payment_id: (data.id as string) || null,
+    moyasar_payment_id: moyasarPaymentId || null,
     moyasar_invoice_id: (data.invoice_id as string) || null,
     payload,
     processed_at: new Date().toISOString(),
@@ -349,13 +372,7 @@ export async function processMoyasarWebhook(
     return { received: true };
   }
 
-  const moyasarPaymentId = data.id as string;
-  const metadata = (data.metadata as Record<string, string>) || {};
-  const invoiceId = metadata.edusaga_invoice_id || metadata.invoice_id;
-  const installmentId = metadata.installment_id || null;
-  let invoiceStatus: string | undefined;
-
-  if (!invoiceId) return { received: false, error: 'missing_invoice_id' };
+  if (!invoiceId || !tenantId) return { received: false, error: 'missing_invoice_id' };
 
   const { data: invoice } = await supabase
     .from('invoices')
@@ -365,6 +382,14 @@ export async function processMoyasarWebhook(
     .single();
   if (!invoice) return { received: false, error: 'invoice_not_found' };
 
+  // Resolve the local moyasar_invoices row id from the external Moyasar invoice id.
+  const { data: moyasarInvoiceRow } = await supabase
+    .from('moyasar_invoices')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .eq('moyasar_id', data.invoice_id as string)
+    .maybeSingle();
+
   // Upsert moyasar payment record
   const paymentAmountHalala = Number(data.amount) || 0;
   const feeHalala = Number(data.fee) || 0;
@@ -373,7 +398,7 @@ export async function processMoyasarWebhook(
     .upsert({
       tenant_id: tenantId,
       moyasar_payment_id: moyasarPaymentId,
-      moyasar_invoice_id: data.invoice_id as string,
+      moyasar_invoice_id: (moyasarInvoiceRow?.id as string) || null,
       amount_halala: paymentAmountHalala,
       fee_halala: feeHalala,
       refunded_halala: Number(data.refunded) || 0,
