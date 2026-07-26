@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
@@ -25,7 +25,8 @@ import {
   Wallet,
   Calendar,
   ExternalLink,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -82,6 +83,55 @@ export default function InvoiceDetails() {
     },
     enabled: !!invoice?.guardian_id && hasTenantAccess
   });
+
+  const [paymentLink, setPaymentLink] = useState(null);
+  const [paymentLinkLoading, setPaymentLinkLoading] = useState(false);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
+
+  const paymentMethodLabels = {
+    mada: isRTL ? 'مدى' : 'Mada',
+    creditcard: isRTL ? 'بطاقة ائتمان / مدين' : 'Credit / Debit Card',
+    applepay: 'Apple Pay',
+    stcpay: 'STC Pay',
+    samsungpay: 'Samsung Pay',
+    bank_transfer: isRTL ? 'تحويل بنكي' : 'Bank Transfer',
+    cash: isRTL ? 'نقداً' : 'Cash',
+  };
+
+  useEffect(() => {
+    if (!invoice || invoice.status === 'paid' || invoice.document_type !== 'invoice') {
+      setPaymentLink(null);
+      return;
+    }
+    const balance = Number(invoice.total_amount || 0) - Number(invoice.paid_amount || 0);
+    if (balance <= 0) return;
+
+    setPaymentLinkLoading(true);
+    callApi(`/api/invoices/${invoice.id}/payment-link`, null, { method: 'GET' })
+      .then((result) => {
+        if (result.paymentUrl) setPaymentLink(result);
+      })
+      .catch((err) => console.error('Payment link load failed:', err))
+      .finally(() => setPaymentLinkLoading(false));
+  }, [invoice?.id, invoice?.status, invoice?.total_amount, invoice?.paid_amount, invoice?.document_type]);
+
+  // Load a live ZATCA PDF preview for the invoice details tab.
+  useEffect(() => {
+    if (!invoice?.id) {
+      setPdfPreviewUrl(null);
+      return;
+    }
+    let objectUrl = null;
+    callApi(`/api/invoices/${invoice.id}/download-pdf?inline=1`, null, { method: 'GET', responseType: 'blob' })
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob);
+        setPdfPreviewUrl(objectUrl);
+      })
+      .catch((err) => console.error('PDF preview load failed:', err));
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [invoice?.id]);
 
   // Primary download: server-generated, ZATCA-compliant PDF (bilingual EN/AR
   // with the Fatoora TLV QR code embedded).
@@ -385,6 +435,25 @@ EduSaga 360
           </TabsList>
 
           <TabsContent value="details" className="p-6 space-y-6 mt-0">
+          {/* ZATCA Invoice Preview */}
+          {pdfPreviewUrl && (
+            <div className="border rounded-lg overflow-hidden bg-white">
+              <div className="bg-sand px-4 py-2 border-b flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-ink">
+                  {isRTL ? 'معاينة فاتورة ZATCA' : 'ZATCA Invoice Preview'}
+                </h3>
+                <span className="text-xs text-muted-foreground">
+                  {isRTL ? 'متوافقة مع هيئة الزكاة والضريبة والجمارك' : 'ZATCA-compliant'}
+                </span>
+              </div>
+              <iframe
+                src={pdfPreviewUrl}
+                title={isRTL ? 'معاينة الفاتورة' : 'Invoice preview'}
+                className="w-full h-[500px]"
+              />
+            </div>
+          )}
+
           {/* Student Info */}
           <div className="grid grid-cols-2 gap-6">
             <div>
@@ -405,6 +474,18 @@ EduSaga 360
                     {invoice.preferred_payment_method === 'cash' && (isRTL ? 'نقداً' : 'Cash')}
                     {invoice.preferred_payment_method === 'tamara' && `${t('tamara')} (${t('buyNowPayLater')})`}
                   </Badge>
+                </div>
+              )}
+              {(invoice.payment_methods?.length > 0) && (
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground">{isRTL ? 'طرق الدفع المتاحة' : 'Accepted Payment Methods'}:</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {invoice.payment_methods.map((method) => (
+                      <Badge key={method} variant="outline" className="bg-sand">
+                        {paymentMethodLabels[method] || method}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -451,6 +532,12 @@ EduSaga 360
               <span>{isRTL ? 'المجموع الفرعي' : 'Subtotal'}</span>
               <span>{money(invoice.subtotal)} {t('sar')}</span>
             </div>
+            {Number(invoice.vat_amount) > 0 && (
+              <div className="flex justify-between text-muted-foreground">
+                <span>{isRTL ? 'ضريبة القيمة المضافة (15%)' : 'VAT (15%)'}</span>
+                <span>+{money(invoice.vat_amount)} {t('sar')}</span>
+              </div>
+            )}
             {Number(invoice.discount_amount) > 0 && (
               <div className="flex justify-between text-red-600">
                 <span>{t('discount')}</span>
@@ -507,6 +594,99 @@ EduSaga 360
                 </CardContent>
               </Card>
             </div>
+
+            {/* Accepted Payment Methods */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">
+                  {isRTL ? 'طرق الدفع المسموح بها' : 'Accepted Payment Methods'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(invoice.payment_methods || []).length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {invoice.payment_methods.map((method) => (
+                      <Badge key={method} variant="outline" className="bg-sand gap-1">
+                        {getPaymentMethodIcon(method)}
+                        {paymentMethodLabels[method] || method}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {isRTL ? 'لم يتم تحديد طرق دفع بعد.' : 'No payment methods selected for this invoice.'}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Moyasar Payment Link */}
+            {invoice.status !== 'paid' && invoice.document_type === 'invoice' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    {isRTL ? 'رابط الدفع (Moyasar)' : 'Moyasar Payment Link'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {paymentLinkLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      {isRTL ? 'جاري تحميل رابط الدفع...' : 'Loading payment link...'}
+                    </div>
+                  ) : paymentLink?.paymentUrl ? (
+                    <>
+                      <div className="p-3 bg-sand rounded border break-all text-sm">
+                        {paymentLink.paymentUrl}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(paymentLink.paymentUrl);
+                            toast.success(isRTL ? 'تم نسخ الرابط' : 'Payment link copied');
+                          }}
+                        >
+                          {isRTL ? 'نسخ الرابط' : 'Copy Link'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const text = encodeURIComponent(`${isRTL ? 'رابط دفع الفاتورة' : 'Invoice payment link'}: ${paymentLink.paymentUrl}`);
+                            window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
+                          }}
+                        >
+                          {isRTL ? 'مشاركة عبر واتساب' : 'Share via WhatsApp'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const subject = encodeURIComponent(`Invoice ${invoice.invoice_number} - Payment Link`);
+                            const body = encodeURIComponent(`Please use the following link to pay invoice ${invoice.invoice_number}:\n\n${paymentLink.paymentUrl}`);
+                            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                          }}
+                        >
+                          {isRTL ? 'مشاركة عبر البريد' : 'Share via Email'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => window.open(paymentLink.paymentUrl, '_blank', 'noopener,noreferrer')}
+                        >
+                          {isRTL ? 'فتح بوابة الدفع' : 'Open Payment Gateway'}
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {isRTL ? 'لا يوجد رابط دفع نشط.' : 'No active payment link.'}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Payment History Table */}
             <Card>

@@ -314,10 +314,11 @@ invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Re
 
     const pdfBuffer = await generateZATCAInvoicePDF(invoice, tenant);
 
+    const inline = req.query.inline === '1' || req.query.inline === 'true';
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="invoice-${invoice.invoice_number}.pdf"`,
+      `${inline ? 'inline' : 'attachment'}; filename="invoice-${invoice.invoice_number}.pdf"`,
     );
     res.setHeader('Content-Length', pdfBuffer.length);
 

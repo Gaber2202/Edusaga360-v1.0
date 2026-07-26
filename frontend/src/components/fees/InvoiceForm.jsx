@@ -52,6 +52,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
     discount_amount: 0,
     discount_reason: '',
     preferred_payment_method: '',
+    payment_methods: [],
     bank_account_id: '',
     notes: '',
     status: 'draft'
@@ -111,6 +112,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
         discount_amount: invoice.discount_amount || 0,
         discount_reason: invoice.discount_reason || '',
         preferred_payment_method: invoice.preferred_payment_method || '',
+        payment_methods: invoice.payment_methods || [],
         bank_account_id: invoice.bank_account_id || '',
         notes: invoice.notes || '',
         status: invoice.status || 'draft',
@@ -130,6 +132,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
         discount_amount: 0,
         discount_reason: '',
         preferred_payment_method: '',
+        payment_methods: [],
         bank_account_id: '',
         notes: '',
         status: 'draft'
@@ -200,6 +203,26 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
       ...prev,
       items: prev.items.filter((_, i) => i !== index)
     }));
+  };
+
+  const paymentMethodOptions = [
+    { id: 'mada', label: isRTL ? 'مدى' : 'Mada' },
+    { id: 'creditcard', label: isRTL ? 'بطاقة ائتمان / مدين' : 'Credit / Debit Card' },
+    { id: 'applepay', label: 'Apple Pay' },
+    { id: 'stcpay', label: 'STC Pay' },
+    { id: 'samsungpay', label: 'Samsung Pay' },
+    { id: 'bank_transfer', label: isRTL ? 'تحويل بنكي' : 'Bank Transfer' },
+    { id: 'cash', label: isRTL ? 'نقداً' : 'Cash' },
+  ];
+
+  const togglePaymentMethod = (methodId) => {
+    setFormData((prev) => {
+      const current = prev.payment_methods || [];
+      const next = current.includes(methodId)
+        ? current.filter((m) => m !== methodId)
+        : [...current, methodId];
+      return { ...prev, payment_methods: next };
+    });
   };
 
   const vatRate = getVatRate(tenant);
@@ -638,6 +661,32 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
                     </SelectContent>
                   </Select>
                 </div>
+              )}
+            </div>
+
+            <div className="md:col-span-2 space-y-2">
+              <Label>{isRTL ? 'طرق الدفع المتاحة للوالد' : 'Payment Methods Available to Parent'}</Label>
+              <div className="flex flex-wrap gap-2">
+                {paymentMethodOptions.map((method) => {
+                  const selected = (formData.payment_methods || []).includes(method.id);
+                  return (
+                    <Button
+                      key={method.id}
+                      type="button"
+                      variant={selected ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => togglePaymentMethod(method.id)}
+                      className="rounded-full"
+                    >
+                      {method.label}
+                    </Button>
+                  );
+                })}
+              </div>
+              {(formData.payment_methods || []).length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {isRTL ? 'اختر طريقة دفع واحدة على الأقل' : 'Select at least one payment method'}
+                </p>
               )}
             </div>
           </div>
