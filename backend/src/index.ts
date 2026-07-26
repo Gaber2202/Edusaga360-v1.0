@@ -42,6 +42,8 @@ import { billingPublicRouter } from './routes/billingPublic.js';
 import cron from 'node-cron';
 import { SegmentationRunner } from './services/collections/runner.js';
 import { CollectionMessenger } from './services/collections/messenger.js';
+import { InstallmentPlanEngine } from './services/collections/installments.js';
+import { GuaranteeEngine } from './services/collections/guarantee.js';
 
 dotenv.config();
 
@@ -202,6 +204,8 @@ app.listen(PORT, () => {
         try {
           const runner = new SegmentationRunner(supabase);
           const messenger = new CollectionMessenger(supabase, callbackUrl);
+          const installmentEngine = new InstallmentPlanEngine(supabase);
+          const guaranteeEngine = new GuaranteeEngine(supabase);
           const { data: settings } = await supabase
             .from('collection_settings')
             .select('tenant_id')
@@ -211,7 +215,9 @@ app.listen(PORT, () => {
             try {
               const segResult = await runner.runForTenant(row.tenant_id);
               const enqueueResult = await messenger.enqueueRemindersForTenant(row.tenant_id);
-              console.log(`[cron] collections completed for ${row.tenant_id}:`, { segResult, enqueueResult });
+              const brokenResult = await installmentEngine.detectBrokenPlans(row.tenant_id);
+              const measureResult = await guaranteeEngine.recordMeasurement(row.tenant_id);
+              console.log(`[cron] collections completed for ${row.tenant_id}:`, { segResult, enqueueResult, brokenResult, measureResult });
             } catch (err) {
               console.error(`[cron] collections failed for ${row.tenant_id}:`, err);
             }

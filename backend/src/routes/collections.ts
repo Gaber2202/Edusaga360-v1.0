@@ -8,6 +8,7 @@ import { authMiddleware } from '../middleware/auth.js';
 import { SegmentationRunner } from '../services/collections/runner.js';
 import { CollectionMessenger } from '../services/collections/messenger.js';
 import { InstallmentPlanEngine } from '../services/collections/installments.js';
+import { GuaranteeEngine } from '../services/collections/guarantee.js';
 
 export const collectionsRouter = Router();
 
@@ -331,5 +332,63 @@ collectionsRouter.post('/approval-queue/:id/resolve', authMiddleware, tenantMidd
   } catch (err) {
     console.error('[collections/approval-queue/resolve] error:', err);
     return res.status(500).json({ error: 'resolve_failed', message: (err as Error).message });
+  }
+});
+
+// ─── POST /api/collections/guarantee/baseline ─────────────────────────────────
+const GuaranteeBaselineSchema = z.object({
+  term: z.string().optional(),
+  as_of_date: z.string().optional(),
+  scope: z.enum(['all', 'tuition']).optional(),
+});
+
+collectionsRouter.post('/guarantee/baseline', authMiddleware, tenantMiddleware, requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const tenantId = req.user!.tenant_id!;
+    const parsed = GuaranteeBaselineSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'validation_error', details: parsed.error.flatten() });
+
+    const engine = new GuaranteeEngine(supabase);
+    const result = await engine.captureBaseline(tenantId, parsed.data);
+    return res.json({ ok: true, result });
+  } catch (err) {
+    console.error('[collections/guarantee/baseline] error:', err);
+    return res.status(500).json({ error: 'baseline_failed', message: (err as Error).message });
+  }
+});
+
+// ─── POST /api/collections/guarantee/measure ──────────────────────────────────
+const GuaranteeMeasureSchema = z.object({
+  term: z.string().optional(),
+  as_of_date: z.string().optional(),
+  scope: z.enum(['all', 'tuition']).optional(),
+});
+
+collectionsRouter.post('/guarantee/measure', authMiddleware, tenantMiddleware, requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const tenantId = req.user!.tenant_id!;
+    const parsed = GuaranteeMeasureSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'validation_error', details: parsed.error.flatten() });
+
+    const engine = new GuaranteeEngine(supabase);
+    const result = await engine.recordMeasurement(tenantId, parsed.data);
+    return res.json({ ok: true, result });
+  } catch (err) {
+    console.error('[collections/guarantee/measure] error:', err);
+    return res.status(500).json({ error: 'measure_failed', message: (err as Error).message });
+  }
+});
+
+// ─── GET /api/collections/guarantee/dashboard ─────────────────────────────────
+collectionsRouter.get('/guarantee/dashboard', authMiddleware, tenantMiddleware, requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const tenantId = req.user!.tenant_id!;
+    const { term } = req.query as Record<string, string>;
+    const engine = new GuaranteeEngine(supabase);
+    const result = await engine.dashboard(tenantId, term);
+    return res.json({ ok: true, result });
+  } catch (err) {
+    console.error('[collections/guarantee/dashboard] error:', err);
+    return res.status(500).json({ error: 'dashboard_failed', message: (err as Error).message });
   }
 });
