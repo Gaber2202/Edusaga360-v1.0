@@ -130,6 +130,72 @@ export async function createOrRefreshMoyasarLink(
   return { ok: true, moyasarInvoiceId: moyasarId, paymentUrl, status, amountHalala, expiresAt: expiredAt };
 }
 
+export interface PaymentLinkOptions {
+  tenantId: string;
+  invoiceId: string;
+  installmentId?: string | null;
+  callbackUrl?: string;
+  successUrl?: string;
+  backUrl?: string;
+  sourceType?: 'creditcard' | 'mada' | 'applepay' | 'stcpay' | 'samsungpay';
+}
+
+export async function getOrCreateMoyasarLink(
+  supabase: SupabaseClient,
+  options: PaymentLinkOptions,
+): Promise<MoyasarLinkResult> {
+  const { data: invoice, error: invErr } = await supabase
+    .from('invoices')
+    .select('invoice_number, total_amount, paid_amount, due_date, branch_id, guardian_id, status, document_type, student_name, student_id')
+    .eq('id', options.invoiceId)
+    .eq('tenant_id', options.tenantId)
+    .single();
+  if (invErr || !invoice) return { ok: false, error: 'invoice_not_found' };
+
+  if (['paid', 'cancelled', 'draft', 'quotation', 'proforma'].includes(invoice.status as string) || invoice.document_type !== 'invoice') {
+    return { ok: false, error: 'invoice_not_payable' };
+  }
+
+  const balance = sar((Number(invoice.total_amount) || 0) - (Number(invoice.paid_amount) || 0));
+  if (balance <= 0) return { ok: false, error: 'invoice_fully_paid' };
+
+  // Re-use an active, non-expired Moyasar link if one already exists.
+  const { data: existing } = await supabase
+    .from('moyasar_invoices')
+    .select('moyasar_id, payment_url, amount_halala, status, expired_at')
+    .eq('tenant_id', options.tenantId)
+    .eq('edusaga_invoice_id', options.invoiceId)
+    .is('edusaga_installment_id', options.installmentId || null)
+    .in('status', ['initiated', 'on_hold'])
+    .gt('expired_at', new Date().toISOString())
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existing?.payment_url) {
+    return {
+      ok: true,
+      moyasarInvoiceId: existing.moyasar_id as string,
+      paymentUrl: existing.payment_url as string,
+      status: existing.status as string,
+      amountHalala: existing.amount_halala as number,
+      expiresAt: existing.expired_at as string | undefined,
+    };
+  }
+
+  const baseUrl = options.callbackUrl || process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3001}`;
+  return createOrRefreshMoyasarLink(supabase, {
+    tenantId: options.tenantId,
+    invoiceId: options.invoiceId,
+    installmentId: options.installmentId,
+    callbackUrl: `${baseUrl}/api/public/billing/moyasar/webhook`,
+    successUrl: options.successUrl || `${baseUrl}/payment/result?status=success`,
+    backUrl: options.backUrl || `${baseUrl}/payment/result?status=pending`,
+    sourceType: options.sourceType,
+    studentFirstName: (invoice.student_name as string) || 'Student',
+  });
+}
+
 export interface MoyasarBulkResultItem {
   invoice_id: string;
   moyasar_invoice_id?: string;
