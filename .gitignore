@@ -13,6 +13,9 @@ build/
 .env.local
 .env.*.local
 
+# Supabase CLI local config / linked project
+supabase/
+
 # IDE
 .vscode/
 .idea/

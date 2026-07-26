@@ -20,6 +20,7 @@ import SetupAccount from './pages/SetupAccount';
 import SchoolLogin from './pages/SchoolLogin';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import PaymentResult from './pages/PaymentResult';
 import { useRole } from './components/RoleContext';
 import { isPlatformOwner } from './lib/authHelpers';
 
@@ -84,6 +85,7 @@ const AuthenticatedApp = () => {
       pathname === '/reset-password' ||
       pathname === '/setup' ||
       pathname === '/OnboardingWizard' ||
+      pathname === '/payment/result' ||
       pathname.startsWith('/onboarding/'); // /onboarding/:token is unauthenticated
 
     if (authError.type === 'user_not_registered') {
@@ -99,6 +101,7 @@ const AuthenticatedApp = () => {
             <Route path="/setup" element={<SetupAccount />} />
             <Route path="/OnboardingWizard" element={<OnboardingWizard />} />
             <Route path="/onboarding/:token" element={<OnboardingWizard />} />
+            <Route path="/payment/result" element={<PaymentResult />} />
           </Routes>
         );
       }
@@ -116,6 +119,7 @@ const AuthenticatedApp = () => {
             <Route path="/setup" element={<SetupAccount />} />
             <Route path="/OnboardingWizard" element={<OnboardingWizard />} />
             <Route path="/onboarding/:token" element={<OnboardingWizard />} />
+            <Route path="/payment/result" element={<PaymentResult />} />
           </Routes>
         );
       }
@@ -161,6 +165,7 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/setup" element={<SetupAccount />} />
+      <Route path="/payment/result" element={<PaymentResult />} />
       <Route path="/ParentSignContract" element={<ParentSignContractPage />} />
       <Route path="/HRManagerDashboard" element={<LayoutWrapper currentPageName="HRManagerDashboard"><HRManagerDashboard /></LayoutWrapper>} />
       <Route path="/EOSBCalculator" element={<LayoutWrapper currentPageName="EOSBCalculator"><EOSBCalculator /></LayoutWrapper>} />
