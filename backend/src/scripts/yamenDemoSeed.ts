@@ -170,7 +170,9 @@ async function seedBatch(
     });
 
     // Deterministic invoice mix: 40% paid, 20% partial, 40% outstanding/overdue.
-    const total = 15000 + ((i % 7) * 1000);
+    const subtotal = 15000 + ((i % 7) * 1000);
+    const vat = Math.round(subtotal * 0.15 * 100) / 100;
+    const total = Math.round((subtotal + vat) * 100) / 100;
     let paidAmount = 0;
     let status = 'issued';
     const dueDate = `2026-${pad(8 + (i % 3), 2)}-${pad(1 + (i % 28), 2)}`;
@@ -179,14 +181,14 @@ async function seedBatch(
       paidAmount = total;
       status = 'paid';
     } else if (i % 10 < 6) {
-      paidAmount = Math.round(total * 0.5);
+      paidAmount = Math.round(total * 0.5 * 100) / 100;
       status = 'partial';
     } else if (i % 10 === 9) {
       status = 'overdue';
     }
 
     const invoiceId = crypto.randomUUID();
-    const outstanding = total - paidAmount;
+    const outstanding = Math.round((total - paidAmount) * 100) / 100;
     const isOverdue = status === 'overdue';
 
     invoices.push({
@@ -195,12 +197,38 @@ async function seedBatch(
       branch_id: branchId,
       student_id: studentId,
       invoice_number: `INV-${suffix}`,
+      document_type: 'invoice',
+      invoice_type: 'simplified',
+      zatca_invoice_type: 'simplified',
+      student_name: `Student ${suffix}`,
+      buyer_name: `Guardian ${suffix}`,
       date: '2026-08-01',
+      issue_date: '2026-08-01',
+      supply_date: '2026-08-01',
       due_date: dueDate,
+      subtotal,
+      vat_amount: vat,
+      discount_amount: 0,
       total_amount: total,
       paid_amount: paidAmount,
+      balance: outstanding,
       status,
-      items: [{ description: 'Tuition fee', amount: total }],
+      items: [{
+        category_code: 'TUITION',
+        description_en: 'Tuition fee',
+        description_ar: 'رسوم دراسية',
+        quantity: 1,
+        unit_amount: subtotal,
+        unit_price_net: subtotal,
+        subtotal,
+        vat_rate: 0.15,
+        vat_amount: vat,
+        vat_category: 'standard',
+        vat_category_code: 'S',
+        line_total_gross: total,
+        total,
+        discount: 0,
+      }],
     });
 
     profiles.push({
