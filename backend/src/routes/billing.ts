@@ -302,7 +302,6 @@ const RecordPaymentSchema = z.object({
 });
 
 const CreditNoteSchema = z.object({
-  original_invoice_id: z.string().uuid(),
   reason: z.string().min(1),
   reason_ar: z.string().min(1),
   amount: z.number().positive(),
@@ -813,7 +812,7 @@ billingRouter.get('/invoices', async (req: AuthenticatedRequest, res: Response) 
 
   let q = supabase
     .from('invoices')
-    .select('*, students(id, name_en, name_ar, student_id, grade)', { count: 'exact' })
+    .select('*, students(id, name_en, name_ar, student_id, grade_id, guardian_id)', { count: 'exact' })
     .eq('tenant_id', tenant_id)
     .order('created_at', { ascending: false })
     .range((page - 1) * limit, page * limit - 1);
@@ -837,7 +836,7 @@ billingRouter.get('/invoices/:id', async (req: AuthenticatedRequest, res: Respon
   const { id } = req.params;
   const { data: invoice, error } = await supabase
     .from('invoices')
-    .select('*, students(id, name_en, name_ar, student_id, grade, parent_id)')
+    .select('*, students(id, name_en, name_ar, student_id, grade_id, guardian_id)')
     .eq('id', id)
     .eq('tenant_id', tenant_id)
     .single();
@@ -1122,7 +1121,7 @@ billingRouter.post('/payments', async (req: AuthenticatedRequest, res: Response)
       .single();
     if (pmtErr) throw pmtErr;
 
-    await supabase.from('invoices').update({ paid_amount: newPaid, status: newStatus, updated_at: new Date().toISOString() }).eq('id', invoice_id).eq('tenant_id', tenant_id);
+    await supabase.from('invoices').update({ paid_amount: newPaid, status: newStatus, balance: sar(invoice.total_amount - newPaid), updated_at: new Date().toISOString() }).eq('id', invoice_id).eq('tenant_id', tenant_id);
 
     // Auto-issue a bilingual receipt for this payment.
     let receipt: Record<string, unknown> | null = null;
@@ -1656,7 +1655,7 @@ billingRouter.post('/dunning/trigger', requireRole(FINANCE_ROLES), async (req: A
     const today = new Date().toISOString().split('T')[0];
     let q = supabase
       .from('invoices')
-      .select('id, invoice_number, student_id, total_amount, paid_amount, due_date, students(name_en, name_ar, parent_id)')
+      .select('id, invoice_number, student_id, total_amount, paid_amount, due_date, students(name_en, name_ar, guardian_id)')
       .eq('tenant_id', tenant_id)
       .in('status', ['issued', 'partial', 'overdue'])
       .lt('due_date', today);
@@ -1680,7 +1679,7 @@ billingRouter.post('/dunning/trigger', requireRole(FINANCE_ROLES), async (req: A
         daysOverdue < 30 ? 'overdue_notice' : 'final_notice'
       );
       const balance = sar((inv.total_amount ?? 0) - (inv.paid_amount ?? 0));
-      const studentRec = inv.students as { name_en?: string; name_ar?: string; parent_id?: string } | null;
+      const studentRec = inv.students as { name_en?: string; name_ar?: string; guardian_id?: string } | null;
       const studentName = studentRec?.name_en ?? 'Student';
 
       const msgEn = `Dear Parent, invoice ${inv.invoice_number} for SAR ${balance} is ${daysOverdue} days overdue. Please settle your balance at the earliest.`;

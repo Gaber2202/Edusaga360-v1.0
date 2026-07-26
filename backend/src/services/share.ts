@@ -27,18 +27,18 @@ function signToken(payload: string): string {
 
 export function createShareToken(invoiceId: string, tenantId: string, expiresAt?: Date): string {
   const exp = expiresAt ? expiresAt.toISOString() : '';
-  const payload = `${tenantId}:${invoiceId}:${exp}`;
+  const payload = `${tenantId}|${invoiceId}|${exp}`;
   const sig = signToken(payload);
-  return Buffer.from(`${tenantId}:${invoiceId}:${exp}:${sig}`).toString('base64url');
+  return Buffer.from(`${tenantId}|${invoiceId}|${exp}|${sig}`).toString('base64url');
 }
 
 export function verifyShareToken(token: string): { tenant_id: string; invoice_id: string; expires_at?: string } | null {
   try {
     const decoded = Buffer.from(token, 'base64url').toString('utf-8');
-    const [tenant_id, invoice_id, exp, sig] = decoded.split(':');
+    const [tenant_id, invoice_id, exp, sig] = decoded.split('|');
     if (!tenant_id || !invoice_id || !sig) return null;
     if (exp && new Date(exp) < new Date()) return null;
-    const payload = `${tenant_id}:${invoice_id}:${exp}`;
+    const payload = `${tenant_id}|${invoice_id}|${exp}`;
     const expected = signToken(payload);
     if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
     return { tenant_id, invoice_id, expires_at: exp || undefined };
