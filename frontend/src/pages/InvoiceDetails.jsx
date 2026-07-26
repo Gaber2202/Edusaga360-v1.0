@@ -30,7 +30,6 @@ import {
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
-import jsPDF from 'jspdf';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import WhatsAppButton from '../components/communications/WhatsAppButton';
 import { WhatsAppMessageTypes } from '../components/communications/WhatsAppService';
@@ -84,158 +83,8 @@ export default function InvoiceDetails() {
     enabled: !!invoice?.guardian_id && hasTenantAccess
   });
 
-  const generatePDF = () => {
-    if (!invoice) return;
-
-    const doc = new jsPDF();
-    
-    // Header
-    doc.setFontSize(20);
-    doc.text('INVOICE', 105, 20, { align: 'center' });
-    
-    doc.setFontSize(10);
-    doc.text('EduSaga 360', 105, 28, { align: 'center' });
-    doc.text('School Management System', 105, 33, { align: 'center' });
-    
-    // Invoice Details
-    doc.setFontSize(12);
-    doc.text(`Invoice #: ${invoice.invoice_number}`, 20, 50);
-    doc.text(`Date: ${fmtDate(invoice.issue_date)}`, 20, 57);
-    doc.text(`Due Date: ${fmtDate(invoice.due_date)}`, 20, 64);
-    
-    // Student Info
-    doc.text(`Student: ${invoice.student_name}`, 20, 78);
-    doc.text(`Grade: ${invoice.grade}`, 20, 85);
-    
-    // Items Header
-    doc.setFontSize(10);
-    doc.setFillColor(240, 240, 240);
-    doc.rect(20, 95, 170, 8, 'F');
-    doc.text('Description', 22, 100);
-    doc.text('Amount (SAR)', 160, 100);
-    
-    // Items
-    let y = 110;
-    invoice.items?.forEach(item => {
-      doc.text(itemDesc(item, isRTL), 22, y);
-      doc.text(money(itemAmount(item)), 160, y);
-      y += 7;
-    });
-    
-    // Payment Method - Actual Paid By
-    if (paymentLogs.length > 0) {
-      const activeLogs = paymentLogs.filter(log => log.status !== 'reversed');
-      const methodsMap = {};
-      activeLogs.forEach(log => {
-        if (!methodsMap[log.payment_method]) methodsMap[log.payment_method] = 0;
-        methodsMap[log.payment_method] += log.amount;
-      });
-      
-      y += 5;
-      doc.setFontSize(10);
-      doc.setFont(undefined, 'bold');
-      doc.text('Paid By:', 20, y);
-      doc.setFont(undefined, 'normal');
-      
-      const methodKeys = Object.keys(methodsMap);
-      if (methodKeys.length === 1) {
-        const method = methodKeys[0];
-        const methodNames = { 
-          credit_card: 'Credit Card', 
-          bank_transfer: 'Bank Transfer', 
-          cash: 'Cash',
-          tamara: 'TAMARA (Buy Now, Pay Later)',
-          internal_settlement: 'Internal Settlement',
-          other: 'Other'
-        };
-        doc.text(methodNames[method] || method, 50, y);
-        
-        // Show TAMARA reference if available
-        const tamaraLog = activeLogs.find(l => l.payment_method === 'tamara');
-        if (tamaraLog?.tamara_order_id) {
-          y += 5;
-          doc.text(`TAMARA Ref: ${tamaraLog.tamara_order_id}`, 50, y);
-        }
-      } else {
-        doc.text('Mixed Payments', 50, y);
-        y += 5;
-        Object.entries(methodsMap).forEach(([method, amount]) => {
-          const methodNames = { 
-            credit_card: 'Credit Card', 
-            bank_transfer: 'Bank Transfer', 
-            cash: 'Cash',
-            tamara: 'TAMARA',
-            internal_settlement: 'Internal Settlement'
-          };
-          doc.text(`  - ${methodNames[method] || method}: ${amount.toLocaleString()} SAR`, 50, y);
-          y += 5;
-        });
-      }
-      y += 2;
-    }
-
-    // Bank Account Details
-    if (invoice.preferred_payment_method === 'bank_transfer' && invoice.bank_account_details) {
-      doc.setFont(undefined, 'bold');
-      doc.text('Bank Transfer Details:', 20, y);
-      doc.setFont(undefined, 'normal');
-      y += 7;
-      doc.text(`Bank: ${invoice.bank_account_details.bank_name}`, 20, y);
-      y += 5;
-      doc.text(`Account: ${invoice.bank_account_details.account_name}`, 20, y);
-      y += 5;
-      doc.text(`IBAN: ${invoice.bank_account_details.iban}`, 20, y);
-      y += 10;
-    }
-
-    // Total Section
-    y += 5;
-    doc.line(20, y, 190, y);
-    y += 8;
-    doc.setFontSize(11);
-    doc.text('Subtotal:', 140, y);
-    doc.text(`${money(invoice.subtotal)} SAR`, 160, y);
-
-    if (Number(invoice.discount_amount) > 0) {
-      y += 7;
-      doc.text('Discount:', 140, y);
-      doc.text(`-${money(invoice.discount_amount)} SAR`, 160, y);
-    }
-
-    y += 7;
-    doc.setFontSize(13);
-    doc.setFont(undefined, 'bold');
-    doc.text('Total:', 140, y);
-    doc.text(`${money(invoice.total_amount)} SAR`, 160, y);
-
-    y += 7;
-    doc.text('Paid:', 140, y);
-    doc.text(`${money(invoice.paid_amount)} SAR`, 160, y);
-
-    y += 7;
-    const balance = Number(invoice.total_amount || 0) - Number(invoice.paid_amount || 0);
-    doc.text('Balance:', 140, y);
-    doc.text(`${money(balance)} SAR`, 160, y);
-    
-    // Save
-    doc.save(`Invoice_${invoice.invoice_number}.pdf`);
-    
-    // Log audit
-    logAuditEvent(
-      AuditActions.EXPORT,
-      'Invoice',
-      invoice.id,
-      { action: 'download_pdf', invoice_number: invoice.invoice_number },
-      user
-    );
-    
-    toast.success(isRTL ? 'تم تحميل الفاتورة' : 'Invoice downloaded');
-  };
-
   // Primary download: server-generated, ZATCA-compliant PDF (bilingual EN/AR
-  // with the Fatoora TLV QR code embedded). Falls back to the lightweight
-  // client-side PDF if the backend is unreachable, so a document is always
-  // produced.
+  // with the Fatoora TLV QR code embedded).
   const handleDownloadPDF = async () => {
     if (!invoice) return;
     toast.loading(isRTL ? 'جاري إنشاء الفاتورة...' : 'Generating invoice...');
@@ -262,10 +111,9 @@ export default function InvoiceDetails() {
         user
       );
     } catch (err) {
-      console.error('ZATCA PDF download failed, falling back to client-side PDF:', err);
+      console.error('ZATCA PDF download failed:', err);
       toast.dismiss();
-      // Graceful degradation — still hand the user a printable document offline.
-      generatePDF();
+      toast.error(isRTL ? 'فشل إنشاء الفاتورة المتوافقة مع هيئة الزكاة' : 'Failed to generate ZATCA invoice');
     }
   };
 
