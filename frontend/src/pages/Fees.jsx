@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { createPageUrl } from '../utils';
 import { useTenantFilter } from '../hooks/useTenantFilter';
-import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 
 // ─── API helpers ───────────────────────────────────────────────────────────────
 
@@ -246,15 +246,15 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
                         title={isRTL ? 'تحميل PDF' : 'Download PDF'}
                         onClick={async () => {
                           try {
-                            const r = await fetch(`/api/invoices/${inv.id}/download-pdf`, {
-                              headers: { Authorization: `Bearer ${token}` },
-                            });
-                            if (!r.ok) throw new Error('Download failed');
-                            const blob = await r.blob();
+                            const blob = await callApi(
+                              `/api/invoices/${inv.id}/download-pdf`,
+                              null,
+                              { method: 'GET', responseType: 'blob' }
+                            );
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
-                            a.download = `invoice-${inv.invoice_number}.pdf`;
+                            a.download = `zatca-invoice-${inv.invoice_number}.pdf`;
                             a.click();
                             URL.revokeObjectURL(url);
                           } catch {

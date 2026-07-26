@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react';
+import ChunkLoadErrorBoundary from './components/ChunkLoadErrorBoundary';
 import { Toaster } from './components/ui/sonner';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClientInstance } from './lib/query-client';
@@ -130,6 +131,7 @@ const AuthenticatedApp = () => {
 
   return (
     <Suspense fallback={<PageFallback />}>
+    <ChunkLoadErrorBoundary>
     <Routes>
       <Route path="/" element={
         <LayoutWrapper currentPageName={mainPageKey}>
@@ -178,6 +180,7 @@ const AuthenticatedApp = () => {
 
       <Route path="*" element={<PageNotFound />} />
     </Routes>
+    </ChunkLoadErrorBoundary>
     </Suspense>
   );
 };
