@@ -38,6 +38,7 @@ import { atsRouter } from './routes/ats.js';
 import { emailConnectorsRouter } from './routes/emailConnectors.js';
 import { messagingRouter } from './routes/messaging.js';
 import { collectionsRouter } from './routes/collections.js';
+import { billingPublicRouter } from './routes/billingPublic.js';
 import cron from 'node-cron';
 import { SegmentationRunner } from './services/collections/runner.js';
 
@@ -138,6 +139,8 @@ const apiLimiter = rateLimit({
 app.use('/api/health', healthRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/registration', registrationLimiter, registrationRouter);
+// Moyasar server-to-server webhook — verified by shared secret, not JWT.
+app.use('/api/public/billing', billingPublicRouter);
 
 // ── Authenticated routes — ALL protected by authMiddleware + tenantMiddleware ──
 // IMPORTANT: Register middleware on each router directly.
