@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { authMiddleware } from './middleware/auth.js';
 import { tenantMiddleware } from './middleware/tenant.js';
+import { supabase } from './lib/supabase.js';
 import { healthRouter } from './routes/health.js';
 import { authRouter } from './routes/auth.js';
 import { journalEntryRouter } from './routes/journalEntries.js';
@@ -36,6 +37,9 @@ import { externalApiRouter } from './routes/external/v1.js';
 import { atsRouter } from './routes/ats.js';
 import { emailConnectorsRouter } from './routes/emailConnectors.js';
 import { messagingRouter } from './routes/messaging.js';
+import { collectionsRouter } from './routes/collections.js';
+import cron from 'node-cron';
+import { SegmentationRunner } from './services/collections/runner.js';
 
 dotenv.config();
 
@@ -167,6 +171,8 @@ app.use('/api/ats',                 apiLimiter, authMiddleware, tenantMiddleware
 app.use('/api/email',               apiLimiter, authMiddleware, tenantMiddleware, emailConnectorsRouter);
 // Messaging integration — connect an SMS / WhatsApp gateway for notifications.
 app.use('/api/messaging',           apiLimiter, authMiddleware, tenantMiddleware, messagingRouter);
+// YAMEN AI Collections Agent — finance console, segmentation, approval queue.
+app.use('/api/collections',         apiLimiter, collectionsRouter);
 
 app.use(
   (
@@ -182,6 +188,35 @@ app.use(
 
 app.listen(PORT, () => {
   console.log(`EduSaga 360 API server running on port ${PORT}`);
+
+  // Nightly YAMEN collections segmentation job (01:00 KSA) — skipped if disabled.
+  if (process.env.COLLECTIONS_CRON_ENABLED === 'true') {
+    cron.schedule(
+      '0 1 * * *',
+      async () => {
+        try {
+          const runner = new SegmentationRunner(supabase);
+          const { data: settings } = await supabase
+            .from('collection_settings')
+            .select('tenant_id')
+            .eq('is_enabled', true)
+            .is('kill_switch_activated_at', null);
+          for (const row of settings ?? []) {
+            try {
+              const result = await runner.runForTenant(row.tenant_id);
+              console.log(`[cron] segmentation completed for ${row.tenant_id}:`, result);
+            } catch (err) {
+              console.error(`[cron] segmentation failed for ${row.tenant_id}:`, err);
+            }
+          }
+        } catch (err) {
+          console.error('[cron] nightly segmentation failed:', err);
+        }
+      },
+      { timezone: 'Asia/Riyadh' },
+    );
+    console.log('[cron] nightly collections segmentation scheduled for 01:00 Asia/Riyadh');
+  }
 });
 
 export default app;
