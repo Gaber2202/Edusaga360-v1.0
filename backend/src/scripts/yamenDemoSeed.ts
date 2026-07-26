@@ -8,6 +8,7 @@
  * overdue), collection settings and collection_profiles so the Finance Officer
  * Console and nightly cron have realistic data to evaluate.
  */
+import crypto from 'crypto';
 import { supabase } from '../lib/supabase.js';
 
 const STUDENT_COUNT = 900;
@@ -68,7 +69,7 @@ async function findOrCreateAcademicYear(tenantId: string) {
       name: ACADEMIC_YEAR,
       start_date: '2026-09-01',
       end_date: '2027-06-30',
-      is_active: true,
+      is_current: true,
     })
     .select('id')
     .single();
@@ -82,7 +83,7 @@ async function findOrCreateGrade(tenantId: string, branchId: string, academicYea
 
   const { data: grade, error } = await supabase
     .from('grades')
-    .insert({ tenant_id: tenantId, name_en: 'Grade 1', name_ar: 'الصف الأول', level: 1 })
+    .insert({ tenant_id: tenantId, name_en: 'Grade 1', name_ar: 'الصف الأول', code: 'G1', level: 1, capacity: 30 })
     .select('id')
     .single();
   if (error) throw error;
@@ -185,43 +186,47 @@ async function seedBatch(
     }
 
     const invoiceId = crypto.randomUUID();
+    const outstanding = total - paidAmount;
+    const isOverdue = status === 'overdue';
+
     invoices.push({
       id: invoiceId,
       tenant_id: tenantId,
       branch_id: branchId,
       student_id: studentId,
-      guardian_id: guardianId,
       invoice_number: `INV-${suffix}`,
       date: '2026-08-01',
       due_date: dueDate,
       total_amount: total,
       paid_amount: paidAmount,
-      balance: total - paidAmount,
       status,
-      items: JSON.stringify([{ description_en: 'Tuition fee', amount: total }]),
+      items: [{ description: 'Tuition fee', amount: total }],
     });
 
     profiles.push({
       tenant_id: tenantId,
       guardian_id: guardianId,
       student_id: studentId,
-      invoice_id: invoiceId,
-      current_segment: 'B',
-      outstanding_balance: total - paidAmount,
+      current_segment: isOverdue ? 'D' : outstanding > 0 ? 'C' : 'A',
+      outstanding_balance: outstanding,
       avg_days_to_pay: 5 + (i % 20),
-      partial_payment_ratio: paidAmount > 0 ? Number((paidAmount / total).toFixed(2)) : 0,
+      partial_payment_ratio: paidAmount > 0 ? Number((paidAmount / total).toFixed(4)) : 0,
       missed_installments_count: 0,
       total_invoiced: total,
       total_collected: paidAmount,
-      current_overdue_30_plus: status === 'overdue' ? 1 : 0,
-      current_overdue_60_plus: 0,
-      current_overdue_90_plus: 0,
-      cross_term_default: false,
-      had_plan_ever: false,
-      has_active_plan: false,
-      message_reply_count: 0,
-      risk_flag: false,
+      channel_responsiveness: {},
       preferred_language: 'ar',
+      features_jsonb: {
+        invoice_id: invoiceId,
+        current_overdue_30_plus: isOverdue ? 1 : 0,
+        current_overdue_60_plus: 0,
+        current_overdue_90_plus: 0,
+        cross_term_default: false,
+        had_plan_ever: false,
+        has_active_plan: false,
+        message_reply_count: 0,
+        risk_flag: false,
+      },
     });
   }
 
