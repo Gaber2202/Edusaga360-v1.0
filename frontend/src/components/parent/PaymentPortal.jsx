@@ -1,28 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { tenantQuery } from '../../api/supabaseClient';
+import { tenantQuery, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useTenant } from '../TenantContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Loader2, CreditCard, Smartphone, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { Loader2, CreditCard, Smartphone, CheckCircle2, Clock, AlertCircle, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 // ─── Payment link generators ──────────────────────────────────────────────────
 // STC Pay deep link format: stcpay://pay?amount=X&description=Y&ref=Z
-// Mada: redirects to bank's e-payment gateway via URL params
-// We generate a hosted checkout URL that the school's payment gateway would handle.
-// For now we produce deep links + fallback to a Moyasar / payment page URL pattern.
-
-const PAYMENT_GATEWAY = import.meta.env.VITE_PAYMENT_GATEWAY_URL ?? 'https://platform.edusaga360.com/pay';
 
 function buildSTCPayLink(amount, description, referenceId) {
   const params = new URLSearchParams({ amount: amount.toFixed(2), description, ref: referenceId });
   return `stcpay://pay?${params}`;
-}
-
-function buildPaymentPageLink(tenantId, invoiceId, amount, description) {
-  const params = new URLSearchParams({ tenant: tenantId, invoice: invoiceId, amount: amount.toFixed(2), desc: description });
-  return `${PAYMENT_GATEWAY}?${params}`;
 }
 
 function statusConfig(status, isRTL) {
@@ -39,6 +29,48 @@ export default function PaymentPortal({ student }) {
   const [invoices, setInvoices]   = useState([]);
   const [loading, setLoading]     = useState(false);
   const [expanded, setExpanded]   = useState(null);
+  const [payingId, setPayingId]   = useState(null);
+
+  const handlePay = async (invoice) => {
+    setPayingId(invoice.id);
+    toast.loading(isRTL ? 'جاري تحميل رابط الدفع...' : 'Loading payment link...');
+    try {
+      const result = await callApi(`/api/invoices/${invoice.id}/payment-link`, null, { method: 'GET' });
+      if (result.paymentUrl) {
+        window.open(result.paymentUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        toast.error(isRTL ? 'لم يتم إنشاء رابط الدفع' : 'Payment link not created');
+      }
+    } catch (err) {
+      console.error('Payment link error:', err);
+      toast.error(isRTL ? 'فشل تحميل رابط الدفع' : 'Failed to load payment link');
+    } finally {
+      setPayingId(null);
+      toast.dismiss();
+    }
+  };
+
+  const handleDownload = async (invoice) => {
+    toast.loading(isRTL ? 'جاري تحميل الفاتورة...' : 'Downloading invoice...');
+    try {
+      const blob = await callApi(
+        `/api/invoices/${invoice.id}/download-pdf`,
+        null,
+        { method: 'GET', responseType: 'blob' }
+      );
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `zatca-invoice-${invoice.invoice_number}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.dismiss();
+      toast.success(isRTL ? 'تم تحميل الفاتورة' : 'Invoice downloaded');
+    } catch (err) {
+      toast.dismiss();
+      toast.error(isRTL ? 'فشل تحميل الفاتورة' : 'Failed to download invoice');
+    }
+  };
 
   useEffect(() => {
     if (!student?.id || !tenant?.id) return;
@@ -159,6 +191,20 @@ export default function PaymentPortal({ student }) {
                         </p>
 
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                          {/* Primary: Moyasar checkout link */}
+                          <Button
+                            onClick={() => handlePay(invoice)}
+                            disabled={payingId === invoice.id}
+                            className="flex items-center justify-center gap-2 bg-najdi-900 hover:bg-ink text-white text-sm font-medium py-2.5 px-4 rounded-lg transition-colors"
+                          >
+                            {payingId === invoice.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <CreditCard className="w-4 h-4" />
+                            )}
+                            {isRTL ? 'دفع الآن' : 'Pay Now'}
+                          </Button>
+
                           {/* STC Pay */}
                           <a
                             href={buildSTCPayLink(outstanding, description, invoice.id)}
@@ -169,29 +215,15 @@ export default function PaymentPortal({ student }) {
                             STC Pay
                           </a>
 
-                          {/* Mada / online payment page */}
-                          <a
-                            href={buildPaymentPageLink(tenant.id, invoice.id, outstanding, description)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={() => toast.info(isRTL ? 'جاري فتح بوابة الدفع...' : 'Opening payment gateway...')}
-                            className="flex items-center justify-center gap-2 bg-najdi-900 hover:bg-ink text-white text-sm font-medium py-2.5 px-4 rounded-lg transition-colors"
-                          >
-                            <CreditCard className="w-4 h-4" />
-                            {isRTL ? 'مدى / بطاقة' : 'Mada / Card'}
-                          </a>
-
-                          {/* Copy reference */}
+                          {/* Download ZATCA PDF + copy ref */}
                           <Button
                             variant="outline"
                             size="sm"
                             className="text-sm"
-                            onClick={() => {
-                              navigator.clipboard.writeText(invoice.invoice_number);
-                              toast.success(isRTL ? 'تم نسخ رقم الفاتورة' : 'Invoice number copied');
-                            }}
+                            onClick={() => handleDownload(invoice)}
                           >
-                            {isRTL ? 'نسخ رقم الفاتورة' : 'Copy Ref'}
+                            <Download className="w-4 h-4 me-1" />
+                            {isRTL ? 'تحميل PDF' : 'Download PDF'}
                           </Button>
                         </div>
 

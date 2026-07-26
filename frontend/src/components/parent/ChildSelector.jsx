@@ -17,18 +17,47 @@ export default function ChildSelector({ selectedChildId, onChildChange }) {
     const fetchChildren = async () => {
       try {
         setLoading(true);
-        const user = await supabase.auth.getUser().then(r => r.data?.user);
-        
-        // Fetch students where mother_email matches current user email
-        const { data: studentList = [] } = await tenantQuery('students').select('*').match({
-          mother_email: user.email,
-          tenant_id: tenant?.id
-        });
+        const authUser = await supabase.auth.getUser().then(r => r.data?.user);
+        if (!authUser?.email) return;
 
-        setChildren(studentList || []);
-        
+        // Build the child list from two trusted sources:
+        // 1. The user's linked_student_ids array in the users table.
+        // 2. The guardians table record whose email matches the parent.
+        const merged = new Map();
+
+        const { data: userRec } = await tenantQuery('users')
+          .select('linked_student_ids, email')
+          .eq('auth_id', authUser.id)
+          .maybeSingle();
+
+        const linkedIds = userRec?.linked_student_ids || [];
+        if (linkedIds.length > 0) {
+          const { data: linkedStudents = [] } = await tenantQuery('students')
+            .select('*')
+            .in('id', linkedIds)
+            .eq('status', 'active');
+          linkedStudents.forEach((s) => merged.set(s.id, s));
+        }
+
+        const parentEmail = userRec?.email || authUser.email;
+        const { data: guardian } = await tenantQuery('guardians')
+          .select('id')
+          .eq('email', parentEmail)
+          .maybeSingle();
+
+        if (guardian?.id) {
+          const { data: guardianStudents = [] } = await tenantQuery('students')
+            .select('*')
+            .eq('guardian_id', guardian.id)
+            .eq('status', 'active');
+          guardianStudents.forEach((s) => merged.set(s.id, s));
+        }
+
+        const studentList = Array.from(merged.values());
+        setChildren(studentList);
+
         // Auto-select first child if none selected
-        if (studentList?.length > 0 && !selectedChildId) {
+        if (studentList.length > 0 && !selectedChildId) {
           onChildChange(studentList[0]);
         }
       } catch (err) {

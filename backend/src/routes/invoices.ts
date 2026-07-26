@@ -18,6 +18,7 @@ import {
   invoiceDataFromRow,
 } from '../services/zatca.js';
 import { getTenantComplianceData } from '../services/tenant.js';
+import { getOrCreateMoyasarLink } from '../services/moyasar/moyasarService.js';
 import { PdfQueueSaturatedError } from '../lib/pdfConcurrency.js';
 
 export const invoiceRouter = Router();
@@ -328,5 +329,76 @@ invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Re
     }
     console.error('Failed to generate invoice PDF:', err);
     return res.status(500).json({ message: 'Failed to generate invoice PDF' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/invoices/:id/payment-link — get or create a Moyasar checkout link
+// Accessible to finance users and to parents of the linked student.
+// ---------------------------------------------------------------------------
+
+invoiceRouter.get('/:id/payment-link', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id: invoiceId } = req.params;
+    const tenantId = req.user!.tenant_id;
+
+    if (!tenantId) {
+      return res.status(400).json({ message: 'Tenant ID not found in token' });
+    }
+
+    const { data: invoice, error: invoiceError } = await supabase
+      .from('invoices')
+      .select('id, student_id, guardian_id, tenant_id, status, document_type, total_amount, paid_amount')
+      .eq('id', invoiceId)
+      .eq('tenant_id', tenantId)
+      .single();
+
+    if (invoiceError || !invoice) {
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+
+    // Parents may only request payment links for their own linked children.
+    if (req.user!.role === 'parent') {
+      const { data: user } = await supabase
+        .from('users')
+        .select('linked_student_ids, email')
+        .eq('auth_id', req.user!.id)
+        .single();
+      const linked: string[] = (user?.linked_student_ids as string[] | null) ?? [];
+      const isLinkedStudent = invoice.student_id && linked.includes(invoice.student_id as string);
+
+      let isGuardian = false;
+      if (!isLinkedStudent && invoice.guardian_id && user?.email) {
+        const { count } = await supabase
+          .from('guardians')
+          .select('*', { count: 'exact', head: true })
+          .eq('id', invoice.guardian_id)
+          .eq('email', user.email as string)
+          .eq('tenant_id', tenantId);
+        isGuardian = (count ?? 0) > 0;
+      }
+
+      if (!isLinkedStudent && !isGuardian) {
+        return res.status(403).json({ message: 'Not authorized to pay this invoice' });
+      }
+    }
+
+    const baseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3001}`;
+    const result = await getOrCreateMoyasarLink(supabase, {
+      tenantId: tenantId as string,
+      invoiceId: invoiceId as string,
+      callbackUrl: `${baseUrl}/api/public/billing/moyasar/webhook`,
+      successUrl: `${baseUrl}/payment/result?status=success`,
+      backUrl: `${baseUrl}/payment/result?status=pending`,
+    });
+
+    if (!result.ok) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    return res.json(result);
+  } catch (err) {
+    console.error('Failed to get payment link:', err);
+    return res.status(500).json({ message: 'Failed to get payment link' });
   }
 });
