@@ -41,6 +41,7 @@ import { collectionsRouter } from './routes/collections.js';
 import { billingPublicRouter } from './routes/billingPublic.js';
 import cron from 'node-cron';
 import { SegmentationRunner } from './services/collections/runner.js';
+import { CollectionMessenger } from './services/collections/messenger.js';
 
 dotenv.config();
 
@@ -191,14 +192,16 @@ app.use(
 
 app.listen(PORT, () => {
   console.log(`EduSaga 360 API server running on port ${PORT}`);
+  const callbackUrl = `${process.env.FRONTEND_URL ?? 'https://parentportal.edusaga360.com'}/payment/complete`;
 
-  // Nightly YAMEN collections segmentation job (01:00 KSA) — skipped if disabled.
   if (process.env.COLLECTIONS_CRON_ENABLED === 'true') {
+    // Nightly YAMEN collections job (01:00 KSA): segment, then enqueue reminders.
     cron.schedule(
       '0 1 * * *',
       async () => {
         try {
           const runner = new SegmentationRunner(supabase);
+          const messenger = new CollectionMessenger(supabase, callbackUrl);
           const { data: settings } = await supabase
             .from('collection_settings')
             .select('tenant_id')
@@ -206,19 +209,32 @@ app.listen(PORT, () => {
             .is('kill_switch_activated_at', null);
           for (const row of settings ?? []) {
             try {
-              const result = await runner.runForTenant(row.tenant_id);
-              console.log(`[cron] segmentation completed for ${row.tenant_id}:`, result);
+              const segResult = await runner.runForTenant(row.tenant_id);
+              const enqueueResult = await messenger.enqueueRemindersForTenant(row.tenant_id);
+              console.log(`[cron] collections completed for ${row.tenant_id}:`, { segResult, enqueueResult });
             } catch (err) {
-              console.error(`[cron] segmentation failed for ${row.tenant_id}:`, err);
+              console.error(`[cron] collections failed for ${row.tenant_id}:`, err);
             }
           }
         } catch (err) {
-          console.error('[cron] nightly segmentation failed:', err);
+          console.error('[cron] nightly collections failed:', err);
         }
       },
       { timezone: 'Asia/Riyadh' },
     );
-    console.log('[cron] nightly collections segmentation scheduled for 01:00 Asia/Riyadh');
+
+    // Send pending messages every 5 minutes within the tenant send window.
+    cron.schedule('*/5 * * * *', async () => {
+      try {
+        const messenger = new CollectionMessenger(supabase, callbackUrl);
+        const result = await messenger.sendPendingMessages(100);
+        console.log('[cron] send pending messages:', result);
+      } catch (err) {
+        console.error('[cron] send pending messages failed:', err);
+      }
+    });
+
+    console.log('[cron] collections jobs scheduled (segmentation 01:00 KSA, sends every 5 min)');
   }
 });
 

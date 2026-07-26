@@ -6,6 +6,7 @@ import { tenantMiddleware } from '../middleware/tenant.js';
 import { createInternalOrAuthMiddleware } from '../middleware/internalAuth.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { SegmentationRunner } from '../services/collections/runner.js';
+import { CollectionMessenger } from '../services/collections/messenger.js';
 
 export const collectionsRouter = Router();
 
@@ -14,6 +15,8 @@ const internalOrAuth = createInternalOrAuthMiddleware(authMiddleware);
 const RunSegmentationSchema = z.object({
   tenant_id: z.string().uuid().optional(),
 });
+
+const callbackUrl = `${process.env.FRONTEND_URL ?? 'https://parentportal.edusaga360.com'}/payment/complete`;
 
 // ─── POST /api/collections/run-segmentation ───────────────────────────────────
 // Triggered by finance officers manually or by an internal scheduler.
@@ -32,6 +35,46 @@ collectionsRouter.post(
     } catch (err) {
       console.error('[collections/run-segmentation] error:', err);
       return res.status(500).json({ error: 'segmentation_failed', message: (err as Error).message });
+    }
+  },
+);
+
+// ─── POST /api/collections/enqueue-reminders ─────────────────────────────────
+// Queues the next reminder for every overdue profile in the tenant.
+collectionsRouter.post(
+  '/enqueue-reminders',
+  internalOrAuth,
+  tenantMiddleware,
+  requireRole([...FINANCE_ROLES, 'system']),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const tenantId = req.user!.tenant_id!;
+      const messenger = new CollectionMessenger(supabase, callbackUrl);
+      const result = await messenger.enqueueRemindersForTenant(tenantId);
+      return res.json({ ok: true, result });
+    } catch (err) {
+      console.error('[collections/enqueue-reminders] error:', err);
+      return res.status(500).json({ error: 'enqueue_failed', message: (err as Error).message });
+    }
+  },
+);
+
+// ─── POST /api/collections/send-pending ───────────────────────────────────────
+// Immediately dispatches pending messages whose scheduled_at has passed and that
+// are inside the tenant send window.
+collectionsRouter.post(
+  '/send-pending',
+  internalOrAuth,
+  tenantMiddleware,
+  requireRole([...FINANCE_ROLES, 'system']),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const messenger = new CollectionMessenger(supabase, callbackUrl);
+      const result = await messenger.sendPendingMessages(Number(req.query.limit ?? 100));
+      return res.json({ ok: true, result });
+    } catch (err) {
+      console.error('[collections/send-pending] error:', err);
+      return res.status(500).json({ error: 'send_failed', message: (err as Error).message });
     }
   },
 );

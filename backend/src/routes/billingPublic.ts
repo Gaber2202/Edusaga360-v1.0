@@ -152,7 +152,7 @@ billingPublicRouter.post('/moyasar/webhook', async (req, res) => {
         channel: 'whatsapp',
         template_key: 'payment_thank_you',
         language: (profile.preferred_language as string) ?? 'ar',
-        amount_due: 0,
+        amount_due: amountSAR,
         scheduled_at: new Date().toISOString(),
         delivery_status: 'pending',
         idempotency_key: `thankyou:${tenant_id}:${invoice_id}:${payment_id}`,
