@@ -18,6 +18,11 @@ export const API_SCOPES = [
   'guardians:read',
   'guardians:write',
   'invoices:read',
+  'invoices:write',
+  'invoices:share',
+  'payments:read',
+  'bulk_import:write',
+  'webhooks:write',
 ] as const;
 
 export type ApiScope = (typeof API_SCOPES)[number];

@@ -19,6 +19,8 @@ import { studentsRouter } from './students.js';
 import { staffRouter } from './staff.js';
 import { guardiansRouter } from './guardians.js';
 import { invoicesRouter } from './invoices.js';
+import { importRouter } from './import.js';
+import { webhooksRouter } from './webhooks.js';
 
 export const externalApiRouter = Router();
 
@@ -40,3 +42,5 @@ externalApiRouter.use('/students', studentsRouter);
 externalApiRouter.use('/staff', staffRouter);
 externalApiRouter.use('/guardians', guardiansRouter);
 externalApiRouter.use('/invoices', invoicesRouter);
+externalApiRouter.use('/import', importRouter);
+externalApiRouter.use('/webhooks', webhooksRouter);
