@@ -171,7 +171,14 @@ function vatRateForCategory(category: string, rate?: number): number {
   if (category === 'zero_rated') return 0;
   if (category === 'exempt') return 0;
   if (category === 'out_of_scope') return 0;
-  return rate ?? 15;
+  if (rate == null) return 0.15;
+  // Treat provided percentages (>=1) as well as decimal fractions (<1) consistently.
+  return rate >= 1 ? rate / 100 : rate;
+}
+
+function percentValue(rate?: number): number {
+  if (rate == null) return 15;
+  return rate < 1 ? rate * 100 : rate;
 }
 
 export function normalizeInvoiceItems(invoice: InvoiceData): Required<InvoiceItemData>[] {
@@ -189,7 +196,7 @@ export function normalizeInvoiceItems(invoice: InvoiceData): Required<InvoiceIte
     const vatCategory = (item.vat_category || 'standard') as NonNullable<InvoiceItemData['vat_category']>;
     const vatRate = vatRateForCategory(vatCategory, item.vat_rate);
     const vatCategoryCode = item.vat_category_code || categoryCode(vatCategory);
-    const vatAmount = vatCategory === 'standard' ? sar(lineNet * (vatRate / 100)) : 0;
+    const vatAmount = vatRate > 0 ? sar(lineNet * vatRate) : 0;
     const lineTotalGross = sar(lineNet + vatAmount);
     return {
       description_en,
@@ -333,7 +340,7 @@ export function generateTLVQR(
 // ---------------------------------------------------------------------------
 
 function taxCategoryXml(categoryCode: string, vatRate: number, reason?: string): string {
-  const percent = vatRate > 0 ? `<cbc:Percent>${vatRate.toFixed(2)}</cbc:Percent>` : '';
+  const percent = vatRate > 0 ? `<cbc:Percent>${percentValue(vatRate).toFixed(2)}</cbc:Percent>` : '';
   const exemption = (categoryCode === 'E' || categoryCode === 'O') && reason
     ? `<cbc:TaxExemptionReason>${escapeXml(reason)}</cbc:TaxExemptionReason>`
     : '';
@@ -452,7 +459,7 @@ export function generateUBLXml(invoice: InvoiceData, tenant: TenantData): string
       <cbc:Name>${escapeXml(item.description_en)}</cbc:Name>
       <cac:ClassifiedTaxCategory>
         <cbc:ID>${item.vat_category_code}</cbc:ID>
-        ${item.vat_rate > 0 ? `<cbc:Percent>${item.vat_rate.toFixed(2)}</cbc:Percent>` : ''}
+        ${item.vat_rate > 0 ? `<cbc:Percent>${percentValue(item.vat_rate).toFixed(2)}</cbc:Percent>` : ''}
         <cac:TaxScheme>
           <cbc:ID>VAT</cbc:ID>
         </cac:TaxScheme>
@@ -738,7 +745,7 @@ function buildInvoiceHTML(invoice: InvoiceData, tenant: TenantData, qrDataUrl: s
       </td>
       <td dir="ltr">${item.quantity}</td>
       <td dir="ltr">SAR ${formatMoney(item.unit_price_net)}</td>
-      <td dir="ltr">${item.vat_category === 'standard' ? item.vat_rate.toFixed(0) + '%' : categoryCode(item.vat_category)}</td>
+      <td dir="ltr">${item.vat_category === 'standard' ? (item.vat_rate * 100).toFixed(0) + '%' : categoryCode(item.vat_category)}</td>
       <td dir="ltr">SAR ${formatMoney(item.vat_amount)}</td>
       <td dir="ltr">SAR ${formatMoney(item.line_total_gross)}</td>
     </tr>
@@ -746,7 +753,7 @@ function buildInvoiceHTML(invoice: InvoiceData, tenant: TenantData, qrDataUrl: s
 
   const vatRows = vatSummary.rates.map((r) => `
     <div class="total-row">
-      <span class="total-label">ضريبة القيمة المضافة ${r.rate > 0 ? r.rate.toFixed(0) + '%' : r.category_code}</span>
+      <span class="total-label">ضريبة القيمة المضافة ${r.rate > 0 ? (r.rate * 100).toFixed(0) + '%' : r.category_code}</span>
       <bdi>:</bdi>
       <span class="total-value" dir="ltr">SAR ${formatMoney(r.vat_amount)}</span>
     </div>
@@ -1034,9 +1041,9 @@ export async function generateZATCAInvoicePDF(
   invoice: InvoiceData,
   tenant: TenantData,
 ): Promise<Buffer> {
-  // Normalize items and VAT summary so the PDF always shows consistent math
+  // Normalize items and recompute VAT summary so the PDF always shows consistent math
   const normalizedItems = normalizeInvoiceItems(invoice);
-  const vatSummary = computeVatSummary({ ...invoice, items: normalizedItems });
+  const vatSummary = computeVatSummary({ ...invoice, items: normalizedItems, vat_summary: undefined });
   const enrichedInvoice: InvoiceData = {
     ...invoice,
     items: normalizedItems,
