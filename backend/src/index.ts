@@ -39,6 +39,7 @@ import { emailConnectorsRouter } from './routes/emailConnectors.js';
 import { messagingRouter } from './routes/messaging.js';
 import { collectionsRouter } from './routes/collections.js';
 import { billingPublicRouter } from './routes/billingPublic.js';
+import { messagingPublicRouter } from './routes/messagingPublic.js';
 import cron from 'node-cron';
 import { SegmentationRunner } from './services/collections/runner.js';
 import { CollectionMessenger } from './services/collections/messenger.js';
@@ -144,6 +145,8 @@ app.use('/api/auth', authRouter);
 app.use('/api/registration', registrationLimiter, registrationRouter);
 // Moyasar server-to-server webhook — verified by shared secret, not JWT.
 app.use('/api/public/billing', billingPublicRouter);
+// Meta / Infobip inbound messaging webhooks — verified by provider signature/tokens at handler level.
+app.use('/api/public/messaging', messagingPublicRouter);
 
 // ── Authenticated routes — ALL protected by authMiddleware + tenantMiddleware ──
 // IMPORTANT: Register middleware on each router directly.
