@@ -514,7 +514,7 @@ export async function complianceCheck(
 
 let browserInstance: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
 
-async function getBrowser() {
+export async function getBrowser() {
   if (!browserInstance || !browserInstance.connected) {
     browserInstance = await puppeteer.launch({
       headless: true,

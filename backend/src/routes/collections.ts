@@ -395,6 +395,21 @@ collectionsRouter.post('/guarantee/measure', authMiddleware, tenantMiddleware, r
 });
 
 // ─── GET /api/collections/guarantee/dashboard ─────────────────────────────────
+collectionsRouter.get('/guarantee/report/pdf', authMiddleware, tenantMiddleware, requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const tenantId = req.user!.tenant_id!;
+    const { term } = req.query as Record<string, string>;
+    const engine = new GuaranteeEngine(supabase);
+    const pdf = await engine.generateReportPDF(tenantId, term);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="yamen-guarantee-${term ?? 'current'}.pdf"`);
+    return res.send(pdf);
+  } catch (err) {
+    console.error('[collections/guarantee/report/pdf] error:', err);
+    return res.status(500).json({ error: 'pdf_failed', message: (err as Error).message });
+  }
+});
+
 collectionsRouter.get('/guarantee/dashboard', authMiddleware, tenantMiddleware, requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const tenantId = req.user!.tenant_id!;
