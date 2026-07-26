@@ -269,154 +269,57 @@ export default function InvoiceDetails() {
     }
   };
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (!invoice) return;
-    
-    const printWindow = window.open('', '_blank');
-    const html = `
-      <!DOCTYPE html>
-      <html dir="${isRTL ? 'rtl' : 'ltr'}">
-      <head>
-        <title>Invoice ${invoice.invoice_number}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 40px; }
-          .header { text-align: center; margin-bottom: 30px; }
-          .header h1 { margin: 0; color: #1e293b; }
-          .details { margin-bottom: 30px; }
-          .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-          th { background: #f1f5f9; padding: 10px; text-align: left; }
-          td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
-          .total-section { margin-top: 20px; text-align: right; }
-          .total-row { display: flex; justify-content: flex-end; gap: 50px; margin: 5px 0; }
-          .total-row.grand { font-size: 18px; font-weight: bold; margin-top: 10px; }
-          @media print { button { display: none; } }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>INVOICE</h1>
-          <p>EduSaga 360 - School Management System</p>
-        </div>
-        
-        <div class="details">
-          <div class="details-grid">
-            <div>
-              <p><strong>Invoice #:</strong> ${invoice.invoice_number}</p>
-              <p><strong>Date:</strong> ${fmtDate(invoice.issue_date)}</p>
-              <p><strong>Due Date:</strong> ${fmtDate(invoice.due_date)}</p>
-            </div>
-            <div>
-              <p><strong>Student:</strong> ${invoice.student_name}</p>
-              <p><strong>Grade:</strong> ${invoice.grade}</p>
-              <p><strong>Status:</strong> ${invoice.status}</p>
-            </div>
-          </div>
-        </div>
-        
-        <table>
-          <thead>
-            <tr>
-              <th>Description</th>
-              <th>Type</th>
-              <th style="text-align: right;">Amount (SAR)</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${invoice.items?.map(item => `
-              <tr>
-                <td>${itemDesc(item, isRTL)}</td>
-                <td>${item.fee_type || item.category_code || ''}</td>
-                <td style="text-align: right;">${money(itemAmount(item))}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        
-        ${paymentLogs.length > 0 ? `
-          <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-left: 4px solid #10b981;">
-            <h3 style="margin: 0 0 10px 0; font-size: 14px;">Payment Information</h3>
-            ${(() => {
-              const activeLogs = paymentLogs.filter(log => log.status !== 'reversed');
-              const methodsMap = {};
-              activeLogs.forEach(log => {
-                if (!methodsMap[log.payment_method]) methodsMap[log.payment_method] = 0;
-                methodsMap[log.payment_method] += log.amount;
-              });
-              const methodKeys = Object.keys(methodsMap);
-              
-              if (methodKeys.length === 1) {
-                const method = methodKeys[0];
-                const methodNames = { 
-                  credit_card: 'Credit Card', 
-                  bank_transfer: 'Bank Transfer', 
-                  cash: 'Cash',
-                  tamara: 'TAMARA (Buy Now, Pay Later)',
-                  internal_settlement: 'Internal Settlement'
-                };
-                const tamaraLog = activeLogs.find(l => l.payment_method === 'tamara');
-                return `<p style="margin: 5px 0;"><strong>Paid By:</strong> ${methodNames[method] || method}</p>
-                        ${tamaraLog?.tamara_order_id ? `<p style="margin: 5px 0; font-size: 12px;"><strong>TAMARA Ref:</strong> ${tamaraLog.tamara_order_id}</p>` : ''}`;
-              } else {
-                const breakdown = Object.entries(methodsMap).map(([method, amount]) => {
-                  const methodNames = { 
-                    credit_card: 'Credit Card', 
-                    bank_transfer: 'Bank Transfer', 
-                    cash: 'Cash',
-                    tamara: 'TAMARA',
-                    internal_settlement: 'Internal Settlement'
-                  };
-                  return `<li>${methodNames[method] || method}: ${amount.toLocaleString()} SAR</li>`;
-                }).join('');
-                return `<p style="margin: 5px 0;"><strong>Paid By:</strong> Mixed Payments</p>
-                        <ul style="margin: 5px 0 0 20px; font-size: 12px;">${breakdown}</ul>`;
-              }
-            })()}
-          </div>
-        ` : ''}
-        
-        <div class="total-section">
-          <div class="total-row">
-            <span>Subtotal:</span>
-            <span>${money(invoice.subtotal)} SAR</span>
-          </div>
-          ${Number(invoice.discount_amount) > 0 ? `
-            <div class="total-row">
-              <span>Discount:</span>
-              <span>-${money(invoice.discount_amount)} SAR</span>
-            </div>
-          ` : ''}
-          <div class="total-row grand">
-            <span>Total:</span>
-            <span>${money(invoice.total_amount)} SAR</span>
-          </div>
-          <div class="total-row">
-            <span>Paid:</span>
-            <span>${money(invoice.paid_amount)} SAR</span>
-          </div>
-          <div class="total-row grand">
-            <span>Balance:</span>
-            <span>${money(Number(invoice.total_amount || 0) - Number(invoice.paid_amount || 0))} SAR</span>
-          </div>
-        </div>
-        
-        <button onclick="window.print()" style="margin-top: 30px; padding: 10px 20px; background: #1e293b; color: white; border: none; cursor: pointer;">
-          Print Invoice
-        </button>
-      </body>
-      </html>
-    `;
-    
-    printWindow.document.write(html);
-    printWindow.document.close();
-    
-    logAuditEvent(
-      AuditActions.VIEW,
-      'Invoice',
-      invoice.id,
-      { action: 'print', invoice_number: invoice.invoice_number },
-      user
-    );
+
+    toast.loading(isRTL ? 'جاري تحميل الفاتورة للطباعة...' : 'Loading invoice for printing...');
+    try {
+      const blob = await callApi(
+        `/api/invoices/${invoice.id}/download-pdf`,
+        null,
+        { method: 'GET', responseType: 'blob' }
+      );
+      const url = URL.createObjectURL(blob);
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.src = url;
+
+      const cleanup = () => {
+        if (iframe.parentNode) document.body.removeChild(iframe);
+        URL.revokeObjectURL(url);
+      };
+
+      iframe.onerror = cleanup;
+      document.body.appendChild(iframe);
+
+      iframe.onload = () => {
+        toast.dismiss();
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        } catch (e) {
+          console.error('Print failed:', e);
+        }
+        setTimeout(cleanup, 1000);
+      };
+
+      logAuditEvent(
+        AuditActions.VIEW,
+        'Invoice',
+        invoice.id,
+        { action: 'print_zatca_pdf', invoice_number: invoice.invoice_number },
+        user
+      );
+    } catch (err) {
+      console.error('ZATCA PDF print failed:', err);
+      toast.dismiss();
+      toast.error(isRTL ? 'فشل تحميل الفاتورة للطباعة' : 'Failed to load invoice for printing');
+    }
   };
 
   const shareViaEmail = async () => {
