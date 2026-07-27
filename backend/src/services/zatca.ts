@@ -136,8 +136,9 @@ function sar(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-function escapeXml(str: string): string {
-  return str
+function escapeXml(str: string | null | undefined): string {
+  const s = str == null ? '' : String(str);
+  return s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -145,8 +146,9 @@ function escapeXml(str: string): string {
     .replace(/'/g, '&apos;');
 }
 
-function escapeHtml(str: string): string {
-  return str
+function escapeHtml(str: string | null | undefined): string {
+  const s = str == null ? '' : String(str);
+  return s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')

@@ -268,6 +268,7 @@ const CreateInvoiceSchema = z.object({
   supply_date: z.string().optional(),
   document_type: z.enum(['invoice', 'quotation', 'proforma', 'credit_note', 'debit_note', 'receipt']).optional().default('invoice'),
   invoice_type: z.enum(['simplified', 'standard']).optional().default('simplified'),
+  payment_methods: z.array(z.string()).optional().default([]),
 });
 
 const BulkInvoiceSchema = z.object({
@@ -475,7 +476,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       student_id, academic_year, fee_lines, due_date: rawDueDate,
       apply_discounts: shouldApplyDiscounts, installment_count, notes_ar, notes_en,
       buyer_name, buyer_vat_number, buyer_address, supply_date,
-      document_type, invoice_type,
+      document_type, invoice_type, payment_methods,
     } = parsed.data;
     const due_date = rawDueDate && rawDueDate.trim() !== '' ? rawDueDate : null;
     const isTaxInvoice = !['quotation', 'proforma', 'receipt'].includes(document_type);
@@ -652,6 +653,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       items: enrichedLines,
       vat_summary: vatSummary,
       notes: notesText,
+      payment_methods: payment_methods || [],
       zatca_uuid: isTaxInvoice ? invoiceData.uuid : null,
       icv: isTaxInvoice ? invoiceData.icv : null,
       invoice_hash,
@@ -685,6 +687,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
         status: isTaxInvoice ? 'issued' : 'draft',
         items: enrichedLines,
         notes: notesText,
+        payment_methods: payment_methods || [],
       };
       const { data: baseData, error: baseError } = await supabase
         .from('invoices')
@@ -1238,6 +1241,7 @@ export async function createInvoiceForStudent(
     supply_date?: string;
     notes?: string;
     terms_and_conditions?: string;
+    payment_methods?: string[];
   },
 ): Promise<Record<string, unknown>> {
   const today = new Date().toISOString().split('T')[0];
@@ -1417,6 +1421,7 @@ export async function createInvoiceForStudent(
       recurring_schedule_id: options?.recurring_schedule_id ?? null,
       notes: options?.notes ?? null,
       terms_and_conditions: options?.terms_and_conditions ?? null,
+      payment_methods: options?.payment_methods ?? [],
     })
     .select()
     .single();
