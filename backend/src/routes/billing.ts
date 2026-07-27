@@ -34,7 +34,7 @@ import { createReceiptForPayment } from '../services/receipt.js';
 import { convertToInvoice } from '../services/lifecycle.js';
 import { shareInvoice } from '../services/share.js';
 import type { ShareChannel } from '../services/share.js';
-import { createOrRefreshMoyasarLink, bulkCreateMoyasarInvoices, requestMoyasarRefund, reconcileMoyasarState } from '../services/moyasar/moyasarService.js';
+import { createOrRefreshMoyasarLink, bulkCreateMoyasarInvoices, requestMoyasarRefund, reconcileMoyasarState, type MoyasarLinkResult } from '../services/moyasar/moyasarService.js';
 import {
   getAgingReport,
   getExpectedCollections,
@@ -54,6 +54,7 @@ export const billingRouter = Router();
 const VAT_RATE_STANDARD = 0.15;
 const ZATCA_SANDBOX_URL = 'https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal';
 const ZATCA_PROD_URL = 'https://gw-fatoora.zatca.gov.sa/e-invoicing/core';
+const DIGITAL_PAYMENT_METHODS = new Set(['mada', 'creditcard', 'applepay', 'stcpay', 'samsungpay']);
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -792,12 +793,35 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       console.warn('[billing] GL journal post failed:', (journalErr as Error).message);
     }
 
+    // Auto-issue a Moyasar hosted payment link when the parent should pay digitally.
+    let paymentLink: MoyasarLinkResult | null = null;
+    if (isTaxInvoice && invoice?.id && Array.isArray(payment_methods) && payment_methods.some((m) => DIGITAL_PAYMENT_METHODS.has(m))) {
+      try {
+        const protocol = req.get('X-Forwarded-Proto') || req.protocol;
+        const baseUrl = process.env.PARENT_PORTAL_URL || process.env.PUBLIC_BASE_URL || `${protocol}://${req.get('host')}`;
+        const firstDigital = payment_methods.find((m) => DIGITAL_PAYMENT_METHODS.has(m));
+        paymentLink = await createOrRefreshMoyasarLink(supabase, {
+          tenantId: tenant_id,
+          invoiceId: invoice.id as string,
+          callbackUrl: `${baseUrl}/api/public/billing/moyasar/webhook`,
+          successUrl: `${baseUrl}/payment/result?status=success`,
+          backUrl: `${baseUrl}/payment/result?status=pending`,
+          sourceType: firstDigital as 'mada' | 'creditcard' | 'applepay' | 'stcpay' | 'samsungpay' | undefined,
+          studentFirstName: (student.name_en as string) || (student.name_ar as string) || 'Student',
+        });
+      } catch (moyasarErr) {
+        console.warn('[billing] Auto Moyasar link creation failed:', (moyasarErr as Error).message);
+        paymentLink = { ok: false, error: (moyasarErr as Error).message };
+      }
+    }
+
     return res.status(201).json({
       invoice,
       zatca: isTaxInvoice
         ? { id: zatcaRecord?.id, qr_code, invoice_hash, status: 'pending' }
         : { id: null, qr_code: null, invoice_hash: null, status: 'not_applicable' },
       payment_plan: plan,
+      payment_link: paymentLink,
       discounts_applied: discountDetails,
       summary: { subtotal, total_discount: totalDiscount, vat_amount: vatAmount, total_amount: totalAmount },
     });

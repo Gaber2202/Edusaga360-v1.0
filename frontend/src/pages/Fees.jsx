@@ -959,6 +959,12 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) 
                 </span>
               </div>
             )}
+            {result.payment_link?.ok && result.payment_link?.paymentUrl && (
+              <div className="rounded-lg bg-sand border border-najdi-100 p-3 space-y-2">
+                <p className="text-xs font-medium text-ink">{isRTL ? 'رابط الدفع للولي (Moyasar)' : 'Parent Payment Link (Moyasar)'}</p>
+                <a href={result.payment_link.paymentUrl} target="_blank" rel="noreferrer" className="block text-xs text-najdi-700 break-all font-mono">{result.payment_link.paymentUrl}</a>
+              </div>
+            )}
             <Button className="w-full" onClick={() => { onClose(); setResult(null); }}>{isRTL ? 'إغلاق' : 'Close'}</Button>
           </div>
         ) : (
