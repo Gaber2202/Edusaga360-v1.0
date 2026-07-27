@@ -859,8 +859,18 @@ function DashboardTab({ token, isRTL, tenantId }) {
 
 // ─── New Invoice dialog ────────────────────────────────────────────────────────
 
+const PAYMENT_METHOD_OPTIONS = [
+  { id: 'mada', label: { ar: 'مدى', en: 'Mada' } },
+  { id: 'creditcard', label: { ar: 'بطاقة ائتمان / مدين', en: 'Credit / Debit Card' } },
+  { id: 'applepay', label: { ar: 'Apple Pay', en: 'Apple Pay' } },
+  { id: 'stcpay', label: { ar: 'STC Pay', en: 'STC Pay' } },
+  { id: 'samsungpay', label: { ar: 'Samsung Pay', en: 'Samsung Pay' } },
+  { id: 'bank_transfer', label: { ar: 'تحويل بنكي', en: 'Bank Transfer' } },
+  { id: 'cash', label: { ar: 'نقداً', en: 'Cash' } },
+];
+
 function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) {
-  const [form, setForm] = useState({ student_id: '', academic_year: '2025-2026', due_date: '', installment_count: '1', notes_en: '', notes_ar: '' });
+  const [form, setForm] = useState({ student_id: '', academic_year: '2025-2026', due_date: '', installment_count: '1', notes_en: '', notes_ar: '', payment_methods: [] });
   const [feeLines, setFeeLines] = useState([{ category_id: '', description_en: '', description_ar: '', amount: '' }]);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -885,6 +895,16 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) 
   const removeLine = (i) => setFeeLines((l) => l.filter((_, j) => j !== i));
   const updateLine = (i, k, v) => setFeeLines((l) => l.map((line, j) => j === i ? { ...line, [k]: v } : line));
 
+  const togglePaymentMethod = (methodId) => {
+    setForm((f) => {
+      const current = f.payment_methods || [];
+      const next = current.includes(methodId)
+        ? current.filter((m) => m !== methodId)
+        : [...current, methodId];
+      return { ...f, payment_methods: next };
+    });
+  };
+
   const submit = async () => {
     setLoading(true); setError(null);
     try {
@@ -896,6 +916,7 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) 
         ...(form.due_date ? { due_date: form.due_date } : {}),
         ...(form.notes_en ? { notes_en: form.notes_en } : {}),
         ...(form.notes_ar ? { notes_ar: form.notes_ar } : {}),
+        payment_methods: form.payment_methods || [],
         fee_lines: feeLines.map((l) => ({
           ...(l.category_id ? { category_id: l.category_id } : {}),
           description_en: l.description_en || 'Tuition Fee',
@@ -1025,6 +1046,29 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) 
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Payment methods available to parent */}
+            <div>
+              <label className="block text-xs font-medium text-ink mb-2">{isRTL ? 'طرق الدفع المتاحة للوالد' : 'Payment Methods Available to Parent'}</label>
+              <div className="flex flex-wrap gap-2">
+                {PAYMENT_METHOD_OPTIONS.map((method) => {
+                  const selected = (form.payment_methods || []).includes(method.id);
+                  return (
+                    <button
+                      key={method.id}
+                      type="button"
+                      onClick={() => togglePaymentMethod(method.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${selected ? 'bg-najdi-900 text-white border-najdi-900' : 'bg-white text-ink border-border hover:bg-sand'}`}
+                    >
+                      {isRTL ? method.label.ar : method.label.en}
+                    </button>
+                  );
+                })}
+              </div>
+              {(form.payment_methods || []).length === 0 && (
+                <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'اختر طريقة دفع واحدة على الأقل' : 'Select at least one payment method'}</p>
+              )}
             </div>
 
             {error && <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">{error}</div>}
