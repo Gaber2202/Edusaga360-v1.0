@@ -23,6 +23,19 @@ import { PdfQueueSaturatedError } from '../lib/pdfConcurrency.js';
 
 export const invoiceRouter = Router();
 
+async function resolveTenantId(req: AuthenticatedRequest): Promise<string | null> {
+  if (req.user?.tenant_id) return req.user.tenant_id;
+  const override = (req.query.tenant_id as string) || (req.headers['x-tenant-id'] as string);
+  if (override) return override;
+  const { data } = await supabase
+    .from('tenants')
+    .select('id')
+    .eq('status', 'active')
+    .order('created_at')
+    .limit(1)
+    .single();
+  return data?.id ?? null;
+}
 
 // ---------------------------------------------------------------------------
 // Validation schemas
@@ -111,9 +124,9 @@ invoiceRouter.post('/generate-zatca', requireRole(FINANCE_ROLES), async (req: Au
       });
     }
 
-    const tenantId = req.user!.tenant_id;
+    const tenantId = await resolveTenantId(req);
     if (!tenantId) {
-      return res.status(400).json({ message: 'Tenant ID not found in token' });
+      return res.status(400).json({ message: 'Tenant ID not found' });
     }
 
     const tenant = await getTenantComplianceData(tenantId);
@@ -217,7 +230,7 @@ invoiceRouter.post('/zatca-compliance-check', requireRole(FINANCE_ROLES), async 
       return res.status(400).json({ message: 'Validation failed', errors: parsed.error.flatten() });
     }
 
-    const tenantId = req.user!.tenant_id;
+    const tenantId = await resolveTenantId(req);
     if (!tenantId) {
       return res.status(400).json({ message: 'Tenant ID not found' });
     }
@@ -246,7 +259,7 @@ invoiceRouter.post('/zatca-compliance-check', requireRole(FINANCE_ROLES), async 
 invoiceRouter.get('/:id/zatca-status', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const tenantId = req.user!.tenant_id;
+    const tenantId = await resolveTenantId(req);
 
     if (!tenantId) {
       return res.status(400).json({ message: 'Tenant ID not found' });
@@ -277,21 +290,23 @@ invoiceRouter.get('/:id/zatca-status', async (req: AuthenticatedRequest, res: Re
 invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const tenantId = req.user!.tenant_id;
-
-    if (!tenantId) {
-      return res.status(400).json({ message: 'Tenant ID not found in token' });
-    }
+    let tenantId = req.user?.tenant_id || (req.headers['x-tenant-id'] as string) || (req.query.tenant_id as string);
 
     // Fetch invoice from Supabase
-    const { data: invoiceRow, error: invoiceError } = await supabase
-      .from('invoices')
-      .select('*')
-      .eq('id', id)
-      .eq('tenant_id', tenantId)
-      .single();
+    let invoiceQuery = supabase.from('invoices').select('*').eq('id', id);
+    if (tenantId) invoiceQuery = invoiceQuery.eq('tenant_id', tenantId);
+    let { data: invoiceRow, error: invoiceError } = await invoiceQuery.single();
 
-    if (invoiceError || !invoiceRow) {
+    if ((!invoiceRow || invoiceError) && !tenantId && req.user?.is_platform_owner) {
+      const { data: ownerInvoice } = await supabase.from('invoices').select('*').eq('id', id).single();
+      if (ownerInvoice) {
+        invoiceRow = ownerInvoice;
+        tenantId = ownerInvoice.tenant_id as string;
+        invoiceError = null;
+      }
+    }
+
+    if (invoiceError || !invoiceRow || !tenantId) {
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
@@ -341,20 +356,33 @@ invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Re
 invoiceRouter.get('/:id/payment-link', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id: invoiceId } = req.params;
-    const tenantId = req.user!.tenant_id;
+    let tenantId = req.user?.tenant_id || (req.headers['x-tenant-id'] as string) || (req.query.tenant_id as string);
 
-    if (!tenantId) {
-      return res.status(400).json({ message: 'Tenant ID not found in token' });
-    }
-
-    const { data: invoice, error: invoiceError } = await supabase
+    // Platform owners may not have a tenant_id in their token; look up the invoice first.
+    let invoiceQuery = supabase
       .from('invoices')
       .select('id, student_id, guardian_id, tenant_id, status, document_type, total_amount, paid_amount')
-      .eq('id', invoiceId)
-      .eq('tenant_id', tenantId)
-      .single();
+      .eq('id', invoiceId);
+    if (tenantId) {
+      invoiceQuery = invoiceQuery.eq('tenant_id', tenantId);
+    }
+    let { data: invoice, error: invoiceError } = await invoiceQuery.single();
 
-    if (invoiceError || !invoice) {
+    if ((!invoice || invoiceError) && !tenantId && req.user?.is_platform_owner) {
+      // Try cross-tenant lookup and adopt the invoice's tenant for the payment link.
+      const { data: ownerInvoice } = await supabase
+        .from('invoices')
+        .select('id, student_id, guardian_id, tenant_id, status, document_type, total_amount, paid_amount')
+        .eq('id', invoiceId)
+        .single();
+      if (ownerInvoice) {
+        invoice = ownerInvoice;
+        tenantId = ownerInvoice.tenant_id as string;
+        invoiceError = null;
+      }
+    }
+
+    if (invoiceError || !invoice || !tenantId) {
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
