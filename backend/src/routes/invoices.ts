@@ -295,15 +295,11 @@ invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Re
     // Fetch invoice from Supabase
     let invoiceQuery = supabase.from('invoices').select('*').eq('id', id);
     if (tenantId) invoiceQuery = invoiceQuery.eq('tenant_id', tenantId);
-    let { data: invoiceRow, error: invoiceError } = await invoiceQuery.single();
+    const { data: invoiceRow, error: invoiceError } = await invoiceQuery.single();
 
-    if ((!invoiceRow || invoiceError) && !tenantId && req.user?.is_platform_owner) {
-      const { data: ownerInvoice } = await supabase.from('invoices').select('*').eq('id', id).single();
-      if (ownerInvoice) {
-        invoiceRow = ownerInvoice;
-        tenantId = ownerInvoice.tenant_id as string;
-        invoiceError = null;
-      }
+    if (invoiceRow && !tenantId && req.user?.is_platform_owner) {
+      // Cross-tenant lookup succeeded; adopt the invoice's tenant.
+      tenantId = invoiceRow.tenant_id as string;
     }
 
     if (invoiceError || !invoiceRow || !tenantId) {
@@ -366,20 +362,11 @@ invoiceRouter.get('/:id/payment-link', async (req: AuthenticatedRequest, res: Re
     if (tenantId) {
       invoiceQuery = invoiceQuery.eq('tenant_id', tenantId);
     }
-    let { data: invoice, error: invoiceError } = await invoiceQuery.single();
+    const { data: invoice, error: invoiceError } = await invoiceQuery.single();
 
-    if ((!invoice || invoiceError) && !tenantId && req.user?.is_platform_owner) {
-      // Try cross-tenant lookup and adopt the invoice's tenant for the payment link.
-      const { data: ownerInvoice } = await supabase
-        .from('invoices')
-        .select('id, student_id, guardian_id, tenant_id, status, document_type, total_amount, paid_amount')
-        .eq('id', invoiceId)
-        .single();
-      if (ownerInvoice) {
-        invoice = ownerInvoice;
-        tenantId = ownerInvoice.tenant_id as string;
-        invoiceError = null;
-      }
+    if (invoice && !tenantId && req.user?.is_platform_owner) {
+      // Cross-tenant lookup succeeded; adopt the invoice's tenant.
+      tenantId = invoice.tenant_id as string;
     }
 
     if (invoiceError || !invoice || !tenantId) {
