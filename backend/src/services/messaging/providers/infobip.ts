@@ -42,6 +42,7 @@ export const infobip: MessagingProvider = {
     }
 
     const json = await postAndParse(ctx, 'Infobip', url, headers, JSON.stringify(body));
-    return { id: str(getPath(json, 'messages.0.messageId')) };
+    // SMS advanced response nests the id under messages[0].messageId; WhatsApp returns it at the top level as messageId.
+    return { id: str(getPath(json, 'messages.0.messageId') ?? getPath(json, 'messageId')) };
   },
 };

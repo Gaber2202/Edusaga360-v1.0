@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { getProvider } from '../messaging/registry.js';
 import { decryptSecret, isAiCryptoConfigured } from '../../lib/aiCrypto.js';
 import { sendEmail as sendTransactionalEmail } from '../email.js';
-import { createMoyasarPaymentLink } from './moyasar.js';
+import { getOrCreateMoyasarLink } from '../moyasar/moyasarService.js';
 import { writeLedger } from './ledgerWriter.js';
 import { CollectionThreadService } from './threads.js';
 
@@ -192,8 +192,8 @@ export class CollectionMessenger {
 
     for (const msg of (messages ?? []) as unknown as MessengerMessage[]) {
       try {
-        await this.sendMessage(msg);
-        sent++;
+        const didSend = await this.sendMessage(msg);
+        if (didSend) sent++;
       } catch (err) {
         console.error(`[collections/messenger] send failed for message ${msg.id}:`, err);
         await this.supabase
@@ -208,26 +208,25 @@ export class CollectionMessenger {
     return { sent, failed };
   }
 
-  private async sendMessage(msg: MessengerMessage): Promise<void> {
+  private async sendMessage(msg: MessengerMessage): Promise<boolean> {
     const settings = await this.loadSettings(msg.tenant_id);
-    if (!settings || settings.kill_switch_activated_at || !this.isInSendWindow(settings)) {
+    if (settings?.kill_switch_activated_at || !this.isInSendWindow(settings ?? {})) {
       // Leave pending; it will be retried when the window opens or kill switch is cleared.
-      return;
+      return false;
     }
 
     const profile = await this.loadProfileForSend(msg.tenant_id, msg.profile_id);
     if (!profile) throw new Error('Profile not found');
 
-    const link = await createMoyasarPaymentLink(
-      msg.tenant_id,
-      msg.invoice_id,
-      msg.id,
-      this.callbackUrl,
-      'mada',
-    );
-    if (link.error) throw new Error(link.error);
+    const link = await getOrCreateMoyasarLink(this.supabase, {
+      tenantId: msg.tenant_id,
+      invoiceId: msg.invoice_id,
+      callbackUrl: this.callbackUrl,
+      sourceType: 'mada',
+    });
+    if (!link.ok) throw new Error(link.error);
 
-    const [bodyAr, bodyEn] = this.fillTemplate(msg.template_key, profile, msg.amount_due ?? 0, msg.due_date ?? '', link.url ?? '');
+    const [bodyAr, bodyEn] = this.fillTemplate(msg.template_key, profile, msg.amount_due ?? 0, msg.due_date ?? '', link.paymentUrl);
     const language = profile.preferred_language ?? 'ar';
     const to = msg.channel === 'email' ? profile.email : profile.phone;
     if (!to) throw new Error(`No ${msg.channel} destination for profile ${profile.id}`);
@@ -248,18 +247,22 @@ export class CollectionMessenger {
       if (!result.id) throw new Error('Provider did not return a message id');
     }
 
-    await this.supabase
+    const { error: updateError } = await this.supabase
       .from('collection_messages')
       .update({
         delivery_status: 'sent',
         sent_at: new Date().toISOString(),
         sent_to: to,
-        moyasar_link: link.url,
+        moyasar_link: link.paymentUrl,
         personalized_body_ar: bodyAr,
         personalized_body_en: bodyEn,
       })
       .eq('id', msg.id)
       .eq('tenant_id', msg.tenant_id);
+    if (updateError) {
+      console.error('[collections/messenger] update failed:', updateError);
+      throw new Error(`Failed to mark message as sent: ${updateError.message}`);
+    }
 
     await writeLedger(this.supabase, {
       tenant_id: msg.tenant_id,
@@ -274,6 +277,7 @@ export class CollectionMessenger {
 
     // Mirror the outbound message into the staff↔parent thread for full case history.
     await this.threadService.mirrorYamenMessage(msg.tenant_id, msg.profile_id, bodyAr, bodyEn, providerId);
+    return true;
   }
 
   private async sendEmailMessage(to: string, bodyAr: string, bodyEn: string): Promise<void> {

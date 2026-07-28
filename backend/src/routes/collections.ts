@@ -20,7 +20,7 @@ const RunSegmentationSchema = z.object({
   tenant_id: z.string().uuid().optional(),
 });
 
-const callbackUrl = `${process.env.FRONTEND_URL ?? 'https://parentportal.edusaga360.com'}/payment/complete`;
+const parentPortalBaseUrl = process.env.FRONTEND_URL ?? 'https://parentportal.edusaga360.com';
 
 // ─── POST /api/collections/run-segmentation ───────────────────────────────────
 // Triggered by finance officers manually or by an internal scheduler.
@@ -53,7 +53,7 @@ collectionsRouter.post(
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const tenantId = req.user!.tenant_id!;
-      const messenger = new CollectionMessenger(supabase, callbackUrl);
+      const messenger = new CollectionMessenger(supabase, parentPortalBaseUrl);
       const result = await messenger.enqueueRemindersForTenant(tenantId);
       return res.json({ ok: true, result });
     } catch (err) {
@@ -73,7 +73,7 @@ collectionsRouter.post(
   requireRole([...FINANCE_ROLES, 'system']),
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const messenger = new CollectionMessenger(supabase, callbackUrl);
+      const messenger = new CollectionMessenger(supabase, parentPortalBaseUrl);
       const result = await messenger.sendPendingMessages(Number(req.query.limit ?? 100));
       return res.json({ ok: true, result });
     } catch (err) {
