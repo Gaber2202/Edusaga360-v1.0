@@ -26,6 +26,7 @@ const USER_ROLES = [
   { id: 'admissions', name_ar: 'قبول وتسجيل', name_en: 'Admissions Officer' },
   { id: 'teacher', name_ar: 'معلم', name_en: 'Teacher' },
   { id: 'parent', name_ar: 'ولي أمر', name_en: 'Parent' },
+  { id: 'unassigned', name_ar: 'بانتظار التعيين', name_en: 'Pending Assignment' },
 ];
 
 export default function UserManagement() {

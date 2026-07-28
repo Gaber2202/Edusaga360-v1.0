@@ -65,7 +65,19 @@ const PlatformOwnerRoute = ({ children }) => {
 };
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
+  const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
+  const pathname = window.location.pathname;
+  const isPublicPath =
+    pathname === '/RegistrationWizard' ||
+    pathname === '/register' ||
+    pathname === '/client/login' ||
+    pathname === '/school-login' ||
+    pathname === '/forgot-password' ||
+    pathname === '/reset-password' ||
+    pathname === '/setup' ||
+    pathname === '/OnboardingWizard' ||
+    pathname === '/payment/result' ||
+    pathname.startsWith('/onboarding/'); // /onboarding/:token is unauthenticated
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -75,19 +87,13 @@ const AuthenticatedApp = () => {
     );
   }
 
+  // Prevent the guest placeholder (avatar letter 'U', no tenant access) from
+  // appearing on protected routes. Public pages stay reachable without a session.
+  if (!isAuthenticated && !isPublicPath) {
+    return <Navigate to="/school-login" replace />;
+  }
+
   if (authError) {
-    const pathname = window.location.pathname;
-    const isPublicPath =
-      pathname === '/RegistrationWizard' ||
-      pathname === '/register' ||
-      pathname === '/client/login' ||
-      pathname === '/school-login' ||
-      pathname === '/forgot-password' ||
-      pathname === '/reset-password' ||
-      pathname === '/setup' ||
-      pathname === '/OnboardingWizard' ||
-      pathname === '/payment/result' ||
-      pathname.startsWith('/onboarding/'); // /onboarding/:token is unauthenticated
 
     if (authError.type === 'user_not_registered') {
       if (isPublicPath) {
