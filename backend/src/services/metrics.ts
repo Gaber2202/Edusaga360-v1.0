@@ -116,22 +116,20 @@ export class MetricsService {
       { kpi: 'chro.leave_absence_summary', name_ar: 'ملخص الإجازات والغياب', name_en: 'Leave & Absence Summary', owner_persona: ['chro'], display_format: 'text' },
     ];
 
-    for (const row of registry as any[]) {
-      const upsertRow = {
-        metric_key: row.kpi,
-        name_ar: row.name_ar,
-        name_en: row.name_en,
-        formula: row.formula,
-        source_tables: row.source_tables,
-        owner_persona: row.owner_persona,
-        threshold_green: row.threshold_green,
-        threshold_amber: row.threshold_amber,
-        threshold_red: row.threshold_red,
-        display_format: row.display_format,
-      };
-      const { error } = await this.supabase.from('kpi_registry').upsert(upsertRow as any, { onConflict: 'metric_key' });
-      if (error) console.error('kpi_registry upsert error:', error);
-    }
+    const registryRows = (registry as any[]).map((row) => ({
+      metric_key: row.kpi,
+      name_ar: row.name_ar,
+      name_en: row.name_en,
+      formula: row.formula,
+      source_tables: row.source_tables,
+      owner_persona: row.owner_persona,
+      threshold_green: row.threshold_green,
+      threshold_amber: row.threshold_amber,
+      threshold_red: row.threshold_red,
+      display_format: row.display_format,
+    }));
+    const { error } = await this.supabase.from('kpi_registry').upsert(registryRows as any, { onConflict: 'metric_key' });
+    if (error) console.error('kpi_registry upsert error:', error);
   }
 
   private async upsert(kpi: string, tenantId: string, period: string, input: MetricInput, branchId?: string): Promise<void> {
@@ -186,8 +184,13 @@ export class MetricsService {
     return q;
   }
 
-  async computeAndStoreAll(tenantId: string, period = 'current', branchId?: string): Promise<DashboardData> {
+  async computeAndStoreAll(tenantId: string, period = 'current', branchId?: string, persona?: 'ceo' | 'cfo' | 'coo' | 'chro'): Promise<DashboardData> {
     await this.ensureRegistry();
+
+    const needsCEO = !persona || persona === 'ceo';
+    const needsCFO = !persona || persona === 'cfo';
+    const needsCOO = !persona || persona === 'coo';
+    const needsCHRO = !persona || persona === 'chro';
 
     // Period range for trailing-financial computations.
     const periodEnd = todayStr();
@@ -200,12 +203,16 @@ export class MetricsService {
     ]);
 
     // === Financials (cash basis: paid invoices - approved expenses) ===
-    const [invRes, expRes] = await Promise.all([
-      this.branchFilter(this.supabase.from('invoices').select('total_amount, paid_amount, date, branch_id, subtotal, vat_amount, items, status, due_date').eq('tenant_id', tenantId).gte('date', periodStart).neq('status', 'cancelled'), branchId),
-      this.branchFilter(this.supabase.from('expenses').select('amount, date, branch_id').eq('tenant_id', tenantId).eq('status', 'approved').gte('date', periodStart), branchId),
-    ]);
-    const invoices = (invRes.data ?? []) as any[];
-    const expenses = (expRes.data ?? []) as any[];
+    let invoices: any[] = [];
+    let expenses: any[] = [];
+    if (needsCEO || needsCFO || needsCOO) {
+      const [invRes, expRes] = await Promise.all([
+        this.branchFilter(this.supabase.from('invoices').select('total_amount, paid_amount, date, branch_id, vat_amount, status, due_date').eq('tenant_id', tenantId).gte('date', periodStart).neq('status', 'cancelled'), branchId),
+        this.branchFilter(this.supabase.from('expenses').select('amount, date, branch_id').eq('tenant_id', tenantId).eq('status', 'approved').gte('date', periodStart), branchId),
+      ]);
+      invoices = (invRes.data ?? []) as any[];
+      expenses = (expRes.data ?? []) as any[];
+    }
 
     const revenue = round2(invoices.reduce((s, r) => s + Number(r.paid_amount ?? 0), 0));
     const expTotal = round2(expenses.reduce((s, r) => s + Number(r.amount ?? 0), 0));
@@ -252,10 +259,9 @@ export class MetricsService {
     const ebitdaDelta = pctDelta(revenue_trend[n - 1]?.ebitda ?? 0, revenue_trend[n - 2]?.ebitda ?? 0);
     const collectionDelta = pctDelta(collection_trend[n - 1]?.rate ?? 0, collection_trend[n - 2]?.rate ?? 0);
 
-    // === Collection aggregates (all-time for the branch filter) ===
-    const allInvoices = (invoices.length > 0 ? invoices : (await this.branchFilter(this.supabase.from('invoices').select('total_amount, paid_amount, due_date, status, branch_id').eq('tenant_id', tenantId).neq('status', 'cancelled'), branchId).then((r: any) => r.data ?? []))) as any[];
-    const totalInvoicedAll = round2(allInvoices.reduce((s: number, r: any) => s + Number(r.total_amount ?? 0), 0));
-    const totalCollectedAll = round2(allInvoices.reduce((s: number, r: any) => s + Number(r.paid_amount ?? 0), 0));
+    // === Collection aggregates (12-month trailing for the branch filter) ===
+    const totalInvoicedAll = round2(invoices.reduce((s: number, r: any) => s + Number(r.total_amount ?? 0), 0));
+    const totalCollectedAll = round2(invoices.reduce((s: number, r: any) => s + Number(r.paid_amount ?? 0), 0));
     let collectionRate = totalInvoicedAll > 0 ? round2((totalCollectedAll / totalInvoicedAll) * 100) : 0;
     let collectionRateNote: string | undefined;
     if (collectionRate > 100) {
@@ -264,22 +270,28 @@ export class MetricsService {
     }
 
     // === Cash collected 30d & DSO ===
-    const since30 = daysAgoStr(30);
-    const payments30 = await this.branchFilter(this.supabase.from('payments').select('amount, date, branch_id').eq('tenant_id', tenantId).gte('date', since30), branchId).then((r: any) => (r.data ?? []) as any[]);
-    const cashCollected30d = round2(payments30.reduce((s: number, r: any) => s + Number(r.amount ?? 0), 0));
+    let cashCollected30d = 0;
+    if (needsCEO || needsCFO) {
+      const since30 = daysAgoStr(30);
+      const payments30 = await this.branchFilter(this.supabase.from('payments').select('amount, date, branch_id').eq('tenant_id', tenantId).gte('date', since30), branchId).then((r: any) => (r.data ?? []) as any[]);
+      cashCollected30d = round2(payments30.reduce((s: number, r: any) => s + Number(r.amount ?? 0), 0));
+    }
 
-    const unpaidInvoices = allInvoices.filter((r: any) => Number(r.total_amount ?? 0) - Number(r.paid_amount ?? 0) > 0);
+    const unpaidInvoices = invoices.filter((r: any) => Number(r.total_amount ?? 0) - Number(r.paid_amount ?? 0) > 0);
     const ar = round2(unpaidInvoices.reduce((s: number, r: any) => s + (Number(r.total_amount ?? 0) - Number(r.paid_amount ?? 0)), 0));
     const dso = revenue > 0 ? round2(ar / (revenue / 365)) : null;
 
-    // === AR aging ===
-    const aging = await getAgingReport(this.supabase, tenantId, {});
-    const arAging = {
-      '0_30': aging.buckets.current ?? 0,
-      '31_60': aging.buckets['1_30'] ?? 0,
-      '61_90': aging.buckets['31_60'] ?? 0,
-      '90_plus': aging.buckets['90_plus'] ?? 0,
-    };
+    // === AR aging (CFO only) ===
+    let arAging = { '0_30': 0, '31_60': 0, '61_90': 0, '90_plus': 0 };
+    if (needsCFO) {
+      const aging = await getAgingReport(this.supabase, tenantId, { academic_year: academicYear?.id, includeStudents: false });
+      arAging = {
+        '0_30': aging.buckets.current ?? 0,
+        '31_60': aging.buckets['1_30'] ?? 0,
+        '61_90': aging.buckets['31_60'] ?? 0,
+        '90_plus': aging.buckets['90_plus'] ?? 0,
+      };
+    }
 
     // === Overdue by campus ===
     const today = Date.now();
@@ -290,13 +302,15 @@ export class MetricsService {
     }
     const overdue_by_campus = branches.map((b: any) => ({ branch_id: b.id, name_en: b.name_en, name_ar: b.name_ar, overdue_amount: round2(overdueByBranch.get(b.id) ?? 0) }));
 
-    // === Revenue by fee type ===
-    const revenueByFeeType = await getRevenueByFeeType(this.supabase, tenantId, periodStart, periodEnd);
-
-    // === Collections forecast ===
-    const forecastFrom = todayStr();
-    const forecastTo = daysAgoStr(-90); // 90 days ahead
-    const expectedCollections = await getExpectedCollections(this.supabase, tenantId, forecastFrom, forecastTo);
+    // === Revenue by fee type & collections forecast (CFO only) ===
+    let revenueByFeeType: any = { data_quality: 'not_tracked', message: 'Revenue by fee type not requested.' };
+    let expectedCollections: any = { data_quality: 'not_tracked', message: 'Collections forecast not requested.' };
+    if (needsCFO) {
+      revenueByFeeType = await getRevenueByFeeType(this.supabase, tenantId, periodStart, periodEnd);
+      const forecastFrom = todayStr();
+      const forecastTo = daysAgoStr(-90); // 90 days ahead
+      expectedCollections = await getExpectedCollections(this.supabase, tenantId, forecastFrom, forecastTo);
+    }
 
     // === VAT position ===
     const vatAccrued = round2(invoices.reduce((s, r) => s + Number(r.vat_amount ?? 0), 0));
@@ -307,9 +321,9 @@ export class MetricsService {
       return d.toISOString().split('T')[0];
     })();
 
-    // === Growth (enrollment vs previous academic year) ===
+    // === Growth (enrollment vs previous academic year, CEO/COO only) ===
     let growthData: any = { current_count: null, previous_count: null, growth_rate: null, score: 50, data_quality: 'not_tracked' };
-    if (academicYear) {
+    if ((needsCEO || needsCOO) && academicYear) {
       const currentRes = await this.branchFilter(this.supabase.from('students').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('academic_year', academicYear.id), branchId);
       const currentCount = (currentRes as any).count ?? 0;
       // previous academic year: largest start_date < current.start_date
@@ -329,18 +343,25 @@ export class MetricsService {
     }
 
     // === Capacity & COO ===
-    const [sectionsRes, studentsRes, employeesRes, applicantsRes, applicationsRes] = await Promise.all([
-      this.branchFilter(this.supabase.from('sections').select('branch_id, capacity, id, name_en, name_ar, grade_id').eq('tenant_id', tenantId), branchId),
-      this.branchFilter(this.supabase.from('students').select('id, branch_id, status').eq('tenant_id', tenantId).eq('status', 'active'), branchId),
-      this.branchFilter(this.supabase.from('employees').select('id, job_title_id, job_titles(name_en, name_ar), status, branch_id').eq('tenant_id', tenantId).eq('status', 'active'), branchId),
-      this.branchFilter(this.supabase.from('applicants').select('id, status, branch_id').eq('tenant_id', tenantId), branchId),
-      this.branchFilter(this.supabase.from('applications').select('id, stage, decision, branch_id').eq('tenant_id', tenantId), branchId),
-    ]);
-    const sections = (sectionsRes.data ?? []) as any[];
-    const students = (studentsRes.data ?? []) as any[];
-    const employees = (employeesRes.data ?? []) as any[];
-    const applicants = (applicantsRes.data ?? []) as any[];
-    const applications = (applicationsRes.data ?? []) as any[];
+    let sections: any[] = [];
+    let students: any[] = [];
+    let employees: any[] = [];
+    let applicants: any[] = [];
+    let applications: any[] = [];
+    if (needsCEO || needsCOO) {
+      const [sectionsRes, studentsRes, employeesRes, applicantsRes, applicationsRes] = await Promise.all([
+        this.branchFilter(this.supabase.from('sections').select('branch_id, capacity, id, name_en, name_ar, grade_id').eq('tenant_id', tenantId), branchId),
+        this.branchFilter(this.supabase.from('students').select('id, branch_id, status').eq('tenant_id', tenantId).eq('status', 'active'), branchId),
+        this.branchFilter(this.supabase.from('employees').select('id, job_title_id, job_titles(name_en, name_ar), status, branch_id').eq('tenant_id', tenantId).eq('status', 'active'), branchId),
+        this.branchFilter(this.supabase.from('applicants').select('id, status, branch_id').eq('tenant_id', tenantId), branchId),
+        this.supabase.from('applications').select('id, stage, decision').eq('tenant_id', tenantId),
+      ]);
+      sections = (sectionsRes.data ?? []) as any[];
+      students = (studentsRes.data ?? []) as any[];
+      employees = (employeesRes.data ?? []) as any[];
+      applicants = (applicantsRes.data ?? []) as any[];
+      applications = (applicationsRes.data ?? []) as any[];
+    }
 
     const capacityByBranch = new Map<string, number>();
     for (const s of sections) {
@@ -356,7 +377,7 @@ export class MetricsService {
     const capacityToCash = branches.map((b: any) => {
       const capacity = capacityByBranch.get(b.id) ?? 0;
       const enrolled = studentsByBranch.get(b.id) ?? 0;
-      const branchInvoices = allInvoices.filter((r) => r.branch_id === b.id);
+      const branchInvoices = invoices.filter((r) => r.branch_id === b.id);
       const cash = round2(branchInvoices.reduce((s, r) => s + Number(r.paid_amount ?? 0), 0));
       return {
         branch_id: b.id,
@@ -398,13 +419,22 @@ export class MetricsService {
     const studentAttendanceRate = null;
 
     // === HR / CHRO ===
-    const [employeesFullRes, departmentsRes, iqamaRes, attendanceRes] = await Promise.all([
-      this.branchFilter(this.supabase.from('employees').select('id, status, nationality, gender, department_id, is_saudi, hire_date, end_date, contract_type').eq('tenant_id', tenantId), branchId),
-      this.supabase.from('departments').select('id, name_en, name_ar').eq('tenant_id', tenantId),
-      this.branchFilter(this.supabase.from('employees').select('id, iqama_expiry').eq('tenant_id', tenantId).eq('status', 'active').not('iqama_expiry', 'is', null), branchId),
-      this.branchFilter(this.supabase.from('employee_attendance').select('employee_id, status, late_minutes, is_excused, date').eq('tenant_id', tenantId).gte('date', daysAgoStr(30)), branchId),
-    ]);
-    const employeesFull = (employeesFullRes.data ?? []) as any[];
+    let employeesFull: any[] = [];
+    let departments: any[] = [];
+    let iqamaList: any[] = [];
+    let attendanceRecords: any[] = [];
+    if (needsCHRO || needsCEO || needsCFO || needsCOO) {
+      const [employeesFullRes, departmentsRes, iqamaRes, attendanceRes] = await Promise.all([
+        this.branchFilter(this.supabase.from('employees').select('id, status, nationality, gender, department_id, is_saudi, hire_date, end_date, contract_type').eq('tenant_id', tenantId), branchId),
+        this.supabase.from('departments').select('id, name_en, name_ar').eq('tenant_id', tenantId),
+        this.branchFilter(this.supabase.from('employees').select('id, iqama_expiry').eq('tenant_id', tenantId).eq('status', 'active').not('iqama_expiry', 'is', null), branchId),
+        this.supabase.from('employee_attendance').select('employee_id, status, late_minutes, is_excused, date').eq('tenant_id', tenantId).gte('date', daysAgoStr(30)),
+      ]);
+      employeesFull = (employeesFullRes.data ?? []) as any[];
+      departments = (departmentsRes.data ?? []) as any[];
+      iqamaList = (iqamaRes.data ?? []) as any[];
+      attendanceRecords = (attendanceRes.data ?? []) as any[];
+    }
     const activeEmployees = employeesFull.filter((e: any) => e.status === 'active');
     const saudiCount = activeEmployees.filter(isSaudi).length;
     const headcount = activeEmployees.length;
@@ -428,7 +458,6 @@ export class MetricsService {
     const retentionRate = round2(100 - attritionRate);
     const retentionQuality = activeNow === 0 ? 'not_tracked' : 'real';
 
-    const departments = (departmentsRes.data ?? []) as any[];
     const deptName = new Map(departments.map((d: any) => [d.id, { en: d.name_en, ar: d.name_ar }]));
     const byDepartment = new Map<string, number>();
     for (const e of activeEmployees) {
@@ -466,7 +495,6 @@ export class MetricsService {
     };
 
     // Leave/absence summary from employee_attendance last 30 days
-    const attendanceRecords = (attendanceRes.data ?? []) as any[];
     const absentCount = attendanceRecords.filter((r: any) => r.status === 'absent' && !r.is_excused).length;
     const lateCount = attendanceRecords.filter((r: any) => r.status === 'late').length;
     const excusedCount = attendanceRecords.filter((r: any) => r.is_excused).length;
@@ -491,7 +519,7 @@ export class MetricsService {
       payRun = null;
     }
     const overdueCount = (overdueCountRes as any).count ?? 0;
-    const iqamaExpiringCount = (iqamaRes.data ?? []).filter((e: any) => new Date(e.iqama_expiry).getTime() <= new Date(cutoff30).getTime()).length;
+    const iqamaExpiringCount = (iqamaList ?? []).filter((e: any) => new Date(e.iqama_expiry).getTime() <= new Date(cutoff30).getTime()).length;
     const zatca = zatcaRes.data?.[0] ?? null;
     const zatcaColor = !zatca ? 'unknown' : ['cleared', 'reported'].includes(zatca.zatca_status) ? 'green' : ['pending', 'generated'].includes(zatca.zatca_status) ? 'yellow' : 'red';
     const payrollColor = !payRun ? 'unknown' : payRun.status === 'paid' ? 'green' : ['processed', 'approved'].includes(payRun.status) ? 'yellow' : 'red';
@@ -613,60 +641,82 @@ export class MetricsService {
       open_roles: { count: null, avg_time_to_fill_days: null, count_data_quality: 'not_tracked', time_to_fill_data_quality: 'not_tracked', message: 'Open-role requisitions not configured.' },
     };
 
-    // Store all snapshots
-    const metricValues: Record<string, MetricInput> = {
-      'ceo.vitality.score': { value: vitalityScore, metadata: { sub_scores: subScores } },
-      'ceo.financials.revenue': { value: revenue },
-      'ceo.financials.ebitda': { value: ebitda },
-      'ceo.financials.revenue_delta_pct': { value: revenueDelta },
-      'ceo.financials.ebitda_delta_pct': { value: ebitdaDelta },
-      'ceo.collections.collection_rate_pct': { value: collectionRate, numerator: totalCollectedAll, denominator: totalInvoicedAll },
-      'ceo.collections.collection_delta_pct': { value: collectionDelta },
-      'ceo.growth.growth_rate_pct': { value: growthData.growth_rate },
-      'ceo.compliance.score': { value: complianceScore },
-      'ceo.campus_vitality': { metadata: capacityToCash.map((c) => ({ ...c, score: clamp(Math.round(c.utilization_pct ?? 0)) })) },
-      'ceo.revenue_trend': { metadata: revenue_trend },
-      'ceo.collection_trend': { metadata: collection_trend },
-      'ceo.strategic_alerts': { metadata: strategicAlerts },
-      'ceo.top_risks': { metadata: riskCandidates },
-      'ceo.cash_runway': { value: cashRunway },
-      'cfo.kpis.revenue': { value: revenue },
-      'cfo.kpis.ebitda': { value: ebitda },
-      'cfo.kpis.margin_pct': { value: margin * 100 },
-      'cfo.kpis.cash_collected_30d': { value: cashCollected30d },
-      'cfo.kpis.dso_days': { value: dso },
-      'cfo.ar_aging': { metadata: arAging },
-      'cfo.overdue_by_campus': { metadata: overdue_by_campus },
-      'cfo.revenue_vs_ebitda': { metadata: revenue_trend.slice(-6) },
-      'cfo.compliance_traffic_lights': { metadata: { zatca_vat: complianceSignals.zatca_vat, wps_mudad: complianceSignals.wps_mudad, gosi: complianceSignals.gosi } },
-      'cfo.revenue_by_fee_type': { metadata: revenueByFeeType },
-      'cfo.collections_forecast': { metadata: expectedCollections },
-      'cfo.vat_position': { metadata: { output_vat_accrued: vatAccrued, next_filing_date: nextFilingDate, period_start: periodStart, period_end: periodEnd } },
-      'coo.kpis.capacity_utilization_pct': { value: capacityUtilization, numerator: totalEnrolled, denominator: totalCapacity },
-      'coo.kpis.student_teacher_ratio': { value: studentTeacherRatio },
-      'coo.capacity_to_cash': { metadata: capacityToCash },
-      'coo.admissions_funnel': { metadata: funnel },
-      'coo.utilization_by_campus': { metadata: capacityToCash.map((c) => ({ branch_id: c.branch_id, name_en: c.name_en, name_ar: c.name_ar, utilization_pct: c.utilization_pct })) },
-      'chro.kpis.headcount': { value: headcount },
-      'chro.kpis.saudization_pct': { value: saudizationPct, numerator: saudiCount, denominator: headcount },
-      'chro.kpis.retention_rate_pct': { value: retentionQuality === 'real' ? retentionRate : null, numerator: separations, denominator: avgHeadcount },
-      'chro.nitaqat': { metadata: { band: nitaqatBand, saudization_pct: saudizationPct, thresholds, data_quality: headcount > 0 ? 'real' : 'not_tracked' } },
-      'chro.workforce_composition': { metadata: { by_department: workforceByDepartment, by_gender: byGender, saudi_count: saudiCount, non_saudi_count: headcount - saudiCount } },
-      'chro.saudi_vs_non_saudi': { metadata: saudiVsNonSaudi },
-      'chro.payroll_gov_compliance': { metadata: complianceSignals },
-      'chro.contract_expiry_radar': { metadata: contractExpiry },
-      'chro.leave_absence_summary': { metadata: leaveAbsenceSummary },
-      'chro.open_roles': { metadata: { count: null, avg_time_to_fill_days: null, count_data_quality: 'not_tracked', time_to_fill_data_quality: 'not_tracked', message: 'Open-role requisitions not configured.' } },
-    };
+    // Build metric snapshots (only for the requested persona when applicable)
+    const metricValues: Record<string, MetricInput> = {};
+    if (needsCEO) {
+      metricValues['ceo.vitality.score'] = { value: vitalityScore, metadata: { sub_scores: subScores } };
+      metricValues['ceo.financials.revenue'] = { value: revenue };
+      metricValues['ceo.financials.ebitda'] = { value: ebitda };
+      metricValues['ceo.financials.revenue_delta_pct'] = { value: revenueDelta };
+      metricValues['ceo.financials.ebitda_delta_pct'] = { value: ebitdaDelta };
+      metricValues['ceo.collections.collection_rate_pct'] = { value: collectionRate, numerator: totalCollectedAll, denominator: totalInvoicedAll };
+      metricValues['ceo.collections.collection_delta_pct'] = { value: collectionDelta };
+      metricValues['ceo.growth.growth_rate_pct'] = { value: growthData.growth_rate };
+      metricValues['ceo.compliance.score'] = { value: complianceScore };
+      metricValues['ceo.campus_vitality'] = { metadata: capacityToCash.map((c) => ({ ...c, score: clamp(Math.round(c.utilization_pct ?? 0)) })) };
+      metricValues['ceo.revenue_trend'] = { metadata: revenue_trend };
+      metricValues['ceo.collection_trend'] = { metadata: collection_trend };
+      metricValues['ceo.strategic_alerts'] = { metadata: strategicAlerts };
+      metricValues['ceo.top_risks'] = { metadata: riskCandidates };
+      metricValues['ceo.cash_runway'] = { value: cashRunway };
+    }
+    if (needsCFO) {
+      metricValues['cfo.kpis.revenue'] = { value: revenue };
+      metricValues['cfo.kpis.ebitda'] = { value: ebitda };
+      metricValues['cfo.kpis.margin_pct'] = { value: margin * 100 };
+      metricValues['cfo.kpis.cash_collected_30d'] = { value: cashCollected30d };
+      metricValues['cfo.kpis.dso_days'] = { value: dso };
+      metricValues['cfo.ar_aging'] = { metadata: arAging };
+      metricValues['cfo.overdue_by_campus'] = { metadata: overdue_by_campus };
+      metricValues['cfo.revenue_vs_ebitda'] = { metadata: revenue_trend.slice(-6) };
+      metricValues['cfo.compliance_traffic_lights'] = { metadata: { zatca_vat: complianceSignals.zatca_vat, wps_mudad: complianceSignals.wps_mudad, gosi: complianceSignals.gosi } };
+      metricValues['cfo.revenue_by_fee_type'] = { metadata: revenueByFeeType };
+      metricValues['cfo.collections_forecast'] = { metadata: expectedCollections };
+      metricValues['cfo.vat_position'] = { metadata: { output_vat_accrued: vatAccrued, next_filing_date: nextFilingDate, period_start: periodStart, period_end: periodEnd } };
+    }
+    if (needsCOO) {
+      metricValues['coo.kpis.capacity_utilization_pct'] = { value: capacityUtilization, numerator: totalEnrolled, denominator: totalCapacity };
+      metricValues['coo.kpis.student_teacher_ratio'] = { value: studentTeacherRatio };
+      metricValues['coo.capacity_to_cash'] = { metadata: capacityToCash };
+      metricValues['coo.admissions_funnel'] = { metadata: funnel };
+      metricValues['coo.utilization_by_campus'] = { metadata: capacityToCash.map((c) => ({ branch_id: c.branch_id, name_en: c.name_en, name_ar: c.name_ar, utilization_pct: c.utilization_pct })) };
+    }
+    if (needsCHRO) {
+      metricValues['chro.kpis.headcount'] = { value: headcount };
+      metricValues['chro.kpis.saudization_pct'] = { value: saudizationPct, numerator: saudiCount, denominator: headcount };
+      metricValues['chro.kpis.retention_rate_pct'] = { value: retentionQuality === 'real' ? retentionRate : null, numerator: separations, denominator: avgHeadcount };
+      metricValues['chro.nitaqat'] = { metadata: { band: nitaqatBand, saudization_pct: saudizationPct, thresholds, data_quality: headcount > 0 ? 'real' : 'not_tracked' } };
+      metricValues['chro.workforce_composition'] = { metadata: { by_department: workforceByDepartment, by_gender: byGender, saudi_count: saudiCount, non_saudi_count: headcount - saudiCount } };
+      metricValues['chro.saudi_vs_non_saudi'] = { metadata: saudiVsNonSaudi };
+      metricValues['chro.payroll_gov_compliance'] = { metadata: complianceSignals };
+      metricValues['chro.contract_expiry_radar'] = { metadata: contractExpiry };
+      metricValues['chro.leave_absence_summary'] = { metadata: leaveAbsenceSummary };
+      metricValues['chro.open_roles'] = { metadata: { count: null, avg_time_to_fill_days: null, count_data_quality: 'not_tracked', time_to_fill_data_quality: 'not_tracked', message: 'Open-role requisitions not configured.' } };
+    }
 
-    for (const [key, input] of Object.entries(metricValues)) {
-      await this.upsert(key, tenantId, period, input, branchId);
+    const snapshotRows = Object.entries(metricValues).map(([k, v]) => ({
+      tenant_id: tenantId,
+      branch_id: branchId ?? null,
+      metric_key: k,
+      period,
+      value: v.value ?? null,
+      numerator: v.numerator ?? null,
+      denominator: v.denominator ?? null,
+      metadata: v.metadata ?? {},
+      computed_at: new Date().toISOString(),
+    }));
+    if (snapshotRows.length) {
+      await this.supabase.from('kpi_snapshots').upsert(snapshotRows as any, { onConflict: 'tenant_id, branch_id, metric_key, period' });
     }
     // Also store assembled persona payloads for fast dashboard reads.
-    await this.upsert('ceo.dashboard', tenantId, period, { metadata: ceoData }, branchId);
-    await this.upsert('cfo.dashboard', tenantId, period, { metadata: cfoData }, branchId);
-    await this.upsert('coo.dashboard', tenantId, period, { metadata: cooData }, branchId);
-    await this.upsert('chro.dashboard', tenantId, period, { metadata: chroData }, branchId);
+    const dashboardRows: any[] = [];
+    if (needsCEO) dashboardRows.push({ tenant_id: tenantId, branch_id: branchId ?? null, metric_key: 'ceo.dashboard', period, metadata: ceoData, computed_at: new Date().toISOString() });
+    if (needsCFO) dashboardRows.push({ tenant_id: tenantId, branch_id: branchId ?? null, metric_key: 'cfo.dashboard', period, metadata: cfoData, computed_at: new Date().toISOString() });
+    if (needsCOO) dashboardRows.push({ tenant_id: tenantId, branch_id: branchId ?? null, metric_key: 'coo.dashboard', period, metadata: cooData, computed_at: new Date().toISOString() });
+    if (needsCHRO) dashboardRows.push({ tenant_id: tenantId, branch_id: branchId ?? null, metric_key: 'chro.dashboard', period, metadata: chroData, computed_at: new Date().toISOString() });
+    if (dashboardRows.length) {
+      await this.supabase.from('kpi_snapshots').upsert(dashboardRows as any, { onConflict: 'tenant_id, branch_id, metric_key, period' });
+    }
 
     return {
       ceo: ceoData,
@@ -683,7 +733,7 @@ export class MetricsService {
       const cached = await this.loadDashboardSnapshot(persona, tenantId, period, branchId);
       if (cached) return cached;
     }
-    const all = await this.computeAndStoreAll(tenantId, period, branchId);
+    const all = await this.computeAndStoreAll(tenantId, period, branchId, persona);
     return { ...all[persona], computed_at: all.computed_at, period: all.period };
   }
 
