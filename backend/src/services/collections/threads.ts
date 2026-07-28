@@ -8,7 +8,6 @@ export interface ThreadMessageInput {
   user_id?: string;
   guardian_id?: string;
   reply_to_message_id?: string;
-  external_id?: string;
 }
 
 export interface CreateThreadInput {
@@ -84,7 +83,6 @@ export class CollectionThreadService {
       body_ar: input.body_ar,
       body_en: input.body_en,
       reply_to_message_id: input.reply_to_message_id,
-      external_id: input.external_id,
     });
     if (error) throw error;
 
@@ -96,7 +94,7 @@ export class CollectionThreadService {
     profileId: string,
     bodyAr: string,
     bodyEn: string,
-    externalMessageId?: string,
+    _externalMessageId?: string,
     userId?: string,
   ): Promise<void> {
     const threadId = await this.getOrCreateProfileThread(tenantId, profileId);
@@ -106,7 +104,6 @@ export class CollectionThreadService {
       user_id: userId,
       body_ar: bodyAr,
       body_en: bodyEn,
-      external_id: externalMessageId,
     });
   }
 

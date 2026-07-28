@@ -118,7 +118,6 @@ async function handleInbound(
     sender_type: 'guardian',
     body_en: text,
     body_ar: text,
-    external_id: externalMessageId,
   });
 
   return res.json({ received: true, reply_class: replyClass });
