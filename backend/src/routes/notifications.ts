@@ -16,7 +16,7 @@ const WHATSAPP_SENDER = process.env.INFOBIP_WHATSAPP_SENDER ?? '447860088970'; /
 const SendWhatsAppSchema = z.object({
   to:           z.string().min(7).max(25).regex(/^[\+\d\s\-\(\)]+$/, 'Must be a phone number'),
   template_key: z.string().min(1).max(100),
-  variables:    z.record(z.string()).default({}),
+  variables:    z.record(z.string().nullable()).default({}),
   language:     z.enum(['ar', 'en']).default('ar'),
   employee_id:  z.string().uuid().optional(),
   student_id:   z.string().uuid().optional(),
@@ -26,7 +26,7 @@ const SendWhatsAppSchema = z.object({
 const BulkWhatsAppSchema = z.object({
   recipients: z.array(z.object({
     to:          z.string().min(7).max(25).regex(/^[\+\d\s\-\(\)]+$/, 'Must be a phone number'),
-    variables:   z.record(z.string()).default({}),
+    variables:   z.record(z.string().nullable()).default({}),
     language:    z.enum(['ar', 'en']).default('ar'),
     reference_id: z.string().optional(),
   })).min(1).max(100),
@@ -91,8 +91,11 @@ const TEMPLATES: Record<string, Template> = {
 
 // ─── Interpolate template variables ──────────────────────────────────────────
 
-function interpolate(template: string, vars: Record<string, string>): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `{{${key}}}`);
+function interpolate(template: string, vars: Record<string, string | null | undefined>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => {
+    const value = vars[key];
+    return value != null ? String(value) : '';
+  });
 }
 
 // ─── Send a single WhatsApp message via Infobip ───────────────────────────────
