@@ -4,6 +4,7 @@
  * SMS:      POST {base}/sms/2/text/advanced
  * WhatsApp: POST {base}/whatsapp/1/message/text
  */
+import { normalizePhone } from '../../../lib/phone.js';
 import { MessagingProvider, assertChannel, getPath, missingFields, postAndParse, str } from '../types.js';
 
 export const infobip: MessagingProvider = {
@@ -33,12 +34,13 @@ export const infobip: MessagingProvider = {
 
     let url: string;
     let body: unknown;
+    const to = normalizePhone(msg.to);
     if (msg.channel === 'whatsapp') {
       url = `${base}/whatsapp/1/message/text`;
-      body = { from: String(ctx.config.whatsapp_sender ?? ctx.config.sender ?? ''), to: msg.to, content: { text: msg.text } };
+      body = { from: String(ctx.config.whatsapp_sender ?? ctx.config.sender ?? ''), to, content: { text: msg.text } };
     } else {
       url = `${base}/sms/2/text/advanced`;
-      body = { messages: [{ from: String(ctx.config.sender ?? 'EduSaga'), destinations: [{ to: msg.to }], text: msg.text }] };
+      body = { messages: [{ from: String(ctx.config.sender ?? 'EduSaga'), destinations: [{ to }], text: msg.text }] };
     }
 
     const json = await postAndParse(ctx, 'Infobip', url, headers, JSON.stringify(body));

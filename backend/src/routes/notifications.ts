@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import { AuthenticatedRequest, requireRole, STAFF_ROLES } from '../middleware/auth.js';
 import { assertPublicUrl } from '../lib/ssrfGuard.js';
+import { normalizePhone } from '../lib/phone.js';
 
 export const notificationsRouter = Router();
 
@@ -13,7 +14,7 @@ const WHATSAPP_SENDER = process.env.INFOBIP_WHATSAPP_SENDER ?? '447860088970'; /
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
 const SendWhatsAppSchema = z.object({
-  to:           z.string().min(7).max(20).regex(/^\+?[0-9]+$/, 'Must be a phone number'),
+  to:           z.string().min(7).max(25).regex(/^[\+\d\s\-\(\)]+$/, 'Must be a phone number'),
   template_key: z.string().min(1).max(100),
   variables:    z.record(z.string()).default({}),
   language:     z.enum(['ar', 'en']).default('ar'),
@@ -24,7 +25,7 @@ const SendWhatsAppSchema = z.object({
 
 const BulkWhatsAppSchema = z.object({
   recipients: z.array(z.object({
-    to:          z.string().min(7).max(20),
+    to:          z.string().min(7).max(25).regex(/^[\+\d\s\-\(\)]+$/, 'Must be a phone number'),
     variables:   z.record(z.string()).default({}),
     language:    z.enum(['ar', 'en']).default('ar'),
     reference_id: z.string().optional(),
@@ -47,8 +48,8 @@ interface Template { ar: string; en: string }
 
 const TEMPLATES: Record<string, Template> = {
   fee_due: {
-    ar: 'عزيزي ولي الأمر،\n\nيوجد فاتورة مستحقة بمبلغ *{{amount}} ريال* للطالب {{student_name}}.\nتاريخ الاستحقاق: {{due_date}}\n\nيرجى السداد في أقرب وقت. شكراً لتعاونكم.',
-    en: 'Dear Parent,\n\nAn invoice of *SAR {{amount}}* is due for student {{student_name}}.\nDue date: {{due_date}}\n\nPlease settle at your earliest convenience. Thank you.',
+    ar: 'عزيزي ولي الأمر،\n\nيوجد فاتورة مستحقة بمبلغ *{{amount}} ريال* للطالب {{student_name}}.\nتاريخ الاستحقاق: {{due_date}}\n\nرابط الدفع:\n{{payment_link}}\n\nيرجى السداد في أقرب وقت. شكراً لتعاونكم.',
+    en: 'Dear Parent,\n\nAn invoice of *SAR {{amount}}* is due for student {{student_name}}.\nDue date: {{due_date}}\n\nPayment link:\n{{payment_link}}\n\nPlease settle at your earliest convenience. Thank you.',
   },
   fee_overdue: {
     ar: 'تنبيه: الفاتورة متأخرة!\n\nعزيزي ولي أمر {{student_name}}،\nالمبلغ المستحق *{{amount}} ريال* تجاوز تاريخ الاستحقاق {{due_date}}.\n\nيرجى التواصل مع إدارة المدرسة فوراً.',
@@ -104,8 +105,8 @@ async function sendViaInfobip(to: string, text: string): Promise<{ success: bool
     return { success: false, error: 'INFOBIP_BASE_URL not configured' };
   }
 
-  // Normalise number — strip leading 0, ensure country code
-  const normalised = to.replace(/^0/, '').replace(/\D/g, '');
+  // Normalise number — strip formatting, collapse leading 00, prepend default country code for local numbers
+  const normalised = normalizePhone(to);
   const url = `${INFOBIP_BASE_URL}/whatsapp/1/message/text`;
 
   try {
@@ -168,6 +169,7 @@ notificationsRouter.post('/whatsapp', requireRole(STAFF_ROLES), async (req: Auth
 
   const tenant_id = req.user!.tenant_id!;
   const { to, template_key, variables, language, reference_id } = parsed.data;
+  const normalisedTo = normalizePhone(to);
 
   const template = TEMPLATES[template_key];
   if (!template) {
@@ -175,11 +177,11 @@ notificationsRouter.post('/whatsapp', requireRole(STAFF_ROLES), async (req: Auth
   }
 
   const text   = interpolate(template[language], variables);
-  const result = await sendViaInfobip(to, text);
+  const result = await sendViaInfobip(normalisedTo, text);
 
   await logCommunication(
     tenant_id, 'whatsapp', template_key, text,
-    [{ phone: to, language }],
+    [{ phone: normalisedTo, language }],
     result.success ? 'sent' : 'failed',
     reference_id,
   );
