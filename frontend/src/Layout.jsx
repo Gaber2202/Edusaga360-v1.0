@@ -698,7 +698,7 @@ function LayoutContent({ children, currentPageName }) {
                 <Button variant="ghost" className="gap-1 sm:gap-2 px-1 sm:px-2 h-9">
                   <Avatar className="w-7 h-7 sm:w-8 sm:h-8">
                     <AvatarFallback className="bg-najdi-900 text-white text-xs">
-                        {(user?.display_name || user?.full_name || user?.email || 'U')[0]?.toUpperCase()}
+                        {(user?.display_name || user?.full_name || user?.email || '?')[0]?.toUpperCase()}
                       </AvatarFallback>
                   </Avatar>
                   <div className="hidden md:flex flex-col text-left min-w-0">

@@ -117,6 +117,7 @@ const translations = {
     auditor: 'المدقق',
     teacher: 'المعلم',
     parent: 'ولي الأمر',
+    unassigned: 'بانتظار التعيين',
     
     // Student related
     studentName: 'اسم الطالب',
@@ -733,6 +734,7 @@ const translations = {
     auditor: 'Auditor',
     teacher: 'Teacher',
     parent: 'Parent',
+    unassigned: 'Pending Assignment',
     
     // Student related
     studentName: 'Student Name',
