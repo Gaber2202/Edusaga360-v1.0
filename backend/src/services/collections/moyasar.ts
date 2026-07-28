@@ -13,7 +13,7 @@ export async function createMoyasarPaymentLink(
   callbackUrl: string,
   paymentMethod: 'creditcard' | 'mada' | 'applepay' | 'stcpay' = 'mada',
 ): Promise<MoyasarPaymentLink> {
-  const moyasarKey = process.env.MOYASAR_API_KEY;
+  const moyasarKey = process.env.MOYASAR_SECRET_KEY_TEST || process.env.MOYASAR_API_KEY;
   if (!moyasarKey) {
     return { error: 'Payment gateway not configured' };
   }
