@@ -27,8 +27,8 @@ export class CollectionThreadService {
       .insert({
         tenant_id: tenantId,
         subject: input.subject ?? 'Collection follow-up',
-        thread_type: input.guardian_id ? 'staff_parent' : 'staff_staff',
-        profile_id: input.profile_id,
+        type: input.guardian_id ? 'staff_parent' : 'staff_staff',
+        linked_profile_id: input.profile_id,
       })
       .select('id')
       .single();
@@ -60,7 +60,7 @@ export class CollectionThreadService {
       .from('message_threads')
       .select('id')
       .eq('tenant_id', tenantId)
-      .eq('profile_id', profileId)
+      .eq('linked_profile_id', profileId)
       .maybeSingle();
     if (existing) return (existing as { id: string }).id;
 
