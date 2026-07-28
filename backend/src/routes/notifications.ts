@@ -2,12 +2,12 @@ import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import { AuthenticatedRequest, requireRole, STAFF_ROLES } from '../middleware/auth.js';
+import { assertPublicUrl } from '../lib/ssrfGuard.js';
 
 export const notificationsRouter = Router();
 
-
 const INFOBIP_API_KEY = process.env.INFOBIP_API_KEY;
-const INFOBIP_BASE_URL = 'https://5wy37y.api.infobip.com';  // per Infobip account base URL
+const INFOBIP_BASE_URL = (process.env.INFOBIP_BASE_URL ?? '').replace(/\/+$/, '');
 const WHATSAPP_SENDER = process.env.INFOBIP_WHATSAPP_SENDER ?? '447860099299'; // Infobip sandbox sender
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
@@ -100,12 +100,17 @@ async function sendViaInfobip(to: string, text: string): Promise<{ success: bool
   if (!INFOBIP_API_KEY) {
     return { success: false, error: 'INFOBIP_API_KEY not configured' };
   }
+  if (!INFOBIP_BASE_URL) {
+    return { success: false, error: 'INFOBIP_BASE_URL not configured' };
+  }
 
   // Normalise number — strip leading 0, ensure country code
   const normalised = to.replace(/^0/, '').replace(/\D/g, '');
+  const url = `${INFOBIP_BASE_URL}/whatsapp/1/message/text`;
 
   try {
-    const response = await fetch(`${INFOBIP_BASE_URL}/whatsapp/1/message/text`, {
+    await assertPublicUrl(url);
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Authorization': `App ${INFOBIP_API_KEY}`,
