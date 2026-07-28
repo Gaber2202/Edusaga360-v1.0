@@ -248,7 +248,7 @@ export class CollectionMessenger {
       if (!result.id) throw new Error('Provider did not return a message id');
     }
 
-    await this.supabase
+    const { error: updateError } = await this.supabase
       .from('collection_messages')
       .update({
         delivery_status: 'sent',
@@ -260,6 +260,10 @@ export class CollectionMessenger {
       })
       .eq('id', msg.id)
       .eq('tenant_id', msg.tenant_id);
+    if (updateError) {
+      console.error('[collections/messenger] update failed:', updateError);
+      throw new Error(`Failed to mark message as sent: ${updateError.message}`);
+    }
 
     await writeLedger(this.supabase, {
       tenant_id: msg.tenant_id,
