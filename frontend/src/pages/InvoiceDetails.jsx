@@ -390,7 +390,7 @@ EduSaga 360
                 invoice_number: invoice.invoice_number,
                 amount: money(invoice.total_amount),
                 due_date: fmtDate(invoice.due_date),
-                payment_link: window.location.origin
+                payment_link: paymentLink?.paymentUrl
               }}
             />
           )}
