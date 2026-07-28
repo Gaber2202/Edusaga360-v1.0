@@ -10,6 +10,8 @@ export const notificationsRouter = Router();
 const INFOBIP_API_KEY = process.env.INFOBIP_API_KEY;
 const INFOBIP_BASE_URL = (process.env.INFOBIP_BASE_URL ?? '').replace(/\/+$/, '');
 const WHATSAPP_SENDER = process.env.INFOBIP_WHATSAPP_SENDER ?? '447860088970'; // Infobip test sender (update to approved business number for production)
+const INFOBIP_WHATSAPP_TEMPLATE = process.env.INFOBIP_WHATSAPP_TEMPLATE; // e.g. first_purchase_thank_you — used for cold-start invoice messages
+const INFOBIP_WHATSAPP_TEMPLATE_LANGUAGE = process.env.INFOBIP_WHATSAPP_TEMPLATE_LANGUAGE ?? 'en';
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -100,7 +102,67 @@ function interpolate(template: string, vars: Record<string, string | null | unde
 
 // ─── Send a single WhatsApp message via Infobip ───────────────────────────────
 
-async function sendViaInfobip(to: string, text: string): Promise<{ success: boolean; messageId?: string; error?: string }> {
+function sanitizePlaceholder(value: string): string {
+  return value.replace(/[\t\n\r]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+}
+
+async function sendTemplateViaInfobip(to: string, text: string): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  if (!INFOBIP_API_KEY) {
+    return { success: false, error: 'INFOBIP_API_KEY not configured' };
+  }
+  if (!INFOBIP_BASE_URL) {
+    return { success: false, error: 'INFOBIP_BASE_URL not configured' };
+  }
+  if (!INFOBIP_WHATSAPP_TEMPLATE) {
+    return { success: false, error: 'INFOBIP_WHATSAPP_TEMPLATE not configured' };
+  }
+
+  const normalised = normalizePhone(to);
+  const url = `${INFOBIP_BASE_URL}/whatsapp/1/message/template`;
+
+  try {
+    await assertPublicUrl(url);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `App ${INFOBIP_API_KEY}`,
+        'Content-Type': 'application/json',
+        'Accept':        'application/json',
+      },
+      body: JSON.stringify({
+        messages: [{
+          from: WHATSAPP_SENDER,
+          to: normalised,
+          content: {
+            templateName: INFOBIP_WHATSAPP_TEMPLATE,
+            language: INFOBIP_WHATSAPP_TEMPLATE_LANGUAGE,
+            templateData: {
+              body: {
+                placeholders: [sanitizePlaceholder(text)],
+              },
+            },
+          },
+        }],
+      }),
+    });
+
+    const body = await response.json() as any;
+
+    if (!response.ok) {
+      return { success: false, error: body?.requestError?.serviceException?.text ?? `HTTP ${response.status}` };
+    }
+
+    const messageId = body?.messages?.[0]?.messageId ?? body?.messageId;
+    return { success: true, messageId };
+  } catch (err: any) {
+    return { success: false, error: err.message ?? 'Network error' };
+  }
+}
+
+async function sendViaInfobip(to: string, text: string, useTemplate = false): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  if (useTemplate && INFOBIP_WHATSAPP_TEMPLATE) {
+    return sendTemplateViaInfobip(to, text);
+  }
   if (!INFOBIP_API_KEY) {
     return { success: false, error: 'INFOBIP_API_KEY not configured' };
   }
@@ -180,7 +242,9 @@ notificationsRouter.post('/whatsapp', requireRole(STAFF_ROLES), async (req: Auth
   }
 
   const text   = interpolate(template[language], variables);
-  const result = await sendViaInfobip(normalisedTo, text);
+  // Cold-start WhatsApp messages (no active session) must use an approved template.
+  const useTemplate = INFOBIP_WHATSAPP_TEMPLATE ? ['fee_due', 'fee_overdue'].includes(template_key) : false;
+  const result = await sendViaInfobip(normalisedTo, text, useTemplate);
 
   await logCommunication(
     tenant_id, 'whatsapp', template_key, text,
@@ -210,11 +274,13 @@ notificationsRouter.post('/whatsapp/bulk', requireRole(STAFF_ROLES), async (req:
     return res.status(400).json({ error: `Unknown template: ${template_key}`, available: Object.keys(TEMPLATES) });
   }
 
+  const useTemplate = INFOBIP_WHATSAPP_TEMPLATE ? ['fee_due', 'fee_overdue'].includes(template_key) : false;
+
   // Send concurrently (Infobip handles rate limits on their end)
   const results = await Promise.allSettled(
     recipients.map(async (r) => {
       const text   = interpolate(template[r.language], r.variables);
-      const result = await sendViaInfobip(r.to, text);
+      const result = await sendViaInfobip(r.to, text, useTemplate);
       return { to: r.to, ...result };
     }),
   );
