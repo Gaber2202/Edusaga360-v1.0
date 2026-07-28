@@ -243,8 +243,7 @@ export class CollectionMessenger {
       if (!provider) throw new Error(`Unknown provider ${connector.provider}`);
 
       const body = language === 'ar' ? bodyAr : bodyEn;
-      const credentials = this.decryptCreds(connector);
-      const result = await provider.send({ config: connector.config as Record<string, unknown>, credentials }, { to, text: body, channel: msg.channel as 'whatsapp' | 'sms' });
+      const result = await provider.send({ config: connector.config, credentials: connector.credentials }, { to, text: body, channel: msg.channel as 'whatsapp' | 'sms' });
       providerId = connector.provider;
       if (!result.id) throw new Error('Provider did not return a message id');
     }
@@ -390,8 +389,12 @@ export class CollectionMessenger {
     return data ? ((data as { sequence_step: number }).sequence_step) : null;
   }
 
-  private async selectConnector(tenantId: string, channel: 'whatsapp' | 'sms' | 'email') {
+  private async selectConnector(
+    tenantId: string,
+    channel: 'whatsapp' | 'sms' | 'email',
+  ): Promise<{ provider: string; config: Record<string, unknown>; credentials: Record<string, string> } | null> {
     if (channel === 'email') return null;
+
     const { data, error } = await this.supabase
       .from('messaging_connectors')
       .select('*')
@@ -399,12 +402,27 @@ export class CollectionMessenger {
       .eq('is_active', true)
       .order('created_at', { ascending: false });
     if (error) throw error;
+
     for (const row of (data ?? []) as unknown as { provider: string; config: unknown; credentials: string }[]) {
       const provider = getProvider(row.provider);
       if (provider && provider.channels.includes(channel)) {
-        return row;
+        return { provider: row.provider, config: row.config as Record<string, unknown>, credentials: this.decryptCreds(row) };
       }
     }
+
+    // Fallback to platform-level Infobip credentials when no tenant connector is configured.
+    const apiKey = process.env.INFOBIP_API_KEY;
+    const baseUrl = (process.env.INFOBIP_BASE_URL ?? '').replace(/\/+$/, '');
+    if (apiKey && baseUrl) {
+      const sender = process.env.INFOBIP_SMS_SENDER || 'EduSaga';
+      const whatsappSender = process.env.INFOBIP_WHATSAPP_SENDER || '447860088970';
+      return {
+        provider: 'infobip',
+        config: { base_url: baseUrl, sender, whatsapp_sender: whatsappSender },
+        credentials: { api_key: apiKey },
+      };
+    }
+
     return null;
   }
 
