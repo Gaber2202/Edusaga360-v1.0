@@ -852,8 +852,9 @@ function buildInvoiceHTML(invoice: InvoiceData, tenant: TenantData, qrDataUrl: s
       font-size: 10px;
     }
     .meta-label { color: #777; }
-    .meta-value { font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .meta-value { font-weight: 600; font-family: 'Noto Naskh Arabic', 'Plus Jakarta Sans', sans-serif; }
     .meta-value.ltr { direction: ltr; unicode-bidi: isolate; }
+    .hijri { font-family: 'Noto Naskh Arabic', sans-serif; direction: rtl; unicode-bidi: embed; }
     .ar-text { font-weight: 600; }
     .en-text { font-size: 9px; color: #666; direction: ltr; unicode-bidi: isolate; }
     table { width: 100%; border-collapse: collapse; margin: 16px 0; }
@@ -882,7 +883,7 @@ function buildInvoiceHTML(invoice: InvoiceData, tenant: TenantData, qrDataUrl: s
       align-items: center;
     }
     .total-label { color: #444; }
-    .total-value { font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif; direction: ltr; unicode-bidi: isolate; }
+    .total-value { font-weight: 600; font-family: 'Noto Naskh Arabic', 'Plus Jakarta Sans', sans-serif; direction: ltr; unicode-bidi: isolate; }
     .total-row.grand { border-top: 2px solid #0E6B4F; padding-top: 8px; margin-top: 4px; font-size: 13px; font-weight: 700; color: #0E6B4F; }
     .notes { font-size: 10px; color: #555; margin-top: 12px; padding: 8px; background: #fafaf7; border-radius: 4px; }
     .footer {
@@ -926,7 +927,7 @@ function buildInvoiceHTML(invoice: InvoiceData, tenant: TenantData, qrDataUrl: s
       <h4>بيانات الفاتورة / Invoice Details</h4>
       <div class="meta-row"><span class="meta-label">رقم الفاتورة / Invoice No:</span><span class="meta-value ltr"><bdi>${escapeHtml(invoice.invoice_number)}</bdi></span></div>
       <div class="meta-row"><span class="meta-label">تاريخ الإصدار (م) / Issue Date:</span><span class="meta-value ltr"><bdi>${issueDateGregorian}</bdi></span></div>
-      ${issueDateHijri ? `<div class="meta-row"><span class="meta-label">تاريخ الإصدار (هـ) / Hijri Date:</span><span class="meta-value ltr"><bdi>${issueDateHijri}</bdi></span></div>` : ''}
+      ${issueDateHijri ? `<div class="meta-row"><span class="meta-label">تاريخ الإصدار (هـ) / Hijri Date:</span><span class="meta-value hijri"><bdi>${issueDateHijri}</bdi></span></div>` : ''}
       ${invoice.due_date ? `<div class="meta-row"><span class="meta-label">تاريخ الاستحقاق / Due Date:</span><span class="meta-value ltr"><bdi>${invoice.due_date.substring(0, 10)}</bdi></span></div>` : ''}
       ${invoice.supply_date && invoice.supply_date !== issueDateGregorian ? `<div class="meta-row"><span class="meta-label">تاريخ التوريد / Supply Date:</span><span class="meta-value ltr"><bdi>${invoice.supply_date.substring(0, 10)}</bdi></span></div>` : ''}
       ${invoice.uuid ? `<div class="meta-row"><span class="meta-label">UUID:</span><span class="meta-value ltr" style="font-size:8px"><bdi>${escapeHtml(invoice.uuid)}</bdi></span></div>` : ''}
@@ -1077,7 +1078,8 @@ export async function generateZATCAInvoicePDF(
     const browser = await getBrowser();
     const page = await browser.newPage();
     try {
-      await page.setContent(html, { waitUntil: 'load', timeout: 30000 });
+      await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
+      await page.evaluate(() => document.fonts.ready);
       const puppeteerPdf = await page.pdf({
         format: 'A4',
         printBackground: true,
