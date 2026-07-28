@@ -99,9 +99,16 @@ export default function ExecutiveCommandCenter() {
   const [tenantsLoading, setTenantsLoading] = useState(false);
   const [selectedTenantId, setSelectedTenantId] = useState(null);
 
+  const [branches, setBranches] = useState([]);
+  const [branchesLoading, setBranchesLoading] = useState(false);
+  const [selectedBranchId, setSelectedBranchId] = useState('all');
+
+  const [period, setPeriod] = useState('current');
+
   const [dashboard, setDashboard] = useState(null);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState(false);
+  const [metricsRefreshing, setMetricsRefreshing] = useState(false);
 
   const [brief, setBrief] = useState(null);
   const [briefLoading, setBriefLoading] = useState(false);
@@ -146,52 +153,81 @@ export default function ExecutiveCommandCenter() {
     return () => { active = false; };
   }, [requiresTenantSelection, isRTL]);
 
-  const tenantQS = useCallback((sep = '?') => (
-    requiresTenantSelection && selectedTenantId ? `${sep}tenant_id=${encodeURIComponent(selectedTenantId)}` : ''
-  ), [requiresTenantSelection, selectedTenantId]);
+  const dashboardQS = useCallback(() => {
+    const params = new URLSearchParams();
+    if (requiresTenantSelection && selectedTenantId) params.set('tenant_id', selectedTenantId);
+    if (selectedBranchId && selectedBranchId !== 'all') params.set('branch_id', selectedBranchId);
+    if (period && period !== 'current') params.set('period', period);
+    const str = params.toString();
+    return str ? `?${str}` : '';
+  }, [requiresTenantSelection, selectedTenantId, selectedBranchId, period]);
 
-  const loadDashboard = useCallback(async (p) => {
+  const loadDashboard = useCallback(async (p, opts = {}) => {
     if (!p) return;
     if (requiresTenantSelection && !selectedTenantId) return;
-    setDashboardLoading(true);
-    setDashboardError(false);
+    if (!opts.background) { setDashboardLoading(true); setDashboardError(false); }
     try {
-      const res = await callApi(`/api/exec/${p}${tenantQS()}`, null, { method: 'GET' });
+      const res = await callApi(`/api/exec/${p}${dashboardQS()}`, null, { method: 'GET' });
       setDashboard(res);
     } catch (err) {
-      setDashboardError(true);
-      setDashboard(null);
+      if (!opts.background) { setDashboardError(true); setDashboard(null); }
       if (err?.status === 403) {
         toast.error(isRTL ? 'ليس لديك صلاحية الوصول لهذا القسم' : 'You do not have access to this dashboard');
       } else {
         toast.error(isRTL ? 'فشل تحميل البيانات' : 'Failed to load dashboard data');
       }
     } finally {
-      setDashboardLoading(false);
+      if (!opts.background) setDashboardLoading(false);
     }
-  }, [isRTL, requiresTenantSelection, selectedTenantId, tenantQS]);
+  }, [isRTL, requiresTenantSelection, selectedTenantId, selectedBranchId, period, dashboardQS]);
 
-  useEffect(() => { if (persona) loadDashboard(persona); }, [persona, selectedTenantId, loadDashboard]);
+  useEffect(() => { if (persona) loadDashboard(persona); }, [persona, selectedTenantId, selectedBranchId, period, loadDashboard]);
+
+  useEffect(() => {
+    if (requiresTenantSelection && !selectedTenantId) return;
+    let active = true;
+    setBranchesLoading(true);
+    callApi(`/api/exec/branches${dashboardQS()}`, null, { method: 'GET' })
+      .then((res) => { if (active) setBranches(res.branches || []); })
+      .catch(() => { if (active) toast.error(isRTL ? 'فشل تحميل الفروع' : 'Failed to load branches'); })
+      .finally(() => { if (active) setBranchesLoading(false); });
+    return () => { active = false; };
+  }, [requiresTenantSelection, selectedTenantId, dashboardQS, isRTL]);
+
+  const refreshMetrics = async () => {
+    if (requiresTenantSelection && !selectedTenantId) return;
+    setMetricsRefreshing(true);
+    try {
+      await callApi(`/api/exec/metrics/refresh${dashboardQS()}`, {}, { method: 'POST' });
+      toast.success(isRTL ? 'تم تحديث المؤشرات' : 'Metrics refreshed');
+      if (persona) loadDashboard(persona, { background: true });
+      if (persona === 'ceo') loadBrief();
+    } catch {
+      toast.error(isRTL ? 'فشل تحديث المؤشرات' : 'Failed to refresh metrics');
+    } finally {
+      setMetricsRefreshing(false);
+    }
+  };
 
   const loadBrief = useCallback(async () => {
     if (requiresTenantSelection && !selectedTenantId) return;
     setBriefLoading(true);
     try {
-      const res = await callApi(`/api/exec/ceo/brief${tenantQS()}`, null, { method: 'GET' });
+      const res = await callApi(`/api/exec/ceo/brief${dashboardQS()}`, null, { method: 'GET' });
       setBrief(res);
     } catch {
       setBrief(null);
     } finally {
       setBriefLoading(false);
     }
-  }, [requiresTenantSelection, selectedTenantId, tenantQS]);
+  }, [requiresTenantSelection, selectedTenantId, selectedBranchId, period, dashboardQS]);
 
-  useEffect(() => { if (persona === 'ceo') loadBrief(); }, [persona, selectedTenantId, loadBrief]);
+  useEffect(() => { if (persona === 'ceo') loadBrief(); }, [persona, selectedTenantId, selectedBranchId, period, loadBrief]);
 
   const refreshBrief = async () => {
     setBriefRefreshing(true);
     try {
-      const res = await callApi(`/api/exec/ceo/brief/refresh${tenantQS()}`, {}, { method: 'POST' });
+      const res = await callApi(`/api/exec/ceo/brief/refresh${dashboardQS()}`, {}, { method: 'POST' });
       setBrief(res);
       toast.success(isRTL ? 'تم تحديث الموجز' : 'Brief refreshed');
     } catch {
@@ -234,7 +270,13 @@ export default function ExecutiveCommandCenter() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <ExportMenu targetRef={dashboardRef} filename="executive-command-center" />
+          <ExportMenu
+            persona={persona}
+            tenantId={selectedTenantId || undefined}
+            branchId={selectedBranchId}
+            period={period}
+            filename={`executive-command-center-${persona}-${period}`}
+          />
           {requiresTenantSelection && (
             <>
               <span className="text-sm text-muted-foreground">{isRTL ? 'المدرسة' : 'School'}</span>
@@ -250,6 +292,34 @@ export default function ExecutiveCommandCenter() {
               </Select>
             </>
           )}
+          <span className="text-sm text-muted-foreground">{isRTL ? 'الفرع' : 'Branch'}</span>
+          <Select value={selectedBranchId} onValueChange={setSelectedBranchId} disabled={branchesLoading}>
+            <SelectTrigger className="w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{isRTL ? 'جميع الفروع' : 'All branches'}</SelectItem>
+              {branches.map((b) => (
+                <SelectItem key={b.id} value={b.id}>{isRTL ? (b.name_ar || b.name_en) : (b.name_en || b.name_ar)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span className="text-sm text-muted-foreground">{isRTL ? 'الفترة' : 'Period'}</span>
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="current">{isRTL ? 'الحالية' : 'Current'}</SelectItem>
+              {Array.from({ length: 12 }).map((_, i) => {
+                const d = new Date();
+                d.setMonth(d.getMonth() - i);
+                const key = d.toISOString().slice(0, 7);
+                const label = isRTL ? `${d.toLocaleString('ar-SA', { month: 'short' })} ${d.getFullYear()}` : `${d.toLocaleString('en-US', { month: 'short' })} ${d.getFullYear()}`;
+                return <SelectItem key={key} value={key}>{label}</SelectItem>;
+              })}
+            </SelectContent>
+          </Select>
           {showSwitcher && (
             <>
               <span className="text-sm text-muted-foreground">{t('switchPersona')}</span>
@@ -264,6 +334,15 @@ export default function ExecutiveCommandCenter() {
                 </SelectContent>
               </Select>
             </>
+          )}
+          <Button variant="outline" size="icon" onClick={refreshMetrics} disabled={metricsRefreshing} title={isRTL ? 'تحديث المؤشرات' : 'Refresh metrics'}>
+            <RefreshCw className={`w-4 h-4 ${metricsRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
+          {dashboard?.computed_at && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
+              <Clock className="w-3.5 h-3.5" />
+              <span>{new Date(dashboard.computed_at).toLocaleString(isRTL ? 'ar-SA' : 'en-US')}</span>
+            </div>
           )}
         </div>
       </div>
@@ -382,10 +461,12 @@ function KPICard({ title, value, delta, sparkData, color, isRTL }) {
 }
 
 function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBrief, isRTL, t }) {
-  const { vitality, financials, collections, campus_vitality = [], strategic_alerts = [], revenue_trend = [], collection_trend = [] } = data;
+  const { vitality, financials, collections, campus_vitality = [], strategic_alerts = [], revenue_trend = [], collection_trend = [], top_risks = [], cash_runway } = data;
 
   const collectionRate = collections?.collection_rate_pct;
-  const isCollectionCritical = collectionRate !== undefined && collectionRate !== null && collectionRate === 0;
+  const collectionTotalInvoiced = collections?.total_invoiced ?? 0;
+  const hasCollectionData = collectionTotalInvoiced > 0;
+  const isCollectionCritical = collectionRate !== undefined && collectionRate !== null && collectionRate === 0 && hasCollectionData;
 
   return (
     <div className="space-y-6">
@@ -443,9 +524,16 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
           title={isRTL ? 'نسبة التحصيل' : 'Collection Rate'}
           value={isCollectionCritical
             ? <span className="text-red-500 font-bold">{fmtPct(0)}</span>
-            : fmtPct(collectionRate)
+            : (
+              <span
+                className={collections?.collection_rate_note ? 'underline decoration-dotted cursor-help' : ''}
+                title={collections?.collection_rate_note || undefined}
+              >
+                {hasCollectionData ? fmtPct(collectionRate) : '—'}
+              </span>
+            )
           }
-          delta={collections?.collection_delta_pct}
+          delta={hasCollectionData ? collections?.collection_delta_pct : null}
           sparkData={collection_trend?.map((v, i) => ({ name: i, value: v.rate || v }))}
           color={isCollectionCritical ? COLORS.red : COLORS.gold}
           isRTL={isRTL}
@@ -597,6 +685,44 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
           )}
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-0 shadow-sm md:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <ShieldX className="w-4 h-4 text-red-500" />
+              {isRTL ? 'أعلى 5 مخاطر' : 'Top 5 Risks'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {top_risks.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground text-sm">{isRTL ? 'لا توجد مخاطر مرتفعة' : 'No high-priority risks'}</div>
+            ) : (
+              <ul className="space-y-2">
+                {top_risks.slice(0, 5).map((r, i) => (
+                  <li key={i} className="flex items-start gap-3 text-sm text-ink">
+                    <span className="w-5 h-5 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-xs font-semibold flex-shrink-0">{i + 1}</span>
+                    <span>{isRTL ? r.message_ar : r.message_en}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Clock className="w-4 h-4 text-najdi-900" />
+              {isRTL ? 'مدى النقد (أشهر)' : 'Cash Runway (months)'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-ink">{cash_runway !== null && cash_runway !== undefined ? fmtNumber(cash_runway, isRTL) : '—'}</p>
+            <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'النقد المتوفر بناءً على الإنفاق الشهري' : 'Cash available based on monthly spend'}</p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* 6. Strategic Alerts with severity badges */}
       <Card className="border-0 shadow-sm">
@@ -868,7 +994,7 @@ function COODashboard({ data, isRTL, t }) {
 }
 
 function CHRODashboard({ data, isRTL, t }) {
-  const { kpis = {}, nitaqat = {}, workforce_composition = {}, payroll_gov_compliance = {}, open_roles = {} } = data;
+  const { kpis = {}, nitaqat = {}, workforce_composition = {}, payroll_gov_compliance = {}, open_roles = {}, contract_expiry_radar = {}, leave_absence_summary = {} } = data;
 
   const bandColor = { platinum: 'text-purple-600 border-purple-200', green: 'text-emerald-600 border-emerald-200', yellow: 'text-amber-600 border-amber-200', red: 'text-red-600 border-red-200' }[nitaqat.band] || 'text-muted-foreground border-border';
 
@@ -893,18 +1019,24 @@ function CHRODashboard({ data, isRTL, t }) {
       <Card className="border-0 shadow-sm">
         <CardHeader><CardTitle className="text-base">{t('nitaqatBand')}</CardTitle></CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4">
-            <Badge variant="outline" className={`text-base px-4 py-1.5 ${bandColor}`}>
-              {(nitaqat.band || '—').toUpperCase()}
-            </Badge>
-            <div className="flex-1">
-              <ScoreBar label={t('saudizationRate')} value={nitaqat.saudization_pct} isRTL={isRTL} />
-            </div>
-          </div>
-          {nitaqat.thresholds && (
-            <p className="text-xs text-muted-foreground mt-3">
-              {isRTL ? 'الحدود' : 'Thresholds'}: {isRTL ? 'بلاتيني' : 'Platinum'} ≥{nitaqat.thresholds.platinum}% · {isRTL ? 'أخضر' : 'Green'} ≥{nitaqat.thresholds.green}% · {isRTL ? 'أصفر' : 'Yellow'} ≥{nitaqat.thresholds.yellow}%
-            </p>
+          {nitaqat.data_quality === 'not_tracked' ? (
+            <EmptyState isRTL={isRTL} message={isRTL ? 'لا توجد بيانات موظفين مسجلة' : 'No employee data on record'} />
+          ) : (
+            <>
+              <div className="flex items-center gap-4">
+                <Badge variant="outline" className={`text-base px-4 py-1.5 ${bandColor}`}>
+                  {(nitaqat.band || '—').toUpperCase()}
+                </Badge>
+                <div className="flex-1">
+                  <ScoreBar label={t('saudizationRate')} value={nitaqat.saudization_pct} isRTL={isRTL} />
+                </div>
+              </div>
+              {nitaqat.thresholds && (
+                <p className="text-xs text-muted-foreground mt-3">
+                  {isRTL ? 'الحدود' : 'Thresholds'}: {isRTL ? 'بلاتيني' : 'Platinum'} ≥{nitaqat.thresholds.platinum}% · {isRTL ? 'أخضر' : 'Green'} ≥{nitaqat.thresholds.green}% · {isRTL ? 'أصفر' : 'Yellow'} ≥{nitaqat.thresholds.yellow}%
+                </p>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -956,6 +1088,52 @@ function CHRODashboard({ data, isRTL, t }) {
           </div>
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-0 shadow-sm">
+          <CardHeader><CardTitle className="text-base">{isRTL ? 'عقود تنتهي خلال 90 يوماً' : 'Contracts Expiring in 90 Days'}</CardTitle></CardHeader>
+          <CardContent>
+            {contract_expiry_radar.data_quality === 'not_tracked' ? <EmptyState isRTL={isRTL} /> : (
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="p-3 rounded-lg bg-red-50 border border-red-100">
+                  <p className="text-lg font-bold text-red-600">{fmtNumber(contract_expiry_radar['0_30'], isRTL)}</p>
+                  <p className="text-xs text-muted-foreground">{isRTL ? '0-30 يوم' : '0-30 days'}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-amber-50 border border-amber-100">
+                  <p className="text-lg font-bold text-amber-600">{fmtNumber(contract_expiry_radar['31_60'], isRTL)}</p>
+                  <p className="text-xs text-muted-foreground">{isRTL ? '31-60 يوم' : '31-60 days'}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-100">
+                  <p className="text-lg font-bold text-emerald-600">{fmtNumber(contract_expiry_radar['61_90'], isRTL)}</p>
+                  <p className="text-xs text-muted-foreground">{isRTL ? '61-90 يوم' : '61-90 days'}</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm">
+          <CardHeader><CardTitle className="text-base">{isRTL ? 'ملخص الغياب والإجازات (30 يوماً)' : 'Leave & Absence Summary (30d)'}</CardTitle></CardHeader>
+          <CardContent>
+            {leave_absence_summary.data_quality === 'not_tracked' ? <EmptyState isRTL={isRTL} /> : (
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="p-3 rounded-lg bg-red-50 border border-red-100">
+                  <p className="text-lg font-bold text-red-600">{fmtNumber(leave_absence_summary.absent, isRTL)}</p>
+                  <p className="text-xs text-muted-foreground">{isRTL ? 'غياب' : 'Absent'}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-amber-50 border border-amber-100">
+                  <p className="text-lg font-bold text-amber-600">{fmtNumber(leave_absence_summary.late, isRTL)}</p>
+                  <p className="text-xs text-muted-foreground">{isRTL ? 'تأخر' : 'Late'}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-100">
+                  <p className="text-lg font-bold text-emerald-600">{fmtNumber(leave_absence_summary.excused, isRTL)}</p>
+                  <p className="text-xs text-muted-foreground">{isRTL ? 'معذور' : 'Excused'}</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StatCard
