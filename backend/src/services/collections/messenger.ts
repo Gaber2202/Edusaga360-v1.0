@@ -192,8 +192,8 @@ export class CollectionMessenger {
 
     for (const msg of (messages ?? []) as unknown as MessengerMessage[]) {
       try {
-        await this.sendMessage(msg);
-        sent++;
+        const didSend = await this.sendMessage(msg);
+        if (didSend) sent++;
       } catch (err) {
         console.error(`[collections/messenger] send failed for message ${msg.id}:`, err);
         await this.supabase
@@ -208,11 +208,11 @@ export class CollectionMessenger {
     return { sent, failed };
   }
 
-  private async sendMessage(msg: MessengerMessage): Promise<void> {
+  private async sendMessage(msg: MessengerMessage): Promise<boolean> {
     const settings = await this.loadSettings(msg.tenant_id);
-    if (!settings || settings.kill_switch_activated_at || !this.isInSendWindow(settings)) {
+    if (settings?.kill_switch_activated_at || !this.isInSendWindow(settings ?? {})) {
       // Leave pending; it will be retried when the window opens or kill switch is cleared.
-      return;
+      return false;
     }
 
     const profile = await this.loadProfileForSend(msg.tenant_id, msg.profile_id);
@@ -274,6 +274,7 @@ export class CollectionMessenger {
 
     // Mirror the outbound message into the staff↔parent thread for full case history.
     await this.threadService.mirrorYamenMessage(msg.tenant_id, msg.profile_id, bodyAr, bodyEn, providerId);
+    return true;
   }
 
   private async sendEmailMessage(to: string, bodyAr: string, bodyEn: string): Promise<void> {
