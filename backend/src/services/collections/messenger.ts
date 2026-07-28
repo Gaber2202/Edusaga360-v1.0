@@ -415,7 +415,7 @@ export class CollectionMessenger {
     const baseUrl = (process.env.INFOBIP_BASE_URL ?? '').replace(/\/+$/, '');
     if (apiKey && baseUrl) {
       const sender = process.env.INFOBIP_SMS_SENDER || 'EduSaga';
-      const whatsappSender = process.env.INFOBIP_WHATSAPP_SENDER || '447860099299';
+      const whatsappSender = process.env.INFOBIP_WHATSAPP_SENDER || '447860088970';
       return {
         provider: 'infobip',
         config: { base_url: baseUrl, sender, whatsapp_sender: whatsappSender },

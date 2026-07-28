@@ -8,7 +8,7 @@ export const notificationsRouter = Router();
 
 const INFOBIP_API_KEY = process.env.INFOBIP_API_KEY;
 const INFOBIP_BASE_URL = (process.env.INFOBIP_BASE_URL ?? '').replace(/\/+$/, '');
-const WHATSAPP_SENDER = process.env.INFOBIP_WHATSAPP_SENDER ?? '447860099299'; // Infobip sandbox sender
+const WHATSAPP_SENDER = process.env.INFOBIP_WHATSAPP_SENDER ?? '447860088970'; // Infobip test sender (update to approved business number for production)
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
