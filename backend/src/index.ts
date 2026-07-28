@@ -46,6 +46,7 @@ import { CollectionMessenger } from './services/collections/messenger.js';
 import { InstallmentPlanEngine } from './services/collections/installments.js';
 import { GuaranteeEngine } from './services/collections/guarantee.js';
 import { reconcileMoyasarState } from './services/moyasar/moyasarService.js';
+import { MetricsService } from './services/metrics.js';
 
 dotenv.config();
 
@@ -269,6 +270,29 @@ app.listen(PORT, () => {
     });
     console.log('[cron] Moyasar reconciliation sweep scheduled every 15 min');
   }
+
+  // Nightly KPI snapshot materialization (02:00 KSA) for the Executive Command Center.
+  cron.schedule(
+    '0 2 * * *',
+    async () => {
+      try {
+        const metrics = new MetricsService(supabase);
+        const { data: tenants } = await supabase.from('tenants').select('id');
+        for (const t of tenants ?? []) {
+          try {
+            await metrics.computeAndStoreAll(t.id as string, 'current');
+            console.log(`[cron] kpi snapshots completed for ${t.id}`);
+          } catch (err) {
+            console.error(`[cron] kpi snapshots failed for ${t.id}:`, err);
+          }
+        }
+      } catch (err) {
+        console.error('[cron] nightly kpi snapshots failed:', err);
+      }
+    },
+    { timezone: 'Asia/Riyadh' },
+  );
+  console.log('[cron] KPI snapshots scheduled every night at 02:00 KSA');
 });
 
 export default app;

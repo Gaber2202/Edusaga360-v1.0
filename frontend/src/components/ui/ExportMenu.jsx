@@ -8,20 +8,63 @@ import {
 } from './dropdown-menu';
 import { Download, FileImage, FileText, Loader2 } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
+import { callApi } from '../../api/supabaseClient';
 
 /**
- * Exports a DOM region (chart or whole dashboard section) to PNG or PDF from a
- * single button — works on mobile. Pass a ref to the element you want captured.
- * html2canvas / jspdf are dynamically imported so they stay out of the main
- * bundle until the user actually exports.
+ * Export control.
  *
- *   const ref = useRef(null);
- *   <div ref={ref}> ...charts... </div>
+ * Server-side export (recommended for Arabic dashboards):
+ *   <ExportMenu persona="ceo" tenantId="..." branchId="..." period="..." filename="executive-command-center" />
+ *
+ * Legacy client-side capture:
  *   <ExportMenu targetRef={ref} filename="finance-dashboard" />
  */
-export default function ExportMenu({ targetRef, filename = 'export', className }) {
+export default function ExportMenu({
+  targetRef,
+  filename = 'export',
+  className,
+  persona,
+  tenantId,
+  branchId,
+  period,
+}) {
   const { isRTL } = useLanguage();
   const [busy, setBusy] = useState(false);
+
+  const hasServerExport = Boolean(persona);
+
+  const buildServerUrl = (format) => {
+    const params = new URLSearchParams();
+    if (tenantId) params.set('tenant_id', tenantId);
+    if (branchId && branchId !== 'all') params.set('branch_id', branchId);
+    if (period) params.set('period', period);
+    params.set('format', format);
+    params.set('lang', isRTL ? 'ar' : 'en');
+    return `/api/exec/${persona}/export?${params.toString()}`;
+  };
+
+  const downloadBlob = (blob, ext) => {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${filename}.${ext}`;
+    document.body.appendChild(link);
+    link.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  };
+
+  const serverExport = async (format) => {
+    setBusy(true);
+    try {
+      const blob = await callApi(buildServerUrl(format), null, { method: 'GET', responseType: 'blob' });
+      downloadBlob(blob, format);
+    } catch (e) {
+      console.error('Server export failed', e);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const capture = async () => {
     const node = targetRef?.current;
@@ -32,12 +75,12 @@ export default function ExportMenu({ targetRef, filename = 'export', className }
       backgroundColor: '#ffffff',
       useCORS: true,
       logging: false,
-      // Ignore anything explicitly marked no-export (e.g. the button itself).
       ignoreElements: (el) => el.hasAttribute?.('data-no-export'),
     });
   };
 
   const exportPng = async () => {
+    if (hasServerExport) return serverExport('png');
     setBusy(true);
     try {
       const canvas = await capture();
@@ -54,6 +97,7 @@ export default function ExportMenu({ targetRef, filename = 'export', className }
   };
 
   const exportPdf = async () => {
+    if (hasServerExport) return serverExport('pdf');
     setBusy(true);
     try {
       const canvas = await capture();
