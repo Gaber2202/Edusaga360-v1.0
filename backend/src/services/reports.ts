@@ -25,9 +25,12 @@ export async function getAgingReport(
   options?: { academic_year?: string; includeStudents?: boolean },
 ): Promise<AgingReport> {
   const today = todayStr();
+  const selectColumns = options?.includeStudents !== false
+    ? 'id, invoice_number, student_id, total_amount, paid_amount, due_date, status, students(name_en, name_ar, grade_id, guardian_id), academic_year'
+    : 'id, invoice_number, student_id, total_amount, paid_amount, due_date, status, academic_year';
   let q = supabase
     .from('invoices')
-    .select('id, invoice_number, student_id, total_amount, paid_amount, due_date, status, students(name_en, name_ar, grade_id, guardian_id), academic_year')
+    .select(selectColumns)
     .eq('tenant_id', tenantId)
     .in('status', ['issued', 'partial', 'overdue', 'viewed']);
   if (options?.academic_year) q = q.eq('academic_year', options.academic_year);
