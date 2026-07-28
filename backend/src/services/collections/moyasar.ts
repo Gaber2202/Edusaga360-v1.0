@@ -18,6 +18,13 @@ export async function createMoyasarPaymentLink(
     return { error: 'Payment gateway not configured' };
   }
 
+  // Test keys typically cannot create mada/applepay/stcpay payments; fall back
+  // to a configurable test method (default credit card) for test-mode keys.
+  const isTestKey = moyasarKey.startsWith('sk_test');
+  const effectiveMethod: typeof paymentMethod = isTestKey
+    ? (process.env.MOYASAR_TEST_PAYMENT_METHOD as typeof paymentMethod | undefined) || 'creditcard'
+    : paymentMethod;
+
   const { data: invoice } = await supabase
     .from('invoices')
     .select('invoice_number, total_amount, paid_amount, student_id')
@@ -43,7 +50,7 @@ export async function createMoyasarPaymentLink(
         currency: 'SAR',
         description: `EduSaga Invoice ${invoice.invoice_number}`,
         callback_url: callbackUrl,
-        source: { type: paymentMethod },
+        source: { type: effectiveMethod },
         metadata: {
           invoice_id: invoiceId,
           tenant_id: tenantId,
@@ -53,7 +60,8 @@ export async function createMoyasarPaymentLink(
     });
     const data = (await response.json()) as Record<string, unknown>;
     if (!response.ok) {
-      return { error: 'Payment gateway error', payment_id: data.id as string | undefined };
+      console.error('[moyasar] create payment error:', JSON.stringify(data));
+      return { error: `Payment gateway error: ${data.message || data.error || 'unknown'}`, payment_id: data.id as string | undefined };
     }
     return { url: (data.url as string) ?? '', payment_id: data.id as string | undefined };
   } catch (err) {
