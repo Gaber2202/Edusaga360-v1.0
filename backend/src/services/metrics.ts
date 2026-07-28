@@ -354,7 +354,7 @@ export class MetricsService {
         this.branchFilter(this.supabase.from('students').select('id, branch_id, status').eq('tenant_id', tenantId).eq('status', 'active'), branchId),
         this.branchFilter(this.supabase.from('employees').select('id, job_title_id, job_titles(name_en, name_ar), status, branch_id').eq('tenant_id', tenantId).eq('status', 'active'), branchId),
         this.branchFilter(this.supabase.from('applicants').select('id, status, branch_id').eq('tenant_id', tenantId), branchId),
-        this.branchFilter(this.supabase.from('applications').select('id, stage, decision, branch_id').eq('tenant_id', tenantId), branchId),
+        this.supabase.from('applications').select('id, stage, decision').eq('tenant_id', tenantId),
       ]);
       sections = (sectionsRes.data ?? []) as any[];
       students = (studentsRes.data ?? []) as any[];
@@ -377,7 +377,7 @@ export class MetricsService {
     const capacityToCash = branches.map((b: any) => {
       const capacity = capacityByBranch.get(b.id) ?? 0;
       const enrolled = studentsByBranch.get(b.id) ?? 0;
-      const branchInvoices = allInvoices.filter((r) => r.branch_id === b.id);
+      const branchInvoices = invoices.filter((r) => r.branch_id === b.id);
       const cash = round2(branchInvoices.reduce((s, r) => s + Number(r.paid_amount ?? 0), 0));
       return {
         branch_id: b.id,
@@ -428,7 +428,7 @@ export class MetricsService {
         this.branchFilter(this.supabase.from('employees').select('id, status, nationality, gender, department_id, is_saudi, hire_date, end_date, contract_type').eq('tenant_id', tenantId), branchId),
         this.supabase.from('departments').select('id, name_en, name_ar').eq('tenant_id', tenantId),
         this.branchFilter(this.supabase.from('employees').select('id, iqama_expiry').eq('tenant_id', tenantId).eq('status', 'active').not('iqama_expiry', 'is', null), branchId),
-        this.branchFilter(this.supabase.from('employee_attendance').select('employee_id, status, late_minutes, is_excused, date').eq('tenant_id', tenantId).gte('date', daysAgoStr(30)), branchId),
+        this.supabase.from('employee_attendance').select('employee_id, status, late_minutes, is_excused, date').eq('tenant_id', tenantId).gte('date', daysAgoStr(30)),
       ]);
       employeesFull = (employeesFullRes.data ?? []) as any[];
       departments = (departmentsRes.data ?? []) as any[];

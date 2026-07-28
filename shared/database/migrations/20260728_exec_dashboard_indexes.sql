@@ -1,11 +1,10 @@
 -- ============================================================
--- Executive Command Center v2: query performance indexes
+-- EduSaga 360 — Executive Command Center v2: query indexes
 -- ============================================================
--- Additive & idempotent. These indexes support the KPI snapshot
--- computations and day-to-day dashboard loads under the main
--- tenant/branch/date filters.
+-- Additive & idempotent. Supports the KPI snapshot computations
+-- and the dashboard load under tenant/branch/date filters.
 
--- Invoices: the heaviest table for dashboard financials.
+-- Invoices
 CREATE INDEX IF NOT EXISTS idx_invoices_tenant_date_status
   ON invoices (tenant_id, date DESC, status);
 CREATE INDEX IF NOT EXISTS idx_invoices_tenant_branch_date_status
@@ -45,24 +44,23 @@ CREATE INDEX IF NOT EXISTS idx_employees_tenant_iqama_expiry
   ON employees (tenant_id, iqama_expiry)
   WHERE iqama_expiry IS NOT NULL AND status = 'active';
 
--- Attendance
+-- Attendance (no branch_id on this table)
 CREATE INDEX IF NOT EXISTS idx_employee_attendance_tenant_date
   ON employee_attendance (tenant_id, date DESC);
-CREATE INDEX IF NOT EXISTS idx_employee_attendance_tenant_branch_date
-  ON employee_attendance (tenant_id, branch_id, date DESC);
 
 -- Capacity / admissions
 CREATE INDEX IF NOT EXISTS idx_sections_tenant_branch
   ON sections (tenant_id, branch_id);
 CREATE INDEX IF NOT EXISTS idx_applicants_tenant_branch_status
   ON applicants (tenant_id, branch_id, status);
-CREATE INDEX IF NOT EXISTS idx_applications_tenant_branch_stage
-  ON applications (tenant_id, branch_id, stage);
+-- applications has no branch_id column
+CREATE INDEX IF NOT EXISTS idx_applications_tenant_stage
+  ON applications (tenant_id, stage);
 
 -- Academic years lookup
 CREATE INDEX IF NOT EXISTS idx_academic_years_tenant_start
   ON academic_years (tenant_id, start_date DESC);
 
--- Installments (collections forecast)
+-- Installments (collections forecast) — no branch_id column
 CREATE INDEX IF NOT EXISTS idx_payment_plan_installments_tenant_due_date_status
   ON payment_plan_installments (tenant_id, due_date, status);
