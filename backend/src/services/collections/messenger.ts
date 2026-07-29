@@ -232,6 +232,7 @@ export class CollectionMessenger {
     if (!to) throw new Error(`No ${msg.channel} destination for profile ${profile.id}`);
 
     let providerId = 'email';
+    let providerMessageId: string | undefined;
     if (msg.channel === 'email') {
       await this.sendEmailMessage(to, bodyAr, bodyEn);
     } else {
@@ -245,6 +246,7 @@ export class CollectionMessenger {
       const result = await provider.send({ config: connector.config, credentials: connector.credentials }, { to, text: body, channel: msg.channel as 'whatsapp' | 'sms' });
       providerId = connector.provider;
       if (!result.id) throw new Error('Provider did not return a message id');
+      providerMessageId = result.id;
     }
 
     const { error: updateError } = await this.supabase
@@ -256,6 +258,7 @@ export class CollectionMessenger {
         moyasar_link: link.paymentUrl,
         personalized_body_ar: bodyAr,
         personalized_body_en: bodyEn,
+        provider_message_id: providerMessageId ?? null,
       })
       .eq('id', msg.id)
       .eq('tenant_id', msg.tenant_id);

@@ -40,6 +40,7 @@ import { messagingRouter } from './routes/messaging.js';
 import { collectionsRouter } from './routes/collections.js';
 import { billingPublicRouter } from './routes/billingPublic.js';
 import { messagingPublicRouter } from './routes/messagingPublic.js';
+import { infobipWebhookRouter } from './routes/infobipWebhooks.js';
 import cron from 'node-cron';
 import { SegmentationRunner } from './services/collections/runner.js';
 import { CollectionMessenger } from './services/collections/messenger.js';
@@ -149,6 +150,8 @@ app.use('/api/registration', registrationLimiter, registrationRouter);
 app.use('/api/public/billing', billingPublicRouter);
 // Meta / Infobip inbound messaging webhooks — verified by provider signature/tokens at handler level.
 app.use('/api/public/messaging', messagingPublicRouter);
+// Infobip delivery-receipt webhook — verified by INFOBIP_WEBHOOK_SECRET if configured.
+app.use('/api/webhooks/infobip', infobipWebhookRouter);
 
 // ── Authenticated routes — ALL protected by authMiddleware + tenantMiddleware ──
 // IMPORTANT: Register middleware on each router directly.
