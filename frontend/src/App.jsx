@@ -65,7 +65,7 @@ const PlatformOwnerRoute = ({ children }) => {
 };
 
 const AuthenticatedApp = () => {
-  const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
+  const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, requiresMfa } = useAuth();
   const pathname = window.location.pathname;
   const isPublicPath =
     pathname === '/RegistrationWizard' ||
@@ -91,6 +91,11 @@ const AuthenticatedApp = () => {
   // appearing on protected routes. Public pages stay reachable without a session.
   if (!isAuthenticated && !isPublicPath) {
     return <Navigate to="/school-login" replace />;
+  }
+
+  // MFA-pending users must verify before reaching any protected page.
+  if (isAuthenticated && requiresMfa && pathname !== '/MfaVerify') {
+    return <Navigate to="/MfaVerify" replace />;
   }
 
   if (authError) {
@@ -144,17 +149,19 @@ const AuthenticatedApp = () => {
           <MainPage />
         </LayoutWrapper>
       } />
-      {Object.entries(Pages).map(([path, Page]) => (
-        <Route
-          key={path}
-          path={`/${path}`}
-          element={
-            <LayoutWrapper currentPageName={path}>
-              <Page />
-            </LayoutWrapper>
-          }
-        />
-      ))}
+      {Object.entries(Pages)
+        .filter(([path]) => path !== 'MfaVerify')
+        .map(([path, Page]) => (
+          <Route
+            key={path}
+            path={`/${path}`}
+            element={
+              <LayoutWrapper currentPageName={path}>
+                <Page />
+              </LayoutWrapper>
+            }
+          />
+        ))}
       <Route path="/SuperAdminDashboard" element={<PlatformOwnerRoute><LayoutWrapper currentPageName="SuperAdminDashboard"><SuperAdminDashboard /></LayoutWrapper></PlatformOwnerRoute>} />
       <Route path="/SubscriptionManagement" element={
         <LayoutWrapper currentPageName="SubscriptionManagement"><SubscriptionManagement /></LayoutWrapper>
@@ -170,6 +177,7 @@ const AuthenticatedApp = () => {
       <Route path="/login" element={<Navigate to="/school-login" replace />} />
       <Route path="/client/login" element={<Navigate to="/school-login" replace />} />
       <Route path="/school-login" element={<SchoolLogin />} />
+      <Route path="/MfaVerify" element={<Pages.MfaVerify />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/setup" element={<SetupAccount />} />

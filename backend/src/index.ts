@@ -9,6 +9,7 @@ import { tenantMiddleware } from './middleware/tenant.js';
 import { supabase } from './lib/supabase.js';
 import { healthRouter } from './routes/health.js';
 import { authRouter } from './routes/auth.js';
+import { mfaRouter } from './routes/mfa.js';
 import { journalEntryRouter } from './routes/journalEntries.js';
 import { tenantRequestRouter } from './routes/tenantRequests.js';
 import { registrationRouter } from './routes/registration.js';
@@ -144,6 +145,8 @@ const apiLimiter = rateLimit({
 
 // ── Public routes (no auth required) ──────────────────────────────────────────
 app.use('/api/health', healthRouter);
+// MFA routes are authenticated but mounted under /api/auth for a consistent namespace.
+app.use('/api/auth/mfa', apiLimiter, authMiddleware, mfaRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/registration', registrationLimiter, registrationRouter);
 // Moyasar server-to-server webhook — verified by shared secret, not JWT.

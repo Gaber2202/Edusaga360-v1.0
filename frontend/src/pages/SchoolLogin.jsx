@@ -51,14 +51,19 @@ export default function SchoolLogin() {
     setLoading(true);
     setAuthFailure('');
     try {
-      const { error } = await login(email, password);
+      const { error, data } = await login(email, password);
       if (error) {
         setAuthFailure(t('فشل تسجيل الدخول. تحقق من بريدك وكلمة المرور.', 'Login failed. Please check your email and password.'));
         setLoading(false);
         return;
       }
       logAuditEvent({ action: AuditActions.LOGIN, entityType: 'Session', entityId: null });
-      window.location.replace('/');
+      const appMeta = data?.user?.app_metadata || {};
+      if (appMeta.mfa_required && !appMeta.mfa_verified_at) {
+        window.location.replace('/MfaVerify');
+      } else {
+        window.location.replace('/');
+      }
     } catch {
       setAuthFailure(t('حدث خطأ. حاول مرة أخرى.', 'An error occurred. Please try again.'));
       setLoading(false);
