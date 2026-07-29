@@ -193,7 +193,11 @@ export class CollectionMessenger {
     for (const msg of (messages ?? []) as unknown as MessengerMessage[]) {
       try {
         const didSend = await this.sendMessage(msg);
-        if (didSend) sent++;
+        if (didSend) {
+          sent++;
+        } else {
+          failed++;
+        }
       } catch (err) {
         console.error(`[collections/messenger] send failed for message ${msg.id}:`, err);
         await this.supabase
@@ -228,37 +232,90 @@ export class CollectionMessenger {
 
     const [bodyAr, bodyEn] = this.fillTemplate(msg.template_key, profile, msg.amount_due ?? 0, msg.due_date ?? '', link.paymentUrl);
     const language = profile.preferred_language ?? 'ar';
-    const to = msg.channel === 'email' ? profile.email : profile.phone;
-    if (!to) throw new Error(`No ${msg.channel} destination for profile ${profile.id}`);
+    const now = new Date().toISOString();
 
-    let providerId = 'email';
+    // Failover chain: try the requested channel first, then cheaper/more reliable fallbacks.
+    const FALLBACK_CHAIN: Record<string, string[]> = {
+      whatsapp: ['sms', 'email'],
+      sms: ['email'],
+      email: [],
+    };
+    const preferredChannel = msg.channel;
+    const channels = [preferredChannel, ...(FALLBACK_CHAIN[preferredChannel] ?? [])];
+
+    const attempts: { channel: string; success: boolean; error?: string; provider_message_id?: string }[] = [];
+    let successChannel: string | null = null;
     let providerMessageId: string | undefined;
-    if (msg.channel === 'email') {
-      await this.sendEmailMessage(to, bodyAr, bodyEn);
-    } else {
-      const connector = await this.selectConnector(msg.tenant_id, msg.channel as 'whatsapp' | 'sms');
-      if (!connector) throw new Error(`No active ${msg.channel} connector configured`);
+    let providerId = 'email';
+    let to = '';
 
-      const provider = getProvider(connector.provider);
-      if (!provider) throw new Error(`Unknown provider ${connector.provider}`);
+    for (const channel of channels) {
+      const destination = channel === 'email' ? profile.email : profile.phone;
+      if (!destination) {
+        attempts.push({ channel, success: false, error: 'no destination' });
+        continue;
+      }
+      to = destination;
 
-      const body = language === 'ar' ? bodyAr : bodyEn;
-      const result = await provider.send({ config: connector.config, credentials: connector.credentials }, { to, text: body, channel: msg.channel as 'whatsapp' | 'sms' });
-      providerId = connector.provider;
-      if (!result.id) throw new Error('Provider did not return a message id');
-      providerMessageId = result.id;
+      try {
+        if (channel === 'email') {
+          await this.sendEmailMessage(to, bodyAr, bodyEn);
+        } else {
+          const connector = await this.selectConnector(msg.tenant_id, channel as 'whatsapp' | 'sms');
+          if (!connector) {
+            attempts.push({ channel, success: false, error: 'no connector' });
+            continue;
+          }
+
+          const provider = getProvider(connector.provider);
+          if (!provider) {
+            attempts.push({ channel, success: false, error: 'provider not found' });
+            continue;
+          }
+
+          const body = language === 'ar' ? bodyAr : bodyEn;
+          const result = await provider.send({ config: connector.config, credentials: connector.credentials }, { to, text: body, channel: channel as 'whatsapp' | 'sms' });
+          if (!result.id) {
+            attempts.push({ channel, success: false, error: 'no message id' });
+            continue;
+          }
+          providerId = connector.provider;
+          providerMessageId = result.id;
+        }
+        successChannel = channel;
+        attempts.push({ channel, success: true, provider_message_id: providerMessageId });
+        break;
+      } catch (err: any) {
+        attempts.push({ channel, success: false, error: err.message ?? 'send failed' });
+      }
+    }
+
+    if (!successChannel) {
+      await this.supabase
+        .from('collection_messages')
+        .update({
+          delivery_status: 'failed',
+          delivery_response: { attempts, final: 'all channels failed' },
+          delivery_updated_at: now,
+        })
+        .eq('id', msg.id)
+        .eq('tenant_id', msg.tenant_id);
+      return false;
     }
 
     const { error: updateError } = await this.supabase
       .from('collection_messages')
       .update({
+        channel: successChannel,
         delivery_status: 'sent',
-        sent_at: new Date().toISOString(),
+        sent_at: now,
         sent_to: to,
         moyasar_link: link.paymentUrl,
         personalized_body_ar: bodyAr,
         personalized_body_en: bodyEn,
         provider_message_id: providerMessageId ?? null,
+        delivery_response: { attempts },
+        delivery_updated_at: now,
       })
       .eq('id', msg.id)
       .eq('tenant_id', msg.tenant_id);
@@ -275,7 +332,7 @@ export class CollectionMessenger {
       reference_id: msg.id,
       input_snapshot: { message_id: msg.id, invoice_id: msg.invoice_id, channel: msg.channel, language },
       decision: 'sent',
-      outcome: { provider: providerId, to, language },
+      outcome: { provider: providerId, channel: successChannel, to, language },
     });
 
     // Mirror the outbound message into the staff↔parent thread for full case history.
