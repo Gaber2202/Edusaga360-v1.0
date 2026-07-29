@@ -10,6 +10,10 @@ export const AuthProvider = ({ children }) => {
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [authError, setAuthError] = useState(null);
 
+  const mfaRequired = !!user?.app_metadata?.mfa_required;
+  const mfaVerified = !!user?.app_metadata?.mfa_verified_at;
+  const requiresMfa = mfaRequired && !mfaVerified;
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
@@ -90,6 +94,9 @@ export const AuthProvider = ({ children }) => {
     isLoadingAuth,
     isLoadingPublicSettings: false,
     authError,
+    mfaRequired,
+    mfaVerified,
+    requiresMfa,
     login,
     signUp,
     logout,
