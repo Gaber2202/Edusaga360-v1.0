@@ -1,0 +1,8 @@
+environment:
+  name: EduSaga 360
+  identifier: EduSaga_360
+  description: ""
+  tags: {}
+  type: Production
+  orgIdentifier: default
+  projectIdentifier: default_project
