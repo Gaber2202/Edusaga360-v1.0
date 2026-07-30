@@ -89,7 +89,7 @@ export default function YamenHRInsights({ module, data = {}, isRTL }) {
     const prompt = modulePrompts[module] || `Analyze this HR module data and provide insights: ${JSON.stringify(data)}. Respond in Arabic and English.`;
     setLoading(true);
     setInsight('');
-    const res = await callApi('/api/ai/invoke-llm', { prompt });
+    const res = await callApi('/api/ai/invoke-llm', { prompt, source: 'hr' });
     setInsight(extractAiText(res));
     setLoading(false);
   };

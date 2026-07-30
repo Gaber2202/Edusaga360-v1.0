@@ -93,7 +93,7 @@ Provide:
 4. Recommended actions for HR
 
 Respond in both Arabic and English. Be specific and actionable.`;
-    const res = await callApi('/api/ai/invoke-llm', { prompt });
+    const res = await callApi('/api/ai/invoke-llm', { prompt, source: 'hr' });
     setAiInsight(extractAiText(res));
     setLoadingAI(false);
   };

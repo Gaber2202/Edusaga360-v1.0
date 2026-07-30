@@ -17,6 +17,7 @@ import Analytics from './pages/Analytics';
 import EmailTemplates from './pages/EmailTemplates';
 import FeatureFlags from './pages/FeatureFlags';
 import AuditLogs from './pages/AuditLogs';
+import YamenAIUsage from './pages/YamenAIUsage';
 import AdminSettings from './pages/AdminSettings';
 
 const queryClient = new QueryClient({
@@ -58,6 +59,7 @@ function AppRoutes() {
         <Route path="/email-templates" element={<EmailTemplates />} />
         <Route path="/feature-flags" element={<FeatureFlags />} />
         <Route path="/audit-logs" element={<AuditLogs />} />
+        <Route path="/yamen-ai-usage" element={<YamenAIUsage />} />
         <Route path="/settings" element={<AdminSettings />} />
       </Routes>
     </AdminLayout>

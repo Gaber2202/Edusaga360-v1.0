@@ -152,6 +152,7 @@ function MyProfileSection({ isRTL, user }) {
 First Name: "${form.first_name}"
 Last Name: "${form.last_name}"
 Return ONLY a JSON object with keys "first_name_ar" and "last_name_ar". No explanation.`,
+      source: 'settings',
       response_json_schema: {
         type: 'object',
         properties: {

@@ -1,9 +1,9 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { callApi } from '../lib/supabase';
+import { callApi, apiGet } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Building2, Users, TrendingUp, Clock, UserPlus, Mail, AlertCircle, DollarSign, Sparkles, Zap } from 'lucide-react';
+import { Building2, Users, TrendingUp, Clock, UserPlus, Mail, AlertCircle, DollarSign, Sparkles, Zap, Brain } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { formatMoney, planLabel } from '../lib/plans';
@@ -54,6 +54,14 @@ export default function Dashboard() {
   });
   const tenants = (tenantsData?.tenants ?? []).slice(0, 6);
 
+  const now = new Date();
+  const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const { data: aiUsage } = useQuery({
+    queryKey: ['admin-ai-usage', currentPeriod],
+    queryFn: () => apiGet('/api/admin/ai-usage', { period: currentPeriod }),
+  });
+  const aiCost = aiUsage?.summary?.cost_usd ?? 0;
+
   return (
     <div className="space-y-6">
       <div>
@@ -74,7 +82,7 @@ export default function Dashboard() {
         <KPI title="MRR" value={formatMoney(stats?.mrr ?? 0)} sub={`${formatMoney(stats?.arr ?? 0)} ARR`} icon={DollarSign} color="emerald" to="/subscriptions" />
         <KPI title="Trials Expiring ≤7d" value={stats?.trialsExpiringSoon ?? 0} sub={`${stats?.trialsExpired ?? 0} expired`} icon={Zap} color="red" to="/trials" />
         <KPI title="Converted This Month" value={stats?.conversionsThisMonth ?? 0} icon={Sparkles} color="emerald" to="/trials" />
-        <KPI title="Pending Actions" value={(stats?.pendingUserRequests ?? 0) + (stats?.pendingTenants ?? 0) + (stats?.pendingInvitations ?? 0)} icon={AlertCircle} color="amber" to="/user-requests" />
+        <KPI title="Yamen AI Cost" value={`$${(aiCost ?? 0).toFixed(4)}`} sub={`${(aiUsage?.summary?.total_tokens ?? 0).toLocaleString()} tokens`} icon={Brain} color="purple" to="/yamen-ai-usage" />
       </div>
 
       {/* Alert row */}

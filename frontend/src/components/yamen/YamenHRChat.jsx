@@ -172,6 +172,7 @@ export default function YamenHRChat({ isRTL, isHRMode }) {
       const res = await callApi('/api/ai/invoke-llm', {
         prompt: text,
         messages: history,
+        source: 'chat',
       });
 
       const responseText = extractAiText(res) || (isRTL ? 'لم يتم استلام رد' : 'No response received');

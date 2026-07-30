@@ -93,7 +93,7 @@ export default function WorkforcePlanning() {
     4. Risk indicators
     
     Respond in both Arabic and English. If data is insufficient, clearly state what's missing.`;
-    const res = await callApi('/api/ai/invoke-llm', { prompt });
+    const res = await callApi('/api/ai/invoke-llm', { prompt, source: 'hr' });
     setAiInsight(extractAiText(res));
     setLoadingAI(false);
   };
