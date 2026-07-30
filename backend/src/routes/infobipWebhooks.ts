@@ -1,9 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { supabase } from '../lib/supabase.js';
+import { InfobipAiAssistant } from '../services/ai/inboundAssistant.js';
 
 export const infobipWebhookRouter = Router();
 
 const INFOBIP_WEBHOOK_SECRET = process.env.INFOBIP_WEBHOOK_SECRET;
+const CALLBACK_URL = `${process.env.FRONTEND_URL ?? 'https://parentportal.edusaga360.com'}/payment/complete`;
+const aiAssistant = new InfobipAiAssistant(supabase, CALLBACK_URL);
 
 interface InfobipStatus {
   name?: string;
@@ -104,5 +107,72 @@ infobipWebhookRouter.post('/', async (req: Request, res: Response) => {
   } catch (err) {
     console.error('[infobip/webhook] delivery report processing failed:', err);
     return res.status(500).json({ error: 'webhook_processing_failed', message: (err as Error).message });
+  }
+});
+
+// ─── POST /api/webhooks/infobip/inbound ───────────────────────────────────────
+// Replies to inbound WhatsApp/SMS messages using the AI parent assistant.
+
+interface InfobipInboundMessage {
+  from?: string;
+  to?: string;
+  messageId?: string;
+  channel?: string;
+  text?: string;
+  message?: { type?: string; text?: string; body?: string };
+  sender?: string;
+  integrationType?: string;
+  receivedAt?: string;
+}
+
+function extractInboundMessages(body: unknown): InfobipInboundMessage[] {
+  if (!body || typeof body !== 'object') return [];
+  const b = body as Record<string, unknown>;
+  if (Array.isArray(b.results)) return b.results as InfobipInboundMessage[];
+  if (Array.isArray(b.messages)) return b.messages as InfobipInboundMessage[];
+  if (b.from || b.sender) return [b as InfobipInboundMessage];
+  return [];
+}
+
+function inboundText(msg: InfobipInboundMessage): string {
+  return (msg.text ?? msg.message?.text ?? msg.message?.body ?? '').trim();
+}
+
+infobipWebhookRouter.post('/inbound', async (req: Request, res: Response) => {
+  try {
+    const token = req.query.token ?? req.headers['x-infobip-webhook-secret'];
+    if (INFOBIP_WEBHOOK_SECRET && token !== INFOBIP_WEBHOOK_SECRET) {
+      return res.status(401).json({ error: 'unauthorized' });
+    }
+
+    const messages = extractInboundMessages(req.body);
+    if (!messages.length) {
+      return res.status(400).json({ error: 'no_messages' });
+    }
+
+    let processed = 0;
+    for (const msg of messages) {
+      const text = inboundText(msg);
+      if (!text) continue;
+
+      const result = await aiAssistant.handleInbound({
+        from: msg.from ?? msg.sender ?? '',
+        to: msg.to ?? '',
+        text,
+        messageId: msg.messageId ?? `${Date.now()}-${processed}`,
+        channel: msg.channel ?? msg.integrationType ?? 'WHATSAPP',
+      });
+
+      if (!result.ok) {
+        console.warn('[infobip/webhook/inbound] message not processed:', result.error, { from: msg.from });
+      } else {
+        processed++;
+      }
+    }
+
+    return res.json({ received: true, processed });
+  } catch (err) {
+    console.error('[infobip/webhook/inbound] processing failed:', err);
+    return res.status(500).json({ error: 'inbound_processing_failed', message: (err as Error).message });
   }
 });
