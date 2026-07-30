@@ -136,7 +136,7 @@ export default function DisciplinaryCases() {
     - Case types: ${JSON.stringify(typeCounts)}
     - Repeat offenders (employees with 2+ cases): ${Object.values(cases.reduce((acc, c) => { acc[c.employee_id] = (acc[c.employee_id] || 0) + 1; return acc; }, {})).filter(v => v >= 2).length}
     Provide insights on patterns, risk indicators, and recommended actions in both Arabic and English.`;
-    const res = await callApi('/api/ai/invoke-llm', { prompt });
+    const res = await callApi('/api/ai/invoke-llm', { prompt, source: 'hr' });
     setAiInsight(extractAiText(res));
     setLoadingAI(false);
   };

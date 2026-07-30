@@ -34,6 +34,7 @@ Respond in JSON format.`;
       const analysisResult = await callApi('/api/ai/invoke-llm', {
         prompt: visionPrompt,
         file_urls: [file_url],
+        source: 'documents',
         model: 'gemini_3_pro',
         response_json_schema: {
           type: 'object',

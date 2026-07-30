@@ -133,7 +133,7 @@ export default function Engagement() {
     setLoadingAI(true);
     try {
       const prompt = `You are Yamen AI, an HR helpdesk assistant for a Saudi school (EduSaga 360 platform). Answer this employee query helpfully in both Arabic and English:\n\n"${aiChat}"\n\nConsider Saudi labor law, school policies, and HR best practices.`;
-      const res = await callApi('/api/ai/invoke-llm', { prompt });
+      const res = await callApi('/api/ai/invoke-llm', { prompt, source: 'hr' });
       setAiResponse(extractAiText(res));
     } catch (_) {
       setAiResponse(isRTL ? 'عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.' : 'Sorry, an error occurred. Please try again.');

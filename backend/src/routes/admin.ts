@@ -850,7 +850,7 @@ adminRouter.get('/tenants/:id/ai', async (req: AuthenticatedRequest, res) => {
 
   const [{ data: tenant, error: tErr }, { data: providers, error: pErr }] = await Promise.all([
     supabase.from('tenants')
-      .select('yamen_ai_token_limit, yamen_ai_tokens_used_this_month, yamen_ai_used_this_month, yamen_ai_usage_period')
+      .select('yamen_ai_token_limit, yamen_ai_tokens_used_this_month, yamen_ai_used_this_month, yamen_ai_usage_period, yamen_ai_cost_usd_this_month')
       .eq('id', id).maybeSingle(),
     supabase.from('tenant_ai_providers')
       .select('id, name, format, base_url, model, api_key_enc, is_active, priority, created_at')
@@ -865,6 +865,7 @@ adminRouter.get('/tenants/:id/ai', async (req: AuthenticatedRequest, res) => {
     token_limit: tenant?.yamen_ai_token_limit ?? null,      // null = unlimited
     tokens_used_this_month: periodCurrent ? Number(tenant?.yamen_ai_tokens_used_this_month ?? 0) : 0,
     requests_this_month: periodCurrent ? Number(tenant?.yamen_ai_used_this_month ?? 0) : 0,
+    cost_usd_this_month: periodCurrent ? Number(tenant?.yamen_ai_cost_usd_this_month ?? 0) : 0,
     usage_period: tenant?.yamen_ai_usage_period ?? null,
     providers: (providers ?? []).map((p) => ({
       id: p.id,
@@ -949,4 +950,65 @@ adminRouter.delete('/tenants/:id/ai/providers/:providerId', async (req: Authenti
   if (error) return res.status(500).json({ message: error.message });
   await writeAudit(req, { action: 'tenant.ai_remove_provider', target_type: 'tenant', target_id: id, tenant_id: id, metadata: { name: data?.name, provider_id: providerId } });
   return res.json({ success: true });
+});
+
+/** Aggregate Yamen AI usage and cost. Platform owners can see all tenants. */
+adminRouter.get('/ai-usage', async (req: AuthenticatedRequest, res) => {
+  if (!await requirePlatformOwner(req, res)) return;
+
+  const period = (req.query.period as string) || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+  const tenantId = (req.query.tenant_id as string) || null;
+
+  const base = supabase.from('yamen_ai_usage_log').select('*', { count: 'exact' })
+    .eq('period', period)
+    .order('created_at', { ascending: false });
+
+  const { data: rows, error, count } = tenantId ? await base.eq('tenant_id', tenantId) : await base;
+  if (error) return res.status(500).json({ message: error.message });
+
+  const safe = rows || [];
+  const summary = safe.reduce((acc: any, r: any) => {
+    acc.requests += 1;
+    acc.input_tokens += Number(r.input_tokens || 0);
+    acc.output_tokens += Number(r.output_tokens || 0);
+    acc.total_tokens += Number(r.total_tokens || 0);
+    acc.cost_usd += Number(r.cost_usd || 0);
+    return acc;
+  }, { requests: 0, input_tokens: 0, output_tokens: 0, total_tokens: 0, cost_usd: 0 });
+
+  function groupBy(key: string) {
+    const map: Record<string, { requests: number; input_tokens: number; output_tokens: number; total_tokens: number; cost_usd: number }> = {};
+    for (const r of safe) {
+      const k = (r as any)[key] || 'unknown';
+      if (!map[k]) map[k] = { requests: 0, input_tokens: 0, output_tokens: 0, total_tokens: 0, cost_usd: 0 };
+      map[k].requests += 1;
+      map[k].input_tokens += Number(r.input_tokens || 0);
+      map[k].output_tokens += Number(r.output_tokens || 0);
+      map[k].total_tokens += Number(r.total_tokens || 0);
+      map[k].cost_usd += Number(r.cost_usd || 0);
+    }
+    return Object.entries(map).map(([name, totals]) => ({ name, ...totals })).sort((a, b) => b.total_tokens - a.total_tokens);
+  }
+
+  return res.json({
+    period,
+    tenant_id: tenantId,
+    summary,
+    by_provider: groupBy('provider'),
+    by_source: groupBy('source'),
+    by_tenant: groupBy('tenant_id'),
+    recent: safe.slice(0, 50).map((r: any) => ({
+      id: r.id,
+      tenant_id: r.tenant_id,
+      provider: r.provider,
+      model: r.model,
+      source: r.source,
+      input_tokens: r.input_tokens,
+      output_tokens: r.output_tokens,
+      total_tokens: r.total_tokens,
+      cost_usd: r.cost_usd,
+      created_at: r.created_at,
+    })),
+    total_count: count ?? safe.length,
+  });
 });

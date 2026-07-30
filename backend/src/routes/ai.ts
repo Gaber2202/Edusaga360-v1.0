@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { AuthenticatedRequest } from '../middleware/auth.js';
 import { sanitizeSearchTerm } from '../lib/sanitize.js';
 import { decryptSecret } from '../lib/aiCrypto.js';
+import { calculateCost } from '../lib/aiPricing.js';
 
 export const aiRouter = Router();
 
@@ -511,8 +512,12 @@ async function runTool(name: string, input: Record<string, unknown>, tenantId: s
 
 export interface Message { role: 'user' | 'assistant'; content: string | unknown[] }
 
-/** Accumulates total tokens consumed across an agentic run, for metering. */
-export interface UsageSink { tokens: number }
+/** Accumulates token usage across an agentic run, for metering. */
+export interface UsageSink {
+  input: number;
+  output: number;
+  total: number;
+}
 
 export async function callClaudeWithTools(
   messages: Message[],
@@ -549,7 +554,11 @@ export async function callClaudeWithTools(
     }
 
     const data = await res.json() as any;
-    if (usage) usage.tokens += (data.usage?.input_tokens ?? 0) + (data.usage?.output_tokens ?? 0);
+    if (usage) {
+      usage.input += Number(data.usage?.input_tokens ?? 0);
+      usage.output += Number(data.usage?.output_tokens ?? 0);
+      usage.total += Number(data.usage?.input_tokens ?? 0) + Number(data.usage?.output_tokens ?? 0);
+    }
 
     if (data.stop_reason === 'end_turn') {
       // Final text response
@@ -635,7 +644,12 @@ export async function callGeminiWithTools(
     const data = await res.json() as any;
     if (usage) {
       const u = data.usageMetadata;
-      usage.tokens += u?.totalTokenCount ?? ((u?.promptTokenCount ?? 0) + (u?.candidatesTokenCount ?? 0));
+      const prompt = Number(u?.promptTokenCount ?? 0);
+      const candidates = Number(u?.candidatesTokenCount ?? 0);
+      const total = u?.totalTokenCount != null ? Number(u.totalTokenCount) : prompt + candidates;
+      usage.input += prompt;
+      usage.output += candidates;
+      usage.total += total;
     }
     const candidate = data.candidates?.[0];
     if (!candidate) return 'No response from Gemini.';
@@ -715,7 +729,12 @@ export async function callOpenAICompatibleWithTools(
     const data = await res.json() as any;
     if (usage) {
       const u = data.usage;
-      usage.tokens += u?.total_tokens ?? ((u?.prompt_tokens ?? 0) + (u?.completion_tokens ?? 0));
+      const prompt = Number(u?.prompt_tokens ?? 0);
+      const completion = Number(u?.completion_tokens ?? 0);
+      const total = u?.total_tokens != null ? Number(u.total_tokens) : prompt + completion;
+      usage.input += prompt;
+      usage.output += completion;
+      usage.total += total;
     }
     const message = data.choices?.[0]?.message;
     if (!message) return 'No response generated.';
@@ -802,13 +821,21 @@ async function probeActiveProvider(): Promise<Record<string, unknown>> {
 // ─── Provider resolution ──────────────────────────────────────────────────────
 // Ordered list of providers to attempt for a request, honouring AI_PROVIDER.
 
-export interface ProviderResult { text: string; tokens: number }
+export interface ProviderResult {
+  text: string;
+  tokens: number;
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number;
+  provider: string;
+  model: string;
+}
 export interface ProviderRunner { name: string; run: () => Promise<ProviderResult> }
 
 /** Map a provider def to a runnable, choosing the adapter by wire format. */
 function runnerForDef(def: ProviderDef, messages: Message[], tenantId: string): ProviderRunner {
   const run = async (): Promise<ProviderResult> => {
-    const usage: UsageSink = { tokens: 0 };
+    const usage: UsageSink = { input: 0, output: 0, total: 0 };
     let text: string;
     if (def.format === 'gemini') {
       text = await callGeminiWithTools(messages, tenantId, SYSTEM_PROMPT, usage);
@@ -824,7 +851,15 @@ function runnerForDef(def: ProviderDef, messages: Message[], tenantId: string): 
       };
       text = await callOpenAICompatibleWithTools(messages, tenantId, SYSTEM_PROMPT, cfg, usage);
     }
-    return { text, tokens: usage.tokens };
+    return {
+      text,
+      tokens: usage.total,
+      inputTokens: usage.input,
+      outputTokens: usage.output,
+      costUsd: calculateCost(usage.input, usage.output, def.model),
+      provider: def.name,
+      model: def.model,
+    };
   };
   return { name: def.name, run };
 }
@@ -942,6 +977,7 @@ const InvokeLLMSchema = z.object({
     content: z.string().max(4000),
   })).max(20).optional(),
   mode:     z.enum(['chat', 'compliance_check']).optional().default('chat'),
+  source:   z.string().max(40).optional(),
 });
 
 const SYSTEM_PROMPT = `You are Yamen, the AI assistant for EduSaga 360 — a Saudi school management platform.
@@ -985,11 +1021,26 @@ export async function checkTokenQuota(tenantId: string): Promise<QuotaState> {
 }
 
 /** Record token usage for a tenant (atomic, monthly-resetting). Best-effort. */
-async function recordTokenUsage(tenantId: string, tokens: number): Promise<void> {
-  if (tokens <= 0) return;
-  const { error } = await supabase.rpc('record_ai_usage', { p_tenant_id: tenantId, p_tokens: tokens });
+async function recordAIUsage(
+  tenantId: string,
+  result: { tokens: number; inputTokens: number; outputTokens: number; costUsd: number; provider: string; model: string },
+  source?: string,
+): Promise<void> {
+  if (result.tokens <= 0) return;
+  const { error } = await supabase.rpc('record_ai_usage', {
+    p_tenant_id: tenantId,
+    p_tokens: result.tokens,
+    p_provider: result.provider ?? null,
+    p_model: result.model ?? null,
+    p_source: source ?? null,
+    p_input_tokens: result.inputTokens ?? 0,
+    p_output_tokens: result.outputTokens ?? 0,
+    p_cost_usd: result.costUsd ?? 0,
+  });
   if (error) console.warn('[ai] record_ai_usage failed:', error.message);
 }
+
+export { recordAIUsage };
 
 function quotaExceededMessage(limit: number, used: number): string {
   return (
@@ -1007,7 +1058,7 @@ aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) =>
     const parsed = InvokeLLMSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: 'Invalid request', errors: parsed.error.flatten() });
 
-    const { prompt, messages, mode } = parsed.data;
+    const { prompt, messages, mode, source } = parsed.data;
     const tenant_id = req.user!.tenant_id!;
 
     // Compliance check shortcut — directly runs get_compliance_alerts
@@ -1073,8 +1124,8 @@ aiRouter.post('/invoke-llm', async (req: AuthenticatedRequest, res: Response) =>
     for (const runner of runners) {
       try {
         const result = await runner.run();
-        await recordTokenUsage(tenant_id, result.tokens);
-        return res.json({ response: result.text, provider: runner.name, tokens_used: result.tokens });
+        await recordAIUsage(tenant_id, result, source);
+        return res.json({ response: result.text, provider: runner.name, tokens_used: result.tokens, cost_usd: result.costUsd, input_tokens: result.inputTokens, output_tokens: result.outputTokens });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         console.warn(`[ai] ${runner.name} failed:`, msg);
@@ -1118,11 +1169,20 @@ aiRouter.post('/compliance-alerts', async (req: AuthenticatedRequest, res: Respo
       role: 'user',
       content: `Based on these compliance alerts for our school, write a short executive summary (3-5 bullet points) in Arabic. Be direct about critical items first:\n\n${JSON.stringify(alerts, null, 2)}`,
     }];
+    let used: ProviderResult | null = null;
     for (const runner of resolveProviders(summaryMessages, tenant_id)) {
-      try { summary = (await runner.run()).text; break; } catch { /* try next provider */ }
+      try {
+        used = await runner.run();
+        summary = used.text;
+        break;
+      } catch { /* try next provider */ }
     }
 
-    return res.json({ alerts, summary });
+    if (used) {
+      await recordAIUsage(tenant_id, used, 'compliance');
+    }
+
+    return res.json({ alerts, summary, tokens_used: used?.tokens ?? 0, cost_usd: used?.costUsd ?? 0 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     console.error('Compliance alerts error:', message);

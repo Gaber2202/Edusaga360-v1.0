@@ -149,7 +149,7 @@ export default function RecruitmentPage() {
       const rec = recruitments.find(r => r.id === recruitmentId);
       const relevantApplicants = applicants.filter(a => a.recruitment_id === recruitmentId);
       const prompt = `You are Yamen AI, an HR assistant for a Saudi school. Analyze these applicants for the position "${rec?.position_name}" and rank them. Requirements: ${rec?.required_qualifications || 'N/A'}. Job description: ${rec?.job_description || 'N/A'}.\n\nApplicants:\n${relevantApplicants.map((a, i) => `${i+1}. ${a.full_name_ar} (${a.full_name_en}) - Education: ${a.education_level}, Experience: ${a.years_of_experience} years, Specialization: ${a.specialization}, Expected Salary: ${a.expected_salary} SAR, Interview Scores: Tech=${a.interview_technical_score}/10 Comm=${a.interview_communication_score}/10 Culture=${a.interview_culture_score}/10`).join('\n')}\n\nProvide a ranked list with AI score (0-100) and reasoning for each. Format as JSON array: [{"name":"...","score":85,"reasoning":"..."}]. Also provide Arabic summary.`;
-      const res = await callApi('/api/ai/invoke-llm', { prompt });
+      const res = await callApi('/api/ai/invoke-llm', { prompt, source: 'recruitment' });
       const text = extractAiText(res);
       try {
         const jsonMatch = text.match(/\[[\s\S]*?\]/);

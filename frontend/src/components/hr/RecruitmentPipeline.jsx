@@ -231,7 +231,7 @@ Provide:
 5. Hire / Hold / No-Hire recommendation with clear reasoning
 
 Respond in both Arabic and English. Be concise and specific.`;
-    const res = await callApi('/api/ai/invoke-llm', { prompt });
+    const res = await callApi('/api/ai/invoke-llm', { prompt, source: 'recruitment' });
     setAiSuggestion(extractAiText(res));
     setLoadingAI(false);
   };

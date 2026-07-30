@@ -86,7 +86,7 @@ export default function YamenExecutiveReport({ isRTL }) {
       `أنت يامن، مساعد الموارد البشرية الذكي لنظام EduSaga. اكتب تقريراً تنفيذياً أسبوعياً لإدارة الموارد البشرية بأسلوب احترافي سعودي باللغة العربية.\n\nالبيانات:\n- إجمالي الموظفين النشطين: ${stats.active}\n- نسبة السعودة: ${stats.saudizationPct}%\n- موظفون عالي المخاطر: ${stats.highRiskCount}\n- إقامات منتهية: ${stats.expiredIqama}\n- طلبات إجازة معلقة: ${stats.pendingLeaves}\n- إجمالي الرواتب هذا الشهر: ${stats.totalPayroll.toLocaleString()} ريال\n- درجة صحة الموارد البشرية: ${stats.healthScore}%\n\nاكتب ملخصاً تنفيذياً من 3 فقرات يشمل: الوضع العام، المخاطر الرئيسية، التوصيات. لا تختلق أرقاماً خارج المعطيات.` :
       `You are YAMEN, the AI HR Companion for EduSaga. Write a professional weekly executive HR report summary in English.\n\nData:\n- Active employees: ${stats.active}\n- Saudization: ${stats.saudizationPct}%\n- High risk employees: ${stats.highRiskCount}\n- Expired Iqamas: ${stats.expiredIqama}\n- Pending leaves: ${stats.pendingLeaves}\n- Monthly payroll: SAR ${stats.totalPayroll.toLocaleString()}\n- HR Health Score: ${stats.healthScore}%\n\nWrite a 3-paragraph executive summary: overall status, key risks, recommendations. Use only the provided data.`;
 
-      const res = await callApi('/api/ai/invoke-llm', { prompt });
+      const res = await callApi('/api/ai/invoke-llm', { prompt, source: 'executive' });
       setAiSummary(extractAiText(res));
     } catch (e) {toast.error(aiErrorMessage(e, isRTL));} finally
     {setGenerating(false);}

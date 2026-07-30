@@ -34,6 +34,7 @@ export default function YamenDocumentGenerator({ isRTL }) {
 
       const enhanced = await callApi('/api/ai/invoke-llm', {
         prompt: enhancedPrompt,
+        source: 'documents',
         model: 'gemini_3_pro',
       });
 

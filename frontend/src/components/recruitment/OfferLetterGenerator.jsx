@@ -88,6 +88,7 @@ Both must be complete, professional, and include all the above details. Include 
 
     const res = await callApi('/api/ai/invoke-llm', {
       prompt,
+      source: 'recruitment',
       response_json_schema: {
         type: 'object',
         properties: {

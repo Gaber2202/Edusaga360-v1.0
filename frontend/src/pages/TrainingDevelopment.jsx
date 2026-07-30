@@ -115,7 +115,7 @@ export default function TrainingDevelopment() {
     - Employees with expiring certifications (within 60 days): ${expiringCerts.length}
     - Mandatory trainings: ${trainings.filter(t => t.is_mandatory).length}
     Provide a brief executive summary with risks and recommendations. If data is missing or insufficient, say so clearly.`;
-    const res = await callApi('/api/ai/invoke-llm', { prompt });
+    const res = await callApi('/api/ai/invoke-llm', { prompt, source: 'hr' });
     setAiInsight(extractAiText(res));
     setLoadingAI(false);
   };

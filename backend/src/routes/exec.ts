@@ -9,7 +9,7 @@ import {
   EXEC_PERSONAS,
   ExecPersona,
 } from '../middleware/execAccess.js';
-import { resolveProviders, Message } from './ai.js';
+import { resolveProviders, Message, recordAIUsage } from './ai.js';
 import { MetricsService } from '../services/metrics.js';
 import { renderDashboardExport } from '../services/execExport.js';
 
@@ -259,20 +259,24 @@ async function generateAndCacheBrief(tenant_id: string, period: string, generate
 
   let brief: BoardBrief | null = null;
   let usedProvider: string | null = null;
+  let usedResult: any = null;
   for (const runner of resolveProviders(buildBriefPrompt(metrics), tenant_id)) {
     try {
-      const raw = (await runner.run()).text;
-      const parsed = parseBriefResponse(raw);
+      const result = await runner.run();
+      const parsed = parseBriefResponse(result.text);
       if (parsed) {
         brief = parsed;
         usedProvider = runner.name;
+        usedResult = result;
         break;
       }
     } catch {
       /* try next provider */
     }
   }
-  if (!brief) return null;
+  if (!brief || !usedResult) return null;
+
+  await recordAIUsage(tenant_id, usedResult, 'executive');
 
   await supabase.from('exec_brief_cache').upsert(
     {

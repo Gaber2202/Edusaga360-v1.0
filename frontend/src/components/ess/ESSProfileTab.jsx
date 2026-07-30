@@ -78,7 +78,7 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
     - Active Contracts: ${contracts.filter(c => c.status === 'active').length}
     
     Provide: risk score (Low/Medium/High), key alerts, and recommendations. If data is insufficient, state what is missing.`;
-    const res = await callApi('/api/ai/invoke-llm', { prompt });
+    const res = await callApi('/api/ai/invoke-llm', { prompt, source: 'ess' });
     setAiInsight(extractAiText(res));
     setLoadingAI(false);
   };

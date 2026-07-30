@@ -10,7 +10,7 @@ import {
 } from './ui/dropdown-menu';
 import {
   LayoutDashboard, Building2, Users, UserPlus, CreditCard, Activity,
-  Settings, LogOut, Mail, Flag, History, ChevronLeft, ChevronRight, Send, Clock,
+  Settings, LogOut, Mail, Flag, History, ChevronLeft, ChevronRight, Send, Clock, Brain,
 } from 'lucide-react';
 
 const navigation = [
@@ -25,6 +25,7 @@ const navigation = [
   { name: 'Email Templates', icon: Mail, path: '/email-templates' },
   { name: 'Feature Flags', icon: Flag, path: '/feature-flags' },
   { name: 'Audit Logs', icon: History, path: '/audit-logs' },
+  { name: 'Yamen AI Usage', icon: Brain, path: '/yamen-ai-usage' },
   { name: 'Settings', icon: Settings, path: '/settings' },
 ];
 
