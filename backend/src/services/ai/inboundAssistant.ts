@@ -76,7 +76,6 @@ export class InfobipAiAssistant {
         guardian.id,
         text,
         text,
-        payload.messageId,
       );
 
       const { intent } = classifyIntent(text);
@@ -89,7 +88,6 @@ export class InfobipAiAssistant {
         undefined,
         reply.ar,
         reply.en,
-        payload.messageId,
       );
 
       if (intent === 'human') {
