@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase, callApi } from '../api/supabaseClient';
 import { useAuth } from '../lib/AuthContext';
 import { Button } from '../components/ui/button';
@@ -25,17 +25,21 @@ export default function MfaVerify() {
   const [info, setInfo] = useState('');
   const [otp, setOtp] = useState(null);
   const [countdown, setCountdown] = useState(0);
+  const sentRef = useRef(false);
 
   const isRTL = lang === 'ar';
   const t = (ar, en) => (isRTL ? ar : en);
 
   useEffect(() => {
-    if (!requiresMfa && user) {
+    if (!user) return;
+    if (!requiresMfa) {
       window.location.replace('/');
       return;
     }
+    if (sentRef.current) return;
+    sentRef.current = true;
     sendCode();
-  }, []);
+  }, [user, requiresMfa]);
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -48,12 +52,7 @@ export default function MfaVerify() {
     setError('');
     setInfo('');
     try {
-      const res = await callApi('/api/auth/mfa/send', { language: lang });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || t('فشل إرسال الرمز.', 'Failed to send code.'));
-      }
-      const data = await res.json();
+      const data = await callApi('/api/auth/mfa/send', { language: lang });
       setOtp(data);
       setInfo(
         t(
@@ -75,11 +74,7 @@ export default function MfaVerify() {
     setLoading(true);
     setError('');
     try {
-      const res = await callApi('/api/auth/mfa/verify', { otp_id: otp.otp_id, code });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || t('رمز غير صحيح.', 'Invalid code.'));
-      }
+      await callApi('/api/auth/mfa/verify', { otp_id: otp.otp_id, code });
       // Refresh the Supabase session so the new mfa_verified_at app_metadata claim is loaded.
       await supabase.auth.refreshSession();
       window.location.replace('/');
