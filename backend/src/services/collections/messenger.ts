@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { getProvider } from '../messaging/registry.js';
 import { decryptSecret, isAiCryptoConfigured } from '../../lib/aiCrypto.js';
 import { sendEmail as sendTransactionalEmail } from '../email.js';
-import { getOrCreateMoyasarLink } from '../moyasar/moyasarService.js';
+import { getOrCreateMoyasarLink } from '../../packs/sa/moyasarService.js';
 import { writeLedger } from './ledgerWriter.js';
 import { CollectionThreadService } from './threads.js';
 

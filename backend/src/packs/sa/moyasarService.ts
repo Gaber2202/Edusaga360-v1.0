@@ -2,8 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import { MoyasarClient, type MoyasarInvoiceItem } from './moyasarClient.js';
 import { toMinorUnits, toMajorUnits, roundToMinorUnits, getMinorUnits } from '../../lib/money.js';
-import { getTenantComplianceData } from '../tenant.js';
-import { createReceiptForPayment } from '../receipt.js';
+import { getTenantComplianceData } from '../../services/tenant.js';
+import { createReceiptForPayment } from '../../services/receipt.js';
 
 export interface MoyasarLinkOptions {
   tenantId: string;

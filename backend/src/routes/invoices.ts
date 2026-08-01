@@ -18,7 +18,7 @@ import {
   invoiceDataFromRow,
 } from '../packs/sa/zatca.js';
 import { getTenantComplianceData } from '../services/tenant.js';
-import { getOrCreateMoyasarLink } from '../services/moyasar/moyasarService.js';
+import { getOrCreateMoyasarLink } from '../packs/sa/moyasarService.js';
 import { PdfQueueSaturatedError } from '../lib/pdfConcurrency.js';
 
 export const invoiceRouter = Router();

@@ -33,7 +33,7 @@ import { createReceiptForPayment } from '../services/receipt.js';
 import { convertToInvoice } from '../services/lifecycle.js';
 import { shareInvoice } from '../services/share.js';
 import type { ShareChannel } from '../services/share.js';
-import { createOrRefreshMoyasarLink, bulkCreateMoyasarInvoices, requestMoyasarRefund, reconcileMoyasarState, type MoyasarLinkResult } from '../services/moyasar/moyasarService.js';
+import { createOrRefreshMoyasarLink, bulkCreateMoyasarInvoices, requestMoyasarRefund, reconcileMoyasarState, type MoyasarLinkResult } from '../packs/sa/moyasarService.js';
 import { applyDiscounts } from '../packs/sa/feeGovernance.js';
 import {
   getAgingReport,

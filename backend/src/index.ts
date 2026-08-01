@@ -48,7 +48,7 @@ import { SegmentationRunner } from './services/collections/runner.js';
 import { CollectionMessenger } from './services/collections/messenger.js';
 import { InstallmentPlanEngine } from './services/collections/installments.js';
 import { GuaranteeEngine } from './services/collections/guarantee.js';
-import { reconcileMoyasarState } from './services/moyasar/moyasarService.js';
+import { reconcileMoyasarState } from './packs/sa/moyasarService.js';
 import { MetricsService } from './services/metrics.js';
 
 dotenv.config();

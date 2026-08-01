@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createSupabaseStub, injectUser, QueryContext } from '../support/supabaseMock.js';
-import { MoyasarClient } from '../../services/moyasar/moyasarClient.js';
+import { MoyasarClient } from '../../packs/sa/moyasarClient.js';
 import { golden } from './support/golden.js';
 
 const db = createSupabaseStub();
@@ -75,7 +75,7 @@ describe('Moyasar outbound payload golden snapshots', () => {
         data: { id: 'msar-inv-1', url: 'https://moyasar.com/invoice/1', status: 'initiated' },
       });
 
-    const { createOrRefreshMoyasarLink } = await import('../../services/moyasar/moyasarService.js');
+    const { createOrRefreshMoyasarLink } = await import('../../packs/sa/moyasarService.js');
     await createOrRefreshMoyasarLink(db.client as any, {
       tenantId: 'tenant-A',
       invoiceId: 'inv-1',
@@ -118,7 +118,7 @@ describe('Moyasar outbound payload golden snapshots', () => {
         data: { id: 'ref-1' },
       });
 
-    const { requestMoyasarRefund } = await import('../../services/moyasar/moyasarService.js');
+    const { requestMoyasarRefund } = await import('../../packs/sa/moyasarService.js');
     await requestMoyasarRefund(db.client as any, 'tenant-A', 'pmt-1', 500);
 
     expect(spy).toHaveBeenCalledTimes(1);
