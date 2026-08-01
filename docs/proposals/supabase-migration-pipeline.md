@@ -135,6 +135,19 @@ The manifest becomes the single source of truth:
 }
 ```
 
+## 5. Required pattern: expand-contract for column renames
+
+Column renames (e.g. `currency` → `currency_code`, `amount_halala` → `amount_minor`) must use an expand-contract sequence, not a hard `ALTER TABLE ... RENAME COLUMN`. The `20260801_task3_category_b_c.sql` migration worked only because production had no real users at the time; with a live school, a hard rename creates an outage window between the migration and the deployed code.
+
+The pipeline must enforce this pattern:
+
+1. **Add the new column** — `ALTER TABLE t ADD COLUMN new_name TYPE;`.
+2. **Backfill and dual-write** — update application code to write both old and new columns (or use a trigger/view to keep them in sync), and migrate existing rows.
+3. **Move reads to the new column** — update all `SELECT` references to the new column.
+4. **Drop the old column** — only after the previous steps have been deployed and verified.
+
+For the `invoices.balance` generated-column change, the same principle applies in reverse: the migration must be marked `post_deploy` and run only after the application code no longer writes the column.
+
 ## Outcome once implemented
 
 - Every push to `main` automatically applies pending migrations.
