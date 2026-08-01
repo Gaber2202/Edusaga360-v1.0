@@ -7,13 +7,13 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest';
 import QRCode from 'qrcode';
+import type { InvoiceData } from '../../services/vat.js';
 import {
   buildInvoiceHTML,
   generateUBLXml,
   generateInvoiceHash,
   signInvoice,
   generateTLVQR,
-  InvoiceData,
   TenantData,
 } from '../../services/zatca.js';
 import { golden } from './support/golden.js';

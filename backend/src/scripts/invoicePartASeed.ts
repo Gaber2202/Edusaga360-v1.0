@@ -1,12 +1,12 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import type { InvoiceData } from '../services/vat.js';
 import {
   generateZATCAInvoicePDF,
   generateUBLXml,
   generateTLVQR,
   generateInvoiceHash,
-  InvoiceData,
   TenantData,
 } from '../services/zatca.js';
 

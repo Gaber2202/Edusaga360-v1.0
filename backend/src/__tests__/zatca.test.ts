@@ -13,12 +13,12 @@
  * Pure functions — no Supabase or network involved.
  */
 import { describe, it, expect } from 'vitest';
+import type { InvoiceData } from '../services/vat.js';
 import {
   generateTLVQR,
   generateUBLXml,
   generateInvoiceHash,
   generateZATCAInvoicePDF,
-  InvoiceData,
   TenantData,
 } from '../services/zatca.js';
 
