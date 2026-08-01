@@ -48,7 +48,7 @@ SKIP_DIRS = {"node_modules", ".git"}
 # form `const { jurisdictionCode } = tenant`; those are caught by tsc linting and
 # should be refactored to use resolveJurisdiction() anyway.
 DIRECT_READ_RE = re.compile(
-    r"(tenant|branch)\s*\.\s*(jurisdiction_code|jurisdictionCode)",
+    r"(tenant|branch)\s*\?{0,1}\s*\.\s*(jurisdiction_code|jurisdictionCode)",
     re.IGNORECASE,
 )
 
