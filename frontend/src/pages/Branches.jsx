@@ -16,6 +16,8 @@ import { toast } from 'sonner';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 
+const KNOWN_JURISDICTIONS = ['SA', 'AE', 'QA'];
+
 export default function Branches() {
   const { t, isRTL } = useLanguage();
   const queryClient = useQueryClient();
@@ -33,7 +35,8 @@ export default function Branches() {
     address: '',
     phone: '',
     email: '',
-    status: 'active'
+    status: 'active',
+    jurisdiction_code: ''
   });
 
   const { data: branches = [], isLoading } = useQuery({
@@ -47,7 +50,11 @@ export default function Branches() {
       toast.error(isRTL ? 'يرجى ملء الحقول المطلوبة' : 'Please fill in required fields');
       return;
     }
-    
+    if (!formData.jurisdiction_code || !KNOWN_JURISDICTIONS.includes(formData.jurisdiction_code)) {
+      toast.error(isRTL ? 'يرجى اختيار جهة صالحة' : 'Please select a valid jurisdiction');
+      return;
+    }
+
     setSaving(true);
     try {
       const branchCode = formData.code || `BR-${Date.now().toString(36).toUpperCase()}`;
@@ -75,16 +82,17 @@ export default function Branches() {
 
   const handleEdit = (branch) => {
     setEditingBranch(branch);
-    // CRITICAL FIX: Properly load branch data for editing
+    const { jurisdiction_code, ...rest } = branch;
     setFormData({
-      code: branch.code || '',
-      name_ar: branch.name_ar || '',
-      name_en: branch.name_en || '',
-      city: branch.city || '',
-      address: branch.address || '',
-      phone: branch.phone || '',
-      email: branch.email || '',
-      status: branch.status || 'active'
+      code: rest.code || '',
+      name_ar: rest.name_ar || '',
+      name_en: rest.name_en || '',
+      city: rest.city || '',
+      address: rest.address || '',
+      phone: rest.phone || '',
+      email: rest.email || '',
+      status: rest.status || 'active',
+      jurisdiction_code: jurisdiction_code || ''
     });
     setShowForm(true);
   };
@@ -93,7 +101,7 @@ export default function Branches() {
     setEditingBranch(null);
     setFormData({
       code: '', name_ar: '', name_en: '', city: '', address: '', phone: '',
-      email: '', status: 'active'
+      email: '', status: 'active', jurisdiction_code: ''
     });
   };
 
@@ -159,6 +167,19 @@ export default function Branches() {
             <div className="space-y-2">
               <Label>{t('address')}</Label>
               <Textarea value={formData.address} onChange={(e) => setFormData(p => ({...p, address: e.target.value}))} rows={2} />
+            </div>
+            <div className="space-y-2">
+              <Label>{isRTL ? 'الاختصاص القضائي' : 'Jurisdiction'} *</Label>
+              <select
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={formData.jurisdiction_code}
+                onChange={(e) => setFormData(p => ({...p, jurisdiction_code: e.target.value}))}
+              >
+                <option value="">{isRTL ? 'اختر الاختصاص' : 'Select jurisdiction'}</option>
+                {KNOWN_JURISDICTIONS.map(code => (
+                  <option key={code} value={code}>{code}</option>
+                ))}
+              </select>
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={formData.status === 'active'} onCheckedChange={(v) => setFormData(p => ({...p, status: v ? 'active' : 'inactive'}))} />

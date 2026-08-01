@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { sendEmail } from '../services/email.js';
+import { validateJurisdictionCode } from '../lib/jurisdiction.js';
 
 export const registrationRouter = Router();
 
@@ -19,6 +20,21 @@ const onboardingTokenExpiry = () => new Date(Date.now() + ONBOARDING_TOKEN_TTL_M
 // Secret used to sign approve/deny links so they can't be forged.
 // Set ADMIN_LINK_SECRET in Railway env vars to a long random string.
 const ADMIN_LINK_SECRET = process.env.ADMIN_LINK_SECRET || 'change-me-in-production';
+
+/**
+ * Map an ISO / registration country string to a jurisdiction code.
+ * This is a temporary convenience for the registration flow while the
+ * registration form only collects `country`. New registrations must resolve
+ * to a known jurisdiction before the tenant is created.
+ */
+const COUNTRY_TO_JURISDICTION: Record<string, string> = {
+  SA: 'SA',
+  'SAUDI ARABIA': 'SA',
+  AE: 'AE',
+  'UNITED ARAB EMIRATES': 'AE',
+  QA: 'QA',
+  QATAR: 'QA',
+};
 
 /** Sign a registration action URL so it can't be guessed or forged. */
 function signAdminAction(action: string, id: string): string {
@@ -175,6 +191,16 @@ registrationRouter.get('/approve/:id', async (req, res) => {
       return res.send(renderResultPage('Already Approved', `${request.school_name_en || request.contact_name} has already been approved.`, true));
     }
 
+    // Resolve and validate jurisdiction before creating the tenant.
+    const jurisdictionCode = COUNTRY_TO_JURISDICTION[(request.country ?? '').toUpperCase()];
+    if (!jurisdictionCode) {
+      return res.status(400).send(renderResultPage('Error', `Cannot create tenant: unknown or missing country/jurisdiction for registration ${id}.`, false));
+    }
+    const known = await validateJurisdictionCode(supabase, jurisdictionCode);
+    if (!known) {
+      return res.status(400).send(renderResultPage('Error', `Cannot create tenant: jurisdiction ${jurisdictionCode} is not configured.`, false));
+    }
+
     // Mint a fresh onboarding token + expiry at approval time. The original
     // token's clock started at registration, so a delayed approval would email
     // an already-expired link (the cause of "invalid/expired" on the welcome
@@ -212,6 +238,7 @@ registrationRouter.get('/approve/:id', async (req, res) => {
         school_type: request.school_type,
         trial_end_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         created_date: new Date().toISOString(),
+        jurisdiction_code: jurisdictionCode,
       })
       .select()
       .single();
