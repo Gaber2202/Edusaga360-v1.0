@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { normalizePhone } from '../../lib/phone.js';
 import { getProvider } from '../messaging/registry.js';
-import { getOrCreateMoyasarLink } from '../moyasar/moyasarService.js';
+import { getOrCreateMoyasarLink } from '../../packs/sa/moyasarService.js';
 import { decryptSecret, isAiCryptoConfigured } from '../../lib/aiCrypto.js';
 
 type Channel = 'whatsapp' | 'sms';

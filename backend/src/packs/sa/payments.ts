@@ -11,7 +11,7 @@ import {
   requestMoyasarRefund,
   type MoyasarLinkOptions,
   type MoyasarLinkResult,
-} from '../../services/moyasar/moyasarService.js';
+} from './moyasarService.js';
 import type { PaymentsService, PaymentLinkOptions } from '../contract/CountryPack.js';
 
 export type { MoyasarLinkResult };

@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase.js';
 import { verifyShareToken, recordInvoiceView, renderInvoicePdf } from '../services/share.js';
-import { processMoyasarWebhook } from '../services/moyasar/moyasarService.js';
+import { processMoyasarWebhook } from '../packs/sa/moyasarService.js';
 
 export const billingPublicRouter = Router();
 
