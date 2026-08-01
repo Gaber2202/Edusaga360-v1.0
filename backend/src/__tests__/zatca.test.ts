@@ -20,7 +20,7 @@ import {
   generateInvoiceHash,
   generateZATCAInvoicePDF,
   TenantData,
-} from '../services/zatca.js';
+} from '../packs/sa/zatca.js';
 
 // ── Test helpers ────────────────────────────────────────────────────────────
 

@@ -15,7 +15,7 @@ import {
   signInvoice,
   generateTLVQR,
   TenantData,
-} from '../../services/zatca.js';
+} from '../../packs/sa/zatca.js';
 import { golden } from './support/golden.js';
 
 beforeAll(() => {

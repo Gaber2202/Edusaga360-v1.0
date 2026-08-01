@@ -1,16 +1,16 @@
 import crypto from 'crypto';
 import QRCode from 'qrcode';
 import { PDFDocument, PDFHexString } from 'pdf-lib';
-import { runPdfJob } from '../lib/pdfConcurrency.js';
-import { formatHijri } from '../lib/hijri.js';
-import { getBrowser } from './pdfBrowser.js';
+import { runPdfJob } from '../../lib/pdfConcurrency.js';
+import { formatHijri } from './hijri.js';
+import { getBrowser } from '../../services/pdfBrowser.js';
 import {
   categoryCode,
   computeVatSummary,
   InvoiceData,
   normalizeInvoiceItems,
   percentValue,
-} from '../packs/sa/vat.js';
+} from './vat.js';
 
 /** Umm al-Qura issue date for the invoice; never throws (bad dates → ''). */
 function safeHijriDate(iso: string): string {

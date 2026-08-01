@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { computeVatSummary, InvoiceData, InvoiceItemData } from '../packs/sa/vat.js';
-import { generateTLVQR, generateUBLXml, generateInvoiceHash, TenantData } from './zatca.js';
+import { generateTLVQR, generateUBLXml, generateInvoiceHash, TenantData } from '../packs/sa/zatca.js';
 
 function sar(n: number): number {
   return Math.round(n * 100) / 100;

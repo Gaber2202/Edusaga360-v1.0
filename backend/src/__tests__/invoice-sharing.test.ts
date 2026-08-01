@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('../lib/supabase.js', () => ({ supabase: {} }));
 vi.mock('../services/tenant.js', () => ({ getTenantComplianceData: vi.fn() }));
-vi.mock('../services/zatca.js', () => ({ invoiceDataFromRow: vi.fn(), generateZATCAInvoicePDF: vi.fn() }));
+vi.mock('../packs/sa/zatca.js', () => ({ invoiceDataFromRow: vi.fn(), generateZATCAInvoicePDF: vi.fn() }));
 vi.mock('../services/email.js', () => ({ isEmailConfigured: vi.fn().mockReturnValue(false), sendEmail: vi.fn() }));
 vi.mock('../services/messaging/registry.js', () => ({ getProvider: vi.fn() }));
 vi.mock('../lib/aiCrypto.js', () => ({ isAiCryptoConfigured: vi.fn().mockReturnValue(false), decryptSecret: vi.fn() }));

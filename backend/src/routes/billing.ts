@@ -27,7 +27,7 @@ import {
   generateInvoiceHash,
   generateZATCAInvoicePDF,
   TenantData,
-} from '../services/zatca.js';
+} from '../packs/sa/zatca.js';
 import { getTenantComplianceData } from '../services/tenant.js';
 import { createReceiptForPayment } from '../services/receipt.js';
 import { convertToInvoice } from '../services/lifecycle.js';

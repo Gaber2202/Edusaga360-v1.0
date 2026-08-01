@@ -11,7 +11,7 @@ import {
   generateTLVQR,
   buildInvoiceHTML,
   generateZATCAInvoicePDF,
-} from '../../services/zatca.js';
+} from './zatca.js';
 import type { EInvoiceService } from '../contract/CountryPack.js';
 
 export const saEInvoice: EInvoiceService = {

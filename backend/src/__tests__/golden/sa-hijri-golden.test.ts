@@ -10,7 +10,7 @@ import {
   hijriToGregorian,
   hijriNumeric,
   formatHijri,
-} from '../../lib/hijri.js';
+} from '../../packs/sa/hijri.js';
 import { golden } from './support/golden.js';
 
 describe('Saudi Umm al-Qura golden snapshots', () => {

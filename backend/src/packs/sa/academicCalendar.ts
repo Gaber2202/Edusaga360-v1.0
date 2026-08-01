@@ -2,7 +2,7 @@
  * src/packs/sa/academicCalendar.ts
  *
  * Saudi academic-calendar and Hijri adapter. Academic-year lookup queries the
- * DB directly; Hijri conversion delegates to lib/hijri.
+ * DB directly; Hijri conversion delegates to the Saudi pack's hijri module.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -11,7 +11,7 @@ import {
   gregorianToHijri,
   hijriToGregorian,
   hijriNumeric,
-} from '../../lib/hijri.js';
+} from './hijri.js';
 import type { AcademicCalendarService } from '../contract/CountryPack.js';
 
 function toIsoDate(input?: Date | string): string | undefined {
