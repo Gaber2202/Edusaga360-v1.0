@@ -174,13 +174,12 @@ app.use('/api/notifications',       apiLimiter, authMiddleware, tenantMiddleware
 app.use('/api/benchmarks',          apiLimiter, authMiddleware, tenantMiddleware, benchmarksRouter);
 app.use('/api/marketplace',         apiLimiter, authMiddleware, tenantMiddleware, marketplaceRouter);
 app.use('/api/tenant-users',        apiLimiter, authMiddleware, tenantMiddleware, tenantUsersRouter);
-app.use('/api/subscription',        apiLimiter, subscriptionPublicRouter);
+app.use('/api/subscription',        apiLimiter, subscriptionPublicRouter, authMiddleware, tenantMiddleware, subscriptionRouter);
 app.use('/api/ai',                  apiLimiter, authMiddleware, tenantMiddleware, aiRouter);
 app.use('/api/admin',               apiLimiter, authMiddleware, adminRouter);
 app.use('/api/parents',             apiLimiter, authMiddleware, tenantMiddleware, parentsRouter);
 app.use('/api/files',               apiLimiter, authMiddleware, tenantMiddleware, filesRouter);
 app.use('/api/exec',                apiLimiter, authMiddleware, tenantMiddleware, execRouter);
-app.use('/api/subscription',        apiLimiter, authMiddleware, tenantMiddleware, subscriptionRouter);
 app.use('/api/intake',              apiLimiter, authMiddleware, tenantMiddleware, intakeRouter);
 // API key management (control plane for the external /api/v1 data plane above).
 app.use('/api/api-keys',            apiLimiter, authMiddleware, tenantMiddleware, apiKeysRouter);
