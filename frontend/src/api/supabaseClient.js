@@ -65,6 +65,7 @@ const PLATFORM_ONLY_ENTITIES = new Set([
   'roles',
   'countries',
   'currencies',
+  'jurisdictions',
   'public_settings',
   'app_settings',
   'app_versions',
