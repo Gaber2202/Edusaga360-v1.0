@@ -182,7 +182,6 @@ export async function processBulkImport(
             due_date: due_date ?? null,
             total_amount,
             paid_amount,
-            balance: (total_amount || 0) - paid_amount,
             status,
             document_type: 'invoice',
             invoice_type: 'simplified',
@@ -210,7 +209,7 @@ export async function processBulkImport(
 
         let invoice: any;
         if (invoice_number) {
-          const { data } = await supabase.from('invoices').select('id, total_amount, paid_amount, status, balance').eq('tenant_id', tenantId).eq('invoice_number', invoice_number).maybeSingle();
+          const { data } = await supabase.from('invoices').select('id, total_amount, paid_amount, status').eq('tenant_id', tenantId).eq('invoice_number', invoice_number).maybeSingle();
           if (!data) errors.push(`invoice_number not found: ${invoice_number}`);
           else invoice = data;
         }
@@ -223,7 +222,7 @@ export async function processBulkImport(
             const { data, error } = await supabase.from('payments').insert(insert).select().single();
             if (error) errors.push(error.message);
             else {
-              await supabase.from('invoices').update({ paid_amount: newPaid, balance: Math.max(0, (Number(invoice.total_amount) || 0) - newPaid), status: newStatus }).eq('id', invoice.id);
+              await supabase.from('invoices').update({ paid_amount: newPaid, status: newStatus }).eq('id', invoice.id);
               record = data;
             }
           } else {

@@ -414,7 +414,7 @@ billingRouter.post('/fee-structures', requireRole(FINANCE_ROLES), async (req: Au
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const { data, error } = await supabase
     .from('fee_structures')
-    .insert({ ...parsed.data, tenant_id, created_by: req.user!.id })
+    .insert({ ...parsed.data, tenant_id, currency_code: 'SAR', created_by: req.user!.id })
     .select()
     .single();
   if (error) return res.status(500).json({ error: error.message });
@@ -588,7 +588,6 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       vat_amount: vatAmount,
       total_amount: totalAmount,
       paid_amount: 0,
-      balance: totalAmount,
       student_name: student.name_en,
       buyer_name: buyer_name || (student as Record<string, unknown>).name_en as string,
       student_id: student_id,
@@ -648,7 +647,6 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       discount_amount: totalDiscount,
       vat_amount: vatAmount,
       total_amount: totalAmount,
-      balance: totalAmount,
       paid_amount: 0,
       status: isTaxInvoice ? 'issued' : 'draft',
       items: enrichedLines,
@@ -1026,7 +1024,6 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
         discount_amount: 0,
         vat_amount: 0,
         total_amount: -amount,
-        balance: -amount,
         paid_amount: 0,
         status: 'issued',
         items: cnItems,
@@ -1151,7 +1148,7 @@ billingRouter.post('/payments', async (req: AuthenticatedRequest, res: Response)
       .single();
     if (pmtErr) throw pmtErr;
 
-    await supabase.from('invoices').update({ paid_amount: newPaid, status: newStatus, balance: sar(invoice.total_amount - newPaid), updated_at: new Date().toISOString() }).eq('id', invoice_id).eq('tenant_id', tenant_id);
+    await supabase.from('invoices').update({ paid_amount: newPaid, status: newStatus, updated_at: new Date().toISOString() }).eq('id', invoice_id).eq('tenant_id', tenant_id);
 
     // Auto-issue a bilingual receipt for this payment.
     let receipt: Record<string, unknown> | null = null;
@@ -1383,7 +1380,6 @@ export async function createInvoiceForStudent(
     vat_amount: vatAmount,
     total_amount: totalAmount,
     paid_amount: 0,
-    balance: totalAmount,
     student_name: student.name_en,
     buyer_name: options?.buyer_name || student.name_en,
     buyer_vat_number: options?.buyer_vat_number,
@@ -1430,7 +1426,6 @@ export async function createInvoiceForStudent(
       vat_amount: vatAmount,
       total_amount: totalAmount,
       paid_amount: 0,
-      balance: totalAmount,
       status: options?.status ?? 'issued',
       items: enrichedLines,
       vat_summary: vatSummary,

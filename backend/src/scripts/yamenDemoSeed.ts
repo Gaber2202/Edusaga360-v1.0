@@ -1,15 +1,19 @@
 /**
  * YAMEN Collections — 900-student fictional Saudi private-school seed.
  *
- * Run with:
- *   SUPABASE_URL=<url> SUPABASE_SERVICE_ROLE_KEY=<key> npx tsx src/scripts/yamenDemoSeed.ts
+ * WRITES SYNTHETIC BEHAVIOURAL DATA. Never run against production.
  *
- * Creates a demo tenant, branch, 900 guardians/students, invoices (paid, partial,
- * overdue), collection settings and collection_profiles so the Finance Officer
- * Console and nightly cron have realistic data to evaluate.
+ * The demo tenant must already exist and be flagged is_demo. This script
+ * will not create it.
+ *
+ * Run with:
+ *   DEMO_SEED_ALLOWED_PROJECT_REFS=<ref> \
+ *   SUPABASE_URL=<url> SUPABASE_SERVICE_ROLE_KEY=<key> \
+ *   npx tsx src/scripts/yamenDemoSeed.ts --confirm-demo-target
  */
 import crypto from 'crypto';
 import { supabase } from '../lib/supabase.js';
+import { assertDemoDatabase, assertDemoTarget, DemoGuardError } from './lib/demoGuard.js';
 
 const STUDENT_COUNT = 900;
 const TENANT_NAME = 'YAMEN Demo School';
@@ -21,28 +25,23 @@ function pad(n: number, len: number) {
   return String(n).padStart(len, '0');
 }
 
-async function findOrCreateTenant() {
-  const { data: existing } = await supabase.from('tenants').select('id').eq('slug', TENANT_SLUG).maybeSingle();
-  if (existing) return (existing as { id: string }).id;
-
-  const { data: tenant, error } = await supabase
+async function resolveDemoTenantOrAbort(): Promise<string> {
+  const { data, error } = await supabase
     .from('tenants')
-    .insert({
-      name_en: TENANT_NAME,
-      name_ar: 'مدرسة يامن التجريبية',
-      slug: TENANT_SLUG,
-      tenant_code: 'YAMEN-DEMO',
-      status: 'active',
-      plan: 'enterprise',
-      school_type: 'private',
-      default_language: 'ar',
-      num_grades: 12,
-      max_students: 2000,
-    })
-    .select('id')
-    .single();
-  if (error) throw error;
-  return (tenant as { id: string }).id;
+    .select('id, is_demo')
+    .eq('slug', TENANT_SLUG)
+    .maybeSingle();
+
+  if (error) {
+    throw new DemoGuardError(`Tenant lookup failed: ${error.message}`);
+  }
+  if (!data) {
+    throw new DemoGuardError(
+      `Demo tenant with slug "${TENANT_SLUG}" does not exist on this database. ` +
+        'This script never creates tenants. Create it deliberately first.',
+    );
+  }
+  return (data as { id: string }).id;
 }
 
 async function findOrCreateBranch(tenantId: string) {
@@ -51,7 +50,7 @@ async function findOrCreateBranch(tenantId: string) {
 
   const { data: branch, error } = await supabase
     .from('branches')
-    .insert({ tenant_id: tenantId, name_en: BRANCH_NAME, name_ar: 'الح campus الرئيسي', is_main: true })
+    .insert({ tenant_id: tenantId, name_en: BRANCH_NAME, name_ar: 'الحرم الرئيسي', is_main: true })
     .select('id')
     .single();
   if (error) throw error;
@@ -211,7 +210,6 @@ async function seedBatch(
       discount_amount: 0,
       total_amount: total,
       paid_amount: paidAmount,
-      balance: outstanding,
       status,
       items: [{
         category_code: 'TUITION',
@@ -233,6 +231,7 @@ async function seedBatch(
 
     profiles.push({
       tenant_id: tenantId,
+      currency_code: 'SAR', // TODO: hardcoded SAR; tracked in #154
       guardian_id: guardianId,
       student_id: studentId,
       current_segment: isOverdue ? 'D' : outstanding > 0 ? 'C' : 'A',
@@ -277,7 +276,9 @@ async function seedBatch(
 }
 
 async function main() {
-  const tenantId = await findOrCreateTenant();
+  assertDemoDatabase();                              // database check BEFORE any read or write
+  const tenantId = await resolveDemoTenantOrAbort(); // resolve only, never create
+  await assertDemoTarget(supabase, tenantId);        // tenant check
   const branchId = await findOrCreateBranch(tenantId);
   const academicYearId = await findOrCreateAcademicYear(tenantId);
   const gradeId = await findOrCreateGrade(tenantId, branchId, academicYearId);

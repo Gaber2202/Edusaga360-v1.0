@@ -1,20 +1,81 @@
-// Money helpers: centralize SAR/Halala conversion so no inline math drifts.
-export const SAR_TO_HALALA = 100;
+import type { SupabaseClient } from '@supabase/supabase-js';
 
-export function toHalala(sar: number | string | null | undefined): number {
-  if (sar === null || sar === undefined) return 0;
-  const num = typeof sar === 'string' ? parseFloat(sar) : sar;
-  if (Number.isNaN(num)) return 0;
-  return Math.round(num * SAR_TO_HALALA);
+const DEFAULT_MINOR_UNITS = 2;
+const minorUnitsCache = new Map<string, number>();
+
+function toNumber(amount: number | string | null | undefined): number {
+  if (amount === null || amount === undefined) return 0;
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return Number.isNaN(num) ? 0 : num;
 }
 
-export function toSar(halala: number | string | null | undefined): number {
-  if (halala === null || halala === undefined) return 0;
-  const num = typeof halala === 'string' ? parseFloat(halala) : halala;
-  if (Number.isNaN(num)) return 0;
-  return Math.round(num) / SAR_TO_HALALA;
+/**
+ * Read minor_units from the currencies table, falling back to 2 when the row
+ * is missing or the query fails. Results are cached per process.
+ */
+export async function getMinorUnits(
+  supabase: SupabaseClient,
+  currencyCode?: string | null,
+): Promise<number> {
+  if (!currencyCode) return DEFAULT_MINOR_UNITS;
+  const cached = minorUnitsCache.get(currencyCode);
+  if (cached !== undefined) return cached;
+  try {
+    const { data, error } = await supabase
+      .from('currencies')
+      .select('minor_units')
+      .eq('code', currencyCode)
+      .maybeSingle();
+    if (error) throw error;
+    const units = (data?.minor_units as number | undefined) ?? DEFAULT_MINOR_UNITS;
+    minorUnitsCache.set(currencyCode, units);
+    return units;
+  } catch {
+    return DEFAULT_MINOR_UNITS;
+  }
 }
 
+/** Convert a major-unit amount to the currency's minor-unit integer. */
+export function toMinorUnits(
+  amount: number | string | null | undefined,
+  minorUnits: number,
+): number {
+  const num = toNumber(amount);
+  const factor = 10 ** minorUnits;
+  return Math.round(num * factor);
+}
+
+/** Convert a minor-unit integer to the currency's major-unit amount. */
+export function toMajorUnits(
+  amount: number | string | null | undefined,
+  minorUnits: number,
+): number {
+  const num = toNumber(amount);
+  const factor = 10 ** minorUnits;
+  return Math.round(num) / factor;
+}
+
+/** Round a major-unit amount to the currency's minor-unit precision. */
+export function roundToMinorUnits(
+  amount: number | string | null | undefined,
+  minorUnits: number,
+): number {
+  const num = toNumber(amount);
+  const factor = 10 ** minorUnits;
+  return Math.round(num * factor) / factor;
+}
+
+/** Legacy SAR-only rounding helper. Prefer roundToMinorUnits for new code. */
 export function sar(num: number): number {
-  return Math.round(num * SAR_TO_HALALA) / SAR_TO_HALALA;
+  return roundToMinorUnits(num, 2);
+}
+
+/** Legacy SAR-only major-to-minor helper. Prefer toMinorUnits for new code. */
+export function toHalala(sar: number | string | null | undefined): number {
+  return toMinorUnits(sar, 2);
+}
+
+/** Legacy SAR-only minor-to-major helper. Prefer toMajorUnits for new code. */
+export function toSar(halala: number | string | null | undefined): number {
+  return toMajorUnits(halala, 2);
 }

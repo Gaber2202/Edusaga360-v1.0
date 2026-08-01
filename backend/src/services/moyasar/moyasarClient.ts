@@ -1,12 +1,10 @@
-import { toHalala } from '../../lib/money.js';
-
 const MOYASAR_BASE = 'https://api.moyasar.com/v1';
 
 export type MoyasarSourceType = 'creditcard' | 'mada' | 'applepay' | 'stcpay' | 'samsungpay';
 
 export interface MoyasarInvoiceItem {
-  amount: number; // halalas
-  currency: 'SAR';
+  amount: number; // minor units
+  currency: string;
   description: string;
   callback_url?: string;
   success_url?: string;
@@ -18,8 +16,8 @@ export interface MoyasarInvoiceItem {
 export type MoyasarBulkInvoiceItem = MoyasarInvoiceItem;
 
 export interface MoyasarPaymentRequest {
-  amount: number; // halalas
-  currency: 'SAR';
+  amount: number; // minor units
+  currency: string;
   description?: string;
   callback_url?: string;
   source: Record<string, unknown>;
@@ -28,7 +26,7 @@ export interface MoyasarPaymentRequest {
 }
 
 export interface MoyasarRefundRequest {
-  amount?: number; // halalas; omit for full refund
+  amount?: number; // minor units; omit for full refund
 }
 
 export interface MoyasarWebhookRegisterRequest {
@@ -147,5 +145,3 @@ export class MoyasarClient {
     return this.request('POST', '/webhooks', { body: req as unknown as Record<string, unknown>, idempotencyKey });
   }
 }
-
-export { toHalala };

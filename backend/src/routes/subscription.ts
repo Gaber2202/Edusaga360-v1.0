@@ -13,6 +13,7 @@ import { Router, Response } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import crypto from 'crypto';
+import { toMinorUnits, roundToMinorUnits } from '../lib/money.js';
 import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/auth.js';
 
 export const subscriptionRouter = Router();
@@ -44,11 +45,11 @@ const PLAN_LIMITS: Record<string, {
 const PER_SEAT_PRICE_SAR = 500; // annual per-seat add-on price
 const VAT_RATE = 0.15;
 
-function sar(n: number) { return Math.round(n * 100) / 100; }
+function sar(n: number) { return roundToMinorUnits(n, 2); }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-async function applyUpgrade(
+export async function applyUpgrade(
   orderId: string,
   tenantId: string,
   orderType: string,
@@ -278,7 +279,7 @@ subscriptionRouter.post('/orders/:id/payment-link', requireRole(['admin']), asyn
         .single();
       if (fb) {
         const desc = typeof fb.description === 'string' ? JSON.parse(fb.description) : fb.description;
-        order = { ...fb, total_amount: desc?.total_amount, order_type: desc?.order_type, plan_code: desc?.plan_code };
+        order = { ...fb, total_amount: desc?.total_amount, order_type: desc?.order_type, plan_code: desc?.plan_code, currency: 'SAR' };
       }
     }
 
@@ -292,7 +293,7 @@ subscriptionRouter.post('/orders/:id/payment-link', requireRole(['admin']), asyn
       return res.status(500).json({ error: 'Payment gateway not configured. Contact support.' });
     }
 
-    const amountHalala = Math.round((order.total_amount as number) * 100);
+    const amountMinor = toMinorUnits(order.total_amount as number, 2);
     const description = (order.order_type as string) === 'plan_upgrade'
       ? `EduSaga 360 — Plan upgrade to ${order.plan_code}`
       : `EduSaga 360 — Additional seats`;
@@ -307,8 +308,8 @@ subscriptionRouter.post('/orders/:id/payment-link', requireRole(['admin']), asyn
         Authorization: `Basic ${Buffer.from(`${moyasarKey}:`).toString('base64')}`,
       },
       body: JSON.stringify({
-        amount: amountHalala,
-        currency: 'SAR',
+        amount: amountMinor,
+        currency: order.currency || 'SAR',
         description,
         callback_url: cbUrl,
         metadata: { order_id: orderId, tenant_id: tenantId, type: 'subscription' },
@@ -503,129 +504,6 @@ subscriptionRouter.post('/orders/:id/reject', requireRole(FINANCE_ROLES), async 
   } catch (err) {
     console.error('subscription/reject:', err);
     return res.status(500).json({ error: 'Rejection failed' });
-  }
-});
-
-// ─── POST /webhook/moyasar — Idempotent Moyasar webhook for subscriptions ────
-//
-// Payment integrity (PAY-01/PAY-02): a webhook body is attacker-controllable, so
-// entitlements must never be granted on the body's word alone. Two guards:
-//   1. Shared-secret check — when MOYASAR_WEBHOOK_SECRET is configured, the caller
-//      must present the same token (Moyasar echoes the webhook "secret token" in
-//      the payload's `secret_token`; we also accept it via header for flexibility).
-//      Compared in constant time. If the env var is unset the check is skipped and
-//      a warning is logged (see BLOCKERS.md — production MUST set this).
-//   2. Amount check — the paid `amount` (halalas) must equal the order's
-//      total_amount * 100. A mismatch is treated as fraud/misroute and rejected
-//      WITHOUT applying the upgrade.
-
-function timingSafeEqual(a: string, b: string): boolean {
-  const ab = Buffer.from(a);
-  const bb = Buffer.from(b);
-  if (ab.length !== bb.length) return false;
-  return crypto.timingSafeEqual(ab, bb);
-}
-
-subscriptionRouter.post('/webhook/moyasar', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { id: payment_id, status, metadata, amount, secret_token } = req.body as Record<string, unknown>;
-
-    // Guard 1 — shared-secret verification.
-    const webhookSecret = process.env.MOYASAR_WEBHOOK_SECRET;
-    if (webhookSecret) {
-      const presented = (secret_token as string | undefined)
-        || (req.headers['x-moyasar-secret'] as string | undefined)
-        || (req.headers['x-event-secret'] as string | undefined)
-        || '';
-      if (!presented || !timingSafeEqual(presented, webhookSecret)) {
-        console.warn('subscription/webhook: rejected — invalid or missing webhook secret');
-        return res.status(401).json({ error: 'Invalid webhook signature' });
-      }
-    } else {
-      console.warn('subscription/webhook: MOYASAR_WEBHOOK_SECRET not set — webhook authenticity is NOT verified');
-    }
-
-    if (status !== 'paid') return res.json({ received: true });
-
-    const meta = metadata as Record<string, string> | undefined;
-    if (!meta?.order_id || meta?.type !== 'subscription') {
-      return res.json({ received: true }); // Not a subscription payment
-    }
-
-    const orderId = meta.order_id;
-    const tenantId = meta.tenant_id;
-
-    // Idempotency: check if already processed
-    let order: Record<string, unknown> | null = null;
-    let useSubscriptionTable = true;
-
-    const { data } = await supabase
-      .from('subscription_orders')
-      .select('*')
-      .eq('id', orderId)
-      .single();
-
-    if (data) {
-      order = data;
-    } else {
-      useSubscriptionTable = false;
-      const { data: fb } = await supabase
-        .from('tenant_requests')
-        .select('*')
-        .eq('id', orderId)
-        .single();
-      if (fb) {
-        const desc = typeof fb.description === 'string' ? JSON.parse(fb.description) : fb.description;
-        order = { ...fb, total_amount: desc?.total_amount, order_type: desc?.order_type, plan_code: desc?.plan_code, additional_seats: desc?.additional_seats };
-      }
-    }
-
-    if (!order) return res.status(404).json({ error: 'Order not found' });
-    if (order.status === 'paid' || order.status === 'verified') {
-      return res.json({ received: true, already_processed: true });
-    }
-
-    // Guard 2 — server-side amount verification. Never trust the webhook to imply
-    // the correct amount was paid: compare Moyasar's halalas against the order total.
-    const expectedHalala = Math.round(Number(order.total_amount) * 100);
-    const paidHalala = Math.round(Number(amount));
-    if (!Number.isFinite(expectedHalala) || expectedHalala <= 0 || paidHalala !== expectedHalala) {
-      console.error(
-        `subscription/webhook: amount mismatch for order ${orderId} — expected ${expectedHalala} halala, got ${paidHalala}. Upgrade NOT applied.`,
-      );
-      return res.status(400).json({ error: 'Amount mismatch — payment not applied' });
-    }
-
-    // Mark as paid
-    if (useSubscriptionTable) {
-      await supabase.from('subscription_orders')
-        .update({
-          status: 'paid',
-          moyasar_payment_id: payment_id as string,
-          paid_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', orderId);
-    } else {
-      await supabase.from('tenant_requests')
-        .update({ status: 'paid' })
-        .eq('id', orderId);
-    }
-
-    // Auto-apply the upgrade
-    await applyUpgrade(
-      orderId,
-      tenantId,
-      order.order_type as string,
-      (order.plan_code as string) ?? null,
-      (order.additional_seats as number) ?? 0,
-      'system',
-    );
-
-    return res.json({ received: true, applied: true });
-  } catch (err) {
-    console.error('subscription/webhook:', err);
-    return res.status(500).json({ error: 'Webhook processing failed' });
   }
 });
 

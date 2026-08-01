@@ -44,7 +44,8 @@ const CreateChequeSchema = z.object({
   bank_name: z.string().optional(),
   drawer_name: z.string().optional(),
   amount: z.number().positive(),
-  currency: z.string().optional(),
+  currency_code: z.string().optional(),
+  currency: z.string().optional(), // deprecated alias
   issue_date: z.string().optional(),
   due_date: z.string().optional(),
   invoice_id: z.string().uuid().optional(),
@@ -71,6 +72,7 @@ async function applyToInvoice(tenant_id: string, userId: string, cheque: ChequeR
   const today = new Date().toISOString().split('T')[0];
   const newPaid = sar((inv.paid_amount ?? 0) + cheque.amount);
   const newStatus = newPaid >= inv.total_amount - 0.01 ? 'paid' : 'partial';
+  const newBalance = sar(Math.max(0, Number(inv.total_amount) - newPaid));
 
   const { data: payment } = await supabase
     .from('payments')
@@ -96,7 +98,7 @@ async function applyToInvoice(tenant_id: string, userId: string, cheque: ChequeR
     { account_code: '12', debit: 0, credit: cheque.amount, description: `A/R cleared — ${inv.invoice_number}` },
   ], inv.branch_id ?? null);
 
-  return { invoice_id: cheque.invoice_id, paid_amount: newPaid, status: newStatus, payment_id: (payment as { id?: string } | null)?.id ?? null };
+  return { invoice_id: cheque.invoice_id, paid_amount: newPaid, balance: newBalance, status: newStatus, payment_id: (payment as { id?: string } | null)?.id ?? null };
 }
 
 async function reverseFromInvoice(tenant_id: string, userId: string, cheque: ChequeRow) {
@@ -106,6 +108,7 @@ async function reverseFromInvoice(tenant_id: string, userId: string, cheque: Che
   const inv = invoice as InvoiceRow;
   const newPaid = sar(Math.max(0, (inv.paid_amount ?? 0) - cheque.amount));
   const newStatus = newPaid <= 0.01 ? 'issued' : 'partial';
+  const newBalance = sar(Math.max(0, Number(inv.total_amount) - newPaid));
 
   if (cheque.payment_id) {
     await supabase.from('payments').update({ status: 'reversed' }).eq('id', cheque.payment_id).eq('tenant_id', tenant_id);
@@ -120,7 +123,7 @@ async function reverseFromInvoice(tenant_id: string, userId: string, cheque: Che
     { account_code: '11', debit: 0, credit: cheque.amount, description: `Cheque ${cheque.cheque_number} bounced` },
   ], inv.branch_id ?? null);
 
-  return { invoice_id: cheque.invoice_id, paid_amount: newPaid, status: newStatus, reversed: true };
+  return { invoice_id: cheque.invoice_id, paid_amount: newPaid, balance: newBalance, status: newStatus, reversed: true };
 }
 
 // ---------------------------------------------------------------------------
@@ -132,12 +135,13 @@ chequeRouter.post('/', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequ
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const tenant_id = req.user!.tenant_id!;
 
+  const { currency, currency_code, ...chequeData } = parsed.data;
   const { data: cheque, error } = await supabase
     .from('cheques')
     .insert({
       tenant_id,
-      ...parsed.data,
-      currency: parsed.data.currency ?? 'SAR',
+      ...chequeData,
+      currency_code: currency_code ?? currency ?? 'SAR',
       status: 'received',
       created_by: req.user!.id,
     })

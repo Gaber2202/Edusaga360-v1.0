@@ -120,6 +120,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  guard-invoices-balance:
+    name: Guard invoices.balance writes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Block any code path that writes invoices.balance
+        run: python3 .github/scripts/guard_invoices_balance.py
+
   dependency-audit:
     name: Dependency Audit (advisory)
     runs-on: ubuntu-latest

@@ -1,11 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
+import { assertDemoDatabase } from './lib/demoGuard.js';
 
 const url = process.env.SUPABASE_URL!;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(url, key, { realtime: { transport: ws as any } });
 
 async function main() {
+  assertDemoDatabase();
   const email = `test-${Date.now()}@edusaga.local`;
   const { data: userData, error: createErr } = await supabase.auth.admin.createUser({
     email,

@@ -116,6 +116,8 @@ describe('POST /api/public/billing/moyasar/webhook', () => {
 
     const invoiceUpdate = db.filtersFor('invoices').find((c) => c.op === 'update');
     expect((invoiceUpdate?.payload as { status?: string })?.status).toBe('paid');
+    expect((invoiceUpdate?.payload as { paid_amount?: number })?.paid_amount).toBe(1000);
+    expect((invoiceUpdate?.payload as { balance?: number })?.balance).toBeUndefined();
 
     const stopUpdate = db.filtersFor('collection_messages').find((c) => c.op === 'update');
     expect((stopUpdate?.payload as { delivery_status?: string })?.delivery_status).toBe('stopped');

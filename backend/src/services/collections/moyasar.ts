@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase.js';
+import { getMinorUnits, toMinorUnits, roundToMinorUnits } from '../../lib/money.js';
 
 export interface MoyasarPaymentLink {
   url?: string;
@@ -27,7 +28,7 @@ export async function createMoyasarPaymentLink(
 
   const { data: invoice } = await supabase
     .from('invoices')
-    .select('invoice_number, total_amount, paid_amount, student_id')
+    .select('invoice_number, total_amount, paid_amount, student_id, currency_code')
     .eq('id', invoiceId)
     .eq('tenant_id', tenantId)
     .single();
@@ -35,8 +36,10 @@ export async function createMoyasarPaymentLink(
     return { error: 'Invoice not found' };
   }
 
-  const balance = Math.round(((invoice.total_amount as number) - (invoice.paid_amount as number)) * 100) / 100;
-  const amountHalala = Math.round(balance * 100);
+  const currencyCode = (invoice.currency_code as string) || 'SAR';
+  const minorUnits = await getMinorUnits(supabase, currencyCode);
+  const balance = roundToMinorUnits((Number(invoice.total_amount) - Number(invoice.paid_amount)), minorUnits);
+  const amountMinor = toMinorUnits(balance, minorUnits);
 
   try {
     const response = await fetch('https://api.moyasar.com/v1/payments', {
@@ -46,8 +49,8 @@ export async function createMoyasarPaymentLink(
         Authorization: `Basic ${Buffer.from(`${moyasarKey}:`).toString('base64')}`,
       },
       body: JSON.stringify({
-        amount: amountHalala,
-        currency: 'SAR',
+        amount: amountMinor,
+        currency: currencyCode,
         description: `EduSaga Invoice ${invoice.invoice_number}`,
         callback_url: callbackUrl,
         source: { type: effectiveMethod },

@@ -17,7 +17,7 @@ import { createSupabaseStub, QueryContext } from './support/supabaseMock.js';
 const db = createSupabaseStub();
 vi.mock('@supabase/supabase-js', () => ({ createClient: () => db.client }));
 
-const { subscriptionRouter } = await import('../routes/subscription.js');
+const { subscriptionPublicRouter } = await import('../routes/subscriptionPublic.js');
 
 const ORDER_ID = '11111111-1111-1111-1111-111111111111';
 const TENANT_ID = 'tenant-A';
@@ -27,7 +27,7 @@ function makeApp() {
   const app = express();
   app.use(express.json());
   // Webhook is unauthenticated at the handler level; mount the router directly.
-  app.use('/subscription', subscriptionRouter);
+  app.use('/subscription', subscriptionPublicRouter);
   return app;
 }
 
