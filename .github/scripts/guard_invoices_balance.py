@@ -27,7 +27,7 @@ EXTRA_FILES = [ROOT / "shared" / "database" / "schema.sql"]
 # Remove test files from guard scope: test mocks return balance, they do not
 # perform DB writes, and the global .from('invoices') patterns do not appear in
 # them.
-SKIP_DIRS = {"__tests__", "node_modules", ".git"}
+SKIP_DIRS = {"node_modules", ".git"}
 
 
 def strip_line_comments(text: str) -> str:
