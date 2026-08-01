@@ -65,7 +65,11 @@ export class NotImplementedInJurisdiction extends Error {
  * `tenant.jurisdictionCode` or `branch.jurisdictionCode` directly; use this helper.
  */
 export function resolveJurisdiction(ctx: RequestContext): JurisdictionCode {
-  const code = ctx.branch?.jurisdictionCode || ctx.tenant.jurisdictionCode;
+  const raw = ctx.branch?.jurisdictionCode;
+  if (raw === '') {
+    throw new JurisdictionUnresolvedError(ctx.tenant.id, ctx.branch?.id);
+  }
+  const code = raw ?? ctx.tenant.jurisdictionCode;
   if (!code) {
     throw new JurisdictionUnresolvedError(
       ctx.tenant.id,

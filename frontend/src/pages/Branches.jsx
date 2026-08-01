@@ -94,9 +94,9 @@ export default function Branches() {
     }
   };
 
-  const handleEdit = (branch) => {
-    setEditingBranch(branch);
-    const { jurisdiction_code, ...rest } = branch;
+  const handleEdit = (row) => {
+    setEditingBranch(row);
+    const { jurisdiction_code, ...rest } = row;
     setFormData({
       code: rest.code || '',
       name_ar: rest.name_ar || '',

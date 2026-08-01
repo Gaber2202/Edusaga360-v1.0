@@ -22,12 +22,12 @@ describe('resolveJurisdiction', () => {
     expect(resolveJurisdiction(ctx)).toBe('QA');
   });
 
-  it('falls back to the tenant jurisdiction when branch code is an empty string', () => {
+  it('throws JurisdictionUnresolvedError when branch code is an empty string', () => {
     const ctx: RequestContext = {
       tenant: { id: 'tenant-1', jurisdictionCode: 'SA' },
       branch: { id: 'branch-1', jurisdictionCode: '' },
     };
-    expect(resolveJurisdiction(ctx)).toBe('SA');
+    expect(() => resolveJurisdiction(ctx)).toThrow(JurisdictionUnresolvedError);
   });
 
   it('throws JurisdictionUnresolvedError when both tenant and branch jurisdictions are missing', () => {
