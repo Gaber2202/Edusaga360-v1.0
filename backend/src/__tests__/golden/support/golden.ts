@@ -25,6 +25,10 @@ export function golden<T extends Buffer | string>(name: string, actual: T, ext: 
 
   const expected = readFileSync(path);
   if (Buffer.compare(expected, actualBuf) !== 0) {
+    if (process.env.UPDATE_GOLDEN === '1') {
+      writeFileSync(path, actualBuf);
+      return actual;
+    }
     const preview = actualBuf.length < 800
       ? actualBuf.toString('utf8').replace(/\s+/g, ' ').slice(0, 200)
       : `<binary ${actualBuf.length} bytes>`;

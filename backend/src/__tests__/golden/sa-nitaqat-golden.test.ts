@@ -35,7 +35,7 @@ describe('Nitaqat / Saudization golden snapshot', () => {
             { id: 'e1', status: 'active', nationality: 'saudi', gender: 'male', department_id: null, is_saudi: true, hire_date: '2024-01-01', end_date: null, contract_type: 'full_time' },
             { id: 'e2', status: 'active', nationality: 'indian', gender: 'male', department_id: null, is_saudi: false, hire_date: '2024-01-01', end_date: null, contract_type: 'full_time' },
             { id: 'e3', status: 'active', nationality: 'egyptian', gender: 'female', department_id: null, is_saudi: false, hire_date: '2024-01-01', end_date: null, contract_type: 'full_time' },
-            { id: 'e4', status: 'active', nationality: 'saudi', gender: 'female', department_id: null, is_saudi: true, hire_date: '2024-01-01', end_date: null, contract_type: 'full_time' },
+            { id: 'e4', status: 'active', nationality: 'indian', gender: 'female', department_id: null, is_saudi: false, hire_date: '2024-01-01', end_date: null, contract_type: 'full_time' },
           ],
         };
       }
