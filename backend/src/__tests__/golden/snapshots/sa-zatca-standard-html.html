@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Noto Naskh Arabic', 'Plus Jakarta Sans', sans-serif;
+      font-size: 11px;
+      color: #1C2420;
+      background: #fff;
+      padding: 32px;
+      direction: rtl;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      border-bottom: 3px solid #0E6B4F;
+      padding-bottom: 16px;
+    }
+    .company-info { text-align: right; flex: 1; }
+    .company-name { font-size: 20px; font-weight: 700; color: #0E6B4F; margin-bottom: 4px; }
+    .company-name-en { font-size: 14px; font-weight: 500; color: #666; font-family: 'Plus Jakarta Sans', sans-serif; direction: ltr; text-align: right; }
+    .company-detail { font-size: 10px; color: #555; margin: 2px 0; }
+    .company-detail.ltr { direction: ltr; unicode-bidi: isolate; text-align: right; }
+    .invoice-title {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: #0E6B4F;
+      margin: 12px 0;
+      padding: 8px;
+      background: #E7F4EF;
+      border-radius: 6px;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .meta-box {
+      background: #f8f7f3;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #eee;
+    }
+    .meta-box h4 { font-size: 12px; font-weight: 700; color: #0E6B4F; margin-bottom: 8px; }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 4px 0;
+      font-size: 10px;
+    }
+    .meta-label { color: #777; }
+    .meta-value { font-weight: 600; font-family: 'Noto Naskh Arabic', 'Plus Jakarta Sans', sans-serif; }
+    .meta-value.ltr { direction: ltr; unicode-bidi: isolate; }
+    .hijri { font-family: 'Noto Naskh Arabic', sans-serif; direction: rtl; unicode-bidi: embed; }
+    .ar-text { font-weight: 600; }
+    .en-text { font-size: 9px; color: #666; direction: ltr; unicode-bidi: isolate; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    thead th { background: #0E6B4F; color: #fff; padding: 8px 6px; font-size: 10px; font-weight: 600; text-align: right; }
+    thead th.amount { text-align: center; }
+    tbody td { padding: 7px 6px; border-bottom: 1px solid #eee; font-size: 10px; text-align: right; }
+    tbody td.amount { text-align: center; }
+    tbody tr:nth-child(even) { background: #fafaf7; }
+    .totals {
+      display: flex;
+      justify-content: flex-start;
+      margin-top: 12px;
+    }
+    .totals-box {
+      width: 320px;
+      background: #f8f7f3;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #eee;
+    }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 10px;
+      align-items: center;
+    }
+    .total-label { color: #444; }
+    .total-value { font-weight: 600; font-family: 'Noto Naskh Arabic', 'Plus Jakarta Sans', sans-serif; direction: ltr; unicode-bidi: isolate; }
+    .total-row.grand { border-top: 2px solid #0E6B4F; padding-top: 8px; margin-top: 4px; font-size: 13px; font-weight: 700; color: #0E6B4F; }
+    .notes { font-size: 10px; color: #555; margin-top: 12px; padding: 8px; background: #fafaf7; border-radius: 4px; }
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #ddd;
+      page-break-inside: avoid;
+    }
+    .qr-section { text-align: center; }
+    .qr-section img { width: 150px; height: 150px; }
+    .qr-label { font-size: 8px; color: #888; margin-top: 4px; }
+    .zatca-notice { font-size: 8px; color: #888; max-width: 320px; text-align: right; }
+    .powered { font-size: 8px; color: #aaa; text-align: center; margin-top: 12px; }
+    @media print {
+      body { padding: 0; }
+      .footer { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="company-info">
+      <div class="company-name">مدرسة النور العالمية</div>
+      <div class="company-name-en">Al Noor International School</div>
+      <div class="company-detail">طريق الملك فهد، الرياض</div>
+      <div class="company-detail ltr">King Fahd Road, Riyadh</div>
+      <div class="company-detail ltr">الرقم الضريبي / VAT TRN: <bdi>300000000000003</bdi></div>
+      <div class="company-detail ltr">السجل التجاري / CR: <bdi>1010101010</bdi></div>
+      <div class="company-detail ltr">هاتف / Phone: <bdi>966500000000</bdi></div>
+      <div class="company-detail ltr">بريد / Email: <bdi>info@alnoor.edu.sa</bdi></div>
+    </div>
+  </div>
+
+  <div class="invoice-title">فاتورة ضريبية مبسطة / Simplified Tax Invoice</div>
+
+  <div class="meta-grid">
+    <div class="meta-box">
+      <h4>بيانات الفاتورة / Invoice Details</h4>
+      <div class="meta-row"><span class="meta-label">رقم الفاتورة / Invoice No:</span><span class="meta-value ltr"><bdi>INV-2026-000001</bdi></span></div>
+      <div class="meta-row"><span class="meta-label">تاريخ الإصدار (م) / Issue Date:</span><span class="meta-value ltr"><bdi>2026-06-18</bdi></span></div>
+      <div class="meta-row"><span class="meta-label">تاريخ الإصدار (هـ) / Hijri Date:</span><span class="meta-value hijri"><bdi>٣ محرم ١٤٤٨ هـ</bdi></span></div>
+      
+      
+      <div class="meta-row"><span class="meta-label">UUID:</span><span class="meta-value ltr" style="font-size:8px"><bdi>11111111-1111-1111-1111-111111111111</bdi></span></div>
+      
+    </div>
+    <div class="meta-box">
+      <h4>بيانات المشتري / Buyer Details</h4>
+      <div class="meta-row"><span class="meta-label">الاسم / Name:</span><span class="meta-value">Sara Ahmed</span></div>
+      
+      <div class="meta-row"><span class="meta-label">العنوان / Address:</span><span class="meta-value">Riyadh, Saudi Arabia</span></div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>البند / Description</th>
+        <th class="amount">الكمية / Qty</th>
+        <th class="amount">سعر الوحدة / Unit</th>
+        <th class="amount">نسبة الضريبة / VAT</th>
+        <th class="amount">ضريبة القيمة المضافة / VAT Amt</th>
+        <th class="amount">الإجمالي / Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+    <tr>
+      <td>1</td>
+      <td>
+        <div class="ar-text">رسوم دراسية</div>
+        <div class="en-text">Tuition</div>
+      </td>
+      <td dir="ltr">1</td>
+      <td dir="ltr">SAR 1,000.00</td>
+      <td dir="ltr">15%</td>
+      <td dir="ltr">SAR 150.00</td>
+      <td dir="ltr">SAR 1,150.00</td>
+    </tr>
+  
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <div class="totals-box">
+      <div class="total-row">
+        <span class="total-label">المجموع قبل الضريبة / Subtotal</span>
+        <span class="total-value" dir="ltr">SAR 1,000.00</span>
+      </div>
+      
+      
+    <div class="total-row">
+      <span class="total-label">ضريبة القيمة المضافة 15%</span>
+      <bdi>:</bdi>
+      <span class="total-value" dir="ltr">SAR 150.00</span>
+    </div>
+  
+      <div class="total-row grand">
+        <span class="total-label">الإجمالي شامل الضريبة / Total</span>
+        <span class="total-value" dir="ltr">SAR 1,150.00</span>
+      </div>
+      
+    </div>
+  </div>
+
+  
+  
+
+  <div class="footer">
+    <div class="zatca-notice">
+      <p>هذه الفاتورة تتوافق مع متطلبات الفوترة الإلكترونية للمرحلة الثانية من هيئة الزكاة والضريبة والجمارك</p>
+      <p style="direction:ltr;text-align:left;margin-top:4px">This invoice complies with ZATCA Phase 2 e-invoicing requirements.</p>
+    </div>
+    <div class="qr-section">
+      <img src="{{QR_DATA_URL}}" alt="ZATCA QR" />
+      <div class="qr-label">رمز الاستجابة السريعة / ZATCA QR</div>
+    </div>
+  </div>
+
+  <div class="powered">Powered by EduSaga 360</div>
+</body>
+</html>
