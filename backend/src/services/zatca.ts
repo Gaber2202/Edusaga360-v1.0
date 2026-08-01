@@ -160,7 +160,7 @@ function formatMoney(n: number): string {
   return v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function categoryCode(category?: string): string {
+export function categoryCode(category?: string): string {
   switch (category) {
     case 'zero_rated': return 'Z';
     case 'exempt': return 'E';
@@ -169,7 +169,7 @@ function categoryCode(category?: string): string {
   }
 }
 
-function vatRateForCategory(category: string, rate?: number): number {
+export function vatRateForCategory(category: string, rate?: number): number {
   if (category === 'zero_rated') return 0;
   if (category === 'exempt') return 0;
   if (category === 'out_of_scope') return 0;

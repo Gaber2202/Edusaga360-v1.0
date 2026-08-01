@@ -2,31 +2,12 @@ import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import { AuthenticatedRequest, requireRole, PAYROLL_ROLES } from '../middleware/auth.js';
+import {
+  calculateGosiForEmployee,
+  GOSI_CAP_MONTHLY,
+} from '../packs/sa/payroll.js';
 
 export const payrollRouter = Router();
-
-
-// ─── GOSI Rates (Saudi Labour Law / GOSI regulations) ─────────────────────
-//
-// Saudi nationals:
-//   Employee: 9%  | Employer: 11.75%  on basic salary, capped at 45,000 SAR/month
-//   (Pension 9%+9% + Work Hazard 2.75% employer-only)
-//
-// Expatriates (non-Saudi):
-//   Employee: 1.5% | Employer: 2%  on basic salary, capped at 45,000 SAR/month
-//   (Work Hazard insurance only — no pension contribution)
-
-const GOSI_CAP_MONTHLY = 45_000;
-
-const GOSI_SAUDI = {
-  employee: 0.09,
-  employer: 0.1175,
-} as const;
-
-const GOSI_EXPAT = {
-  employee: 0.015,
-  employer: 0.02,
-} as const;
 
 // ─── Validation schemas ────────────────────────────────────────────────────
 
@@ -45,39 +26,6 @@ const GosiCalculateSchema = z.object({
     }),
   ).min(1),
 });
-
-// ─── Helper: is this employee considered Saudi for GOSI? ──────────────────
-
-function isSaudi(nationality: string | null | undefined): boolean {
-  if (!nationality) return false;
-  const n = nationality.toLowerCase().trim();
-  return n === 'saudi' || n === 'saudi arabia' || n === 'sa' || n === 'سعودي';
-}
-
-// ─── Helper: calculate GOSI contributions for one employee ────────────────
-
-function calculateGosiForEmployee(
-  basic_salary: number,
-  nationality: string | null | undefined,
-): {
-  gosi_wage: number;
-  gosi_employee: number;
-  gosi_employer: number;
-  is_saudi: boolean;
-  rates: { employee: number; employer: number };
-} {
-  const gosiWage = Math.min(basic_salary, GOSI_CAP_MONTHLY);
-  const saudi = isSaudi(nationality);
-  const rates = saudi ? GOSI_SAUDI : GOSI_EXPAT;
-
-  return {
-    gosi_wage: gosiWage,
-    gosi_employee: Math.round(gosiWage * rates.employee * 100) / 100,
-    gosi_employer: Math.round(gosiWage * rates.employer * 100) / 100,
-    is_saudi: saudi,
-    rates,
-  };
-}
 
 // ─── POST /api/payroll/calculate — Full payroll calculation for a period ──
 
