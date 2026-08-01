@@ -20,6 +20,7 @@ const TENANT_NAME = 'YAMEN Demo School';
 const TENANT_SLUG = 'yamen-demo';
 const BRANCH_NAME = 'Main Campus';
 const ACADEMIC_YEAR = '2026-2027';
+const JURISDICTION_CODE = 'SA';
 
 function pad(n: number, len: number) {
   return String(n).padStart(len, '0');
@@ -50,7 +51,13 @@ async function findOrCreateBranch(tenantId: string) {
 
   const { data: branch, error } = await supabase
     .from('branches')
-    .insert({ tenant_id: tenantId, name_en: BRANCH_NAME, name_ar: 'الحرم الرئيسي', is_main: true })
+    .insert({
+      tenant_id: tenantId,
+      name_en: BRANCH_NAME,
+      name_ar: 'الحرم الرئيسي',
+      is_main: true,
+      jurisdiction_code: JURISDICTION_CODE,
+    })
     .select('id')
     .single();
   if (error) throw error;

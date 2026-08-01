@@ -1,13 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
 import { assertDemoDatabase } from './lib/demoGuard.js';
+import { validateJurisdictionCode } from '../lib/jurisdiction.js';
 
 const url = process.env.SUPABASE_URL!;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(url, key, { realtime: { transport: ws as any } });
 
+const JURISDICTION_CODE = 'SA';
+
 async function main() {
   assertDemoDatabase();
+  const known = await validateJurisdictionCode(supabase, JURISDICTION_CODE);
+  if (!known) {
+    console.error(`Jurisdiction ${JURISDICTION_CODE} is not configured in jurisdictions table`);
+    process.exit(1);
+  }
   const tenantId = '00000000-0000-0000-0000-000000000001';
   const { data: existing } = await supabase.from('tenants').select('id').eq('id', tenantId).maybeSingle();
   if (existing) {
@@ -27,6 +35,7 @@ async function main() {
     num_grades: 12,
     max_students: 2000,
     is_demo: true,
+    jurisdiction_code: JURISDICTION_CODE,
   });
   if (error) {
     console.error(error);

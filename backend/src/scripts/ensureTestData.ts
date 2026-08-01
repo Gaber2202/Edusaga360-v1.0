@@ -9,9 +9,17 @@ const supabase = createClient(url, key, { realtime: { transport: ws as any } });
 
 const tenantId = '00000000-0000-0000-0000-000000000001';
 
+const JURISDICTION_CODE = 'SA';
+
 async function main() {
   await assertDemoTarget(supabase, tenantId);
-  const { data: branch } = await supabase.from('branches').insert({ tenant_id: tenantId, name_en: 'Main Campus', name_ar: 'الحرم الرئيسي', is_main: true }).select('id').single();
+  const { data: branch } = await supabase.from('branches').insert({
+    tenant_id: tenantId,
+    name_en: 'Main Campus',
+    name_ar: 'الحرم الرئيسي',
+    is_main: true,
+    jurisdiction_code: JURISDICTION_CODE,
+  }).select('id').single();
   const branchId = (branch as any).id;
   const { data: year } = await supabase.from('academic_years').insert({ tenant_id: tenantId, name: '2026-2027', start_date: '2026-09-01', end_date: '2027-06-30', is_current: true }).select('id').single();
   const yearId = (year as any).id;

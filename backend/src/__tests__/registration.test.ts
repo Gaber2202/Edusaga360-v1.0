@@ -50,6 +50,7 @@ function makeQB(resolvedValue: { data: unknown; error: unknown } = { data: null,
     eq: vi.fn().mockReturnThis(),
     in: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue(resolvedValue),
+    maybeSingle: vi.fn().mockResolvedValue(resolvedValue),
   };
   return qb;
 }
@@ -59,6 +60,7 @@ function makeQB(resolvedValue: { data: unknown; error: unknown } = { data: null,
 describe('POST /registration/request', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFrom.mockReset();
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: true, json: async () => ({}) });
   });
 
@@ -134,6 +136,7 @@ describe('POST /registration/request', () => {
 describe('GET /registration/approve/:id', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFrom.mockReset();
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: true, json: async () => ({}) });
   });
 
@@ -149,9 +152,11 @@ describe('GET /registration/approve/:id', () => {
         onboarding_token: 'tok123',
         city: 'Riyadh',
         school_type: 'private',
+        country: 'SA',
       },
       error: null,
     });
+    const jurisdictionQB = makeQB({ data: { code: 'SA' }, error: null });
     const updateQB = makeQB({ data: null, error: null });
     const tenantQB = makeQB({
       data: { id: 'tenant-new' },
@@ -160,10 +165,11 @@ describe('GET /registration/approve/:id', () => {
     const linkQB = makeQB({ data: null, error: null });
 
     mockFrom
-      .mockReturnValueOnce(fetchQB)   // select request
-      .mockReturnValueOnce(updateQB)  // update status = approved
-      .mockReturnValueOnce(tenantQB)  // insert tenant
-      .mockReturnValueOnce(linkQB);   // update registration_requests with tenant_id
+      .mockReturnValueOnce(fetchQB)        // select request
+      .mockReturnValueOnce(jurisdictionQB) // validate jurisdiction_code
+      .mockReturnValueOnce(updateQB)       // update status = approved
+      .mockReturnValueOnce(tenantQB)       // insert tenant
+      .mockReturnValueOnce(linkQB);        // update registration_requests with tenant_id
 
     const app = makeApp();
     const res = await request(app).get(`/registration/approve/req-valid?sig=${sigFor('approve', 'req-valid')}`);
@@ -206,6 +212,7 @@ describe('GET /registration/approve/:id', () => {
 describe('POST /registration/onboarding/:token/complete', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFrom.mockReset();
   });
 
   it('returns 200 and redirect_url when token is valid and status is approved', async () => {
