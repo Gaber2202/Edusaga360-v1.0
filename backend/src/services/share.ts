@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { InvoiceData } from './vat.js';
+import type { InvoiceData } from '../packs/sa/vat.js';
 import { invoiceDataFromRow, generateZATCAInvoicePDF, TenantData } from './zatca.js';
 import { getProvider } from './messaging/registry.js';
 import { isEmailConfigured, sendEmail } from './email.js';

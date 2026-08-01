@@ -13,7 +13,7 @@
  * Pure functions — no Supabase or network involved.
  */
 import { describe, it, expect } from 'vitest';
-import type { InvoiceData } from '../services/vat.js';
+import type { InvoiceData } from '../packs/sa/vat.js';
 import {
   generateTLVQR,
   generateUBLXml,

@@ -8,7 +8,7 @@ import {
   computeVatSummary,
   categoryCode,
   vatRateForCategory,
-} from '../../services/vat.js';
+} from './vat.js';
 import type { TaxService } from '../contract/CountryPack.js';
 
 export const saTax: TaxService = {
