@@ -31,6 +31,7 @@ import { parentsRouter } from './routes/parents.js';
 import { filesRouter } from './routes/files.js';
 import { execRouter } from './routes/exec.js';
 import { subscriptionRouter } from './routes/subscription.js';
+import { subscriptionPublicRouter } from './routes/subscriptionPublic.js';
 import { intakeRouter } from './routes/intake.js';
 import { apiKeysRouter } from './routes/apiKeys.js';
 import { apiKeyAuth } from './middleware/apiKeyAuth.js';
@@ -173,6 +174,7 @@ app.use('/api/notifications',       apiLimiter, authMiddleware, tenantMiddleware
 app.use('/api/benchmarks',          apiLimiter, authMiddleware, tenantMiddleware, benchmarksRouter);
 app.use('/api/marketplace',         apiLimiter, authMiddleware, tenantMiddleware, marketplaceRouter);
 app.use('/api/tenant-users',        apiLimiter, authMiddleware, tenantMiddleware, tenantUsersRouter);
+app.use('/api/subscription',        apiLimiter, subscriptionPublicRouter);
 app.use('/api/ai',                  apiLimiter, authMiddleware, tenantMiddleware, aiRouter);
 app.use('/api/admin',               apiLimiter, authMiddleware, adminRouter);
 app.use('/api/parents',             apiLimiter, authMiddleware, tenantMiddleware, parentsRouter);
