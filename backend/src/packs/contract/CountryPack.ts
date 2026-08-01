@@ -132,7 +132,7 @@ export interface PayrollService {
     supabase: unknown,
     tenantId: string,
     period: { start: string; end: string },
-  ): Promise<Buffer | string>;
+  ): Promise<{ filename: string; content: string }>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
