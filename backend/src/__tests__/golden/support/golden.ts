@@ -14,8 +14,13 @@ export function golden<T extends Buffer | string>(name: string, actual: T, ext: 
   const actualBuf = Buffer.isBuffer(actual) ? actual : Buffer.from(actual, 'utf8');
 
   if (!existsSync(path)) {
-    writeFileSync(path, actualBuf);
-    return actual;
+    if (process.env.UPDATE_GOLDEN === '1') {
+      writeFileSync(path, actualBuf);
+      return actual;
+    }
+    throw new Error(
+      `Missing golden snapshot ${name}.${ext}. Re-run with UPDATE_GOLDEN=1 to create it.`,
+    );
   }
 
   const expected = readFileSync(path);
