@@ -148,7 +148,7 @@ async function postJournal(
 }
 
 /** Resolve applicable discount rules for a student, returning total discount amount */
-async function applyDiscounts(
+export async function applyDiscounts(
   tenant_id: string,
   student_id: string,
   academic_year: string,

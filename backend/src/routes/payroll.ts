@@ -48,7 +48,7 @@ const GosiCalculateSchema = z.object({
 
 // ─── Helper: is this employee considered Saudi for GOSI? ──────────────────
 
-function isSaudi(nationality: string | null | undefined): boolean {
+export function isSaudi(nationality: string | null | undefined): boolean {
   if (!nationality) return false;
   const n = nationality.toLowerCase().trim();
   return n === 'saudi' || n === 'saudi arabia' || n === 'sa' || n === 'سعودي';
@@ -56,7 +56,7 @@ function isSaudi(nationality: string | null | undefined): boolean {
 
 // ─── Helper: calculate GOSI contributions for one employee ────────────────
 
-function calculateGosiForEmployee(
+export function calculateGosiForEmployee(
   basic_salary: number,
   nationality: string | null | undefined,
 ): {

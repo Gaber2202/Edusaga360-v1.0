@@ -43,7 +43,7 @@ function maskIban(iban: string | null | undefined): string {
   return `****${clean.slice(-4)}`;
 }
 
-interface PayslipData {
+export interface PayslipData {
   name_ar: string | null; name_en: string | null; employee_number: string | null;
   job_title_name: string | null; iban: string | null; nationality: string | null;
   hire_date: string | null; department_name: string | null;
@@ -56,7 +56,7 @@ interface PayslipData {
   tuition_advance: number; penalties: number; other_deductions: number; gosi_employer: number;
 }
 
-async function generatePayslipPdf(data: PayslipData): Promise<Buffer> {
+export async function generatePayslipPdf(data: PayslipData): Promise<Buffer> {
   return new Promise(async (resolve, reject) => {
     try {
       const doc = new PDFDocument({ size: 'A4', margin: 40, info: { Title: 'Payslip / كشف راتب', Author: data.company_name_en ?? 'EduSaga 360' } });

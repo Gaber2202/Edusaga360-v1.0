@@ -83,10 +83,10 @@ export interface PaymentsService {
   createOrRefreshPaymentLink?(supabase: unknown, options: PaymentLinkOptions): Promise<PaymentLinkResult>;
 
   /** Process a webhook payload from the payment provider. */
-  processWebhook?(supabase: unknown, payload: unknown, signature?: string): Promise<unknown>;
+  processWebhook?(supabase: unknown, payload: unknown, options?: { skipSecret?: boolean }): Promise<unknown>;
 
   /** Refund a payment, optionally for a partial amount. */
-  refundPayment?(supabase: unknown, paymentId: string, amount?: number): Promise<unknown>;
+  refundPayment?(supabase: unknown, tenantId: string, paymentId: string, amount?: number): Promise<unknown>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -119,10 +119,19 @@ export interface PayrollService {
   calculateGosi?(basicSalary: number, nationality: string): GosiResult;
 
   /** Run a full payroll calculation for a period. */
-  calculatePayroll?(supabase: unknown, period: { start: string; end: string }): Promise<unknown>;
+  calculatePayroll?(
+    supabase: unknown,
+    tenantId: string,
+    period: { start: string; end: string },
+    employeeIds?: string[],
+  ): Promise<unknown>;
 
   /** Generate the WPS / Mudad bank file for a period. */
-  generateWpsFile?(supabase: unknown, period: { start: string; end: string }): Promise<Buffer | string>;
+  generateWpsFile?(
+    supabase: unknown,
+    tenantId: string,
+    period: { start: string; end: string },
+  ): Promise<Buffer | string>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -164,13 +173,22 @@ export interface RegulatorReportsService {
 
 export interface AcademicCalendarService {
   /** Resolve the active academic year for a date. */
-  currentAcademicYearForDate?(date: Date | string): unknown;
+  currentAcademicYearForDate?(supabase: unknown, tenantId: string, date?: Date | string): Promise<unknown>;
 
   /** List term boundaries for an academic year. */
   termBoundariesForYear?(yearLabel: string): Array<{ start: string; end: string; name: string }>;
 
   /** Format a date as Hijri for display. */
-  formatHijri?(date: Date | string, locale: 'ar' | 'en'): string;
+  formatHijri?(date: Date | string, locale?: 'ar' | 'en'): string;
+
+  /** Convert a Gregorian date to Umm al-Qura Hijri parts. */
+  gregorianToHijri?(date: Date | string): { year: number; month: number; day: number };
+
+  /** Convert Umm al-Qura Hijri parts to a Gregorian date. */
+  hijriToGregorian?(year: number, month: number, day: number): Date;
+
+  /** Zero-padded numeric Hijri string, e.g. "1448-01-17". */
+  hijriNumeric?(date: Date | string): string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -179,10 +197,18 @@ export interface AcademicCalendarService {
 
 export interface FeeGovernanceService {
   /** Resolve which fee structures apply for a student/grade/year. */
-  resolveFeeStructures?(supabase: unknown, input: unknown): Promise<unknown>;
+  resolveFeeStructures?(
+    supabase: unknown,
+    tenantId: string,
+    input: { grade?: string; academicYear?: string; branchId?: string },
+  ): Promise<unknown>;
 
   /** Apply jurisdiction-aware discounts and sibling discounts. */
-  applyDiscounts?(supabase: unknown, input: unknown): Promise<unknown>;
+  applyDiscounts?(
+    supabase: unknown,
+    tenantId: string,
+    input: unknown,
+  ): Promise<unknown>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -196,13 +222,23 @@ export interface FeeGovernanceService {
 export type DocumentTemplateSet = never;
 
 export interface DocumentsService {
-  /** Build a jurisdiction-specific document from placeholders. */
+  /** Render an already-backend invoice to a ZATCA-compliant PDF. */
+  renderInvoicePdf?(invoice: unknown, tenant: unknown): Promise<Buffer>;
+
+  /** Render an already-backend payslip to a PDF. */
+  renderPayslipPdf?(payslipData: unknown): Promise<Buffer>;
+
+  /**
+   * TODO: Category A and B document generation (HR letters, contracts, VAT
+   * returns, MHRSD reports) is intentionally not implemented here.
+   * See ADR-006 and Task 8b.
+   */
   buildDocument?<T extends DocumentTemplateSet>(
     templateKey: string,
     variables: Record<string, unknown>,
   ): T;
 
-  /** Render a document to PDF. */
+  /** TODO: Category A and B; see ADR-006 and Task 8b. */
   renderPdf?<T extends DocumentTemplateSet>(document: T): Promise<Buffer>;
 }
 
@@ -223,10 +259,13 @@ export interface LocalisationService {
   formatMoney?(options: CurrencyFormatOptions): string;
 
   /** Convert a major-currency amount to minor units (halalas, fils, dirham). */
-  toMinorUnits?(amount: number, minorUnits?: number): number;
+  toMinorUnits?(amount: number | string, minorUnits?: number): number;
 
   /** Convert minor units back to a major-currency amount. */
-  toMajorUnits?(amountMinor: number, minorUnits?: number): number;
+  toMajorUnits?(amountMinor: number | string, minorUnits?: number): number;
+
+  /** Round a major-unit amount to the currency's minor-unit precision. */
+  roundToMinorUnits?(amount: number | string, minorUnits?: number): number;
 
   /** Format a number for the jurisdiction. */
   formatNumber?(value: number, locale?: string): string;
