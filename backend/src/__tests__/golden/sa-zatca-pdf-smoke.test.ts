@@ -14,7 +14,7 @@ import type { InvoiceData } from '../../packs/sa/vat.js';
 import {
   generateZATCAInvoicePDF,
   TenantData,
-} from '../../services/zatca.js';
+} from '../../packs/sa/zatca.js';
 
 beforeAll(() => {
   process.env.TZ = 'UTC';

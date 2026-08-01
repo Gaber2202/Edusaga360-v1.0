@@ -7,7 +7,7 @@ import { createInvoiceForStudent } from '../billing.js';
 import { shareInvoice } from '../../services/share.js';
 import type { ShareChannel } from '../../services/share.js';
 import { getTenantComplianceData } from '../../services/tenant.js';
-import { invoiceDataFromRow, generateZATCAInvoicePDF } from '../../services/zatca.js';
+import { invoiceDataFromRow, generateZATCAInvoicePDF } from '../../packs/sa/zatca.js';
 
 export const invoicesRouter = Router();
 

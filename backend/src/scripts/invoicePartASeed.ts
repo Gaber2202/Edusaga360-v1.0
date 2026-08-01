@@ -8,7 +8,7 @@ import {
   generateTLVQR,
   generateInvoiceHash,
   TenantData,
-} from '../services/zatca.js';
+} from '../packs/sa/zatca.js';
 
 const tenant: TenantData = {
   legal_name_ar: 'مدارس النور الدولية',

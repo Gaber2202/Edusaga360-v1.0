@@ -10,7 +10,7 @@ import {
   hijriNumeric,
   formatHijri,
   hijriMonthName,
-} from '../lib/hijri.js';
+} from '../packs/sa/hijri.js';
 
 describe('gregorianToHijri (Umm al-Qura)', () => {
   it('maps 1 Muharram 1445 correctly', () => {

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createSupabaseStub, QueryContext } from './support/supabaseMock.js';
 
-vi.mock('../services/zatca.js', () => ({
+vi.mock('../packs/sa/zatca.js', () => ({
   generateZATCAInvoicePDF: vi.fn(() => Buffer.from('pdf')),
 }));
 

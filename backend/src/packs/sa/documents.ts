@@ -12,7 +12,7 @@
 import http from 'http';
 import https from 'https';
 import PDFDocument from 'pdfkit';
-import { generateZATCAInvoicePDF } from '../../services/zatca.js';
+import { generateZATCAInvoicePDF } from './zatca.js';
 import { NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
 import type { DocumentsService } from '../contract/CountryPack.js';
 
