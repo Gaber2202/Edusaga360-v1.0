@@ -16,12 +16,24 @@ import { toast } from 'sonner';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 
-const KNOWN_JURISDICTIONS = ['SA', 'AE', 'QA'];
+const INHERIT_VALUE = '__inherit__';
 
 export default function Branches() {
   const { t, isRTL } = useLanguage();
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
+
+  const { data: jurisdictions = [] } = useQuery({
+    queryKey: ['jurisdictions'],
+    queryFn: () => fetchData(tenantQuery('jurisdictions').select('code,name_en,name_ar').eq('status', 'ga').order('code')),
+    enabled: hasTenantAccess,
+  });
+
+  const { data: tenant } = useQuery({
+    queryKey: ['tenant', tenantId],
+    queryFn: () => fetchData(tenantQuery('tenants').select('jurisdiction_code').eq('id', tenantId).single()),
+    enabled: !!tenantId,
+  });
   
   const [showForm, setShowForm] = useState(false);
   const [editingBranch, setEditingBranch] = useState(null);
@@ -50,15 +62,23 @@ export default function Branches() {
       toast.error(isRTL ? 'يرجى ملء الحقول المطلوبة' : 'Please fill in required fields');
       return;
     }
-    if (!formData.jurisdiction_code || !KNOWN_JURISDICTIONS.includes(formData.jurisdiction_code)) {
-      toast.error(isRTL ? 'يرجى اختيار جهة صالحة' : 'Please select a valid jurisdiction');
+    if (formData.jurisdiction_code === '') {
+      toast.error(isRTL ? 'يرجى اختيار جهة صالحة' : 'Please select a jurisdiction or "Inherit from school"');
+      return;
+    }
+    if (
+      formData.jurisdiction_code !== INHERIT_VALUE &&
+      !jurisdictions.some(j => j.code === formData.jurisdiction_code)
+    ) {
+      toast.error(isRTL ? 'الجهة المختارة غير مضبوطة' : 'Selected jurisdiction is not configured');
       return;
     }
 
     setSaving(true);
     try {
       const branchCode = formData.code || `BR-${Date.now().toString(36).toUpperCase()}`;
-      const data = { ...formData, code: branchCode, tenant_id: tenantId };
+      const jurisdiction_code = formData.jurisdiction_code === INHERIT_VALUE ? null : formData.jurisdiction_code;
+      const data = { ...formData, code: branchCode, tenant_id: tenantId, jurisdiction_code };
 
       if (editingBranch?.id) {
         await tenantQuery('branches').update(data).eq('id', editingBranch.id);
@@ -92,7 +112,7 @@ export default function Branches() {
       phone: rest.phone || '',
       email: rest.email || '',
       status: rest.status || 'active',
-      jurisdiction_code: jurisdiction_code || ''
+      jurisdiction_code: jurisdiction_code || INHERIT_VALUE
     });
     setShowForm(true);
   };
@@ -101,7 +121,7 @@ export default function Branches() {
     setEditingBranch(null);
     setFormData({
       code: '', name_ar: '', name_en: '', city: '', address: '', phone: '',
-      email: '', status: 'active', jurisdiction_code: ''
+      email: '', status: 'active', jurisdiction_code: INHERIT_VALUE
     });
   };
 
@@ -176,8 +196,13 @@ export default function Branches() {
                 onChange={(e) => setFormData(p => ({...p, jurisdiction_code: e.target.value}))}
               >
                 <option value="">{isRTL ? 'اختر الاختصاص' : 'Select jurisdiction'}</option>
-                {KNOWN_JURISDICTIONS.map(code => (
-                  <option key={code} value={code}>{code}</option>
+                <option value={INHERIT_VALUE}>
+                  {isRTL
+                    ? `يرث من المدرسة (${tenant?.jurisdiction_code || '?'})`
+                    : `Inherit from school (${tenant?.jurisdiction_code || '?'})`}
+                </option>
+                {jurisdictions.map(j => (
+                  <option key={j.code} value={j.code}>{j.code}</option>
                 ))}
               </select>
             </div>

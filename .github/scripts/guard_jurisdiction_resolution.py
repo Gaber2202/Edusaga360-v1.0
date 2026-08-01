@@ -75,7 +75,7 @@ def check_file(path: Path) -> list[str]:
     for lineno, line in enumerate(raw.splitlines(), start=1):
         for m in DIRECT_READ_RE.finditer(line):
             # Ignore the same line if it is an assignment (write) rather than a read.
-            if re.search(rf"{re.escape(m.group(0))}\s*[=:]", line):
+            if re.search(rf"{re.escape(m.group(0))}\s*(=(?!=)|:)", line):
                 continue
             findings.append(f"line {lineno}: direct read `{m.group(0)}`")
     return findings
