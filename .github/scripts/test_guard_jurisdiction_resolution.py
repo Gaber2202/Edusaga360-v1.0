@@ -47,6 +47,11 @@ MUST_CATCH = [
     ("destructure camel branch alias", "const { jurisdictionCode: jc } = branch"),
     ("equality read", "tenant.jurisdiction_code === 'SA'"),
     ("nested optional branch", "x?.branch?.jurisdiction_code"),
+    ("ternary read", "const code = flag ? tenant.jurisdiction_code : 'SA';"),
+    ("ternary optional read", "const code = flag ? tenant?.jurisdiction_code : 'SA';"),
+    ("switch case read", "switch (x) { case tenant.jurisdiction_code: break; }"),
+    ("destructure from ctx.branch", "const { jurisdiction_code } = ctx.branch;"),
+    ("destructure from obj.tenant", "const { jurisdiction_code } = someObj.tenant;"),
 ]
 
 # Patterns the guard MUST NOT flag (legitimate writes / object keys).
