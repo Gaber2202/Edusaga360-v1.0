@@ -1,12 +1,17 @@
 /**
- * Golden-file tests for Saudi Riyal (SAR) formatting and halala conversion.
+ * Golden-file tests for Saudi Riyal (SAR) formatting and minor/major unit
+ * conversion.
  *
- * `sar()`, `toHalala()` and `toSar()` are used by payroll, billing, and ZATCA
- * totals. The snapshots pin rounding and subunit conversion behaviour.
+ * `sar()` rounds to the currency's minor-unit precision. `toMinorUnits()` and
+ * `toMajorUnits()` are the jurisdiction-agnostic helpers these Saudi aliases
+ * delegate to; the snapshots pin the same rounding and subunit conversion
+ * behaviour.
  */
 import { describe, it } from 'vitest';
-import { sar, toHalala, toSar } from '../../lib/money.js';
+import { sar, toMinorUnits, toMajorUnits } from '../../lib/money.js';
 import { golden } from './support/golden.js';
+
+const MINOR_UNITS = 2;
 
 describe('SAR money formatting golden snapshots', () => {
   it('sar() rounding is stable', () => {
@@ -22,27 +27,27 @@ describe('SAR money formatting golden snapshots', () => {
     golden('sa-money-sar-rounding', JSON.stringify(cases), 'json');
   });
 
-  it('toHalala conversion is stable', () => {
+  it('toMinorUnits conversion is stable', () => {
     const cases = [
-      toHalala(1234.56),
-      toHalala(115),
-      toHalala(0.01),
-      toHalala(null),
-      toHalala('1150'),
-      toHalala(0),
+      toMinorUnits(1234.56, MINOR_UNITS),
+      toMinorUnits(115, MINOR_UNITS),
+      toMinorUnits(0.01, MINOR_UNITS),
+      toMinorUnits(null, MINOR_UNITS),
+      toMinorUnits('1150', MINOR_UNITS),
+      toMinorUnits(0, MINOR_UNITS),
     ];
-    golden('sa-money-to-halala', JSON.stringify(cases), 'json');
+    golden('sa-money-to-minor-units', JSON.stringify(cases), 'json');
   });
 
-  it('toSar conversion is stable', () => {
+  it('toMajorUnits conversion is stable', () => {
     const cases = [
-      toSar(115000),
-      toSar(1150),
-      toSar(10),
-      toSar(null),
-      toSar('100000'),
-      toSar(0),
+      toMajorUnits(115000, MINOR_UNITS),
+      toMajorUnits(1150, MINOR_UNITS),
+      toMajorUnits(10, MINOR_UNITS),
+      toMajorUnits(null, MINOR_UNITS),
+      toMajorUnits('100000', MINOR_UNITS),
+      toMajorUnits(0, MINOR_UNITS),
     ];
-    golden('sa-money-to-sar', JSON.stringify(cases), 'json');
+    golden('sa-money-to-major-units', JSON.stringify(cases), 'json');
   });
 });

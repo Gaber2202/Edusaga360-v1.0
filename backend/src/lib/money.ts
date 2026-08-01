@@ -65,17 +65,7 @@ export function roundToMinorUnits(
   return Math.round(num * factor) / factor;
 }
 
-/** Legacy SAR-only rounding helper. Prefer roundToMinorUnits for new code. */
+/** SAR-only rounding helper (SAR uses 2 minor units). Prefer roundToMinorUnits for new code. */
 export function sar(num: number): number {
   return roundToMinorUnits(num, 2);
-}
-
-/** Legacy SAR-only major-to-minor helper. Prefer toMinorUnits for new code. */
-export function toHalala(sar: number | string | null | undefined): number {
-  return toMinorUnits(sar, 2);
-}
-
-/** Legacy SAR-only minor-to-major helper. Prefer toMajorUnits for new code. */
-export function toSar(halala: number | string | null | undefined): number {
-  return toMajorUnits(halala, 2);
 }

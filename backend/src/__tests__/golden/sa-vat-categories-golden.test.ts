@@ -6,7 +6,7 @@
  * invoice PDF totals table.
  */
 import { describe, it, expect } from 'vitest';
-import { computeVatSummary, InvoiceData, InvoiceItemData } from '../../services/vat.js';
+import { computeVatSummary, InvoiceData, InvoiceItemData } from '../../packs/sa/vat.js';
 import type { TenantData } from '../../services/zatca.js';
 import { golden } from './support/golden.js';
 

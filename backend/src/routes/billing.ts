@@ -20,7 +20,7 @@ import { z } from 'zod';
 import crypto from 'crypto';
 import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/auth.js';
 import { sanitizeSearchTerm } from '../lib/sanitize.js';
-import { computeVatSummary, InvoiceData } from '../services/vat.js';
+import { computeVatSummary, InvoiceData } from '../packs/sa/vat.js';
 import {
   generateTLVQR,
   generateUBLXml,

@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { SupabaseClient } from '@supabase/supabase-js';
-import type { InvoiceData } from './vat.js';
+import type { InvoiceData } from '../packs/sa/vat.js';
 import { generateZATCAInvoicePDF, TenantData } from './zatca.js';
 
 function sar(n: number): number {

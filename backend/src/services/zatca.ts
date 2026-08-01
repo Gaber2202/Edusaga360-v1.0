@@ -10,7 +10,7 @@ import {
   InvoiceData,
   normalizeInvoiceItems,
   percentValue,
-} from './vat.js';
+} from '../packs/sa/vat.js';
 
 /** Umm al-Qura issue date for the invoice; never throws (bad dates → ''). */
 function safeHijriDate(iso: string): string {

@@ -9,7 +9,7 @@
  * XML and TLV QR payloads are deterministic and are snapshotted.
  */
 import { describe, it, expect, beforeAll } from 'vitest';
-import type { InvoiceData } from '../../services/vat.js';
+import type { InvoiceData } from '../../packs/sa/vat.js';
 import {
   generateUBLXml,
   generateTLVQR,

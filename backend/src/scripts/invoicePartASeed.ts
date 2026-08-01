@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import type { InvoiceData } from '../services/vat.js';
+import type { InvoiceData } from '../packs/sa/vat.js';
 import {
   generateZATCAInvoicePDF,
   generateUBLXml,
