@@ -87,7 +87,6 @@ export async function createReceiptForPayment(
     vat_amount: 0,
     total_amount: amount,
     paid_amount: amount,
-    balance: 0,
     status: 'paid',
     items: receiptData.items,
     vat_summary: { total_taxable: amount, total_vat: 0, rates: [] },

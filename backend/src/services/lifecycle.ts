@@ -138,7 +138,6 @@ export async function convertToInvoice(
     vat_amount: invoiceData.vat_amount,
     total_amount: invoiceData.total_amount,
     paid_amount: 0,
-    balance: invoiceData.total_amount,
     status: 'issued',
     items,
     vat_summary: vatSummary,

@@ -182,7 +182,6 @@ export async function processBulkImport(
             due_date: due_date ?? null,
             total_amount,
             paid_amount,
-            balance: (total_amount || 0) - paid_amount,
             status,
             document_type: 'invoice',
             invoice_type: 'simplified',
@@ -223,7 +222,7 @@ export async function processBulkImport(
             const { data, error } = await supabase.from('payments').insert(insert).select().single();
             if (error) errors.push(error.message);
             else {
-              await supabase.from('invoices').update({ paid_amount: newPaid, balance: Math.max(0, (Number(invoice.total_amount) || 0) - newPaid), status: newStatus }).eq('id', invoice.id);
+              await supabase.from('invoices').update({ paid_amount: newPaid, status: newStatus }).eq('id', invoice.id);
               record = data;
             }
           } else {

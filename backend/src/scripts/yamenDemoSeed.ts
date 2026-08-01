@@ -210,7 +210,6 @@ async function seedBatch(
       discount_amount: 0,
       total_amount: total,
       paid_amount: paidAmount,
-      balance: outstanding,
       status,
       items: [{
         category_code: 'TUITION',

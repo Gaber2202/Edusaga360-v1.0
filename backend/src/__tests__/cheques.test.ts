@@ -115,8 +115,23 @@ describe('POST /cheques/:id/transition', () => {
     const res = await request(makeApp()).post(`/cheques/${CHEQUE_ID}/transition`).send({ to_status: 'cleared' });
     expect(res.status).toBe(200);
     expect(res.body.cheque.status).toBe('cleared');
-    expect(res.body.invoice_sync).toMatchObject({ invoice_id: INVOICE_ID, paid_amount: 500, status: 'partial', payment_id: 'pay-1' });
+    expect(res.body.invoice_sync).toMatchObject({ invoice_id: INVOICE_ID, paid_amount: 500, balance: 500, status: 'partial', payment_id: 'pay-1' });
     expect(res.body.follow_up_required).toBe(false);
+  });
+
+  it('clearing a cheque for the full amount marks the invoice paid with zero balance', async () => {
+    db.setResolver((ctx: QueryContext) => {
+      if (ctx.table === 'cheques' && ctx.op === 'select') return { data: { id: CHEQUE_ID, status: 'deposited', amount: 1000, invoice_id: INVOICE_ID, cheque_number: 'CHQ-001' } };
+      if (ctx.table === 'cheques' && ctx.op === 'update') return { data: { id: CHEQUE_ID, status: 'cleared' } };
+      if (ctx.table === 'invoices') return { data: { id: INVOICE_ID, invoice_number: 'INV-1', total_amount: 1000, paid_amount: 0 } };
+      if (ctx.table === 'payments' && ctx.op === 'insert') return { data: { id: 'pay-1' } };
+      if (ctx.table === 'chart_of_accounts') return { data: null };
+      return { data: null };
+    });
+
+    const res = await request(makeApp()).post(`/cheques/${CHEQUE_ID}/transition`).send({ to_status: 'cleared' });
+    expect(res.status).toBe(200);
+    expect(res.body.invoice_sync).toMatchObject({ invoice_id: INVOICE_ID, paid_amount: 1000, balance: 0, status: 'paid' });
   });
 
   it('bouncing a cleared cheque reverses the invoice and flags follow-up', async () => {
@@ -131,7 +146,7 @@ describe('POST /cheques/:id/transition', () => {
     const res = await request(makeApp()).post(`/cheques/${CHEQUE_ID}/transition`).send({ to_status: 'bounced', bounce_reason: 'NSF' });
     expect(res.status).toBe(200);
     expect(res.body.cheque.status).toBe('bounced');
-    expect(res.body.invoice_sync).toMatchObject({ invoice_id: INVOICE_ID, paid_amount: 0, status: 'issued', reversed: true });
+    expect(res.body.invoice_sync).toMatchObject({ invoice_id: INVOICE_ID, paid_amount: 0, balance: 1000, status: 'issued', reversed: true });
     expect(res.body.follow_up_required).toBe(true);
   });
 

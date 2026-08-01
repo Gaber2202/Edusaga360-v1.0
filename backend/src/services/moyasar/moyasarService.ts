@@ -520,7 +520,7 @@ export async function processMoyasarWebhook(
       invoiceStatus = newStatus;
       await supabase
         .from('invoices')
-        .update({ paid_amount: newPaid, balance: roundToMinorUnits(Number(invoice.total_amount) - newPaid, minorUnits), status: newStatus, updated_at: new Date().toISOString() })
+        .update({ paid_amount: newPaid, status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', invoiceId)
         .eq('tenant_id', tenantId);
 
