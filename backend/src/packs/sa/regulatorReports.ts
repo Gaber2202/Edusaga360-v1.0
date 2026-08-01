@@ -15,8 +15,8 @@ export const saRegulatorReports: RegulatorReportsService = {
   calculateNitaqat: async (supabase: SupabaseClient, tenantId: string) => {
     const dashboard = await new MetricsService(supabase).getDashboard('chro', tenantId);
     return {
-      band: dashboard?.nitaqat,
-      saudizationPct: dashboard?.saudization_pct,
+      band: dashboard?.nitaqat?.band,
+      saudizationPct: dashboard?.nitaqat?.saudization_pct,
       workforceComposition: dashboard?.workforce_composition,
     };
   },

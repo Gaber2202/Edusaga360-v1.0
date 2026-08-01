@@ -63,6 +63,7 @@ export interface EInvoiceService {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface PaymentLinkOptions {
+  tenantId: string;
   invoiceId: string;
   installmentId?: string | null;
   callbackUrl: string;
@@ -83,7 +84,7 @@ export interface PaymentsService {
   createOrRefreshPaymentLink?(supabase: unknown, options: PaymentLinkOptions): Promise<PaymentLinkResult>;
 
   /** Process a webhook payload from the payment provider. */
-  processWebhook?(supabase: unknown, payload: unknown, options?: { skipSecret?: boolean }): Promise<unknown>;
+  processWebhook?(supabase: unknown, payload: unknown, signature?: string): Promise<unknown>;
 
   /** Refund a payment, optionally for a partial amount. */
   refundPayment?(supabase: unknown, tenantId: string, paymentId: string, amount?: number): Promise<unknown>;
