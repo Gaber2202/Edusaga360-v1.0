@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
-import { getBrowser } from '../zatca.js';
+import { getBrowser } from '../pdfBrowser.js';
 import { runPdfJob } from '../../lib/pdfConcurrency.js';
 
 export interface GuaranteeMeasurementInput {

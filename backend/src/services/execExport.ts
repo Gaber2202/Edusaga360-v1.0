@@ -1,4 +1,4 @@
-import { getBrowser } from './zatca.js';
+import { getBrowser } from './pdfBrowser.js';
 
 const ACCENT = '#0E6B4F';
 const GREEN = '#16A077';

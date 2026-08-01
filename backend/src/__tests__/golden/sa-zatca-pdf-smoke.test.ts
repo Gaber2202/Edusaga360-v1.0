@@ -10,9 +10,9 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest';
 import { PDFDocument } from 'pdf-lib';
+import type { InvoiceData } from '../../services/vat.js';
 import {
   generateZATCAInvoicePDF,
-  InvoiceData,
   TenantData,
 } from '../../services/zatca.js';
 
