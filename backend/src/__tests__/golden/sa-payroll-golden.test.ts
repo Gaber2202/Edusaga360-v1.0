@@ -40,15 +40,6 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-// Minimal deterministic payloads; the first run writes the golden file,
-// subsequent runs must match byte-for-byte.
-function writeIfMissing(name: string, payload: unknown) {
-  const json = JSON.stringify(payload, null, 2) + '\n';
-  // We use vitest's built-in assertion style via a helper, but keep it simple:
-  // the file is written on first run and compared on subsequent runs.
-  return json;
-}
-
 import { golden } from './support/golden.js';
 
 describe('payroll / GOSI golden snapshots', () => {
@@ -117,5 +108,51 @@ describe('payroll / GOSI golden snapshots', () => {
 
     expect(res.status).toBe(200);
     golden('sa-gosi-calculation', JSON.stringify(res.body), 'json');
+  });
+
+  it('WPS (Mudad) bank file is byte-stable', async () => {
+    const resolver = (ctx: QueryContext) => {
+      if (ctx.table === 'tenants') {
+        return { data: { id: 'tenant-A', slug: 'alnoor', name_en: 'Al Noor' } };
+      }
+      if (ctx.table === 'payslip_lines') return { data: [] };
+      if (ctx.table === 'employees') {
+        return {
+          data: [
+            {
+              id: 'e1',
+              employee_number: 'EMP001',
+              nationality: 'saudi',
+              basic_salary: 10000,
+              housing_allowance: 2000,
+              transport_allowance: 1000,
+              other_allowances: {},
+              bank_name: 'Al Rajhi Bank',
+              bank_iban: 'SA0380000000608010167519',
+            },
+            {
+              id: 'e2',
+              employee_number: 'EMP002',
+              nationality: 'indian',
+              basic_salary: 8000,
+              housing_allowance: 1000,
+              transport_allowance: 500,
+              other_allowances: {},
+              bank_name: 'Riyad Bank',
+              bank_iban: 'SA0380000000608010167520',
+            },
+          ],
+        };
+      }
+      return { data: null };
+    };
+    db.setResolver(resolver);
+
+    const res = await request(makeApp())
+      .get('/payroll/wps-file')
+      .query({ period_start: '2026-06-01', period_end: '2026-06-30' });
+
+    expect(res.status).toBe(200);
+    golden('sa-wps-file', res.text, 'txt');
   });
 });
