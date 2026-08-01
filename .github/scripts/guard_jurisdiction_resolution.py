@@ -44,11 +44,17 @@ EXTRA_FILES = [ROOT / "shared" / "database" / "schema.sql"]
 
 SKIP_DIRS = {"node_modules", ".git"}
 
-# Match direct property reads. The regex intentionally misses destructuring of the
-# form `const { jurisdictionCode } = tenant`; those are caught by tsc linting and
-# should be refactored to use resolveJurisdiction() anyway.
-DIRECT_READ_RE = re.compile(
-    r"(tenant|branch)\s*\.\s*(jurisdiction_code|jurisdictionCode)",
+# Match direct property reads on the canonical `tenant` and `branch` identifiers.
+# Covers dot access, optional chaining, bracket access with string literals, and
+# simple single-line destructuring. Multi-line destructuring and arbitrary
+# variable aliases (e.g. `data.jurisdiction_code`) require an AST-based check.
+PROPERTY_READ_RE = re.compile(
+    r"\b(tenant|branch)\b\s*\?{0,1}\s*(?:\.\s*(jurisdiction_code|jurisdictionCode)|\[\s*['\"](jurisdiction_code|jurisdictionCode)['\"]\s*\])",
+    re.IGNORECASE,
+)
+
+DESTRUCTURING_RE = re.compile(
+    r"\b(?:const|let|var)\s*\{\s*[^}]*?\b(jurisdiction_code|jurisdictionCode)\b(?:\s*:\s*\w+)?\b[^}]*?\}\s*=\s*\b(tenant|branch)\b",
     re.IGNORECASE,
 )
 
@@ -67,16 +73,22 @@ def is_allowed(path: Path) -> bool:
     return False
 
 
+def _is_write(line: str, matched_text: str) -> bool:
+    """Return True if `matched_text` on `line` is an assignment or object-key write."""
+    return bool(re.search(rf"{re.escape(matched_text)}\s*(=(?!=)|:)", line))
+
+
 def check_file(path: Path) -> list[str]:
     if is_allowed(path):
         return []
     raw = path.read_text(encoding="utf-8", errors="ignore")
     findings = []
     for lineno, line in enumerate(raw.splitlines(), start=1):
-        for m in DIRECT_READ_RE.finditer(line):
-            # Ignore the same line if it is an assignment (write) rather than a read.
-            if re.search(rf"{re.escape(m.group(0))}\s*(=(?!=)|:)", line):
+        for m in PROPERTY_READ_RE.finditer(line):
+            if _is_write(line, m.group(0)):
                 continue
+            findings.append(f"line {lineno}: direct read `{m.group(0)}`")
+        for m in DESTRUCTURING_RE.finditer(line):
             findings.append(f"line {lineno}: direct read `{m.group(0)}`")
     return findings
 

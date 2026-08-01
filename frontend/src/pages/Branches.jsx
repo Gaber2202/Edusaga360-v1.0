@@ -29,12 +29,6 @@ export default function Branches() {
     enabled: hasTenantAccess,
   });
 
-  const { data: tenant } = useQuery({
-    queryKey: ['tenant', tenantId],
-    queryFn: () => fetchData(tenantQuery('tenants').select('jurisdiction_code').eq('id', tenantId).single()),
-    enabled: !!tenantId,
-  });
-  
   const [showForm, setShowForm] = useState(false);
   const [editingBranch, setEditingBranch] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -100,9 +94,9 @@ export default function Branches() {
     }
   };
 
-  const handleEdit = (branch) => {
-    setEditingBranch(branch);
-    const { jurisdiction_code, ...rest } = branch;
+  const handleEdit = (row) => {
+    setEditingBranch(row);
+    const { jurisdiction_code, ...rest } = row;
     setFormData({
       code: rest.code || '',
       name_ar: rest.name_ar || '',
@@ -197,9 +191,7 @@ export default function Branches() {
               >
                 <option value="">{isRTL ? 'اختر الاختصاص' : 'Select jurisdiction'}</option>
                 <option value={INHERIT_VALUE}>
-                  {isRTL
-                    ? `يرث من المدرسة (${tenant?.jurisdiction_code || '?'})`
-                    : `Inherit from school (${tenant?.jurisdiction_code || '?'})`}
+                  {isRTL ? 'يرث من المدرسة' : 'Inherit from school'}
                 </option>
                 {jurisdictions.map(j => (
                   <option key={j.code} value={j.code}>{j.code}</option>
