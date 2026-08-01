@@ -717,7 +717,7 @@ function simplifiedTitle(zatcaType?: string, documentType?: string): string {
     : 'فاتورة ضريبية مبسطة / Simplified Tax Invoice';
 }
 
-function buildInvoiceHTML(invoice: InvoiceData, tenant: TenantData, qrDataUrl: string, showZatcaFooter = true): string {
+export function buildInvoiceHTML(invoice: InvoiceData, tenant: TenantData, qrDataUrl: string, showZatcaFooter = true): string {
   const sellerNameAr = tenant.legal_name_ar || tenant.name_ar || tenant.name || 'المدرسة';
   const sellerNameEn = tenant.legal_name_en || tenant.name || 'School';
   const vatNumber = tenant.vat_number || '300000000000003';
