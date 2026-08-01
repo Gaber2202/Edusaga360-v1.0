@@ -22,8 +22,8 @@ BEGIN
   INSERT INTO tenants (id, name_en, name_ar, status) VALUES (tenant_a, 'Tenant A', 'المستأجر أ', 'active');
   INSERT INTO tenants (id, name_en, name_ar, status) VALUES (tenant_b, 'Tenant B', 'المستأجر ب', 'active');
 
-  INSERT INTO invoices (tenant_id, invoice_number, document_type, invoice_type, status, subtotal, vat_amount, total_amount, paid_amount, balance, issue_date, date, academic_year)
-  VALUES (tenant_a, 'INV-RLS-A', 'invoice', 'simplified', 'issued', 1000, 150, 1150, 0, 1150, CURRENT_DATE, CURRENT_DATE, '2026')
+  INSERT INTO invoices (tenant_id, invoice_number, document_type, invoice_type, status, subtotal, vat_amount, total_amount, paid_amount, issue_date, date, academic_year)
+  VALUES (tenant_a, 'INV-RLS-A', 'invoice', 'simplified', 'issued', 1000, 150, 1150, 0, CURRENT_DATE, CURRENT_DATE, '2026')
   RETURNING id INTO inv_a;
 
   -- Tenant A should see the invoice

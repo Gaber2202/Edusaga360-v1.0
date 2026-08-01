@@ -209,7 +209,7 @@ export async function processBulkImport(
 
         let invoice: any;
         if (invoice_number) {
-          const { data } = await supabase.from('invoices').select('id, total_amount, paid_amount, status, balance').eq('tenant_id', tenantId).eq('invoice_number', invoice_number).maybeSingle();
+          const { data } = await supabase.from('invoices').select('id, total_amount, paid_amount, status').eq('tenant_id', tenantId).eq('invoice_number', invoice_number).maybeSingle();
           if (!data) errors.push(`invoice_number not found: ${invoice_number}`);
           else invoice = data;
         }

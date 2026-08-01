@@ -35,9 +35,6 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invoices' AND column_name='discount_reason' AND table_schema='public') THEN
     ALTER TABLE invoices ADD COLUMN discount_reason TEXT;
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invoices' AND column_name='balance' AND table_schema='public') THEN
-    ALTER TABLE invoices ADD COLUMN balance NUMERIC(15,2) DEFAULT 0;
-  END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invoices' AND column_name='branch_id' AND table_schema='public') THEN
     ALTER TABLE invoices ADD COLUMN branch_id UUID;
   END IF;
@@ -66,9 +63,6 @@ END $$;
 
 -- Backfill issue_date from date for any existing rows
 UPDATE invoices SET issue_date = date WHERE issue_date IS NULL AND date IS NOT NULL;
-
--- Backfill balance for existing rows that have total_amount but no balance
-UPDATE invoices SET balance = total_amount - COALESCE(paid_amount, 0) WHERE balance = 0 OR balance IS NULL;
 
 -- ---------------------------------------------------------------------------
 -- invoice_batches — needed by BulkInvoiceGeneration

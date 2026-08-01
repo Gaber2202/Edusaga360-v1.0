@@ -90,7 +90,6 @@ export async function convertToInvoice(
     vat_amount: vatAmount,
     total_amount: totalAmount,
     paid_amount: 0,
-    balance: totalAmount,
     student_name: original.student_name || undefined,
     buyer_name: original.buyer_name || original.student_name || undefined,
     student_id: original.student_id ?? undefined,
