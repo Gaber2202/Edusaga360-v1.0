@@ -1,0 +1,1 @@
+{"url":"https://api.moyasar.com/v1/invoices","method":"POST","authHeaderPrefix":"Basic ","body":{"amount":21850000,"currency":"SAR","description":"EduSaga 360 — Plan upgrade to enterprise","callback_url":"https://admin.example.com/subscription?order_id=order-1&payment=complete","metadata":{"order_id":"order-1","tenant_id":"tenant-A","type":"subscription"}}}
