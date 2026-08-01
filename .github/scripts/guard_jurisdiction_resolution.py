@@ -54,7 +54,7 @@ PROPERTY_READ_RE = re.compile(
 )
 
 DESTRUCTURING_RE = re.compile(
-    r"\b(?:const|let|var)\s*\{\s*[^}]*?\b(jurisdiction_code|jurisdictionCode)\b(?:\s*:\s*\w+)?\b[^}]*?\}\s*=\s*\b(tenant|branch)\b",
+    r"\b(?:const|let|var)\s*\{\s*[^}]*?\b(jurisdiction_code|jurisdictionCode)\b(?:\s*:\s*\w+)?\b[^}]*?\}\s*=\s*(?:[\w$]*\.)?(tenant|branch)\b",
     re.IGNORECASE,
 )
 
@@ -74,8 +74,9 @@ def is_allowed(path: Path) -> bool:
 
 
 def _is_write(line: str, matched_text: str) -> bool:
-    """Return True if `matched_text` on `line` is an assignment or object-key write."""
-    return bool(re.search(rf"{re.escape(matched_text)}\s*(=(?!=)|:)", line))
+    """Return True if `matched_text` on `line` is the target of an assignment."""
+    # A single `=` only; `==`/`===` comparisons and `?:` ternaries are reads.
+    return bool(re.search(rf"{re.escape(matched_text)}\s*=(?!=)", line))
 
 
 def check_file(path: Path) -> list[str]:
