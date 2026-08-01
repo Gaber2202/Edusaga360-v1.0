@@ -44,7 +44,8 @@ const CreateChequeSchema = z.object({
   bank_name: z.string().optional(),
   drawer_name: z.string().optional(),
   amount: z.number().positive(),
-  currency: z.string().optional(),
+  currency_code: z.string().optional(),
+  currency: z.string().optional(), // deprecated alias
   issue_date: z.string().optional(),
   due_date: z.string().optional(),
   invoice_id: z.string().uuid().optional(),
@@ -132,13 +133,13 @@ chequeRouter.post('/', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequ
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const tenant_id = req.user!.tenant_id!;
 
-  const { currency, ...chequeData } = parsed.data;
+  const { currency, currency_code, ...chequeData } = parsed.data;
   const { data: cheque, error } = await supabase
     .from('cheques')
     .insert({
       tenant_id,
       ...chequeData,
-      currency_code: currency ?? 'SAR',
+      currency_code: currency_code ?? currency ?? 'SAR',
       status: 'received',
       created_by: req.user!.id,
     })
