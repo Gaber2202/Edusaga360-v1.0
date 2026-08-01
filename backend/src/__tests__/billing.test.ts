@@ -211,6 +211,16 @@ describe('POST /billing/invoices/:id/credit-note', () => {
     expect(res.status).toBe(201);
     expect(res.body.invoice_type).toBe('credit_note');
     expect(res.body.total_amount).toBe(-500);
+
+    // Balance must be generated, not written. Credit notes start with paid_amount=0 and a negative balance.
+    const cnInsert = db.filtersFor('invoices').find((c) => c.op === 'insert');
+    expect(cnInsert).toBeTruthy();
+    const payload = cnInsert!.payload as Record<string, unknown>;
+    expect(payload).not.toHaveProperty('balance');
+    expect(payload.paid_amount).toBe(0);
+    expect(payload.total_amount).toBe(-500);
+    // Generated balance will be total_amount - paid_amount = -500.
+    expect((payload.total_amount as number) - (payload.paid_amount as number)).toBe(-500);
   });
 
   it('refuses a credit note larger than the original invoice', async () => {

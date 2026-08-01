@@ -89,5 +89,10 @@ describe('convertToInvoice', () => {
     expect(inserted.icv).toBe(8);
     expect(Array.isArray(inserted.items)).toBe(true);
     expect((inserted.items as any[])[0].description_en).toBe('Tuition');
+
+    // Balance is generated, not written. New invoice starts unpaid, so generated balance = total.
+    expect(inserted).not.toHaveProperty('balance');
+    expect(inserted.paid_amount).toBe(0);
+    expect((inserted.total_amount as number) - (inserted.paid_amount as number)).toBe(1150);
   });
 });
