@@ -414,7 +414,7 @@ billingRouter.post('/fee-structures', requireRole(FINANCE_ROLES), async (req: Au
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const { data, error } = await supabase
     .from('fee_structures')
-    .insert({ ...parsed.data, tenant_id, created_by: req.user!.id })
+    .insert({ ...parsed.data, tenant_id, currency_code: 'SAR', created_by: req.user!.id })
     .select()
     .single();
   if (error) return res.status(500).json({ error: error.message });

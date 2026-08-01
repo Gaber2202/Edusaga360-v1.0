@@ -1,11 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
+import { assertDemoDatabase } from './lib/demoGuard.js';
 
 const url = process.env.SUPABASE_URL!;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(url, key, { realtime: { transport: ws as any } });
 
 async function main() {
+  assertDemoDatabase();
   const tenantId = '00000000-0000-0000-0000-000000000001';
   const { data: existing } = await supabase.from('tenants').select('id').eq('id', tenantId).maybeSingle();
   if (existing) {
@@ -24,6 +26,7 @@ async function main() {
     default_language: 'ar',
     num_grades: 12,
     max_students: 2000,
+    is_demo: true,
   });
   if (error) {
     console.error(error);

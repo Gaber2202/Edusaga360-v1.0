@@ -137,7 +137,7 @@ chequeRouter.post('/', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequ
     .insert({
       tenant_id,
       ...parsed.data,
-      currency: parsed.data.currency ?? 'SAR',
+      currency_code: parsed.data.currency ?? 'SAR',
       status: 'received',
       created_by: req.user!.id,
     })

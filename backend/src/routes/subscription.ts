@@ -13,6 +13,7 @@ import { Router, Response } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import crypto from 'crypto';
+import { toMinorUnits, roundToMinorUnits } from '../lib/money.js';
 import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/auth.js';
 
 export const subscriptionRouter = Router();
@@ -44,7 +45,7 @@ const PLAN_LIMITS: Record<string, {
 const PER_SEAT_PRICE_SAR = 500; // annual per-seat add-on price
 const VAT_RATE = 0.15;
 
-function sar(n: number) { return Math.round(n * 100) / 100; }
+function sar(n: number) { return roundToMinorUnits(n, 2); }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -278,7 +279,7 @@ subscriptionRouter.post('/orders/:id/payment-link', requireRole(['admin']), asyn
         .single();
       if (fb) {
         const desc = typeof fb.description === 'string' ? JSON.parse(fb.description) : fb.description;
-        order = { ...fb, total_amount: desc?.total_amount, order_type: desc?.order_type, plan_code: desc?.plan_code };
+        order = { ...fb, total_amount: desc?.total_amount, order_type: desc?.order_type, plan_code: desc?.plan_code, currency: 'SAR' };
       }
     }
 
@@ -292,7 +293,7 @@ subscriptionRouter.post('/orders/:id/payment-link', requireRole(['admin']), asyn
       return res.status(500).json({ error: 'Payment gateway not configured. Contact support.' });
     }
 
-    const amountHalala = Math.round((order.total_amount as number) * 100);
+    const amountMinor = toMinorUnits(order.total_amount as number, 2);
     const description = (order.order_type as string) === 'plan_upgrade'
       ? `EduSaga 360 — Plan upgrade to ${order.plan_code}`
       : `EduSaga 360 — Additional seats`;
@@ -307,8 +308,8 @@ subscriptionRouter.post('/orders/:id/payment-link', requireRole(['admin']), asyn
         Authorization: `Basic ${Buffer.from(`${moyasarKey}:`).toString('base64')}`,
       },
       body: JSON.stringify({
-        amount: amountHalala,
-        currency: 'SAR',
+        amount: amountMinor,
+        currency: order.currency || 'SAR',
         description,
         callback_url: cbUrl,
         metadata: { order_id: orderId, tenant_id: tenantId, type: 'subscription' },
@@ -576,7 +577,7 @@ subscriptionRouter.post('/webhook/moyasar', async (req: AuthenticatedRequest, re
         .single();
       if (fb) {
         const desc = typeof fb.description === 'string' ? JSON.parse(fb.description) : fb.description;
-        order = { ...fb, total_amount: desc?.total_amount, order_type: desc?.order_type, plan_code: desc?.plan_code, additional_seats: desc?.additional_seats };
+        order = { ...fb, total_amount: desc?.total_amount, order_type: desc?.order_type, plan_code: desc?.plan_code, additional_seats: desc?.additional_seats, currency: 'SAR' };
       }
     }
 
@@ -587,11 +588,11 @@ subscriptionRouter.post('/webhook/moyasar', async (req: AuthenticatedRequest, re
 
     // Guard 2 — server-side amount verification. Never trust the webhook to imply
     // the correct amount was paid: compare Moyasar's halalas against the order total.
-    const expectedHalala = Math.round(Number(order.total_amount) * 100);
-    const paidHalala = Math.round(Number(amount));
-    if (!Number.isFinite(expectedHalala) || expectedHalala <= 0 || paidHalala !== expectedHalala) {
+    const expectedMinor = toMinorUnits(Number(order.total_amount), 2);
+    const paidMinor = Math.round(Number(amount));
+    if (!Number.isFinite(expectedMinor) || expectedMinor <= 0 || paidMinor !== expectedMinor) {
       console.error(
-        `subscription/webhook: amount mismatch for order ${orderId} — expected ${expectedHalala} halala, got ${paidHalala}. Upgrade NOT applied.`,
+        `subscription/webhook: amount mismatch for order ${orderId} — expected ${expectedMinor} minor, got ${paidMinor}. Upgrade NOT applied.`,
       );
       return res.status(400).json({ error: 'Amount mismatch — payment not applied' });
     }

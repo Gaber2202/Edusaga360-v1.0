@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import { MoyasarClient, type MoyasarInvoiceItem } from './moyasarClient.js';
-import { toHalala, toSar, sar } from '../../lib/money.js';
+import { toMinorUnits, toMajorUnits, roundToMinorUnits, getMinorUnits } from '../../lib/money.js';
 import { getTenantComplianceData } from '../tenant.js';
 import { createReceiptForPayment } from '../receipt.js';
 
@@ -21,7 +21,7 @@ export type MoyasarLinkResult = {
   moyasarInvoiceId: string;
   paymentUrl: string;
   status: string;
-  amountHalala: number;
+  amountMinor: number;
   expiresAt?: string;
 } | {
   ok: false;
@@ -51,7 +51,7 @@ export async function createOrRefreshMoyasarLink(
 
   const { data: invoice, error: invErr } = await supabase
     .from('invoices')
-    .select('invoice_number, total_amount, paid_amount, due_date, branch_id, guardian_id, status, document_type')
+    .select('invoice_number, total_amount, paid_amount, due_date, branch_id, guardian_id, status, document_type, currency_code')
     .eq('id', options.invoiceId)
     .eq('tenant_id', options.tenantId)
     .single();
@@ -60,10 +60,12 @@ export async function createOrRefreshMoyasarLink(
     return { ok: false, error: 'invoice_not_payable' };
   }
 
-  const balance = sar((Number(invoice.total_amount) || 0) - (Number(invoice.paid_amount) || 0));
+  const currencyCode = (invoice.currency_code as string) || 'SAR';
+  const minorUnits = await getMinorUnits(supabase, currencyCode);
+  const balance = roundToMinorUnits((Number(invoice.total_amount) || 0) - (Number(invoice.paid_amount) || 0), minorUnits);
   if (balance <= 0) return { ok: false, error: 'invoice_fully_paid' };
 
-  const amountHalala = toHalala(balance);
+  const amountMinor = toMinorUnits(balance, minorUnits);
 
   // Cancel any active previous Moyasar invoice for this EduSaga invoice/installment.
   await cancelActiveMoyasarInvoices(supabase, client, options.tenantId, options.invoiceId, options.installmentId, 'amount_changed_or_reissued');
@@ -91,8 +93,8 @@ export async function createOrRefreshMoyasarLink(
 
   const idempotencyKey = idempotencyKeyForInvoice(options.tenantId, options.invoiceId, nextVersion);
   const res = await client.createInvoice({
-    amount: amountHalala,
-    currency: 'SAR',
+    amount: amountMinor,
+    currency: currencyCode,
     description,
     callback_url: options.callbackUrl,
     success_url: options.successUrl,
@@ -115,7 +117,8 @@ export async function createOrRefreshMoyasarLink(
     moyasar_id: moyasarId,
     edusaga_invoice_id: options.invoiceId,
     edusaga_installment_id: options.installmentId || null,
-    amount_halala: amountHalala,
+    amount_minor: amountMinor,
+    currency_code: currencyCode,
     status,
     payment_url: paymentUrl,
     callback_url: options.callbackUrl,
@@ -127,7 +130,7 @@ export async function createOrRefreshMoyasarLink(
   });
   if (insertErr) return { ok: false, error: insertErr.message };
 
-  return { ok: true, moyasarInvoiceId: moyasarId, paymentUrl, status, amountHalala, expiresAt: expiredAt };
+  return { ok: true, moyasarInvoiceId: moyasarId, paymentUrl, status, amountMinor, expiresAt: expiredAt };
 }
 
 export interface PaymentLinkOptions {
@@ -146,7 +149,7 @@ export async function getOrCreateMoyasarLink(
 ): Promise<MoyasarLinkResult> {
   const { data: invoice, error: invErr } = await supabase
     .from('invoices')
-    .select('invoice_number, total_amount, paid_amount, due_date, branch_id, guardian_id, status, document_type, student_name, student_id')
+    .select('invoice_number, total_amount, paid_amount, due_date, branch_id, guardian_id, status, document_type, student_name, student_id, currency_code')
     .eq('id', options.invoiceId)
     .eq('tenant_id', options.tenantId)
     .single();
@@ -156,13 +159,15 @@ export async function getOrCreateMoyasarLink(
     return { ok: false, error: 'invoice_not_payable' };
   }
 
-  const balance = sar((Number(invoice.total_amount) || 0) - (Number(invoice.paid_amount) || 0));
+  const currencyCode = (invoice.currency_code as string) || 'SAR';
+  const minorUnits = await getMinorUnits(supabase, currencyCode);
+  const balance = roundToMinorUnits((Number(invoice.total_amount) || 0) - (Number(invoice.paid_amount) || 0), minorUnits);
   if (balance <= 0) return { ok: false, error: 'invoice_fully_paid' };
 
   // Re-use an active, non-expired Moyasar link if one already exists.
   const { data: existing } = await supabase
     .from('moyasar_invoices')
-    .select('moyasar_id, payment_url, amount_halala, status, expired_at')
+    .select('moyasar_id, payment_url, amount_minor, status, expired_at')
     .eq('tenant_id', options.tenantId)
     .eq('edusaga_invoice_id', options.invoiceId)
     .is('edusaga_installment_id', options.installmentId || null)
@@ -178,7 +183,7 @@ export async function getOrCreateMoyasarLink(
       moyasarInvoiceId: existing.moyasar_id as string,
       paymentUrl: existing.payment_url as string,
       status: existing.status as string,
-      amountHalala: existing.amount_halala as number,
+      amountMinor: existing.amount_minor as number,
       expiresAt: existing.expired_at as string | undefined,
     };
   }
@@ -230,7 +235,7 @@ export async function bulkCreateMoyasarInvoices(
 
   const { data: invoices, error: invErr } = await supabase
     .from('invoices')
-    .select('id, invoice_number, total_amount, paid_amount, status, document_type, guardian_id, student_id')
+    .select('id, invoice_number, total_amount, paid_amount, status, document_type, guardian_id, student_id, currency_code')
     .in('id', invoiceIds)
     .eq('tenant_id', tenantId)
     .eq('document_type', 'invoice');
@@ -243,6 +248,11 @@ export async function bulkCreateMoyasarInvoices(
 
   const studentMap = new Map((students as any[] ?? []).map((s) => [s.id, s.name_en || s.name_ar || 'Student']));
 
+  const { data: currencyRows } = await supabase.from('currencies').select('code, minor_units');
+  const minorUnitsMap = new Map<string, number>(
+    (currencyRows as any[] ?? []).map((c) => [c.code as string, Number(c.minor_units) ?? 2]),
+  );
+
   const results: MoyasarBulkResultItem[] = [];
   const expiryHours = resolvePaymentExpiryHours(tenantId);
   const expiredAt = new Date(Date.now() + expiryHours * 60 * 60 * 1000).toISOString();
@@ -253,20 +263,22 @@ export async function bulkCreateMoyasarInvoices(
     const itemMap = new Map<string, any>();
 
     for (const inv of chunk) {
-      const balance = sar((Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0));
+      const currencyCode = (inv.currency_code as string) || 'SAR';
+      const minorUnits = minorUnitsMap.get(currencyCode) ?? 2;
+      const balance = roundToMinorUnits((Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0), minorUnits);
       if (balance <= 0 || ['paid', 'cancelled', 'draft', 'quotation', 'proforma'].includes(inv.status)) {
         results.push({ invoice_id: inv.id, error: 'invoice_not_payable_or_paid' });
         continue;
       }
-      const amountHalala = toHalala(balance);
+      const amountMinor = toMinorUnits(balance, minorUnits);
       const metadata: Record<string, string> = {
         tenant_id: tenantId,
         edusaga_invoice_id: inv.id,
         guardian_id: inv.guardian_id || '',
       };
       const item: MoyasarInvoiceItem = {
-        amount: amountHalala,
-        currency: 'SAR',
+        amount: amountMinor,
+        currency: currencyCode,
         description: `رسوم دراسية — Term 1 Tuition — ${studentMap.get(inv.student_id) || 'Student'}`,
         callback_url: callbackUrl,
         success_url: successUrl,
@@ -275,7 +287,7 @@ export async function bulkCreateMoyasarInvoices(
         metadata,
       };
       items.push(item);
-      itemMap.set(inv.id, { inv, amountHalala, item });
+      itemMap.set(inv.id, { inv, amountMinor, item, currencyCode });
     }
 
     if (items.length === 0) continue;
@@ -309,7 +321,8 @@ export async function bulkCreateMoyasarInvoices(
         tenant_id: tenantId,
         moyasar_id: moyasarId,
         edusaga_invoice_id: invId,
-        amount_halala: ctx.amountHalala ?? 0,
+        amount_minor: ctx.amountMinor ?? 0,
+        currency_code: ctx.currencyCode,
         status: status || 'initiated',
         payment_url: paymentUrl,
         callback_url: callbackUrl,
@@ -456,19 +469,24 @@ export async function processMoyasarWebhook(
     .eq('moyasar_id', data.invoice_id as string)
     .maybeSingle();
 
+  const currencyCode = (invoice.currency_code as string) || 'SAR';
+  const minorUnits = await getMinorUnits(supabase, currencyCode);
+  const epsilon = 1 / (10 ** minorUnits);
+
   // Upsert moyasar payment record
-  const paymentAmountHalala = Number(data.amount) || 0;
-  const feeHalala = Number(data.fee) || 0;
+  const paymentAmountMinor = Number(data.amount) || 0;
+  const feeMinor = Number(data.fee) || 0;
   const { data: moyasarPmt } = await supabase
     .from('moyasar_payments')
     .upsert({
       tenant_id: tenantId,
       moyasar_payment_id: moyasarPaymentId,
       moyasar_invoice_id: (moyasarInvoiceRow?.id as string) || null,
-      amount_halala: paymentAmountHalala,
-      fee_halala: feeHalala,
-      refunded_halala: Number(data.refunded) || 0,
-      captured_halala: Number(data.captured) || 0,
+      amount_minor: paymentAmountMinor,
+      fee_minor: feeMinor,
+      refunded_minor: Number(data.refunded) || 0,
+      captured_minor: Number(data.captured) || 0,
+      currency_code: currencyCode,
       status: data.status as string,
       payment_method: (data.source as Record<string, unknown>)?.type as string,
       metadata,
@@ -478,7 +496,7 @@ export async function processMoyasarWebhook(
     .single();
 
   if (eventType === 'payment_paid' || eventType === 'payment_captured') {
-    const amountSAR = toSar(paymentAmountHalala);
+    const amountMajor = toMajorUnits(paymentAmountMinor, minorUnits);
     const { data: existingPayment } = await supabase
       .from('payments')
       .select('id')
@@ -486,12 +504,13 @@ export async function processMoyasarWebhook(
       .eq('reference', moyasarPaymentId)
       .maybeSingle();
     if (!existingPayment) {
-      const newPaid = sar(Number(invoice.paid_amount) + amountSAR);
-      const newStatus = newPaid >= Number(invoice.total_amount) - 0.01 ? 'paid' : 'partial';
+      const newPaid = roundToMinorUnits(Number(invoice.paid_amount) + amountMajor, minorUnits);
+      const newStatus = newPaid >= Number(invoice.total_amount) - epsilon ? 'paid' : 'partial';
       const { data: paymentRow } = await supabase.from('payments').insert({
         tenant_id: tenantId,
         invoice_id: invoiceId,
-        amount: amountSAR,
+        amount: amountMajor,
+        currency_code: currencyCode,
         method: 'online',
         reference: moyasarPaymentId,
         date: new Date().toISOString().split('T')[0],
@@ -501,7 +520,7 @@ export async function processMoyasarWebhook(
       invoiceStatus = newStatus;
       await supabase
         .from('invoices')
-        .update({ paid_amount: newPaid, balance: sar(Number(invoice.total_amount) - newPaid), status: newStatus, updated_at: new Date().toISOString() })
+        .update({ paid_amount: newPaid, balance: roundToMinorUnits(Number(invoice.total_amount) - newPaid, minorUnits), status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', invoiceId)
         .eq('tenant_id', tenantId);
 
@@ -511,7 +530,7 @@ export async function processMoyasarWebhook(
         await createReceiptForPayment(
           supabase,
           invoice as any,
-          { id: paymentRow?.id, amount: amountSAR, method: 'online', reference: moyasarPaymentId, date: new Date().toISOString().split('T')[0] },
+          { id: paymentRow?.id, amount: amountMajor, method: 'online', reference: moyasarPaymentId, date: new Date().toISOString().split('T')[0] },
           tenantData,
         );
       } catch (receiptErr) {
@@ -542,7 +561,8 @@ export async function processMoyasarWebhook(
         tenant_id: tenantId,
         edusaga_invoice_id: invoiceId,
         moyasar_payment_id: moyasarPaymentId,
-        amount_halala: paymentAmountHalala,
+        amount_minor: paymentAmountMinor,
+        currency_code: currencyCode,
         status: 'pending_review',
         reason: 'refund_without_credit_note',
       });
@@ -583,7 +603,7 @@ export async function reconcileMoyasarState(
     const moyasarPaymentId = p.id as string;
     const { data: local } = await supabase
       .from('moyasar_payments')
-      .select('id, status, amount_halala')
+      .select('id, status, amount_minor')
       .eq('tenant_id', tenantId)
       .eq('moyasar_payment_id', moyasarPaymentId)
       .maybeSingle();
@@ -621,7 +641,7 @@ export async function requestMoyasarRefund(
 
   const { data: pmt } = await supabase
     .from('payments')
-    .select('id, reference, amount, invoice_id')
+    .select('id, reference, amount, invoice_id, currency_code')
     .eq('tenant_id', tenantId)
     .eq('id', edusagaPaymentId)
     .single();
@@ -637,20 +657,26 @@ export async function requestMoyasarRefund(
     .maybeSingle();
   const threshold = Number(setting?.refund_approval_threshold_sar) || 0;
   const refundAmountSAR = amountSAR ?? Number(pmt.amount);
+
+  const currencyCode = (pmt.currency_code as string) || 'SAR';
+  const minorUnits = await getMinorUnits(supabase, currencyCode);
+  const refundMinor = toMinorUnits(refundAmountSAR, minorUnits);
+
   if (threshold > 0 && refundAmountSAR > threshold) {
     await supabase.from('moyasar_refund_queue').insert({
       tenant_id: tenantId,
       edusaga_invoice_id: pmt.invoice_id as string,
       edusaga_payment_id: edusagaPaymentId,
       moyasar_payment_id: moyasarPaymentId,
-      amount_halala: toHalala(refundAmountSAR),
+      amount_minor: refundMinor,
+      currency_code: currencyCode,
       status: 'pending_review',
       reason: 'above_threshold',
     });
     return { ok: true, moyasarPaymentId };
   }
 
-  const req = amountSAR ? { amount: toHalala(amountSAR) } : undefined;
+  const req = amountSAR ? { amount: refundMinor } : undefined;
   const res = await client.refundPayment(moyasarPaymentId, req);
   if (!res.ok) return { ok: false, error: res.error?.message || 'refund_failed' };
 
@@ -659,7 +685,8 @@ export async function requestMoyasarRefund(
     edusaga_invoice_id: pmt.invoice_id as string,
     edusaga_payment_id: edusagaPaymentId,
     moyasar_payment_id: moyasarPaymentId,
-    amount_halala: toHalala(refundAmountSAR),
+    amount_minor: refundMinor,
+    currency_code: currencyCode,
     status: 'approved',
     reason: 'below_threshold_auto',
   });
