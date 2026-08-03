@@ -184,6 +184,9 @@ export interface AcademicCalendarService {
   /** Resolve the active academic year for a date. */
   currentAcademicYearForDate?(supabase: unknown, tenantId: string, date?: Date | string): Promise<unknown>;
 
+  /** Resolve the academic year immediately before a given start date. */
+  academicYearBefore?(supabase: unknown, tenantId: string, startDate: string): Promise<unknown>;
+
   /** List term boundaries for an academic year. */
   termBoundariesForYear?(yearLabel: string): Array<{ start: string; end: string; name: string }>;
 

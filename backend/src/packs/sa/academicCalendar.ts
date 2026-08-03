@@ -75,6 +75,23 @@ export const saAcademicCalendar: AcademicCalendarService = {
     return latest ?? null;
   },
 
+  academicYearBefore: async (
+    supabase: SupabaseClient,
+    tenantId: string,
+    startDate: string,
+  ) => {
+    const { data: prevYear, error } = await supabase
+      .from('academic_years')
+      .select('id, name, start_date, end_date, is_current')
+      .eq('tenant_id', tenantId)
+      .lt('start_date', startDate)
+      .order('start_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return prevYear ?? null;
+  },
+
   termBoundariesForYear: (_yearLabel: string) => {
     // Term boundaries are not yet modelled as a standalone concept.
     throw new Error('termBoundariesForYear is not implemented for SA');

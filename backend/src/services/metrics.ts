@@ -310,7 +310,7 @@ export class MetricsService {
       const currentRes = await this.branchFilter(this.supabase.from('students').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('academic_year', academicYear.id), branchId);
       const currentCount = (currentRes as any).count ?? 0;
       // previous academic year: largest start_date < current.start_date
-      const { data: prevYear } = await this.supabase.from('academic_years').select('id').eq('tenant_id', tenantId).lt('start_date', academicYear.start_date).order('start_date', { ascending: false }).limit(1).maybeSingle();
+      const prevYear = await saAcademicCalendar.academicYearBefore!(this.supabase, tenantId, academicYear.start_date) as { id: string } | null;
       let previousCount = 0;
       if (prevYear?.id) {
         previousCount = (await this.branchFilter(this.supabase.from('students').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('academic_year', prevYear.id), branchId).then((r: any) => r.count ?? 0)) as number;
