@@ -7,7 +7,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
-import { sar } from '../../lib/money.js';
+import { roundToMinorUnits } from '../../lib/money.js';
 import type { FeeGovernanceService } from '../contract/CountryPack.js';
 
 export async function applyDiscounts(
@@ -79,7 +79,7 @@ export async function applyDiscounts(
     // Calculate discount amount
     let amount = 0;
     if (rule.calculation === 'percentage') {
-      amount = sar(runningSubtotal * (rule.value / 100));
+      amount = roundToMinorUnits(runningSubtotal * (rule.value / 100), 2);
       if (rule.max_amount) amount = Math.min(amount, rule.max_amount);
     } else {
       amount = Math.min(rule.value, runningSubtotal);
@@ -95,14 +95,14 @@ export async function applyDiscounts(
       description_en: rule.name_en,
     });
 
-    runningSubtotal = sar(runningSubtotal - amount);
+    runningSubtotal = roundToMinorUnits(runningSubtotal - amount, 2);
 
     if (rule.stacking === 'blocked') stackingBlocked = true;
     if (rule.stacking === 'override') break;
   }
 
   return {
-    total_discount: sar(subtotal - runningSubtotal),
+    total_discount: roundToMinorUnits(subtotal - runningSubtotal, 2),
     applied,
   };
 }

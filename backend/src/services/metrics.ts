@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { sar, getAgingReport, getExpectedCollections, getRevenueByFeeType } from './reports.js';
+import { saAcademicCalendar } from '../packs/sa/academicCalendar.js';
 
 const DAY_MS = 86400000;
 
@@ -174,11 +175,6 @@ export class MetricsService {
     };
   }
 
-  async getCurrentAcademicYear(tenantId: string): Promise<any | null> {
-    const { data } = await this.supabase.from('academic_years').select('id, name, start_date, is_current').eq('tenant_id', tenantId).order('start_date', { ascending: false }).limit(1);
-    return data?.[0] ?? null;
-  }
-
   private branchFilter(q: any, branchId?: string) {
     if (branchId) return q.eq('branch_id', branchId);
     return q;
@@ -198,7 +194,7 @@ export class MetricsService {
     const startOfMonth = `${isoMonth(0)}-01`;
 
     const [academicYear, branches] = await Promise.all([
-      this.getCurrentAcademicYear(tenantId),
+      saAcademicCalendar.currentAcademicYearForDate!(this.supabase, tenantId) as Promise<{ id: string; start_date: string } | null>,
       this.supabase.from('branches').select('id, name_en, name_ar').eq('tenant_id', tenantId).then(r => r.data ?? []),
     ]);
 
