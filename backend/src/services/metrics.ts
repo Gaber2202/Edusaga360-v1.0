@@ -1,6 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { sar, getAgingReport, getExpectedCollections, getRevenueByFeeType } from './reports.js';
 import { saAcademicCalendar } from '../packs/sa/academicCalendar.js';
+import { saRegulatorReports } from '../packs/sa/regulatorReports.js';
+import type { NitaqatResult } from '../packs/sa/regulatorReports.js';
 
 const DAY_MS = 86400000;
 
@@ -33,12 +35,6 @@ function isoMonth(offset: number): string {
   const d = new Date();
   d.setMonth(d.getMonth() - offset);
   return d.toISOString().slice(0, 7);
-}
-
-function isSaudi(e: any): boolean {
-  if (e.is_saudi === true) return true;
-  if (e.nationality && /^(saudi|saudi arabia|sa|سعودي)$/i.test(String(e.nationality).trim())) return true;
-  return false;
 }
 
 interface MetricInput {
@@ -164,15 +160,6 @@ export class MetricsService {
     if (!data) return null;
     if (Date.now() - new Date(data.computed_at).getTime() > 3600000) return null;
     return { ...data.metadata, computed_at: data.computed_at, period: data.period };
-  }
-
-  async getNitaqatThresholds(tenantId: string): Promise<{ platinum: number; green: number; yellow: number }> {
-    const { data } = await this.supabase.from('nitaqat_thresholds').select('*').eq('tenant_id', tenantId).maybeSingle();
-    return {
-      platinum: Number(data?.platinum ?? 40),
-      green: Number(data?.green ?? 25),
-      yellow: Number(data?.yellow ?? 15),
-    };
   }
 
   private branchFilter(q: any, branchId?: string) {
@@ -432,18 +419,21 @@ export class MetricsService {
       attendanceRecords = (attendanceRes.data ?? []) as any[];
     }
     const activeEmployees = employeesFull.filter((e: any) => e.status === 'active');
-    const saudiCount = activeEmployees.filter(isSaudi).length;
-    const headcount = activeEmployees.length;
-    const saudizationPct = headcount > 0 ? round2((saudiCount / headcount) * 100) : 0;
 
-    const thresholds = await this.getNitaqatThresholds(tenantId);
-    let nitaqatBand: 'platinum' | 'green' | 'yellow' | 'red' | null = null;
-    if (headcount > 0) {
-      if (saudizationPct >= thresholds.platinum) nitaqatBand = 'platinum';
-      else if (saudizationPct >= thresholds.green) nitaqatBand = 'green';
-      else if (saudizationPct >= thresholds.yellow) nitaqatBand = 'yellow';
-      else nitaqatBand = 'red';
-    }
+    const nitaqatData = await saRegulatorReports.calculateNitaqat!(this.supabase, tenantId, {
+      branchId,
+      employees: employeesFull,
+      departments,
+    }) as NitaqatResult;
+    const {
+      headcount,
+      saudiCount,
+      saudizationPct,
+      nitaqatBand,
+      nitaqat,
+      workforce_composition: workforceComposition,
+      saudi_vs_non_saudi: saudiVsNonSaudi,
+    } = nitaqatData;
 
     // Retention: 12-mo rolling attrition
     const cutoff12mo = daysAgoStr(365);
@@ -453,30 +443,6 @@ export class MetricsService {
     const attritionRate = round2((separations / avgHeadcount) * 100);
     const retentionRate = round2(100 - attritionRate);
     const retentionQuality = activeNow === 0 ? 'not_tracked' : 'real';
-
-    const deptName = new Map(departments.map((d: any) => [d.id, { en: d.name_en, ar: d.name_ar }]));
-    const byDepartment = new Map<string, number>();
-    for (const e of activeEmployees) {
-      const key = e.department_id ?? 'unassigned';
-      byDepartment.set(key, (byDepartment.get(key) ?? 0) + 1);
-    }
-    const workforceByDepartment = [...byDepartment.entries()].map(([id, count]) => ({
-      department_id: id === 'unassigned' ? null : id,
-      name_en: deptName.get(id)?.en ?? 'Unassigned',
-      name_ar: deptName.get(id)?.ar ?? 'غير محدد',
-      count,
-    }));
-
-    const byGender = activeEmployees.reduce((acc: Record<string, number>, e: any) => {
-      const key = e.gender ?? 'unspecified';
-      acc[key] = (acc[key] ?? 0) + 1;
-      return acc;
-    }, {});
-
-    const saudiVsNonSaudi = [
-      { name: 'saudi', value: saudiCount },
-      { name: 'non_saudi', value: headcount - saudiCount },
-    ];
 
     // Contract expiry radar
     const now = new Date();
@@ -627,8 +593,8 @@ export class MetricsService {
     };
     const chroData = {
       kpis: { headcount, saudization_pct: saudizationPct, retention_rate_pct: retentionQuality === 'real' ? retentionRate : null, retention_data_quality: retentionQuality, open_roles_count: null },
-      nitaqat: { band: nitaqatBand, saudization_pct: saudizationPct, thresholds, data_quality: headcount > 0 ? 'real' : 'not_tracked' },
-      workforce_composition: { by_department: workforceByDepartment, by_gender: byGender, saudi_count: saudiCount, non_saudi_count: headcount - saudiCount },
+      nitaqat,
+      workforce_composition: workforceComposition,
       saudi_vs_non_saudi: saudiVsNonSaudi,
       payroll_gov_compliance: complianceSignals,
       contract_expiry_radar: contractExpiry,
@@ -681,8 +647,8 @@ export class MetricsService {
       metricValues['chro.kpis.headcount'] = { value: headcount };
       metricValues['chro.kpis.saudization_pct'] = { value: saudizationPct, numerator: saudiCount, denominator: headcount };
       metricValues['chro.kpis.retention_rate_pct'] = { value: retentionQuality === 'real' ? retentionRate : null, numerator: separations, denominator: avgHeadcount };
-      metricValues['chro.nitaqat'] = { metadata: { band: nitaqatBand, saudization_pct: saudizationPct, thresholds, data_quality: headcount > 0 ? 'real' : 'not_tracked' } };
-      metricValues['chro.workforce_composition'] = { metadata: { by_department: workforceByDepartment, by_gender: byGender, saudi_count: saudiCount, non_saudi_count: headcount - saudiCount } };
+      metricValues['chro.nitaqat'] = { metadata: nitaqat };
+      metricValues['chro.workforce_composition'] = { metadata: workforceComposition };
       metricValues['chro.saudi_vs_non_saudi'] = { metadata: saudiVsNonSaudi };
       metricValues['chro.payroll_gov_compliance'] = { metadata: complianceSignals };
       metricValues['chro.contract_expiry_radar'] = { metadata: contractExpiry };
