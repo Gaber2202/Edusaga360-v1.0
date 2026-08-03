@@ -114,6 +114,8 @@ describe('ZATCA invoice HTML golden snapshots', () => {
     await snapshotHtml('sa-zatca-standard-html', {
       ...baseInvoice,
       invoice_type: 'standard',
+      zatca_invoice_type: 'standard',
+      buyer_vat_number: '300000000000004',
     } as InvoiceData);
   });
 });
