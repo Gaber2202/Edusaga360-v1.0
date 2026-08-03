@@ -159,7 +159,15 @@ export interface GovIntegrationsService {
 
 export interface RegulatorReportsService {
   /** Nitaqat / Saudization calculation for a tenant. */
-  calculateNitaqat?(supabase: unknown, tenantId: string): Promise<unknown>;
+  calculateNitaqat?(
+    supabase: unknown,
+    tenantId: string,
+    options?: {
+      branchId?: string;
+      employees?: unknown[];
+      departments?: unknown[];
+    },
+  ): Promise<unknown>;
 
   /** ZATCA VAT return computation. */
   calculateVatReturn?(supabase: unknown, period: { start: string; end: string }): Promise<unknown>;
