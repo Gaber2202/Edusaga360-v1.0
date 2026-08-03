@@ -20,23 +20,57 @@ function toIsoDate(input?: Date | string): string | undefined {
   return input.slice(0, 10);
 }
 
+function todayStr(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export const saAcademicCalendar: AcademicCalendarService = {
   currentAcademicYearForDate: async (
     supabase: SupabaseClient,
     tenantId: string,
     date?: Date | string,
   ) => {
-    const iso = toIsoDate(date);
-    let q = supabase
+    const explicitDate = toIsoDate(date);
+    const iso = explicitDate ?? todayStr();
+
+    // 1. Find the year whose range contains the requested/current date.
+    const { data: inRange, error: rangeError } = await supabase
       .from('academic_years')
       .select('id, name, start_date, end_date, is_current')
-      .eq('tenant_id', tenantId);
-    if (iso) {
-      q = q.lte('start_date', iso).gte('end_date', iso);
+      .eq('tenant_id', tenantId)
+      .lte('start_date', iso)
+      .gte('end_date', iso)
+      .order('start_date', { ascending: false })
+      .maybeSingle();
+    if (rangeError) throw rangeError;
+    if (inRange) return inRange;
+
+    // 2. When asking for "current" (no explicit date), fall back to the row
+    //    flagged is_current. This prevents a future academic year with the
+    //    latest start_date from being treated as current forever.
+    if (!explicitDate) {
+      const { data: flagged, error: flaggedError } = await supabase
+        .from('academic_years')
+        .select('id, name, start_date, end_date, is_current')
+        .eq('tenant_id', tenantId)
+        .eq('is_current', true)
+        .order('start_date', { ascending: false })
+        .maybeSingle();
+      if (flaggedError) throw flaggedError;
+      if (flagged) return flagged;
     }
-    const { data, error } = await q.order('start_date', { ascending: false }).maybeSingle();
-    if (error) throw error;
-    return data;
+
+    // 3. Final fallback: latest start_date. This preserves the old behaviour
+    //    for tenants that have not set end_date / is_current.
+    const { data: latest, error: latestError } = await supabase
+      .from('academic_years')
+      .select('id, name, start_date, end_date, is_current')
+      .eq('tenant_id', tenantId)
+      .order('start_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (latestError) throw latestError;
+    return latest ?? null;
   },
 
   termBoundariesForYear: (_yearLabel: string) => {

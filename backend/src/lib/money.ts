@@ -64,8 +64,3 @@ export function roundToMinorUnits(
   const factor = 10 ** minorUnits;
   return Math.round(num * factor) / factor;
 }
-
-/** SAR-only rounding helper (SAR uses 2 minor units). Prefer roundToMinorUnits for new code. */
-export function sar(num: number): number {
-  return roundToMinorUnits(num, 2);
-}
