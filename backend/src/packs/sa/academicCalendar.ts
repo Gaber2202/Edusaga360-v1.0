@@ -41,6 +41,7 @@ export const saAcademicCalendar: AcademicCalendarService = {
       .lte('start_date', iso)
       .gte('end_date', iso)
       .order('start_date', { ascending: false })
+      .limit(1)
       .maybeSingle();
     if (rangeError) throw rangeError;
     if (inRange) return inRange;
@@ -55,6 +56,7 @@ export const saAcademicCalendar: AcademicCalendarService = {
         .eq('tenant_id', tenantId)
         .eq('is_current', true)
         .order('start_date', { ascending: false })
+        .limit(1)
         .maybeSingle();
       if (flaggedError) throw flaggedError;
       if (flagged) return flagged;
