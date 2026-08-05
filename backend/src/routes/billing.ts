@@ -20,7 +20,7 @@ import { z } from 'zod';
 import crypto from 'crypto';
 import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/auth.js';
 import { sanitizeSearchTerm } from '../lib/sanitize.js';
-import { computeVatSummary, InvoiceData } from '../packs/sa/vat.js';
+import { buildInvoiceLines, computeVatSummary, InvoiceData, type BuildInvoiceLineInput } from '../packs/sa/vat.js';
 import {
   generateTLVQR,
   generateUBLXml,
@@ -54,7 +54,6 @@ export const billingRouter = Router();
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const VAT_RATE_STANDARD = 0.15;
 const ZATCA_SANDBOX_URL = 'https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal';
 const ZATCA_PROD_URL = 'https://gw-fatoora.zatca.gov.sa/e-invoicing/core';
 const DIGITAL_PAYMENT_METHODS = new Set(['mada', 'creditcard', 'applepay', 'stcpay', 'samsungpay']);
@@ -398,83 +397,33 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
     if (studentErr || !student) return res.status(404).json({ error: 'Student not found' });
     const studentBranchId = (student as Record<string, unknown>).branch_id as string | null ?? null;
 
-    // Fetch fee categories for VAT treatment lookup (only for lines that have category_id)
-    const categoryIds = [...new Set(fee_lines.map((l) => l.category_id).filter(Boolean))] as string[];
-    let catMap: Record<string, { id: string; vat_treatment: string; name_ar: string; name_en: string; code: string }> = {};
-    if (categoryIds.length > 0) {
-      const { data: categories } = await supabase
-        .from('fee_categories')
-        .select('id, vat_treatment, name_ar, name_en, code')
-        .in('id', categoryIds)
-        .eq('tenant_id', tenant_id);
-      catMap = Object.fromEntries((categories ?? []).map((c) => [c.id, c]));
-    }
-
-    function toVatCategory(treatment?: string): 'standard' | 'exempt' | 'zero_rated' | 'out_of_scope' {
-      if (treatment === 'exempt') return 'exempt';
-      if (treatment === 'zero_rated') return 'zero_rated';
-      if (treatment === 'out_of_scope') return 'out_of_scope';
-      return 'standard';
-    }
-    function toVatCategoryCode(category: 'standard' | 'exempt' | 'zero_rated' | 'out_of_scope'): string {
-      switch (category) {
-        case 'zero_rated': return 'Z';
-        case 'exempt': return 'E';
-        case 'out_of_scope': return 'O';
-        default: return 'S';
-      }
-    }
-
-    // Calculate per-line amounts with correct VAT treatment
-    let subtotal = 0;
-    const enrichedLines = fee_lines.map((line) => {
-      const cat = line.category_id ? catMap[line.category_id] : undefined;
-      const lineSubtotal = sar(line.amount * (line.quantity ?? 1));
-      const vatTreatment: string = cat?.vat_treatment ?? 'standard';
-      const vatCategory = toVatCategory(vatTreatment);
-      const vatRate = vatCategory === 'standard' ? VAT_RATE_STANDARD : 0;
-      const vatAmount = sar(lineSubtotal * vatRate);
-      const total = sar(lineSubtotal + vatAmount);
-      subtotal = sar(subtotal + lineSubtotal);
-      return {
-        category_id: line.category_id ?? null,
-        description_en: line.description_en,
-        description_ar: line.description_ar,
-        category_code: cat?.code ?? 'MANUAL',
-        vat_treatment: vatTreatment,
-        vat_category: vatCategory,
-        vat_category_code: toVatCategoryCode(vatCategory),
-        quantity: line.quantity ?? 1,
-        unit_amount: line.amount,
-        unit_price_net: line.amount,
-        subtotal: lineSubtotal,
-        line_total_gross: total,
-        vat_rate: vatRate,
-        vat_amount: vatAmount,
-        total,
-        discount: 0,
-      };
-    });
-
-    // Apply discount rules
+    // Resolve VAT/category metadata and compute totals through the Saudi VAT pack.
+    const rawLines = await buildInvoiceRawLines(fee_lines as FeeLineInput[], tenant_id);
+    const preSubtotal = rawLines.reduce(
+      (sum, line) => sar(sum + sar(line.amount * (line.quantity ?? 1))),
+      0,
+    );
     let totalDiscount = 0;
     let discountDetails: Awaited<ReturnType<typeof applyDiscounts>>['applied'] = [];
     if (shouldApplyDiscounts && fee_lines.length > 0) {
-      const primaryCategoryId = fee_lines[0].category_id;
-      const result = await applyDiscounts(supabase, tenant_id, student_id, academic_year, subtotal, primaryCategoryId);
+      const primaryCategoryId = rawLines[0]?.category_id ?? undefined;
+      const result = await applyDiscounts(
+        supabase,
+        tenant_id,
+        student_id,
+        academic_year,
+        preSubtotal,
+        typeof primaryCategoryId === 'string' ? primaryCategoryId : undefined,
+      );
       totalDiscount = result.total_discount;
       discountDetails = result.applied;
     }
-
-    // VAT computed on post-discount taxable amount (per ZATCA rules discount reduces tax base)
-    const taxableSubtotal = sar(subtotal - totalDiscount);
-    const vatAmount = sar(
-      enrichedLines.reduce((s, l) => {
-        const lineRatio = l.subtotal / (subtotal || 1);
-        return s + sar((taxableSubtotal * lineRatio) * l.vat_rate);
-      }, 0),
-    );
-    const totalAmount = sar(taxableSubtotal + vatAmount);
+    const {
+      lines: enrichedLines,
+      subtotal,
+      vat_amount: vatAmount,
+      total_amount: totalAmount,
+    } = buildInvoiceLines(rawLines, totalDiscount);
 
     const invoiceNumber = await generateInvoiceNumber(tenant_id);
     const today = new Date().toISOString().split('T')[0];
@@ -1140,11 +1089,48 @@ billingRouter.patch('/installments/:id', async (req: AuthenticatedRequest, res: 
 // ─── Shared invoice creation logic (used by single + bulk endpoints) ─────────
 
 interface FeeLineInput {
-  category_id: string;
+  category_id?: string;
+  category_code?: string | null;
   description_en: string;
   description_ar: string;
+  vat_treatment?: string | null;
   amount: number;
   quantity: number;
+}
+
+/** Ensure every raw line has a vat_treatment and category_code for buildInvoiceLines. */
+async function buildInvoiceRawLines(
+  sourceLines: FeeLineInput[],
+  tenant_id: string,
+): Promise<BuildInvoiceLineInput[]> {
+  const missing = sourceLines.filter((l) => l.category_id && !l.vat_treatment);
+  let catMap: Record<string, { vat_treatment: string; code: string }> = {};
+  if (missing.length > 0) {
+    const categoryIds = [...new Set(missing.map((l) => l.category_id).filter(Boolean))] as string[];
+    const { data: categories } = await supabase
+      .from('fee_categories')
+      .select('id, vat_treatment, code')
+      .in('id', categoryIds)
+      .eq('tenant_id', tenant_id);
+    catMap = Object.fromEntries((categories ?? []).map((c) => [c.id, c]));
+  }
+
+  return sourceLines.map((line) => {
+    const treatment = line.vat_treatment
+      ?? (line.category_id ? catMap[line.category_id]?.vat_treatment : undefined)
+      ?? 'standard';
+    return {
+      category_id: line.category_id ?? null,
+      category_code: line.category_code
+        ?? (line.category_id ? catMap[line.category_id]?.code : null)
+        ?? 'MANUAL',
+      description_en: line.description_en,
+      description_ar: line.description_ar,
+      vat_treatment: treatment,
+      amount: line.amount,
+      quantity: line.quantity,
+    };
+  });
 }
 
 export async function createInvoiceForStudent(
@@ -1196,70 +1182,40 @@ export async function createInvoiceForStudent(
     });
     sourceLines = feeStructures.map((fs) => ({
       category_id: fs.category_id,
+      category_code: fs.category_code,
       description_en: fs.description_en,
       description_ar: fs.description_ar,
+      vat_treatment: fs.vat_treatment,
       amount: fs.amount,
       quantity: fs.quantity,
     }));
   }
 
-  const categoryIds = [...new Set(sourceLines.map((l) => l.category_id).filter(Boolean))];
-  const { data: categories } = await supabase
-    .from('fee_categories')
-    .select('id, vat_treatment, name_ar, name_en, code')
-    .in('id', categoryIds)
-    .eq('tenant_id', tenant_id);
-  const catMap = Object.fromEntries((categories ?? []).map((c) => [c.id, c]));
+  const rawLines = await buildInvoiceRawLines(sourceLines, tenant_id);
 
-  let subtotal = 0;
-  const enrichedLines: any[] = sourceLines.map((line) => {
-    const cat = catMap[line.category_id];
-    const lineSubtotal = sar(line.amount * (line.quantity ?? 1));
-    const treatment = (cat?.vat_treatment ?? 'standard') as string;
-    const vatRate = treatment === 'standard' ? VAT_RATE_STANDARD : 0;
-    subtotal = sar(subtotal + lineSubtotal);
-    return {
-      category_id: line.category_id ?? null,
-      category_code: cat?.code ?? 'MANUAL',
-      description_en: line.description_en,
-      description_ar: line.description_ar,
-      vat_treatment: treatment,
-      vat_category: treatment === 'exempt' ? 'exempt' : treatment === 'zero_rated' ? 'zero_rated' : treatment === 'out_of_scope' ? 'out_of_scope' : 'standard',
-      vat_category_code: treatment === 'zero_rated' ? 'Z' : treatment === 'exempt' ? 'E' : treatment === 'out_of_scope' ? 'O' : 'S',
-      quantity: line.quantity ?? 1,
-      unit_amount: line.amount,
-      unit_price_net: line.amount,
-      subtotal: lineSubtotal,
-      vat_rate: vatRate,
-      vat_amount: sar(lineSubtotal * vatRate),
-      line_total_gross: sar(lineSubtotal + sar(lineSubtotal * vatRate)),
-      total: sar(lineSubtotal + sar(lineSubtotal * vatRate)),
-      discount: 0,
-    };
-  });
-
-  // Apply sibling/scholarship discount rules to the subtotal.
-  const primaryCategoryId = sourceLines[0]?.category_id;
+  // Compute a pre-discount subtotal with the same stepwise rounding used by
+  // buildInvoiceLines so the discount calculation is deterministic.
+  const preSubtotal = rawLines.reduce(
+    (sum, line) => sar(sum + sar(line.amount * (line.quantity ?? 1))),
+    0,
+  );
+  const primaryCategoryId = rawLines[0]?.category_id ?? undefined;
   const { total_discount: totalDiscount, applied: discountDetails } = await applyDiscounts(
     supabase,
     tenant_id,
     student_id,
     academic_year,
-    subtotal,
-    primaryCategoryId,
+    preSubtotal,
+    typeof primaryCategoryId === 'string' ? primaryCategoryId : undefined,
   );
 
-  const taxableSubtotal = sar(subtotal - totalDiscount);
-  let vatAmount = 0;
-  for (const l of enrichedLines) {
-    const lineRatio = l.subtotal / (subtotal || 1);
-    const lineVat = sar(taxableSubtotal * lineRatio * l.vat_rate);
-    l.vat_amount = lineVat;
-    l.line_total_gross = sar(taxableSubtotal * lineRatio + lineVat);
-    l.total = l.line_total_gross;
-    vatAmount = sar(vatAmount + lineVat);
-  }
-  const totalAmount = sar(taxableSubtotal + vatAmount);
+  // Saudi-specific VAT/rounding lives in the pack; everything else is generic.
+  const {
+    lines: enrichedLines,
+    subtotal,
+    vat_amount: vatAmount,
+    total_amount: totalAmount,
+  } = buildInvoiceLines(rawLines, totalDiscount);
 
   const invoiceNumber = options?.invoice_number ?? (await generateInvoiceNumber(tenant_id));
   const tenant = await getTenantComplianceData(tenant_id);
@@ -1376,7 +1332,7 @@ export async function createInvoiceForStudent(
 
   await postJournal(tenant_id, created_by, invoiceNumber, `Bulk Invoice ${invoiceNumber}`, [
     { account_code: '12', debit: totalAmount, credit: 0, description: `A/R — ${invoiceNumber}` },
-    { account_code: '41', debit: 0, credit: taxableSubtotal, description: `Revenue — ${invoiceNumber}` },
+    { account_code: '41', debit: 0, credit: sar(subtotal - totalDiscount), description: `Revenue — ${invoiceNumber}` },
     { account_code: '24', debit: 0, credit: vatAmount, description: `VAT — ${invoiceNumber}` },
   ], studentBranchId ?? null);
 
@@ -1425,12 +1381,10 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
 
     const planForStudent = (student: { grade_id?: string | null }) => {
       const relevant = feeStructures.filter((fs) => !fs.grade || fs.grade === student.grade_id);
-      let gross = 0;
-      for (const fs of relevant) {
-        const lineSubtotal = sar(fs.amount);
-        const vatRate = fs.vat_treatment === 'standard' ? VAT_RATE_STANDARD : 0;
-        gross = sar(gross + lineSubtotal + sar(lineSubtotal * vatRate));
-      }
+      // Dry-run total intentionally excludes discounts so it stays a preview of
+      // gross fees. buildInvoiceLines(..., 0) reproduces the old line-by-line sum
+      // using the Saudi VAT pack.
+      const { total_amount: gross } = buildInvoiceLines(relevant, 0);
       return { relevant, gross };
     };
 
@@ -1519,10 +1473,12 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
         const { relevant } = planForStudent(student);
         if (!relevant.length) { skipped++; continue; }
 
-        const feeLines = relevant.map((fs) => ({
+        const feeLines: FeeLineInput[] = relevant.map((fs) => ({
           category_id: fs.category_id,
+          category_code: fs.category_code,
           description_en: fs.description_en,
           description_ar: fs.description_ar,
+          vat_treatment: fs.vat_treatment,
           amount: fs.amount,
           quantity: fs.quantity,
         }));

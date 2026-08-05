@@ -4,7 +4,7 @@ function sar(n: number): number {
 }
 
 export interface BuildInvoiceLineInput {
-  category_id: string;
+  category_id?: string | null;
   category_code?: string | null;
   description_en: string;
   description_ar: string;
