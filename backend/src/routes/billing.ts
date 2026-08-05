@@ -1188,11 +1188,10 @@ export async function createInvoiceForStudent(
 
   let sourceLines = fee_lines;
   if (!sourceLines || sourceLines.length === 0) {
-    // Fall back to mandatory fee structures for this student's grade/branch.
+    // Fall back to mandatory fee structures for this student's grade.
     const feeStructures = await resolveFeeStructures(supabase, tenant_id, {
       academicYear: academic_year,
       grade: student.grade_id ?? undefined,
-      branchId: (branch_id as string | undefined) ?? ((student as Record<string, unknown>).branch_id as string | undefined) ?? undefined,
       mandatoryOnly: true,
     });
     sourceLines = feeStructures.map((fs) => ({

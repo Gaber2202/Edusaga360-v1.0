@@ -49,13 +49,6 @@ export async function resolveFeeStructures(
   if (input.mandatoryOnly !== false) {
     query = query.eq('is_mandatory', true);
   }
-  if (input.grade) {
-    query = query.or(`grade.eq.${input.grade},grade.is.null`);
-  }
-  if (input.branchId) {
-    // fee_structures.campus_id is the legacy alias for branch_id; see issue #188.
-    query = query.or(`campus_id.eq.${input.branchId},campus_id.is.null`);
-  }
   if (input.program) {
     query = query.eq('program', input.program);
   }
@@ -63,23 +56,35 @@ export async function resolveFeeStructures(
   const { data, error } = await query;
   if (error) throw error;
 
-  return (data ?? []).map((fs) => {
-    const cat = (fs.fee_categories as Record<string, unknown> | undefined) ?? {};
-    return {
-      id: fs.id as string,
-      category_id: fs.category_id as string,
-      category_code: (cat.code as string | null) ?? null,
-      description_en: (cat.name_en as string) ?? 'Fee',
-      description_ar: (cat.name_ar as string) ?? 'رسوم',
-      vat_treatment: (cat.vat_treatment as string) ?? 'standard',
-      amount: Number(fs.amount ?? 0),
-      quantity: 1,
-      grade: (fs.grade as string | null) ?? null,
-      campus_id: (fs.campus_id as string | null) ?? null,
-      program: (fs.program as string | null) ?? null,
-      is_mandatory: (fs.is_mandatory as boolean) ?? true,
-      effective_from: (fs.effective_from as string | null) ?? null,
-      effective_to: (fs.effective_to as string | null) ?? null,
-    };
-  });
+  // Grade/campus matching is done in memory to avoid building PostgREST `or(...)`
+  // filter strings from request-controlled values. `fee_structures.campus_id` is
+  // the legacy alias for branch_id (see issue #188).
+  const grade = input.grade ?? null;
+  const branchId = input.branchId ?? null;
+
+  return (data ?? [])
+    .filter((fs) => {
+      if (grade != null && fs.grade != null && fs.grade !== grade) return false;
+      if (branchId != null && fs.campus_id != null && fs.campus_id !== branchId) return false;
+      return true;
+    })
+    .map((fs) => {
+      const cat = (fs.fee_categories as Record<string, unknown> | undefined) ?? {};
+      return {
+        id: fs.id as string,
+        category_id: fs.category_id as string,
+        category_code: (cat.code as string | null) ?? null,
+        description_en: (cat.name_en as string) ?? 'Fee',
+        description_ar: (cat.name_ar as string) ?? 'رسوم',
+        vat_treatment: (cat.vat_treatment as string) ?? 'standard',
+        amount: Number(fs.amount ?? 0),
+        quantity: 1,
+        grade: (fs.grade as string | null) ?? null,
+        campus_id: (fs.campus_id as string | null) ?? null,
+        program: (fs.program as string | null) ?? null,
+        is_mandatory: (fs.is_mandatory as boolean) ?? true,
+        effective_from: (fs.effective_from as string | null) ?? null,
+        effective_to: (fs.effective_to as string | null) ?? null,
+      };
+    });
 }
