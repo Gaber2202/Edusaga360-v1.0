@@ -217,14 +217,10 @@ export interface AcademicCalendarService {
 // Fee Governance
 // ─────────────────────────────────────────────────────────────────────────────
 
-export interface FeeGovernanceService {
-  /** Apply jurisdiction-aware discounts and sibling discounts. */
-  applyDiscounts?(
-    supabase: unknown,
-    tenantId: string,
-    input: unknown,
-  ): Promise<unknown>;
-}
+// Intentionally empty marker — regulator-driven fee-increase governance is
+// reserved for future tasks (e.g. MOE caps, required submissions).
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface FeeGovernanceService {}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Documents
