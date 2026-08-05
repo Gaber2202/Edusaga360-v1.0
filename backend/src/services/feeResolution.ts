@@ -65,7 +65,11 @@ export async function resolveFeeStructures(
   return (data ?? [])
     .filter((fs) => {
       if (grade != null && fs.grade != null && fs.grade !== grade) return false;
-      if (branchId != null && fs.campus_id != null && fs.campus_id !== branchId) return false;
+      if (
+        branchId != null &&
+        fs.campus_id != null &&
+        String(fs.campus_id).toLowerCase() !== branchId.toLowerCase()
+      ) return false;
       return true;
     })
     .map((fs) => {
