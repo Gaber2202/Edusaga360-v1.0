@@ -12,9 +12,37 @@ import {
   type MoyasarLinkOptions,
   type MoyasarLinkResult,
 } from './moyasarService.js';
-import type { PaymentsService, PaymentLinkOptions } from '../contract/CountryPack.js';
+import type { PaymentsService, PaymentLinkOptions, SadadBillResult } from '../contract/CountryPack.js';
 
 export type { MoyasarLinkResult };
+
+async function generateSadadBill(
+  supabase: SupabaseClient,
+  tenantId: string,
+  invoiceId: string,
+): Promise<SadadBillResult> {
+  const { data: invoice, error } = await supabase
+    .from('invoices')
+    .select('invoice_number, total_amount, due_date')
+    .eq('id', invoiceId)
+    .eq('tenant_id', tenantId)
+    .single();
+  if (error || !invoice) throw error ?? new Error('Invoice not found');
+
+  const companyCode = process.env.SADAD_COMPANY_CODE ?? '000';
+  const seq = String(invoice.invoice_number ?? '').replace(/\D/g, '').padStart(9, '0');
+  const sadadBillNumber = `${companyCode}${seq}`;
+
+  return {
+    sadad_bill_number: sadadBillNumber,
+    amount: Number(invoice.total_amount ?? 0),
+    due_date: (invoice.due_date as string | null) ?? null,
+    payment_instructions: {
+      ar: `لسداد الفاتورة عبر سداد، استخدم رقم الفاتورة: ${sadadBillNumber}`,
+      en: `To pay via SADAD, use bill number: ${sadadBillNumber}`,
+    },
+  };
+}
 
 function toMoyasarOptions(options: PaymentLinkOptions): MoyasarLinkOptions {
   return {
@@ -24,6 +52,9 @@ function toMoyasarOptions(options: PaymentLinkOptions): MoyasarLinkOptions {
 }
 
 export const saPayments: PaymentsService = {
+  generateSadadBill: async (supabase, tenantId, invoiceId) =>
+    generateSadadBill(supabase as SupabaseClient, tenantId, invoiceId),
+
   createOrRefreshPaymentLink: async (supabase, options) =>
     createOrRefreshMoyasarLink(supabase as SupabaseClient, toMoyasarOptions(options)),
 
