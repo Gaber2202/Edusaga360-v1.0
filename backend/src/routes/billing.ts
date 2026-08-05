@@ -34,7 +34,7 @@ import { convertToInvoice } from '../services/lifecycle.js';
 import { shareInvoice } from '../services/share.js';
 import type { ShareChannel } from '../services/share.js';
 import { createOrRefreshMoyasarLink, bulkCreateMoyasarInvoices, requestMoyasarRefund, reconcileMoyasarState, type MoyasarLinkResult } from '../packs/sa/moyasarService.js';
-import { applyDiscounts } from '../packs/sa/feeGovernance.js';
+import { applyDiscounts } from '../services/discounts.js';
 import {
   getAgingReport,
   getExpectedCollections,
