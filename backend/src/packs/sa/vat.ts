@@ -3,6 +3,43 @@ function sar(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
+export interface BuildInvoiceLineInput {
+  category_id: string;
+  category_code?: string | null;
+  description_en: string;
+  description_ar: string;
+  vat_treatment?: string | null;
+  amount: number;
+  quantity?: number;
+}
+
+export interface BuiltInvoiceLine {
+  category_id: string | null;
+  category_code: string;
+  description_en: string;
+  description_ar: string;
+  vat_treatment: string;
+  vat_category: 'standard' | 'zero_rated' | 'exempt' | 'out_of_scope';
+  vat_category_code: string;
+  quantity: number;
+  unit_amount: number;
+  unit_price_net: number;
+  subtotal: number;
+  vat_rate: number;
+  vat_amount: number;
+  line_total_gross: number;
+  total: number;
+  discount: number;
+}
+
+export interface BuildInvoiceLinesResult {
+  lines: BuiltInvoiceLine[];
+  subtotal: number;
+  discount_amount: number;
+  vat_amount: number;
+  total_amount: number;
+}
+
 export interface InvoiceItemData {
   description?: string;
   description_en?: string;
@@ -91,6 +128,82 @@ export function vatRateForCategory(category: string, rate?: number): number {
 export function percentValue(rate?: number): number {
   if (rate == null) return 15;
   return rate < 1 ? rate * 100 : rate;
+}
+
+
+function vatCategoryForTreatment(treatment: string): 'standard' | 'zero_rated' | 'exempt' | 'out_of_scope' {
+  if (treatment === 'zero_rated') return 'zero_rated';
+  if (treatment === 'exempt') return 'exempt';
+  if (treatment === 'out_of_scope') return 'out_of_scope';
+  return 'standard';
+}
+
+/**
+ * Build ZATCA-ready invoice lines from raw fee lines and an optional document-level
+ * discount. This deliberately reproduces the current routes/billing.ts arithmetic,
+ * including the one-halala redistribution drift, so it can replace the inline code
+ * without changing golden snapshots.
+ */
+export function buildInvoiceLines(
+  rawLines: BuildInvoiceLineInput[],
+  discountAmount = 0,
+): BuildInvoiceLinesResult {
+  let subtotal = 0;
+  const preDiscountLines: BuiltInvoiceLine[] = rawLines.map((line) => {
+    const treatment = line.vat_treatment ?? 'standard';
+    const quantity = line.quantity ?? 1;
+    const lineSubtotal = sar(line.amount * quantity);
+    const vatRate = vatRateForCategory(treatment);
+    const preVat = sar(lineSubtotal * vatRate);
+    const preTotal = sar(lineSubtotal + preVat);
+    subtotal = sar(subtotal + lineSubtotal);
+    return {
+      category_id: line.category_id ?? null,
+      category_code: line.category_code ?? 'MANUAL',
+      description_en: line.description_en,
+      description_ar: line.description_ar,
+      vat_treatment: treatment,
+      vat_category: vatCategoryForTreatment(treatment),
+      vat_category_code: categoryCode(treatment),
+      quantity,
+      unit_amount: line.amount,
+      unit_price_net: line.amount,
+      subtotal: lineSubtotal,
+      vat_rate: vatRate,
+      vat_amount: preVat,
+      line_total_gross: preTotal,
+      total: preTotal,
+      discount: 0,
+    };
+  });
+
+  const taxableSubtotal = sar(subtotal - discountAmount);
+  let vatAmount = 0;
+
+  const lines = preDiscountLines.map((line) => {
+    const lineRatio = line.subtotal / (subtotal || 1);
+    const lineVat = sar(taxableSubtotal * lineRatio * line.vat_rate);
+    const lineTotalGross = sar(taxableSubtotal * lineRatio + lineVat);
+    vatAmount = sar(vatAmount + lineVat);
+
+    return {
+      ...line,
+      vat_amount: lineVat,
+      line_total_gross: lineTotalGross,
+      total: lineTotalGross,
+      discount: 0,
+    };
+  });
+
+  const totalAmount = sar(taxableSubtotal + vatAmount);
+
+  return {
+    lines,
+    subtotal,
+    discount_amount: discountAmount,
+    vat_amount: vatAmount,
+    total_amount: totalAmount,
+  };
 }
 
 
