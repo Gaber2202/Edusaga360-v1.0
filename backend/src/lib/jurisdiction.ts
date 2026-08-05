@@ -80,6 +80,42 @@ export function resolveJurisdiction(ctx: RequestContext): JurisdictionCode {
 }
 
 /**
+ * Build a `RequestContext` from tenant/branch identifiers by reading the
+ * corresponding `jurisdiction_code` values from the database. This is the
+ * only helper that performs the database read; callers then pass the returned
+ * context to `resolveJurisdiction()` or `resolvePack()`.
+ */
+export async function buildRequestContext(
+  supabase: SupabaseClient,
+  tenantId: string,
+  branchId?: string,
+): Promise<RequestContext> {
+  const { data: tenant, error: tErr } = await supabase
+    .from('tenants')
+    .select('id, jurisdiction_code')
+    .eq('id', tenantId)
+    .single();
+  if (tErr || !tenant) throw tErr ?? new JurisdictionUnresolvedError(tenantId, branchId);
+
+  let branch: Branch | undefined;
+  if (branchId) {
+    const { data: b, error: bErr } = await supabase
+      .from('branches')
+      .select('id, jurisdiction_code')
+      .eq('id', branchId)
+      .single();
+    if (!bErr && b) {
+      branch = { id: b.id as string, jurisdictionCode: b.jurisdiction_code as string };
+    }
+  }
+
+  return {
+    tenant: { id: tenant.id as string, jurisdictionCode: tenant.jurisdiction_code as string },
+    branch,
+  };
+}
+
+/**
  * Validate that a jurisdiction code exists in the `jurisdictions` table.
  * Used in tenant/branch creation flows to fail fast on missing or unknown codes.
  */

@@ -46,6 +46,7 @@ import {
 } from '../services/reports.js';
 import { dispatchWebhook } from '../services/webhookDelivery.js';
 import { resolvePack } from '../packs/registry.js';
+import { buildRequestContext } from '../lib/jurisdiction.js';
 
 export const billingRouter = Router();
 
@@ -1672,23 +1673,33 @@ billingRouter.post('/sadad/generate', async (req: AuthenticatedRequest, res: Res
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
-  const { data: tenant } = await supabase
-    .from('tenants')
-    .select('jurisdiction_code')
-    .eq('id', tenant_id)
-    .single();
-  if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
+  try {
+    const ctx = await buildRequestContext(supabase, tenant_id);
+    const pack = resolvePack(ctx);
+    if (!pack.payments?.generateSadadBill) {
+      return res.status(501).json({ error: 'SADAD bill generation not available for this jurisdiction' });
+    }
 
-  const pack = resolvePack({ tenant: { id: tenant_id, jurisdictionCode: tenant.jurisdiction_code as string } });
-  if (!pack.payments?.generateSadadBill) {
-    return res.status(501).json({ error: 'SADAD bill generation not available for this jurisdiction' });
+    const result = await pack.payments.generateSadadBill(supabase, tenant_id, parsed.data.invoice_id);
+
+    await supabase.from('invoices').update({ sadad_bill_number: result.sadad_bill_number }).eq('id', parsed.data.invoice_id).eq('tenant_id', tenant_id);
+
+    return res.json(result);
+  } catch (err) {
+    const name = (err as Error).name;
+    const message = (err as Error).message;
+    if (name === 'JurisdictionUnresolvedError') {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+    if (name === 'NotImplementedInJurisdiction') {
+      return res.status(501).json({ error: 'SADAD bill generation not available for this jurisdiction' });
+    }
+    if (message === 'Invoice not found' || (err as any).code === 'PGRST116') {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+    console.error('sadad/generate:', err);
+    return res.status(500).json({ error: 'SADAD bill generation failed' });
   }
-
-  const result = await pack.payments.generateSadadBill(supabase, tenant_id, parsed.data.invoice_id);
-
-  await supabase.from('invoices').update({ sadad_bill_number: result.sadad_bill_number }).eq('id', parsed.data.invoice_id).eq('tenant_id', tenant_id);
-
-  return res.json(result);
 });
 
 // ─── POST /api/billing/moyasar/link — Create or refresh a Moyasar invoice link ─
