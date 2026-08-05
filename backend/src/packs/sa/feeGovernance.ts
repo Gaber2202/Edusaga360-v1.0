@@ -6,7 +6,6 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
 import { roundToMinorUnits } from '../../lib/money.js';
 import type { FeeGovernanceService } from '../contract/CountryPack.js';
 
@@ -108,10 +107,6 @@ export async function applyDiscounts(
 }
 
 export const saFeeGovernance: FeeGovernanceService = {
-  resolveFeeStructures: async () => {
-    throw new NotImplementedInJurisdiction('SA', 'FeeGovernanceService.resolveFeeStructures — see ADR-006 / Task 8b');
-  },
-
   applyDiscounts: (
     supabase,
     tenantId: string,

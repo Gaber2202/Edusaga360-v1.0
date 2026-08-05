@@ -45,6 +45,7 @@ import {
   getRevenueByFeeType,
 } from '../services/reports.js';
 import { dispatchWebhook } from '../services/webhookDelivery.js';
+import { resolveFeeStructures } from '../services/feeResolution.js';
 import { resolvePack } from '../packs/registry.js';
 import { buildRequestContext } from '../lib/jurisdiction.js';
 
@@ -1187,25 +1188,20 @@ export async function createInvoiceForStudent(
 
   let sourceLines = fee_lines;
   if (!sourceLines || sourceLines.length === 0) {
-    // Fall back to mandatory fee structures for this student's grade.
-    let fsQuery = supabase
-      .from('fee_structures')
-      .select('*, fee_categories(id, vat_treatment, name_ar, name_en, code)')
-      .eq('tenant_id', tenant_id)
-      .eq('academic_year', academic_year)
-      .eq('is_mandatory', true);
-    if (student.grade_id) fsQuery = fsQuery.or(`grade.eq.${student.grade_id},grade.is.null`);
-    const { data: feeStructures } = await fsQuery;
-    sourceLines = (feeStructures ?? []).map((fs) => {
-      const cat = fs.fee_categories as Record<string, unknown> | undefined;
-      return {
-        category_id: (cat?.id as string) ?? fs.category_id,
-        description_en: (cat?.name_en as string) ?? 'Fee',
-        description_ar: (cat?.name_ar as string) ?? 'رسوم',
-        amount: Number(fs.amount ?? 0),
-        quantity: 1,
-      };
+    // Fall back to mandatory fee structures for this student's grade/branch.
+    const feeStructures = await resolveFeeStructures(supabase, tenant_id, {
+      academicYear: academic_year,
+      grade: student.grade_id ?? undefined,
+      branchId: (branch_id as string | undefined) ?? ((student as Record<string, unknown>).branch_id as string | undefined) ?? undefined,
+      mandatoryOnly: true,
     });
+    sourceLines = feeStructures.map((fs) => ({
+      category_id: fs.category_id,
+      description_en: fs.description_en,
+      description_ar: fs.description_ar,
+      amount: fs.amount,
+      quantity: fs.quantity,
+    }));
   }
 
   const categoryIds = [...new Set(sourceLines.map((l) => l.category_id).filter(Boolean))];
@@ -1399,18 +1395,15 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
     const { academic_year, grade, campus_id, due_date, dry_run, approved, name } = parsed.data;
 
-    // Fetch active fee structures
-    let fsQuery = supabase
-      .from('fee_structures')
-      .select('*, fee_categories(id, vat_treatment, name_ar, name_en, code)')
-      .eq('tenant_id', tenant_id)
-      .eq('academic_year', academic_year)
-      .eq('is_mandatory', true);
-    if (grade) fsQuery = fsQuery.or(`grade.eq.${grade},grade.is.null`);
-    if (campus_id) fsQuery = fsQuery.or(`campus_id.eq.${campus_id},campus_id.is.null`);
-    const { data: feeStructures } = await fsQuery;
+    // Fetch active fee structures (generic, jurisdiction-neutral resolution).
+    const feeStructures = await resolveFeeStructures(supabase, tenant_id, {
+      academicYear: academic_year,
+      grade: grade ?? undefined,
+      branchId: campus_id ?? undefined,
+      mandatoryOnly: true,
+    });
 
-    if (!feeStructures?.length) return res.status(400).json({ error: 'No fee structures found for the given criteria' });
+    if (!feeStructures.length) return res.status(400).json({ error: 'No fee structures found for the given criteria' });
 
     // Fetch students
     let stuQuery = supabase.from('students').select('id, name_en, name_ar, grade_id, branch_id, grades(name_en)').eq('tenant_id', tenant_id).eq('status', 'active');
@@ -1432,12 +1425,11 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
     const existingIds = new Set((existing ?? []).map((e) => e.student_id));
 
     const planForStudent = (student: { grade_id?: string | null }) => {
-      const relevant = (feeStructures ?? []).filter((fs) => !fs.grade || fs.grade === student.grade_id);
+      const relevant = feeStructures.filter((fs) => !fs.grade || fs.grade === student.grade_id);
       let gross = 0;
       for (const fs of relevant) {
-        const lineSubtotal = sar(Number(fs.amount ?? 0));
-        const treatment = (fs.fee_categories as Record<string, unknown>)?.vat_treatment ?? 'standard';
-        const vatRate = treatment === 'standard' ? VAT_RATE_STANDARD : 0;
+        const lineSubtotal = sar(fs.amount);
+        const vatRate = fs.vat_treatment === 'standard' ? VAT_RATE_STANDARD : 0;
         gross = sar(gross + lineSubtotal + sar(lineSubtotal * vatRate));
       }
       return { relevant, gross };
@@ -1529,11 +1521,11 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
         if (!relevant.length) { skipped++; continue; }
 
         const feeLines = relevant.map((fs) => ({
-          category_id: (fs.fee_categories as Record<string, unknown>)?.id as string ?? fs.category_id,
-          description_en: (fs.fee_categories as Record<string, unknown>)?.name_en as string ?? 'Fee',
-          description_ar: (fs.fee_categories as Record<string, unknown>)?.name_ar as string ?? 'رسوم',
-          amount: Number(fs.amount ?? 0),
-          quantity: 1,
+          category_id: fs.category_id,
+          description_en: fs.description_en,
+          description_ar: fs.description_ar,
+          amount: fs.amount,
+          quantity: fs.quantity,
         }));
 
         const invoice = await createInvoiceForStudent(tenant_id, req.user!.id, student.id, academic_year, feeLines, due_date, student.branch_id ?? null, { batch_id: batch.id });

@@ -218,13 +218,6 @@ export interface AcademicCalendarService {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface FeeGovernanceService {
-  /** Resolve which fee structures apply for a student/grade/year. */
-  resolveFeeStructures?(
-    supabase: unknown,
-    tenantId: string,
-    input: { grade?: string; academicYear?: string; branchId?: string },
-  ): Promise<unknown>;
-
   /** Apply jurisdiction-aware discounts and sibling discounts. */
   applyDiscounts?(
     supabase: unknown,
