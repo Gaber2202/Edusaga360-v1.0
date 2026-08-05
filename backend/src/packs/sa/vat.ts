@@ -153,7 +153,9 @@ export function buildInvoiceLines(
     const treatment = line.vat_treatment ?? 'standard';
     const quantity = line.quantity ?? 1;
     const lineSubtotal = sar(line.amount * quantity);
-    const vatRate = vatRateForCategory(treatment);
+    // Mirror createInvoiceForStudent (routes/billing.ts:1218): only the literal
+    // string 'standard' is taxed at 15%; everything else is zero-rated.
+    const vatRate = treatment === 'standard' ? 0.15 : 0;
     const preVat = sar(lineSubtotal * vatRate);
     const preTotal = sar(lineSubtotal + preVat);
     subtotal = sar(subtotal + lineSubtotal);
