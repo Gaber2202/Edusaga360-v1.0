@@ -45,6 +45,7 @@ import {
   getRevenueByFeeType,
 } from '../services/reports.js';
 import { dispatchWebhook } from '../services/webhookDelivery.js';
+import { resolvePack } from '../packs/registry.js';
 
 export const billingRouter = Router();
 
@@ -1671,30 +1672,23 @@ billingRouter.post('/sadad/generate', async (req: AuthenticatedRequest, res: Res
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
-  const { data: invoice } = await supabase
-    .from('invoices')
-    .select('invoice_number, total_amount, student_id, due_date')
-    .eq('id', parsed.data.invoice_id)
-    .eq('tenant_id', tenant_id)
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('jurisdiction_code')
+    .eq('id', tenant_id)
     .single();
-  if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+  if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
 
-  // SADAD bill number: company_code + sequential (12 digits total)
-  const companyCode = process.env.SADAD_COMPANY_CODE ?? '000';
-  const seq = invoice.invoice_number.replace(/\D/g, '').padStart(9, '0');
-  const sadadBillNumber = `${companyCode}${seq}`;
+  const pack = resolvePack({ tenant: { id: tenant_id, jurisdictionCode: tenant.jurisdiction_code as string } });
+  if (!pack.payments?.generateSadadBill) {
+    return res.status(501).json({ error: 'SADAD bill generation not available for this jurisdiction' });
+  }
 
-  await supabase.from('invoices').update({ sadad_bill_number: sadadBillNumber }).eq('id', parsed.data.invoice_id).eq('tenant_id', tenant_id);
+  const result = await pack.payments.generateSadadBill(supabase, tenant_id, parsed.data.invoice_id);
 
-  return res.json({
-    sadad_bill_number: sadadBillNumber,
-    amount: invoice.total_amount,
-    due_date: invoice.due_date,
-    payment_instructions: {
-      ar: `لسداد الفاتورة عبر سداد، استخدم رقم الفاتورة: ${sadadBillNumber}`,
-      en: `To pay via SADAD, use bill number: ${sadadBillNumber}`,
-    },
-  });
+  await supabase.from('invoices').update({ sadad_bill_number: result.sadad_bill_number }).eq('id', parsed.data.invoice_id).eq('tenant_id', tenant_id);
+
+  return res.json(result);
 });
 
 // ─── POST /api/billing/moyasar/link — Create or refresh a Moyasar invoice link ─

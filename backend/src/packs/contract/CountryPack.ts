@@ -79,6 +79,13 @@ export interface PaymentLinkResult {
   error?: string;
 }
 
+export interface SadadBillResult {
+  sadad_bill_number: string;
+  amount: number;
+  due_date: string | null;
+  payment_instructions: { ar: string; en: string };
+}
+
 export interface PaymentsService {
   /** Create or refresh a hosted payment link for an invoice. */
   createOrRefreshPaymentLink?(supabase: unknown, options: PaymentLinkOptions): Promise<PaymentLinkResult>;
@@ -88,6 +95,9 @@ export interface PaymentsService {
 
   /** Refund a payment, optionally for a partial amount. */
   refundPayment?(supabase: unknown, tenantId: string, paymentId: string, amount?: number): Promise<unknown>;
+
+  /** Generate a SADAD bill number for an invoice (Saudi national payment scheme). */
+  generateSadadBill?(supabase: unknown, tenantId: string, invoiceId: string): Promise<SadadBillResult>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
