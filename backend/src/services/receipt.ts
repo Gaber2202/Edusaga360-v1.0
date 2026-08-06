@@ -1,4 +1,3 @@
-// ZATCA-CI-PROOF: intentionally introduced to prove the country-literal lint fails in CI.
 import crypto from 'crypto';
 import { SupabaseClient } from '@supabase/supabase-js';
 import type { InvoiceData } from '../packs/sa/vat.js';
