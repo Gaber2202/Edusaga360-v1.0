@@ -151,7 +151,153 @@ export async function computeVatSummary(
   };
 }
 
+interface BuildInvoiceLineInput {
+  category_id?: string | null;
+  category_code?: string | null;
+  description_en: string;
+  description_ar: string;
+  vat_treatment?: string | null;
+  amount: number;
+  quantity?: number;
+}
+
+interface BuiltInvoiceLine {
+  category_id: string | null;
+  category_code: string;
+  description_en: string;
+  description_ar: string;
+  vat_treatment: string;
+  vat_category: 'standard' | 'zero_rated' | 'exempt' | 'out_of_scope';
+  vat_category_code: string;
+  quantity: number;
+  unit_amount: number;
+  unit_price_net: number;
+  subtotal: number;
+  vat_rate: number;
+  vat_amount: number;
+  line_total_gross: number;
+  total: number;
+  discount: number;
+}
+
+interface BuildInvoiceLinesResult {
+  lines: BuiltInvoiceLine[];
+  subtotal: number;
+  discount_amount: number;
+  vat_amount: number;
+  total_amount: number;
+}
+
+async function buildInvoiceLines(
+  rawLines: unknown,
+  discountAmount = 0,
+  supabase?: unknown,
+  issueDate?: string,
+): Promise<BuildInvoiceLinesResult> {
+  const lines = Array.isArray(rawLines) ? (rawLines as BuildInvoiceLineInput[]) : [];
+  const asOf = issueDate ?? new Date().toISOString().slice(0, 10);
+
+  if (!supabase) {
+    throw new Error('AE buildInvoiceLines requires a supabase client');
+  }
+
+  const rates = await loadVatRates(supabase as SupabaseClient, asOf);
+
+  const preDiscountLines = lines.map((line) => {
+    const treatment = line.vat_treatment ?? 'standard';
+    const category = categoryFromString(treatment);
+    const quantity = line.quantity ?? 1;
+    const lineSubtotal = roundToMinorUnits(line.amount * quantity, 2);
+    const vatRate = rates[category] ?? 0;
+    const preVat = roundToMinorUnits(lineSubtotal * vatRate, 2);
+    const preTotal = roundToMinorUnits(lineSubtotal + preVat, 2);
+    return {
+      category_id: line.category_id ?? null,
+      category_code: line.category_code ?? 'MANUAL',
+      description_en: line.description_en,
+      description_ar: line.description_ar,
+      vat_treatment: treatment,
+      vat_category: category,
+      vat_category_code: categoryCode(treatment),
+      quantity,
+      unit_amount: line.amount,
+      unit_price_net: line.amount,
+      subtotal: lineSubtotal,
+      vat_rate: vatRate,
+      vat_amount: preVat,
+      line_total_gross: preTotal,
+      total: preTotal,
+      discount: 0,
+    };
+  });
+
+  const subtotal = roundToMinorUnits(
+    preDiscountLines.reduce((sum, line) => roundToMinorUnits(sum + line.subtotal, 2), 0),
+    2,
+  );
+
+  const totalDiscount = roundToMinorUnits(discountAmount, 2);
+  const taxableSubtotal = roundToMinorUnits(subtotal - totalDiscount, 2);
+
+  // Allocate discount exactly: round proportional shares, then distribute the
+  // remainder (positive or negative) to the largest share first.
+  const shares: { index: number; rawShare: number; share: number }[] = [];
+  let allocated = 0;
+  if (totalDiscount !== 0 && subtotal > 0) {
+    for (let i = 0; i < preDiscountLines.length; i++) {
+      const rawShare = (preDiscountLines[i].subtotal / subtotal) * totalDiscount;
+      const share = roundToMinorUnits(rawShare, 2);
+      shares.push({ index: i, rawShare, share });
+      allocated = roundToMinorUnits(allocated + share, 2);
+    }
+  }
+  let remainder = roundToMinorUnits(totalDiscount - allocated, 2);
+  if (remainder !== 0 && shares.length > 0) {
+    shares.sort((a, b) => b.rawShare - a.rawShare);
+    const unit = remainder > 0 ? 0.01 : -0.01;
+    let i = 0;
+    while (Math.abs(remainder) >= 0.005 && i < shares.length * 1000) {
+      shares[i % shares.length].share = roundToMinorUnits(shares[i % shares.length].share + unit, 2);
+      remainder = roundToMinorUnits(remainder - unit, 2);
+      i++;
+    }
+  }
+
+  const lineDiscounts = new Map<number, number>();
+  for (const s of shares) {
+    lineDiscounts.set(s.index, s.share);
+  }
+
+  let vatAmount = 0;
+  let totalAmount = 0;
+  const builtLines: BuiltInvoiceLine[] = preDiscountLines.map((line, index) => {
+    const lineDiscount = lineDiscounts.get(index) ?? 0;
+    const lineTaxable = roundToMinorUnits(line.subtotal - lineDiscount, 2);
+    const lineVat = roundToMinorUnits(lineTaxable * line.vat_rate, 2);
+    const lineTotalGross = roundToMinorUnits(lineTaxable + lineVat, 2);
+    vatAmount = roundToMinorUnits(vatAmount + lineVat, 2);
+    totalAmount = roundToMinorUnits(totalAmount + lineTotalGross, 2);
+    return {
+      ...line,
+      discount: lineDiscount,
+      vat_amount: lineVat,
+      line_total_gross: lineTotalGross,
+      total: lineTotalGross,
+    };
+  });
+
+  // Final totals are sums of rounded line values so the document balances exactly.
+  return {
+    lines: builtLines,
+    subtotal,
+    discount_amount: totalDiscount,
+    vat_amount: vatAmount,
+    total_amount: totalAmount,
+  };
+}
+
 export const aeTax: TaxService = {
   categoryCode,
   computeVatSummary,
+  buildInvoiceLines,
 };

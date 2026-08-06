@@ -9,6 +9,23 @@
  * build in this codebase. Do not build this by analogy to ZATCA.
  */
 
+import { NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
 import type { EInvoiceService } from '../contract/CountryPack.js';
 
-export const aeEInvoice: EInvoiceService = {};
+function stub(method: string) {
+  return (..._args: unknown[]) => {
+    throw new NotImplementedInJurisdiction(
+      'AE',
+      `EInvoiceService.${method} — UAE e-invoicing requires a Ministry of Finance Accredited Service Provider (PINT-AE); self-issued QR/hash chains are not supported`,
+    );
+  };
+}
+
+export const aeEInvoice: EInvoiceService = {
+  generateUBLXml: stub('generateUBLXml'),
+  generateInvoiceHash: stub('generateInvoiceHash'),
+  signInvoice: stub('signInvoice'),
+  generateTLVQR: stub('generateTLVQR'),
+  buildInvoiceHTML: stub('buildInvoiceHTML'),
+  generatePDF: stub('generatePDF'),
+};

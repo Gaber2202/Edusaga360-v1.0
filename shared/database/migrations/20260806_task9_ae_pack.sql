@@ -31,8 +31,9 @@ ON CONFLICT (code) DO UPDATE SET
   fiscal_year_start_month = EXCLUDED.fiscal_year_start_month,
   status = EXCLUDED.status;
 
--- ---------- 3. Emirate-level regulator on branch ----------
+-- ---------- 3. Emirate-level regulator and branch-level settings ----------
 ALTER TABLE branches ADD COLUMN IF NOT EXISTS regulator_code text;
+ALTER TABLE branches ADD COLUMN IF NOT EXISTS settings JSONB DEFAULT '{}';
 
 -- ---------- 4. Verified tax rules (source_url + verified_on) ----------
 CREATE TABLE IF NOT EXISTS jurisdiction_tax_rules (

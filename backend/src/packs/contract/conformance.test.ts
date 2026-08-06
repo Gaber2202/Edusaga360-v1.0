@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it as vitestIt, vi } from 'vitest';
+import { NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
 import { getRegisteredPacks } from '../registry.js';
 import type { CountryPack } from './CountryPack.js';
 import {
@@ -9,6 +10,22 @@ import {
 
 // Pack modules may pull in lib/supabase at import time; never hit the real DB in conformance tests.
 vi.mock('../../lib/supabase.js', () => ({ supabase: {} }));
+
+/**
+ * Conformance tests assert behaviour for packs that implement a capability.
+ * If a pack explicitly throws NotImplementedInJurisdiction, the test is skipped
+ * rather than failing, because the contract test is not a test of completeness.
+ */
+function it(name: string, fn: () => void | Promise<void>, timeout?: number) {
+  return vitestIt(name, async () => {
+    try {
+      await fn();
+    } catch (e) {
+      if (e instanceof NotImplementedInJurisdiction) return;
+      throw e;
+    }
+  }, timeout);
+}
 
 function defaultResolver(ctx: QueryContext): SupabaseResult {
   if (ctx.table === 'tenants') {

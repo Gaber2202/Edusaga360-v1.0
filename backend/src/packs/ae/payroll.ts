@@ -6,6 +6,9 @@
  * generation is a stub because the SIF layout is bank-specific.
  */
 
+import { roundToMinorUnits } from '../../lib/money.js';
+import { isRamadan } from '../../lib/hijri.js';
+import { NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
 import type { PayrollService } from '../contract/CountryPack.js';
 
 const CURRENCY_CODE = 'AED';
@@ -57,22 +60,58 @@ function calculateOvertime(
   overtimeHours: number,
   isNight = false,
   isRestDay = false,
+  date?: Date | string,
 ): { amount: number; currencyCode: string } {
   if (normalHoursPerMonth <= 0 || overtimeHours <= 0) {
     return { amount: 0, currencyCode: CURRENCY_CODE };
   }
 
-  const hourlyRate = basicSalary / normalHoursPerMonth;
-  let premium = 0.25;
-  if (isRestDay) premium = 1.50;
-  else if (isNight) premium = 0.50;
+  if (isRestDay) {
+    throw new NotImplementedInJurisdiction(
+      'AE',
+      'PayrollService.calculateOvertime — rest-day overtime premium is not specified in UAE Labour Law',
+    );
+  }
 
-  const amount = Math.round(hourlyRate * overtimeHours * (1 + premium) * 100) / 100;
+  // UAE Labour Law reduces working hours by 2 hours per day during Ramadan.
+  // We assume an 8-hour normal day and scale the monthly norm accordingly.
+  let adjustedHours = normalHoursPerMonth;
+  if (date && isRamadan(date)) {
+    const workingDays = normalHoursPerMonth / 8;
+    if (workingDays > 0) {
+      adjustedHours = roundToMinorUnits(workingDays * 6, 2);
+    }
+  }
+
+  const hourlyRate = basicSalary / adjustedHours;
+  const premium = isNight ? 0.50 : 0.25;
+
+  const amount = roundToMinorUnits(hourlyRate * overtimeHours * (1 + premium), 2);
   return { amount, currencyCode: CURRENCY_CODE };
+}
+
+function calculatePayroll(): Promise<unknown> {
+  return Promise.reject(
+    new NotImplementedInJurisdiction(
+      'AE',
+      'PayrollService.calculatePayroll — full period payroll calculation not yet implemented for UAE',
+    ),
+  );
+}
+
+function generateWpsFile(): Promise<{ filename: string; content: string }> {
+  return Promise.reject(
+    new NotImplementedInJurisdiction(
+      'AE',
+      'PayrollService.generateWpsFile — UAE WPS SIF layout is bank-specific and must be configured at onboarding',
+    ),
+  );
 }
 
 export const aePayroll: PayrollService = {
   calculateEndOfServiceBenefit,
   calculateAnnualLeave,
   calculateOvertime,
+  calculatePayroll,
+  generateWpsFile,
 };

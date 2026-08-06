@@ -5,9 +5,11 @@
  */
 
 import {
+  buildInvoiceLines,
   computeVatSummary,
   categoryCode,
   vatRateForCategory,
+  type BuildInvoiceLineInput,
   type InvoiceData,
 } from './vat.js';
 import type { TaxService } from '../contract/CountryPack.js';
@@ -17,4 +19,10 @@ export const saTax: TaxService = {
   vatRateForCategory,
   categoryCode,
   computeVatSummary: (invoice: unknown, _supabase?: unknown) => computeVatSummary(invoice as InvoiceData),
+  buildInvoiceLines: (
+    rawLines: unknown,
+    discountAmount?: number,
+    _supabase?: unknown,
+    _issueDate?: string,
+  ) => buildInvoiceLines(rawLines as BuildInvoiceLineInput[], discountAmount ?? 0),
 };

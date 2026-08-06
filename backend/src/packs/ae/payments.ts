@@ -6,6 +6,23 @@
  * gateway is a commercial task per school.
  */
 
+import { NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
 import type { PaymentsService } from '../contract/CountryPack.js';
 
-export const aePayments: PaymentsService = {};
+function stub(method: string) {
+  return async (..._args: unknown[]) => {
+    throw new NotImplementedInJurisdiction(
+      'AE',
+      `PaymentsService.${method} — UAE payment gateway not configured; choose a CBUAE-licensed provider and complete onboarding`,
+    );
+  };
+}
+
+export const aePayments: PaymentsService = {
+  createOrRefreshPaymentLink: stub('createOrRefreshPaymentLink'),
+  getOrCreatePaymentLink: stub('getOrCreatePaymentLink'),
+  processWebhook: stub('processWebhook'),
+  refundPayment: stub('refundPayment'),
+  generateSadadBill: stub('generateSadadBill'),
+  reconcilePaymentState: stub('reconcilePaymentState'),
+};

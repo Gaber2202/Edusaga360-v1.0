@@ -34,6 +34,16 @@ export interface TaxService {
    *  Optional supabase client is used by DB-driven packs to load effective-dated
    *  rates from jurisdiction_tax_rules. */
   computeVatSummary?(invoice: unknown, supabase?: unknown): unknown | Promise<unknown>;
+
+  /** Build invoice lines from raw fee lines, applying discounts and VAT.
+   *  Optional supabase client is used by DB-driven packs to load effective-dated
+   *  rates from jurisdiction_tax_rules. */
+  buildInvoiceLines?(
+    rawLines: unknown,
+    discountAmount?: number,
+    supabase?: unknown,
+    issueDate?: string,
+  ): unknown | Promise<unknown>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -162,13 +172,16 @@ export interface PayrollService {
   /** Annual leave entitlement in days for a given length of service. */
   calculateAnnualLeave?(yearsOfService: number, isPartTime?: boolean): number;
 
-  /** Overtime pay for a given number of extra hours. */
+  /** Overtime pay for a given number of extra hours.
+   *  `date` is optional; some jurisdictions adjust normal hours for calendar
+   *  events such as Ramadan. */
   calculateOvertime?(
     basicSalary: number,
     normalHoursPerMonth: number,
     overtimeHours: number,
     isNight?: boolean,
     isRestDay?: boolean,
+    date?: Date | string,
   ): { amount: number; currencyCode: string };
 }
 
@@ -334,6 +347,12 @@ export interface LocalisationService {
 
   /** Format a number for the jurisdiction. */
   formatNumber?(value: number, locale?: string): string;
+
+  /** Default locale for the jurisdiction (branch/tenant settings may override). */
+  getDefaultLocale?(): string;
+
+  /** Default weekend days (0=Sunday…6=Saturday) for the jurisdiction. */
+  getDefaultWeekend?(): number[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

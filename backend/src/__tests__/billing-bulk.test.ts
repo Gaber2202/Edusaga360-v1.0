@@ -52,6 +52,7 @@ describe('POST /billing/bulk-invoices — dry-run preview', () => {
       if (ctx.table === 'fee_structures') return { data: FEE_STRUCTURES };
       if (ctx.table === 'students') return { data: STUDENTS };
       if (ctx.table === 'invoices') return { data: [{ student_id: 's2' }] }; // s2 already invoiced this year
+      if (ctx.table === 'tenants') return { data: { id: TENANT_ID, jurisdiction_code: 'SA' } };
       return { data: null };
     });
 

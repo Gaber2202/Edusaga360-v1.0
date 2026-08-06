@@ -6,6 +6,19 @@
  * frontend to the backend.
  */
 
+import { NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
 import type { DocumentsService } from '../contract/CountryPack.js';
 
-export const aeDocuments: DocumentsService = {};
+function stub(method: string) {
+  return async (..._args: unknown[]) => {
+    throw new NotImplementedInJurisdiction(
+      'AE',
+      `DocumentsService.${method} — UAE document rendering pipeline not implemented; see generic renderer extraction (ADR-007)`,
+    );
+  };
+}
+
+export const aeDocuments: DocumentsService = {
+  renderInvoicePdf: stub('renderInvoicePdf'),
+  renderPayslipPdf: stub('renderPayslipPdf'),
+};
