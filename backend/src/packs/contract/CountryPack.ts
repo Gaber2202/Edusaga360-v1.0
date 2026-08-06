@@ -24,8 +24,8 @@ export interface TaxService {
   /** Standard VAT rate for the jurisdiction (e.g. 0.15 for KSA). */
   readonly standardVatRate?: number;
 
-  /** Resolve the VAT rate for a line-item category. */
-  vatRateForCategory?(category: string, fallbackRate?: number): number;
+  /** Resolve the VAT rate for a line-item category, optionally as of an issue date. */
+  vatRateForCategory?(category: string, fallbackRate?: number, asOf?: Date | string): number;
 
   /** Resolve the UBL/ZATCA category code for a category name. */
   categoryCode?(category: string): string;

@@ -1,0 +1,2431 @@
+[
+  {
+    "file": "admin-portal/src/components/ConvertToPaidDialog.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "admin-portal/src/components/UserFormDialog.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "admin-portal/src/lib/plans.js",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "admin-portal/src/pages/Analytics.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "admin-portal/src/pages/Subscriptions.jsx",
+    "term": "sar",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "admin-portal/src/pages/Tenants.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/eslint-local-rules/country-literal-ban.mjs",
+    "term": "aed",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/eslint-local-rules/country-literal-ban.mjs",
+    "term": "asia/riyadh",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/eslint-local-rules/country-literal-ban.mjs",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/eslint-local-rules/country-literal-ban.mjs",
+    "term": "halala",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/eslint-local-rules/country-literal-ban.mjs",
+    "term": "moyasar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/eslint-local-rules/country-literal-ban.mjs",
+    "term": "mudad",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/eslint-local-rules/country-literal-ban.mjs",
+    "term": "muqeem",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/eslint-local-rules/country-literal-ban.mjs",
+    "term": "nafath",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/eslint-local-rules/country-literal-ban.mjs",
+    "term": "nitaqat",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/eslint-local-rules/country-literal-ban.mjs",
+    "term": "qar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/eslint-local-rules/country-literal-ban.mjs",
+    "term": "qiwa",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/eslint-local-rules/country-literal-ban.mjs",
+    "term": "sadad",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/eslint-local-rules/country-literal-ban.mjs",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/eslint-local-rules/country-literal-ban.mjs",
+    "term": "zatca",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/index.ts",
+    "term": "asia/riyadh",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/index.ts",
+    "term": "moyasar",
+    "count": 7,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/index.ts",
+    "term": "sar",
+    "count": 7,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/lib/calculations.ts",
+    "term": "gosi",
+    "count": 18,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/lib/calculations.ts",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/ai.ts",
+    "term": "gosi",
+    "count": 8,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/ai.ts",
+    "term": "sar",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/benchmarks.ts",
+    "term": "gosi",
+    "count": 15,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/billing.ts",
+    "term": "moyasar",
+    "count": 40,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/billing.ts",
+    "term": "sadad",
+    "count": 13,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/billing.ts",
+    "term": "sar",
+    "count": 75,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/billing.ts",
+    "term": "zatca",
+    "count": 78,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/billingPublic.ts",
+    "term": "moyasar",
+    "count": 10,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/billingPublic.ts",
+    "term": "sar",
+    "count": 10,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/cheques.ts",
+    "term": "sar",
+    "count": 6,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/exec.ts",
+    "term": "sar",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/infobipWebhooks.ts",
+    "term": "sar",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/intake.ts",
+    "term": "sar",
+    "count": 6,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/invoices.ts",
+    "term": "moyasar",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/invoices.ts",
+    "term": "sar",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/invoices.ts",
+    "term": "zatca",
+    "count": 54,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/notifications.ts",
+    "term": "sar",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/payroll.ts",
+    "term": "gosi",
+    "count": 55,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/payslipPdf.ts",
+    "term": "gosi",
+    "count": 11,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/subscription.ts",
+    "term": "moyasar",
+    "count": 9,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/subscription.ts",
+    "term": "sar",
+    "count": 23,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/subscriptionPublic.ts",
+    "term": "moyasar",
+    "count": 11,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/subscriptionPublic.ts",
+    "term": "sar",
+    "count": 12,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/scripts/ensureTestCompliance.ts",
+    "term": "zatca",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/scripts/invoicePartASeed.ts",
+    "term": "sar",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/scripts/invoicePartASeed.ts",
+    "term": "zatca",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/scripts/yamenDemoSeed.ts",
+    "term": "asia/riyadh",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/scripts/yamenDemoSeed.ts",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/scripts/yamenDemoSeed.ts",
+    "term": "zatca",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/ai/inboundAssistant.ts",
+    "term": "sar",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/ats/providers/custom.ts",
+    "term": "sar",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/ats/providers/greenhouse.ts",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/ats/providers/indeed.ts",
+    "term": "sar",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/ats/providers/linkedin.ts",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/ats/providers/workday.ts",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/ats/types.ts",
+    "term": "sar",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/bulkImport.ts",
+    "term": "zatca",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/collections/guarantee.ts",
+    "term": "sar",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/collections/messenger.ts",
+    "term": "asia/riyadh",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/collections/messenger.ts",
+    "term": "moyasar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/collections/messenger.ts",
+    "term": "sar",
+    "count": 9,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/collections/moyasar.ts",
+    "term": "moyasar",
+    "count": 12,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/collections/moyasar.ts",
+    "term": "sar",
+    "count": 13,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/email/providers/custom.ts",
+    "term": "sar",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/email/providers/microsoft.ts",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/email/types.ts",
+    "term": "sar",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/execExport.ts",
+    "term": "gosi",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/execExport.ts",
+    "term": "mudad",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/execExport.ts",
+    "term": "nitaqat",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/execExport.ts",
+    "term": "qiwa",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/execExport.ts",
+    "term": "sar",
+    "count": 16,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/execExport.ts",
+    "term": "zatca",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/ledger.ts",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/lifecycle.ts",
+    "term": "sar",
+    "count": 8,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/lifecycle.ts",
+    "term": "zatca",
+    "count": 9,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/messaging/types.ts",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/metrics.ts",
+    "term": "gosi",
+    "count": 11,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/metrics.ts",
+    "term": "mudad",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/metrics.ts",
+    "term": "nitaqat",
+    "count": 17,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/metrics.ts",
+    "term": "qiwa",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/metrics.ts",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/metrics.ts",
+    "term": "zatca",
+    "count": 23,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/receipt.ts",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/receipt.ts",
+    "term": "zatca",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/reports.ts",
+    "term": "sar",
+    "count": 40,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/services/tenant.ts",
+    "term": "zatca",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/e2e/invoice-create.spec.ts",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/api/supabaseClient.js",
+    "term": "sar",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/BranchContext.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/CommandPalette.jsx",
+    "term": "zatca",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/LanguageContext.jsx",
+    "term": "gosi",
+    "count": 9,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/LanguageContext.jsx",
+    "term": "nitaqat",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/LanguageContext.jsx",
+    "term": "sar",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/LanguageContext.jsx",
+    "term": "zatca",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/benchmarks/BenchmarkDashboard.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/canteen/QuickPOS.jsx",
+    "term": "sar",
+    "count": 8,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/communications/WhatsAppService.jsx",
+    "term": "sar",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/dashboard/ActivityPanel.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/dashboard/DashboardAnalytics.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/dashboard/DashboardHeader.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/dashboard/DashboardKPICard.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/depreciation/AssetLifecycleTracker.jsx",
+    "term": "sar",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/depreciation/DepreciationReport.jsx",
+    "term": "sar",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/employees/BankDetailsForm.jsx",
+    "term": "mudad",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/employees/CompensationForm.jsx",
+    "term": "gosi",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/employees/CompensationForm.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/employees/CompensationTab.jsx",
+    "term": "gosi",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/employees/CompensationTab.jsx",
+    "term": "sar",
+    "count": 8,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/ess/ESSProfileTab.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/fees/BulkInvoiceGeneration.jsx",
+    "term": "sar",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/fees/FeesArrearsView.jsx",
+    "term": "sar",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/fees/FeesDashboard.jsx",
+    "term": "sar",
+    "count": 8,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/fees/FeesInvoiceList.jsx",
+    "term": "sadad",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/fees/FeesInvoiceList.jsx",
+    "term": "sar",
+    "count": 6,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/fees/FeesVATReport.jsx",
+    "term": "sar",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/fees/FeesVATReport.jsx",
+    "term": "zatca",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/fees/InvoiceForm.jsx",
+    "term": "sar",
+    "count": 6,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/fees/InvoiceForm.jsx",
+    "term": "zatca",
+    "count": 21,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/fees/PaymentForm.jsx",
+    "term": "sar",
+    "count": 6,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/fees/PaymentLogForm.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/fleet/FuelTracker.jsx",
+    "term": "sar",
+    "count": 6,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/fleet/MaintenanceTracker.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/fleet/TripTracker.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/GOSIManagement.jsx",
+    "term": "gosi",
+    "count": 16,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/GOSIManagement.jsx",
+    "term": "sar",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/GOSIServices.jsx",
+    "term": "gosi",
+    "count": 30,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/GOSIServices.jsx",
+    "term": "sar",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/GovComplianceDashboard.jsx",
+    "term": "gosi",
+    "count": 18,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/GovComplianceDashboard.jsx",
+    "term": "mudad",
+    "count": 8,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/GovComplianceDashboard.jsx",
+    "term": "sar",
+    "count": 6,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/GovDocuments.jsx",
+    "term": "gosi",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/GovReports.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/GovReports.jsx",
+    "term": "mudad",
+    "count": 7,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/GovReports.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/IqamaServices.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/IqamaServices.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/MudadServices.jsx",
+    "term": "mudad",
+    "count": 14,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/MudadServices.jsx",
+    "term": "sar",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/MudadWPS.jsx",
+    "term": "mudad",
+    "count": 7,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/MudadWPS.jsx",
+    "term": "sar",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/MuqeemServices.jsx",
+    "term": "muqeem",
+    "count": 16,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/QiwaContracts.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/QiwaContracts.jsx",
+    "term": "qiwa",
+    "count": 43,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/QiwaServices.jsx",
+    "term": "qiwa",
+    "count": 10,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/SaudizationTracker.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/ServiceWorkflowDialog.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/ViolationsPenalties.jsx",
+    "term": "gosi",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/ViolationsPenalties.jsx",
+    "term": "sar",
+    "count": 8,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/ViolationsPenalties.jsx",
+    "term": "zatca",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/VisaServices.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/gov/VisaServices.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/hr/DocumentExpiryTracker.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/hr/HRDemoDataSeeder.jsx",
+    "term": "gosi",
+    "count": 13,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/hr/HRDemoDataSeeder.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/hr/LeaveWorkflow.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/hr/NitaqatDashboard.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/hr/NitaqatDashboard.jsx",
+    "term": "nitaqat",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/hr/PayrollCalculationEngine.jsx",
+    "term": "gosi",
+    "count": 51,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/hr/PayrollCalculationEngine.jsx",
+    "term": "halala",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/hr/PayrollCalculationEngine.jsx",
+    "term": "sar",
+    "count": 9,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/hr/RecruitmentPipeline.jsx",
+    "term": "sar",
+    "count": 7,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/hr/YamenHRInsights.jsx",
+    "term": "gosi",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/hr/YamenHRInsights.jsx",
+    "term": "qiwa",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/hr/YamenHRInsights.jsx",
+    "term": "sar",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/intake/DocumentVerificationQueue.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/integrations/PlatformManagedCatalog.jsx",
+    "term": "gosi",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/integrations/PlatformManagedCatalog.jsx",
+    "term": "mudad",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/integrations/PlatformManagedCatalog.jsx",
+    "term": "muqeem",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/integrations/PlatformManagedCatalog.jsx",
+    "term": "nafath",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/integrations/PlatformManagedCatalog.jsx",
+    "term": "qiwa",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/integrations/PlatformManagedCatalog.jsx",
+    "term": "zatca",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/notifications/NotificationHelper.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/notifications/NotificationService.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/parent/PaymentPortal.jsx",
+    "term": "moyasar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/parent/PaymentPortal.jsx",
+    "term": "sar",
+    "count": 7,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/parent/PaymentPortal.jsx",
+    "term": "zatca",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/BankExports.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/GOSISubmissions.jsx",
+    "term": "gosi",
+    "count": 52,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/GOSISubmissions.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/LoansManagement.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/PayRunDetails.jsx",
+    "term": "gosi",
+    "count": 32,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/PayRunDetails.jsx",
+    "term": "sar",
+    "count": 7,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/PayRunValidations.jsx",
+    "term": "gosi",
+    "count": 10,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/PayRunValidations.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/PayRunsList.jsx",
+    "term": "gosi",
+    "count": 29,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/PayRunsList.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/PayrollDashboard.jsx",
+    "term": "gosi",
+    "count": 19,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/PayrollDashboard.jsx",
+    "term": "sar",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/PayrollReports.jsx",
+    "term": "gosi",
+    "count": 33,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/PayrollReports.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/PayrollSettings.jsx",
+    "term": "gosi",
+    "count": 26,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/PayrollSettings.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/PayslipSettings.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/PayslipViewer.jsx",
+    "term": "gosi",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/PayslipViewer.jsx",
+    "term": "sar",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/PayslipsManagement.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/SalaryComponents.jsx",
+    "term": "gosi",
+    "count": 12,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/payroll/TuitionAdvanceManagement.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/platform/SubscriptionPlansTab.jsx",
+    "term": "sar",
+    "count": 10,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/policies/policyTemplates.jsx",
+    "term": "nitaqat",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/recruitment/ConvertToEmployee.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/recruitment/ConvertToEmployee.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/recruitment/OfferLetterGenerator.jsx",
+    "term": "sar",
+    "count": 9,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/recruitment/OnboardingEngine.jsx",
+    "term": "gosi",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/recruitment/OnboardingEngine.jsx",
+    "term": "qiwa",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/reports/ExecutiveDashboard.jsx",
+    "term": "sadad",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/reports/ExecutiveDashboard.jsx",
+    "term": "sar",
+    "count": 8,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/reports/FinancialReports.jsx",
+    "term": "sar",
+    "count": 10,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/reports/ReportBuilder.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/students/StudentDetails.jsx",
+    "term": "sar",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/students/StudentFeesSection.jsx",
+    "term": "sar",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/subscription/ClientSubscriptionPortal.jsx",
+    "term": "moyasar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/subscription/ClientSubscriptionPortal.jsx",
+    "term": "sar",
+    "count": 20,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/superadmin/TenantDetailDialog.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/yamen/YamenDashboard.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/yamen/YamenDraftDocuments.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/yamen/YamenDraftDocuments.jsx",
+    "term": "sar",
+    "count": 14,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/yamen/YamenEmployeeAssistant.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/yamen/YamenExecutiveReport.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/yamen/YamenExecutiveReport.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/yamen/YamenHRChat.jsx",
+    "term": "gosi",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/yamen/YamenInsightsDashboard.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/yamen/YamenRiskMonitor.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/yamen/yamenUtils.jsx",
+    "term": "gosi",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/yamen/yamenUtils.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/components/yamen/yamenUtils.jsx",
+    "term": "zatca",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/lib/dateCompare.js",
+    "term": "asia/riyadh",
+    "count": 6,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/lib/integrationHandlers.js",
+    "term": "gosi",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/lib/integrationHandlers.js",
+    "term": "sar",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/lib/invoiceFormat.js",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/lib/invoiceFormat.js",
+    "term": "zatca",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/lib/planDefinitions.js",
+    "term": "sar",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/lib/reportBuilders.js",
+    "term": "sar",
+    "count": 15,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/lib/reportPrint.js",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/APBills.jsx",
+    "term": "sar",
+    "count": 17,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/AssetAssignments.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/AssetRentals.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Assets.jsx",
+    "term": "sar",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/AttendanceDevices.jsx",
+    "term": "asia/riyadh",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/AttendanceDevices.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/BusinessTravel.jsx",
+    "term": "sar",
+    "count": 9,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/CanteenManagement.jsx",
+    "term": "sar",
+    "count": 10,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/ChequeManagement.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Collections.jsx",
+    "term": "sadad",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Collections.jsx",
+    "term": "sar",
+    "count": 6,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Communications.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/ContractTemplates.jsx",
+    "term": "sadad",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/ContractTemplates.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/ContractTemplates.jsx",
+    "term": "zatca",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Contracts.jsx",
+    "term": "sar",
+    "count": 9,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/CorporateCards.jsx",
+    "term": "sar",
+    "count": 6,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Dashboard.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Dashboard.jsx",
+    "term": "zatca",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Depreciation.jsx",
+    "term": "sar",
+    "count": 6,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/DisciplinaryCases.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/EOSBCalculator.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/EOSBCalculator.jsx",
+    "term": "sar",
+    "count": 29,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/ESSPortal.jsx",
+    "term": "gosi",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/ESSPortal.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/ESSSettings.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/EmployeeAttendance.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Employees.jsx",
+    "term": "gosi",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/ExecutiveCommandCenter.jsx",
+    "term": "gosi",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/ExecutiveCommandCenter.jsx",
+    "term": "mudad",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/ExecutiveCommandCenter.jsx",
+    "term": "nitaqat",
+    "count": 10,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/ExecutiveCommandCenter.jsx",
+    "term": "qiwa",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/ExecutiveCommandCenter.jsx",
+    "term": "sar",
+    "count": 12,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/ExecutiveCommandCenter.jsx",
+    "term": "zatca",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Expenses.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Expenses.jsx",
+    "term": "sar",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Facilities.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Fees.jsx",
+    "term": "moyasar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Fees.jsx",
+    "term": "sar",
+    "count": 34,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Fees.jsx",
+    "term": "zatca",
+    "count": 14,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/FinanceDashboard.jsx",
+    "term": "sar",
+    "count": 20,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/FinancialStatements.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/FinancialStatements.jsx",
+    "term": "sar",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/FleetManagement.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/GovIntegrations.jsx",
+    "term": "gosi",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/GovIntegrations.jsx",
+    "term": "mudad",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/GovIntegrations.jsx",
+    "term": "muqeem",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/GovIntegrations.jsx",
+    "term": "qiwa",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/GovernmentRelations.jsx",
+    "term": "gosi",
+    "count": 6,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/GovernmentRelations.jsx",
+    "term": "mudad",
+    "count": 6,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/GovernmentRelations.jsx",
+    "term": "muqeem",
+    "count": 6,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/GovernmentRelations.jsx",
+    "term": "qiwa",
+    "count": 12,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/HRApprovalsInbox.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/HRContracts.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/HRManagerDashboard.jsx",
+    "term": "gosi",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/HRManagerDashboard.jsx",
+    "term": "nitaqat",
+    "count": 28,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/HRManagerDashboard.jsx",
+    "term": "sar",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/ITHelpdesk.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Integrations.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Integrations.jsx",
+    "term": "mudad",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Integrations.jsx",
+    "term": "nafath",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Integrations.jsx",
+    "term": "qiwa",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Integrations.jsx",
+    "term": "zatca",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/InvoiceDetails.jsx",
+    "term": "moyasar",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/InvoiceDetails.jsx",
+    "term": "sadad",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/InvoiceDetails.jsx",
+    "term": "sar",
+    "count": 20,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/InvoiceDetails.jsx",
+    "term": "zatca",
+    "count": 13,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/JournalEntries.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/LeaveBalances.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Leaves.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/LibraryManagement.jsx",
+    "term": "sar",
+    "count": 3,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/MonthEndClose.jsx",
+    "term": "gosi",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/MyPayslips.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/MyPayslips.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/OperationsDashboard.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Overtime.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Overtime.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/ParentIntake.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Payroll.jsx",
+    "term": "gosi",
+    "count": 9,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/PerformanceEvaluation.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/PurchaseOrders.jsx",
+    "term": "sar",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/PurchaseRequisitions.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Reconciliation.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/RecruitmentPage.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/RecruitmentPage.jsx",
+    "term": "sar",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/Refunds.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/SuperAdminDashboard.jsx",
+    "term": "sar",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/SystemHealth.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/SystemSmokeTest.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/SystemSmokeTest.jsx",
+    "term": "sar",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/TrainingDevelopment.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/TrainingDevelopment.jsx",
+    "term": "qiwa",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/TrainingDevelopment.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/TransportManagement.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/TransportManagement.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/TrialBalance.jsx",
+    "term": "sar",
+    "count": 15,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/TuitionFeesConfiguration.jsx",
+    "term": "sar",
+    "count": 4,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/VATManagement.jsx",
+    "term": "sar",
+    "count": 11,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/VATManagement.jsx",
+    "term": "zatca",
+    "count": 7,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/WorkforcePlanning.jsx",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/WorkforcePlanning.jsx",
+    "term": "sar",
+    "count": 8,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/YamenAI.jsx",
+    "term": "gosi",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/YamenAI.jsx",
+    "term": "nitaqat",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/YamenCollections.jsx",
+    "term": "asia/riyadh",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/pages/YamenCollections.jsx",
+    "term": "sar",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "parent-portal/src/lib/api.js",
+    "term": "zatca",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "parent-portal/src/pages/Fees.jsx",
+    "term": "sar",
+    "count": 5,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "shared/database/schema.sql",
+    "term": "gosi",
+    "count": 2,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  }
+]
