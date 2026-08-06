@@ -48,7 +48,8 @@ import { SegmentationRunner } from './services/collections/runner.js';
 import { CollectionMessenger } from './services/collections/messenger.js';
 import { InstallmentPlanEngine } from './services/collections/installments.js';
 import { GuaranteeEngine } from './services/collections/guarantee.js';
-import { reconcileMoyasarState } from './packs/sa/moyasarService.js';
+import { buildRequestContext, resolveJurisdiction } from './lib/jurisdiction.js';
+import { resolvePack } from './packs/registry.js';
 import { MetricsService } from './services/metrics.js';
 
 dotenv.config();
@@ -256,7 +257,7 @@ app.listen(PORT, () => {
   }
 
   if (process.env.MOYASAR_RECONCILE_ENABLED === 'true') {
-    // Moyasar reconciliation sweep every 15 minutes.
+    // Payment reconciliation sweep every 15 minutes (provider chosen by jurisdiction pack).
     cron.schedule('*/15 * * * *', async () => {
       try {
         const { data: tenants } = await supabase
@@ -265,7 +266,13 @@ app.listen(PORT, () => {
           .eq('moyasar_enabled', true);
         for (const t of tenants ?? []) {
           try {
-            const report = await reconcileMoyasarState(supabase, t.tenant_id as string);
+            const ctx = await buildRequestContext(supabase, t.tenant_id as string);
+            const pack = resolvePack(ctx);
+            if (!pack.payments?.reconcilePaymentState) {
+              console.warn(`[cron] reconcile not available for jurisdiction ${resolveJurisdiction(ctx)}`);
+              continue;
+            }
+            const report = await pack.payments.reconcilePaymentState(supabase, t.tenant_id as string);
             console.log(`[cron] moyasar reconcile ${t.tenant_id}:`, report);
           } catch (err) {
             console.error(`[cron] moyasar reconcile failed for ${t.tenant_id}:`, err);

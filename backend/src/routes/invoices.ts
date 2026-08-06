@@ -14,9 +14,9 @@ import {
   reportInvoice,
   clearInvoice,
   complianceCheck,
-  TenantData,
   invoiceDataFromRow,
 } from '../packs/sa/zatca.js';
+import type { TenantData } from '../types/tenant.js';
 import { getTenantComplianceData } from '../services/tenant.js';
 import { getOrCreateMoyasarLink } from '../packs/sa/moyasarService.js';
 import { PdfQueueSaturatedError } from '../lib/pdfConcurrency.js';

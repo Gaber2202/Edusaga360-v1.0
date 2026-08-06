@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { InvoiceData } from '../packs/sa/vat.js';
-import { invoiceDataFromRow, generateZATCAInvoicePDF, TenantData } from '../packs/sa/zatca.js';
+import { buildRequestContext, resolveJurisdiction, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
+import { resolvePack } from '../packs/registry.js';
 import { getProvider } from './messaging/registry.js';
 import { isEmailConfigured, sendEmail } from './email.js';
 import { decryptSecret, isAiCryptoConfigured } from '../lib/aiCrypto.js';
@@ -20,6 +20,18 @@ export interface ShareResult {
   url?: string;
   sent_to?: string;
   error?: string;
+}
+
+interface ShareContext {
+  tenant: Awaited<ReturnType<typeof getTenantComplianceData>>;
+  invoice: Record<string, unknown>;
+  studentNameAr: string;
+  studentNameEn: string;
+  guardianNameAr: string;
+  guardianNameEn: string;
+  phone: string;
+  email: string;
+  pdfBase64: string;
 }
 
 function signToken(payload: string): string {
@@ -63,16 +75,24 @@ async function loadInvoice(supabase: SupabaseClient, invoiceId: string, tenantId
   return data as Record<string, unknown>;
 }
 
-async function buildShareContext(supabase: SupabaseClient, invoice: Record<string, unknown>) {
+async function buildShareContext(supabase: SupabaseClient, invoice: Record<string, unknown>): Promise<ShareContext> {
   const student = (invoice.students as Record<string, unknown> | undefined) || {};
   const guardian = (student.guardians as Record<string, unknown> | undefined) || {};
   const tenant = await getTenantComplianceData(invoice.tenant_id as string);
-  const invoiceData = invoiceDataFromRow(invoice);
-  const pdfBuffer = await generateZATCAInvoicePDF(invoiceData, tenant);
+  const tenantId = invoice.tenant_id as string;
+
+  const ctx = await buildRequestContext(supabase, tenantId, (invoice.branch_id as string) ?? undefined);
+  const pack = resolvePack(ctx);
+  if (!pack.documents?.renderInvoicePdf) {
+    throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'invoice PDF for sharing');
+  }
+
+  const pdfBuffer = await pack.documents.renderInvoicePdf(invoice, tenant);
   const pdfBase64 = pdfBuffer.toString('base64');
+
   return {
     tenant,
-    invoice: invoiceData,
+    invoice,
     studentNameAr: (student.name_ar as string) || (invoice.student_name as string) || 'ابنكم/ابنتكم',
     studentNameEn: (student.name_en as string) || (invoice.student_name as string) || 'your child',
     guardianNameAr: (guardian.name_ar as string) || 'ولي الأمر',
@@ -93,8 +113,8 @@ async function sendWhatsAppShare(
     .from('messaging_connectors')
     .select('*')
     .eq('tenant_id', tenantId)
-    .in('channel', ['whatsapp'])
-    .eq('is_active', true);
+    .eq('is_active', true)
+    .in('channel', ['whatsapp']);
 
   // Prefer Infobip if configured, otherwise Meta WhatsApp Cloud.
   const connector = (connectors ?? []).find((c) => (c.provider as string) === 'infobip')
@@ -162,17 +182,18 @@ export async function shareInvoice(
         error = 'Email provider not configured';
       } else {
         try {
+          const invoiceNumber = ctx.invoice.invoice_number as string;
           const html = `
             <div dir="rtl" style="text-align:right;font-family:Arial,Noto Naskh Arabic,sans-serif;">
               <p>مرحباً ${ctx.guardianNameAr}،</p>
-              <p>تمت مشاركة فاتورة ${ctx.invoice.invoice_number} لـ ${ctx.studentNameAr}.</p>
+              <p>تمت مشاركة فاتورة ${invoiceNumber} لـ ${ctx.studentNameAr}.</p>
               <p><a href="${url}">عرض الفاتورة / View invoice</a></p>
               <hr/>
-              <p dir="ltr" style="text-align:left;">Dear ${ctx.guardianNameEn},</p>
-              <p dir="ltr" style="text-align:left;">Invoice ${ctx.invoice.invoice_number} for ${ctx.studentNameEn} has been shared with you.</p>
+              <p dir="ltr" style="text-align:left;">Dear ${ctx.guardianNameEn}،</p>
+              <p dir="ltr" style="text-align:left;">Invoice ${invoiceNumber} for ${ctx.studentNameEn} has been shared with you.</p>
               <p dir="ltr" style="text-align:left;"><a href="${url}">View invoice</a></p>
             </div>`;
-          await sendEmail({ to: sentTo, subject: `فاتورة ${ctx.invoice.invoice_number} / Invoice ${ctx.invoice.invoice_number}`, html });
+          await sendEmail({ to: sentTo, subject: `فاتورة ${invoiceNumber} / Invoice ${invoiceNumber}`, html });
         } catch (err) {
           success = false;
           error = (err as Error).message;
@@ -184,7 +205,8 @@ export async function shareInvoice(
         success = false;
         error = 'No WhatsApp destination available';
       } else {
-        const text = `مرحباً ${ctx.guardianNameAr}،\nفاتورة ${ctx.invoice.invoice_number} (${ctx.studentNameAr}): ${url}\n----\nDear ${ctx.guardianNameEn},\nInvoice ${ctx.invoice.invoice_number} for ${ctx.studentNameEn}: ${url}`;
+        const invoiceNumber = ctx.invoice.invoice_number as string;
+        const text = `مرحباً ${ctx.guardianNameAr}،\nفاتورة ${invoiceNumber} (${ctx.studentNameAr}): ${url}\n----\nDear ${ctx.guardianNameEn},\nInvoice ${invoiceNumber} for ${ctx.studentNameEn}: ${url}`;
         const whatsapp = await sendWhatsAppShare(supabase, tenantId, sentTo, text);
         success = whatsapp.success;
         error = whatsapp.error;
@@ -228,7 +250,7 @@ export async function recordInvoiceView(
   supabase: SupabaseClient,
   tenantId: string,
   invoiceId: string,
-): Promise<InvoiceData> {
+): Promise<Record<string, unknown>> {
   const now = new Date().toISOString();
 
   const { data: current } = await supabase
@@ -266,9 +288,7 @@ export async function recordInvoiceView(
     outcome: { status: updated.status },
   });
 
-  const tenant = await getTenantComplianceData(tenantId);
-  const invoiceData = invoiceDataFromRow(updated as Record<string, unknown>);
-  return invoiceData;
+  return updated as Record<string, unknown>;
 }
 
 export async function renderInvoicePdf(supabase: SupabaseClient, tenantId: string, invoiceId: string): Promise<Buffer> {
@@ -281,6 +301,10 @@ export async function renderInvoicePdf(supabase: SupabaseClient, tenantId: strin
   if (error || !invoice) throw new Error('Invoice not found');
 
   const tenant = await getTenantComplianceData(tenantId);
-  const invoiceData = invoiceDataFromRow(invoice as Record<string, unknown>);
-  return generateZATCAInvoicePDF(invoiceData, tenant);
+  const ctx = await buildRequestContext(supabase, tenantId, (invoice.branch_id as string) ?? undefined);
+  const pack = resolvePack(ctx);
+  if (!pack.documents?.renderInvoicePdf) {
+    throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'invoice PDF');
+  }
+  return pack.documents.renderInvoicePdf(invoice as Record<string, unknown>, tenant);
 }

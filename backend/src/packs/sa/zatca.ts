@@ -11,6 +11,9 @@ import {
   normalizeInvoiceItems,
   percentValue,
 } from './vat.js';
+import type { TenantData } from '../../types/tenant.js';
+
+export type { TenantData } from '../../types/tenant.js';
 
 /** Umm al-Qura issue date for the invoice; never throws (bad dates → ''). */
 function safeHijriDate(iso: string): string {
@@ -19,25 +22,6 @@ function safeHijriDate(iso: string): string {
   } catch {
     return '';
   }
-}
-
-export interface TenantData {
-  id?: string;
-  name?: string;
-  name_ar?: string;
-  legal_name_en?: string;
-  legal_name_ar?: string;
-  vat_number?: string;
-  address?: string;
-  address_ar?: string;
-  address_en?: string;
-  city?: string;
-  country_code?: string;
-  country_subentity_code?: string;
-  phone?: string;
-  email?: string;
-  cr_number?: string;
-  logo_url?: string;
 }
 
 export function invoiceDataFromRow(row: Record<string, unknown>): InvoiceData {

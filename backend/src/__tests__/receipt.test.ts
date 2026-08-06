@@ -38,6 +38,7 @@ describe('createReceiptForPayment', () => {
       invoice as any,
       { id: 'pmt-1', amount: 1150, method: 'mada', reference: 'ref-1', date: '2026-08-01' },
       { name_en: 'Al Noor', name_ar: 'النور', vat_number: '300000000000003', address_en: 'Riyadh', address_ar: 'الرياض', city: 'Riyadh', country_code: 'SA', country_subentity_code: 'SA-01', phone: '+966500000000', email: 'a@school.sa', cr_number: '1010101010' } as any,
+      () => Promise.resolve(Buffer.from('pdf')),
     );
 
     expect(result.receipt).toBeTruthy();

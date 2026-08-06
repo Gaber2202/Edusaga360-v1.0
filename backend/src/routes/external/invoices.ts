@@ -4,10 +4,8 @@ import { supabase } from '../../lib/supabase.js';
 import { ApiKeyRequest, requireScope } from '../../middleware/apiKeyAuth.js';
 import { parsePagination } from './shared.js';
 import { createInvoiceForStudent } from '../billing.js';
-import { shareInvoice } from '../../services/share.js';
+import { shareInvoice, renderInvoicePdf } from '../../services/share.js';
 import type { ShareChannel } from '../../services/share.js';
-import { getTenantComplianceData } from '../../services/tenant.js';
-import { invoiceDataFromRow, generateZATCAInvoicePDF } from '../../packs/sa/zatca.js';
 
 export const invoicesRouter = Router();
 
@@ -163,18 +161,16 @@ invoicesRouter.get('/:id/download-pdf', requireScope('invoices:read'), async (re
     const { id } = req.params;
     const { data: row, error } = await supabase
       .from('invoices')
-      .select('*')
+      .select('invoice_number')
       .eq('tenant_id', tenantId)
       .eq('id', id as string)
       .single();
     if (error || !row) return res.status(404).json({ error: 'not_found', message: 'Invoice not found' });
 
-    const tenant = await getTenantComplianceData(tenantId);
-    const invoice = invoiceDataFromRow(row as Record<string, unknown>);
-    const pdfBuffer = await generateZATCAInvoicePDF(invoice, tenant);
+    const pdfBuffer = await renderInvoicePdf(supabase, tenantId, id as string);
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoice_number}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="invoice-${row.invoice_number}.pdf"`);
     res.setHeader('Content-Length', pdfBuffer.length);
     return res.send(pdfBuffer);
   } catch (err) {

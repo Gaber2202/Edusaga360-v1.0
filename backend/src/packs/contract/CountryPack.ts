@@ -90,6 +90,9 @@ export interface PaymentsService {
   /** Create or refresh a hosted payment link for an invoice. */
   createOrRefreshPaymentLink?(supabase: unknown, options: PaymentLinkOptions): Promise<PaymentLinkResult>;
 
+  /** Get an existing active payment link, or create a new one if none exists. */
+  getOrCreatePaymentLink?(supabase: unknown, options: PaymentLinkOptions): Promise<PaymentLinkResult>;
+
   /** Process a webhook payload from the payment provider. */
   processWebhook?(supabase: unknown, payload: unknown, signature?: string): Promise<unknown>;
 
@@ -98,6 +101,9 @@ export interface PaymentsService {
 
   /** Generate a SADAD bill number for an invoice (Saudi national payment scheme). */
   generateSadadBill?(supabase: unknown, tenantId: string, invoiceId: string): Promise<SadadBillResult>;
+
+  /** Reconcile local payment state against the provider (e.g. Moyasar). */
+  reconcilePaymentState?(supabase: unknown, tenantId: string, since?: string): Promise<unknown>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

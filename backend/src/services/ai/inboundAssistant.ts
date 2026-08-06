@@ -1,7 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { normalizePhone } from '../../lib/phone.js';
 import { getProvider } from '../messaging/registry.js';
-import { getOrCreateMoyasarLink } from '../../packs/sa/moyasarService.js';
+import { buildRequestContext, resolveJurisdiction, NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
+import { resolvePack } from '../../packs/registry.js';
 import { decryptSecret, isAiCryptoConfigured } from '../../lib/aiCrypto.js';
 
 type Channel = 'whatsapp' | 'sms';
@@ -261,7 +262,12 @@ export class InfobipAiAssistant {
       };
     }
     const invoice = invoices[0];
-    const link = await getOrCreateMoyasarLink(this.supabase, {
+    const ctx = await buildRequestContext(this.supabase, guardian.tenant_id);
+    const pack = resolvePack(ctx);
+    if (!pack.payments?.getOrCreatePaymentLink) {
+      throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'payment link');
+    }
+    const link = await pack.payments.getOrCreatePaymentLink(this.supabase, {
       tenantId: guardian.tenant_id,
       invoiceId: invoice.id,
       callbackUrl: this.callbackUrl,

@@ -1,7 +1,9 @@
 import crypto from 'crypto';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { computeVatSummary, InvoiceData, InvoiceItemData } from '../packs/sa/vat.js';
-import { generateTLVQR, generateUBLXml, generateInvoiceHash, TenantData } from '../packs/sa/zatca.js';
+import type { InvoiceData, InvoiceItemData, VatSummary } from '../packs/sa/vat.js';
+import type { TenantData } from '../types/tenant.js';
+import { buildRequestContext, resolveJurisdiction, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
+import { resolvePack } from '../packs/registry.js';
 
 function sar(n: number): number {
   return Math.round(n * 100) / 100;
@@ -96,14 +98,25 @@ export async function convertToInvoice(
     parent_document_id: original.id,
   };
 
-  const vatSummary = computeVatSummary(invoiceData);
+  const ctx = await buildRequestContext(supabase, original.tenant_id, original.branch_id ?? undefined);
+  const pack = resolvePack(ctx);
+
+  const jurisdiction = resolveJurisdiction(ctx);
+  if (!pack.tax?.computeVatSummary) {
+    throw new NotImplementedInJurisdiction(jurisdiction, 'VAT summary');
+  }
+  if (!pack.eInvoice?.generateUBLXml || !pack.eInvoice?.generateInvoiceHash || !pack.eInvoice?.generateTLVQR) {
+    throw new NotImplementedInJurisdiction(jurisdiction, 'e-invoice generation');
+  }
+
+  const vatSummary = pack.tax.computeVatSummary(invoiceData) as VatSummary;
   invoiceData.vat_summary = vatSummary;
   invoiceData.vat_amount = vatSummary.total_vat;
   invoiceData.total_amount = sar(subtotal - discount + vatSummary.total_vat);
 
-  const ubl_xml = generateUBLXml(invoiceData, tenant);
-  const invoice_hash = generateInvoiceHash(ubl_xml);
-  const qr_code = generateTLVQR(invoiceData, tenant, generateInvoiceHash(ubl_xml));
+  const ubl_xml = pack.eInvoice.generateUBLXml(invoiceData, tenant);
+  const invoice_hash = pack.eInvoice.generateInvoiceHash(ubl_xml);
+  const qr_code = pack.eInvoice.generateTLVQR(invoiceData, tenant, invoice_hash);
 
   const payload = {
     tenant_id: original.tenant_id,

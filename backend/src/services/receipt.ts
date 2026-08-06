@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { SupabaseClient } from '@supabase/supabase-js';
 import type { InvoiceData } from '../packs/sa/vat.js';
-import { generateZATCAInvoicePDF, TenantData } from '../packs/sa/zatca.js';
+import type { TenantData } from '../types/tenant.js';
 
 function sar(n: number): number {
   return Math.round(n * 100) / 100;
@@ -33,6 +33,7 @@ export async function createReceiptForPayment(
   invoice: InvoiceLikeRow,
   payment: { id: string; amount: number; method: string; reference?: string | null; date?: string },
   tenant: TenantData,
+  renderInvoicePdf: (invoice: InvoiceData, tenant: TenantData) => Promise<Buffer>,
 ): Promise<{ receipt: Record<string, unknown>; pdf_base64: string }> {
   const today = payment.date || new Date().toISOString().split('T')[0];
   const receiptNumber = `RCP-${invoice.invoice_number}-${payment.id.slice(0, 8)}`;
@@ -69,7 +70,7 @@ export async function createReceiptForPayment(
     uuid: crypto.randomUUID(),
   };
 
-  const pdfBuffer = await generateZATCAInvoicePDF(receiptData, tenant);
+  const pdfBuffer = await renderInvoicePdf(receiptData, tenant);
 
   const insertPayload = {
     tenant_id: invoice.tenant_id,

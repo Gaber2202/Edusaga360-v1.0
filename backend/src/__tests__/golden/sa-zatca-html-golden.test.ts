@@ -8,13 +8,13 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import QRCode from 'qrcode';
 import type { InvoiceData } from '../../packs/sa/vat.js';
+import type { TenantData } from '../../types/tenant.js';
 import {
   buildInvoiceHTML,
   generateUBLXml,
   generateInvoiceHash,
   signInvoice,
   generateTLVQR,
-  TenantData,
 } from '../../packs/sa/zatca.js';
 import { golden } from './support/golden.js';
 
