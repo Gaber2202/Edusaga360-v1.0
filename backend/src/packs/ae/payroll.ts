@@ -9,9 +9,11 @@
 import { roundToMinorUnits } from '../../lib/money.js';
 import { isRamadan } from '../../lib/hijri.js';
 import { NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
-import type { PayrollService } from '../contract/CountryPack.js';
+import type { PayrollService, GosiResult } from '../contract/CountryPack.js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 const CURRENCY_CODE = 'AED';
+const JURISDICTION_CODE = 'AE';
 
 function calculateEndOfServiceBenefit(
   basicSalary: number,
@@ -54,32 +56,87 @@ function calculateAnnualLeave(yearsOfService: number, _isPartTime = false): numb
   return 30;
 }
 
-function calculateOvertime(
+function toOptionalNumber(value: unknown): number | undefined {
+  if (value === null || value === undefined) return undefined;
+  if (typeof value === 'object' && !(value instanceof Date)) {
+    if (Array.isArray(value)) return undefined;
+    if (Object.keys(value as object).length === 0) return undefined;
+  }
+  const n = typeof value === 'string' ? parseFloat(value) : Number(value);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+async function loadRegulatoryValue(
+  supabase: unknown,
+  parameterKey: string,
+  asOf?: Date | string,
+): Promise<unknown | undefined> {
+  const target = asOf ? (typeof asOf === 'string' ? asOf.slice(0, 10) : asOf.toISOString().split('T')[0]) : new Date().toISOString().split('T')[0];
+  const { data, error } = await (supabase as SupabaseClient)
+    .from('regulatory_register')
+    .select('parameter_value')
+    .eq('jurisdiction_code', JURISDICTION_CODE)
+    .eq('parameter_key', parameterKey)
+    .lte('effective_from', target)
+    .gte('effective_to', target)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return undefined;
+  return data.parameter_value;
+}
+
+async function calculateOvertime(
   basicSalary: number,
   normalHoursPerMonth: number,
   overtimeHours: number,
   isNight = false,
   isRestDay = false,
   date?: Date | string,
-): { amount: number; currencyCode: string } {
+  supabase?: unknown,
+): Promise<{ amount: number; currencyCode: string }> {
   if (normalHoursPerMonth <= 0 || overtimeHours <= 0) {
     return { amount: 0, currencyCode: CURRENCY_CODE };
   }
 
   if (isRestDay) {
     throw new NotImplementedInJurisdiction(
-      'AE',
+      JURISDICTION_CODE,
       'PayrollService.calculateOvertime — rest-day overtime premium is not specified in UAE Labour Law',
     );
   }
 
-  // UAE Labour Law reduces working hours by 2 hours per day during Ramadan.
-  // We assume an 8-hour normal day and scale the monthly norm accordingly.
   let adjustedHours = normalHoursPerMonth;
+
   if (date && isRamadan(date)) {
-    const workingDays = normalHoursPerMonth / 8;
+    if (!supabase) {
+      throw new NotImplementedInJurisdiction(
+        JURISDICTION_CODE,
+        'PayrollService.calculateOvertime — Ramadan working-hour reduction cannot be applied without effective-dated regulatory parameters',
+      );
+    }
+
+    const dailyHoursValue = await loadRegulatoryValue(supabase, 'working_hours_per_day');
+    const dailyHours = toOptionalNumber(dailyHoursValue);
+    if (dailyHours === undefined || dailyHours <= 0) {
+      throw new NotImplementedInJurisdiction(
+        JURISDICTION_CODE,
+        'PayrollService.calculateOvertime — normal daily working hours are not configured',
+      );
+    }
+
+    const reductionValue = await loadRegulatoryValue(supabase, 'ramadan_working_hours_reduction');
+    const reduction = toOptionalNumber(reductionValue);
+    if (reduction === undefined) {
+      throw new NotImplementedInJurisdiction(
+        JURISDICTION_CODE,
+        'PayrollService.calculateOvertime — Ramadan working-hour reduction is not verified in regulatory_register',
+      );
+    }
+
+    const workingDays = normalHoursPerMonth / dailyHours;
     if (workingDays > 0) {
-      adjustedHours = roundToMinorUnits(workingDays * 6, 2);
+      adjustedHours = roundToMinorUnits(workingDays * (dailyHours - reduction), 2);
     }
   }
 
@@ -90,10 +147,17 @@ function calculateOvertime(
   return { amount, currencyCode: CURRENCY_CODE };
 }
 
+function calculateGosi(_basicSalary: number, _nationality?: string): GosiResult {
+  throw new NotImplementedInJurisdiction(
+    JURISDICTION_CODE,
+    'PayrollService.calculateGosi — GOSI/Social Security does not apply to UAE private-sector employees',
+  );
+}
+
 function calculatePayroll(): Promise<unknown> {
   return Promise.reject(
     new NotImplementedInJurisdiction(
-      'AE',
+      JURISDICTION_CODE,
       'PayrollService.calculatePayroll — full period payroll calculation not yet implemented for UAE',
     ),
   );
@@ -102,7 +166,7 @@ function calculatePayroll(): Promise<unknown> {
 function generateWpsFile(): Promise<{ filename: string; content: string }> {
   return Promise.reject(
     new NotImplementedInJurisdiction(
-      'AE',
+      JURISDICTION_CODE,
       'PayrollService.generateWpsFile — UAE WPS SIF layout is bank-specific and must be configured at onboarding',
     ),
   );
@@ -112,6 +176,7 @@ export const aePayroll: PayrollService = {
   calculateEndOfServiceBenefit,
   calculateAnnualLeave,
   calculateOvertime,
+  calculateGosi,
   calculatePayroll,
   generateWpsFile,
 };

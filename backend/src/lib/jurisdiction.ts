@@ -129,6 +129,28 @@ export async function buildRequestContext(
  * Validate that a jurisdiction code exists in the `jurisdictions` table.
  * Used in tenant/branch creation flows to fail fast on missing or unknown codes.
  */
+/**
+ * Check whether a jurisdiction feature is enabled in `jurisdiction_features`.
+ * Missing rows are treated as disabled. This is the canonical gate for
+ * jurisdiction capabilities; callers should prefer this over country-code
+ * comparisons.
+ */
+export async function isFeatureEnabled(
+  ctx: RequestContext,
+  supabase: SupabaseClient,
+  featureKey: string,
+): Promise<boolean> {
+  const code = resolveJurisdiction(ctx);
+  const { data, error } = await supabase
+    .from('jurisdiction_features')
+    .select('enabled')
+    .eq('jurisdiction_code', code)
+    .eq('feature_key', featureKey)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.enabled === true;
+}
+
 export async function validateJurisdictionCode(
   supabase: SupabaseClient,
   code: JurisdictionCode,

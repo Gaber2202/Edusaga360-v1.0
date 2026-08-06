@@ -62,7 +62,13 @@ describe('no silent fallback', () => {
     it('PaymentsService.generateSadadBill', () => assertThrowsNotImplemented(() => pack.payments?.generateSadadBill?.({}, 'tenant-ae', 'inv-ae')));
     it('PaymentsService.reconcilePaymentState', () => assertThrowsNotImplemented(() => pack.payments?.reconcilePaymentState?.({}, 'tenant-ae')));
 
+    it('PayrollService.calculateGosi', () => assertThrowsNotImplemented(() => pack.payroll?.calculateGosi?.(10000, 'any')));
     it('PayrollService.calculatePayroll', () => assertThrowsNotImplemented(() => pack.payroll?.calculatePayroll?.({}, 'tenant-ae', { start: '2026-01-01', end: '2026-01-31' })));
     it('PayrollService.generateWpsFile', () => assertThrowsNotImplemented(() => pack.payroll?.generateWpsFile?.({}, 'tenant-ae', { start: '2026-01-01', end: '2026-01-31' })));
+
+    it('AcademicCalendarService.formatHijri', () => assertThrowsNotImplemented(() => pack.academicCalendar?.formatHijri?.('2026-01-01')));
+    it('AcademicCalendarService.gregorianToHijri', () => assertThrowsNotImplemented(() => pack.academicCalendar?.gregorianToHijri?.('2026-01-01')));
+    it('AcademicCalendarService.hijriToGregorian', () => assertThrowsNotImplemented(() => pack.academicCalendar?.hijriToGregorian?.(1446, 9, 1)));
+    it('AcademicCalendarService.hijriNumeric', () => assertThrowsNotImplemented(() => pack.academicCalendar?.hijriNumeric?.('2026-01-01')));
   });
 });

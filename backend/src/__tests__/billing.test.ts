@@ -197,6 +197,7 @@ describe('POST /billing/invoices/:id/credit-note', () => {
       if (ctx.table === 'invoices' && ctx.op === 'select') return { data: { id: INVOICE_ID, invoice_number: 'INV-1', total_amount: originalTotal, student_id: STUDENT_ID, academic_year: '2025-2026' } };
       if (ctx.table === 'invoices' && ctx.op === 'insert') return { data: { id: 'cn1', invoice_number: 'CN-INV-1', total_amount: -500, invoice_type: 'credit_note' } };
       if (ctx.table === 'tenants') return { data: TENANT_ROW };
+      if (ctx.table === 'jurisdiction_features') return { data: { enabled: true } };
       if (ctx.table === 'zatca_submissions') return { data: null };
       if (ctx.table === 'chart_of_accounts') return { data: null };
       return { data: null };
@@ -240,6 +241,7 @@ describe('POST /billing/invoices/:id/zatca-submit', () => {
     return (ctx: QueryContext) => {
       if (ctx.table === 'zatca_submissions' && ctx.op === 'select') return { data: { id: 'z1', invoice_hash: 'h', ubl_xml: '<Invoice/>', submission_type: 'reporting' } };
       if (ctx.table === 'tenants') return { data: TENANT_ROW };
+      if (ctx.table === 'jurisdiction_features') return { data: { enabled: true } };
       if (ctx.table === 'invoices') return { data: { invoice_number: 'INV-1', date: '2026-06-18', subtotal: 1000, vat_amount: 150, total_amount: 1150 } };
       return { data: null };
     };

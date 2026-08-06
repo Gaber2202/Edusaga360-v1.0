@@ -47,7 +47,7 @@ import {
 import { dispatchWebhook } from '../services/webhookDelivery.js';
 import { resolveFeeStructures, type ResolvedFeeStructure } from '../services/feeResolution.js';
 import { resolvePack } from '../packs/registry.js';
-import { buildRequestContext, resolveJurisdiction, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
+import { buildRequestContext, resolveJurisdiction, isFeatureEnabled, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
 
 export const billingRouter = Router();
 
@@ -59,6 +59,20 @@ const ZATCA_PROD_URL = 'https://gw-fatoora.zatca.gov.sa/e-invoicing/core';
 const DIGITAL_PAYMENT_METHODS = new Set(['mada', 'creditcard', 'applepay', 'stcpay', 'samsungpay']);
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** True when the resolved pack supports e-invoicing AND the feature is enabled
+ *  in `jurisdiction_features`. This is the canonical gate; callers must never
+ *  compare pack.code to a country literal to decide whether to generate
+ *  ZATCA artifacts. */
+async function eInvoiceFeatureEnabled(
+  tenantId: string,
+  branchId?: string | null,
+): Promise<boolean> {
+  const ctx = await buildRequestContext(supabase, tenantId, branchId ?? undefined);
+  const pack = resolvePack(ctx);
+  if (!pack.eInvoice) return false;
+  return isFeatureEnabled(ctx, supabase, 'einvoicing');
+}
 
 /** Resolve tenant_id: use user's own tenant, or for platform owners accept query/header override */
 async function resolveTenantId(req: AuthenticatedRequest): Promise<string | null> {
@@ -424,7 +438,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
 
     const ctx = await buildRequestContext(supabase, tenant_id, studentBranchId ?? undefined);
     const pack = resolvePack(ctx);
-    const isZatcaInvoice = isTaxInvoice && pack.code === 'SA';
+    const isEInvoiceEnabled = isTaxInvoice && !!pack.eInvoice && await isFeatureEnabled(ctx, supabase, 'einvoicing');
     const buildResult = await pack.tax?.buildInvoiceLines?.(
       rawLines,
       totalDiscount,
@@ -478,7 +492,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
     let ubl_xml: string | null = null;
     let invoice_hash: string | null = null;
     let previous_hash: string | null = null;
-    if (isZatcaInvoice) {
+    if (isEInvoiceEnabled) {
       chain = await getZatcaChain(tenant_id);
       invoiceData.previous_invoice_hash = chain.previous_invoice_hash;
       invoiceData.icv = chain.icv;
@@ -524,13 +538,13 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       vat_summary: vatSummary,
       notes: notesText,
       payment_methods: payment_methods || [],
-      zatca_uuid: isZatcaInvoice ? invoiceData.uuid : null,
-      icv: isZatcaInvoice ? invoiceData.icv : null,
+      zatca_uuid: isEInvoiceEnabled ? invoiceData.uuid : null,
+      icv: isEInvoiceEnabled ? invoiceData.icv : null,
       invoice_hash,
       previous_invoice_hash: previous_hash,
       ubl_xml,
       qr_code,
-      zatca_status: isZatcaInvoice ? 'pending' : 'not_applicable',
+      zatca_status: isEInvoiceEnabled ? 'pending' : 'not_applicable',
       zatca_response: null,
     };
 
@@ -588,7 +602,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
 
     // ZATCA submission, installments and GL journal only apply to formal invoices.
     let zatcaRecord: Record<string, unknown> | null = null;
-    if (isZatcaInvoice) {
+    if (isEInvoiceEnabled) {
       const submissionType = invoiceData.invoice_type === 'standard' ? 'clearance' : 'reporting';
       const { data: zatcaData, error: zatcaErr } = await supabase
         .from('zatca_submissions')
@@ -686,7 +700,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
 
     return res.status(201).json({
       invoice,
-      zatca: isZatcaInvoice
+      zatca: isEInvoiceEnabled
         ? { id: zatcaRecord?.id, qr_code, invoice_hash, status: 'pending' }
         : { id: null, qr_code: null, invoice_hash: null, status: 'not_applicable' },
       payment_plan: plan,
@@ -771,9 +785,13 @@ billingRouter.post('/invoices/:id/zatca-submit', requireRole(FINANCE_ROLES), asy
       .single();
     if (subErr || !sub) return res.status(404).json({ error: 'ZATCA record not found' });
 
+    const { data: invoice } = await supabase.from('invoices').select('*').eq('id', id).single();
+    if (!(await eInvoiceFeatureEnabled(tenant_id, (invoice as { branch_id?: string | null } | null)?.branch_id ?? null))) {
+      return res.status(400).json({ error: 'E-invoicing is not enabled for this jurisdiction' });
+    }
+
     // Generate PDF
     const tenant = await getTenantComplianceData(tenant_id);
-    const { data: invoice } = await supabase.from('invoices').select('*').eq('id', id).single();
     const pdfBuffer = await generateZATCAInvoicePDF(
       { invoice_number: invoice?.invoice_number, issue_date: invoice?.date, subtotal: invoice?.subtotal, vat_amount: invoice?.vat_amount, total_amount: invoice?.total_amount } as InvoiceData,
       tenant,
@@ -906,6 +924,10 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
       .single();
     if (cnErr) throw cnErr;
 
+    if (!(await eInvoiceFeatureEnabled(tenant_id, original.branch_id ?? null))) {
+      return res.status(400).json({ error: 'E-invoicing is not enabled for this jurisdiction' });
+    }
+
     // ZATCA credit note submission record
     const tenant = await getTenantComplianceData(tenant_id);
     const creditInvoiceData: InvoiceData = {
@@ -971,6 +993,10 @@ billingRouter.post('/documents/:id/convert-to-invoice', requireRole(FINANCE_ROLE
 
     if (!['quotation', 'proforma'].includes(original.document_type)) {
       return res.status(400).json({ error: 'Only quotation or proforma can be converted to an invoice' });
+    }
+
+    if (!(await eInvoiceFeatureEnabled(tenant_id, original.branch_id ?? null))) {
+      return res.status(400).json({ error: 'E-invoicing is not enabled for this jurisdiction' });
     }
 
     const tenant = await getTenantComplianceData(tenant_id);
@@ -1252,12 +1278,12 @@ export async function createInvoiceForStudent(
 
   const invoiceNumber = options?.invoice_number ?? (await generateInvoiceNumber(tenant_id));
   const tenant = await getTenantComplianceData(tenant_id);
-  const isZatcaInvoice = pack.code === 'SA';
+  const isEInvoiceEnabled = !!pack.eInvoice && await isFeatureEnabled(ctx, supabase, 'einvoicing');
 
   const docType = options?.document_type ?? 'invoice';
   const invType = options?.invoice_type ?? 'simplified';
 
-  const chain = isZatcaInvoice ? await getZatcaChain(tenant_id) : { previous_invoice_hash: undefined, icv: undefined };
+  const chain = isEInvoiceEnabled ? await getZatcaChain(tenant_id) : { previous_invoice_hash: undefined, icv: undefined };
 
   const invoiceData: InvoiceData = {
     invoice_number: invoiceNumber,
@@ -1294,7 +1320,7 @@ export async function createInvoiceForStudent(
   let qr_code: string | null = null;
   let ubl_xml: string | null = null;
   let invoice_hash: string | null = null;
-  if (isZatcaInvoice) {
+  if (isEInvoiceEnabled) {
     ubl_xml = generateUBLXml(invoiceData, tenant);
     invoice_hash = generateInvoiceHash(ubl_xml);
     qr_code = generateTLVQR(invoiceData, tenant);
@@ -1335,7 +1361,7 @@ export async function createInvoiceForStudent(
       previous_invoice_hash: chain.previous_invoice_hash ?? null,
       ubl_xml,
       qr_code,
-      zatca_status: 'pending',
+      zatca_status: isEInvoiceEnabled ? 'pending' : 'not_applicable',
       batch_id: options?.batch_id ?? null,
       recurring_schedule_id: options?.recurring_schedule_id ?? null,
       notes: options?.notes ?? null,
@@ -1346,7 +1372,7 @@ export async function createInvoiceForStudent(
     .single();
   if (error) throw error;
 
-  if (isZatcaInvoice) {
+  if (isEInvoiceEnabled) {
     await supabase.from('zatca_submissions').insert({
       tenant_id,
       invoice_id: invoice.id,

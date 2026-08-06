@@ -2,11 +2,13 @@
  * src/packs/ae/academicCalendar.ts
  *
  * UAE academic calendar. Gregorian academic-year lookup is DB-driven and
- * identical to the Saudi implementation; Hijri helpers are intentionally omitted
- * because they are not used in the Emirates school calendar.
+ * identical to the Saudi implementation; Hijri helpers are intentionally
+ * stubs because the Emirates school calendar is Gregorian and the UAE pack
+ * does not require Ramadan detection at the calendar layer.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
 import type { AcademicCalendarService } from '../contract/CountryPack.js';
 
 export interface AcademicYearRow {
@@ -59,6 +61,15 @@ async function academicYearBefore(
   return (data as AcademicYearRow | null) ?? null;
 }
 
+function hijriStub(method: string) {
+  return (..._args: unknown[]) => {
+    throw new NotImplementedInJurisdiction(
+      'AE',
+      `AcademicCalendarService.${method} — Hijri calendar support is not enabled for UAE`,
+    );
+  };
+}
+
 export const aeAcademicCalendar: AcademicCalendarService = {
   currentAcademicYearForDate,
   academicYearBefore,
@@ -66,4 +77,8 @@ export const aeAcademicCalendar: AcademicCalendarService = {
     // Emirate-specific term dates are held in regulatory_register per school.
     return [];
   },
+  formatHijri: hijriStub('formatHijri'),
+  gregorianToHijri: hijriStub('gregorianToHijri'),
+  hijriToGregorian: hijriStub('hijriToGregorian'),
+  hijriNumeric: hijriStub('hijriNumeric'),
 };

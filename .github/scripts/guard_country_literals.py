@@ -72,6 +72,13 @@ CURRENCY_PATTERNS: dict[str, re.Pattern] = {
     for term in CURRENCY_TERMS
 }
 
+# Country-code comparisons such as `pack.code === 'SA'` defeat the pack registry.
+# Match any `.code === 'SA' | 'AE' | 'QA'` (or !==) to catch this shape.
+COUNTRY_CODE_COMPARISON_PATTERNS: dict[str, re.Pattern] = {
+    term.lower(): re.compile(r"\.code\s*(?:===|!==)\s*(['\"])" + re.escape(term) + r"\1", re.IGNORECASE)
+    for term in ['SA', 'AE', 'QA']
+}
+
 
 def is_allowed_path(rel: str) -> bool:
     """Return True if the path is inside an allowed directory or is a test file."""
@@ -120,6 +127,11 @@ def scan_repo(repo_root: Path):
 
             # Currency codes only when they appear as quoted string literals.
             for term, pattern in CURRENCY_PATTERNS.items():
+                for _ in pattern.finditer(text):
+                    counts[rel][term] += 1
+
+            # Country-code comparisons such as `pack.code === 'SA'`.
+            for term, pattern in COUNTRY_CODE_COMPARISON_PATTERNS.items():
                 for _ in pattern.finditer(text):
                     counts[rel][term] += 1
     return counts
