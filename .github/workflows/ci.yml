@@ -138,6 +138,14 @@ jobs:
       - name: Prove the guard with fixture tests
         run: python3 .github/scripts/test_guard_jurisdiction_resolution.py
 
+  guard-country-literals:
+    name: Guard country-specific literals
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Block Saudi/GCC-specific literals outside packs and migrations
+        run: python3 .github/scripts/guard_country_literals.py
+
   dependency-audit:
     name: Dependency Audit (advisory)
     runs-on: ubuntu-latest

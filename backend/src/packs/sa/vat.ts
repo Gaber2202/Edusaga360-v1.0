@@ -115,11 +115,26 @@ export function categoryCode(category?: string): string {
 }
 
 
-export function vatRateForCategory(category: string, rate?: number): number {
+// Saudi VAT timeline for effective dating. Re-issued historical invoices must
+// reproduce the rate in force at the original issue date.
+// Source: ZATCA public VAT guidance.
+const SA_VAT_5_START = new Date('2018-01-01T00:00:00Z');
+const SA_VAT_15_START = new Date('2020-07-01T00:00:00Z');
+
+function historicalVatRate(asOf?: Date | string): number {
+  if (!asOf) return 0.15;
+  const d = typeof asOf === 'string' ? new Date(asOf) : asOf;
+  if (Number.isNaN(d.getTime())) return 0.15;
+  if (d < SA_VAT_5_START) return 0;
+  if (d < SA_VAT_15_START) return 0.05;
+  return 0.15;
+}
+
+export function vatRateForCategory(category: string, rate?: number, asOf?: Date | string): number {
   if (category === 'zero_rated') return 0;
   if (category === 'exempt') return 0;
   if (category === 'out_of_scope') return 0;
-  if (rate == null) return 0.15;
+  if (rate == null) return historicalVatRate(asOf);
   // Treat provided percentages (>=1) as well as decimal fractions (<1) consistently.
   return rate >= 1 ? rate / 100 : rate;
 }
@@ -222,7 +237,7 @@ export function normalizeInvoiceItems(invoice: InvoiceData): Required<InvoiceIte
     const discount = item.discount ?? 0;
     const lineNet = sar(unit_price_net * quantity - discount);
     const vatCategory = (item.vat_category || 'standard') as NonNullable<InvoiceItemData['vat_category']>;
-    const vatRate = vatRateForCategory(vatCategory, item.vat_rate);
+    const vatRate = vatRateForCategory(vatCategory, item.vat_rate, invoice.issue_date);
     const vatCategoryCode = item.vat_category_code || categoryCode(vatCategory);
     const vatAmount = vatRate > 0 ? sar(lineNet * vatRate) : 0;
     const lineTotalGross = sar(lineNet + vatAmount);
