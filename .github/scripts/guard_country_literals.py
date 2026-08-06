@@ -22,16 +22,16 @@ from collections import defaultdict
 from datetime import date
 from pathlib import Path
 
-# Named literals are matched case-insensitively as substrings, because they
-# appear in identifiers, table names, comments and string values.
+# Named literals are matched case-insensitively as substrings in code, comments
+# and string values, because they appear in identifiers, table names, etc.
 NAMED_TERMS = [
     "ZATCA", "Nafath", "Moyasar", "Nitaqat", "GOSI", "Qiwa", "Mudad", "Muqeem",
     "SADAD", "Asia/Riyadh", "halala",
 ]
 
-# Currency codes must appear as standalone tokens. They are also accepted when
-# quoted ('SAR', "SAR"). They are NOT matched when they are part of an
-# identifier (e.g. the shared sar() rounding helper) or a hyphenated word.
+# Currency codes are matched case-insensitively as whole words inside string
+# literals only. This avoids false positives on identifiers such as the shared
+# rounding helper `sar()` or imports like `import { sar } from ...`.
 CURRENCY_TERMS = ["SAR", "AED", "QAR"]
 
 ALLOWED_DIRS = [
@@ -61,24 +61,16 @@ SKIP_FILES = {
     "pnpm-lock.yaml",
 }
 
-
-def build_term_pattern(term: str) -> re.Pattern:
-    """Build a case-insensitive regex for one forbidden term."""
-    if term in CURRENCY_TERMS:
-        # Standalone token, not part of an identifier or hyphenated word,
-        # and not followed immediately by '(' (function call).
-        pattern = (
-            r"(?<![A-Za-z0-9_-])"
-            + re.escape(term)
-            + r"(?![A-Za-z0-9_-])(?![(])"
-        )
-    else:
-        pattern = re.escape(term)
-    return re.compile(pattern, re.IGNORECASE)
-
+# Match single-quoted, double-quoted and backtick/template strings.
+STRING_LITERAL_RE = re.compile(r'"(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\'|`(?:[^`\\]|\\.)*`')
 
 TERM_PATTERNS: dict[str, re.Pattern] = {
-    term.lower(): build_term_pattern(term) for term in (NAMED_TERMS + CURRENCY_TERMS)
+    term.lower(): re.compile(re.escape(term), re.IGNORECASE) for term in NAMED_TERMS
+}
+
+CURRENCY_PATTERNS: dict[str, re.Pattern] = {
+    term.lower(): re.compile(r"\b" + re.escape(term) + r"\b", re.IGNORECASE)
+    for term in CURRENCY_TERMS
 }
 
 
@@ -121,9 +113,18 @@ def scan_repo(repo_root: Path):
                 text = p.read_text(encoding="utf-8", errors="replace")
             except OSError:
                 continue
+
+            # Named terms anywhere in the source.
             for term, pattern in TERM_PATTERNS.items():
                 for _ in pattern.finditer(text):
                     counts[rel][term] += 1
+
+            # Currency codes only inside string literals.
+            for str_match in STRING_LITERAL_RE.finditer(text):
+                str_literal = str_match.group(0)
+                for term, pattern in CURRENCY_PATTERNS.items():
+                    for _ in pattern.finditer(str_literal):
+                        counts[rel][term] += 1
     return counts
 
 

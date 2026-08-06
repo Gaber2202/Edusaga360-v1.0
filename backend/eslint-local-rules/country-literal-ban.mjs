@@ -15,31 +15,31 @@ const RULE_DIR = path.dirname(__filename);
 const REPO_ROOT = path.resolve(RULE_DIR, '..', '..');
 const ALLOWLIST_PATH = path.join(REPO_ROOT, '.github', 'allowed_country_literals.json');
 
+// Named literals are matched case-insensitively as substrings in code, comments
+// and string values, because they appear in identifiers, table names, etc.
 const NAMED_TERMS = [
   'ZATCA', 'Nafath', 'Moyasar', 'Nitaqat', 'GOSI', 'Qiwa', 'Mudad', 'Muqeem',
   'SADAD', 'Asia/Riyadh', 'halala',
 ];
+
+// Currency codes are matched case-insensitively as whole words inside string
+// literals only. This avoids false positives on identifiers such as the shared
+// rounding helper `sar()` or imports like `import { sar } from ...`.
 const CURRENCY_TERMS = ['SAR', 'AED', 'QAR'];
 
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function buildTermPattern(term) {
-  if (CURRENCY_TERMS.includes(term)) {
-    // Standalone token, not part of an identifier or hyphenated word,
-    // and not followed immediately by '(' (function call).
-    return new RegExp(
-      `(?<![A-Za-z0-9_-])${escapeRegExp(term)}(?![A-Za-z0-9_-])(?![(])`,
-      'gi',
-    );
-  }
-  return new RegExp(escapeRegExp(term), 'gi');
-}
+const NAMED_PATTERNS = NAMED_TERMS.map((term) => ({
+  term: term.toLowerCase(),
+  pattern: new RegExp(escapeRegExp(term), 'gi'),
+}));
 
-const TERM_PATTERNS = Object.fromEntries(
-  [...NAMED_TERMS, ...CURRENCY_TERMS].map((t) => [t.toLowerCase(), buildTermPattern(t)]),
-);
+const CURRENCY_PATTERNS = CURRENCY_TERMS.map((term) => ({
+  term: term.toLowerCase(),
+  pattern: new RegExp(`\\b${escapeRegExp(term)}\\b`, 'gi'),
+}));
 
 function loadAllowlist() {
   if (!existsSync(ALLOWLIST_PATH)) return new Map();
@@ -87,44 +87,64 @@ export default {
       create(context) {
         const allowlist = loadAllowlist();
         const filename = getRelative(context.filename);
-        const source = context.sourceCode.getText();
         const seen = new Map();
 
-        return {
-          Program() {
-            for (const [term, pattern] of Object.entries(TERM_PATTERNS)) {
-              let match;
-              while ((match = pattern.exec(source)) !== null) {
-                const pos = match.index;
-                const matchedTerm = match[0];
-                const line = source.slice(0, pos).split('\n').length;
-                const key = `${filename}::${matchedTerm.toLowerCase()}`;
-                const entry = allowlist.get(key) ?? { count: 0 };
-                const allowed = entry.count ?? 0;
-                const count = (seen.get(key) ?? 0) + 1;
-                seen.set(key, count);
+        function reportIfNeeded(term, matchedTerm, line) {
+          const key = `${filename}::${matchedTerm.toLowerCase()}`;
+          const entry = allowlist.get(key) ?? { count: 0 };
+          const allowed = entry.count ?? 0;
+          const count = (seen.get(key) ?? 0) + 1;
+          seen.set(key, count);
 
-                if (isExpired(entry.expires) && count === 1) {
-                  context.report({
-                    loc: { start: { line, column: 0 }, end: { line, column: 0 } },
-                    messageId: 'expired',
-                    data: { term: matchedTerm, file: filename, expires: entry.expires },
-                  });
-                } else if (allowed === 0 && count === 1) {
-                  context.report({
-                    loc: { start: { line, column: 0 }, end: { line, column: 0 } },
-                    messageId: 'disallowedLiteral',
-                    data: { term: matchedTerm, file: filename },
-                  });
-                } else if (count > allowed && allowed > 0) {
-                  context.report({
-                    loc: { start: { line, column: 0 }, end: { line, column: 0 } },
-                    messageId: 'countExceeded',
-                    data: { term: matchedTerm, file: filename, actual: count, allowed },
-                  });
-                }
-              }
+          if (isExpired(entry.expires) && count === 1) {
+            context.report({
+              loc: { start: { line, column: 0 }, end: { line, column: 0 } },
+              messageId: 'expired',
+              data: { term: matchedTerm, file: filename, expires: entry.expires },
+            });
+          } else if (allowed === 0 && count === 1) {
+            context.report({
+              loc: { start: { line, column: 0 }, end: { line, column: 0 } },
+              messageId: 'disallowedLiteral',
+              data: { term: matchedTerm, file: filename },
+            });
+          } else if (count > allowed && allowed > 0) {
+            context.report({
+              loc: { start: { line, column: 0 }, end: { line, column: 0 } },
+              messageId: 'countExceeded',
+              data: { term: matchedTerm, file: filename, actual: count, allowed },
+            });
+          }
+        }
+
+        function checkText(text, line, isCurrency = false) {
+          const patterns = isCurrency ? CURRENCY_PATTERNS : NAMED_PATTERNS;
+          for (const { pattern, term } of patterns) {
+            let match;
+            while ((match = pattern.exec(text)) !== null) {
+              reportIfNeeded(term, match[0], line);
+              if (match[0] === '') break;
             }
+          }
+        }
+
+        return {
+          // Named terms can appear anywhere in source text.
+          Program(node) {
+            const source = context.sourceCode.getText(node);
+            checkText(source, 1, false);
+          },
+
+          // Currency codes only inside string literals.
+          Literal(node) {
+            if (typeof node.value !== 'string') return;
+            const line = node.loc?.start?.line ?? 1;
+            checkText(node.value, line, true);
+          },
+          TemplateLiteral(node) {
+            const line = node.loc?.start?.line ?? 1;
+            const raw = node.quasis.map((q) => q.value.raw).join(' ');
+            checkText(raw, line, true);
           },
         };
       },
