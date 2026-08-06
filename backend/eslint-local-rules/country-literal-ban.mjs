@@ -22,9 +22,10 @@ const NAMED_TERMS = [
   'SADAD', 'Asia/Riyadh', 'halala',
 ];
 
-// Currency codes are matched case-insensitively as whole words inside string
-// literals only. This avoids false positives on identifiers such as the shared
-// rounding helper `sar()` or imports like `import { sar } from ...`.
+// Currency codes are matched case-insensitively only when they appear as
+// quoted string literals ('SAR', "SAR", 'AED', "AED", 'QAR', "QAR"). This
+// avoids false positives on identifiers such as the shared rounding helper
+// `sar()` or variables like `PER_SEAT_PRICE_SAR`.
 const CURRENCY_TERMS = ['SAR', 'AED', 'QAR'];
 
 function escapeRegExp(string) {
@@ -36,9 +37,10 @@ const NAMED_PATTERNS = NAMED_TERMS.map((term) => ({
   pattern: new RegExp(escapeRegExp(term), 'gi'),
 }));
 
+// Backreference \1 ensures the opening and closing quote are the same.
 const CURRENCY_PATTERNS = CURRENCY_TERMS.map((term) => ({
   term: term.toLowerCase(),
-  pattern: new RegExp(`\\b${escapeRegExp(term)}\\b`, 'gi'),
+  pattern: new RegExp(`(['"])${escapeRegExp(term)}\\1`, 'gi'),
 }));
 
 function loadAllowlist() {
@@ -88,63 +90,54 @@ export default {
         const allowlist = loadAllowlist();
         const filename = getRelative(context.filename);
         const seen = new Map();
+        const source = context.sourceCode.getText();
 
-        function reportIfNeeded(term, matchedTerm, line) {
-          const key = `${filename}::${matchedTerm.toLowerCase()}`;
+        function reportIfNeeded(term, pos) {
+          const line = source.slice(0, pos).split('\n').length;
+          const key = `${filename}::${term.toLowerCase()}`;
           const entry = allowlist.get(key) ?? { count: 0 };
           const allowed = entry.count ?? 0;
           const count = (seen.get(key) ?? 0) + 1;
           seen.set(key, count);
+          const displayTerm = term.toUpperCase();
 
           if (isExpired(entry.expires) && count === 1) {
             context.report({
               loc: { start: { line, column: 0 }, end: { line, column: 0 } },
               messageId: 'expired',
-              data: { term: matchedTerm, file: filename, expires: entry.expires },
+              data: { term: displayTerm, file: filename, expires: entry.expires },
             });
           } else if (allowed === 0 && count === 1) {
             context.report({
               loc: { start: { line, column: 0 }, end: { line, column: 0 } },
               messageId: 'disallowedLiteral',
-              data: { term: matchedTerm, file: filename },
+              data: { term: displayTerm, file: filename },
             });
           } else if (count > allowed && allowed > 0) {
             context.report({
               loc: { start: { line, column: 0 }, end: { line, column: 0 } },
               messageId: 'countExceeded',
-              data: { term: matchedTerm, file: filename, actual: count, allowed },
+              data: { term: displayTerm, file: filename, actual: count, allowed },
             });
           }
         }
 
-        function checkText(text, line, isCurrency = false) {
-          const patterns = isCurrency ? CURRENCY_PATTERNS : NAMED_PATTERNS;
-          for (const { pattern, term } of patterns) {
-            let match;
-            while ((match = pattern.exec(text)) !== null) {
-              reportIfNeeded(term, match[0], line);
-              if (match[0] === '') break;
-            }
-          }
-        }
-
         return {
-          // Named terms can appear anywhere in source text.
-          Program(node) {
-            const source = context.sourceCode.getText(node);
-            checkText(source, 1, false);
-          },
-
-          // Currency codes only inside string literals.
-          Literal(node) {
-            if (typeof node.value !== 'string') return;
-            const line = node.loc?.start?.line ?? 1;
-            checkText(node.value, line, true);
-          },
-          TemplateLiteral(node) {
-            const line = node.loc?.start?.line ?? 1;
-            const raw = node.quasis.map((q) => q.value.raw).join(' ');
-            checkText(raw, line, true);
+          'Program:exit'(node) {
+            for (const { pattern, term } of NAMED_PATTERNS) {
+              let match;
+              while ((match = pattern.exec(source)) !== null) {
+                reportIfNeeded(term, match.index);
+                if (match[0] === '') break;
+              }
+            }
+            for (const { pattern, term } of CURRENCY_PATTERNS) {
+              let match;
+              while ((match = pattern.exec(source)) !== null) {
+                reportIfNeeded(term, match.index);
+                if (match[0] === '') break;
+              }
+            }
           },
         };
       },

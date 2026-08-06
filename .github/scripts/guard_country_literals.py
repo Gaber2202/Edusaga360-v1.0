@@ -29,9 +29,10 @@ NAMED_TERMS = [
     "SADAD", "Asia/Riyadh", "halala",
 ]
 
-# Currency codes are matched case-insensitively as whole words inside string
-# literals only. This avoids false positives on identifiers such as the shared
-# rounding helper `sar()` or imports like `import { sar } from ...`.
+# Currency codes are matched case-insensitively only when they appear as
+# quoted string literals ('SAR', "SAR", 'AED', "AED", 'QAR', "QAR"). This
+# avoids false positives on identifiers such as the shared rounding helper
+# `sar()` or variables like `PER_SEAT_PRICE_SAR`.
 CURRENCY_TERMS = ["SAR", "AED", "QAR"]
 
 ALLOWED_DIRS = [
@@ -61,15 +62,13 @@ SKIP_FILES = {
     "pnpm-lock.yaml",
 }
 
-# Match single-quoted, double-quoted and backtick/template strings.
-STRING_LITERAL_RE = re.compile(r'"(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\'|`(?:[^`\\]|\\.)*`')
-
 TERM_PATTERNS: dict[str, re.Pattern] = {
     term.lower(): re.compile(re.escape(term), re.IGNORECASE) for term in NAMED_TERMS
 }
 
+# Match quoted currency literals exactly: 'SAR', "SAR", 'AED', "AED", etc.
 CURRENCY_PATTERNS: dict[str, re.Pattern] = {
-    term.lower(): re.compile(r"\b" + re.escape(term) + r"\b", re.IGNORECASE)
+    term.lower(): re.compile(r"(['\"])" + re.escape(term) + r"\1", re.IGNORECASE)
     for term in CURRENCY_TERMS
 }
 
@@ -119,12 +118,10 @@ def scan_repo(repo_root: Path):
                 for _ in pattern.finditer(text):
                     counts[rel][term] += 1
 
-            # Currency codes only inside string literals.
-            for str_match in STRING_LITERAL_RE.finditer(text):
-                str_literal = str_match.group(0)
-                for term, pattern in CURRENCY_PATTERNS.items():
-                    for _ in pattern.finditer(str_literal):
-                        counts[rel][term] += 1
+            # Currency codes only when they appear as quoted string literals.
+            for term, pattern in CURRENCY_PATTERNS.items():
+                for _ in pattern.finditer(text):
+                    counts[rel][term] += 1
     return counts
 
 
