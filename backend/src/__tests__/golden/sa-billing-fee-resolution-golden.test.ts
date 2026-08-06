@@ -51,6 +51,7 @@ const TENANT = {
   admin_email: 'admin@alnoor.edu.sa',
   city: 'Riyadh',
   logo_url: null,
+  jurisdiction_code: 'SA',
   settings: {},
 };
 
@@ -111,6 +112,9 @@ function buildResolver(opts: {
     }
     if (ctx.table === 'tenant_compliance_settings') {
       return { data: null };
+    }
+    if (ctx.table === 'branches') {
+      return { data: { id: 'branch-b1', jurisdiction_code: 'SA' } };
     }
     if (ctx.table === 'fee_structures') {
       return { data: applyFeeStructureFilters(feeStructures, ctx.filters) };

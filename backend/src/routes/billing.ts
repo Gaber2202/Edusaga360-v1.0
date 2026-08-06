@@ -20,7 +20,7 @@ import { z } from 'zod';
 import crypto from 'crypto';
 import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/auth.js';
 import { sanitizeSearchTerm } from '../lib/sanitize.js';
-import { buildInvoiceLines, computeVatSummary, InvoiceData, type BuildInvoiceLineInput } from '../packs/sa/vat.js';
+import { buildInvoiceLines, type InvoiceData, type VatSummary, type BuildInvoiceLineInput } from '../packs/sa/vat.js';
 import {
   generateTLVQR,
   generateUBLXml,
@@ -453,7 +453,12 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       uuid: crypto.randomUUID(),
     };
 
-    const vatSummary = computeVatSummary(invoiceData);
+    const ctx = await buildRequestContext(supabase, tenant_id, studentBranchId ?? undefined);
+    const pack = resolvePack(ctx);
+    const vatSummary = await pack.tax?.computeVatSummary?.(invoiceData, supabase) as VatSummary;
+    if (!vatSummary) {
+      throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'tax.computeVatSummary');
+    }
     invoiceData.vat_summary = vatSummary;
 
     // ZATCA reporting data is only relevant for formal tax invoices.
@@ -1256,7 +1261,12 @@ export async function createInvoiceForStudent(
     terms_and_conditions: options?.terms_and_conditions,
   };
 
-  const vatSummary = computeVatSummary(invoiceData);
+  const ctx = await buildRequestContext(supabase, tenant_id, branch_id ?? undefined);
+  const pack = resolvePack(ctx);
+  const vatSummary = await pack.tax?.computeVatSummary?.(invoiceData, supabase) as VatSummary;
+  if (!vatSummary) {
+    throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'tax.computeVatSummary');
+  }
   invoiceData.vat_summary = vatSummary;
 
   const qr_code = generateTLVQR(invoiceData, tenant);

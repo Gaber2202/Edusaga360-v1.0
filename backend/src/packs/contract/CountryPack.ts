@@ -30,8 +30,10 @@ export interface TaxService {
   /** Resolve the UBL/ZATCA category code for a category name. */
   categoryCode?(category: string): string;
 
-  /** Compute a jurisdiction-aware VAT summary for an invoice. */
-  computeVatSummary?(invoice: unknown): unknown;
+  /** Compute a jurisdiction-aware VAT summary for an invoice.
+   *  Optional supabase client is used by DB-driven packs to load effective-dated
+   *  rates from jurisdiction_tax_rules. */
+  computeVatSummary?(invoice: unknown, supabase?: unknown): unknown | Promise<unknown>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -149,6 +151,25 @@ export interface PayrollService {
     tenantId: string,
     period: { start: string; end: string },
   ): Promise<{ filename: string; content: string }>;
+
+  /** End-of-service gratuity for one employee (foreign workers). */
+  calculateEndOfServiceBenefit?(
+    basicSalary: number,
+    yearsOfService: number,
+    nationality?: string,
+  ): { amount: number; currencyCode: string };
+
+  /** Annual leave entitlement in days for a given length of service. */
+  calculateAnnualLeave?(yearsOfService: number, isPartTime?: boolean): number;
+
+  /** Overtime pay for a given number of extra hours. */
+  calculateOvertime?(
+    basicSalary: number,
+    normalHoursPerMonth: number,
+    overtimeHours: number,
+    isNight?: boolean,
+    isRestDay?: boolean,
+  ): { amount: number; currencyCode: string };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -223,10 +244,37 @@ export interface AcademicCalendarService {
 // Fee Governance
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Intentionally empty marker — regulator-driven fee-increase governance is
-// reserved for future tasks (e.g. MOE caps, required submissions).
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface FeeGovernanceService {}
+export interface FeeIncreaseInput {
+  tenantId: string;
+  branchId?: string;
+  regulatorCode?: string;
+  currentTuition: number;
+  proposedTuition: number;
+  academicYear: string;
+  occupancyRate?: number;
+  yearsOfOperation?: number;
+  hasAuditedLosses?: boolean;
+  rating?: string;
+  eci?: number;
+}
+
+export interface FeeIncreaseResult {
+  permitted: boolean;
+  maxIncreasePct?: number;
+  maxTuition?: number;
+  reason: string;
+}
+
+export interface FeeGovernanceService {
+  /** Evaluate whether a proposed tuition increase is permitted under the
+   *  branch's regulator rules. Returns a result; throws
+   *  NotImplementedInJurisdiction if no rule is configured for the regulator. */
+  evaluateFeeIncrease?(
+    supabase: unknown,
+    jurisdictionCode: string,
+    input: FeeIncreaseInput,
+  ): Promise<FeeIncreaseResult>;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Documents

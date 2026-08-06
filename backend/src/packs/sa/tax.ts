@@ -8,6 +8,7 @@ import {
   computeVatSummary,
   categoryCode,
   vatRateForCategory,
+  type InvoiceData,
 } from './vat.js';
 import type { TaxService } from '../contract/CountryPack.js';
 
@@ -15,5 +16,5 @@ export const saTax: TaxService = {
   standardVatRate: 0.15,
   vatRateForCategory,
   categoryCode,
-  computeVatSummary,
+  computeVatSummary: (invoice: unknown, _supabase?: unknown) => computeVatSummary(invoice as InvoiceData),
 };

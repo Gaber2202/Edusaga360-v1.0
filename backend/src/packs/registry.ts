@@ -11,9 +11,13 @@ import {
   type RequestContext,
 } from '../lib/jurisdiction.js';
 import type { CountryPack } from './contract/CountryPack.js';
+import { aePack } from './ae/index.js';
 import { saPack } from './sa/index.js';
 
-const registry = new Map<string, CountryPack>([['SA', saPack]]);
+const registry = new Map<string, CountryPack>([
+  ['SA', saPack],
+  ['AE', aePack],
+]);
 
 /** List all registered country packs (useful for conformance tests). */
 export function getRegisteredPacks(): readonly CountryPack[] {
