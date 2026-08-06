@@ -15,6 +15,11 @@ import { saPack } from './sa/index.js';
 
 const registry = new Map<string, CountryPack>([['SA', saPack]]);
 
+/** List all registered country packs (useful for conformance tests). */
+export function getRegisteredPacks(): readonly CountryPack[] {
+  return Array.from(registry.values());
+}
+
 /**
  * Resolve the CountryPack for the current request context.
  *
