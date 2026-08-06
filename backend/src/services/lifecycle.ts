@@ -109,7 +109,7 @@ export async function convertToInvoice(
     throw new NotImplementedInJurisdiction(jurisdiction, 'e-invoice generation');
   }
 
-  const vatSummary = pack.tax.computeVatSummary(invoiceData) as VatSummary;
+  const vatSummary = await pack.tax.computeVatSummary(invoiceData, supabase) as VatSummary;
   invoiceData.vat_summary = vatSummary;
   invoiceData.vat_amount = vatSummary.total_vat;
   invoiceData.total_amount = sar(subtotal - discount + vatSummary.total_vat);

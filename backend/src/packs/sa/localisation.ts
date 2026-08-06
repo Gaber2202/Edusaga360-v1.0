@@ -31,10 +31,20 @@ function formatNumber(value: number, locale = 'en-SA'): string {
   return new Intl.NumberFormat(locale).format(value);
 }
 
+function getDefaultLocale(): string {
+  return 'en-SA';
+}
+
+function getDefaultWeekend(): number[] {
+  return [5, 6]; // Friday, Saturday per Saudi weekend.
+}
+
 export const saLocalisation: LocalisationService = {
   formatMoney,
   toMinorUnits: (amount, minorUnits = 2) => toMinorUnits(amount, minorUnits),
   toMajorUnits: (amountMinor, minorUnits = 2) => toMajorUnits(amountMinor, minorUnits),
   roundToMinorUnits: (amount, minorUnits = 2) => roundToMinorUnits(amount, minorUnits),
   formatNumber,
+  getDefaultLocale,
+  getDefaultWeekend,
 };

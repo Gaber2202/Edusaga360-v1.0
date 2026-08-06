@@ -20,7 +20,7 @@ import { z } from 'zod';
 import crypto from 'crypto';
 import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/auth.js';
 import { sanitizeSearchTerm } from '../lib/sanitize.js';
-import { buildInvoiceLines, computeVatSummary, InvoiceData, type BuildInvoiceLineInput } from '../packs/sa/vat.js';
+import { type InvoiceData, type VatSummary, type BuildInvoiceLineInput, type BuiltInvoiceLine, type BuildInvoiceLinesResult } from '../packs/sa/vat.js';
 import {
   generateTLVQR,
   generateUBLXml,
@@ -45,7 +45,7 @@ import {
   getRevenueByFeeType,
 } from '../services/reports.js';
 import { dispatchWebhook } from '../services/webhookDelivery.js';
-import { resolveFeeStructures } from '../services/feeResolution.js';
+import { resolveFeeStructures, type ResolvedFeeStructure } from '../services/feeResolution.js';
 import { resolvePack } from '../packs/registry.js';
 import { buildRequestContext, resolveJurisdiction, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
 
@@ -397,7 +397,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
     if (studentErr || !student) return res.status(404).json({ error: 'Student not found' });
     const studentBranchId = (student as Record<string, unknown>).branch_id as string | null ?? null;
 
-    // Resolve VAT/category metadata and compute totals through the Saudi VAT pack.
+    // Resolve VAT/category metadata and compute totals through the pack.
     const rawLines = await buildInvoiceRawLines(fee_lines as FeeLineInput[], tenant_id);
     const preSubtotal = rawLines.reduce(
       (sum, line) => sar(sum + sar(line.amount * (line.quantity ?? 1))),
@@ -418,15 +418,28 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       totalDiscount = result.total_discount;
       discountDetails = result.applied;
     }
+
+    const invoiceNumber = await generateInvoiceNumber(tenant_id);
+    const today = new Date().toISOString().split('T')[0];
+
+    const ctx = await buildRequestContext(supabase, tenant_id, studentBranchId ?? undefined);
+    const pack = resolvePack(ctx);
+    const isZatcaInvoice = isTaxInvoice && pack.code === 'SA';
+    const buildResult = await pack.tax?.buildInvoiceLines?.(
+      rawLines,
+      totalDiscount,
+      supabase,
+      today,
+    ) as { lines: BuiltInvoiceLine[]; subtotal: number; vat_amount: number; total_amount: number } | undefined;
+    if (!buildResult) {
+      throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'tax.buildInvoiceLines');
+    }
     const {
       lines: enrichedLines,
       subtotal,
       vat_amount: vatAmount,
       total_amount: totalAmount,
-    } = buildInvoiceLines(rawLines, totalDiscount);
-
-    const invoiceNumber = await generateInvoiceNumber(tenant_id);
-    const today = new Date().toISOString().split('T')[0];
+    } = buildResult;
 
     // Generate ZATCA artifacts
     const tenant = await getTenantComplianceData(tenant_id);
@@ -453,16 +466,19 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       uuid: crypto.randomUUID(),
     };
 
-    const vatSummary = computeVatSummary(invoiceData);
+    const vatSummary = await pack.tax?.computeVatSummary?.(invoiceData, supabase) as VatSummary;
+    if (!vatSummary) {
+      throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'tax.computeVatSummary');
+    }
     invoiceData.vat_summary = vatSummary;
 
-    // ZATCA reporting data is only relevant for formal tax invoices.
+    // ZATCA reporting data is only relevant for Saudi formal tax invoices.
     let chain: { previous_invoice_hash?: string; icv?: number } = {};
     let qr_code: string | null = null;
     let ubl_xml: string | null = null;
     let invoice_hash: string | null = null;
     let previous_hash: string | null = null;
-    if (isTaxInvoice) {
+    if (isZatcaInvoice) {
       chain = await getZatcaChain(tenant_id);
       invoiceData.previous_invoice_hash = chain.previous_invoice_hash;
       invoiceData.icv = chain.icv;
@@ -508,13 +524,13 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       vat_summary: vatSummary,
       notes: notesText,
       payment_methods: payment_methods || [],
-      zatca_uuid: isTaxInvoice ? invoiceData.uuid : null,
-      icv: isTaxInvoice ? invoiceData.icv : null,
+      zatca_uuid: isZatcaInvoice ? invoiceData.uuid : null,
+      icv: isZatcaInvoice ? invoiceData.icv : null,
       invoice_hash,
       previous_invoice_hash: previous_hash,
       ubl_xml,
       qr_code,
-      zatca_status: isTaxInvoice ? 'pending' : 'not_applicable',
+      zatca_status: isZatcaInvoice ? 'pending' : 'not_applicable',
       zatca_response: null,
     };
 
@@ -572,7 +588,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
 
     // ZATCA submission, installments and GL journal only apply to formal invoices.
     let zatcaRecord: Record<string, unknown> | null = null;
-    if (isTaxInvoice) {
+    if (isZatcaInvoice) {
       const submissionType = invoiceData.invoice_type === 'standard' ? 'clearance' : 'reporting';
       const { data: zatcaData, error: zatcaErr } = await supabase
         .from('zatca_submissions')
@@ -670,7 +686,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
 
     return res.status(201).json({
       invoice,
-      zatca: isTaxInvoice
+      zatca: isZatcaInvoice
         ? { id: zatcaRecord?.id, qr_code, invoice_hash, status: 'pending' }
         : { id: null, qr_code: null, invoice_hash: null, status: 'not_applicable' },
       payment_plan: plan,
@@ -1215,20 +1231,33 @@ export async function createInvoiceForStudent(
     typeof primaryCategoryId === 'string' ? primaryCategoryId : undefined,
   );
 
-  // Saudi-specific VAT/rounding lives in the pack; everything else is generic.
+  // VAT/rounding lives in the pack; everything else is generic.
+  const ctx = await buildRequestContext(supabase, tenant_id, branch_id ?? undefined);
+  const pack = resolvePack(ctx);
+  const buildResult = await pack.tax?.buildInvoiceLines?.(
+    rawLines,
+    totalDiscount,
+    supabase,
+    today,
+  ) as { lines: BuiltInvoiceLine[]; subtotal: number; vat_amount: number; total_amount: number } | undefined;
+  if (!buildResult) {
+    throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'tax.buildInvoiceLines');
+  }
   const {
     lines: enrichedLines,
     subtotal,
     vat_amount: vatAmount,
     total_amount: totalAmount,
-  } = buildInvoiceLines(rawLines, totalDiscount);
+  } = buildResult;
 
   const invoiceNumber = options?.invoice_number ?? (await generateInvoiceNumber(tenant_id));
   const tenant = await getTenantComplianceData(tenant_id);
-  const chain = await getZatcaChain(tenant_id);
+  const isZatcaInvoice = pack.code === 'SA';
 
   const docType = options?.document_type ?? 'invoice';
   const invType = options?.invoice_type ?? 'simplified';
+
+  const chain = isZatcaInvoice ? await getZatcaChain(tenant_id) : { previous_invoice_hash: undefined, icv: undefined };
 
   const invoiceData: InvoiceData = {
     invoice_number: invoiceNumber,
@@ -1256,12 +1285,20 @@ export async function createInvoiceForStudent(
     terms_and_conditions: options?.terms_and_conditions,
   };
 
-  const vatSummary = computeVatSummary(invoiceData);
+  const vatSummary = await pack.tax?.computeVatSummary?.(invoiceData, supabase) as VatSummary;
+  if (!vatSummary) {
+    throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'tax.computeVatSummary');
+  }
   invoiceData.vat_summary = vatSummary;
 
-  const qr_code = generateTLVQR(invoiceData, tenant);
-  const ubl_xml = generateUBLXml(invoiceData, tenant);
-  const invoice_hash = generateInvoiceHash(ubl_xml);
+  let qr_code: string | null = null;
+  let ubl_xml: string | null = null;
+  let invoice_hash: string | null = null;
+  if (isZatcaInvoice) {
+    ubl_xml = generateUBLXml(invoiceData, tenant);
+    invoice_hash = generateInvoiceHash(ubl_xml);
+    qr_code = generateTLVQR(invoiceData, tenant);
+  }
 
   const { data: invoice, error } = await supabase
     .from('invoices')
@@ -1309,17 +1346,19 @@ export async function createInvoiceForStudent(
     .single();
   if (error) throw error;
 
-  await supabase.from('zatca_submissions').insert({
-    tenant_id,
-    invoice_id: invoice.id,
-    invoice_number: invoiceNumber,
-    submission_type: invType === 'standard' ? 'clearance' : 'reporting',
-    invoice_hash,
-    previous_hash: chain.previous_invoice_hash ?? '',
-    ubl_xml,
-    qr_code,
-    zatca_status: 'pending',
-  });
+  if (isZatcaInvoice) {
+    await supabase.from('zatca_submissions').insert({
+      tenant_id,
+      invoice_id: invoice.id,
+      invoice_number: invoiceNumber,
+      submission_type: invType === 'standard' ? 'clearance' : 'reporting',
+      invoice_hash,
+      previous_hash: chain.previous_invoice_hash ?? '',
+      ubl_xml,
+      qr_code,
+      zatca_status: 'pending',
+    });
+  }
 
   if (discountDetails.length > 0) {
     const { error: discErr } = await supabase.from('invoice_discounts').insert(
@@ -1374,6 +1413,10 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
 
     if (!students?.length) return res.status(400).json({ error: 'No active students found' });
 
+    const today = new Date().toISOString().split('T')[0];
+    const ctx = await buildRequestContext(supabase, tenant_id, campus_id ?? undefined);
+    const pack = resolvePack(ctx);
+
     // Determine which students already have a (non-cancelled) invoice for this
     // academic year. The same rule drives both the preview and the real run, so
     // re-running is idempotent (no silent duplicates).
@@ -1385,12 +1428,16 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
       .neq('status', 'cancelled');
     const existingIds = new Set((existing ?? []).map((e) => e.student_id));
 
-    const planForStudent = (student: { grade_id?: string | null }) => {
+    const planForStudent = async (student: { grade_id?: string | null }) => {
       const relevant = feeStructures.filter((fs) => !fs.grade || fs.grade === student.grade_id);
       // Dry-run total intentionally excludes discounts so it stays a preview of
-      // gross fees. buildInvoiceLines(..., 0) reproduces the old line-by-line sum
-      // using the Saudi VAT pack.
-      const { total_amount: gross } = buildInvoiceLines(relevant, 0);
+      // gross fees. Use the pack so the UAE gets 5% and Saudi Arabia keeps 15%.
+      const { total_amount: gross } = await pack.tax?.buildInvoiceLines?.(
+        relevant,
+        0,
+        supabase,
+        today,
+      ) as BuildInvoiceLinesResult;
       return { relevant, gross };
     };
 
@@ -1402,7 +1449,7 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
 
     for (const student of students) {
       if (existingIds.has(student.id)) { alreadyInvoiced++; continue; }
-      const { relevant, gross } = planForStudent(student);
+      const { relevant, gross } = await planForStudent(student);
       if (!relevant.length) { skippedNoFees++; continue; }
       eligible++;
       estimatedTotal = sar(estimatedTotal + gross);
@@ -1476,10 +1523,10 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
     for (const student of students) {
       if (existingIds.has(student.id)) { skipped++; continue; }
       try {
-        const { relevant } = planForStudent(student);
+        const { relevant } = await planForStudent(student);
         if (!relevant.length) { skipped++; continue; }
 
-        const feeLines: FeeLineInput[] = relevant.map((fs) => ({
+        const feeLines: FeeLineInput[] = relevant.map((fs: ResolvedFeeStructure) => ({
           category_id: fs.category_id,
           category_code: fs.category_code,
           description_en: fs.description_en,

@@ -10,11 +10,13 @@ export type JurisdictionCode = string;
 export interface Tenant {
   id: string;
   jurisdictionCode: JurisdictionCode;
+  settings?: Record<string, unknown>;
 }
 
 export interface Branch {
   id: string;
   jurisdictionCode: JurisdictionCode;
+  settings?: Record<string, unknown>;
 }
 
 export interface RequestContext {
@@ -92,7 +94,7 @@ export async function buildRequestContext(
 ): Promise<RequestContext> {
   const { data: tenant, error: tErr } = await supabase
     .from('tenants')
-    .select('id, jurisdiction_code')
+    .select('id, jurisdiction_code, settings')
     .eq('id', tenantId)
     .single();
   if (tErr || !tenant) throw tErr ?? new JurisdictionUnresolvedError(tenantId, branchId);
@@ -101,16 +103,24 @@ export async function buildRequestContext(
   if (branchId) {
     const { data: b, error: bErr } = await supabase
       .from('branches')
-      .select('id, jurisdiction_code')
+      .select('id, jurisdiction_code, settings')
       .eq('id', branchId)
       .single();
     if (!bErr && b) {
-      branch = { id: b.id as string, jurisdictionCode: b.jurisdiction_code as string };
+      branch = {
+        id: b.id as string,
+        jurisdictionCode: b.jurisdiction_code as string,
+        settings: (b.settings ?? {}) as Record<string, unknown>,
+      };
     }
   }
 
   return {
-    tenant: { id: tenant.id as string, jurisdictionCode: tenant.jurisdiction_code as string },
+    tenant: {
+      id: tenant.id as string,
+      jurisdictionCode: tenant.jurisdiction_code as string,
+      settings: (tenant.settings ?? {}) as Record<string, unknown>,
+    },
     branch,
   };
 }

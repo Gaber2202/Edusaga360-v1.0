@@ -35,7 +35,7 @@ function makeApp(user: Record<string, unknown> = FINANCE_USER) {
   return app;
 }
 
-const TENANT_ROW = { id: 'tenant-A', name_en: 'Al Noor', name_ar: 'النور', admin_email: 'a@school.sa', city: 'Riyadh', settings: { vat_number: '300000000000003' } };
+const TENANT_ROW = { id: 'tenant-A', name_en: 'Al Noor', name_ar: 'النور', admin_email: 'a@school.sa', city: 'Riyadh', jurisdiction_code: 'SA', settings: { vat_number: '300000000000003' } };
 
 beforeEach(() => {
   db.reset();

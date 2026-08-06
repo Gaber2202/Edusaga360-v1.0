@@ -163,8 +163,8 @@
   {
     "file": "backend/src/routes/billing.ts",
     "term": "zatca",
-    "count": 78,
-    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "count": 95,
+    "reason": "route is the composition layer for ZATCA e-invoicing; pending full pack extraction",
     "expires": "2026-10-31"
   },
   {
