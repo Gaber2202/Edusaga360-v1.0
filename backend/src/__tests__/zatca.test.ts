@@ -14,12 +14,12 @@
  */
 import { describe, it, expect } from 'vitest';
 import type { InvoiceData } from '../packs/sa/vat.js';
+import type { TenantData } from '../types/tenant.js';
 import {
   generateTLVQR,
   generateUBLXml,
   generateInvoiceHash,
   generateZATCAInvoicePDF,
-  TenantData,
 } from '../packs/sa/zatca.js';
 
 // ── Test helpers ────────────────────────────────────────────────────────────

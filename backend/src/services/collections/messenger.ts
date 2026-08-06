@@ -2,7 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { getProvider } from '../messaging/registry.js';
 import { decryptSecret, isAiCryptoConfigured } from '../../lib/aiCrypto.js';
 import { sendEmail as sendTransactionalEmail } from '../email.js';
-import { getOrCreateMoyasarLink } from '../../packs/sa/moyasarService.js';
+import { buildRequestContext, NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
+import { resolvePack } from '../../packs/registry.js';
 import { writeLedger } from './ledgerWriter.js';
 import { CollectionThreadService } from './threads.js';
 
@@ -222,13 +223,18 @@ export class CollectionMessenger {
     const profile = await this.loadProfileForSend(msg.tenant_id, msg.profile_id);
     if (!profile) throw new Error('Profile not found');
 
-    const link = await getOrCreateMoyasarLink(this.supabase, {
+    const ctx = await buildRequestContext(this.supabase, msg.tenant_id);
+    const pack = resolvePack(ctx);
+    if (!pack.payments?.createOrRefreshPaymentLink) {
+      throw new NotImplementedInJurisdiction(ctx.tenant.jurisdictionCode, 'payment link');
+    }
+    const link = await pack.payments.createOrRefreshPaymentLink(this.supabase, {
       tenantId: msg.tenant_id,
       invoiceId: msg.invoice_id,
       callbackUrl: this.callbackUrl,
       sourceType: 'mada',
     });
-    if (!link.ok) throw new Error(link.error);
+    if (!link.ok || !link.paymentUrl) throw new Error(link.error || 'payment_link_failed');
 
     const [bodyAr, bodyEn] = this.fillTemplate(msg.template_key, profile, msg.amount_due ?? 0, msg.due_date ?? '', link.paymentUrl);
     const language = profile.preferred_language ?? 'ar';

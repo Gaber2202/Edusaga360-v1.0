@@ -7,7 +7,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { computeVatSummary, InvoiceData, InvoiceItemData } from '../../packs/sa/vat.js';
-import type { TenantData } from '../../packs/sa/zatca.js';
+import type { TenantData } from '../../types/tenant.js';
 import { golden } from './support/golden.js';
 
 const tenant: TenantData = {

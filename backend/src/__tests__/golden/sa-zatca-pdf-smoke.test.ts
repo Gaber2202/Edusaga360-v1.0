@@ -11,9 +11,9 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { PDFDocument } from 'pdf-lib';
 import type { InvoiceData } from '../../packs/sa/vat.js';
+import type { TenantData } from '../../types/tenant.js';
 import {
   generateZATCAInvoicePDF,
-  TenantData,
 } from '../../packs/sa/zatca.js';
 
 beforeAll(() => {

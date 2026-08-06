@@ -9,6 +9,7 @@ import {
   createOrRefreshMoyasarLink,
   processMoyasarWebhook,
   requestMoyasarRefund,
+  reconcileMoyasarState,
   type MoyasarLinkOptions,
   type MoyasarLinkResult,
 } from './moyasarService.js';
@@ -68,4 +69,7 @@ export const saPayments: PaymentsService = {
 
   refundPayment: async (supabase, tenantId, paymentId, amount) =>
     requestMoyasarRefund(supabase as SupabaseClient, tenantId, paymentId, amount),
+
+  reconcilePaymentState: async (supabase, tenantId, since) =>
+    reconcileMoyasarState(supabase as SupabaseClient, tenantId, since),
 };

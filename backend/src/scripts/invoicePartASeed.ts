@@ -2,12 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import type { InvoiceData } from '../packs/sa/vat.js';
+import type { TenantData } from '../types/tenant.js';
 import {
   generateZATCAInvoicePDF,
   generateUBLXml,
   generateTLVQR,
   generateInvoiceHash,
-  TenantData,
 } from '../packs/sa/zatca.js';
 
 const tenant: TenantData = {

@@ -50,6 +50,7 @@ describe('hasImplicitViewAll', () => {
 describe('requireExecAccess', () => {
   function grantResolver(grantedPersonas: string[]) {
     return (ctx: any) => {
+      if (ctx.table === 'tenants') return { data: { id: 'tenant-A', jurisdiction_code: 'SA' } };
       if (ctx.table !== 'exec_dashboard_access') return {};
       if (ctx.single) {
         const personaArg = ctx.filters.find((f: any) => f.method === 'eq' && f.args[0] === 'persona')?.args[1];
@@ -184,6 +185,7 @@ describe('execRouter — direct API call isolation', () => {
 
   function grantResolver(grantedPersonas: string[]) {
     return (ctx: any) => {
+      if (ctx.table === 'tenants') return { data: { id: 'tenant-A', jurisdiction_code: 'SA' } };
       if (ctx.table !== 'exec_dashboard_access') return {};
       if (ctx.single) {
         const personaArg = ctx.filters.find((f: any) => f.method === 'eq' && f.args[0] === 'persona')?.args[1];

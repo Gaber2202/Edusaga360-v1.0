@@ -56,6 +56,9 @@ describe('convertToInvoice', () => {
     const db = createSupabaseStub();
     let inserted: any = null;
     db.setResolver((ctx: QueryContext) => {
+      if (ctx.table === 'tenants' && ctx.op === 'select') {
+        return { data: { id: TENANT_ID, jurisdiction_code: 'SA' } };
+      }
       if (ctx.table === 'invoices' && ctx.op === 'insert' && ctx.single) {
         inserted = ctx.payload as Record<string, unknown>;
         return { data: { ...(ctx.payload as object), id: 'new-invoice-id' } };

@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase.js';
-import type { TenantData } from '../packs/sa/zatca.js';
+import type { TenantData } from '../types/tenant.js';
 
 /**
  * Load the tenant compliance profile used for ZATCA/PDF rendering.

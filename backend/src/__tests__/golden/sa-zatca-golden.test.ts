@@ -10,12 +10,12 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest';
 import type { InvoiceData } from '../../packs/sa/vat.js';
+import type { TenantData } from '../../types/tenant.js';
 import {
   generateUBLXml,
   generateTLVQR,
   generateInvoiceHash,
   signInvoice,
-  TenantData,
 } from '../../packs/sa/zatca.js';
 import { golden } from './support/golden.js';
 

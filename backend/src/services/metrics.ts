@@ -1,8 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { sar, getAgingReport, getExpectedCollections, getRevenueByFeeType } from './reports.js';
-import { saAcademicCalendar } from '../packs/sa/academicCalendar.js';
-import { saRegulatorReports } from '../packs/sa/regulatorReports.js';
-import type { NitaqatResult } from '../packs/sa/regulatorReports.js';
+import { buildRequestContext, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
+import { resolvePack } from '../packs/registry.js';
 
 const DAY_MS = 86400000;
 
@@ -170,6 +169,9 @@ export class MetricsService {
   async computeAndStoreAll(tenantId: string, period = 'current', branchId?: string, persona?: 'ceo' | 'cfo' | 'coo' | 'chro'): Promise<DashboardData> {
     await this.ensureRegistry();
 
+    const ctx = await buildRequestContext(this.supabase, tenantId, branchId ?? undefined);
+    const pack = resolvePack(ctx);
+
     const needsCEO = !persona || persona === 'ceo';
     const needsCFO = !persona || persona === 'cfo';
     const needsCOO = !persona || persona === 'coo';
@@ -181,7 +183,9 @@ export class MetricsService {
     const startOfMonth = `${isoMonth(0)}-01`;
 
     const [academicYear, branches] = await Promise.all([
-      saAcademicCalendar.currentAcademicYearForDate!(this.supabase, tenantId) as Promise<{ id: string; start_date: string } | null>,
+      pack.academicCalendar?.currentAcademicYearForDate
+        ? await pack.academicCalendar.currentAcademicYearForDate(this.supabase, tenantId) as { id: string; start_date: string } | null
+        : null,
       this.supabase.from('branches').select('id, name_en, name_ar').eq('tenant_id', tenantId).then(r => r.data ?? []),
     ]);
 
@@ -310,7 +314,9 @@ export class MetricsService {
       const currentRes = await this.branchFilter(this.supabase.from('students').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('academic_year', academicYear.id), branchId);
       const currentCount = (currentRes as any).count ?? 0;
       // previous academic year: largest start_date < current.start_date
-      const prevYear = await saAcademicCalendar.academicYearBefore!(this.supabase, tenantId, academicYear.start_date) as { id: string } | null;
+      const prevYear = pack.academicCalendar?.academicYearBefore
+        ? await pack.academicCalendar.academicYearBefore(this.supabase, tenantId, academicYear.start_date) as { id: string } | null
+        : null;
       let previousCount = 0;
       if (prevYear?.id) {
         previousCount = (await this.branchFilter(this.supabase.from('students').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('academic_year', prevYear.id), branchId).then((r: any) => r.count ?? 0)) as number;
@@ -420,11 +426,14 @@ export class MetricsService {
     }
     const activeEmployees = employeesFull.filter((e: any) => e.status === 'active');
 
-    const nitaqatData = await saRegulatorReports.calculateNitaqat!(this.supabase, tenantId, {
+    if (!pack.regulatorReports?.calculateNitaqat) {
+      throw new NotImplementedInJurisdiction(ctx.tenant.jurisdictionCode, 'Nitaqat calculation');
+    }
+    const nitaqatData = await pack.regulatorReports.calculateNitaqat(this.supabase, tenantId, {
       branchId,
       employees: employeesFull,
       departments,
-    }) as NitaqatResult;
+    }) as any;
     const {
       headcount,
       saudiCount,

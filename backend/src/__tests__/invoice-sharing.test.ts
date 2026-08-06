@@ -2,7 +2,20 @@ import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('../lib/supabase.js', () => ({ supabase: {} }));
 vi.mock('../services/tenant.js', () => ({ getTenantComplianceData: vi.fn() }));
-vi.mock('../packs/sa/zatca.js', () => ({ invoiceDataFromRow: vi.fn(), generateZATCAInvoicePDF: vi.fn() }));
+vi.mock('../packs/sa/zatca.js', () => ({
+  invoiceDataFromRow: vi.fn(),
+  generateZATCAInvoicePDF: vi.fn(() => Promise.resolve(Buffer.from('pdf'))),
+  generateUBLXml: vi.fn(() => '<xml/>'),
+  generateInvoiceHash: vi.fn(() => 'hash'),
+  signInvoice: vi.fn(() => 'signature'),
+  generateTLVQR: vi.fn(() => 'qr'),
+  buildInvoiceHTML: vi.fn(() => '<html/>'),
+  generateCSR: vi.fn(),
+  generatePIH: vi.fn(),
+  reportInvoice: vi.fn(),
+  clearInvoice: vi.fn(),
+  complianceCheck: vi.fn(),
+}));
 vi.mock('../services/email.js', () => ({ isEmailConfigured: vi.fn().mockReturnValue(false), sendEmail: vi.fn() }));
 vi.mock('../services/messaging/registry.js', () => ({ getProvider: vi.fn() }));
 vi.mock('../lib/aiCrypto.js', () => ({ isAiCryptoConfigured: vi.fn().mockReturnValue(false), decryptSecret: vi.fn() }));

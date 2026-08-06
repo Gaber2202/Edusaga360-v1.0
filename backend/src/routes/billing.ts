@@ -26,8 +26,8 @@ import {
   generateUBLXml,
   generateInvoiceHash,
   generateZATCAInvoicePDF,
-  TenantData,
 } from '../packs/sa/zatca.js';
+import type { TenantData } from '../types/tenant.js';
 import { getTenantComplianceData } from '../services/tenant.js';
 import { createReceiptForPayment } from '../services/receipt.js';
 import { convertToInvoice } from '../services/lifecycle.js';
@@ -47,7 +47,7 @@ import {
 import { dispatchWebhook } from '../services/webhookDelivery.js';
 import { resolveFeeStructures } from '../services/feeResolution.js';
 import { resolvePack } from '../packs/registry.js';
-import { buildRequestContext } from '../lib/jurisdiction.js';
+import { buildRequestContext, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
 
 export const billingRouter = Router();
 
@@ -1009,11 +1009,17 @@ billingRouter.post('/payments', async (req: AuthenticatedRequest, res: Response)
     let receipt: Record<string, unknown> | null = null;
     try {
       const tenantData = await getTenantComplianceData(tenant_id);
+      const receiptCtx = await buildRequestContext(supabase, tenant_id, (invoice.branch_id as string) ?? undefined);
+      const receiptPack = resolvePack(receiptCtx);
+      if (!receiptPack.documents?.renderInvoicePdf) {
+        throw new NotImplementedInJurisdiction(receiptCtx.tenant.jurisdictionCode, 'receipt PDF');
+      }
       const { receipt: receiptRow, pdf_base64 } = await createReceiptForPayment(
         supabase,
         invoice as any,
         { id: payment.id, amount, method: payment_method, reference: reference ?? payment.id, date: today },
         tenantData,
+        receiptPack.documents.renderInvoicePdf as (invoice: unknown, tenant: unknown) => Promise<Buffer>,
       );
       receipt = { ...receiptRow, pdf_base64 };
     } catch (receiptErr) {

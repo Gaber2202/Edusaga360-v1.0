@@ -12,9 +12,11 @@
 import http from 'http';
 import https from 'https';
 import PDFDocument from 'pdfkit';
-import { generateZATCAInvoicePDF } from './zatca.js';
+import { generateZATCAInvoicePDF, invoiceDataFromRow } from './zatca.js';
 import { NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
 import type { DocumentsService } from '../contract/CountryPack.js';
+import type { InvoiceData } from './vat.js';
+import type { TenantData } from '../../types/tenant.js';
 
 const ARABIC_MONTHS: Record<number, string> = {
   1: 'يناير', 2: 'فبراير', 3: 'مارس', 4: 'أبريل', 5: 'مايو', 6: 'يونيو',
@@ -200,8 +202,23 @@ export async function generatePayslipPdf(data: PayslipData): Promise<Buffer> {
   });
 }
 
+function isInvoiceData(value: unknown): value is InvoiceData {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'uuid' in value &&
+    typeof (value as Record<string, unknown>).uuid === 'string' &&
+    'invoice_number' in value
+  );
+}
+
 export const saDocuments: DocumentsService = {
-  renderInvoicePdf: generateZATCAInvoicePDF,
+  renderInvoicePdf: async (invoice: unknown, tenant: unknown) => {
+    const invoiceData = isInvoiceData(invoice)
+      ? invoice
+      : invoiceDataFromRow((invoice ?? {}) as Record<string, unknown>);
+    return generateZATCAInvoicePDF(invoiceData, tenant as TenantData);
+  },
   renderPayslipPdf: (payslipData: unknown) => generatePayslipPdf(payslipData as PayslipData),
 
   buildDocument: () => {

@@ -98,6 +98,9 @@ export interface PaymentsService {
 
   /** Generate a SADAD bill number for an invoice (Saudi national payment scheme). */
   generateSadadBill?(supabase: unknown, tenantId: string, invoiceId: string): Promise<SadadBillResult>;
+
+  /** Reconcile local payment state against the provider (e.g. Moyasar). */
+  reconcilePaymentState?(supabase: unknown, tenantId: string, since?: string): Promise<unknown>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
