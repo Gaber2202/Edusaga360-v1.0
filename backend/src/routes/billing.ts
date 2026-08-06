@@ -47,7 +47,7 @@ import {
 import { dispatchWebhook } from '../services/webhookDelivery.js';
 import { resolveFeeStructures } from '../services/feeResolution.js';
 import { resolvePack } from '../packs/registry.js';
-import { buildRequestContext, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
+import { buildRequestContext, resolveJurisdiction, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
 
 export const billingRouter = Router();
 
@@ -1012,7 +1012,7 @@ billingRouter.post('/payments', async (req: AuthenticatedRequest, res: Response)
       const receiptCtx = await buildRequestContext(supabase, tenant_id, (invoice.branch_id as string) ?? undefined);
       const receiptPack = resolvePack(receiptCtx);
       if (!receiptPack.documents?.renderInvoicePdf) {
-        throw new NotImplementedInJurisdiction(receiptCtx.tenant.jurisdictionCode, 'receipt PDF');
+        throw new NotImplementedInJurisdiction(resolveJurisdiction(receiptCtx), 'receipt PDF');
       }
       const { receipt: receiptRow, pdf_base64 } = await createReceiptForPayment(
         supabase,

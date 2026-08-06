@@ -1,4 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+vi.mock('../services/tenant.js', () => ({ getTenantComplianceData: vi.fn() }));
 import { convertToInvoice } from '../services/lifecycle.js';
 import { createSupabaseStub, QueryContext } from './support/supabaseMock.js';
 

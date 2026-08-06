@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { sar, getAgingReport, getExpectedCollections, getRevenueByFeeType } from './reports.js';
-import { buildRequestContext, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
+import { buildRequestContext, resolveJurisdiction, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
 import { resolvePack } from '../packs/registry.js';
 
 const DAY_MS = 86400000;
@@ -427,7 +427,7 @@ export class MetricsService {
     const activeEmployees = employeesFull.filter((e: any) => e.status === 'active');
 
     if (!pack.regulatorReports?.calculateNitaqat) {
-      throw new NotImplementedInJurisdiction(ctx.tenant.jurisdictionCode, 'Nitaqat calculation');
+      throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'Nitaqat calculation');
     }
     const nitaqatData = await pack.regulatorReports.calculateNitaqat(this.supabase, tenantId, {
       branchId,

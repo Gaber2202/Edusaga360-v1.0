@@ -48,7 +48,7 @@ import { SegmentationRunner } from './services/collections/runner.js';
 import { CollectionMessenger } from './services/collections/messenger.js';
 import { InstallmentPlanEngine } from './services/collections/installments.js';
 import { GuaranteeEngine } from './services/collections/guarantee.js';
-import { buildRequestContext } from './lib/jurisdiction.js';
+import { buildRequestContext, resolveJurisdiction } from './lib/jurisdiction.js';
 import { resolvePack } from './packs/registry.js';
 import { MetricsService } from './services/metrics.js';
 
@@ -269,7 +269,7 @@ app.listen(PORT, () => {
             const ctx = await buildRequestContext(supabase, t.tenant_id as string);
             const pack = resolvePack(ctx);
             if (!pack.payments?.reconcilePaymentState) {
-              console.warn(`[cron] reconcile not available for jurisdiction ${ctx.tenant.jurisdictionCode}`);
+              console.warn(`[cron] reconcile not available for jurisdiction ${resolveJurisdiction(ctx)}`);
               continue;
             }
             const report = await pack.payments.reconcilePaymentState(supabase, t.tenant_id as string);

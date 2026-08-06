@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { buildRequestContext, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
+import { buildRequestContext, resolveJurisdiction, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
 import { resolvePack } from '../packs/registry.js';
 import { getProvider } from './messaging/registry.js';
 import { isEmailConfigured, sendEmail } from './email.js';
@@ -85,7 +85,7 @@ async function buildShareContext(supabase: SupabaseClient, invoice: Record<strin
   const ctx = await buildRequestContext(supabase, tenantId, (invoice.branch_id as string) ?? undefined);
   const pack = resolvePack(ctx);
   if (!pack.documents?.renderInvoicePdf) {
-    throw new NotImplementedInJurisdiction(ctx.tenant.jurisdictionCode, 'invoice PDF for sharing');
+    throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'invoice PDF for sharing');
   }
 
   const pdfBuffer = await pack.documents.renderInvoicePdf(
@@ -307,7 +307,7 @@ export async function renderInvoicePdf(supabase: SupabaseClient, tenantId: strin
   const ctx = await buildRequestContext(supabase, tenantId, (invoice.branch_id as string) ?? undefined);
   const pack = resolvePack(ctx);
   if (!pack.documents?.renderInvoicePdf) {
-    throw new NotImplementedInJurisdiction(ctx.tenant.jurisdictionCode, 'invoice PDF');
+    throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'invoice PDF');
   }
   return pack.documents.renderInvoicePdf(invoice as Record<string, unknown>, tenant);
 }

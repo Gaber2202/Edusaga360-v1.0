@@ -5,6 +5,9 @@
  * cannot silently change band logic or Saudization percentage math.
  */
 import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest';
+
+vi.mock('../../services/tenant.js', () => ({ getTenantComplianceData: vi.fn() }));
+
 import { MetricsService } from '../../services/metrics.js';
 import { createSupabaseStub, QueryContext } from '../support/supabaseMock.js';
 import { golden } from './support/golden.js';

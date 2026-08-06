@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { getProvider } from '../messaging/registry.js';
 import { decryptSecret, isAiCryptoConfigured } from '../../lib/aiCrypto.js';
 import { sendEmail as sendTransactionalEmail } from '../email.js';
-import { buildRequestContext, NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
+import { buildRequestContext, resolveJurisdiction, NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
 import { resolvePack } from '../../packs/registry.js';
 import { writeLedger } from './ledgerWriter.js';
 import { CollectionThreadService } from './threads.js';
@@ -226,7 +226,7 @@ export class CollectionMessenger {
     const ctx = await buildRequestContext(this.supabase, msg.tenant_id);
     const pack = resolvePack(ctx);
     if (!pack.payments?.createOrRefreshPaymentLink) {
-      throw new NotImplementedInJurisdiction(ctx.tenant.jurisdictionCode, 'payment link');
+      throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'payment link');
     }
     const link = await pack.payments.createOrRefreshPaymentLink(this.supabase, {
       tenantId: msg.tenant_id,

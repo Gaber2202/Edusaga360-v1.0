@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { SupabaseClient } from '@supabase/supabase-js';
 import type { InvoiceData, InvoiceItemData, VatSummary } from '../packs/sa/vat.js';
 import type { TenantData } from '../types/tenant.js';
-import { buildRequestContext, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
+import { buildRequestContext, resolveJurisdiction, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
 import { resolvePack } from '../packs/registry.js';
 
 function sar(n: number): number {
@@ -101,11 +101,12 @@ export async function convertToInvoice(
   const ctx = await buildRequestContext(supabase, original.tenant_id, original.branch_id ?? undefined);
   const pack = resolvePack(ctx);
 
+  const jurisdiction = resolveJurisdiction(ctx);
   if (!pack.tax?.computeVatSummary) {
-    throw new NotImplementedInJurisdiction(ctx.tenant.jurisdictionCode, 'VAT summary');
+    throw new NotImplementedInJurisdiction(jurisdiction, 'VAT summary');
   }
   if (!pack.eInvoice?.generateUBLXml || !pack.eInvoice?.generateInvoiceHash || !pack.eInvoice?.generateTLVQR) {
-    throw new NotImplementedInJurisdiction(ctx.tenant.jurisdictionCode, 'e-invoice generation');
+    throw new NotImplementedInJurisdiction(jurisdiction, 'e-invoice generation');
   }
 
   const vatSummary = pack.tax.computeVatSummary(invoiceData) as VatSummary;
