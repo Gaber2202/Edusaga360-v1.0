@@ -19,18 +19,20 @@ import os
 import re
 import sys
 from collections import defaultdict
+from datetime import date
 from pathlib import Path
 
-FORBIDDEN_TERMS = [
+# Named literals are matched case-insensitively as substrings, because they
+# appear in identifiers, table names, comments and string values.
+NAMED_TERMS = [
     "ZATCA", "Nafath", "Moyasar", "Nitaqat", "GOSI", "Qiwa", "Mudad", "Muqeem",
-    "SADAD", "'SAR'", "'AED'", "'QAR'", "Asia/Riyadh", "halala",
+    "SADAD", "Asia/Riyadh", "halala",
 ]
 
-# Strip surrounding quotes from quoted-currency literals and normalize to lower case for matching.
-NORMALIZED_TERMS = [
-    (t.strip("'\"") if t.startswith(("'", '"')) and t.endswith(("'", '"')) else t).lower()
-    for t in FORBIDDEN_TERMS
-]
+# Currency codes must appear as standalone tokens. They are also accepted when
+# quoted ('SAR', "SAR"). They are NOT matched when they are part of an
+# identifier (e.g. the shared sar() rounding helper) or a hyphenated word.
+CURRENCY_TERMS = ["SAR", "AED", "QAR"]
 
 ALLOWED_DIRS = [
     "src/packs/",
@@ -57,6 +59,26 @@ SKIP_FILES = {
     "package-lock.json",
     "yarn.lock",
     "pnpm-lock.yaml",
+}
+
+
+def build_term_pattern(term: str) -> re.Pattern:
+    """Build a case-insensitive regex for one forbidden term."""
+    if term in CURRENCY_TERMS:
+        # Standalone token, not part of an identifier or hyphenated word,
+        # and not followed immediately by '(' (function call).
+        pattern = (
+            r"(?<![A-Za-z0-9_-])"
+            + re.escape(term)
+            + r"(?![A-Za-z0-9_-])(?![(])"
+        )
+    else:
+        pattern = re.escape(term)
+    return re.compile(pattern, re.IGNORECASE)
+
+
+TERM_PATTERNS: dict[str, re.Pattern] = {
+    term.lower(): build_term_pattern(term) for term in (NAMED_TERMS + CURRENCY_TERMS)
 }
 
 
@@ -99,8 +121,8 @@ def scan_repo(repo_root: Path):
                 text = p.read_text(encoding="utf-8", errors="replace")
             except OSError:
                 continue
-            for term in NORMALIZED_TERMS:
-                for _ in re.finditer(re.escape(term), text, re.IGNORECASE):
+            for term, pattern in TERM_PATTERNS.items():
+                for _ in pattern.finditer(text):
                     counts[rel][term] += 1
     return counts
 
@@ -115,6 +137,16 @@ def load_allowlist(repo_root: Path) -> dict[tuple[str, str], dict]:
         key = (entry["file"], entry["term"])
         result[key] = entry
     return result
+
+
+def is_expired(entry: dict) -> bool:
+    expires = entry.get("expires")
+    if not expires:
+        return False
+    try:
+        return date.fromisoformat(expires) < date.today()
+    except ValueError:
+        return False
 
 
 def save_allowlist(repo_root: Path, counts: dict[str, dict[str, int]]):
@@ -142,6 +174,8 @@ def check_counts(repo_root: Path, counts: dict[str, dict[str, int]], allowlist: 
             entry = allowlist.get(key)
             if entry is None:
                 violations.append((rel, term, actual, None, "not allowed"))
+            elif is_expired(entry):
+                violations.append((rel, term, actual, entry.get("count", 0), "allowlist expired"))
             elif actual > entry.get("count", 0):
                 violations.append((rel, term, actual, entry.get("count", 0), "count exceeded"))
     return violations

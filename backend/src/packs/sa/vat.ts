@@ -115,15 +115,19 @@ export function categoryCode(category?: string): string {
 }
 
 
-// Saudi VAT moved from 5% to 15% on 1 July 2020. This is used for effective
-// dating so that re-issued historical invoices reproduce the rate in force at
-// their original issue date. Source: ZATCA public VAT guidance.
+// Saudi VAT timeline for effective dating. Re-issued historical invoices must
+// reproduce the rate in force at the original issue date.
+// Source: ZATCA public VAT guidance.
+const SA_VAT_5_START = new Date('2018-01-01T00:00:00Z');
 const SA_VAT_15_START = new Date('2020-07-01T00:00:00Z');
 
 function historicalVatRate(asOf?: Date | string): number {
   if (!asOf) return 0.15;
   const d = typeof asOf === 'string' ? new Date(asOf) : asOf;
-  return d < SA_VAT_15_START ? 0.05 : 0.15;
+  if (Number.isNaN(d.getTime())) return 0.15;
+  if (d < SA_VAT_5_START) return 0;
+  if (d < SA_VAT_15_START) return 0.05;
+  return 0.15;
 }
 
 export function vatRateForCategory(category: string, rate?: number, asOf?: Date | string): number {

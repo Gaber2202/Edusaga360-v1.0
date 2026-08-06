@@ -3,7 +3,7 @@ import tseslint from 'typescript-eslint';
 import localPlugin from './eslint-local-rules/country-literal-ban.mjs';
 
 export default [
-  { ignores: ['dist/**', 'src/packs/**', 'src/__tests__/**', '**/*.test.ts', '**/*.test.tsx', 'eslint-local-rules/**', 'eslint.config.js'] },
+  { ignores: ['dist/**', 'eslint-local-rules/country-literal-ban.mjs'] },
   ...tseslint.configs.recommended,
   {
     plugins: { local: localPlugin },
@@ -15,6 +15,13 @@ export default [
       '@typescript-eslint/no-explicit-any': 'warn',
       'no-console': 'off',
       'local/country-literal-ban': 'error',
+    },
+  },
+  {
+    // Country packs and tests legitimately contain Saudi/GCC-specific literals.
+    files: ['src/packs/**', 'src/__tests__/**', '**/*.test.ts', '**/*.test.tsx'],
+    rules: {
+      'local/country-literal-ban': 'off',
     },
   },
 ];

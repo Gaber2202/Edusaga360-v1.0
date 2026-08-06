@@ -1,7 +1,16 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('../../lib/supabase.js', () => ({ supabase: {} }));
+
 import { resolvePack } from '../registry.js';
 
 describe('effective dating', () => {
+  it('SA pack vatRateForCategory returns 0% before VAT was introduced on 1 January 2018', () => {
+    const pack = resolvePack({ tenant: { id: 'tenant-1', jurisdictionCode: 'SA' } });
+    const rate = pack.tax?.vatRateForCategory?.('standard', undefined, '2017-06-15');
+    expect(rate).toBe(0);
+  });
+
   it('SA pack vatRateForCategory uses the historical 5% rate before 1 July 2020', () => {
     const pack = resolvePack({ tenant: { id: 'tenant-1', jurisdictionCode: 'SA' } });
     const rate = pack.tax?.vatRateForCategory?.('standard', undefined, '2019-01-15');

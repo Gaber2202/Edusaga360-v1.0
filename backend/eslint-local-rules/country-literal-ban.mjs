@@ -15,12 +15,31 @@ const RULE_DIR = path.dirname(__filename);
 const REPO_ROOT = path.resolve(RULE_DIR, '..', '..');
 const ALLOWLIST_PATH = path.join(REPO_ROOT, '.github', 'allowed_country_literals.json');
 
-const FORBIDDEN_TERMS = [
+const NAMED_TERMS = [
   'ZATCA', 'Nafath', 'Moyasar', 'Nitaqat', 'GOSI', 'Qiwa', 'Mudad', 'Muqeem',
-  'SADAD', "'SAR'", "'AED'", "'QAR'", 'Asia/Riyadh', 'halala',
-]
-  .map((t) => (t.startsWith("'") && t.endsWith("'") ? t.slice(1, -1) : t))
-  .map((t) => t.toLowerCase());
+  'SADAD', 'Asia/Riyadh', 'halala',
+];
+const CURRENCY_TERMS = ['SAR', 'AED', 'QAR'];
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildTermPattern(term) {
+  if (CURRENCY_TERMS.includes(term)) {
+    // Standalone token, not part of an identifier or hyphenated word,
+    // and not followed immediately by '(' (function call).
+    return new RegExp(
+      `(?<![A-Za-z0-9_-])${escapeRegExp(term)}(?![A-Za-z0-9_-])(?![(])`,
+      'gi',
+    );
+  }
+  return new RegExp(escapeRegExp(term), 'gi');
+}
+
+const TERM_PATTERNS = Object.fromEntries(
+  [...NAMED_TERMS, ...CURRENCY_TERMS].map((t) => [t.toLowerCase(), buildTermPattern(t)]),
+);
 
 function loadAllowlist() {
   if (!existsSync(ALLOWLIST_PATH)) return new Map();
@@ -29,11 +48,20 @@ function loadAllowlist() {
     const map = new Map();
     for (const entry of data) {
       const key = `${entry.file}::${entry.term}`;
-      map.set(key, entry.count ?? 0);
+      map.set(key, { count: entry.count ?? 0, expires: entry.expires });
     }
     return map;
   } catch {
     return new Map();
+  }
+}
+
+function isExpired(expires) {
+  if (!expires) return false;
+  try {
+    return new Date(expires) < new Date(new Date().toDateString());
+  } catch {
+    return false;
   }
 }
 
@@ -53,6 +81,7 @@ export default {
         messages: {
           disallowedLiteral: "Country-specific literal '{{term}}' is not allowed in {{file}}. Move it into a pack or add to the allowlist with an expiry.",
           countExceeded: "Country-specific literal '{{term}}' occurs {{actual}} times in {{file}}, allowlist count is {{allowed}}.",
+          expired: "Allowlist entry for '{{term}}' in {{file}} expired on {{expires}}. Remove the literal or extend the expiry deliberately.",
         },
       },
       create(context) {
@@ -63,20 +92,25 @@ export default {
 
         return {
           Program() {
-            for (const term of FORBIDDEN_TERMS) {
-              const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-              const re = new RegExp(escaped, 'gi');
+            for (const [term, pattern] of Object.entries(TERM_PATTERNS)) {
               let match;
-              while ((match = re.exec(source)) !== null) {
+              while ((match = pattern.exec(source)) !== null) {
                 const pos = match.index;
                 const matchedTerm = match[0];
                 const line = source.slice(0, pos).split('\n').length;
                 const key = `${filename}::${matchedTerm.toLowerCase()}`;
-                const allowed = allowlist.get(key) ?? 0;
+                const entry = allowlist.get(key) ?? { count: 0 };
+                const allowed = entry.count ?? 0;
                 const count = (seen.get(key) ?? 0) + 1;
                 seen.set(key, count);
 
-                if (allowed === 0 && count === 1) {
+                if (isExpired(entry.expires) && count === 1) {
+                  context.report({
+                    loc: { start: { line, column: 0 }, end: { line, column: 0 } },
+                    messageId: 'expired',
+                    data: { term: matchedTerm, file: filename, expires: entry.expires },
+                  });
+                } else if (allowed === 0 && count === 1) {
                   context.report({
                     loc: { start: { line, column: 0 }, end: { line, column: 0 } },
                     messageId: 'disallowedLiteral',
