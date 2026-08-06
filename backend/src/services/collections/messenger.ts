@@ -225,10 +225,10 @@ export class CollectionMessenger {
 
     const ctx = await buildRequestContext(this.supabase, msg.tenant_id);
     const pack = resolvePack(ctx);
-    if (!pack.payments?.createOrRefreshPaymentLink) {
+    if (!pack.payments?.getOrCreatePaymentLink) {
       throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'payment link');
     }
-    const link = await pack.payments.createOrRefreshPaymentLink(this.supabase, {
+    const link = await pack.payments.getOrCreatePaymentLink(this.supabase, {
       tenantId: msg.tenant_id,
       invoiceId: msg.invoice_id,
       callbackUrl: this.callbackUrl,

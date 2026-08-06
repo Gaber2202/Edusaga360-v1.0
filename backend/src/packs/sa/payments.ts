@@ -7,6 +7,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   createOrRefreshMoyasarLink,
+  getOrCreateMoyasarLink,
   processMoyasarWebhook,
   requestMoyasarRefund,
   reconcileMoyasarState,
@@ -58,6 +59,9 @@ export const saPayments: PaymentsService = {
 
   createOrRefreshPaymentLink: async (supabase, options) =>
     createOrRefreshMoyasarLink(supabase as SupabaseClient, toMoyasarOptions(options)),
+
+  getOrCreatePaymentLink: async (supabase, options) =>
+    getOrCreateMoyasarLink(supabase as SupabaseClient, toMoyasarOptions(options)) as Promise<MoyasarLinkResult>,
 
   processWebhook: async (supabase, payload, signature) => {
     const p = (payload ?? {}) as Record<string, unknown>;

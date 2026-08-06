@@ -264,10 +264,10 @@ export class InfobipAiAssistant {
     const invoice = invoices[0];
     const ctx = await buildRequestContext(this.supabase, guardian.tenant_id);
     const pack = resolvePack(ctx);
-    if (!pack.payments?.createOrRefreshPaymentLink) {
+    if (!pack.payments?.getOrCreatePaymentLink) {
       throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'payment link');
     }
-    const link = await pack.payments.createOrRefreshPaymentLink(this.supabase, {
+    const link = await pack.payments.getOrCreatePaymentLink(this.supabase, {
       tenantId: guardian.tenant_id,
       invoiceId: invoice.id,
       callbackUrl: this.callbackUrl,

@@ -79,7 +79,6 @@ async function buildShareContext(supabase: SupabaseClient, invoice: Record<strin
   const student = (invoice.students as Record<string, unknown> | undefined) || {};
   const guardian = (student.guardians as Record<string, unknown> | undefined) || {};
   const tenant = await getTenantComplianceData(invoice.tenant_id as string);
-  const invoiceId = invoice.id as string;
   const tenantId = invoice.tenant_id as string;
 
   const ctx = await buildRequestContext(supabase, tenantId, (invoice.branch_id as string) ?? undefined);
@@ -88,10 +87,7 @@ async function buildShareContext(supabase: SupabaseClient, invoice: Record<strin
     throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'invoice PDF for sharing');
   }
 
-  const pdfBuffer = await pack.documents.renderInvoicePdf(
-    await loadInvoice(supabase, invoiceId, tenantId),
-    tenant,
-  );
+  const pdfBuffer = await pack.documents.renderInvoicePdf(invoice, tenant);
   const pdfBase64 = pdfBuffer.toString('base64');
 
   return {
@@ -117,6 +113,7 @@ async function sendWhatsAppShare(
     .from('messaging_connectors')
     .select('*')
     .eq('tenant_id', tenantId)
+    .eq('is_active', true)
     .in('channel', ['whatsapp']);
 
   // Prefer Infobip if configured, otherwise Meta WhatsApp Cloud.
