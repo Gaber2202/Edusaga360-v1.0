@@ -33,7 +33,7 @@ import { createReceiptForPayment } from '../services/receipt.js';
 import { convertToInvoice } from '../services/lifecycle.js';
 import { shareInvoice } from '../services/share.js';
 import type { ShareChannel } from '../services/share.js';
-import { createOrRefreshMoyasarLink, bulkCreateMoyasarInvoices, requestMoyasarRefund, reconcileMoyasarState, type MoyasarLinkResult } from '../packs/sa/moyasarService.js';
+import type { PaymentLinkResult } from '../packs/contract/CountryPack.js';
 import { applyDiscounts } from '../services/discounts.js';
 import {
   getAgingReport,
@@ -511,6 +511,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
 
     const extendedPayload = {
       tenant_id,
+      currency_code: pack.currencyCode,
       branch_id: studentBranchId,
       student_id,
       guardian_id: student.guardian_id,
@@ -560,6 +561,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       console.warn('[billing] Extended insert failed, using base schema:', extError.message);
       const basePayload = {
         tenant_id,
+        currency_code: pack.currencyCode,
         branch_id: studentBranchId,
         student_id,
         guardian_id: student.guardian_id,
@@ -589,6 +591,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       const { error: discErr } = await supabase.from('invoice_discounts').insert(
         discountDetails.map((d) => ({
           tenant_id,
+          currency_code: pack.currencyCode,
           invoice_id: invoice.id,
           discount_rule_id: d.rule_id,
           discount_code: d.code,
@@ -633,6 +636,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
         .from('payment_plans')
         .insert({
           tenant_id,
+          currency_code: pack.currencyCode,
           student_id,
           academic_year,
           plan_type: 'term',
@@ -651,6 +655,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
           d.setMonth(d.getMonth() + i);
           return {
             tenant_id,
+            currency_code: pack.currencyCode,
             plan_id: planData.id,
             installment_no: i + 1,
             due_date: d.toISOString().split('T')[0],
@@ -676,14 +681,17 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       console.warn('[billing] GL journal post failed:', (journalErr as Error).message);
     }
 
-    // Auto-issue a Moyasar hosted payment link when the parent should pay digitally.
-    let paymentLink: MoyasarLinkResult | null = null;
+    // Auto-issue a hosted payment link when the parent should pay digitally.
+    let paymentLink: PaymentLinkResult | null = null;
     if (isTaxInvoice && invoice?.id && Array.isArray(payment_methods) && payment_methods.some((m) => DIGITAL_PAYMENT_METHODS.has(m))) {
       try {
+        if (!pack.payments?.createOrRefreshPaymentLink) {
+          throw new NotImplementedInJurisdiction(pack.code, 'hosted payment link');
+        }
         const protocol = req.get('X-Forwarded-Proto') || req.protocol;
         const baseUrl = process.env.PARENT_PORTAL_URL || process.env.PUBLIC_BASE_URL || `${protocol}://${req.get('host')}`;
         const firstDigital = payment_methods.find((m) => DIGITAL_PAYMENT_METHODS.has(m));
-        paymentLink = await createOrRefreshMoyasarLink(supabase, {
+        paymentLink = await pack.payments.createOrRefreshPaymentLink(supabase, {
           tenantId: tenant_id,
           invoiceId: invoice.id as string,
           callbackUrl: `${baseUrl}/api/public/billing/moyasar/webhook`,
@@ -692,9 +700,9 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
           sourceType: firstDigital as 'mada' | 'creditcard' | 'applepay' | 'stcpay' | 'samsungpay' | undefined,
           studentFirstName: (student.name_en as string) || (student.name_ar as string) || 'Student',
         });
-      } catch (moyasarErr) {
-        console.warn('[billing] Auto Moyasar link creation failed:', (moyasarErr as Error).message);
-        paymentLink = { ok: false, error: (moyasarErr as Error).message };
+      } catch (paymentErr) {
+        console.warn('[billing] Auto payment link creation failed:', (paymentErr as Error).message);
+        paymentLink = { ok: false, error: (paymentErr as Error).message };
       }
     }
 
@@ -892,6 +900,8 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
 
     const cnNumber = `CN-${original.invoice_number}`;
     const today = new Date().toISOString().split('T')[0];
+    const ctx = await buildRequestContext(supabase, tenant_id, (original.branch_id as string) ?? undefined);
+    const pack = resolvePack(ctx);
 
     const cnItems = line_adjustments && line_adjustments.length > 0
       ? line_adjustments.map((l: any) => ({ ...l, vat_category: 'out_of_scope', vat_category_code: 'O', vat_rate: 0, vat_amount: 0, line_total_gross: -(l.amount ?? 0), quantity: l.quantity ?? 1, unit_price_net: -(l.amount ?? 0) / (l.quantity ?? 1) }))
@@ -900,6 +910,7 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
       .from('invoices')
       .insert({
         tenant_id,
+        currency_code: pack.currencyCode,
         branch_id: original.branch_id ?? null,
         student_id: original.student_id,
         invoice_number: cnNumber,
@@ -1037,10 +1048,12 @@ billingRouter.post('/payments', async (req: AuthenticatedRequest, res: Response)
     const today = new Date().toISOString().split('T')[0];
     const newPaid = sar(invoice.paid_amount + amount);
     const newStatus = newPaid >= invoice.total_amount - 0.01 ? 'paid' : 'partial';
+    const ctx = await buildRequestContext(supabase, tenant_id, (invoice.branch_id as string) ?? undefined);
+    const pack = resolvePack(ctx);
 
     const { data: payment, error: pmtErr } = await supabase
       .from('payments')
-      .insert({ tenant_id, branch_id: invoice.branch_id ?? null, invoice_id, amount, method: payment_method, reference: reference ?? null, date: today, status: 'completed' })
+      .insert({ tenant_id, currency_code: pack.currencyCode, branch_id: invoice.branch_id ?? null, invoice_id, amount, method: payment_method, reference: reference ?? null, date: today, status: 'completed' })
       .select()
       .single();
     if (pmtErr) throw pmtErr;
@@ -1061,6 +1074,7 @@ billingRouter.post('/payments', async (req: AuthenticatedRequest, res: Response)
         invoice as any,
         { id: payment.id, amount, method: payment_method, reference: reference ?? payment.id, date: today },
         tenantData,
+        receiptPack.currencyCode,
         receiptPack.documents.renderInvoicePdf as (invoice: unknown, tenant: unknown) => Promise<Buffer>,
       );
       receipt = { ...receiptRow, pdf_base64 };
@@ -1330,6 +1344,7 @@ export async function createInvoiceForStudent(
     .from('invoices')
     .insert({
       tenant_id,
+      currency_code: pack.currencyCode,
       branch_id: studentBranchId,
       student_id,
       guardian_id: student.guardian_id,
@@ -1390,6 +1405,7 @@ export async function createInvoiceForStudent(
     const { error: discErr } = await supabase.from('invoice_discounts').insert(
       discountDetails.map((d) => ({
         tenant_id,
+        currency_code: pack.currencyCode,
         invoice_id: invoice.id,
         discount_rule_id: d.rule_id,
         discount_code: d.code,
@@ -1420,6 +1436,8 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
     const parsed = BulkInvoiceSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
     const { academic_year, grade, campus_id, due_date, dry_run, approved, name } = parsed.data;
+    const ctx = await buildRequestContext(supabase, tenant_id, campus_id ?? undefined);
+    const pack = resolvePack(ctx);
 
     // Fetch active fee structures (generic, jurisdiction-neutral resolution).
     const feeStructures = await resolveFeeStructures(supabase, tenant_id, {
@@ -1440,8 +1458,6 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
     if (!students?.length) return res.status(400).json({ error: 'No active students found' });
 
     const today = new Date().toISOString().split('T')[0];
-    const ctx = await buildRequestContext(supabase, tenant_id, campus_id ?? undefined);
-    const pack = resolvePack(ctx);
 
     // Determine which students already have a (non-cancelled) invoice for this
     // academic year. The same rule drives both the preview and the real run, so
@@ -1504,6 +1520,7 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
     const batchNumber = `BATCH-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const batchPayload = {
       tenant_id,
+      currency_code: pack.currencyCode,
       batch_number: batchNumber,
       batch_name: name || `Term invoice batch ${batchNumber}`,
       criteria,
@@ -1752,7 +1769,12 @@ billingRouter.post('/moyasar/link', requireRole(FINANCE_ROLES), async (req: Auth
       .eq('id', (await supabase.from('invoices').select('student_id').eq('id', parsed.data.invoice_id).eq('tenant_id', tenant_id).single()).data?.student_id as string)
       .single();
 
-    const result = await createOrRefreshMoyasarLink(supabase, {
+    const ctx = await buildRequestContext(supabase, tenant_id);
+    const pack = resolvePack(ctx);
+    if (!pack.payments?.createOrRefreshPaymentLink) {
+      throw new NotImplementedInJurisdiction(pack.code, 'hosted payment link');
+    }
+    const result = await pack.payments.createOrRefreshPaymentLink(supabase, {
       tenantId: tenant_id,
       invoiceId: parsed.data.invoice_id,
       installmentId: parsed.data.installment_id,
@@ -1765,8 +1787,11 @@ billingRouter.post('/moyasar/link', requireRole(FINANCE_ROLES), async (req: Auth
     if (!result.ok) return res.status(400).json({ error: result.error });
     return res.json(result);
   } catch (err) {
-    console.error('moyasar link:', err);
-    return res.status(500).json({ error: 'moyasar_link_failed', message: (err as Error).message });
+    if (err instanceof NotImplementedInJurisdiction || (err as any).name === 'NotImplementedInJurisdiction') {
+      return res.status(501).json({ error: (err as Error).message, code: 501, feature: (err as any).feature });
+    }
+    console.error('payment link:', err);
+    return res.status(500).json({ error: 'payment_link_failed', message: (err as Error).message });
   }
 });
 
@@ -1785,7 +1810,12 @@ billingRouter.post('/moyasar/bulk', requireRole(FINANCE_ROLES), async (req: Auth
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
     const baseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3001}`;
-    const result = await bulkCreateMoyasarInvoices(
+    const ctx = await buildRequestContext(supabase, tenant_id);
+    const pack = resolvePack(ctx);
+    if (!pack.payments?.bulkCreatePaymentLinks) {
+      throw new NotImplementedInJurisdiction(pack.code, 'bulk payment links');
+    }
+    const result = await pack.payments.bulkCreatePaymentLinks(
       supabase,
       tenant_id,
       parsed.data.invoice_ids,
@@ -1793,8 +1823,11 @@ billingRouter.post('/moyasar/bulk', requireRole(FINANCE_ROLES), async (req: Auth
       parsed.data.success_url || `${baseUrl}/payment/result?status=success`,
       parsed.data.back_url || `${baseUrl}/payment/result?status=pending`,
     );
-    return result.ok ? res.json(result) : res.status(400).json(result);
+    return (result as { ok?: boolean }).ok ? res.json(result) : res.status(400).json(result);
   } catch (err) {
+    if (err instanceof NotImplementedInJurisdiction || (err as any).name === 'NotImplementedInJurisdiction') {
+      return res.status(501).json({ error: (err as Error).message, code: 501, feature: (err as any).feature });
+    }
     console.error('moyasar bulk:', err);
     return res.status(500).json({ error: 'moyasar_bulk_failed', message: (err as Error).message });
   }
@@ -1812,9 +1845,17 @@ billingRouter.post('/moyasar/refund', requireRole(FINANCE_ROLES), async (req: Au
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
-    const result = await requestMoyasarRefund(supabase, tenant_id, parsed.data.payment_id, parsed.data.amount);
-    return result.ok ? res.json(result) : res.status(400).json(result);
+    const ctx = await buildRequestContext(supabase, tenant_id);
+    const pack = resolvePack(ctx);
+    if (!pack.payments?.refundPayment) {
+      throw new NotImplementedInJurisdiction(pack.code, 'payment refund');
+    }
+    const result = await pack.payments.refundPayment(supabase, tenant_id, parsed.data.payment_id, parsed.data.amount);
+    return (result as { ok?: boolean }).ok ? res.json(result) : res.status(400).json(result);
   } catch (err) {
+    if (err instanceof NotImplementedInJurisdiction || (err as any).name === 'NotImplementedInJurisdiction') {
+      return res.status(501).json({ error: (err as Error).message, code: 501, feature: (err as any).feature });
+    }
     console.error('moyasar refund:', err);
     return res.status(500).json({ error: 'moyasar_refund_failed', message: (err as Error).message });
   }
@@ -1826,9 +1867,17 @@ billingRouter.post('/moyasar/reconcile', requireRole(FINANCE_ROLES), async (req:
   try {
     const tenant_id = req.user!.tenant_id!;
     const since = (req.query.since as string) || undefined;
-    const report = await reconcileMoyasarState(supabase, tenant_id, since);
+    const ctx = await buildRequestContext(supabase, tenant_id);
+    const pack = resolvePack(ctx);
+    if (!pack.payments?.reconcilePaymentState) {
+      throw new NotImplementedInJurisdiction(pack.code, 'payment reconciliation');
+    }
+    const report = await pack.payments.reconcilePaymentState(supabase, tenant_id, since);
     return res.json(report);
   } catch (err) {
+    if (err instanceof NotImplementedInJurisdiction || (err as any).name === 'NotImplementedInJurisdiction') {
+      return res.status(501).json({ error: (err as Error).message, code: 501, feature: (err as any).feature });
+    }
     console.error('moyasar reconcile:', err);
     return res.status(500).json({ error: 'moyasar_reconcile_failed', message: (err as Error).message });
   }

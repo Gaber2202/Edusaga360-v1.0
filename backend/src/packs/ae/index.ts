@@ -13,6 +13,7 @@ import { aeTax } from './tax.js';
 
 export const aePack: CountryPack = {
   code: 'AE',
+  currencyCode: 'AED',
   tax: aeTax,
   eInvoice: aeEInvoice,
   payments: aePayments,

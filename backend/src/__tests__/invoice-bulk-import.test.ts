@@ -16,7 +16,10 @@ describe('csvToRows', () => {
 describe('processBulkImport', () => {
   it('validates student rows and returns error for missing name', async () => {
     const db = createSupabaseStub();
-    db.setResolver(() => ({ data: {} }));
+    db.setResolver((ctx: QueryContext) => {
+      if (ctx.table === 'tenants') return { data: { id: 'tenant-1', jurisdiction_code: 'SA', settings: {} } };
+      return { data: {} };
+    });
     const result = await processBulkImport(
       db.client as any,
       'tenant-1',
@@ -37,6 +40,7 @@ describe('processBulkImport', () => {
         inserted = ctx.payload;
         return { data: { id: 'fc-1' } };
       }
+      if (ctx.table === 'tenants') return { data: { id: 'tenant-1', jurisdiction_code: 'SA', settings: {} } };
       return { data: null };
     });
 
@@ -67,6 +71,7 @@ describe('processBulkImport', () => {
       if (ctx.table === 'invoices' && ctx.op === 'update') {
         return { data: [{ id: 'inv-1', total_amount: 1150, paid_amount: 1150, status: 'paid' }] };
       }
+      if (ctx.table === 'tenants') return { data: { id: 'tenant-1', jurisdiction_code: 'SA', settings: {} } };
       return { data: null };
     });
 
@@ -101,6 +106,7 @@ describe('processBulkImport', () => {
         inserted = ctx.payload;
         return { data: { id: 'inv-1', ...(ctx.payload as object) } };
       }
+      if (ctx.table === 'tenants') return { data: { id: 'tenant-1', jurisdiction_code: 'SA', settings: {} } };
       return { data: null };
     });
 

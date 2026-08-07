@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createSupabaseStub, QueryContext } from './support/supabaseMock.js';
 
-vi.mock('../packs/sa/zatca.js', () => ({
+vi.mock('../packs/sa/zatca.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../packs/sa/zatca.js')>()),
   generateZATCAInvoicePDF: vi.fn(() => Buffer.from('pdf')),
 }));
 
@@ -16,6 +17,7 @@ describe('createReceiptForPayment', () => {
         inserted = ctx.payload;
         return { data: { id: 'rcp-1', ...(ctx.payload as object) } };
       }
+      if (ctx.table === 'tenants') return { data: { id: invoice.tenant_id, jurisdiction_code: 'SA' } };
       return { data: null };
     });
 
@@ -38,6 +40,7 @@ describe('createReceiptForPayment', () => {
       invoice as any,
       { id: 'pmt-1', amount: 1150, method: 'mada', reference: 'ref-1', date: '2026-08-01' },
       { name_en: 'Al Noor', name_ar: 'النور', vat_number: '300000000000003', address_en: 'Riyadh', address_ar: 'الرياض', city: 'Riyadh', country_code: 'SA', country_subentity_code: 'SA-01', phone: '+966500000000', email: 'a@school.sa', cr_number: '1010101010' } as any,
+      'SAR',
       () => Promise.resolve(Buffer.from('pdf')),
     );
 

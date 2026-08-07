@@ -198,7 +198,7 @@
   {
     "file": "backend/src/routes/payroll.ts",
     "term": "gosi",
-    "count": 63,
+    "count": 33,
     "reason": "payroll route composes the Saudi GOSI/WPS pack (allowed until generic payroll composition is extracted)",
     "expires": "2026-10-31"
   },

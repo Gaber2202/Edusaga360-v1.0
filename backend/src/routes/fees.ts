@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/auth.js';
+import { buildRequestContext } from '../lib/jurisdiction.js';
+import { resolvePack } from '../packs/registry.js';
 
 export const feesRouter = Router();
 
@@ -102,6 +104,9 @@ feesRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenticat
       return res.status(404).json({ error: 'Student not found', code: 404 });
     }
 
+    const ctx = await buildRequestContext(supabase, tenant_id);
+    const pack = resolvePack(ctx);
+
     // Calculate amounts — VAT enforced at 15%, never from client input
     const subtotal = fee_items.reduce((sum, item) => sum + item.amount, 0);
     const discountAmount = discount ?? 0;
@@ -134,6 +139,7 @@ feesRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenticat
       .from('invoices')
       .insert({
         tenant_id,
+        currency_code: pack.currencyCode,
         student_id,
         invoice_number: invoiceNumber,
         date: today,
@@ -275,6 +281,7 @@ feesRouter.post('/payments', requireRole(FINANCE_ROLES), async (req: Authenticat
       .from('payments')
       .insert({
         tenant_id,
+        currency_code: invoice.currency_code,
         invoice_id,
         amount,
         method: payment_method,

@@ -11,6 +11,7 @@ import {
   processMoyasarWebhook,
   requestMoyasarRefund,
   reconcileMoyasarState,
+  bulkCreateMoyasarInvoices,
   type MoyasarLinkOptions,
   type MoyasarLinkResult,
 } from './moyasarService.js';
@@ -62,6 +63,16 @@ export const saPayments: PaymentsService = {
 
   getOrCreatePaymentLink: async (supabase, options) =>
     getOrCreateMoyasarLink(supabase as SupabaseClient, toMoyasarOptions(options)) as Promise<MoyasarLinkResult>,
+
+  bulkCreatePaymentLinks: async (supabase, tenantId, invoiceIds, callbackUrl, successUrl, backUrl) =>
+    bulkCreateMoyasarInvoices(
+      supabase as SupabaseClient,
+      tenantId,
+      invoiceIds,
+      callbackUrl,
+      successUrl,
+      backUrl,
+    ),
 
   processWebhook: async (supabase, payload, signature) => {
     const p = (payload ?? {}) as Record<string, unknown>;

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import { AuthenticatedRequest, requireRole, PAYROLL_ROLES } from '../middleware/auth.js';
-import { GOSI_CAP_MONTHLY, isSaudi } from '../packs/sa/payroll.js';
+import { calculateGosiForEmployee } from '../packs/sa/payroll.js';
 import { resolvePack } from '../packs/registry.js';
 import { buildRequestContext, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
 
@@ -46,7 +46,6 @@ payrollRouter.post('/calculate', requireRole(PAYROLL_ROLES), async (req: Authent
     if (!payroll || !payroll.calculateGosi) {
       throw new NotImplementedInJurisdiction(pack.code, 'PayrollService.calculateGosi');
     }
-    const calculateGosi = payroll.calculateGosi;
     const { period_start, period_end, employee_ids } = parsed.data;
 
     // Fetch employees for this tenant
@@ -117,14 +116,7 @@ payrollRouter.post('/calculate', requireRole(PAYROLL_ROLES), async (req: Authent
       );
 
       const grossSalary = basicSalary + housingAllowance + transportAllowance + otherAllowances;
-      const gosiResult  = calculateGosi(basicSalary, emp.nationality);
-      const gosi        = {
-        gosi_wage:      Math.min(basicSalary, GOSI_CAP_MONTHLY),
-        gosi_employee:  gosiResult.employee,
-        gosi_employer:  gosiResult.employer,
-        rates:          gosiResult.rates ?? { employee: 0, employer: 0 },
-        is_saudi:       isSaudi(emp.nationality),
-      };
+      const gosi = calculateGosiForEmployee(basicSalary, emp.nationality);
 
       // Attendance-based deductions
       const dailyRate = Math.round((basicSalary / policy.working_days_per_month) * 100) / 100;
@@ -212,10 +204,9 @@ payrollRouter.post('/gosi-calculate', requireRole(PAYROLL_ROLES), async (req: Au
     const ctx = await buildRequestContext(supabase, tenant_id);
     const pack = resolvePack(ctx);
     const payroll = pack.payroll;
-    if (!payroll || !payroll.calculateGosi) {
+    if (!payroll || !payroll.calculateGosiForEmployees) {
       throw new NotImplementedInJurisdiction(pack.code, 'PayrollService.calculateGosi');
     }
-    const calculateGosi = payroll.calculateGosi;
     const parsed = GosiCalculateSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -225,29 +216,8 @@ payrollRouter.post('/gosi-calculate', requireRole(PAYROLL_ROLES), async (req: Au
       });
     }
 
-    const results = parsed.data.employees.map((emp) => {
-      const gosiResult = calculateGosi(emp.basic_salary, emp.nationality);
-      return {
-        id: emp.id,
-        nationality: emp.nationality,
-        basic_salary: emp.basic_salary,
-        gosi_cap_applied: emp.basic_salary > GOSI_CAP_MONTHLY,
-        gosi_wage: Math.min(emp.basic_salary, GOSI_CAP_MONTHLY),
-        gosi_employee: gosiResult.employee,
-        gosi_employer: gosiResult.employer,
-        total_gosi: gosiResult.total,
-        is_saudi: isSaudi(emp.nationality),
-        rates: gosiResult.rates ?? { employee: 0, employer: 0 },
-      };
-    });
-
-    const totals = {
-      total_gosi_employee: Math.round(results.reduce((s, r) => s + r.gosi_employee, 0) * 100) / 100,
-      total_gosi_employer: Math.round(results.reduce((s, r) => s + r.gosi_employer, 0) * 100) / 100,
-      total_gosi: Math.round(results.reduce((s, r) => s + r.total_gosi, 0) * 100) / 100,
-    };
-
-    return res.json({ employees: results, totals });
+    const { employees, totals } = payroll.calculateGosiForEmployees(parsed.data.employees);
+    return res.json({ employees, totals });
   } catch (err: any) {
     console.error('Failed to calculate GOSI:', err);
     if (err instanceof NotImplementedInJurisdiction || err.name === 'NotImplementedInJurisdiction') {

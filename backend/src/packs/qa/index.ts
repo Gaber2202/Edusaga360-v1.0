@@ -19,6 +19,7 @@ import { qaTax } from './tax.js';
 
 export const qaPack: CountryPack = {
   code: 'QA',
+  currencyCode: 'QAR',
   tax: qaTax,
   eInvoice: qaEInvoice,
   payments: qaPayments,

@@ -1,4 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { buildRequestContext } from '../lib/jurisdiction.js';
+import { resolvePack } from '../packs/registry.js';
 
 export interface BulkImportRow {
   [key: string]: string | number | undefined;
@@ -92,6 +94,8 @@ export async function processBulkImport(
   dryRun = false,
 ): Promise<BulkImportResult> {
   const result: BulkImportResult = { resource, dry_run: dryRun, valid: 0, invalid: 0, created: 0, rows: [] };
+  const ctx = await buildRequestContext(supabase, tenantId);
+  const pack = resolvePack(ctx);
 
   for (const row of rows) {
     const errors: string[] = [];
@@ -175,6 +179,7 @@ export async function processBulkImport(
         if (errors.length === 0 && studentId) {
           const insert = {
             tenant_id: tenantId,
+            currency_code: pack.currencyCode,
             student_id: studentId,
             invoice_number,
             academic_year,
@@ -217,7 +222,7 @@ export async function processBulkImport(
         if (errors.length === 0 && invoice && amount !== undefined) {
           const newPaid = (Number(invoice.paid_amount) || 0) + amount;
           const newStatus = newPaid >= (Number(invoice.total_amount) || 0) ? 'paid' : 'partial';
-          const insert = { tenant_id: tenantId, invoice_id: invoice.id, amount, date: date || new Date().toISOString().split('T')[0], payment_method, reference: val(row, mapping, 'reference') };
+          const insert = { tenant_id: tenantId, currency_code: pack.currencyCode, invoice_id: invoice.id, amount, date: date || new Date().toISOString().split('T')[0], payment_method, reference: val(row, mapping, 'reference') };
           if (!dryRun) {
             const { data, error } = await supabase.from('payments').insert(insert).select().single();
             if (error) errors.push(error.message);

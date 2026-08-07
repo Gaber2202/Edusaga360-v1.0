@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { buildRequestContext } from '../../lib/jurisdiction.js';
+import { resolvePack } from '../../packs/registry.js';
 import { getBrowser } from '../pdfBrowser.js';
 import { runPdfJob } from '../../lib/pdfConcurrency.js';
 
@@ -28,6 +30,8 @@ export class GuaranteeEngine {
     const asOf = input.as_of_date ?? new Date().toISOString().split('T')[0];
     const term = input.term ?? '2025-2026';
     const scope = input.scope ?? 'all';
+    const ctx = await buildRequestContext(this.supabase, tenantId);
+    const pack = resolvePack(ctx);
 
     const metrics = await this.computeCollectionMetrics(tenantId, asOf, term, scope);
     const baselineRate = metrics.net_invoiced > 0 ? metrics.collected / metrics.net_invoiced : 1;
@@ -39,6 +43,7 @@ export class GuaranteeEngine {
       .from('guarantee_baselines')
       .insert({
         tenant_id: tenantId,
+        currency_code: pack.currencyCode,
         term,
         formula_version: 'v1',
         net_invoiced: metrics.net_invoiced,
@@ -58,6 +63,8 @@ export class GuaranteeEngine {
     const asOf = input.as_of_date ?? new Date().toISOString().split('T')[0];
     const term = input.term ?? '2025-2026';
     const scope = input.scope ?? 'all';
+    const ctx = await buildRequestContext(this.supabase, tenantId);
+    const pack = resolvePack(ctx);
 
     const metrics = await this.computeCollectionMetrics(tenantId, asOf, term, scope);
     const currentRate = metrics.net_invoiced > 0 ? metrics.collected / metrics.net_invoiced : 1;
@@ -82,6 +89,7 @@ export class GuaranteeEngine {
       .from('guarantee_measurements')
       .insert({
         tenant_id: tenantId,
+        currency_code: pack.currencyCode,
         term,
         version,
         net_invoiced: metrics.net_invoiced,

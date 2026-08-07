@@ -78,6 +78,7 @@ describe('POST /billing/bulk-invoices — dry-run preview', () => {
   it('returns 400 when no fee structures match the criteria', async () => {
     db.setResolver((ctx: QueryContext) => {
       if (ctx.table === 'fee_structures') return { data: [] };
+      if (ctx.table === 'tenants') return { data: { id: TENANT_ID, jurisdiction_code: 'SA' } };
       return { data: null };
     });
     const res = await request(makeApp())

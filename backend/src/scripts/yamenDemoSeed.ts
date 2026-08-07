@@ -21,6 +21,7 @@ const TENANT_SLUG = 'yamen-demo';
 const BRANCH_NAME = 'Main Campus';
 const ACADEMIC_YEAR = '2026-2027';
 const JURISDICTION_CODE = 'SA';
+const CURRENCY_CODE = 'SAR';
 
 function pad(n: number, len: number) {
   return String(n).padStart(len, '0');
@@ -200,6 +201,7 @@ async function seedBatch(
     invoices.push({
       id: invoiceId,
       tenant_id: tenantId,
+      currency_code: CURRENCY_CODE,
       branch_id: branchId,
       student_id: studentId,
       invoice_number: `INV-${suffix}`,
@@ -238,7 +240,7 @@ async function seedBatch(
 
     profiles.push({
       tenant_id: tenantId,
-      currency_code: 'SAR', // TODO: hardcoded SAR; tracked in #154
+      currency_code: CURRENCY_CODE,
       guardian_id: guardianId,
       student_id: studentId,
       current_segment: isOverdue ? 'D' : outstanding > 0 ? 'C' : 'A',

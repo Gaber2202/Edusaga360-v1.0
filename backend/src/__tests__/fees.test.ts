@@ -51,6 +51,7 @@ describe('POST /fees/invoices', () => {
       if (ctx.table === 'invoices' && ctx.op === 'insert') {
         return { data: { id: INVOICE_ID, invoice_number: 'INV-2026-000001', status: 'issued', total_amount: 1150 } };
       }
+      if (ctx.table === 'tenants') return { data: { id: 'tenant-A', jurisdiction_code: 'SA', settings: {} } };
       if (ctx.table === 'chart_of_accounts') return { data: null }; // CoA not configured → journal skipped
       return { data: null };
     };
@@ -130,6 +131,7 @@ describe('POST /fees/payments', () => {
         return invoice ? { data: invoice } : { data: null, error: { code: 'PGRST116' } };
       }
       if (ctx.table === 'payments' && ctx.op === 'insert') return { data: { id: 'pmt1', amount: 0 } };
+      if (ctx.table === 'tenants') return { data: { id: 'tenant-A', jurisdiction_code: 'SA', settings: {} } };
       if (ctx.table === 'chart_of_accounts') return { data: null };
       return { data: null };
     };
