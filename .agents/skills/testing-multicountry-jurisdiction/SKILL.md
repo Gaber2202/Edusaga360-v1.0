@@ -49,6 +49,17 @@ description: End-to-end multi-country jurisdiction verification for EduSaga 360 
    - `auth.users` with `task11-*` emails
 2. Re-run the pre-flight counts and verify they match the baseline.
 
+## Frontend jurisdiction-gating checks
+- Log in as a tenant with `jurisdiction_code='AE'` (`is_demo=true`).
+- Dashboard: no Hijri date, no `ZATCA Filing`/`ملف زاتكا` quick action, no Saudization/Nitaqat, no GOSI widgets, no nationality split.
+- Payroll: no `GOSI Submissions`/`Bank Exports` sidebar items, no Saudi/non-Saudi split, no GOSI cards.
+- VATManagement: rate shown should match the jurisdiction tax rule (e.g. 5% for AE, 15% for SA, 0% for QA).
+
+### Common pitfalls
+- `jurisdiction_features` may be populated for a service-role query but invisible to the frontend if RLS is not configured, so `JurisdictionFeatureProvider` will load an empty feature set and hide all gated UI for **every** jurisdiction. Verify with an authenticated `fetch` using the anon key + user's access token.
+- `frontend/src/lib/vatRate.js` falls back to `0.15` when `tenant.vat_rate` is missing. The `tenants` table currently has no `vat_rate` column, so `VATManagement` will show 15% for AE/QA unless `getVatRate` is updated to read `jurisdiction_tax_rules`.
+- Currency labels on Dashboard/Payroll/VAT (`SAR`) are not jurisdiction-aware and will leak on AE/QA screens.
+
 ## Regression checks
 - `npm run typecheck` (backend)
 - `npx madge --circular src/index.ts` (backend)

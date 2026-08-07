@@ -33,6 +33,7 @@ import { execRouter } from './routes/exec.js';
 import { subscriptionRouter } from './routes/subscription.js';
 import { subscriptionPublicRouter } from './routes/subscriptionPublic.js';
 import { intakeRouter } from './routes/intake.js';
+import { jurisdictionRouter } from './routes/jurisdiction.js';
 import { apiKeysRouter } from './routes/apiKeys.js';
 import { apiKeyAuth } from './middleware/apiKeyAuth.js';
 import { externalApiRouter } from './routes/external/v1.js';
@@ -192,6 +193,8 @@ app.use('/api/email',               apiLimiter, authMiddleware, tenantMiddleware
 app.use('/api/messaging',           apiLimiter, authMiddleware, tenantMiddleware, messagingRouter);
 // YAMEN AI Collections Agent — finance console, segmentation, approval queue.
 app.use('/api/collections',         apiLimiter, collectionsRouter);
+// Jurisdiction context for frontend gating (features, VAT rate, currency).
+app.use('/api/jurisdiction',        apiLimiter, authMiddleware, tenantMiddleware, jurisdictionRouter);
 
 app.use(
   (

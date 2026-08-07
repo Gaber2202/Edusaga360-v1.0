@@ -1,11 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../api/supabaseClient';
 import { isPlatformOwner } from '../lib/authHelpers';
+import { getJurisdictionContext } from '../api/jurisdiction';
 
 const TenantContext = createContext(null);
 
 /**
  * TenantProvider — loads the current user's tenant record and exposes it.
+ * Also augments the tenant with the backend-resolved jurisdiction context
+ * (VAT rate, currency code, jurisdiction code) so components like
+ * VATManagement and InvoiceForm can read them from the tenant object.
  * Must be placed INSIDE RoleProvider so it can receive user from auth.
  */
 export function TenantProvider({ user, children }) {
@@ -31,15 +35,30 @@ export function TenantProvider({ user, children }) {
         return;
       }
 
+      let tenantData = null;
       if (u.tenant_id) {
         const { data } = await supabase.from('tenants').select('*').eq('id', u.tenant_id);
-        setTenant(data?.[0] || null);
+        tenantData = data?.[0] || null;
       } else if (u.tenant_code) {
         const { data } = await supabase.from('tenants').select('*').eq('tenant_code', u.tenant_code);
-        setTenant(data?.[0] || null);
-      } else {
-        setTenant(null);
+        tenantData = data?.[0] || null;
       }
+
+      if (tenantData) {
+        try {
+          const ctx = await getJurisdictionContext(tenantData.id);
+          tenantData = {
+            ...tenantData,
+            vat_rate: ctx.vatRate,
+            currency_code: ctx.currencyCode,
+            jurisdiction_code: ctx.jurisdiction,
+          };
+        } catch (e) {
+          console.warn('TenantContext: could not load jurisdiction context', e);
+        }
+      }
+
+      setTenant(tenantData);
     } catch (e) {
       console.warn('TenantContext: could not load tenant', e);
       setTenant(null);

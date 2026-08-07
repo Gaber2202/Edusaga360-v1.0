@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useMemo, useEffect, useState } from 'react';
 import { useAuth } from '../lib/AuthContext';
-import { supabase } from '../api/supabaseClient';
+import { getJurisdictionContext } from '../api/jurisdiction';
 
 const JurisdictionFeatureContext = createContext(null);
 
 export function JurisdictionFeatureProvider({ children }) {
   const { user, isAuthenticated } = useAuth();
-  const [features, setFeatures] = useState([]);
+  const [context, setContext] = useState({ features: [], vatRate: undefined, currencyCode: undefined, jurisdiction: undefined });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,39 +16,29 @@ export function JurisdictionFeatureProvider({ children }) {
     async function load() {
       if (!isAuthenticated || !user?.tenant_id) {
         if (!cancelled) {
-          setFeatures([]);
+          setContext({ features: [], vatRate: undefined, currencyCode: undefined, jurisdiction: undefined });
           setLoading(false);
         }
         return;
       }
 
-      const { data: tenantRecord, error: tenantError } = await supabase
-        .from('tenants')
-        .select('jurisdiction_code')
-        .eq('id', user.tenant_id)
-        .single();
-
-      if (tenantError || !tenantRecord?.jurisdiction_code || cancelled) {
+      try {
+        const data = await getJurisdictionContext(user.tenant_id);
         if (!cancelled) {
-          setFeatures([]);
-          setLoading(false);
+          setContext({
+            features: data.features || [],
+            vatRate: data.vatRate,
+            currencyCode: data.currencyCode,
+            jurisdiction: data.jurisdiction,
+          });
         }
-        return;
-      }
-
-      const { data: rows, error } = await supabase
-        .from('jurisdiction_features')
-        .select('feature_key, enabled')
-        .eq('jurisdiction_code', tenantRecord.jurisdiction_code);
-
-      if (!cancelled) {
-        if (error) {
-          console.warn('JurisdictionFeatureProvider: could not load features', error);
-          setFeatures([]);
-        } else {
-          setFeatures(rows || []);
+      } catch (error) {
+        console.warn('JurisdictionFeatureProvider: could not load context', error);
+        if (!cancelled) {
+          setContext({ features: [], vatRate: undefined, currencyCode: undefined, jurisdiction: undefined });
         }
-        setLoading(false);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     }
 
@@ -58,11 +48,11 @@ export function JurisdictionFeatureProvider({ children }) {
 
   const enabledSet = useMemo(() => {
     const set = new Set();
-    for (const f of features) {
-      if (f.enabled) set.add(f.feature_key);
+    for (const key of context.features) {
+      set.add(key);
     }
     return set;
-  }, [features]);
+  }, [context.features]);
 
   const isFeatureEnabled = useMemo(() => (key) => enabledSet.has(key), [enabledSet]);
   const areAnyEnabled = useMemo(
@@ -71,8 +61,8 @@ export function JurisdictionFeatureProvider({ children }) {
   );
 
   const value = useMemo(
-    () => ({ features, loading, isFeatureEnabled, areAnyEnabled }),
-    [features, loading, isFeatureEnabled, areAnyEnabled],
+    () => ({ ...context, features: context.features, loading, isFeatureEnabled, areAnyEnabled }),
+    [context, loading, isFeatureEnabled, areAnyEnabled],
   );
 
   return (
