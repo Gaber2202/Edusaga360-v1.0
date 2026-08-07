@@ -187,6 +187,7 @@ export const saPayroll: PayrollService = {
       employee: r.gosi_employee,
       employer: r.gosi_employer,
       total: Math.round((r.gosi_employee + r.gosi_employer) * 100) / 100,
+      rates: r.rates,
     };
   },
 

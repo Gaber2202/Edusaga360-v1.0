@@ -141,6 +141,7 @@ export interface GosiResult {
   employee: number;
   employer: number;
   total: number;
+  rates?: { employee: number; employer: number };
 }
 
 export interface PayrollService {

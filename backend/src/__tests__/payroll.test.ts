@@ -34,6 +34,10 @@ function makeApp(user: Record<string, unknown> = PAYROLL_USER) {
 beforeEach(() => {
   db.reset();
   vi.clearAllMocks();
+  db.setResolver((ctx: QueryContext) => {
+    if (ctx.table === 'tenants') return { data: { id: 'tenant-A', jurisdiction_code: 'SA' } };
+    return undefined;
+  });
 });
 
 // ── GOSI-only calculation ────────────────────────────────────────────────────
@@ -116,6 +120,7 @@ describe('POST /payroll/gosi-calculate', () => {
 describe('POST /payroll/calculate', () => {
   function payrollResolver(employees: unknown[], attendance: unknown[] = []) {
     return (ctx: QueryContext) => {
+      if (ctx.table === 'tenants') return { data: { id: 'tenant-A', jurisdiction_code: 'SA' } };
       if (ctx.table === 'employees') return { data: employees };
       if (ctx.table === 'attendance_policies') return { data: null }; // use KSA defaults
       if (ctx.table === 'employee_attendance') return { data: attendance };
@@ -213,7 +218,7 @@ describe('POST /payroll/calculate', () => {
 describe('GET /payroll/wps-file', () => {
   function wpsResolver(employees: unknown[]) {
     return (ctx: QueryContext) => {
-      if (ctx.table === 'tenants') return { data: { id: 'tenant-A', slug: 'alnoor', name_en: 'Al Noor' } };
+      if (ctx.table === 'tenants') return { data: { id: 'tenant-A', slug: 'alnoor', name_en: 'Al Noor', jurisdiction_code: 'SA' } };
       if (ctx.table === 'payslip_lines') return { data: [] };  // none finalized → live calc
       if (ctx.table === 'employees') return { data: employees };
       return { data: null };

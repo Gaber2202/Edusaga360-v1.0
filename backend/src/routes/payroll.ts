@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import { AuthenticatedRequest, requireRole, PAYROLL_ROLES } from '../middleware/auth.js';
-import { GOSI_CAP_MONTHLY } from '../packs/sa/payroll.js';
+import { GOSI_CAP_MONTHLY, isSaudi } from '../packs/sa/payroll.js';
 import { resolvePack } from '../packs/registry.js';
 import { buildRequestContext, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
 
@@ -42,9 +42,11 @@ payrollRouter.post('/calculate', requireRole(PAYROLL_ROLES), async (req: Authent
     const tenant_id = req.user!.tenant_id!;
     const ctx = await buildRequestContext(supabase, tenant_id);
     const pack = resolvePack(ctx);
-    if (!pack.payroll?.calculateGosi) {
-      throw new NotImplementedInJurisdiction(resolvePack(ctx).code, 'PayrollService.calculateGosi');
+    const payroll = pack.payroll;
+    if (!payroll || !payroll.calculateGosi) {
+      throw new NotImplementedInJurisdiction(pack.code, 'PayrollService.calculateGosi');
     }
+    const calculateGosi = payroll.calculateGosi;
     const { period_start, period_end, employee_ids } = parsed.data;
 
     // Fetch employees for this tenant
@@ -115,14 +117,13 @@ payrollRouter.post('/calculate', requireRole(PAYROLL_ROLES), async (req: Authent
       );
 
       const grossSalary = basicSalary + housingAllowance + transportAllowance + otherAllowances;
-      const gosiResult  = pack.payroll.calculateGosi!(basicSalary, emp.nationality);
-      const isSaudi     = (emp.nationality ?? '').toLowerCase() === 'saudi';
+      const gosiResult  = calculateGosi(basicSalary, emp.nationality);
       const gosi        = {
         gosi_wage:      Math.min(basicSalary, GOSI_CAP_MONTHLY),
         gosi_employee:  gosiResult.employee,
         gosi_employer:  gosiResult.employer,
         rates:          gosiResult.rates ?? { employee: 0, employer: 0 },
-        is_saudi:       isSaudi,
+        is_saudi:       isSaudi(emp.nationality),
       };
 
       // Attendance-based deductions
@@ -210,9 +211,11 @@ payrollRouter.post('/gosi-calculate', requireRole(PAYROLL_ROLES), async (req: Au
     const tenant_id = req.user!.tenant_id!;
     const ctx = await buildRequestContext(supabase, tenant_id);
     const pack = resolvePack(ctx);
-    if (!pack.payroll?.calculateGosi) {
+    const payroll = pack.payroll;
+    if (!payroll || !payroll.calculateGosi) {
       throw new NotImplementedInJurisdiction(pack.code, 'PayrollService.calculateGosi');
     }
+    const calculateGosi = payroll.calculateGosi;
     const parsed = GosiCalculateSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -223,8 +226,7 @@ payrollRouter.post('/gosi-calculate', requireRole(PAYROLL_ROLES), async (req: Au
     }
 
     const results = parsed.data.employees.map((emp) => {
-      const gosiResult = pack.payroll.calculateGosi!(emp.basic_salary, emp.nationality);
-      const isSaudi = (emp.nationality ?? '').toLowerCase() === 'saudi';
+      const gosiResult = calculateGosi(emp.basic_salary, emp.nationality);
       return {
         id: emp.id,
         nationality: emp.nationality,
@@ -234,7 +236,7 @@ payrollRouter.post('/gosi-calculate', requireRole(PAYROLL_ROLES), async (req: Au
         gosi_employee: gosiResult.employee,
         gosi_employer: gosiResult.employer,
         total_gosi: gosiResult.total,
-        is_saudi: isSaudi,
+        is_saudi: isSaudi(emp.nationality),
         rates: gosiResult.rates ?? { employee: 0, employer: 0 },
       };
     });
@@ -282,11 +284,13 @@ payrollRouter.get('/wps-file', async (req: AuthenticatedRequest, res) => {
 
     const ctx = await buildRequestContext(supabase, tenant_id);
     const pack = resolvePack(ctx);
-    if (!pack.payroll?.generateWpsFile) {
+    const payroll = pack.payroll;
+    if (!payroll || !payroll.generateWpsFile) {
       throw new NotImplementedInJurisdiction(pack.code, 'PayrollService.generateWpsFile');
     }
+    const generateWpsFile = payroll.generateWpsFile;
 
-    const { filename, content } = await pack.payroll.generateWpsFile!(supabase, tenant_id, {
+    const { filename, content } = await generateWpsFile(supabase, tenant_id, {
       start: period_start,
       end: period_end,
     });

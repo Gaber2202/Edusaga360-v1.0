@@ -45,6 +45,7 @@ import { golden } from './support/golden.js';
 describe('payroll / GOSI golden snapshots', () => {
   it('full payroll run response is byte-stable', async () => {
     const resolver = (ctx: QueryContext) => {
+      if (ctx.table === 'tenants') return { data: { id: 'tenant-A', jurisdiction_code: 'SA' } };
       if (ctx.table === 'employees') {
         return {
           data: [
@@ -96,6 +97,11 @@ describe('payroll / GOSI golden snapshots', () => {
   });
 
   it('GOSI calculation response is byte-stable', async () => {
+    db.setResolver((ctx: QueryContext) => {
+      if (ctx.table === 'tenants') return { data: { id: 'tenant-A', jurisdiction_code: 'SA' } };
+      return { data: null };
+    });
+
     const res = await request(makeApp())
       .post('/payroll/gosi-calculate')
       .send({
@@ -113,7 +119,7 @@ describe('payroll / GOSI golden snapshots', () => {
   it('WPS (Mudad) bank file is byte-stable', async () => {
     const resolver = (ctx: QueryContext) => {
       if (ctx.table === 'tenants') {
-        return { data: { id: 'tenant-A', slug: 'alnoor', name_en: 'Al Noor' } };
+        return { data: { id: 'tenant-A', slug: 'alnoor', name_en: 'Al Noor', jurisdiction_code: 'SA' } };
       }
       if (ctx.table === 'payslip_lines') return { data: [] };
       if (ctx.table === 'employees') {
