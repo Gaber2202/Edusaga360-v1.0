@@ -78,7 +78,7 @@ async function loadInvoice(supabase: SupabaseClient, invoiceId: string, tenantId
 async function buildShareContext(supabase: SupabaseClient, invoice: Record<string, unknown>): Promise<ShareContext> {
   const student = (invoice.students as Record<string, unknown> | undefined) || {};
   const guardian = (student.guardians as Record<string, unknown> | undefined) || {};
-  const tenant = await getTenantComplianceData(invoice.tenant_id as string);
+  const tenant = await getTenantComplianceData(supabase, invoice.tenant_id as string);
   const tenantId = invoice.tenant_id as string;
 
   const ctx = await buildRequestContext(supabase, tenantId, (invoice.branch_id as string) ?? undefined);
@@ -300,7 +300,7 @@ export async function renderInvoicePdf(supabase: SupabaseClient, tenantId: strin
     .single();
   if (error || !invoice) throw new Error('Invoice not found');
 
-  const tenant = await getTenantComplianceData(tenantId);
+  const tenant = await getTenantComplianceData(supabase, tenantId);
   const ctx = await buildRequestContext(supabase, tenantId, (invoice.branch_id as string) ?? undefined);
   const pack = resolvePack(ctx);
   if (!pack.documents?.renderInvoicePdf) {

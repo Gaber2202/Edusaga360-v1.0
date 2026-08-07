@@ -456,7 +456,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
     } = buildResult;
 
     // Generate ZATCA artifacts
-    const tenant = await getTenantComplianceData(tenant_id);
+    const tenant = await getTenantComplianceData(supabase, tenant_id);
     const invoiceData: InvoiceData = {
       invoice_number: invoiceNumber,
       document_type: document_type as InvoiceData['document_type'],
@@ -799,7 +799,7 @@ billingRouter.post('/invoices/:id/zatca-submit', requireRole(FINANCE_ROLES), asy
     }
 
     // Generate PDF
-    const tenant = await getTenantComplianceData(tenant_id);
+    const tenant = await getTenantComplianceData(supabase, tenant_id);
     const pdfBuffer = await generateZATCAInvoicePDF(
       { invoice_number: invoice?.invoice_number, issue_date: invoice?.date, subtotal: invoice?.subtotal, vat_amount: invoice?.vat_amount, total_amount: invoice?.total_amount } as InvoiceData,
       tenant,
@@ -940,7 +940,7 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
     }
 
     // ZATCA credit note submission record
-    const tenant = await getTenantComplianceData(tenant_id);
+    const tenant = await getTenantComplianceData(supabase, tenant_id);
     const creditInvoiceData: InvoiceData = {
       invoice_number: cnNumber,
       issue_date: today,
@@ -1010,7 +1010,7 @@ billingRouter.post('/documents/:id/convert-to-invoice', requireRole(FINANCE_ROLE
       return res.status(400).json({ error: 'E-invoicing is not enabled for this jurisdiction' });
     }
 
-    const tenant = await getTenantComplianceData(tenant_id);
+    const tenant = await getTenantComplianceData(supabase, tenant_id);
     const newInvoiceNumber = await generateInvoiceNumber(tenant_id);
     const chain = await getZatcaChain(tenant_id);
     const invoice = await convertToInvoice(supabase, original as any, newInvoiceNumber, tenant, chain.previous_invoice_hash ?? undefined, chain.icv);
@@ -1063,7 +1063,7 @@ billingRouter.post('/payments', async (req: AuthenticatedRequest, res: Response)
     // Auto-issue a bilingual receipt for this payment.
     let receipt: Record<string, unknown> | null = null;
     try {
-      const tenantData = await getTenantComplianceData(tenant_id);
+      const tenantData = await getTenantComplianceData(supabase, tenant_id);
       const receiptCtx = await buildRequestContext(supabase, tenant_id, (invoice.branch_id as string) ?? undefined);
       const receiptPack = resolvePack(receiptCtx);
       if (!receiptPack.documents?.renderInvoicePdf) {
@@ -1291,7 +1291,7 @@ export async function createInvoiceForStudent(
   } = buildResult;
 
   const invoiceNumber = options?.invoice_number ?? (await generateInvoiceNumber(tenant_id));
-  const tenant = await getTenantComplianceData(tenant_id);
+  const tenant = await getTenantComplianceData(supabase, tenant_id);
   const isEInvoiceEnabled = !!pack.eInvoice && await isFeatureEnabled(ctx, supabase, 'einvoicing');
 
   const docType = options?.document_type ?? 'invoice';

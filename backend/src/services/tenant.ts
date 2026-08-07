@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase.js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { TenantData } from '../types/tenant.js';
 
 /**
@@ -7,7 +7,7 @@ import type { TenantData } from '../types/tenant.js';
  * Reads `tenant_compliance_settings` first, then falls back to legacy
  * `tenants.settings` JSONB and `tenants` base columns.
  */
-export async function getTenantComplianceData(tenant_id: string): Promise<TenantData> {
+export async function getTenantComplianceData(supabase: SupabaseClient, tenant_id: string): Promise<TenantData> {
   const [{ data: compliance }, { data: tenant }] = await Promise.all([
     supabase.from('tenant_compliance_settings').select('*').eq('tenant_id', tenant_id).maybeSingle(),
     supabase.from('tenants').select('id, name_en, name_ar, admin_email, city, logo_url, settings').eq('id', tenant_id).single(),

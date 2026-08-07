@@ -130,7 +130,7 @@ invoiceRouter.post('/generate-zatca', requireRole(FINANCE_ROLES), async (req: Au
       return res.status(400).json({ message: 'Tenant ID not found' });
     }
 
-    const tenant = await getTenantComplianceData(tenantId);
+    const tenant = await getTenantComplianceData(supabase, tenantId);
     const icv = await getNextICV(tenantId);
     const previousHash = await getPreviousInvoiceHash(tenantId);
     const uuid = crypto.randomUUID();
@@ -236,7 +236,7 @@ invoiceRouter.post('/zatca-compliance-check', requireRole(FINANCE_ROLES), async 
       return res.status(400).json({ message: 'Tenant ID not found' });
     }
 
-    const tenant = await getTenantComplianceData(tenantId);
+    const tenant = await getTenantComplianceData(supabase, tenantId);
     const uuid = crypto.randomUUID();
 
     const invoice: InvoiceData = { ...parsed.data, uuid, icv: 1 };
@@ -320,7 +320,7 @@ invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Re
       }
     }
 
-    const tenant = await getTenantComplianceData(tenantId);
+    const tenant = await getTenantComplianceData(supabase, tenantId);
 
     const invoice: InvoiceData = invoiceDataFromRow(invoiceRow as Record<string, unknown>);
 

@@ -527,7 +527,7 @@ export async function processMoyasarWebhook(
 
       // Auto-issue a bilingual receipt for the online payment.
       try {
-        const tenantData = await getTenantComplianceData(tenantId);
+        const tenantData = await getTenantComplianceData(supabase, tenantId);
         await createReceiptForPayment(
           supabase,
           invoice as any,
