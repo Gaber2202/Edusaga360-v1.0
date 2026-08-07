@@ -33,6 +33,7 @@ interface InvoiceRow {
   total_amount: number;
   paid_amount: number;
   branch_id?: string | null;
+  currency_code: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -78,6 +79,7 @@ async function applyToInvoice(tenant_id: string, userId: string, cheque: ChequeR
     .from('payments')
     .insert({
       tenant_id,
+      currency_code: inv.currency_code,
       branch_id: inv.branch_id ?? null,
       invoice_id: cheque.invoice_id,
       amount: cheque.amount,

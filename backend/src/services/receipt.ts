@@ -33,6 +33,7 @@ export async function createReceiptForPayment(
   invoice: InvoiceLikeRow,
   payment: { id: string; amount: number; method: string; reference?: string | null; date?: string },
   tenant: TenantData,
+  currencyCode: string,
   renderInvoicePdf: (invoice: InvoiceData, tenant: TenantData) => Promise<Buffer>,
 ): Promise<{ receipt: Record<string, unknown>; pdf_base64: string }> {
   const today = payment.date || new Date().toISOString().split('T')[0];
@@ -74,6 +75,7 @@ export async function createReceiptForPayment(
 
   const insertPayload = {
     tenant_id: invoice.tenant_id,
+    currency_code: currencyCode,
     branch_id: invoice.branch_id ?? null,
     student_id: invoice.student_id ?? null,
     invoice_number: receiptNumber,

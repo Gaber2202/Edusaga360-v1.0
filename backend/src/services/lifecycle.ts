@@ -120,6 +120,7 @@ export async function convertToInvoice(
 
   const payload = {
     tenant_id: original.tenant_id,
+    currency_code: pack.currencyCode,
     branch_id: original.branch_id ?? null,
     student_id: original.student_id ?? null,
     invoice_number: newInvoiceNumber,

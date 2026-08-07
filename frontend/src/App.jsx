@@ -24,6 +24,9 @@ import ResetPassword from './pages/ResetPassword';
 import PaymentResult from './pages/PaymentResult';
 import { useRole } from './components/RoleContext';
 import { isPlatformOwner } from './lib/authHelpers';
+import { JurisdictionFeatureProvider } from './components/JurisdictionFeatureContext';
+import JurisdictionFeatureRoute from './components/JurisdictionFeatureRoute';
+import { PAGE_FEATURE_KEYS } from './lib/jurisdictionFeatures.js';
 
 // Every page under ./pages is lazy-loaded (its own chunk) and rendered inside a
 // Suspense boundary, so navigating to a route only downloads that page.
@@ -150,7 +153,7 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
       {Object.entries(Pages)
-        .filter(([path]) => path !== 'MfaVerify')
+        .filter(([path]) => path !== 'MfaVerify' && !PAGE_FEATURE_KEYS[path])
         .map(([path, Page]) => (
           <Route
             key={path}
@@ -162,6 +165,24 @@ const AuthenticatedApp = () => {
             }
           />
         ))}
+      {Object.entries(PAGE_FEATURE_KEYS)
+        .filter(([path]) => Pages[path])
+        .map(([path, featureKeys]) => {
+          const Page = Pages[path];
+          return (
+            <Route
+              key={path}
+              path={`/${path}`}
+              element={
+                <JurisdictionFeatureRoute featureKeys={featureKeys}>
+                  <LayoutWrapper currentPageName={path}>
+                    <Page />
+                  </LayoutWrapper>
+                </JurisdictionFeatureRoute>
+              }
+            />
+          );
+        })}
       <Route path="/SuperAdminDashboard" element={<PlatformOwnerRoute><LayoutWrapper currentPageName="SuperAdminDashboard"><SuperAdminDashboard /></LayoutWrapper></PlatformOwnerRoute>} />
       <Route path="/SubscriptionManagement" element={
         <LayoutWrapper currentPageName="SubscriptionManagement"><SubscriptionManagement /></LayoutWrapper>
@@ -203,10 +224,12 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <NavigationTracker />
-          <AuthenticatedApp />
-        </Router>
+        <JurisdictionFeatureProvider>
+          <Router>
+            <NavigationTracker />
+            <AuthenticatedApp />
+          </Router>
+        </JurisdictionFeatureProvider>
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>

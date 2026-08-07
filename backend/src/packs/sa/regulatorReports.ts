@@ -8,15 +8,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
 import type { RegulatorReportsService } from '../contract/CountryPack.js';
+import { isSaudi } from './nationality.js';
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
-}
-
-function isSaudi(e: any): boolean {
-  if (e.is_saudi === true) return true;
-  if (e.nationality && /^(saudi|saudi arabia|sa|سعودي)$/i.test(String(e.nationality).trim())) return true;
-  return false;
 }
 
 async function getNitaqatThresholds(

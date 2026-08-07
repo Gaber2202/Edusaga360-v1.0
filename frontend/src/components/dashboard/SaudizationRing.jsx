@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
+import JurisdictionFeatureGate from '../JurisdictionFeatureGate';
+import { PAGE_FEATURE_KEYS } from '../../lib/jurisdictionFeatures.js';
 
 export default function SaudizationRing({ pct, isRTL, animDelay = 0 }) {
   const r = 28;
@@ -11,6 +13,7 @@ export default function SaudizationRing({ pct, isRTL, animDelay = 0 }) {
   const label = pct >= 50 ? (isRTL ? 'ممتاز' : 'Excellent') : pct >= 30 ? (isRTL ? 'مقبول' : 'Acceptable') : (isRTL ? 'دون الحد' : 'Below Min');
 
   return (
+    <JurisdictionFeatureGate featureKeys={PAGE_FEATURE_KEYS.SaudizationTracker}>
     <Link to={createPageUrl('GovernmentRelations')} className="block h-full">
       <div
         className={`bg-gradient-to-br ${gradClass} border rounded-xl p-4 flex flex-col gap-2 h-full hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 animate-fade-in-up`}
@@ -35,5 +38,6 @@ export default function SaudizationRing({ pct, isRTL, animDelay = 0 }) {
         <div className={`text-xs font-semibold text-center ${pct >= 50 ? 'text-emerald-600' : pct >= 30 ? 'text-amber-600' : 'text-red-600'}`}>{label}</div>
       </div>
     </Link>
+    </JurisdictionFeatureGate>
   );
 }

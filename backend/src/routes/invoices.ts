@@ -4,6 +4,8 @@ import crypto from 'crypto';
 import { z } from 'zod';
 import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/auth.js';
 import type { InvoiceData } from '../packs/sa/vat.js';
+import { buildRequestContext, NotImplementedInJurisdiction, resolveJurisdiction } from '../lib/jurisdiction.js';
+import { resolvePack } from '../packs/registry.js';
 import {
   generateTLVQR,
   generateUBLXml,
@@ -18,7 +20,6 @@ import {
 } from '../packs/sa/zatca.js';
 import type { TenantData } from '../types/tenant.js';
 import { getTenantComplianceData } from '../services/tenant.js';
-import { getOrCreateMoyasarLink } from '../packs/sa/moyasarService.js';
 import { PdfQueueSaturatedError } from '../lib/pdfConcurrency.js';
 
 export const invoiceRouter = Router();
@@ -129,7 +130,7 @@ invoiceRouter.post('/generate-zatca', requireRole(FINANCE_ROLES), async (req: Au
       return res.status(400).json({ message: 'Tenant ID not found' });
     }
 
-    const tenant = await getTenantComplianceData(tenantId);
+    const tenant = await getTenantComplianceData(supabase, tenantId);
     const icv = await getNextICV(tenantId);
     const previousHash = await getPreviousInvoiceHash(tenantId);
     const uuid = crypto.randomUUID();
@@ -235,7 +236,7 @@ invoiceRouter.post('/zatca-compliance-check', requireRole(FINANCE_ROLES), async 
       return res.status(400).json({ message: 'Tenant ID not found' });
     }
 
-    const tenant = await getTenantComplianceData(tenantId);
+    const tenant = await getTenantComplianceData(supabase, tenantId);
     const uuid = crypto.randomUUID();
 
     const invoice: InvoiceData = { ...parsed.data, uuid, icv: 1 };
@@ -319,11 +320,16 @@ invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Re
       }
     }
 
-    const tenant = await getTenantComplianceData(tenantId);
+    const tenant = await getTenantComplianceData(supabase, tenantId);
 
     const invoice: InvoiceData = invoiceDataFromRow(invoiceRow as Record<string, unknown>);
 
-    const pdfBuffer = await generateZATCAInvoicePDF(invoice, tenant);
+    const ctx = await buildRequestContext(supabase, tenantId, (invoiceRow.branch_id as string) ?? undefined);
+    const pack = resolvePack(ctx);
+    if (!pack.documents?.renderInvoicePdf) {
+      throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'invoice PDF');
+    }
+    const pdfBuffer = await pack.documents.renderInvoicePdf(invoice, tenant);
 
     const inline = req.query.inline === '1' || req.query.inline === 'true';
     res.setHeader('Content-Type', 'application/pdf');
@@ -335,6 +341,9 @@ invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Re
 
     return res.send(pdfBuffer);
   } catch (err) {
+    if (err instanceof NotImplementedInJurisdiction || (err as any).name === 'NotImplementedInJurisdiction') {
+      return res.status(501).json({ message: (err as Error).message, code: 501, feature: (err as any).feature });
+    }
     if (err instanceof PdfQueueSaturatedError) {
       res.setHeader('Retry-After', '5');
       return res.status(503).json({ message: err.message, code: err.code });
@@ -357,7 +366,7 @@ invoiceRouter.get('/:id/payment-link', async (req: AuthenticatedRequest, res: Re
     // Platform owners may not have a tenant_id in their token; look up the invoice first.
     let invoiceQuery = supabase
       .from('invoices')
-      .select('id, student_id, guardian_id, tenant_id, status, document_type, total_amount, paid_amount')
+      .select('id, student_id, guardian_id, tenant_id, branch_id, status, document_type, total_amount, paid_amount')
       .eq('id', invoiceId);
     if (tenantId) {
       invoiceQuery = invoiceQuery.eq('tenant_id', tenantId);
@@ -400,7 +409,12 @@ invoiceRouter.get('/:id/payment-link', async (req: AuthenticatedRequest, res: Re
     }
 
     const baseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3001}`;
-    const result = await getOrCreateMoyasarLink(supabase, {
+    const ctx = await buildRequestContext(supabase, tenantId, (invoice.branch_id as string) ?? undefined);
+    const pack = resolvePack(ctx);
+    if (!pack.payments?.getOrCreatePaymentLink) {
+      throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'payment link');
+    }
+    const result = await pack.payments.getOrCreatePaymentLink(supabase, {
       tenantId: tenantId as string,
       invoiceId: invoiceId as string,
       callbackUrl: `${baseUrl}/api/public/billing/moyasar/webhook`,
@@ -414,6 +428,9 @@ invoiceRouter.get('/:id/payment-link', async (req: AuthenticatedRequest, res: Re
 
     return res.json(result);
   } catch (err) {
+    if (err instanceof NotImplementedInJurisdiction || (err as any).name === 'NotImplementedInJurisdiction') {
+      return res.status(501).json({ message: (err as Error).message, code: 501, feature: (err as any).feature });
+    }
     console.error('Failed to get payment link:', err);
     return res.status(500).json({ message: 'Failed to get payment link' });
   }

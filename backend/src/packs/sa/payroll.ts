@@ -9,6 +9,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
 import type { PayrollService, GosiResult } from '../contract/CountryPack.js';
+import { isSaudi } from './nationality.js';
 
 // ─── GOSI Rates (Saudi Labour Law / GOSI regulations) ─────────────────────
 
@@ -24,32 +25,61 @@ const GOSI_EXPAT = {
   employer: 0.02,
 } as const;
 
-export function isSaudi(nationality: string | null | undefined): boolean {
-  if (!nationality) return false;
-  const n = nationality.toLowerCase().trim();
-  return n === 'saudi' || n === 'saudi arabia' || n === 'sa' || n === 'سعودي';
-}
-
 export function calculateGosiForEmployee(
   basic_salary: number,
   nationality: string | null | undefined,
 ): {
   gosi_wage: number;
+  gosi_cap_applied: boolean;
   gosi_employee: number;
   gosi_employer: number;
+  total_gosi: number;
   is_saudi: boolean;
   rates: { employee: number; employer: number };
 } {
   const gosiWage = Math.min(basic_salary, GOSI_CAP_MONTHLY);
   const saudi = isSaudi(nationality);
   const rates = saudi ? GOSI_SAUDI : GOSI_EXPAT;
+  const employee = Math.round(gosiWage * rates.employee * 100) / 100;
+  const employer = Math.round(gosiWage * rates.employer * 100) / 100;
 
   return {
     gosi_wage: gosiWage,
-    gosi_employee: Math.round(gosiWage * rates.employee * 100) / 100,
-    gosi_employer: Math.round(gosiWage * rates.employer * 100) / 100,
+    gosi_cap_applied: basic_salary > GOSI_CAP_MONTHLY,
+    gosi_employee: employee,
+    gosi_employer: employer,
+    total_gosi: Math.round((employee + employer) * 100) / 100,
     is_saudi: saudi,
     rates,
+  };
+}
+
+export function calculateGosiForEmployees(
+  employees: { id: string; nationality: string | null | undefined; basic_salary: number }[],
+) {
+  const results = employees.map((emp) => {
+    const calc = calculateGosiForEmployee(emp.basic_salary, emp.nationality);
+    return {
+      id: emp.id,
+      nationality: emp.nationality,
+      basic_salary: emp.basic_salary,
+      gosi_cap_applied: calc.gosi_cap_applied,
+      gosi_wage: calc.gosi_wage,
+      gosi_employee: calc.gosi_employee,
+      gosi_employer: calc.gosi_employer,
+      total_gosi: calc.total_gosi,
+      is_saudi: calc.is_saudi,
+      rates: calc.rates,
+    };
+  });
+
+  return {
+    employees: results,
+    totals: {
+      total_gosi_employee: Math.round(results.reduce((s, r) => s + r.gosi_employee, 0) * 100) / 100,
+      total_gosi_employer: Math.round(results.reduce((s, r) => s + r.gosi_employer, 0) * 100) / 100,
+      total_gosi: Math.round(results.reduce((s, r) => s + r.total_gosi, 0) * 100) / 100,
+    },
   };
 }
 
@@ -186,9 +216,13 @@ export const saPayroll: PayrollService = {
     return {
       employee: r.gosi_employee,
       employer: r.gosi_employer,
-      total: Math.round((r.gosi_employee + r.gosi_employer) * 100) / 100,
+      total: r.total_gosi,
+      cappedSalary: r.gosi_wage,
+      rates: r.rates,
     };
   },
+
+  calculateGosiForEmployees,
 
   calculatePayroll: async () => {
     throw new NotImplementedInJurisdiction('SA', 'PayrollService.calculatePayroll — see ADR-006 / Task 8b');

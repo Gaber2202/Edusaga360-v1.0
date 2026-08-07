@@ -12,54 +12,83 @@ import { NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
 import type { AcademicCalendarService } from '../contract/CountryPack.js';
 
 export interface AcademicYearRow {
-  academic_year: string;
+  id: string;
+  name: string;
   start_date: string;
   end_date: string;
+  is_current: boolean;
 }
 
-function isoDate(d: Date | string): string {
-  if (typeof d === 'string') return d.slice(0, 10);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+function toIsoDate(input?: Date | string): string | undefined {
+  if (!input) return undefined;
+  if (input instanceof Date) return input.toISOString().slice(0, 10);
+  return input.slice(0, 10);
 }
 
-async function currentAcademicYearForDate(
+function todayStr(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+const currentAcademicYearForDate: AcademicCalendarService['currentAcademicYearForDate'] = async (
   supabase: unknown,
-  _tenantId: string,
+  tenantId: string,
   date?: Date | string,
-): Promise<AcademicYearRow | null> {
-  const target = isoDate(date ?? new Date());
-  const { data, error } = await (supabase as SupabaseClient)
+) => {
+  const explicitDate = toIsoDate(date);
+  const iso = explicitDate ?? todayStr();
+
+  const { data: inRange, error: rangeError } = await (supabase as SupabaseClient)
     .from('academic_years')
-    .select('academic_year, start_date, end_date')
-    .lte('start_date', target)
-    .gte('end_date', target)
+    .select('id, name, start_date, end_date, is_current')
+    .eq('tenant_id', tenantId)
+    .lte('start_date', iso)
+    .gte('end_date', iso)
     .order('start_date', { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (rangeError) throw rangeError;
+  if (inRange) return inRange as AcademicYearRow;
 
-  if (error) throw error;
-  return (data as AcademicYearRow | null) ?? null;
-}
+  if (!explicitDate) {
+    const { data: flagged, error: flaggedError } = await (supabase as SupabaseClient)
+      .from('academic_years')
+      .select('id, name, start_date, end_date, is_current')
+      .eq('tenant_id', tenantId)
+      .eq('is_current', true)
+      .order('start_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (flaggedError) throw flaggedError;
+    if (flagged) return flagged as AcademicYearRow;
+  }
 
-async function academicYearBefore(
-  supabase: unknown,
-  _tenantId: string,
-  academicYear: string,
-): Promise<AcademicYearRow | null> {
-  const { data, error } = await (supabase as SupabaseClient)
+  const { data: latest, error: latestError } = await (supabase as SupabaseClient)
     .from('academic_years')
-    .select('academic_year, start_date, end_date')
-    .lt('academic_year', academicYear)
-    .order('academic_year', { ascending: false })
+    .select('id, name, start_date, end_date, is_current')
+    .eq('tenant_id', tenantId)
+    .order('start_date', { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (latestError) throw latestError;
+  return (latest as AcademicYearRow | null) ?? null;
+};
 
+const academicYearBefore: AcademicCalendarService['academicYearBefore'] = async (
+  supabase: unknown,
+  tenantId: string,
+  startDate: string,
+) => {
+  const { data: prevYear, error } = await (supabase as SupabaseClient)
+    .from('academic_years')
+    .select('id, name, start_date, end_date, is_current')
+    .eq('tenant_id', tenantId)
+    .lt('start_date', startDate)
+    .order('start_date', { ascending: false })
+    .limit(1)
+    .maybeSingle();
   if (error) throw error;
-  return (data as AcademicYearRow | null) ?? null;
-}
+  return (prevYear as AcademicYearRow | null) ?? null;
+};
 
 function hijriStub(method: string) {
   return (..._args: unknown[]) => {

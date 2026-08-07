@@ -1,4 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { buildRequestContext } from '../../lib/jurisdiction.js';
+import { resolvePack } from '../../packs/registry.js';
 import { writeLedger } from './ledgerWriter.js';
 
 export interface CreateOfferInput {
@@ -28,6 +30,8 @@ export class InstallmentPlanEngine {
   constructor(private supabase: SupabaseClient) {}
 
   async createOffer(tenantId: string, input: CreateOfferInput) {
+    const ctx = await buildRequestContext(this.supabase, tenantId);
+    const pack = resolvePack(ctx);
     const settings = await this.loadSettings(tenantId);
 
     // Validate invoice belongs to tenant and is outstanding.
@@ -67,6 +71,7 @@ export class InstallmentPlanEngine {
       .from('installment_plan_offers')
       .insert({
         tenant_id: tenantId,
+        currency_code: pack.currencyCode,
         profile_id: input.profile_id,
         invoice_id: input.invoice_id,
         proposed_down_payment_pct: input.down_payment_pct,
@@ -115,6 +120,9 @@ export class InstallmentPlanEngine {
       .single();
     if (!invoice) throw new Error('Invoice not found');
 
+    const ctx = await buildRequestContext(this.supabase, tenantId, (invoice.branch_id as string) ?? undefined);
+    const pack = resolvePack(ctx);
+
     const studentId = invoice.student_id as string;
     const academicYear = (invoice.academic_year as string) ?? '2025-2026';
 
@@ -124,6 +132,7 @@ export class InstallmentPlanEngine {
       .from('payment_plans')
       .insert({
         tenant_id: tenantId,
+        currency_code: pack.currencyCode,
         student_id: studentId,
         academic_year: academicYear,
         plan_type: 'custom',
@@ -157,6 +166,7 @@ export class InstallmentPlanEngine {
         .from('invoices')
         .insert({
           tenant_id: tenantId,
+          currency_code: pack.currencyCode,
           branch_id: invoice.branch_id,
           student_id: studentId,
           invoice_number: `INST-${planId.slice(0, 8)}-${inst.installment_no}`,
@@ -174,6 +184,7 @@ export class InstallmentPlanEngine {
 
       await this.supabase.from('payment_plan_installments').insert({
         tenant_id: tenantId,
+        currency_code: pack.currencyCode,
         plan_id: planId,
         installment_no: inst.installment_no,
         due_date: inst.due_date,

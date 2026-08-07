@@ -22,6 +22,7 @@ import { saLocalisation } from './localisation.js';
 
 export const saPack: CountryPack = {
   code: 'SA',
+  currencyCode: 'SAR',
   tax: saTax,
   eInvoice: saEInvoice,
   payments: saPayments,

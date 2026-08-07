@@ -135,14 +135,14 @@
   {
     "file": "backend/src/routes/benchmarks.ts",
     "term": "gosi",
-    "count": 15,
+    "count": 12,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
   {
     "file": "backend/src/routes/billing.ts",
     "term": "moyasar",
-    "count": 40,
+    "count": 21,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -163,8 +163,8 @@
   {
     "file": "backend/src/routes/billing.ts",
     "term": "zatca",
-    "count": 95,
-    "reason": "route is the composition layer for ZATCA e-invoicing; pending full pack extraction",
+    "count": 79,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
   {
@@ -184,28 +184,28 @@
   {
     "file": "backend/src/routes/invoices.ts",
     "term": "moyasar",
-    "count": 5,
+    "count": 2,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
   {
     "file": "backend/src/routes/invoices.ts",
     "term": "zatca",
-    "count": 54,
+    "count": 53,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
   {
     "file": "backend/src/routes/payroll.ts",
     "term": "gosi",
-    "count": 55,
+    "count": 33,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
   {
     "file": "backend/src/routes/payslipPdf.ts",
     "term": "gosi",
-    "count": 11,
+    "count": 4,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -1192,6 +1192,41 @@
   {
     "file": "frontend/src/lib/invoiceFormat.js",
     "term": "zatca",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/lib/jurisdictionFeatures.js",
+    "term": "gosi",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/lib/jurisdictionFeatures.js",
+    "term": "mudad",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/lib/jurisdictionFeatures.js",
+    "term": "muqeem",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/lib/jurisdictionFeatures.js",
+    "term": "qiwa",
+    "count": 1,
+    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "frontend/src/lib/jurisdictionFeatures.js",
+    "term": "sadad",
     "count": 1,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"

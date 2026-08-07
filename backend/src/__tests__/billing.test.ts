@@ -146,6 +146,7 @@ describe('POST /billing/payments', () => {
     return (ctx: QueryContext) => {
       if (ctx.table === 'invoices' && ctx.op === 'select') return invoice ? { data: invoice } : { data: null, error: { code: 'PGRST116' } };
       if (ctx.table === 'payments' && ctx.op === 'insert') return { data: { id: 'pmt1' } };
+      if (ctx.table === 'tenants') return { data: TENANT_ROW };
       if (ctx.table === 'chart_of_accounts') return { data: null };
       return { data: null };
     };

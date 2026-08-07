@@ -143,6 +143,7 @@ export class CollectionMessenger {
 
         const { error } = await this.supabase.from('collection_messages').insert({
           tenant_id: tenantId,
+          currency_code: invoice.currency_code,
           profile_id: profile.id,
           invoice_id: invoice.id,
           sequence_step: step.step,
@@ -424,11 +425,13 @@ export class CollectionMessenger {
     };
   }
 
-  private async findOldestOverdueInvoice(tenantId: string, guardianId: string): Promise<{ id: string; due_date: string; balance: number } | null> {
+  private async findOldestOverdueInvoice(tenantId: string, guardianId: string): Promise<{ id: string; due_date: string; balance: number; currency_code: string } | null> {
     const today = new Date().toISOString().split('T')[0];
+    const ctx = await buildRequestContext(this.supabase, tenantId);
+    const pack = resolvePack(ctx);
     const { data, error } = await this.supabase
       .from('invoices')
-      .select('id, due_date, total_amount, paid_amount, students!inner(guardian_id)')
+      .select('id, due_date, total_amount, paid_amount, currency_code, students!inner(guardian_id)')
       .eq('tenant_id', tenantId)
       .eq('students.guardian_id', guardianId)
       .lt('due_date', today)
@@ -442,6 +445,7 @@ export class CollectionMessenger {
       id: inv.id as string,
       due_date: String(inv.due_date),
       balance: Number(inv.total_amount ?? 0) - Number(inv.paid_amount ?? 0),
+      currency_code: (inv.currency_code as string) ?? pack.currencyCode,
     };
   }
 

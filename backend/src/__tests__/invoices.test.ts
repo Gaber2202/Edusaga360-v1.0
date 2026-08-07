@@ -34,6 +34,8 @@ const TENANT_ROW = {
   vat_number: '300000000000003',
   address: 'Riyadh',
   cr_number: '1010101010',
+  jurisdiction_code: 'SA',
+  settings: {},
 };
 
 const INVOICE_ROW = {

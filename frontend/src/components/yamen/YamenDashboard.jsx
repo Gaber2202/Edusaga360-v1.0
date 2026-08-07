@@ -8,6 +8,8 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { differenceInDays } from 'date-fns';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
+import JurisdictionFeatureGate from '../JurisdictionFeatureGate';
+import { PAGE_FEATURE_KEYS } from '../../lib/jurisdictionFeatures.js';
 
 function riskColor(score) {
   if (score >= 70) return { dot: 'bg-red-500', text: 'text-red-400', label: { ar: 'عالي', en: 'High' }, badge: 'bg-red-900/40 text-red-300 border-red-700' };
@@ -126,6 +128,7 @@ export default function YamenDashboard({ isRTL }) {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
+            <JurisdictionFeatureGate featureKeys={PAGE_FEATURE_KEYS.GovernmentRelations}>
             {iqamaExpired.length > 0 && (
               <Link to={createPageUrl('GovernmentRelations')} className="flex items-center gap-3 p-3 rounded-lg bg-red-50 border border-red-200 hover:border-red-400 hover:bg-red-100 transition-colors group">
                 <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
@@ -150,6 +153,7 @@ export default function YamenDashboard({ isRTL }) {
                 <ArrowRight className="w-4 h-4 text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Link>
             )}
+            </JurisdictionFeatureGate>
             {pendingLeaves > 0 && (
               <Link to={createPageUrl('HRApprovalsInbox')} className="flex items-center gap-3 p-3 rounded-lg bg-najdi-50 border border-najdi-100 hover:border-najdi-500 hover:bg-najdi-50 transition-colors group">
                 <Clock className="w-5 h-5 text-najdi-500 flex-shrink-0 mt-0.5" />

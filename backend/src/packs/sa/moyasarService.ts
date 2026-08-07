@@ -527,12 +527,13 @@ export async function processMoyasarWebhook(
 
       // Auto-issue a bilingual receipt for the online payment.
       try {
-        const tenantData = await getTenantComplianceData(tenantId);
+        const tenantData = await getTenantComplianceData(supabase, tenantId);
         await createReceiptForPayment(
           supabase,
           invoice as any,
           { id: (paymentRow?.id as string) || moyasarPaymentId, amount: amountMajor, method: 'online', reference: moyasarPaymentId, date: new Date().toISOString().split('T')[0] },
           tenantData,
+          currencyCode,
           generateZATCAInvoicePDF,
         );
       } catch (receiptErr) {

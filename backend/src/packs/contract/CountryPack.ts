@@ -105,6 +105,16 @@ export interface PaymentsService {
   /** Get an existing active payment link, or create a new one if none exists. */
   getOrCreatePaymentLink?(supabase: unknown, options: PaymentLinkOptions): Promise<PaymentLinkResult>;
 
+  /** Bulk-create hosted payment links for a set of invoices. */
+  bulkCreatePaymentLinks?(
+    supabase: unknown,
+    tenantId: string,
+    invoiceIds: string[],
+    callbackUrl: string,
+    successUrl?: string,
+    backUrl?: string,
+  ): Promise<unknown>;
+
   /** Process a webhook payload from the payment provider. */
   processWebhook?(supabase: unknown, payload: unknown, signature?: string): Promise<unknown>;
 
@@ -141,11 +151,19 @@ export interface GosiResult {
   employee: number;
   employer: number;
   total: number;
+  /** GOSI wage used after applying any regulatory cap. */
+  cappedSalary?: number;
+  rates?: { employee: number; employer: number };
 }
 
 export interface PayrollService {
   /** Calculate GOSI contributions for one employee. */
   calculateGosi?(basicSalary: number, nationality: string): GosiResult;
+
+  /** Calculate GOSI contributions for a list of employees and return the API response shape. */
+  calculateGosiForEmployees?(
+    employees: { id: string; nationality: string | null | undefined; basic_salary: number }[],
+  ): { employees: unknown[]; totals: { total_gosi_employee: number; total_gosi_employer: number; total_gosi: number } };
 
   /** Run a full payroll calculation for a period. */
   calculatePayroll?(
@@ -363,6 +381,8 @@ export interface LocalisationService {
 
 export interface CountryPack {
   readonly code: JurisdictionCode;
+  /** ISO currency code for the jurisdiction (SAR, AED, QAR). */
+  readonly currencyCode: string;
   readonly tax?: TaxService;
   readonly eInvoice?: EInvoiceService;
   readonly payments?: PaymentsService;

@@ -25,7 +25,7 @@ export default function Branches() {
 
   const { data: jurisdictions = [] } = useQuery({
     queryKey: ['jurisdictions'],
-    queryFn: () => fetchData(tenantQuery('jurisdictions').select('code,name_en,name_ar').eq('status', 'ga').order('code')),
+    queryFn: () => fetchData(tenantQuery('jurisdictions').select('code,name_en,name_ar').in('status', ['ga', 'draft', 'beta']).order('code')),
     enabled: hasTenantAccess,
   });
 
