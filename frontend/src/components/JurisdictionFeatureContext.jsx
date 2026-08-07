@@ -4,8 +4,16 @@ import { getJurisdictionContext } from '../api/jurisdiction';
 
 const JurisdictionFeatureContext = createContext(null);
 
+function resolveTenantId(user) {
+  return user?.tenant_id
+    || user?.app_metadata?.tenant_id
+    || user?.user_metadata?.tenant_id
+    || null;
+}
+
 export function JurisdictionFeatureProvider({ children }) {
   const { user, isAuthenticated } = useAuth();
+  const tenantId = resolveTenantId(user);
   const [context, setContext] = useState({ features: [], vatRate: undefined, currencyCode: undefined, jurisdiction: undefined });
   const [loading, setLoading] = useState(true);
 
@@ -14,7 +22,7 @@ export function JurisdictionFeatureProvider({ children }) {
     setLoading(true);
 
     async function load() {
-      if (!isAuthenticated || !user?.tenant_id) {
+      if (!isAuthenticated || !tenantId) {
         if (!cancelled) {
           setContext({ features: [], vatRate: undefined, currencyCode: undefined, jurisdiction: undefined });
           setLoading(false);
@@ -23,7 +31,7 @@ export function JurisdictionFeatureProvider({ children }) {
       }
 
       try {
-        const data = await getJurisdictionContext(user.tenant_id);
+        const data = await getJurisdictionContext(tenantId);
         if (!cancelled) {
           setContext({
             features: data.features || [],
@@ -44,7 +52,7 @@ export function JurisdictionFeatureProvider({ children }) {
 
     load();
     return () => { cancelled = true; };
-  }, [isAuthenticated, user?.tenant_id]);
+  }, [isAuthenticated, tenantId]);
 
   const enabledSet = useMemo(() => {
     const set = new Set();
