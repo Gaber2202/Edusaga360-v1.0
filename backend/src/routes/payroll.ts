@@ -2,11 +2,9 @@ import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import { AuthenticatedRequest, requireRole, PAYROLL_ROLES } from '../middleware/auth.js';
-import {
-  calculateGosiForEmployee,
-  GOSI_CAP_MONTHLY,
-  generateWpsFile,
-} from '../packs/sa/payroll.js';
+import { GOSI_CAP_MONTHLY } from '../packs/sa/payroll.js';
+import { resolvePack } from '../packs/registry.js';
+import { buildRequestContext, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
 
 export const payrollRouter = Router();
 
@@ -42,6 +40,11 @@ payrollRouter.post('/calculate', requireRole(PAYROLL_ROLES), async (req: Authent
     }
 
     const tenant_id = req.user!.tenant_id!;
+    const ctx = await buildRequestContext(supabase, tenant_id);
+    const pack = resolvePack(ctx);
+    if (!pack.payroll?.calculateGosi) {
+      throw new NotImplementedInJurisdiction(resolvePack(ctx).code, 'PayrollService.calculateGosi');
+    }
     const { period_start, period_end, employee_ids } = parsed.data;
 
     // Fetch employees for this tenant
@@ -112,7 +115,15 @@ payrollRouter.post('/calculate', requireRole(PAYROLL_ROLES), async (req: Authent
       );
 
       const grossSalary = basicSalary + housingAllowance + transportAllowance + otherAllowances;
-      const gosi        = calculateGosiForEmployee(basicSalary, emp.nationality);
+      const gosiResult  = pack.payroll.calculateGosi!(basicSalary, emp.nationality);
+      const isSaudi     = (emp.nationality ?? '').toLowerCase() === 'saudi';
+      const gosi        = {
+        gosi_wage:      Math.min(basicSalary, GOSI_CAP_MONTHLY),
+        gosi_employee:  gosiResult.employee,
+        gosi_employer:  gosiResult.employer,
+        rates:          gosiResult.rates ?? { employee: 0, employer: 0 },
+        is_saudi:       isSaudi,
+      };
 
       // Attendance-based deductions
       const dailyRate = Math.round((basicSalary / policy.working_days_per_month) * 100) / 100;
@@ -183,8 +194,11 @@ payrollRouter.post('/calculate', requireRole(PAYROLL_ROLES), async (req: Authent
     };
 
     return res.json({ summary, employees: results, policy_applied: !!policyResult.data });
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to calculate payroll:', err);
+    if (err instanceof NotImplementedInJurisdiction || err.name === 'NotImplementedInJurisdiction') {
+      return res.status(501).json({ error: err.message, code: 501, feature: err.feature });
+    }
     return res.status(500).json({ error: 'Failed to calculate payroll', code: 500 });
   }
 });
@@ -193,6 +207,12 @@ payrollRouter.post('/calculate', requireRole(PAYROLL_ROLES), async (req: Authent
 
 payrollRouter.post('/gosi-calculate', requireRole(PAYROLL_ROLES), async (req: AuthenticatedRequest, res) => {
   try {
+    const tenant_id = req.user!.tenant_id!;
+    const ctx = await buildRequestContext(supabase, tenant_id);
+    const pack = resolvePack(ctx);
+    if (!pack.payroll?.calculateGosi) {
+      throw new NotImplementedInJurisdiction(pack.code, 'PayrollService.calculateGosi');
+    }
     const parsed = GosiCalculateSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
@@ -203,18 +223,19 @@ payrollRouter.post('/gosi-calculate', requireRole(PAYROLL_ROLES), async (req: Au
     }
 
     const results = parsed.data.employees.map((emp) => {
-      const gosi = calculateGosiForEmployee(emp.basic_salary, emp.nationality);
+      const gosiResult = pack.payroll.calculateGosi!(emp.basic_salary, emp.nationality);
+      const isSaudi = (emp.nationality ?? '').toLowerCase() === 'saudi';
       return {
         id: emp.id,
         nationality: emp.nationality,
         basic_salary: emp.basic_salary,
         gosi_cap_applied: emp.basic_salary > GOSI_CAP_MONTHLY,
-        gosi_wage: gosi.gosi_wage,
-        gosi_employee: gosi.gosi_employee,
-        gosi_employer: gosi.gosi_employer,
-        total_gosi: Math.round((gosi.gosi_employee + gosi.gosi_employer) * 100) / 100,
-        is_saudi: gosi.is_saudi,
-        rates: gosi.rates,
+        gosi_wage: Math.min(emp.basic_salary, GOSI_CAP_MONTHLY),
+        gosi_employee: gosiResult.employee,
+        gosi_employer: gosiResult.employer,
+        total_gosi: gosiResult.total,
+        is_saudi: isSaudi,
+        rates: gosiResult.rates ?? { employee: 0, employer: 0 },
       };
     });
 
@@ -225,8 +246,11 @@ payrollRouter.post('/gosi-calculate', requireRole(PAYROLL_ROLES), async (req: Au
     };
 
     return res.json({ employees: results, totals });
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to calculate GOSI:', err);
+    if (err instanceof NotImplementedInJurisdiction || err.name === 'NotImplementedInJurisdiction') {
+      return res.status(501).json({ error: err.message, code: 501, feature: err.feature });
+    }
     return res.status(500).json({ error: 'Failed to calculate GOSI', code: 500 });
   }
 });
@@ -256,7 +280,13 @@ payrollRouter.get('/wps-file', async (req: AuthenticatedRequest, res) => {
       });
     }
 
-    const { filename, content } = await generateWpsFile(supabase, tenant_id, {
+    const ctx = await buildRequestContext(supabase, tenant_id);
+    const pack = resolvePack(ctx);
+    if (!pack.payroll?.generateWpsFile) {
+      throw new NotImplementedInJurisdiction(pack.code, 'PayrollService.generateWpsFile');
+    }
+
+    const { filename, content } = await pack.payroll.generateWpsFile!(supabase, tenant_id, {
       start: period_start,
       end: period_end,
     });
@@ -268,6 +298,9 @@ payrollRouter.get('/wps-file', async (req: AuthenticatedRequest, res) => {
     console.error('Failed to generate WPS file:', err);
     if (err.status === 404) {
       return res.status(404).json({ error: err.message, code: 404 });
+    }
+    if (err instanceof NotImplementedInJurisdiction || err.name === 'NotImplementedInJurisdiction') {
+      return res.status(501).json({ error: err.message, code: 501, feature: err.feature });
     }
     return res.status(500).json({ error: 'Failed to generate WPS file', code: 500 });
   }

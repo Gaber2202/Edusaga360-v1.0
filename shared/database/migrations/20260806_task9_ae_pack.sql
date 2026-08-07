@@ -144,7 +144,7 @@ VALUES
   ('AE','ADEK','operating_years_minimum','3','https://llm.education/wp-content/uploads/2025/10/ADEK_S_Fees-Policy_EN.pdf','2026-08-06','Minimum years of operation for standard/exceptional increase'),
   ('AE','ADEK','exceptional_increase_occupancy_pct','0.80','https://llm.education/wp-content/uploads/2025/10/ADEK_S_Fees-Policy_EN.pdf','2026-08-06','Minimum occupancy for exceptional increase'),
   ('AE','ADEK','fee_increase_submission_month','1','https://llm.education/wp-content/uploads/2025/10/ADEK_S_Fees-Policy_EN.pdf','2026-08-06','Fee-increase requests submitted each January (1 = January)'),
-  ('AE','ADEK','increase_basis','rating_x_eci','https://llm.education/wp-content/uploads/2025/10/ADEK_S_Fees-Policy_EN.pdf','2026-08-06','Standard increase is Irtiqaa rating × Education Cost Index')
+  ('AE','ADEK','increase_basis','"rating_x_eci"','https://llm.education/wp-content/uploads/2025/10/ADEK_S_Fees-Policy_EN.pdf','2026-08-06','Standard increase is Irtiqaa rating × Education Cost Index')
 ON CONFLICT (jurisdiction_code, COALESCE(regulator_code, ''), parameter_key, effective_from, effective_to) DO UPDATE SET
   parameter_value = EXCLUDED.parameter_value,
   source_url = EXCLUDED.source_url,
