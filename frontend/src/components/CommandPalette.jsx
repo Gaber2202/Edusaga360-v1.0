@@ -27,6 +27,8 @@ import {
 } from './ui/command';
 import { useLanguage } from './LanguageContext';
 import { createPageUrl } from '../utils';
+import { useJurisdictionFeatures } from './JurisdictionFeatureContext';
+import { PAGE_FEATURE_KEYS } from '../lib/jurisdictionFeatures.js';
 
 const ICONS = {
   LayoutDashboard,
@@ -90,6 +92,15 @@ const NAV_ITEMS = [
 export default function CommandPalette({ open, onOpenChange }) {
   const navigate = useNavigate();
   const { isRTL } = useLanguage();
+  const { areAnyEnabled } = useJurisdictionFeatures();
+
+  const navItems = NAV_ITEMS.map(({ group, items }) => ({
+    group,
+    items: items.filter((item) => {
+      const features = PAGE_FEATURE_KEYS[item.page];
+      return !features || areAnyEnabled(features);
+    }),
+  })).filter(({ items }) => items.length > 0);
 
   useEffect(() => {
     function handleKeyDown(e) {
@@ -117,7 +128,7 @@ export default function CommandPalette({ open, onOpenChange }) {
       <CommandInput placeholder={isRTL ? 'ابحث عن صفحة...' : 'Search pages...'} />
       <CommandList>
         <CommandEmpty>{isRTL ? 'لا توجد نتائج.' : 'No results found.'}</CommandEmpty>
-        {NAV_ITEMS.map(({ group, items }) => (
+        {navItems.map(({ group, items }) => (
           <CommandGroup key={group} heading={group}>
             {items.map((item) => {
               const Icon = ICONS[item.icon];

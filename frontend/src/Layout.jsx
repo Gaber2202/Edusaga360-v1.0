@@ -7,6 +7,7 @@ import { LanguageProvider, useLanguage } from './components/LanguageContext';
 import { RoleProvider, useRole } from './components/RoleContext';
 import { BranchProvider, useBranch } from './components/BranchContext';
 import { TenantProvider, useTenant } from './components/TenantContext';
+import { useJurisdictionFeatures } from './components/JurisdictionFeatureContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import NotificationBell from './components/notifications/NotificationBell';
 import TenantAccessGate from './components/TenantAccessGate';
@@ -98,11 +99,31 @@ import {
           Crown,
           } from 'lucide-react';
 
+import { PAGE_FEATURE_KEYS } from './lib/jurisdictionFeatures.js';
+
+function filterNavigationByFeatures(items, areAnyEnabled) {
+  const out = [];
+  for (const item of items) {
+    const features = item.page ? PAGE_FEATURE_KEYS[item.page] : null;
+    if (features && !areAnyEnabled(features)) continue;
+
+    const filtered = { ...item };
+    if (item.children) {
+      filtered.children = filterNavigationByFeatures(item.children, areAnyEnabled);
+      // Drop parent menu if none of its children remain and it has no own route.
+      if (filtered.children.length === 0 && !item.page) continue;
+    }
+    out.push(filtered);
+  }
+  return out;
+}
+
 function LayoutContent({ children, currentPageName }) {
   const { t, isRTL, language: _language, toggleLanguage } = useLanguage();
   const { user, userRole, canAccess: _canAccess, loading, isTrial, isCreator } = useRole();
   const { tenant, isTenantActive, isModuleEnabled: _isModuleEnabled } = useTenant();
   const { branches, selectedBranchId, selectBranch } = useBranch();
+  const { areAnyEnabled } = useJurisdictionFeatures();
   const queryClient = useQueryClient();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -348,7 +369,7 @@ function LayoutContent({ children, currentPageName }) {
   // owner/creator — never to tenant admins, even though admins otherwise see all.
   const isPlatformCreator = typeof isCreator === 'function' ? isCreator() : false;
   const allowItem = (it) => !it.creatorOnly || isPlatformCreator;
-  const filteredNavigation = navigation.filter(item => {
+  const roleFilteredNavigation = navigation.filter(item => {
     if (!allowItem(item)) return false;
     if (isCreatorRole) return true;
     if (!item.roles) return true;
@@ -366,6 +387,9 @@ function LayoutContent({ children, currentPageName }) {
     }
     return item;
   });
+
+  // Apply jurisdiction feature gating so Saudi-government pages are absent for non-SA tenants.
+  const filteredNavigation = filterNavigationByFeatures(roleFilteredNavigation, areAnyEnabled);
 
   // Resolve a tappable target page for a top-level nav item (its own page, or
   // the first accessible child). Used to build a role-aware mobile bottom nav.

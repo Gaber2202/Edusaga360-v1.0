@@ -9,6 +9,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
 import type { PayrollService, GosiResult } from '../contract/CountryPack.js';
+import { isSaudi } from './nationality.js';
 
 // ─── GOSI Rates (Saudi Labour Law / GOSI regulations) ─────────────────────
 
@@ -23,12 +24,6 @@ const GOSI_EXPAT = {
   employee: 0.015,
   employer: 0.02,
 } as const;
-
-export function isSaudi(nationality: string | null | undefined): boolean {
-  if (!nationality) return false;
-  const n = nationality.toLowerCase().trim();
-  return n === 'saudi' || n === 'saudi arabia' || n === 'sa' || n === 'سعودي';
-}
 
 export function calculateGosiForEmployee(
   basic_salary: number,
@@ -222,6 +217,7 @@ export const saPayroll: PayrollService = {
       employee: r.gosi_employee,
       employer: r.gosi_employer,
       total: r.total_gosi,
+      cappedSalary: r.gosi_wage,
       rates: r.rates,
     };
   },

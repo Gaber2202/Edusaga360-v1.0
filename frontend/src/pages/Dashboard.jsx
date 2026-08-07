@@ -23,6 +23,8 @@ import { countSeries, amountSeries, cumulativeSeries } from '../lib/dashboardMet
 import DashboardKPICard from '../components/dashboard/DashboardKPICard';
 import SaudizationRing from '../components/dashboard/SaudizationRing';
 import QuickActionTile from '../components/dashboard/QuickActionTile';
+import JurisdictionFeatureGate from '../components/JurisdictionFeatureGate';
+import { PAGE_FEATURE_KEYS } from '../lib/jurisdictionFeatures.js';
 import DashboardAnalytics from '../components/dashboard/DashboardAnalytics';
 import ActivityPanel from '../components/dashboard/ActivityPanel';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
@@ -226,6 +228,7 @@ export default function Dashboard() {
       )}
 
       {/* GOV / COMPLIANCE ALERTS (HR) */}
+      <JurisdictionFeatureGate featureKeys={PAGE_FEATURE_KEYS.GovernmentRelations}>
       {isHR && (expiredIqamaCount > 0 || expiringIqama30 > 0 || violations.length > 0) && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {expiredIqamaCount > 0 && (
@@ -254,6 +257,7 @@ export default function Dashboard() {
           )}
         </div>
       )}
+      </JurisdictionFeatureGate>
 
       {/* FINANCE KPIs */}
       {isFinance && !isSchoolAdmin && (
@@ -297,7 +301,9 @@ export default function Dashboard() {
               <QuickActionTile label={isRTL ? 'الرواتب' : 'Payroll'} icon={Banknote} href={createPageUrl('Payroll')} accentIndex={2} />
               <QuickActionTile label={isRTL ? 'الإجازات' : 'Leaves'} icon={Calendar} href={createPageUrl('Leaves')} accentIndex={3} />
               <QuickActionTile label={isRTL ? 'يامن AI' : 'Yamen AI'} icon={Bot} href={createPageUrl('YamenAI')} accentIndex={4} />
-              <QuickActionTile label={isRTL ? 'العلاقات الحكومية' : 'Gov. Relations'} icon={Shield} href={createPageUrl('GovernmentRelations')} accentIndex={5} />
+              <JurisdictionFeatureGate featureKeys={PAGE_FEATURE_KEYS.GovernmentRelations}>
+                <QuickActionTile label={isRTL ? 'العلاقات الحكومية' : 'Gov. Relations'} icon={Shield} href={createPageUrl('GovernmentRelations')} accentIndex={5} />
+              </JurisdictionFeatureGate>
               <QuickActionTile label={isRTL ? 'إنشاء تقرير' : 'Generate Report'} icon={BarChart3} href={createPageUrl('Reports')} accentIndex={6} />
             </>}
             {isSchoolAdmin && <>

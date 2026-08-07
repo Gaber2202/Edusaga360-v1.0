@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { AuthenticatedRequest, requireRole, EXEC_ROLES } from '../middleware/auth.js';
+import { isSaudi } from '../packs/sa/nationality.js';
+import { buildRequestContext, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
+import { resolvePack } from '../packs/registry.js';
 
 export const benchmarksRouter = Router();
 
@@ -39,7 +42,7 @@ async function computeSnapshot(tenantId: string): Promise<Record<string, unknown
   const students  = (studRes.data ?? []) as any[];
   const tenant    = tenantRes.data as any;
 
-  const saudiCount = employees.filter((e: any) => /^(saudi|saudi arabia|sa|سعودي)$/i.test((e.nationality ?? '').trim())).length;
+  const saudiCount = employees.filter((e: any) => isSaudi(e.nationality)).length;
   const salaries   = employees.map((e: any) => Number(e.basic_salary ?? 0)).filter(s => s > 0);
   const presentRecs = records.filter((r: any) => r.status === 'present').length;
   const lateRecs    = records.filter((r: any) => r.status === 'late').length;
@@ -199,7 +202,12 @@ benchmarksRouter.get('/gosi-export', async (req: AuthenticatedRequest, res) => {
 
     const rows = (employees ?? []) as any[];
 
-    const GOSI_CAP = 45_000;
+    const ctx = await buildRequestContext(supabase, tenant_id);
+    const pack = resolvePack(ctx);
+    if (!pack.payroll?.calculateGosi) {
+      throw new NotImplementedInJurisdiction(pack.code, 'GOSI export');
+    }
+
     const lines: string[] = [];
 
     // Header row — official GOSI CSV columns
@@ -211,15 +219,9 @@ benchmarksRouter.get('/gosi-export', async (req: AuthenticatedRequest, res) => {
     ].join(','));
 
     for (const emp of rows) {
-      const basic     = Number(emp.basic_salary ?? 0);
-      const isSaudi   = /^(saudi|saudi arabia|sa|سعودي)$/i.test((emp.nationality ?? '').trim());
-      const gosiWage  = Math.min(basic, GOSI_CAP);
-      const empRate   = isSaudi ? 0.09   : 0.015;
-      const erRate    = isSaudi ? 0.1175 : 0.02;
-      const empCont   = Math.round(gosiWage * empRate  * 100) / 100;
-      const erCont    = Math.round(gosiWage * erRate   * 100) / 100;
-      const total     = Math.round((empCont + erCont)  * 100) / 100;
-      const idNum     = emp.national_id ?? emp.iqama_number ?? '';
+      const basic = Number(emp.basic_salary ?? 0);
+      const calc = pack.payroll.calculateGosi(basic, emp.nationality);
+      const idNum = emp.national_id ?? emp.iqama_number ?? '';
 
       const row = [
         (tenant as any)?.name_en ?? '',
@@ -230,10 +232,10 @@ benchmarksRouter.get('/gosi-export', async (req: AuthenticatedRequest, res) => {
         idNum,
         emp.bank_iban ?? '',
         basic.toFixed(2),
-        gosiWage.toFixed(2),
-        empCont.toFixed(2),
-        erCont.toFixed(2),
-        total.toFixed(2),
+        (calc.cappedSalary ?? 0).toFixed(2),
+        calc.employee.toFixed(2),
+        calc.employer.toFixed(2),
+        calc.total.toFixed(2),
         emp.hire_date ?? '',
         m, y,
       ].join(',');
@@ -248,7 +250,10 @@ benchmarksRouter.get('/gosi-export', async (req: AuthenticatedRequest, res) => {
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     return res.send('﻿' + csv); // BOM for Excel compatibility
-  } catch (err: unknown) {
+  } catch (err: any) {
+    if (err instanceof NotImplementedInJurisdiction || err.name === 'NotImplementedInJurisdiction') {
+      return res.status(501).json({ error: err.message, code: 501, feature: err.feature });
+    }
     console.error('GOSI export error:', err);
     return res.status(500).json({ error: err instanceof Error ? err.message : 'Export failed' });
   }

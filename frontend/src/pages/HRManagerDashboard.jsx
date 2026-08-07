@@ -9,6 +9,9 @@ import { useLanguage } from '../components/LanguageContext';
 import BenchmarkDashboard from '../components/benchmarks/BenchmarkDashboard';
 import { useBranch } from '../components/BranchContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import JurisdictionFeatureGate from '../components/JurisdictionFeatureGate';
+import { useJurisdictionFeatures } from '../components/JurisdictionFeatureContext';
+import { PAGE_FEATURE_KEYS } from '../lib/jurisdictionFeatures.js';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Link } from 'react-router-dom';
@@ -64,6 +67,7 @@ export default function HRManagerDashboard() {
   const { isRTL } = useLanguage();
   const { branchFilter } = useBranch();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
+  const { areAnyEnabled } = useJurisdictionFeatures();
   const [activeTab, setActiveTab] = useState('overview');
   const today = new Date();
 
@@ -265,7 +269,9 @@ export default function HRManagerDashboard() {
           badge={{ label: isRTL ? kpis.nitaqatBand.nameAr : kpis.nitaqatBand.name, color: kpis.nitaqatBand.name === 'Red' ? 'bg-red-100 text-red-700' : kpis.nitaqatBand.name === 'Yellow' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700' }}
           warn={kpis.nitaqatBand.name === 'Yellow'} alert={kpis.nitaqatBand.name === 'Red'} />
         <KPICard title={isRTL ? 'في فترة التجربة' : 'On Probation'} value={kpis.onProbation} icon={Clock} iconBg="bg-amber-50" to="/Employees" />
-        <KPICard title={isRTL ? 'وثائق تنتهي (30 يوم)' : 'Docs Expiring (30d)'} value={kpis.docsIn30Count} icon={AlertCircle} iconBg="bg-red-50" warn={kpis.docsIn30Count > 0} alert={kpis.docsExpiredCount > 0} to="/GovernmentRelations" />
+        <JurisdictionFeatureGate featureKeys={PAGE_FEATURE_KEYS.GovernmentRelations}>
+          <KPICard title={isRTL ? 'وثائق تنتهي (30 يوم)' : 'Docs Expiring (30d)'} value={kpis.docsIn30Count} icon={AlertCircle} iconBg="bg-red-50" warn={kpis.docsIn30Count > 0} alert={kpis.docsExpiredCount > 0} to="/GovernmentRelations" />
+        </JurisdictionFeatureGate>
         <KPICard title={isRTL ? 'طلبات إجازة معلقة' : 'Pending Leave Requests'} value={kpis.pendingLeaves} icon={Calendar} iconBg="bg-purple-50" to="/Leaves" />
         <KPICard title={isRTL ? 'شواغر مفتوحة' : 'Open Vacancies'} value={kpis.openVacancies} icon={Star} iconBg="bg-indigo-50" to="/RecruitmentPage" />
       </div>
@@ -338,6 +344,7 @@ export default function HRManagerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3 py-2">
+              <JurisdictionFeatureGate featureKeys={PAGE_FEATURE_KEYS.GovernmentRelations}>
               {[
                 { label: isRTL ? 'منتهية الصلاحية' : 'Expired', count: kpis.docsExpiredCount, color: 'bg-red-500', textColor: 'text-red-700', bg: 'bg-red-50' },
                 { label: isRTL ? 'تنتهي خلال 30 يوم' : 'Expiring in 30d', count: kpis.docsIn30Count, color: 'bg-amber-500', textColor: 'text-amber-700', bg: 'bg-amber-50' },
@@ -353,9 +360,12 @@ export default function HRManagerDashboard() {
                   </div>
                 </Link>
               ))}
-              <div className="pt-1 text-xs text-muted-foreground text-center">
-                {isRTL ? 'انقر للعرض في سجل الحوكمة' : 'Click to view in Government Relations'}
-              </div>
+              </JurisdictionFeatureGate>
+              <JurisdictionFeatureGate featureKeys={PAGE_FEATURE_KEYS.GovernmentRelations}>
+                <div className="pt-1 text-xs text-muted-foreground text-center">
+                  {isRTL ? 'انقر للعرض في سجل الحوكمة' : 'Click to view in Government Relations'}
+                </div>
+              </JurisdictionFeatureGate>
             </div>
           </CardContent>
         </Card>
@@ -370,9 +380,9 @@ export default function HRManagerDashboard() {
           { to: '/RecruitmentPage', icon: Star, label: isRTL ? 'التوظيف' : 'Recruitment' },
           { to: '/Onboarding', icon: CheckCircle, label: isRTL ? 'الإلحاق' : 'Onboarding' },
           { to: '/EOSBCalculator', icon: Shield, label: isRTL ? 'نهاية الخدمة' : 'EOSB' },
-          { to: '/GovernmentRelations', icon: Building2, label: isRTL ? 'الحوكمة' : 'Gov. Relations' },
+          { to: '/GovernmentRelations', icon: Building2, label: isRTL ? 'الحوكمة' : 'Gov. Relations', featureKeys: PAGE_FEATURE_KEYS.GovernmentRelations },
           { to: '/YamenAI', icon: Zap, label: isRTL ? 'يامن AI' : 'YAMEN AI' },
-        ].map(link => (
+        ].filter(link => !link.featureKeys || areAnyEnabled(link.featureKeys)).map(link => (
           <Link key={link.to} to={link.to}>
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="p-3 flex items-center gap-2">

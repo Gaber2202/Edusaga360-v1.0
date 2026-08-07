@@ -151,6 +151,8 @@ export interface GosiResult {
   employee: number;
   employer: number;
   total: number;
+  /** GOSI wage used after applying any regulatory cap. */
+  cappedSalary?: number;
   rates?: { employee: number; employer: number };
 }
 

@@ -2,15 +2,16 @@ import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import { AuthenticatedRequest, requireRole, PAYROLL_ROLES } from '../middleware/auth.js';
-import { generatePayslipPdf } from '../packs/sa/documents.js';
+import { buildRequestContext, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
+import { resolvePack } from '../packs/registry.js';
 
 export const payslipPdfRouter = Router();
 
 const PayslipPdfSchema = z.object({
-  payslip_id:   z.string().uuid(),
-  employee_id:  z.string().uuid(),
+  payslip_id: z.string().uuid(),
+  employee_id: z.string().uuid(),
   period_month: z.number().int().min(1).max(12),
-  period_year:  z.number().int().min(2000).max(2100),
+  period_year: z.number().int().min(2000).max(2100),
 });
 
 payslipPdfRouter.post('/payslip-pdf', requireRole(PAYROLL_ROLES), async (req: AuthenticatedRequest, res) => {
@@ -40,10 +41,16 @@ payslipPdfRouter.post('/payslip-pdf', requireRole(PAYROLL_ROLES), async (req: Au
       if (bd) { const b = bd as any; branchNameAr = b.name_ar ?? null; branchNameEn = b.name_en ?? null; }
     }
 
+    const ctx = await buildRequestContext(supabase, tenant_id, (employee.branch_id as string) ?? undefined);
+    const pack = resolvePack(ctx);
+    if (!pack.documents?.renderPayslipPdf) {
+      throw new NotImplementedInJurisdiction(pack.code, 'payslip PDF');
+    }
+
     const { data: rawPayslip, error: payslipError } = await supabase
       .from('payslip_lines').select('*').eq('id', payslip_id).eq('tenant_id', tenant_id).single();
 
-    let pv: { basic_salary: number; housing_allowance: number; transport_allowance: number; teaching_allowance: number; overtime: number; bonus: number; other_allowances: number; gosi_employee: number; absence_deduction: number; loan_deduction: number; tuition_advance: number; penalties: number; other_deductions: number; gosi_employer: number; };
+    let pv: any;
 
     if (payslipError || !rawPayslip) {
       const { data: rawSalary, error: salaryError } = await supabase
@@ -52,21 +59,56 @@ payslipPdfRouter.post('/payslip-pdf', requireRole(PAYROLL_ROLES), async (req: Au
       const s = rawSalary as any;
       const basic = Number(s.basic_salary ?? 0);
       const otherSum = Object.values(s.other_allowances ?? {}).reduce((sum: number, v) => sum + Number(v ?? 0), 0);
-      const isSaudi = /^(saudi|saudi arabia|sa|سعودي)$/i.test((employee.nationality ?? '').trim());
-      const gosiWage = Math.min(basic, 45_000);
-      pv = { basic_salary: basic, housing_allowance: Number(s.housing_allowance ?? 0), transport_allowance: Number(s.transport_allowance ?? 0), teaching_allowance: 0, overtime: 0, bonus: 0, other_allowances: otherSum, gosi_employee: Math.round(gosiWage * (isSaudi ? 0.09 : 0.015) * 100) / 100, absence_deduction: 0, loan_deduction: 0, tuition_advance: 0, penalties: 0, other_deductions: 0, gosi_employer: Math.round(gosiWage * (isSaudi ? 0.1175 : 0.02) * 100) / 100 };
+
+      let employeeContrib = 0;
+      let employerContrib = 0;
+      try {
+        if (pack.payroll?.calculateGosi) {
+          const g = pack.payroll.calculateGosi(basic, employee.nationality);
+          employeeContrib = g.employee;
+          employerContrib = g.employer;
+        }
+      } catch (e) {
+        if (!(e instanceof NotImplementedInJurisdiction || (e as any).name === 'NotImplementedInJurisdiction')) throw e;
+      }
+
+      pv = {
+        basic_salary: basic,
+        housing_allowance: Number(s.housing_allowance ?? 0),
+        transport_allowance: Number(s.transport_allowance ?? 0),
+        teaching_allowance: 0,
+        overtime: 0,
+        bonus: 0,
+        other_allowances: otherSum,
+        gosi_employee: employeeContrib,
+        absence_deduction: 0,
+        loan_deduction: 0,
+        tuition_advance: 0,
+        penalties: 0,
+        other_deductions: 0,
+        gosi_employer: employerContrib,
+      };
     } else {
-      const p = rawPayslip as any;
-      pv = { basic_salary: Number(p.basic_salary ?? 0), housing_allowance: Number(p.housing_allowance ?? 0), transport_allowance: Number(p.transport_allowance ?? 0), teaching_allowance: Number(p.teaching_allowance ?? 0), overtime: Number(p.overtime ?? 0), bonus: Number(p.bonus ?? 0), other_allowances: Number(p.other_allowances ?? 0), gosi_employee: Number(p.gosi_employee ?? 0), absence_deduction: Number(p.absence_deduction ?? 0), loan_deduction: Number(p.loan_deduction ?? 0), tuition_advance: Number(p.tuition_advance ?? 0), penalties: Number(p.penalties ?? 0), other_deductions: Number(p.other_deductions ?? 0), gosi_employer: Number(p.gosi_employer ?? 0) };
+      pv = rawPayslip;
     }
 
-    const pdfBuffer = await generatePayslipPdf({
-      name_ar: employee.name_ar ?? null, name_en: employee.name_en ?? null, employee_number: employee.employee_number ?? null,
-      job_title_name: employee.job_title_name ?? null, iban: employee.bank_iban ?? null, nationality: employee.nationality ?? null,
-      hire_date: employee.hire_date ?? null, department_name: employee.department_name ?? null,
-      branch_name_ar: branchNameAr, branch_name_en: branchNameEn,
-      company_name_ar: tenant.name_ar ?? null, company_name_en: tenant.name_en ?? null, logo_url: tenant.logo_url ?? null,
-      period_month, period_year, ...pv,
+    const pdfBuffer = await pack.documents.renderPayslipPdf({
+      name_ar: employee.name_ar ?? null,
+      name_en: employee.name_en ?? null,
+      employee_number: employee.employee_number ?? null,
+      job_title_name: employee.job_title_name ?? null,
+      iban: employee.bank_iban ?? null,
+      nationality: employee.nationality ?? null,
+      hire_date: employee.hire_date ?? null,
+      department_name: employee.department_name ?? null,
+      branch_name_ar: branchNameAr,
+      branch_name_en: branchNameEn,
+      company_name_ar: tenant.name_ar ?? null,
+      company_name_en: tenant.name_en ?? null,
+      logo_url: tenant.logo_url ?? null,
+      period_month,
+      period_year,
+      ...pv,
     });
 
     const filename = `payslip_${employee_id}_${period_month}_${period_year}.pdf`;
@@ -74,7 +116,10 @@ payslipPdfRouter.post('/payslip-pdf', requireRole(PAYROLL_ROLES), async (req: Au
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Length', pdfBuffer.length);
     return res.send(pdfBuffer);
-  } catch (err) {
+  } catch (err: any) {
+    if (err instanceof NotImplementedInJurisdiction || err.name === 'NotImplementedInJurisdiction') {
+      return res.status(501).json({ error: err.message, code: 501, feature: err.feature });
+    }
     console.error('Failed to generate payslip PDF:', err);
     if (!res.headersSent) return res.status(500).json({ error: 'Failed to generate payslip PDF', code: 500 });
   }

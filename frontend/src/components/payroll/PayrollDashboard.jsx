@@ -11,6 +11,8 @@ import { createPageUrl } from '../../utils';
 import { format, differenceInDays } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
+import JurisdictionFeatureGate from '../JurisdictionFeatureGate';
+import { PAGE_FEATURE_KEYS } from '../../lib/jurisdictionFeatures.js';
 import {
   Users,
   DollarSign,
@@ -313,6 +315,7 @@ export default function PayrollDashboard({ onNavigate }) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            <JurisdictionFeatureGate featureKeys={PAGE_FEATURE_KEYS.GovernmentRelations}>
             {expiredIqama.length > 0 && (
               <button
                 className="w-full flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100 hover:bg-red-100 transition-colors cursor-pointer text-start"
@@ -344,6 +347,7 @@ export default function PayrollDashboard({ onNavigate }) {
                 <ArrowRight className="w-4 h-4 text-amber-500" />
               </button>
             )}
+            </JurisdictionFeatureGate>
 
             {missingIBAN.length > 0 && (
               <button
