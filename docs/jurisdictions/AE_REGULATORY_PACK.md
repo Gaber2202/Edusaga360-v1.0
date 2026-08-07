@@ -12,6 +12,7 @@
 2. **Student/parent data residency.** Federal Decree-Law 45/2021 does not impose a blanket data-localization requirement, but cross-border transfers require Data Office approval and an adequacy determination. Whether a school is required to host student/parent personal data inside the UAE is not stated explicitly in the retrieved law text.
 3. **ADEK and SPEA 2025/26 numeric fee-increase caps.** ADEK’s mechanism (Irtiqaa rating × ECI, registration fee cap 5%, three-year operating minimum, ≥80% occupancy for exceptional increases, annual January submission) is verified. The exact numeric ECI/cap for the current cycle has not been published in retrievable sources; model it as effective-dated config rows.
 4. **UAE Pass onboarding for schools.** UAE Pass is the national identity/authentication system. The exact onboarding process, whether a private school can be approved as a Service Provider, and production credential issuance timelines are described in integration guides as requiring case-by-case assessment.
+5. **Ramadan working-hour reduction for overtime.** UAE Labour Law reduces working hours during Ramadan, but the exact daily hour reduction for private-sector employees and whether it applies to all employees or only those fasting has not been confirmed by a primary source. The `regulatory_register.ramadan_working_hours_reduction` row is left empty; `calculateOvertime` throws `NotImplementedInJurisdiction` during Ramadan until the row is populated.
 
 ## CLOSED BY ADDENDUM
 

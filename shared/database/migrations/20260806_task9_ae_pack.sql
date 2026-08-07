@@ -97,8 +97,8 @@ CREATE TABLE IF NOT EXISTS regulatory_register (
   parameter_value  jsonb NOT NULL,
   effective_from   date NOT NULL DEFAULT '1900-01-01',
   effective_to     date NOT NULL DEFAULT '9999-12-31',
-  source_url       text NOT NULL,
-  verified_on      date NOT NULL,
+  source_url       text,                          -- left NULL for unverified placeholder rows
+  verified_on      date,                          -- left NULL until a primary source is attached
   notes            text,
   created_at       timestamptz NOT NULL DEFAULT now()
 );
@@ -106,12 +106,17 @@ CREATE TABLE IF NOT EXISTS regulatory_register (
 CREATE UNIQUE INDEX IF NOT EXISTS regulatory_register_uq
   ON regulatory_register (jurisdiction_code, COALESCE(regulator_code, ''), parameter_key, effective_from, effective_to);
 
+-- Allow the existing NOT NULL definition to be relaxed on already-created tables.
+ALTER TABLE regulatory_register
+  ALTER COLUMN source_url DROP NOT NULL,
+  ALTER COLUMN verified_on DROP NOT NULL;
+
 -- UAE labour / payroll parameters
 INSERT INTO regulatory_register (jurisdiction_code, regulator_code, parameter_key, parameter_value, source_url, verified_on, notes)
 VALUES
   ('AE',NULL,'working_hours_per_week','48','https://www.uaesupremecouncil.org/en/information-and-services/jobs/employment-in-the-private-sector/working-hours.html','2026-08-06','Normal maximum weekly working hours'),
   ('AE',NULL,'working_hours_per_day','8','https://www.uaesupremecouncil.org/en/information-and-services/jobs/employment-in-the-private-sector/working-hours.html','2026-08-06','Normal maximum daily working hours'),
-  ('AE',NULL,'ramadan_working_hours_reduction','2','https://www.uaesupremecouncil.org/en/information-and-services/jobs/employment-in-the-private-sector/working-hours.html','2026-08-06','Working hours reduced by 2 hours during Ramadan'),
+  ('AE',NULL,'ramadan_working_hours_reduction','null'::jsonb,NULL,NULL,'UNVERIFIED — exact daily hour reduction during Ramadan and whether it applies to all employees or only fasting employees requires a primary source and legal review'),
   ('AE',NULL,'overtime_daily_max_hours','2','https://mohre.gov.ae/assets/download/8cd7cf08/Federal%20Decree-Law%20No.%2033%20of%202021%20Regarding%20the%20Regulation%20of%20Employment%20Relationship%20and%20its%20amendments.pdf.aspx','2026-08-06','Maximum overtime hours per day'),
   ('AE',NULL,'overtime_rate_day','0.25','https://mohre.gov.ae/assets/download/8cd7cf08/Federal%20Decree-Law%20No.%2033%20of%202021%20Regarding%20the%20Regulation%20of%20Employment%20Relationship%20and%20its%20amendments.pdf.aspx','2026-08-06','Overtime premium for daytime (25% of basic wage)'),
   ('AE',NULL,'overtime_rate_night','0.50','https://mohre.gov.ae/assets/download/8cd7cf08/Federal%20Decree-Law%20No.%2033%20of%202021%20Regarding%20the%20Regulation%20of%20Employment%20Relationship%20and%20its%20amendments.pdf.aspx','2026-08-06','Overtime premium for night work 22:00-04:00 (50% of basic wage)'),
@@ -156,14 +161,20 @@ ON CONFLICT (jurisdiction_code, COALESCE(regulator_code, ''), parameter_key, eff
   verified_on = EXCLUDED.verified_on,
   notes = EXCLUDED.notes;
 
--- ---------- 6. Jurisdiction feature flags for AE (all false at draft; enabled per-school after verification) ----------
+-- ---------- 6. Jurisdiction feature flags ----------
+-- AE: all false at draft; enabled per-school after verification.
+-- SA: documents and payments are also tracked now to satisfy the conformance suite.
 INSERT INTO jurisdiction_features (jurisdiction_code, feature_key, enabled, config) VALUES
   ('AE','einvoicing',false,'{}'),
   ('AE','wps',false,'{}'),
   ('AE','nationalisation_quota',false,'{}'),
   ('AE','hijri_calendar',false,'{}'),
   ('AE','fee_financing',false,'{}'),
-  ('AE','uae_pass',false,'{}')
+  ('AE','uae_pass',false,'{}'),
+  ('AE','documents',false,'{}'),
+  ('AE','payments',false,'{}'),
+  ('SA','documents',true,'{}'),
+  ('SA','payments',true,'{}')
 ON CONFLICT (jurisdiction_code, feature_key) DO UPDATE SET
   enabled = EXCLUDED.enabled,
   config = EXCLUDED.config;

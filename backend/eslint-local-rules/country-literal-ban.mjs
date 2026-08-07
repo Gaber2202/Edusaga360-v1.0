@@ -43,6 +43,12 @@ const CURRENCY_PATTERNS = CURRENCY_TERMS.map((term) => ({
   pattern: new RegExp(`(['"])${escapeRegExp(term)}\\1`, 'gi'),
 }));
 
+// Country-code comparisons such as `pack.code === '<country>'` defeat the pack registry.
+const COUNTRY_CODE_COMPARISON_PATTERNS = ['SA', 'AE', 'QA'].map((term) => ({
+  term: term.toLowerCase(),
+  pattern: new RegExp(`\\.code\\s*(?:===|!==)\\s*(['"])${escapeRegExp(term)}\\1`, 'gi'),
+}));
+
 function loadAllowlist() {
   if (!existsSync(ALLOWLIST_PATH)) return new Map();
   try {
@@ -132,6 +138,13 @@ export default {
               }
             }
             for (const { pattern, term } of CURRENCY_PATTERNS) {
+              let match;
+              while ((match = pattern.exec(source)) !== null) {
+                reportIfNeeded(term, match.index);
+                if (match[0] === '') break;
+              }
+            }
+            for (const { pattern, term } of COUNTRY_CODE_COMPARISON_PATTERNS) {
               let match;
               while ((match = pattern.exec(source)) !== null) {
                 reportIfNeeded(term, match.index);

@@ -174,7 +174,8 @@ export interface PayrollService {
 
   /** Overtime pay for a given number of extra hours.
    *  `date` is optional; some jurisdictions adjust normal hours for calendar
-   *  events such as Ramadan. */
+   *  events such as Ramadan. `supabase` is provided when the calculation must
+   *  read effective-dated regulatory parameters. */
   calculateOvertime?(
     basicSalary: number,
     normalHoursPerMonth: number,
@@ -182,7 +183,8 @@ export interface PayrollService {
     isNight?: boolean,
     isRestDay?: boolean,
     date?: Date | string,
-  ): { amount: number; currencyCode: string };
+    supabase?: unknown,
+  ): Promise<{ amount: number; currencyCode: string }>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

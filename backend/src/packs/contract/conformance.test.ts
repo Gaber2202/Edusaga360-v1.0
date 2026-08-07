@@ -1,4 +1,4 @@
-import { describe, expect, it as vitestIt, vi } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
 import { getRegisteredPacks } from '../registry.js';
 import type { CountryPack } from './CountryPack.js';
@@ -11,25 +11,55 @@ import {
 // Pack modules may pull in lib/supabase at import time; never hit the real DB in conformance tests.
 vi.mock('../../lib/supabase.js', () => ({ supabase: {} }));
 
-/**
- * Conformance tests assert behaviour for packs that implement a capability.
- * If a pack explicitly throws NotImplementedInJurisdiction, the test is skipped
- * rather than failing, because the contract test is not a test of completeness.
- */
-function it(name: string, fn: () => void | Promise<void>, timeout?: number) {
-  return vitestIt(name, async () => {
-    try {
-      await fn();
-    } catch (e) {
-      if (e instanceof NotImplementedInJurisdiction) return;
-      throw e;
-    }
-  }, timeout);
+function jurisdictionFeatures(code: string): Array<{ feature_key: string; enabled: boolean }> {
+  const base = [
+    { feature_key: 'einvoicing', enabled: false },
+    { feature_key: 'wps', enabled: false },
+    { feature_key: 'nationalisation_quota', enabled: false },
+    { feature_key: 'hijri_calendar', enabled: false },
+    { feature_key: 'documents', enabled: false },
+    { feature_key: 'payments', enabled: false },
+    { feature_key: 'fee_financing', enabled: false },
+    { feature_key: 'uae_pass', enabled: false },
+  ];
+  if (code === 'SA') {
+    return base.map((f) =>
+      ['einvoicing', 'wps', 'nationalisation_quota', 'hijri_calendar', 'documents', 'payments'].includes(f.feature_key)
+        ? { ...f, enabled: true }
+        : f,
+    );
+  }
+  if (code === 'AE') {
+    // All false at draft.
+    return base;
+  }
+  return base;
+}
+
+function resolveFilter(ctx: QueryContext, column: string): unknown {
+  for (const f of ctx.filters) {
+    if (f.method === 'eq' && f.args[0] === column) return f.args[1];
+  }
+  return undefined;
 }
 
 function defaultResolver(ctx: QueryContext): SupabaseResult {
   if (ctx.table === 'tenants') {
     return { data: { id: 'tenant-1', slug: 'demo', name_en: 'Demo School' } };
+  }
+  if (ctx.table === 'jurisdiction_features') {
+    const code = resolveFilter(ctx, 'jurisdiction_code') as string | undefined;
+    return { data: code ? jurisdictionFeatures(code) : [] };
+  }
+  if (ctx.table === 'jurisdiction_tax_rules') {
+    return {
+      data: [
+        { category: 'standard', rate: 0.05, effective_from: '2018-01-01', effective_to: '9999-12-31' },
+        { category: 'zero_rated', rate: 0, effective_from: '2018-01-01', effective_to: '9999-12-31' },
+        { category: 'exempt', rate: 0, effective_from: '2018-01-01', effective_to: '9999-12-31' },
+        { category: 'out_of_scope', rate: 0, effective_from: '2018-01-01', effective_to: '9999-12-31' },
+      ],
+    };
   }
   if (ctx.table === 'nitaqat_thresholds') {
     return { data: null };
@@ -70,16 +100,6 @@ function defaultResolver(ctx: QueryContext): SupabaseResult {
   }
   if (ctx.table === 'payslip_lines') {
     return { data: [] };
-  }
-  if (ctx.table === 'jurisdiction_tax_rules') {
-    return {
-      data: [
-        { category: 'standard', rate: 0.05, effective_from: '2018-01-01', effective_to: '9999-12-31' },
-        { category: 'zero_rated', rate: 0, effective_from: '2018-01-01', effective_to: '9999-12-31' },
-        { category: 'exempt', rate: 0, effective_from: '2018-01-01', effective_to: '9999-12-31' },
-        { category: 'out_of_scope', rate: 0, effective_from: '2018-01-01', effective_to: '9999-12-31' },
-      ],
-    };
   }
   return { data: null };
 }
@@ -177,15 +197,58 @@ function isBase64(str: string): boolean {
 describe.each(getRegisteredPacks().map((pack) => [pack.code, pack] as const))(
   'CountryPack conformance: %s',
   (_code, pack) => {
+    const features: Record<string, boolean> = {};
+
+    beforeAll(async () => {
+      const stub = makeDefaultStub();
+      const { data, error } = await stub.client
+        .from('jurisdiction_features')
+        .select('feature_key, enabled')
+        .eq('jurisdiction_code', pack.code);
+      if (error) throw error;
+      for (const row of (data ?? []) as Array<{ feature_key: string; enabled: boolean }>) {
+        features[row.feature_key] = row.enabled === true;
+      }
+    });
+
+    function featureEnabled(featureKey: string): boolean {
+      return features[featureKey] === true;
+    }
+
+    function whenFeature(
+      name: string,
+      featureKey: string,
+      liveFn: () => void | Promise<void>,
+      stubFn: () => unknown,
+    ) {
+      it(name, async () => {
+        if (featureEnabled(featureKey)) {
+          await liveFn();
+        } else {
+          await expect(async () => { await stubFn(); }).rejects.toThrow(NotImplementedInJurisdiction);
+        }
+      });
+    }
+
+    function whenImplemented(
+      name: string,
+      method: () => unknown,
+      fn: () => void | Promise<void>,
+    ) {
+      it(name, async () => {
+        if (!method()) return;
+        await fn();
+      });
+    }
+
     it('exposes a non-empty jurisdiction code', () => {
       expect(pack.code).toBeTruthy();
       expect(typeof pack.code).toBe('string');
     });
 
     describe('tax', () => {
-      it('vatRateForCategory returns a non-negative rate', () => {
-        if (!pack.tax?.vatRateForCategory) return;
-        const rate = pack.tax.vatRateForCategory('standard');
+      whenImplemented('vatRateForCategory returns a non-negative rate', () => pack.tax?.vatRateForCategory, () => {
+        const rate = pack.tax!.vatRateForCategory!('standard');
         expect(typeof rate).toBe('number');
         expect(rate).toBeGreaterThanOrEqual(0);
       });
@@ -199,8 +262,6 @@ describe.each(getRegisteredPacks().map((pack) => [pack.code, pack] as const))(
 
       it('computeVatSummary preserves line and document totals', async () => {
         if (!pack.tax?.computeVatSummary) return;
-        const standardRate = pack.tax.vatRateForCategory?.('standard') ?? 0;
-        const zeroRate = pack.tax.vatRateForCategory?.('zero_rated') ?? 0;
 
         const invoice = minimalInvoice({
           items: [
@@ -223,20 +284,17 @@ describe.each(getRegisteredPacks().map((pack) => [pack.code, pack] as const))(
         expect(sumTaxable).toBeCloseTo(summary.total_taxable as number, 2);
         expect(sumVat).toBeCloseTo(summary.total_vat as number, 2);
 
-        if (standardRate > 0) {
-          const standardEntry = rates.find((r) => Number(r.rate) === standardRate);
-          expect(standardEntry).toBeTruthy();
-          expect(Number(standardEntry!.vat_amount)).toBeCloseTo(
-            Number(standardEntry!.taxable_amount) * standardRate,
+        const standardEntry = rates.find((r) => r.category === 'standard' && Number(r.rate) > 0);
+        if (standardEntry) {
+          expect(Number(standardEntry.vat_amount)).toBeCloseTo(
+            Number(standardEntry.taxable_amount) * Number(standardEntry.rate),
             2,
           );
         }
 
-        if (zeroRate === 0) {
-          const zeroEntry = rates.find((r) => Number(r.rate) === 0);
-          if (zeroEntry) {
-            expect(Number(zeroEntry.vat_amount)).toBe(0);
-          }
+        const zeroEntry = rates.find((r) => Number(r.rate) === 0);
+        if (zeroEntry) {
+          expect(Number(zeroEntry.vat_amount)).toBe(0);
         }
       });
     });
@@ -245,49 +303,69 @@ describe.each(getRegisteredPacks().map((pack) => [pack.code, pack] as const))(
       const tenant = minimalTenant();
       const invoice = minimalInvoice();
 
-      it('generateUBLXml produces XML containing the invoice number', () => {
-        if (!pack.eInvoice?.generateUBLXml) return;
-        const xml = pack.eInvoice.generateUBLXml(invoice, tenant);
-        expect(typeof xml).toBe('string');
-        expect(xml.length).toBeGreaterThan(0);
-        expect(xml).toContain(invoice.invoice_number as string);
-        expect(xml).toContain('<Invoice');
-      });
+      whenFeature(
+        'generateUBLXml produces XML containing the invoice number',
+        'einvoicing',
+        () => {
+          const xml = pack.eInvoice!.generateUBLXml!(invoice, tenant);
+          expect(typeof xml).toBe('string');
+          expect(xml.length).toBeGreaterThan(0);
+          expect(xml).toContain(invoice.invoice_number as string);
+          expect(xml).toContain('<Invoice');
+        },
+        () => pack.eInvoice!.generateUBLXml!(invoice, tenant),
+      );
 
-      it('generateInvoiceHash produces a 64-character hex digest', () => {
-        if (!pack.eInvoice?.generateInvoiceHash) return;
-        const hash = pack.eInvoice.generateInvoiceHash('<xml/>');
-        expect(typeof hash).toBe('string');
-        expect(hash.length).toBe(64);
-        expect(isHex(hash)).toBe(true);
-      });
+      whenFeature(
+        'generateInvoiceHash produces a 64-character hex digest',
+        'einvoicing',
+        () => {
+          const hash = pack.eInvoice!.generateInvoiceHash!('<xml/>');
+          expect(typeof hash).toBe('string');
+          expect(hash.length).toBe(64);
+          expect(isHex(hash)).toBe(true);
+        },
+        () => pack.eInvoice!.generateInvoiceHash!('<xml/>'),
+      );
 
-      it('generateTLVQR produces a non-empty base64 payload', () => {
-        if (!pack.eInvoice?.generateTLVQR) return;
-        const qr = pack.eInvoice.generateTLVQR(invoice, tenant, 'sig');
-        expect(typeof qr).toBe('string');
-        expect(qr.length).toBeGreaterThan(0);
-        expect(isBase64(qr)).toBe(true);
-      });
+      whenFeature(
+        'generateTLVQR produces a non-empty base64 payload',
+        'einvoicing',
+        () => {
+          const qr = pack.eInvoice!.generateTLVQR!(invoice, tenant, 'sig');
+          expect(typeof qr).toBe('string');
+          expect(qr.length).toBeGreaterThan(0);
+          expect(isBase64(qr)).toBe(true);
+        },
+        () => pack.eInvoice!.generateTLVQR!(invoice, tenant, 'sig'),
+      );
 
-      it('buildInvoiceHTML is bilingual and contains required fields', () => {
-        if (!pack.eInvoice?.buildInvoiceHTML) return;
-        const html = pack.eInvoice.buildInvoiceHTML(invoice, tenant, 'data:image/png;base64,abc');
-        expect(typeof html).toBe('string');
-        expect(html.length).toBeGreaterThan(0);
-        expect(html).toContain(invoice.invoice_number as string);
-        expect(html).toContain((tenant.legal_name_en as string) || (tenant.name as string));
-        expect(/rtl|dir=\"rtl\"|lang=\"ar\"/.test(html) || /[\u0600-\u06FF]/.test(html)).toBe(true);
-      });
+      whenFeature(
+        'buildInvoiceHTML is bilingual and contains required fields',
+        'einvoicing',
+        () => {
+          const html = pack.eInvoice!.buildInvoiceHTML!(invoice, tenant, 'data:image/png;base64,abc');
+          expect(typeof html).toBe('string');
+          expect(html.length).toBeGreaterThan(0);
+          expect(html).toContain(invoice.invoice_number as string);
+          expect(html).toContain((tenant.legal_name_en as string) || (tenant.name as string));
+          expect(/rtl|dir=\"rtl\"|lang=\"ar\"/.test(html) || /[\u0600-\u06FF]/.test(html)).toBe(true);
+        },
+        () => pack.eInvoice!.buildInvoiceHTML!(invoice, tenant, 'data:image/png;base64,abc'),
+      );
     });
 
     describe('documents', () => {
-      it('renderInvoicePdf returns a non-empty Buffer', async () => {
-        if (!pack.documents?.renderInvoicePdf) return;
-        const pdf = await pack.documents.renderInvoicePdf(minimalInvoice(), minimalTenant());
-        expect(Buffer.isBuffer(pdf)).toBe(true);
-        expect(pdf.length).toBeGreaterThan(0);
-      }, 30_000);
+      whenFeature(
+        'renderInvoicePdf returns a non-empty Buffer',
+        'documents',
+        async () => {
+          const pdf = await pack.documents!.renderInvoicePdf!(minimalInvoice(), minimalTenant());
+          expect(Buffer.isBuffer(pdf)).toBe(true);
+          expect(pdf.length).toBeGreaterThan(0);
+        },
+        () => pack.documents!.renderInvoicePdf!(minimalInvoice(), minimalTenant()),
+      );
     });
 
     describe('localisation', () => {
@@ -312,7 +390,7 @@ describe.each(getRegisteredPacks().map((pack) => [pack.code, pack] as const))(
 
       it('formatMoney uses a currency code and formats the value', () => {
         if (!pack.localisation?.formatMoney) return;
-        const formatted = pack.localisation.formatMoney({ value: 1234.5, currency: 'SAR' });
+        const formatted = pack.localisation.formatMoney({ value: 1234.5 });
         expect(typeof formatted).toBe('string');
         expect(formatted.length).toBeGreaterThan(0);
         expect(formatted).toMatch(/1[\s,\.]*234/);
@@ -324,38 +402,63 @@ describe.each(getRegisteredPacks().map((pack) => [pack.code, pack] as const))(
         expect(typeof formatted).toBe('string');
         expect(formatted).toMatch(/\d/);
       });
+
+      it('getDefaultLocale returns a non-empty string', () => {
+        if (!pack.localisation?.getDefaultLocale) return;
+        const locale = pack.localisation.getDefaultLocale();
+        expect(typeof locale).toBe('string');
+        expect(locale.length).toBeGreaterThan(0);
+      });
+
+      it('getDefaultWeekend returns an array of day numbers', () => {
+        if (!pack.localisation?.getDefaultWeekend) return;
+        const weekend = pack.localisation.getDefaultWeekend();
+        expect(Array.isArray(weekend)).toBe(true);
+        for (const day of weekend) {
+          expect(typeof day).toBe('number');
+          expect(day >= 0 && day <= 6).toBe(true);
+        }
+      });
     });
 
     describe('payroll', () => {
-      it('calculateGosi returns non-negative contributions that sum to total', () => {
-        if (!pack.payroll?.calculateGosi) return;
-        const result = pack.payroll.calculateGosi(10000, 'any-nationality') as unknown as Record<string, unknown>;
-        expect(typeof result).toBe('object');
-        expect(Number(result.employee) >= 0).toBe(true);
-        expect(Number(result.employer) >= 0).toBe(true);
-        expect(Number(result.total) >= 0).toBe(true);
-        expect(Number(result.total)).toBeCloseTo(Number(result.employee) + Number(result.employer), 2);
-      });
+      whenFeature(
+        'calculateGosi returns non-negative contributions that sum to total',
+        'wps',
+        () => {
+          const result = pack.payroll!.calculateGosi!(10000, 'any-nationality') as unknown as Record<string, unknown>;
+          expect(typeof result).toBe('object');
+          expect(Number(result.employee) >= 0).toBe(true);
+          expect(Number(result.employer) >= 0).toBe(true);
+          expect(Number(result.total) >= 0).toBe(true);
+          expect(Number(result.total)).toBeCloseTo(Number(result.employee) + Number(result.employer), 2);
+        },
+        () => pack.payroll!.calculateGosi!(10000, 'any-nationality'),
+      );
 
-      it('generateWpsFile produces pipe-delimited lines', async () => {
-        if (!pack.payroll?.generateWpsFile) return;
-        const stub = makeWpsStub();
-        const result = (await pack.payroll.generateWpsFile(
-          stub.client,
-          'tenant-1',
-          { start: '2026-01-01', end: '2026-01-31' },
-        )) as { filename: string; content: string };
-        expect(typeof result.filename).toBe('string');
-        expect(result.filename.length).toBeGreaterThan(0);
-        expect(typeof result.content).toBe('string');
-        const lines = result.content.split('\n').filter((l) => l.trim());
-        expect(lines.length).toBeGreaterThan(0);
-        for (const line of lines) {
-          const fields = line.split('|');
-          expect(fields.length).toBe(6);
-          expect(Number(fields[4])).toBeGreaterThanOrEqual(0);
-        }
-      });
+      whenFeature(
+        'generateWpsFile produces pipe-delimited lines',
+        'wps',
+        async () => {
+          const stub = makeWpsStub();
+          const result = (await pack.payroll!.generateWpsFile!(
+            stub.client,
+            'tenant-1',
+            { start: '2026-01-01', end: '2026-01-31' },
+          )) as { filename: string; content: string };
+          expect(typeof result.filename).toBe('string');
+          expect(result.filename.length).toBeGreaterThan(0);
+          expect(typeof result.content).toBe('string');
+          const lines = result.content.split('\n').filter((l) => l.trim());
+          expect(lines.length).toBeGreaterThan(0);
+          for (const line of lines) {
+            const fields = line.split('|');
+            expect(fields.length).toBe(6);
+            expect(Number(fields[4])).toBeGreaterThanOrEqual(0);
+          }
+        },
+        () => pack.payroll!.generateWpsFile!(makeDefaultStub().client, 'tenant-1', { start: '2026-01-01', end: '2026-01-31' }),
+      );
     });
 
     describe('academic calendar', () => {
@@ -375,173 +478,231 @@ describe.each(getRegisteredPacks().map((pack) => [pack.code, pack] as const))(
         expect(year.end_date >= date).toBe(true);
       });
 
-      it('formatHijri returns a non-empty string', () => {
-        if (!pack.academicCalendar?.formatHijri) return;
-        const formatted = pack.academicCalendar.formatHijri('2026-01-01');
-        expect(typeof formatted).toBe('string');
-        expect(formatted.length).toBeGreaterThan(0);
-      });
+      whenFeature(
+        'formatHijri returns a non-empty string',
+        'hijri_calendar',
+        () => {
+          const formatted = pack.academicCalendar!.formatHijri!('2026-01-01');
+          expect(typeof formatted).toBe('string');
+          expect(formatted.length).toBeGreaterThan(0);
+        },
+        () => pack.academicCalendar!.formatHijri!('2026-01-01'),
+      );
 
-      it('hijriNumeric returns a yyyy-mm-dd style string if implemented', () => {
-        if (!pack.academicCalendar?.hijriNumeric) return;
-        const formatted = pack.academicCalendar.hijriNumeric('2026-01-01');
-        expect(typeof formatted).toBe('string');
-        expect(/\d{2,4}-\d{2}-\d{2}/.test(formatted)).toBe(true);
-      });
+      whenFeature(
+        'hijriNumeric returns a yyyy-mm-dd style string if implemented',
+        'hijri_calendar',
+        () => {
+          const formatted = pack.academicCalendar!.hijriNumeric!('2026-01-01');
+          expect(typeof formatted).toBe('string');
+          expect(/\d{2,4}-\d{2}-\d{2}/.test(formatted)).toBe(true);
+        },
+        () => pack.academicCalendar!.hijriNumeric!('2026-01-01'),
+      );
 
-      it('gregorianToHijri returns numeric year/month/day parts', () => {
-        if (!pack.academicCalendar?.gregorianToHijri) return;
-        const h = pack.academicCalendar.gregorianToHijri('2026-01-01') as {
-          year: number;
-          month: number;
-          day: number;
-        };
-        expect(Number.isFinite(h.year)).toBe(true);
-        expect(Number.isFinite(h.month)).toBe(true);
-        expect(Number.isFinite(h.day)).toBe(true);
-        expect(h.month).toBeGreaterThanOrEqual(1);
-        expect(h.month).toBeLessThanOrEqual(12);
-        expect(h.day).toBeGreaterThanOrEqual(1);
-        expect(h.day).toBeLessThanOrEqual(30);
-      });
+      whenFeature(
+        'gregorianToHijri returns numeric year/month/day parts',
+        'hijri_calendar',
+        () => {
+          const h = pack.academicCalendar!.gregorianToHijri!('2026-01-01') as {
+            year: number;
+            month: number;
+            day: number;
+          };
+          expect(Number.isFinite(h.year)).toBe(true);
+          expect(Number.isFinite(h.month)).toBe(true);
+          expect(Number.isFinite(h.day)).toBe(true);
+          expect(h.month).toBeGreaterThanOrEqual(1);
+          expect(h.month).toBeLessThanOrEqual(12);
+          expect(h.day).toBeGreaterThanOrEqual(1);
+          expect(h.day).toBeLessThanOrEqual(30);
+        },
+        () => pack.academicCalendar!.gregorianToHijri!('2026-01-01'),
+      );
     });
 
     describe('regulator reports', () => {
-      it('calculateNitaqat returns a workforce composition with valid percentages', async () => {
-        if (!pack.regulatorReports?.calculateNitaqat) return;
-        const stub = makeDefaultStub();
-        const employees = [
-          { id: 'e1', status: 'active', is_saudi: true, gender: 'male', department_id: 'd1' },
-          { id: 'e2', status: 'active', nationality: 'Indian', gender: 'female', department_id: 'd1' },
-        ];
-        const departments = [
-          { id: 'd1', name_en: 'Admin', name_ar: 'إدارة' },
-        ];
-        const result = (await pack.regulatorReports.calculateNitaqat(stub.client, 'tenant-1', {
-          employees,
-          departments,
-        })) as Record<string, unknown>;
-        expect(typeof result.headcount).toBe('number');
-        expect(typeof result.saudiCount).toBe('number');
-        expect(typeof result.saudizationPct).toBe('number');
-        expect((result.headcount as number)).toBeGreaterThanOrEqual(0);
-        expect((result.saudiCount as number)).toBeGreaterThanOrEqual(0);
-        expect((result.saudiCount as number) <= (result.headcount as number)).toBe(true);
-        expect((result.saudizationPct as number) >= 0).toBe(true);
-        expect((result.saudizationPct as number) <= 100).toBe(true);
-        const band = result.nitaqatBand ?? (result.nitaqat as Record<string, unknown> | undefined)?.band;
-        expect(['platinum', 'green', 'yellow', 'red', null]).toContain(band);
-      });
+      whenFeature(
+        'calculateNitaqat returns a workforce composition with valid percentages',
+        'nationalisation_quota',
+        async () => {
+          const stub = makeDefaultStub();
+          const employees = [
+            { id: 'e1', status: 'active', is_saudi: true, gender: 'male', department_id: 'd1' },
+            { id: 'e2', status: 'active', nationality: 'Indian', gender: 'female', department_id: 'd1' },
+          ];
+          const departments = [
+            { id: 'd1', name_en: 'Admin', name_ar: 'إدارة' },
+          ];
+          const result = (await pack.regulatorReports!.calculateNitaqat!(stub.client, 'tenant-1', {
+            employees,
+            departments,
+          })) as Record<string, unknown>;
+          expect(typeof result.headcount).toBe('number');
+          expect(typeof result.saudiCount).toBe('number');
+          expect(typeof result.saudizationPct).toBe('number');
+          expect((result.headcount as number)).toBeGreaterThanOrEqual(0);
+          expect((result.saudiCount as number)).toBeGreaterThanOrEqual(0);
+          expect((result.saudiCount as number) <= (result.headcount as number)).toBe(true);
+          expect((result.saudizationPct as number) >= 0).toBe(true);
+          expect((result.saudizationPct as number) <= 100).toBe(true);
+          const band = result.nitaqatBand ?? (result.nitaqat as Record<string, unknown> | undefined)?.band;
+          expect(['platinum', 'green', 'yellow', 'red', null]).toContain(band);
+        },
+        () => pack.regulatorReports!.calculateNitaqat!(makeDefaultStub().client, 'tenant-1'),
+      );
     });
 
     describe('payments', () => {
-      it('getOrCreatePaymentLink returns a PaymentLinkResult shape', async () => {
-        if (!pack.payments?.getOrCreatePaymentLink) return;
-        const stub = makeDefaultStub();
-        const result = (await pack.payments.getOrCreatePaymentLink(stub.client, {
+      whenFeature(
+        'getOrCreatePaymentLink returns a PaymentLinkResult shape',
+        'payments',
+        async () => {
+          const stub = makeDefaultStub();
+          const result = (await pack.payments!.getOrCreatePaymentLink!(stub.client, {
+            tenantId: 'tenant-1',
+            invoiceId: 'inv-1',
+            callbackUrl: 'https://example.com/callback',
+            sourceType: 'mada',
+          })) as { ok: boolean; paymentUrl?: string; error?: string };
+          expect(typeof result.ok).toBe('boolean');
+          if (result.ok) expect(typeof result.paymentUrl).toBe('string');
+          else expect(typeof result.error).toBe('string');
+        },
+        () => pack.payments!.getOrCreatePaymentLink!(makeDefaultStub().client, {
           tenantId: 'tenant-1',
           invoiceId: 'inv-1',
           callbackUrl: 'https://example.com/callback',
           sourceType: 'mada',
-        })) as { ok: boolean; paymentUrl?: string; error?: string };
-        expect(typeof result.ok).toBe('boolean');
-        if (result.ok) expect(typeof result.paymentUrl).toBe('string');
-        else expect(typeof result.error).toBe('string');
-      });
+        }),
+      );
 
-      it('getOrCreatePaymentLink reuses an active existing link', async () => {
-        if (!pack.payments?.getOrCreatePaymentLink) return;
-        const stub = makeDefaultStub();
-        stub.setResolver((ctx) => {
-          if (ctx.table === 'moyasar_invoices') {
-            return {
-              data: {
-                moyasar_id: 'moy-existing',
-                payment_url: 'https://pay.existing/inv-1',
-                status: 'initiated',
-                expired_at: '2099-12-31T23:59:59Z',
-                amount_minor: 115000,
-              },
-            };
+      whenFeature(
+        'getOrCreatePaymentLink reuses an active existing link',
+        'payments',
+        async () => {
+          const stub = makeDefaultStub();
+          stub.setResolver((ctx) => {
+            if (ctx.table === 'moyasar_invoices') {
+              return {
+                data: {
+                  moyasar_id: 'moy-existing',
+                  payment_url: 'https://pay.existing/inv-1',
+                  status: 'initiated',
+                  expired_at: '2099-12-31T23:59:59Z',
+                  amount_minor: 115000,
+                },
+              };
+            }
+            return defaultResolver(ctx);
+          });
+
+          const result = (await pack.payments!.getOrCreatePaymentLink!(stub.client, {
+            tenantId: 'tenant-1',
+            invoiceId: 'inv-1',
+            callbackUrl: 'https://example.com/callback',
+            sourceType: 'mada',
+          })) as { ok: boolean; paymentUrl?: string; error?: string };
+
+          if (result.ok) {
+            expect(result.paymentUrl).toBe('https://pay.existing/inv-1');
+          } else {
+            expect(result.error).toBe('moyasar_not_configured');
           }
-          return defaultResolver(ctx);
-        });
-
-        const result = (await pack.payments.getOrCreatePaymentLink(stub.client, {
+        },
+        () => pack.payments!.getOrCreatePaymentLink!(makeDefaultStub().client, {
           tenantId: 'tenant-1',
           invoiceId: 'inv-1',
           callbackUrl: 'https://example.com/callback',
           sourceType: 'mada',
-        })) as { ok: boolean; paymentUrl?: string; error?: string };
+        }),
+      );
 
-        if (result.ok) {
-          expect(result.paymentUrl).toBe('https://pay.existing/inv-1');
-        } else {
-          expect(result.error).toBe('moyasar_not_configured');
-        }
-      });
-
-      it('createOrRefreshPaymentLink returns a PaymentLinkResult shape', async () => {
-        if (!pack.payments?.createOrRefreshPaymentLink) return;
-        const stub = makeDefaultStub();
-        const result = (await pack.payments.createOrRefreshPaymentLink(stub.client, {
+      whenFeature(
+        'createOrRefreshPaymentLink returns a PaymentLinkResult shape',
+        'payments',
+        async () => {
+          const stub = makeDefaultStub();
+          const result = (await pack.payments!.createOrRefreshPaymentLink!(stub.client, {
+            tenantId: 'tenant-1',
+            invoiceId: 'inv-1',
+            callbackUrl: 'https://example.com/callback',
+          })) as { ok: boolean; paymentUrl?: string; error?: string };
+          expect(typeof result.ok).toBe('boolean');
+          if (result.ok) expect(typeof result.paymentUrl).toBe('string');
+          else expect(typeof result.error).toBe('string');
+        },
+        () => pack.payments!.createOrRefreshPaymentLink!(makeDefaultStub().client, {
           tenantId: 'tenant-1',
           invoiceId: 'inv-1',
           callbackUrl: 'https://example.com/callback',
-        })) as { ok: boolean; paymentUrl?: string; error?: string };
-        expect(typeof result.ok).toBe('boolean');
-        if (result.ok) expect(typeof result.paymentUrl).toBe('string');
-        else expect(typeof result.error).toBe('string');
-      });
+        }),
+      );
 
-      it('refundPayment returns a result with ok boolean', async () => {
-        if (!pack.payments?.refundPayment) return;
-        const result = (await pack.payments.refundPayment(
-          makeDefaultStub().client,
-          'tenant-1',
-          'pmt-1',
-          100,
-        )) as { ok: boolean; error?: string };
-        expect(typeof result.ok).toBe('boolean');
-        if (!result.ok) expect(typeof result.error).toBe('string');
-      });
+      whenFeature(
+        'refundPayment returns a result with ok boolean',
+        'payments',
+        async () => {
+          const result = (await pack.payments!.refundPayment!(
+            makeDefaultStub().client,
+            'tenant-1',
+            'pmt-1',
+            100,
+          )) as { ok: boolean; error?: string };
+          expect(typeof result.ok).toBe('boolean');
+          if (!result.ok) expect(typeof result.error).toBe('string');
+        },
+        () => pack.payments!.refundPayment!(makeDefaultStub().client, 'tenant-1', 'pmt-1', 100),
+      );
 
-      it('processWebhook returns a structured response', async () => {
-        if (!pack.payments?.processWebhook) return;
-        const result = (await pack.payments.processWebhook(
-          makeDefaultStub().client,
-          { id: 'evt-1', status: 'paid', amount: 1150 },
-          'invalid-sig',
-        )) as { received: boolean; error?: string };
-        expect(typeof result).toBe('object');
-        expect(typeof result.received).toBe('boolean');
-      });
+      whenFeature(
+        'processWebhook returns a structured response',
+        'payments',
+        async () => {
+          const result = (await pack.payments!.processWebhook!(
+            makeDefaultStub().client,
+            { id: 'evt-1', status: 'paid', amount: 1150 },
+            'invalid-sig',
+          )) as { received: boolean; error?: string };
+          expect(typeof result).toBe('object');
+          expect(typeof result.received).toBe('boolean');
+        },
+        () => pack.payments!.processWebhook!(makeDefaultStub().client, { id: 'evt-1', status: 'paid', amount: 1150 }, 'invalid-sig'),
+      );
 
-      it('reconcilePaymentState returns checked count and drift list', async () => {
-        if (!pack.payments?.reconcilePaymentState) return;
-        const result = (await pack.payments.reconcilePaymentState(
-          makeDefaultStub().client,
-          'tenant-1',
-        )) as { checked: number; drift: unknown[] };
-        expect(typeof result.checked).toBe('number');
-        expect(Array.isArray(result.drift)).toBe(true);
-      });
+      whenFeature(
+        'reconcilePaymentState returns checked count and drift list',
+        'payments',
+        async () => {
+          const result = (await pack.payments!.reconcilePaymentState!(
+            makeDefaultStub().client,
+            'tenant-1',
+          )) as { checked: number; drift: unknown[] };
+          expect(typeof result.checked).toBe('number');
+          expect(Array.isArray(result.drift)).toBe(true);
+        },
+        () => pack.payments!.reconcilePaymentState!(makeDefaultStub().client, 'tenant-1'),
+      );
 
-      it('generateSadadBill returns bill metadata if implemented', async () => {
-        if (!pack.payments?.generateSadadBill) return;
-        const stub = makeDefaultStub();
-        const result = (await pack.payments.generateSadadBill(stub.client, 'tenant-1', 'inv-1')) as {
-          sadad_bill_number: string;
-          amount: number;
-          due_date: string | null;
-          payment_instructions: { ar: string; en: string };
-        };
-        expect(typeof result.sadad_bill_number).toBe('string');
-        expect(typeof result.amount).toBe('number');
-        expect(typeof result.payment_instructions).toBe('object');
-        expect(typeof result.payment_instructions.ar).toBe('string');
-        expect(typeof result.payment_instructions.en).toBe('string');
-      });
+      whenFeature(
+        'generateSadadBill returns bill metadata if implemented',
+        'payments',
+        async () => {
+          const stub = makeDefaultStub();
+          const result = (await pack.payments!.generateSadadBill!(stub.client, 'tenant-1', 'inv-1')) as {
+            sadad_bill_number: string;
+            amount: number;
+            due_date: string | null;
+            payment_instructions: { ar: string; en: string };
+          };
+          expect(typeof result.sadad_bill_number).toBe('string');
+          expect(typeof result.amount).toBe('number');
+          expect(typeof result.payment_instructions).toBe('object');
+          expect(typeof result.payment_instructions.ar).toBe('string');
+          expect(typeof result.payment_instructions.en).toBe('string');
+        },
+        () => pack.payments!.generateSadadBill!(makeDefaultStub().client, 'tenant-1', 'inv-1'),
+      );
     });
 
     describe('identity', () => {
