@@ -107,7 +107,7 @@ export default function StudentImportDialog({ open, onClose, onSuccess }) {
           national_id: row.national_id?.trim() || '',
           date_of_birth: row.date_of_birth?.trim() || null,
           gender: row.gender?.trim() || '',
-          nationality: row.nationality?.trim() || 'سعودي',
+          nationality: row.nationality?.trim() || '',
           grade: row.grade?.trim() || '',
           section: row.section?.trim() || '',
           academic_year: row.academic_year?.trim() || '',

@@ -23,9 +23,14 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { logAuditEvent, AuditActions } from '../AuditService';
+import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
+import { GOSI_FEATURES, NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
 
 export default function PayRunsList({ onViewPayRun }) {
   const { isRTL } = useLanguage();
+  const { isFeatureEnabled } = useJurisdictionFeatures();
+  const gosiEnabled = isFeatureEnabled(GOSI_FEATURES[0]);
+  const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
   const { selectedBranchId, filterByBranch: _filterByBranch, branchFilter, branches } = useBranch();
   const { user: currentUser, userRole } = useRole();
   const queryClient = useQueryClient();
@@ -97,7 +102,7 @@ export default function PayRunsList({ onViewPayRun }) {
         totalHousing += emp.housing_allowance || 0;
         totalTransport += emp.transport_allowance || 0;
         totalOther += emp.other_allowances || 0;
-        const isSaudi = emp.is_saudi || emp.nationality === 'Saudi' || emp.nationality === 'سعودي';
+        const isSaudi = nationalisationEnabled ? (emp.is_saudi ?? false) : false;
         if (isSaudi) {
           saudiCount++;
         } else {
@@ -141,12 +146,12 @@ export default function PayRunsList({ onViewPayRun }) {
 
       // Create payroll inputs for each employee
       const inputs = branchEmployees.map(emp => {
-        const isSaudi = emp.is_saudi || emp.nationality === 'Saudi' || emp.nationality === 'سعودي';
+        const isSaudi = nationalisationEnabled ? (emp.is_saudi ?? false) : false;
         const grossSalary = (emp.basic_salary || 0) + (emp.housing_allowance || 0) + 
                           (emp.transport_allowance || 0) + (emp.other_allowances || 0);
-        const gosiWage = Math.min((emp.basic_salary || 0) + (emp.housing_allowance || 0), 45000);
-        const gosiEmployee = isSaudi ? gosiWage * 0.0975 : 0;
-        const gosiEmployer = isSaudi ? gosiWage * 0.1175 : gosiWage * 0.02;
+        const gosiWage = gosiEnabled ? Math.min((emp.basic_salary || 0) + (emp.housing_allowance || 0), 45000) : 0;
+        const gosiEmployee = gosiEnabled && isSaudi ? gosiWage * 0.0975 : 0;
+        const gosiEmployer = gosiEnabled ? (isSaudi ? gosiWage * 0.1175 : gosiWage * 0.02) : 0;
 
         return {
           pay_run_id: payRun.id,

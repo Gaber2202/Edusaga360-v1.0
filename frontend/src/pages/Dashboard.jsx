@@ -24,7 +24,7 @@ import DashboardKPICard from '../components/dashboard/DashboardKPICard';
 import SaudizationRing from '../components/dashboard/SaudizationRing';
 import QuickActionTile from '../components/dashboard/QuickActionTile';
 import JurisdictionFeatureGate from '../components/JurisdictionFeatureGate';
-import { PAGE_FEATURE_KEYS } from '../lib/jurisdictionFeatures.js';
+import { PAGE_FEATURE_KEYS, EINVOICING_FEATURES } from '../lib/jurisdictionFeatures.js';
 import DashboardAnalytics from '../components/dashboard/DashboardAnalytics';
 import ActivityPanel from '../components/dashboard/ActivityPanel';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
@@ -80,7 +80,7 @@ export default function Dashboard() {
   const lastPayRun = payRuns[0];
   const expiredIqamaCount = iqamas.filter((i) => isExpired(i.expiry_date, today)).length;
   const expiringIqama30 = iqamas.filter((i) => isExpiringWithin(i.expiry_date, 30, today)).length;
-  const saudiPct = activeEmployees > 0 ? Math.round(employees.filter((e) => e.is_saudi || e.nationality === 'Saudi').length / activeEmployees * 100) : 0;
+  const saudiPct = activeEmployees > 0 ? Math.round(employees.filter((e) => e.is_saudi).length / activeEmployees * 100) : 0;
 
   // ── Real-data sparkline series (no fabricated numbers) ──────────────────────
   const studentSeries = cumulativeSeries(students.filter((s) => s.status === 'active'));
@@ -311,14 +311,18 @@ export default function Dashboard() {
               <QuickActionTile label={isRTL ? 'الطلبات' : 'Admissions'} icon={GraduationCap} href={createPageUrl('Admissions')} accentIndex={1} />
               <QuickActionTile label={isRTL ? 'الرسوم' : 'Fees'} icon={CreditCard} href={createPageUrl('Fees')} accentIndex={2} />
               <QuickActionTile label={isRTL ? 'الحضور' : 'Attendance'} icon={ClipboardCheck} href={createPageUrl('StudentAttendancePage')} accentIndex={3} />
+              <JurisdictionFeatureGate featureKeys={EINVOICING_FEATURES}>
               <QuickActionTile label={isRTL ? 'ملف زاتكا' : 'ZATCA Filing'} icon={Receipt} href={createPageUrl('VATManagement')} accentIndex={4} />
+            </JurisdictionFeatureGate>
               <QuickActionTile label={isRTL ? 'إنشاء تقرير' : 'Generate Report'} icon={BarChart3} href={createPageUrl('Reports')} accentIndex={5} />
             </>}
             {isFinance && !isHR && !isSchoolAdmin && <>
               <QuickActionTile label={isRTL ? 'الفواتير' : 'Invoices'} icon={FileText} href={createPageUrl('Fees')} accentIndex={0} />
               <QuickActionTile label={isRTL ? 'التحصيل' : 'Collections'} icon={Banknote} href={createPageUrl('Collections')} accentIndex={1} />
               <QuickActionTile label={isRTL ? 'قيود يومية' : 'Journals'} icon={Briefcase} href={createPageUrl('JournalEntries')} accentIndex={2} />
-              <QuickActionTile label={isRTL ? 'ملف زاتكا' : 'ZATCA Filing'} icon={Receipt} href={createPageUrl('VATManagement')} accentIndex={3} />
+              <JurisdictionFeatureGate featureKeys={EINVOICING_FEATURES}>
+                <QuickActionTile label={isRTL ? 'ملف زاتكا' : 'ZATCA Filing'} icon={Receipt} href={createPageUrl('VATManagement')} accentIndex={3} />
+              </JurisdictionFeatureGate>
               <QuickActionTile label={isRTL ? 'إنشاء تقرير' : 'Generate Report'} icon={BarChart3} href={createPageUrl('Reports')} accentIndex={4} />
             </>}
           </div>

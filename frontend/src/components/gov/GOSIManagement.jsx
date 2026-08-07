@@ -20,7 +20,7 @@ export default function GOSIManagement() {
       const gosiSalary = gosi?.registered_salary || 0;
       const diff = Math.abs(payrollSalary - gosiSalary);
       const isMismatch = diff > 100;
-      const isSaudi = emp.nationality === 'Saudi' || emp.nationality === 'سعودي';
+      const isSaudi = emp.is_saudi ?? false;
       return { ...emp, gosi, payrollSalary, gosiSalary, diff, isMismatch, isSaudi };
     });
   }, [employees, gosiRecords]);

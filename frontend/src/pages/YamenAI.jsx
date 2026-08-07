@@ -12,6 +12,8 @@ import YamenInsightsDashboard from '../components/yamen/YamenInsightsDashboard';
 import YamenDocumentGenerator from '../components/yamen/YamenDocumentGenerator';
 import YamenDocumentProcessor from '../components/yamen/YamenDocumentProcessor';
 import NitaqatDashboard from '../components/hr/NitaqatDashboard';
+import { useJurisdictionFeatures } from '../components/JurisdictionFeatureContext';
+import { NATIONALISATION_FEATURES } from '../lib/jurisdictionFeatures.js';
 import DocumentExpiryTracker from '../components/hr/DocumentExpiryTracker';
 
 const HR_ROLES = ['admin', 'hr_admin', 'hr_officer', 'creator'];
@@ -131,11 +133,13 @@ function CompliancePanel({ isRTL }) {
 export default function YamenAI() {
   const { isRTL } = useLanguage();
   const { userRole } = useRole();
+  const { isFeatureEnabled } = useJurisdictionFeatures();
+  const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
   const [activeTab, setActiveTab] = useState('dashboard');
 
   const isHRMode = HR_ROLES.includes(userRole);
 
-  const tabs = isHRMode ? [
+  const allTabs = isHRMode ? [
     { id: 'dashboard', label: { ar: 'لوحة يامن', en: 'Dashboard' }, icon: Bot },
     { id: 'risk', label: { ar: 'مراقبة المخاطر', en: 'Risk Monitor' }, icon: AlertTriangle },
     { id: 'nitaqat', label: { ar: 'السعودة — نطاقات', en: 'Saudization' }, icon: Target },
@@ -150,6 +154,7 @@ export default function YamenAI() {
   ] : [
     { id: 'chat', label: { ar: 'اسأل يامن', en: 'Ask YAMEN' }, icon: MessageSquare },
   ];
+  const tabs = isHRMode ? (nationalisationEnabled ? allTabs : allTabs.filter(t => t.id !== 'nitaqat' && t.id !== 'compliance')) : allTabs;
 
   const tabColors = {
     dashboard: 'emerald',
@@ -237,15 +242,15 @@ export default function YamenAI() {
       <div>
         {isHRMode && activeTab === 'dashboard' && <YamenDashboard isRTL={isRTL} />}
         {isHRMode && activeTab === 'risk' && <YamenRiskMonitor isRTL={isRTL} />}
-        {isHRMode && activeTab === 'nitaqat' && <NitaqatDashboard isRTL={isRTL} />}
+        {isHRMode && nationalisationEnabled && activeTab === 'nitaqat' && <NitaqatDashboard isRTL={isRTL} />}
         {isHRMode && activeTab === 'docs_expiry' && <DocumentExpiryTracker isRTL={isRTL} />}
         {isHRMode && activeTab === 'insights' && <YamenInsightsDashboard isRTL={isRTL} />}
         {isHRMode && activeTab === 'documents' && <YamenDocumentGenerator isRTL={isRTL} />}
         {isHRMode && activeTab === 'processor' && <YamenDocumentProcessor isRTL={isRTL} />}
-        {isHRMode && activeTab === 'compliance' && <CompliancePanel isRTL={isRTL} />}
+        {isHRMode && nationalisationEnabled && activeTab === 'compliance' && <CompliancePanel isRTL={isRTL} />}
         {isHRMode && activeTab === 'reports' && <YamenExecutiveReport isRTL={isRTL} />}
         {isHRMode && activeTab === 'employee' && <YamenEmployeeAssistant isRTL={isRTL} isHRView={true} />}
-        {activeTab === 'chat' && <YamenHRChat isRTL={isRTL} isHRMode={isHRMode} />}
+        {activeTab === 'chat' && <YamenHRChat isRTL={isRTL} isHRMode={isHRMode} nationalisationEnabled={nationalisationEnabled} />}
       </div>
     </div>
   );

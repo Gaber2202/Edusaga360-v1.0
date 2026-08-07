@@ -16,6 +16,8 @@ import { toast } from 'sonner';
 import { Loader2, Users, FileText, X } from 'lucide-react';
 import { logAuditEvent } from '../AuditService';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
+import JurisdictionFeatureGate from '../JurisdictionFeatureGate';
+import { NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
 import { planBulkInvoices } from '../../lib/bulkInvoicePlan';
 
 export default function BulkInvoiceGeneration({ open, onClose }) {
@@ -105,8 +107,8 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
     if (criteria.section && student.section !== criteria.section) return false;
     if (criteria.academic_year && student.academic_year !== criteria.academic_year && student.academic_year_id !== criteria.academic_year) return false;
     if (criteria.nationality_category) {
-      if (criteria.nationality_category === 'saudi' && student.nationality !== 'Saudi' && student.nationality !== 'سعودي') return false;
-      if (criteria.nationality_category === 'non_saudi' && (student.nationality === 'Saudi' || student.nationality === 'سعودي')) return false;
+      if (criteria.nationality_category === 'citizen' && !student.is_saudi) return false;
+      if (criteria.nationality_category === 'non_citizen' && student.is_saudi) return false;
     }
     return !excludedStudents.includes(student.id);
   });
@@ -122,8 +124,8 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
       if (criteria.grade && student.grade !== criteria.grade) return false;
       if (criteria.section && student.section !== criteria.section) return false;
       if (criteria.nationality_category) {
-        if (criteria.nationality_category === 'saudi' && student.nationality !== 'Saudi' && student.nationality !== 'سعودي') return false;
-        if (criteria.nationality_category === 'non_saudi' && (student.nationality === 'Saudi' || student.nationality === 'سعودي')) return false;
+        if (criteria.nationality_category === 'citizen' && !student.is_saudi) return false;
+        if (criteria.nationality_category === 'non_citizen' && student.is_saudi) return false;
       }
       return !excludedStudents.includes(student.id);
     });
@@ -331,19 +333,21 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label>{isRTL ? 'فئة الجنسية' : 'Nationality Category'}</Label>
-                    <Select value={criteria.nationality_category} onValueChange={(v) => setCriteria({...criteria, nationality_category: v})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={isRTL ? 'الكل' : 'All'} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={null}>{isRTL ? 'الكل' : 'All'}</SelectItem>
-                        <SelectItem value="saudi">{isRTL ? 'سعودي' : 'Saudi'}</SelectItem>
-                        <SelectItem value="non_saudi">{isRTL ? 'غير سعودي' : 'Non-Saudi'}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <JurisdictionFeatureGate featureKeys={NATIONALISATION_FEATURES}>
+                    <div>
+                      <Label>{isRTL ? 'فئة الجنسية' : 'Nationality Category'}</Label>
+                      <Select value={criteria.nationality_category} onValueChange={(v) => setCriteria({...criteria, nationality_category: v})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={isRTL ? 'الكل' : 'All'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={null}>{isRTL ? 'الكل' : 'All'}</SelectItem>
+                          <SelectItem value="citizen">{isRTL ? 'سعودي' : 'Saudi'}</SelectItem>
+                          <SelectItem value="non_citizen">{isRTL ? 'غير سعودي' : 'Non-Saudi'}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </JurisdictionFeatureGate>
                 </div>
                 <div className="pt-4 flex items-center justify-between">
                   <div className="flex items-center gap-2">

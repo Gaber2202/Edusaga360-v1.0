@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { useJurisdictionFeatures } from '../components/JurisdictionFeatureContext';
+import { NATIONALISATION_FEATURES } from '../lib/jurisdictionFeatures.js';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Badge } from '../components/ui/badge';
@@ -994,6 +996,8 @@ function COODashboard({ data, isRTL, t }) {
 }
 
 function CHRODashboard({ data, isRTL, t }) {
+  const { isFeatureEnabled } = useJurisdictionFeatures();
+  const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
   const { kpis = {}, nitaqat = {}, workforce_composition = {}, payroll_gov_compliance = {}, open_roles = {}, contract_expiry_radar = {}, leave_absence_summary = {} } = data;
 
   const bandColor = { platinum: 'text-purple-600 border-purple-200', green: 'text-emerald-600 border-emerald-200', yellow: 'text-amber-600 border-amber-200', red: 'text-red-600 border-red-200' }[nitaqat.band] || 'text-muted-foreground border-border';
@@ -1006,7 +1010,9 @@ function CHRODashboard({ data, isRTL, t }) {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard title={t('headcount')} value={fmtNumber(kpis.headcount, isRTL)} icon={Users} iconClassName="bg-najdi-50" />
-        <StatCard title={t('saudizationRate')} value={fmtPct(kpis.saudization_pct)} icon={ShieldCheck} iconClassName="bg-emerald-50" />
+        {nationalisationEnabled && (
+          <StatCard title={t('saudizationRate')} value={fmtPct(kpis.saudization_pct)} icon={ShieldCheck} iconClassName="bg-emerald-50" />
+        )}
         <StatCard
           title={t('retentionRate')}
           value={kpis.retention_rate_pct !== null ? fmtPct(kpis.retention_rate_pct) : '—'}
@@ -1016,6 +1022,7 @@ function CHRODashboard({ data, isRTL, t }) {
         />
       </div>
 
+      {nationalisationEnabled && (
       <Card className="border-0 shadow-sm">
         <CardHeader><CardTitle className="text-base">{t('nitaqatBand')}</CardTitle></CardHeader>
         <CardContent>
@@ -1040,6 +1047,7 @@ function CHRODashboard({ data, isRTL, t }) {
           )}
         </CardContent>
       </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="border-0 shadow-sm">

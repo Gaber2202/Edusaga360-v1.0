@@ -48,7 +48,8 @@ export default function Employees() {
     national_id: '',
     date_of_birth: '',
     gender: 'male',
-    nationality: 'Saudi',
+    nationality: '',
+    is_saudi: false,
     branch_id: '',
     employing_company_id: '',
     visa_company_id: '',
@@ -125,11 +126,6 @@ export default function Employees() {
     try {
       const empId = formData.employee_id || `EMP-${Date.now().toString(36).toUpperCase()}`;
       
-      // Auto-classify as Saudi/Non-Saudi based on nationality field or explicit flag
-      const isSaudi = formData.is_saudi === true ||
-                      formData.nationality?.toLowerCase().includes('saudi') || 
-                      formData.nationality?.toLowerCase().includes('سعود');
-      
       // Sync top-level bank fields from bank_details for backward compat
       const bd = formData.bank_details || {};
 
@@ -154,8 +150,8 @@ export default function Employees() {
         // Empty date strings must be NULL, never '' (invalid DATE input).
         contract_end_date: formData.contract_end_date || null,
         end_date: formData.end_date || null,
-        is_saudi: isSaudi,
-        is_gosi_applicable: isSaudi || !!formData.iqama_number,
+        is_saudi: formData.is_saudi,
+        is_gosi_applicable: formData.is_saudi || !!formData.national_id,
         bank_name: bd.bank_name || formData.bank_name || '',
         iban: bd.iban || formData.iban || '',
         bank_account: bd.account_number || formData.bank_account || '',
@@ -201,7 +197,8 @@ export default function Employees() {
       national_id: employee.national_id || '',
       date_of_birth: employee.date_of_birth || '',
       gender: employee.gender || 'male',
-      nationality: employee.nationality || 'Saudi',
+      nationality: employee.nationality || '',
+      is_saudi: employee.is_saudi ?? false,
       branch_id: employee.branch_id || '',
       employing_company_id: employee.employing_company_id || '',
       visa_company_id: employee.visa_company_id || '',
@@ -240,7 +237,7 @@ export default function Employees() {
     setEditingEmployee(null);
     setFormData({
       employee_id: '', name_ar: '', name_en: '', email: '', personal_email: '', phone: '', national_id: '',
-      date_of_birth: '', gender: 'male', nationality: 'Saudi', branch_id: '', 
+      date_of_birth: '', gender: 'male', nationality: '', is_saudi: false, branch_id: '', 
       employing_company_id: '', visa_company_id: '', visa_type: '',
       department_id: '', job_title_id: '',
       manager_id: '', hire_date: format(new Date(), 'yyyy-MM-dd'), contract_end_date: '', end_date: '', contract_type: 'permanent', employment_type: 'full_time',
@@ -362,6 +359,10 @@ export default function Employees() {
               <div className="space-y-2">
                  <Label>{t('nationality')}</Label>
                  <Input value={formData.nationality} onChange={(e) => setFormData(p => ({...p, nationality: e.target.value}))} />
+               </div>
+               <div className="flex items-center gap-2">
+                 <input id="is_saudi" type="checkbox" checked={formData.is_saudi} onChange={(e) => setFormData(p => ({...p, is_saudi: e.target.checked}))} />
+                 <Label htmlFor="is_saudi">{isRTL ? 'موظف سعودي' : 'Saudi National'}</Label>
                </div>
                <div className="space-y-2">
                  <Label>{t('branch')} *</Label>

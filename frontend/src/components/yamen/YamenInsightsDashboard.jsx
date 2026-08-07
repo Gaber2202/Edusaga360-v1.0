@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Badge } from '../ui/badge';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import { AlertTriangle, TrendingDown } from 'lucide-react';
+import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
+import { NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
 import {
   predictChurnRisk,
   detectPayrollAnomalies,
@@ -15,6 +17,8 @@ import {
 
 export default function YamenInsightsDashboard({ isRTL }) {
   const [activeTab, setActiveTab] = useState('churn');
+  const { isFeatureEnabled } = useJurisdictionFeatures();
+  const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
   const { tenantId } = useTenantFilter();
 
   const { data: employees } = useQuery({
@@ -50,7 +54,7 @@ export default function YamenInsightsDashboard({ isRTL }) {
   const departmentHealth = calculateDepartmentHealth(employees, attendance, leaveRequests);
   const trainingNeeds = assessTrainingNeeds(employees, evaluations || []);
 
-  const tabs = [
+  const allTabs = [
     { id: 'churn', label: isRTL ? 'مخاطر التسرب' : 'Churn Risk', count: churnRisks.filter(c => c.riskLevel === 'HIGH').length },
     { id: 'payroll', label: isRTL ? 'الشواذ المالية' : 'Payroll Anomalies', count: payrollAnomalies.length },
     { id: 'absence', label: isRTL ? 'توقعات الغياب' : 'Absence Forecast' },
@@ -58,6 +62,7 @@ export default function YamenInsightsDashboard({ isRTL }) {
     { id: 'training', label: isRTL ? 'احتياجات التدريب' : 'Training Needs', count: trainingNeeds.length },
     { id: 'compliance', label: isRTL ? 'الامتثال' : 'Compliance' },
   ];
+  const tabs = nationalisationEnabled ? allTabs : allTabs.filter(t => t.id !== 'compliance');
 
   return (
     <div className="space-y-4 p-4 bg-najdi-900 rounded-xl border border-najdi-900">
@@ -170,7 +175,7 @@ export default function YamenInsightsDashboard({ isRTL }) {
       )}
 
       {/* Compliance */}
-      {activeTab === 'compliance' && (
+      {nationalisationEnabled && activeTab === 'compliance' && (
         <div className="space-y-2">
           {employees.slice(0, 5).map(emp => {
             const issues = checkSaudiLaborCompliance(emp);

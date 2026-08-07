@@ -27,7 +27,7 @@ export default function GovComplianceDashboard() {
 
   const kpis = useMemo(() => {
     const totalEmp = employees.length;
-    const saudiEmp = employees.filter((e) => e.nationality === 'Saudi' || e.nationality === 'سعودي').length;
+    const saudiEmp = employees.filter((e) => e.is_saudi).length;
     const saudizationPct = totalEmp > 0 ? Math.round(saudiEmp / totalEmp * 100) : 0;
 
     const iqamasExpiring60 = iqamas.filter((i) => {

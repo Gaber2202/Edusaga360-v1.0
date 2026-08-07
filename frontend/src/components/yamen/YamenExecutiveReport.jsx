@@ -9,10 +9,14 @@ import { toast } from 'sonner';
 import { differenceInDays } from 'date-fns';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import { extractAiText, aiErrorMessage } from './yamenUtils';
+import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
+import { NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
 
 const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'];
 
 export default function YamenExecutiveReport({ isRTL }) {
+  const { isFeatureEnabled } = useJurisdictionFeatures();
+  const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const [generating, setGenerating] = useState(false);
   const [aiSummary, setAiSummary] = useState('');
@@ -100,10 +104,12 @@ export default function YamenExecutiveReport({ isRTL }) {
           <p className="text-xs text-muted-foreground">{isRTL ? 'صحة الموارد البشرية' : 'HR Health'}</p>
           <p className={`text-3xl font-bold ${stats.healthScore >= 70 ? 'text-emerald-400' : stats.healthScore >= 50 ? 'text-amber-400' : 'text-red-400'}`}>{stats.healthScore}%</p>
         </CardContent></Card>
+        {nationalisationEnabled && (
         <Card><CardContent className="p-4">
           <p className="text-xs text-muted-foreground">{isRTL ? 'السعودة' : 'Saudization'}</p>
           <p className={`text-3xl font-bold ${stats.saudizationPct >= 40 ? 'text-emerald-400' : 'text-amber-400'}`}>{stats.saudizationPct}%</p>
         </CardContent></Card>
+        )}
         <Card><CardContent className="p-4">
           <p className="text-xs text-muted-foreground">{isRTL ? 'إجمالي الرواتب' : 'Monthly Payroll'}</p>
           <p className="text-2xl font-bold text-white">{stats.totalPayroll > 0 ? (stats.totalPayroll / 1000).toFixed(0) + 'K' : '-'}</p>
@@ -134,6 +140,7 @@ export default function YamenExecutiveReport({ isRTL }) {
           </CardContent>
         </Card>
 
+        {nationalisationEnabled && (
         <Card>
           <CardHeader><CardTitle className="text-sm">{isRTL ? 'توزيع الجنسية' : 'Nationality Distribution'}</CardTitle></CardHeader>
           <CardContent>
@@ -147,6 +154,7 @@ export default function YamenExecutiveReport({ isRTL }) {
             </ResponsiveContainer>
           </CardContent>
         </Card>
+        )}
       </div>
 
       {/* AI Executive Summary */}

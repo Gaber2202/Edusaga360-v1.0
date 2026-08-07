@@ -8,6 +8,8 @@ import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { createJournalEntry } from '../../api/journalEntry';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import { useBranch } from '../BranchContext';
+import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
+import { GOSI_FEATURES } from '../../lib/jurisdictionFeatures.js';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -25,7 +27,7 @@ const GOSI_EMPLOYEE_RATE = 0.10;   // Saudi employee 10%
 const GOSI_EMPLOYER_SOCIAL = 0.12; // Saudi employer social 12%
 const GOSI_HAZARD_ALL = 0.02;      // Occupational hazard all 2%
 
-function calcEmployee(emp, period, attendanceMap, loansMap, advancesMap) {
+function calcEmployee(emp, period, attendanceMap, loansMap, advancesMap, gosiEnabled) {
   const periodStart = period + '-01';
   const periodEnd = new Date(period + '-01');
   periodEnd.setMonth(periodEnd.getMonth() + 1);
@@ -65,11 +67,11 @@ function calcEmployee(emp, period, attendanceMap, loansMap, advancesMap) {
   const grossSalary = proBasic + proHousing + proTransport + proOther + overtimePay;
 
   // GOSI
-  const isSaudi = emp.is_saudi || emp.nationality?.toLowerCase().includes('saudi');
-  const gosiBase = Math.min((basic + housing) * prorateMultiplier, GOSI_CEILING);
-  const gosiEmployee = isSaudi ? gosiBase * GOSI_EMPLOYEE_RATE : 0;
-  const gosiEmployerSocial = isSaudi ? gosiBase * GOSI_EMPLOYER_SOCIAL : 0;
-  const gosiHazard = gosiBase * GOSI_HAZARD_ALL;
+  const isSaudi = emp.is_saudi ?? false;
+  const gosiBase = gosiEnabled ? Math.min((basic + housing) * prorateMultiplier, GOSI_CEILING) : 0;
+  const gosiEmployee = gosiEnabled && isSaudi ? gosiBase * GOSI_EMPLOYEE_RATE : 0;
+  const gosiEmployerSocial = gosiEnabled && isSaudi ? gosiBase * GOSI_EMPLOYER_SOCIAL : 0;
+  const gosiHazard = gosiEnabled ? gosiBase * GOSI_HAZARD_ALL : 0;
   const gosiEmployerTotal = gosiEmployerSocial + gosiHazard;
 
   // Loans/advances
@@ -116,6 +118,7 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const { branchFilter, selectedBranchId } = useBranch();
+  const { isFeatureEnabled } = useJurisdictionFeatures();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [processing, setProcessing] = useState(false);
@@ -167,7 +170,8 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
 
     if (step === 2) {
       // Calculate all employees
-      const lines = employees.map(emp => calcEmployee(emp, period, attendanceMap, loansMap, advancesMap));
+      const gosiEnabled = isFeatureEnabled(GOSI_FEATURES[0]);
+      const lines = employees.map(emp => calcEmployee(emp, period, attendanceMap, loansMap, advancesMap, gosiEnabled));
       setCalculatedLines(lines);
     }
 

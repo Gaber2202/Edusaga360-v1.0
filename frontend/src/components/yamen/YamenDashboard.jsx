@@ -9,7 +9,8 @@ import { createPageUrl } from '../../utils';
 import { differenceInDays } from 'date-fns';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import JurisdictionFeatureGate from '../JurisdictionFeatureGate';
-import { PAGE_FEATURE_KEYS } from '../../lib/jurisdictionFeatures.js';
+import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
+import { PAGE_FEATURE_KEYS, NATIONALISATION_FEATURES, GOVERNMENT_RELATIONS_FEATURES } from '../../lib/jurisdictionFeatures.js';
 
 function riskColor(score) {
   if (score >= 70) return { dot: 'bg-red-500', text: 'text-red-400', label: { ar: 'عالي', en: 'High' }, badge: 'bg-red-900/40 text-red-300 border-red-700' };
@@ -18,6 +19,9 @@ function riskColor(score) {
 }
 
 export default function YamenDashboard({ isRTL }) {
+  const { areAnyEnabled, isFeatureEnabled } = useJurisdictionFeatures();
+  const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
+  const governmentRelationsEnabled = areAnyEnabled(GOVERNMENT_RELATIONS_FEATURES);
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const { data: employees = [] } = useQuery({ queryKey: ['employees', tenantId], queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').match(tenantFilter())), enabled: hasTenantAccess });
   const { data: attendance = [] } = useQuery({ queryKey: ['employeeAttendance', tenantId], queryFn: () => fetchData(tenantQuery('employee_attendances').select('*').match(tenantFilter()).order('date', { ascending: false }).limit(200)), enabled: hasTenantAccess });
@@ -36,15 +40,17 @@ export default function YamenDashboard({ isRTL }) {
       const lates = empAtt.filter((a) => a.status === 'late').length;
       const attRisk = Math.min(100, absences * 15 + lates * 5);
 
-      // Compliance risk (iqama)
+      // Compliance risk (iqama) — only meaningful where iqama/government relations is enabled
       const iqama = iqamaRecords.find((i) => i.employee_id === emp.id);
       let compRisk = 0;
-      if (!iqama && !emp.is_saudi) compRisk = 60;else
-      if (iqama?.expiry_date) {
-        const daysLeft = differenceInDays(new Date(iqama.expiry_date), today);
-        if (daysLeft < 0) compRisk = 100;else
-        if (daysLeft < 30) compRisk = 80;else
-        if (daysLeft < 90) compRisk = 40;
+      if (governmentRelationsEnabled) {
+        if (!iqama && !emp.is_saudi) compRisk = 60;else
+        if (iqama?.expiry_date) {
+          const daysLeft = differenceInDays(new Date(iqama.expiry_date), today);
+          if (daysLeft < 0) compRisk = 100;else
+          if (daysLeft < 30) compRisk = 80;else
+          if (daysLeft < 90) compRisk = 40;
+        }
       }
 
       // Payroll risk
@@ -62,7 +68,7 @@ export default function YamenDashboard({ isRTL }) {
       const overall = Math.round(attRisk * 0.35 + compRisk * 0.3 + payRisk * 0.15 + perfRisk * 0.2);
       return { ...emp, attRisk, compRisk, payRisk, perfRisk, overallRisk: overall, iqama };
     }).sort((a, b) => b.overallRisk - a.overallRisk);
-  }, [employees, attendance, iqamaRecords, evaluations]);
+  }, [employees, attendance, iqamaRecords, evaluations, governmentRelationsEnabled]);
 
   const highRisk = riskEmployees.filter((e) => e.overallRisk >= 70).length;
   const medRisk = riskEmployees.filter((e) => e.overallRisk >= 40 && e.overallRisk < 70).length;
@@ -95,6 +101,7 @@ export default function YamenDashboard({ isRTL }) {
             <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'من 100' : 'out of 100'}</p>
           </CardContent>
         </Card>
+        {nationalisationEnabled && (
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'نسبة السعودة' : 'Saudization %'}</p>
@@ -102,6 +109,7 @@ export default function YamenDashboard({ isRTL }) {
             <p className="text-xs text-muted-foreground mt-1">{saudiCount} / {activeEmployees}</p>
           </CardContent>
         </Card>
+        )}
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'موظفون عالي المخاطر' : 'High Risk Employees'}</p>
@@ -109,6 +117,7 @@ export default function YamenDashboard({ isRTL }) {
             <p className="text-xs text-muted-foreground mt-1">{medRisk} {isRTL ? 'متوسط المخاطر' : 'medium risk'}</p>
           </CardContent>
         </Card>
+        {governmentRelationsEnabled && (
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'إقامات منتهية/قريبة' : 'Iqama Alerts'}</p>
@@ -116,6 +125,7 @@ export default function YamenDashboard({ isRTL }) {
             <p className="text-xs text-muted-foreground mt-1">{iqamaExpired.length} {isRTL ? 'منتهية' : 'expired'}</p>
           </CardContent>
         </Card>
+        )}
       </div>
 
       {/* Action Center */}

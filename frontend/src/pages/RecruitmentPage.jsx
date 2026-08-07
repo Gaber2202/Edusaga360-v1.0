@@ -523,7 +523,7 @@ export default function RecruitmentPage() {
               offered: applicants.filter(a => a.status === 'offered').length,
               hired: applicants.filter(a => a.status === 'hired').length,
               rejected: applicants.filter(a => a.status === 'rejected').length,
-              saudizationHires: applicants.filter(a => a.nationality?.toLowerCase().includes('saudi') || a.nationality?.toLowerCase().includes('سعود')).filter(a => a.status === 'hired').length,
+              saudizationHires: applicants.filter(a => a.is_saudi).filter(a => a.status === 'hired').length,
               salaryRangeMin: Math.min(...recruitments.map(r => r.salary_range_min || 0).filter(v => v > 0), 0),
               salaryRangeMax: Math.max(...recruitments.map(r => r.salary_range_max || 0), 0),
             }}

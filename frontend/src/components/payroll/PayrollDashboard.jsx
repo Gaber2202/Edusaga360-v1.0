@@ -12,7 +12,7 @@ import { format, differenceInDays } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import JurisdictionFeatureGate from '../JurisdictionFeatureGate';
-import { PAGE_FEATURE_KEYS } from '../../lib/jurisdictionFeatures.js';
+import { PAGE_FEATURE_KEYS, GOSI_FEATURES, NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
 import {
   Users,
   DollarSign,
@@ -64,7 +64,7 @@ export default function PayrollDashboard({ onNavigate }) {
   const currentPayRun = payRuns.find(p => p.period === currentPeriod && (!selectedBranchId || p.branch_id === selectedBranchId));
 
   // Calculate stats
-  const saudiCount = filteredEmployees.filter(e => e.is_saudi || e.nationality === 'Saudi' || e.nationality === 'سعودي').length;
+  const saudiCount = filteredEmployees.filter(e => e.is_saudi).length;
   const nonSaudiCount = filteredEmployees.length - saudiCount;
   const teacherCount = filteredEmployees.filter(e => e.job_title_name?.toLowerCase().includes('teacher') || e.job_title_name?.includes('معلم')).length;
   const adminCount = filteredEmployees.length - teacherCount;
@@ -100,15 +100,13 @@ export default function PayrollDashboard({ onNavigate }) {
   const gosiNonSaudiRate = 0.02; // 2% GOSI for non-Saudis (employer only)
 
   const estimatedGOSIEmployee = filteredEmployees.reduce((sum, e) => {
-    const isSaudi = e.is_saudi || e.nationality === 'Saudi' || e.nationality === 'سعودي';
     const gosiWage = Math.min((e.basic_salary || 0) + (e.housing_allowance || 0), 45000);
-    return sum + (isSaudi ? gosiWage * gosiEmployeeRate : 0);
+    return sum + (e.is_saudi ? gosiWage * gosiEmployeeRate : 0);
   }, 0);
 
   const estimatedGOSIEmployer = filteredEmployees.reduce((sum, e) => {
-    const isSaudi = e.is_saudi || e.nationality === 'Saudi' || e.nationality === 'سعودي';
     const gosiWage = Math.min((e.basic_salary || 0) + (e.housing_allowance || 0), 45000);
-    return sum + (isSaudi ? gosiWage * gosiEmployerRate : gosiWage * gosiNonSaudiRate);
+    return sum + (e.is_saudi ? gosiWage * gosiEmployerRate : gosiWage * gosiNonSaudiRate);
   }, 0);
 
   const statusColors = {
@@ -233,47 +231,51 @@ export default function PayrollDashboard({ onNavigate }) {
         </Card>
         </Link>
 
-        <Card className="bg-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{isRTL ? 'سعودي / غير سعودي' : 'Saudi / Non-Saudi'}</p>
-                <p className="text-2xl font-bold mt-1">{saudiCount} / {nonSaudiCount}</p>
+        <JurisdictionFeatureGate featureKeys={NATIONALISATION_FEATURES}>
+          <Card className="bg-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'سعودي / غير سعودي' : 'Saudi / Non-Saudi'}</p>
+                  <p className="text-2xl font-bold mt-1">{saudiCount} / {nonSaudiCount}</p>
+                </div>
+                <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
+                  <UserCheck className="w-6 h-6 text-emerald-600" />
+                </div>
               </div>
-              <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
-                <UserCheck className="w-6 h-6 text-emerald-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </JurisdictionFeatureGate>
 
-        <Card className="bg-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{isRTL ? 'التأمينات (موظف)' : 'GOSI (Employee)'}</p>
-                <p className="text-2xl font-bold mt-1">{(estimatedGOSIEmployee / 1000).toFixed(1)}K</p>
+        <JurisdictionFeatureGate featureKeys={GOSI_FEATURES}>
+          <Card className="bg-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'التأمينات (موظف)' : 'GOSI (Employee)'}</p>
+                  <p className="text-2xl font-bold mt-1">{(estimatedGOSIEmployee / 1000).toFixed(1)}K</p>
+                </div>
+                <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
+                  <Landmark className="w-6 h-6 text-purple-600" />
+                </div>
               </div>
-              <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
-                <Landmark className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{isRTL ? 'التأمينات (صاحب العمل)' : 'GOSI (Employer)'}</p>
-                <p className="text-2xl font-bold mt-1">{(estimatedGOSIEmployer / 1000).toFixed(1)}K</p>
+          <Card className="bg-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'التأمينات (صاحب العمل)' : 'GOSI (Employer)'}</p>
+                  <p className="text-2xl font-bold mt-1">{(estimatedGOSIEmployer / 1000).toFixed(1)}K</p>
+                </div>
+                <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center">
+                  <Building2 className="w-6 h-6 text-amber-600" />
+                </div>
               </div>
-              <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-amber-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </JurisdictionFeatureGate>
       </div>
 
       {/* Secondary Stats */}

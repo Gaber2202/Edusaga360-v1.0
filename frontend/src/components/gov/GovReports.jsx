@@ -20,7 +20,7 @@ export default function GovReports() {
 
   const stats = useMemo(() => {
     const active = employees.filter(e => e.status === 'active');
-    const saudis = active.filter(e => e.is_saudi || e.nationality === 'Saudi' || e.nationality === 'سعودي');
+    const saudis = active.filter(e => e.is_saudi);
     const saudizationPct = active.length ? Math.round((saudis.length / active.length) * 100) : 0;
 
     const expiredIqama = iqamas.filter(i => i.expiry_date && differenceInDays(parseISO(i.expiry_date), today) < 0);

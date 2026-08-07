@@ -27,14 +27,20 @@ import BankExports from '../components/payroll/BankExports';
 import PayrollReports from '../components/payroll/PayrollReports';
 import PayrollSettings from '../components/payroll/PayrollSettings';
 import PayrollCalculationEngine from '../components/hr/PayrollCalculationEngine';
+import { useJurisdictionFeatures } from '../components/JurisdictionFeatureContext';
+import { GOSI_FEATURES, WPS_FEATURES, NATIONALISATION_FEATURES } from '../lib/jurisdictionFeatures.js';
 
 export default function Payroll() {
   const { isRTL } = useLanguage();
+  const { isFeatureEnabled, areAnyEnabled } = useJurisdictionFeatures();
+  const gosiEnabled = isFeatureEnabled(GOSI_FEATURES[0]);
+  const wpsEnabled = areAnyEnabled(WPS_FEATURES);
+  const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
   const [activeSection, setActiveSection] = useState('dashboard');
   const [selectedPayRun, setSelectedPayRun] = useState(null);
   const [enginePeriod, setEnginePeriod] = useState(new Date().toISOString().substring(0, 7));
 
-  const navItems = [
+  const allNavItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: { ar: 'لوحة التحكم', en: 'Dashboard' } },
     { id: 'engine', icon: PlayCircle, label: { ar: '⚡ محرك الرواتب', en: '⚡ Payroll Engine' } },
     { id: 'payruns', icon: PlayCircle, label: { ar: 'كشوفات الرواتب', en: 'Pay Runs' } },
@@ -46,6 +52,11 @@ export default function Payroll() {
     { id: 'reports', icon: FileText, label: { ar: 'التقارير', en: 'Reports' } },
     { id: 'settings', icon: Settings, label: { ar: 'الإعدادات', en: 'Settings' } },
   ];
+  const navItems = allNavItems.filter(item => {
+    if (item.id === 'gosi') return gosiEnabled;
+    if (item.id === 'bank') return wpsEnabled;
+    return true;
+  });
 
   const handleNavigate = (section) => {
     setActiveSection(section);
@@ -118,17 +129,17 @@ export default function Payroll() {
           </PayrollErrorBoundary>
         );
       case 'gosi':
-        return (
+        return gosiEnabled ? (
           <PayrollErrorBoundary page="GOSISubmissions" action="view_gosi">
             <GOSISubmissions />
           </PayrollErrorBoundary>
-        );
+        ) : null;
       case 'bank':
-        return (
+        return wpsEnabled ? (
           <PayrollErrorBoundary page="BankExports" action="view_bank">
             <BankExports />
           </PayrollErrorBoundary>
-        );
+        ) : null;
       case 'reports':
         return (
           <PayrollErrorBoundary page="PayrollReports" action="view_reports">

@@ -11,7 +11,7 @@ import { useBranch } from '../components/BranchContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import JurisdictionFeatureGate from '../components/JurisdictionFeatureGate';
 import { useJurisdictionFeatures } from '../components/JurisdictionFeatureContext';
-import { PAGE_FEATURE_KEYS } from '../lib/jurisdictionFeatures.js';
+import { PAGE_FEATURE_KEYS, NATIONALISATION_FEATURES } from '../lib/jurisdictionFeatures.js';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Link } from 'react-router-dom';
@@ -67,7 +67,8 @@ export default function HRManagerDashboard() {
   const { isRTL } = useLanguage();
   const { branchFilter } = useBranch();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
-  const { areAnyEnabled } = useJurisdictionFeatures();
+  const { areAnyEnabled, isFeatureEnabled } = useJurisdictionFeatures();
+  const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
   const [activeTab, setActiveTab] = useState('overview');
   const today = new Date();
 
@@ -98,7 +99,7 @@ export default function HRManagerDashboard() {
   // ── Computed KPIs ─────────────────────────────────────
   const kpis = useMemo(() => {
     const active = employees.filter(e => e.status === 'active');
-    const saudis = active.filter(e => e.is_saudi || e.nationality?.toLowerCase().includes('saudi'));
+    const saudis = active.filter(e => e.is_saudi);
     const saudizationPct = active.length > 0 ? (saudis.length / active.length) * 100 : 0;
     const nitaqatBand = getNitaqatBand(saudizationPct);
 
@@ -237,7 +238,7 @@ export default function HRManagerDashboard() {
       {activeTab !== 'benchmarks' && <>
 
       {/* Critical alerts */}
-      {(kpis.docsExpiredCount > 0 || kpis.nitaqatBand.name === 'Red' || kpis.nitaqatBand.name === 'Yellow') && (
+      {(kpis.docsExpiredCount > 0 || (nationalisationEnabled && (kpis.nitaqatBand.name === 'Red' || kpis.nitaqatBand.name === 'Yellow'))) && (
         <div className="space-y-2">
           {kpis.docsExpiredCount > 0 && (
             <div className="flex items-center gap-3 p-3 rounded-xl border bg-red-50 border-red-200 text-red-700 text-sm">
@@ -249,7 +250,7 @@ export default function HRManagerDashboard() {
               </span>
             </div>
           )}
-          {(kpis.nitaqatBand.name === 'Yellow' || kpis.nitaqatBand.name === 'Red') && (
+          {nationalisationEnabled && (kpis.nitaqatBand.name === 'Yellow' || kpis.nitaqatBand.name === 'Red') && (
             <div className="flex items-center gap-3 p-3 rounded-xl border bg-amber-50 border-amber-200 text-amber-700 text-sm">
               <Target className="w-4 h-4 flex-shrink-0" />
               <span>
@@ -265,9 +266,11 @@ export default function HRManagerDashboard() {
       {/* KPI grid — row 1: headcount */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <KPICard title={isRTL ? 'إجمالي الموظفين' : 'Total Employees'} value={kpis.totalActive} subtitle={isRTL ? 'موظف نشط' : 'active'} icon={Users} iconBg="bg-najdi-50" to="/Employees" />
-        <KPICard title={isRTL ? 'السعودة %' : 'Saudization %'} value={PCT(kpis.saudizationPct)} subtitle={`${kpis.saudis} ${isRTL ? 'سعودي' : 'Saudi'}`} icon={Target} iconBg="bg-emerald-50"
-          badge={{ label: isRTL ? kpis.nitaqatBand.nameAr : kpis.nitaqatBand.name, color: kpis.nitaqatBand.name === 'Red' ? 'bg-red-100 text-red-700' : kpis.nitaqatBand.name === 'Yellow' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700' }}
-          warn={kpis.nitaqatBand.name === 'Yellow'} alert={kpis.nitaqatBand.name === 'Red'} />
+        {nationalisationEnabled && (
+          <KPICard title={isRTL ? 'السعودة %' : 'Saudization %'} value={PCT(kpis.saudizationPct)} subtitle={`${kpis.saudis} ${isRTL ? 'سعودي' : 'Saudi'}`} icon={Target} iconBg="bg-emerald-50"
+            badge={{ label: isRTL ? kpis.nitaqatBand.nameAr : kpis.nitaqatBand.name, color: kpis.nitaqatBand.name === 'Red' ? 'bg-red-100 text-red-700' : kpis.nitaqatBand.name === 'Yellow' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700' }}
+            warn={kpis.nitaqatBand.name === 'Yellow'} alert={kpis.nitaqatBand.name === 'Red'} />
+        )}
         <KPICard title={isRTL ? 'في فترة التجربة' : 'On Probation'} value={kpis.onProbation} icon={Clock} iconBg="bg-amber-50" to="/Employees" />
         <JurisdictionFeatureGate featureKeys={PAGE_FEATURE_KEYS.GovernmentRelations}>
           <KPICard title={isRTL ? 'وثائق تنتهي (30 يوم)' : 'Docs Expiring (30d)'} value={kpis.docsIn30Count} icon={AlertCircle} iconBg="bg-red-50" warn={kpis.docsIn30Count > 0} alert={kpis.docsExpiredCount > 0} to="/GovernmentRelations" />
@@ -286,6 +289,8 @@ export default function HRManagerDashboard() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {nationalisationEnabled && (
+        <>
         {/* Saudization gauge */}
         <Card>
           <CardHeader className="pb-2">
@@ -314,6 +319,8 @@ export default function HRManagerDashboard() {
             </div>
           </CardContent>
         </Card>
+        </>
+        )}
 
         {/* Nationality pie */}
         <Card>

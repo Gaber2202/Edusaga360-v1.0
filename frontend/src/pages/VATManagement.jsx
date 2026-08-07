@@ -20,7 +20,9 @@ import { toast } from 'sonner';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { useTenant } from '../components/TenantContext';
+import { useJurisdictionFeatures } from '../components/JurisdictionFeatureContext';
 import { getVatRate } from '../lib/vatRate';
+import { EINVOICING_FEATURES } from '../lib/jurisdictionFeatures.js';
 
 export default function VATManagement() {
   const { t, isRTL } = useLanguage();
@@ -28,7 +30,10 @@ export default function VATManagement() {
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
   const { tenant } = useTenant();
+  const { isFeatureEnabled } = useJurisdictionFeatures();
+  const eInvoicingEnabled = isFeatureEnabled(EINVOICING_FEATURES[0]);
   const VAT_RATE = getVatRate(tenant);
+  const vatPct = (VAT_RATE * 100).toFixed(0);
 
   const [showForm, setShowForm] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -167,7 +172,7 @@ export default function VATManagement() {
       });
       await logAuditEvent({ action: 'SUBMIT', entityType: 'VATReturn', entityId: vatReturn.id });
       queryClient.invalidateQueries({ queryKey: ['vatReturns'] });
-      toast.success(isRTL ? 'تم رفع الإقرار إلى هيئة الزكاة' : 'Submitted to ZATCA');
+      toast.success(isRTL ? 'تم رفع الإقرار إلى الهيئة' : 'Submitted to Tax Authority');
     } catch (error) {
       console.error('Error:', error);
       toast.error(isRTL ? 'حدث خطأ' : 'Error occurred');
@@ -179,9 +184,9 @@ export default function VATManagement() {
     const rows = [
       ['VAT Period', `${format(new Date(vatReturn.period_start), 'dd/MM/yyyy')} - ${format(new Date(vatReturn.period_end), 'dd/MM/yyyy')}`],
       ['Total Sales', vatReturn.total_sales?.toLocaleString()],
-      ['VAT on Sales (15%)', vatReturn.vat_on_sales?.toLocaleString()],
+      [`VAT on Sales (${vatPct}%)`, vatReturn.vat_on_sales?.toLocaleString()],
       ['Total Purchases', vatReturn.total_purchases?.toLocaleString()],
-      ['VAT on Purchases (15%)', vatReturn.vat_on_purchases?.toLocaleString()],
+      [`VAT on Purchases (${vatPct}%)`, vatReturn.vat_on_purchases?.toLocaleString()],
       ['Adjustments', vatReturn.adjustments?.toLocaleString()],
       ['VAT Payable', vatReturn.vat_payable?.toLocaleString()],
       ['VAT Refundable', vatReturn.vat_refundable?.toLocaleString()]
@@ -228,7 +233,7 @@ export default function VATManagement() {
     { header: t('status'), cell: (row) => <StatusBadge status={row.status} /> },
     { header: t('actions'), cell: (row) => (
       <div className="flex gap-1">
-        {row.status === 'draft' && (
+        {eInvoicingEnabled && row.status === 'draft' && (
           <Button size="sm" variant="ghost" onClick={() => handleSubmitToZATCA(row)} className="text-najdi-700">
             <Send className="w-4 h-4 me-1" /> {isRTL ? 'رفع' : 'Submit'}
           </Button>
@@ -244,7 +249,7 @@ export default function VATManagement() {
     <div className="space-y-6">
       <PageHeader
         title={isRTL ? 'إدارة ضريبة القيمة المضافة' : 'VAT Management'}
-        subtitle={isRTL ? 'إقرارات ضريبة القيمة المضافة (15%)' : 'VAT Returns (15% Rate)'}
+        subtitle={isRTL ? `إقرارات ضريبة القيمة المضافة (${vatPct}٪)` : `VAT Returns (${vatPct}% Rate)`}
         action
         actionLabel={isRTL ? 'إقرار جديد' : 'New Return'}
         actionIcon={Plus}
@@ -333,7 +338,7 @@ export default function VATManagement() {
                     <span className="font-semibold">{formData.total_sales?.toLocaleString()} {t('sar')}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-emerald-700 font-medium">{isRTL ? 'ضريبة المبيعات (15%)' : 'VAT on Sales (15%)'}</span>
+                    <span className="text-emerald-700 font-medium">{isRTL ? `ضريبة المبيعات (${vatPct}٪)` : `VAT on Sales (${vatPct}%)`}</span>
                     <span className="font-semibold text-emerald-600">{formData.vat_on_sales?.toLocaleString()} {t('sar')}</span>
                   </div>
 
@@ -342,19 +347,19 @@ export default function VATManagement() {
                     <span className="font-semibold">{formData.total_purchases?.toLocaleString()} {t('sar')}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-najdi-900 font-medium">{isRTL ? 'ضريبة المشتريات (15%)' : 'VAT on Purchases (15%)'}</span>
+                    <span className="text-najdi-900 font-medium">{isRTL ? `ضريبة المشتريات (${vatPct}٪)` : `VAT on Purchases (${vatPct}%)`}</span>
                     <span className="font-semibold text-najdi-700">{formData.vat_on_purchases?.toLocaleString()} {t('sar')}</span>
                   </div>
 
                   <div className="flex justify-between items-center pt-3 border-t-2">
                     {formData.vat_payable > 0 ? (
                       <>
-                        <span className="text-red-800 font-bold">{isRTL ? 'المستحق للهيئة' : 'VAT Payable to ZATCA'}</span>
+                        <span className="text-red-800 font-bold">{isRTL ? 'المستحق للهيئة' : 'VAT Payable'}</span>
                         <span className="font-bold text-red-600 text-lg">{formData.vat_payable?.toLocaleString()} {t('sar')}</span>
                       </>
                     ) : (
                       <>
-                        <span className="text-emerald-800 font-bold">{isRTL ? 'المسترد من الهيئة' : 'VAT Refundable from ZATCA'}</span>
+                        <span className="text-emerald-800 font-bold">{isRTL ? 'المسترد من الهيئة' : 'VAT Refundable'}</span>
                         <span className="font-bold text-emerald-600 text-lg">{formData.vat_refundable?.toLocaleString()} {t('sar')}</span>
                       </>
                     )}

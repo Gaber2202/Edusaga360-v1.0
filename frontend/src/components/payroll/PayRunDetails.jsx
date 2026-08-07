@@ -27,9 +27,16 @@ import {
 } from 'lucide-react';
 import PayRunWorkflowStepper from './PayRunWorkflowStepper';
 import PayRunValidations from './PayRunValidations';
+import JurisdictionFeatureGate from '../JurisdictionFeatureGate';
+import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
+import { GOSI_FEATURES, NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
 
 export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
   const { isRTL } = useLanguage();
+  const { isFeatureEnabled } = useJurisdictionFeatures();
+  const gosiEnabled = isFeatureEnabled(GOSI_FEATURES[0]);
+  const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
+  const tableColSpan = gosiEnabled ? 9 : 8;
   const queryClient = useQueryClient();
 
   // Local state for payRun so UI updates instantly after actions
@@ -110,9 +117,11 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
 
           const jeLines = [
             { line_number: 1, account_code: '6000', account_name: 'Salary Expense', debit: grossTotal, credit: 0, description: `Gross Salaries - ${period}` },
-            { line_number: 2, account_code: '6010', account_name: 'GOSI Employer Expense', debit: gosiEmployerTotal, credit: 0, description: `GOSI Employer - ${period}` },
             { line_number: 3, account_code: '2100', account_name: 'Salaries Payable', debit: 0, credit: netTotal, description: `Net Payroll - ${period}` },
-            { line_number: 4, account_code: '2200', account_name: 'GOSI Payable', debit: 0, credit: gosiEmployeeTotal + gosiEmployerTotal, description: `GOSI Payable - ${period}` },
+            ...(gosiEnabled ? [
+              { line_number: 2, account_code: '6010', account_name: 'GOSI Employer Expense', debit: gosiEmployerTotal, credit: 0, description: `GOSI Employer - ${period}` },
+              { line_number: 4, account_code: '2200', account_name: 'GOSI Payable', debit: 0, credit: gosiEmployeeTotal + gosiEmployerTotal, description: `GOSI Payable - ${period}` },
+            ] : []),
           ];
 
           const je = await createJournalEntry({
@@ -435,30 +444,34 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
             <p className="text-xl font-bold mt-1">{summary.employees}</p>
           </CardContent>
         </Card>
-        <Card className="bg-white">
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">{isRTL ? 'سعودي / غير سعودي' : 'Saudi / Non'}</p>
-            <p className="text-xl font-bold mt-1">{summary.saudis} / {summary.nonSaudis}</p>
-          </CardContent>
-        </Card>
+        <JurisdictionFeatureGate featureKeys={NATIONALISATION_FEATURES}>
+          <Card className="bg-white">
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">{isRTL ? 'سعودي / غير سعودي' : 'Saudi / Non'}</p>
+              <p className="text-xl font-bold mt-1">{summary.saudis} / {summary.nonSaudis}</p>
+            </CardContent>
+          </Card>
+        </JurisdictionFeatureGate>
         <Card className="bg-white">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">{isRTL ? 'إجمالي المكتسبات' : 'Total Earnings'}</p>
             <p className="text-xl font-bold mt-1">{(summary.totalEarnings / 1000).toFixed(1)}K</p>
           </CardContent>
         </Card>
-        <Card className="bg-white">
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">{isRTL ? 'تأمينات الموظف' : 'GOSI Employee'}</p>
-            <p className="text-xl font-bold mt-1 text-red-600">{(summary.totalGOSIEmployee / 1000).toFixed(1)}K</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-white">
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">{isRTL ? 'تأمينات صاحب العمل' : 'GOSI Employer'}</p>
-            <p className="text-xl font-bold mt-1 text-amber-600">{(summary.totalGOSIEmployer / 1000).toFixed(1)}K</p>
-          </CardContent>
-        </Card>
+        <JurisdictionFeatureGate featureKeys={GOSI_FEATURES}>
+          <Card className="bg-white">
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">{isRTL ? 'تأمينات الموظف' : 'GOSI Employee'}</p>
+              <p className="text-xl font-bold mt-1 text-red-600">{(summary.totalGOSIEmployee / 1000).toFixed(1)}K</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-white">
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">{isRTL ? 'تأمينات صاحب العمل' : 'GOSI Employer'}</p>
+              <p className="text-xl font-bold mt-1 text-amber-600">{(summary.totalGOSIEmployer / 1000).toFixed(1)}K</p>
+            </CardContent>
+          </Card>
+        </JurisdictionFeatureGate>
         <Card className="bg-emerald-50">
           <CardContent className="p-4">
             <p className="text-xs text-emerald-700">{isRTL ? 'صافي الرواتب' : 'Net Payroll'}</p>
@@ -491,7 +504,7 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
                   <TableHead className="text-center">{isRTL ? 'النقل' : 'Transport'}</TableHead>
                   <TableHead className="text-center">{isRTL ? 'أخرى' : 'Other'}</TableHead>
                   <TableHead className="text-center">{isRTL ? 'الإجمالي' : 'Gross'}</TableHead>
-                  <TableHead className="text-center">{isRTL ? 'تأمينات' : 'GOSI'}</TableHead>
+                  {gosiEnabled && <TableHead className="text-center">{isRTL ? 'تأمينات' : 'GOSI'}</TableHead>}
                   <TableHead className="text-center">{isRTL ? 'استقطاعات' : 'Deductions'}</TableHead>
                   <TableHead className="text-center font-semibold">{isRTL ? 'الصافي' : 'Net'}</TableHead>
                 </TableRow>
@@ -499,13 +512,13 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8">
+                    <TableCell colSpan={tableColSpan} className="text-center py-8">
                       <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
                     </TableCell>
                   </TableRow>
                 ) : filteredInputs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={tableColSpan} className="text-center py-8 text-muted-foreground">
                       {isRTL ? 'لا توجد بيانات' : 'No data'}
                     </TableCell>
                   </TableRow>
@@ -528,7 +541,7 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
                       <TableCell className="text-center">{(input.transport_allowance || 0).toLocaleString()}</TableCell>
                       <TableCell className="text-center">{(input.other_allowances || 0).toLocaleString()}</TableCell>
                       <TableCell className="text-center font-medium">{(input.gross_salary || 0).toLocaleString()}</TableCell>
-                      <TableCell className="text-center text-red-600">{(input.gosi_employee || 0).toLocaleString()}</TableCell>
+                      {gosiEnabled && <TableCell className="text-center text-red-600">{(input.gosi_employee || 0).toLocaleString()}</TableCell>}
                       <TableCell className="text-center text-red-600">{(input.total_deductions || 0).toLocaleString()}</TableCell>
                       <TableCell className="text-center font-bold text-emerald-600">{(input.net_salary || 0).toLocaleString()}</TableCell>
                     </TableRow>

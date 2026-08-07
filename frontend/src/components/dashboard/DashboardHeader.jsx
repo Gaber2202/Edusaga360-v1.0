@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import JurisdictionFeatureGate from '../JurisdictionFeatureGate';
+import { HIJRI_CALENDAR_FEATURES } from '../../lib/jurisdictionFeatures';
 
 // Simple Hijri date conversion (Gregorian to Hijri approximation)
 function toHijri(date) {
@@ -51,8 +53,10 @@ export default function DashboardHeader({ user, tenant, isRTL }) {
           </h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
             <span className="text-muted-foreground text-sm">{gregorianDate}</span>
-            <span className="text-muted-foreground hidden sm:inline">|</span>
-            <span className="text-muted-foreground text-xs font-medium">{hijriDate}</span>
+            <JurisdictionFeatureGate featureKeys={HIJRI_CALENDAR_FEATURES}>
+              <span className="text-muted-foreground hidden sm:inline">|</span>
+              <span className="text-muted-foreground text-xs font-medium">{hijriDate}</span>
+            </JurisdictionFeatureGate>
           </div>
         </div>
       </div>

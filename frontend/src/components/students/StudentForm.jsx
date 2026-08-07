@@ -38,7 +38,7 @@ const EMPTY_FORM = {
   name_en: '',
   date_of_birth: '',
   gender: '',
-  nationality: 'سعودي',
+  nationality: '',
   national_id: '',
   iqama_number: '',
   passport_number: '',

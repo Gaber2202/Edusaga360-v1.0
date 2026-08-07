@@ -11,6 +11,9 @@ import { format, subMonths } from 'date-fns';
 import { toast } from 'sonner';
 import { logAuditEvent, AuditActions } from '../AuditService';
 import MonthPicker from '../ui/MonthPicker';
+import JurisdictionFeatureGate from '../JurisdictionFeatureGate';
+import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
+import { GOSI_FEATURES, NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
 import {
   Download,
   FileText,
@@ -23,6 +26,9 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 
 export default function PayrollReports() {
   const { isRTL } = useLanguage();
+  const { isFeatureEnabled } = useJurisdictionFeatures();
+  const gosiEnabled = isFeatureEnabled(GOSI_FEATURES[0]);
+  const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
   const { selectedBranchId, filterByBranch, branchFilter, branches: _branches } = useBranch();
 
   const [selectedPeriod, setSelectedPeriod] = useState(format(new Date(), 'yyyy-MM'));
@@ -145,7 +151,9 @@ export default function PayrollReports() {
       i.total_deductions || 0,
       i.net_salary || 0,
     ]);
-    const csv = '\uFEFF' + [headers, ...rows].map(r => r.join(',')).join('\n');
+    const csvHeaders = gosiEnabled ? headers : headers.filter(h => h !== (isRTL ? 'تأمينات' : 'GOSI'));
+    const csvRows = rows.map(r => gosiEnabled ? r : r.filter((_, idx) => idx !== 6));
+    const csv = '\uFEFF' + [csvHeaders, ...csvRows].map(r => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -195,19 +203,21 @@ export default function PayrollReports() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{isRTL ? 'تأمينات' : 'GOSI'}</p>
-                <p className="text-2xl font-bold">
-                  {((gosiSummary.total_employee_contribution + gosiSummary.total_employer_contribution) / 1000).toFixed(0)}K
-                </p>
+        <JurisdictionFeatureGate featureKeys={GOSI_FEATURES}>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'تأمينات' : 'GOSI'}</p>
+                  <p className="text-2xl font-bold">
+                    {((gosiSummary.total_employee_contribution + gosiSummary.total_employer_contribution) / 1000).toFixed(0)}K
+                  </p>
+                </div>
+                <Landmark className="w-8 h-8 text-purple-500" />
               </div>
-              <Landmark className="w-8 h-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </JurisdictionFeatureGate>
 
         <Card>
           <CardContent className="p-4">
@@ -258,6 +268,7 @@ export default function PayrollReports() {
                   name={isRTL ? 'صافي (ألف)' : 'Net (K)'}
                   strokeWidth={2}
                 />
+                {gosiEnabled && (
                 <Line 
                   type="monotone" 
                   dataKey="gosi" 
@@ -265,6 +276,7 @@ export default function PayrollReports() {
                   name={isRTL ? 'تأمينات (ألف)' : 'GOSI (K)'}
                   strokeWidth={2}
                 />
+                )}
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -298,6 +310,7 @@ export default function PayrollReports() {
           </CardContent>
         </Card>
 
+        <JurisdictionFeatureGate featureKeys={NATIONALISATION_FEATURES}>
         {/* Nationality Chart */}
         <Card>
           <CardHeader>
@@ -315,7 +328,9 @@ export default function PayrollReports() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
+        </JurisdictionFeatureGate>
 
+        <JurisdictionFeatureGate featureKeys={GOSI_FEATURES}>
         {/* GOSI Summary */}
         <Card>
           <CardHeader>
@@ -350,6 +365,7 @@ export default function PayrollReports() {
             </div>
           </CardContent>
         </Card>
+        </JurisdictionFeatureGate>
       </div>
 
       {/* Detailed Table */}
@@ -365,7 +381,7 @@ export default function PayrollReports() {
                 <TableHead className="text-center">{isRTL ? 'الأساسي' : 'Basic'}</TableHead>
                 <TableHead className="text-center">{isRTL ? 'البدلات' : 'Allowances'}</TableHead>
                 <TableHead className="text-center">{isRTL ? 'الإجمالي' : 'Gross'}</TableHead>
-                <TableHead className="text-center">{isRTL ? 'تأمينات' : 'GOSI'}</TableHead>
+                {gosiEnabled && <TableHead className="text-center">{isRTL ? 'تأمينات' : 'GOSI'}</TableHead>}
                 <TableHead className="text-center">{isRTL ? 'استقطاعات' : 'Deductions'}</TableHead>
                 <TableHead className="text-center">{isRTL ? 'الصافي' : 'Net'}</TableHead>
               </TableRow>
@@ -384,7 +400,7 @@ export default function PayrollReports() {
                     {((input.housing_allowance || 0) + (input.transport_allowance || 0) + (input.other_allowances || 0)).toLocaleString()}
                   </TableCell>
                   <TableCell className="text-center font-medium">{input.gross_salary?.toLocaleString()}</TableCell>
-                  <TableCell className="text-center text-purple-600">{input.gosi_employee?.toLocaleString()}</TableCell>
+                  {gosiEnabled && <TableCell className="text-center text-purple-600">{input.gosi_employee?.toLocaleString()}</TableCell>}
                   <TableCell className="text-center text-red-600">{input.total_deductions?.toLocaleString()}</TableCell>
                   <TableCell className="text-center font-bold text-emerald-600">{input.net_salary?.toLocaleString()}</TableCell>
                 </TableRow>

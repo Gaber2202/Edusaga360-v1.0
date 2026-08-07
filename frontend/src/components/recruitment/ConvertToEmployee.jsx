@@ -53,7 +53,7 @@ export default function ConvertToEmployee({ applicant, recruitment, employees, o
     work_email: '',
     manager_id: '',
     status: 'active',
-    is_saudi: (applicant?.nationality?.toLowerCase().includes('saudi') || applicant?.residency_status === 'citizen'),
+    is_saudi: applicant?.is_saudi ?? false,
     recruitment_history: {
       applicant_id: applicant?.id,
       recruitment_id: recruitment?.id,
