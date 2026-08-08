@@ -13,7 +13,7 @@ import { logAuditEvent, AuditActions } from '../AuditService';
 import MonthPicker from '../ui/MonthPicker';
 import JurisdictionFeatureGate from '../JurisdictionFeatureGate';
 import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
-import { GOSI_FEATURES, NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
+import { SOCIAL_INSURANCE_FEATURES, NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
 import {
   Download,
   FileText,
@@ -27,7 +27,7 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 export default function PayrollReports() {
   const { isRTL } = useLanguage();
   const { isFeatureEnabled } = useJurisdictionFeatures();
-  const gosiEnabled = isFeatureEnabled(GOSI_FEATURES[0]);
+  const socialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);
   const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
   const { selectedBranchId, filterByBranch, branchFilter, branches: _branches } = useBranch();
 
@@ -53,8 +53,8 @@ export default function PayrollReports() {
     queryFn: () => fetchData(tenantQuery('tuition_advances').select('*').match(branchFilter())),
   });
 
-  const { data: gosiRecords = [] } = useQuery({
-    queryKey: ['gosiRecords', selectedBranchId],
+  const { data: socialInsuranceRecords = [] } = useQuery({
+    queryKey: ['socialInsuranceRecords', selectedBranchId],
     queryFn: () => fetchData(tenantQuery('gosi_records').select('*').match(branchFilter()).order('created_at', { ascending: false })),
   });
 
@@ -67,11 +67,11 @@ export default function PayrollReports() {
     const period = format(subMonths(new Date(), i), 'yyyy-MM');
     const monthRuns = filteredPayRuns.filter(p => p.period === period);
     const total = monthRuns.reduce((sum, r) => sum + (r.net_payroll || 0), 0);
-    const gosi = monthRuns.reduce((sum, r) => sum + (r.total_gosi_employee || 0) + (r.total_gosi_employer || 0), 0);
+    const socialInsurance = monthRuns.reduce((sum, r) => sum + (r.total_gosi_employee || 0) + (r.total_gosi_employer || 0), 0);
     trendData.push({
       period: period.slice(5),
       net: total / 1000,
-      gosi: gosi / 1000
+      socialInsurance: socialInsurance / 1000
     });
   }
 
@@ -115,9 +115,9 @@ export default function PayrollReports() {
     monthlyDeduction: activeTuition.reduce((sum, t) => sum + (t.installment_amount || 0), 0)
   };
 
-  // GOSI summary
-  const currentGOSI = gosiRecords.find(g => g.period === selectedPeriod && (!selectedBranchId || g.branch_id === selectedBranchId));
-  const gosiSummary = currentGOSI || {
+  // Social Insurance summary
+  const currentSocialInsurance = socialInsuranceRecords.find(g => g.period === selectedPeriod && (!selectedBranchId || g.branch_id === selectedBranchId));
+  const socialInsuranceSummary = currentSocialInsurance || {
     total_employee_contribution: currentInputs.reduce((sum, i) => sum + (i.gosi_employee || 0), 0),
     total_employer_contribution: currentInputs.reduce((sum, i) => sum + (i.gosi_employer || 0), 0),
     saudi_employees: currentInputs.filter(i => i.is_saudi).length,
@@ -136,7 +136,7 @@ export default function PayrollReports() {
       isRTL ? 'بدل السكن' : 'Housing',
       isRTL ? 'بدل النقل' : 'Transport',
       isRTL ? 'إجمالي' : 'Gross',
-      isRTL ? 'تأمينات' : 'GOSI',
+      isRTL ? 'تأمينات' : 'Social Insurance',
       isRTL ? 'استقطاعات' : 'Deductions',
       isRTL ? 'صافي' : 'Net',
     ];
@@ -151,8 +151,8 @@ export default function PayrollReports() {
       i.total_deductions || 0,
       i.net_salary || 0,
     ]);
-    const csvHeaders = gosiEnabled ? headers : headers.filter(h => h !== (isRTL ? 'تأمينات' : 'GOSI'));
-    const csvRows = rows.map(r => gosiEnabled ? r : r.filter((_, idx) => idx !== 6));
+    const csvHeaders = socialInsuranceEnabled ? headers : headers.filter(h => h !== (isRTL ? 'تأمينات' : 'Social Insurance'));
+    const csvRows = rows.map(r => socialInsuranceEnabled ? r : r.filter((_, idx) => idx !== 6));
     const csv = '\uFEFF' + [csvHeaders, ...csvRows].map(r => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -203,14 +203,14 @@ export default function PayrollReports() {
           </CardContent>
         </Card>
 
-        <JurisdictionFeatureGate featureKeys={GOSI_FEATURES}>
+        <JurisdictionFeatureGate featureKeys={SOCIAL_INSURANCE_FEATURES}>
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">{isRTL ? 'تأمينات' : 'GOSI'}</p>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'تأمينات' : 'Social Insurance'}</p>
                   <p className="text-2xl font-bold">
-                    {((gosiSummary.total_employee_contribution + gosiSummary.total_employer_contribution) / 1000).toFixed(0)}K
+                    {((socialInsuranceSummary.total_employee_contribution + socialInsuranceSummary.total_employer_contribution) / 1000).toFixed(0)}K
                   </p>
                 </div>
                 <Landmark className="w-8 h-8 text-purple-500" />
@@ -268,12 +268,12 @@ export default function PayrollReports() {
                   name={isRTL ? 'صافي (ألف)' : 'Net (K)'}
                   strokeWidth={2}
                 />
-                {gosiEnabled && (
+                {socialInsuranceEnabled && (
                 <Line 
                   type="monotone" 
-                  dataKey="gosi" 
+                  dataKey="socialInsurance" 
                   stroke="#8b5cf6" 
-                  name={isRTL ? 'تأمينات (ألف)' : 'GOSI (K)'}
+                  name={isRTL ? 'تأمينات (ألف)' : 'Social Insurance (K)'}
                   strokeWidth={2}
                 />
                 )}
@@ -330,37 +330,37 @@ export default function PayrollReports() {
         </Card>
         </JurisdictionFeatureGate>
 
-        <JurisdictionFeatureGate featureKeys={GOSI_FEATURES}>
-        {/* GOSI Summary */}
+        <JurisdictionFeatureGate featureKeys={SOCIAL_INSURANCE_FEATURES}>
+        {/* Social Insurance Summary */}
         <Card>
           <CardHeader>
-            <CardTitle>{isRTL ? 'ملخص التأمينات' : 'GOSI Summary'}</CardTitle>
+            <CardTitle>{isRTL ? 'ملخص التأمينات' : 'Social Insurance Summary'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 bg-sand rounded-lg">
                 <p className="text-sm text-muted-foreground">{isRTL ? 'حصة الموظف' : 'Employee Share'}</p>
-                <p className="text-xl font-bold">{gosiSummary.total_employee_contribution?.toLocaleString()}</p>
+                <p className="text-xl font-bold">{socialInsuranceSummary.total_employee_contribution?.toLocaleString()}</p>
               </div>
               <div className="p-4 bg-sand rounded-lg">
                 <p className="text-sm text-muted-foreground">{isRTL ? 'حصة صاحب العمل' : 'Employer Share'}</p>
-                <p className="text-xl font-bold">{gosiSummary.total_employer_contribution?.toLocaleString()}</p>
+                <p className="text-xl font-bold">{socialInsuranceSummary.total_employer_contribution?.toLocaleString()}</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 bg-emerald-50 rounded-lg">
                 <p className="text-sm text-emerald-600">{isRTL ? 'موظفين سعوديين' : 'Saudi Employees'}</p>
-                <p className="text-xl font-bold text-emerald-700">{gosiSummary.saudi_employees}</p>
+                <p className="text-xl font-bold text-emerald-700">{socialInsuranceSummary.saudi_employees}</p>
               </div>
               <div className="p-4 bg-najdi-50 rounded-lg">
                 <p className="text-sm text-najdi-700">{isRTL ? 'غير سعوديين' : 'Non-Saudi'}</p>
-                <p className="text-xl font-bold text-najdi-900">{gosiSummary.non_saudi_employees}</p>
+                <p className="text-xl font-bold text-najdi-900">{socialInsuranceSummary.non_saudi_employees}</p>
               </div>
             </div>
             <div className="p-4 bg-purple-50 rounded-lg">
-              <p className="text-sm text-purple-600">{isRTL ? 'إجمالي التأمينات' : 'Total GOSI'}</p>
+              <p className="text-sm text-purple-600">{isRTL ? 'إجمالي التأمينات' : 'Total Social Insurance'}</p>
               <p className="text-2xl font-bold text-purple-700">
-                {((gosiSummary.total_employee_contribution || 0) + (gosiSummary.total_employer_contribution || 0)).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}
+                {((socialInsuranceSummary.total_employee_contribution || 0) + (socialInsuranceSummary.total_employer_contribution || 0)).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}
               </p>
             </div>
           </CardContent>
@@ -381,7 +381,7 @@ export default function PayrollReports() {
                 <TableHead className="text-center">{isRTL ? 'الأساسي' : 'Basic'}</TableHead>
                 <TableHead className="text-center">{isRTL ? 'البدلات' : 'Allowances'}</TableHead>
                 <TableHead className="text-center">{isRTL ? 'الإجمالي' : 'Gross'}</TableHead>
-                {gosiEnabled && <TableHead className="text-center">{isRTL ? 'تأمينات' : 'GOSI'}</TableHead>}
+                {socialInsuranceEnabled && <TableHead className="text-center">{isRTL ? 'تأمينات' : 'Social Insurance'}</TableHead>}
                 <TableHead className="text-center">{isRTL ? 'استقطاعات' : 'Deductions'}</TableHead>
                 <TableHead className="text-center">{isRTL ? 'الصافي' : 'Net'}</TableHead>
               </TableRow>
@@ -400,7 +400,7 @@ export default function PayrollReports() {
                     {((input.housing_allowance || 0) + (input.transport_allowance || 0) + (input.other_allowances || 0)).toLocaleString()}
                   </TableCell>
                   <TableCell className="text-center font-medium">{input.gross_salary?.toLocaleString()}</TableCell>
-                  {gosiEnabled && <TableCell className="text-center text-purple-600">{input.gosi_employee?.toLocaleString()}</TableCell>}
+                  {socialInsuranceEnabled && <TableCell className="text-center text-purple-600">{input.gosi_employee?.toLocaleString()}</TableCell>}
                   <TableCell className="text-center text-red-600">{input.total_deductions?.toLocaleString()}</TableCell>
                   <TableCell className="text-center font-bold text-emerald-600">{input.net_salary?.toLocaleString()}</TableCell>
                 </TableRow>

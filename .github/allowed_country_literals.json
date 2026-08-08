@@ -792,13 +792,6 @@
   },
   {
     "file": "frontend/src/components/hr/PayrollCalculationEngine.jsx",
-    "term": "gosi",
-    "count": 60,
-    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/components/hr/PayrollCalculationEngine.jsx",
     "term": "halala",
     "count": 2,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
@@ -814,7 +807,7 @@
   {
     "file": "frontend/src/components/hr/YamenHRInsights.jsx",
     "term": "gosi",
-    "count": 11,
+    "count": 2,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -919,7 +912,7 @@
   {
     "file": "frontend/src/components/payroll/PayRunDetails.jsx",
     "term": "gosi",
-    "count": 40,
+    "count": 10,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -947,7 +940,7 @@
   {
     "file": "frontend/src/components/payroll/PayRunsList.jsx",
     "term": "gosi",
-    "count": 35,
+    "count": 9,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -955,13 +948,6 @@
     "file": "frontend/src/components/payroll/PayRunsList.jsx",
     "term": "sar",
     "count": 2,
-    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/components/payroll/PayrollDashboard.jsx",
-    "term": "gosi",
-    "count": 21,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -975,7 +961,7 @@
   {
     "file": "frontend/src/components/payroll/PayrollReports.jsx",
     "term": "gosi",
-    "count": 44,
+    "count": 7,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -1199,7 +1185,7 @@
   {
     "file": "frontend/src/lib/jurisdictionFeatures.js",
     "term": "gosi",
-    "count": 3,
+    "count": 2,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -1717,7 +1703,7 @@
   {
     "file": "frontend/src/pages/Payroll.jsx",
     "term": "gosi",
-    "count": 15,
+    "count": 1,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -1857,7 +1843,7 @@
   {
     "file": "frontend/src/pages/YamenAI.jsx",
     "term": "nitaqat",
-    "count": 6,
+    "count": 1,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },

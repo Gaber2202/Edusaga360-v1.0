@@ -12,7 +12,7 @@ import { format, differenceInDays } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import JurisdictionFeatureGate from '../JurisdictionFeatureGate';
-import { PAGE_FEATURE_KEYS, GOSI_FEATURES, NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
+import { PAGE_FEATURE_KEYS, SOCIAL_INSURANCE_FEATURES, NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
 import {
   Users,
   DollarSign,
@@ -94,19 +94,19 @@ export default function PayrollDashboard({ onNavigate }) {
     return sum + (e.total_salary || (basic + housing + transport + other) || e.salary || 0);
   }, 0);
 
-  // GOSI Calculation (simplified)
-  const gosiEmployeeRate = 0.0975; // 9.75% for Saudis
-  const gosiEmployerRate = 0.1175; // 11.75% for Saudis
-  const gosiNonSaudiRate = 0.02; // 2% GOSI for non-Saudis (employer only)
+  // Social Insurance Calculation (simplified)
+  const employeeSocialInsuranceRate = 0.0975; // 9.75% for Saudis
+  const employerSocialInsuranceRate = 0.1175; // 11.75% for Saudis
+  const nonSaudiSocialInsuranceRate = 0.02; // 2% Social Insurance for non-Saudis (employer only)
 
-  const estimatedGOSIEmployee = filteredEmployees.reduce((sum, e) => {
-    const gosiWage = Math.min((e.basic_salary || 0) + (e.housing_allowance || 0), 45000);
-    return sum + (e.is_saudi ? gosiWage * gosiEmployeeRate : 0);
+  const estimatedSocialInsuranceEmployee = filteredEmployees.reduce((sum, e) => {
+    const socialInsuranceWage = Math.min((e.basic_salary || 0) + (e.housing_allowance || 0), 45000);
+    return sum + (e.is_saudi ? socialInsuranceWage * employeeSocialInsuranceRate : 0);
   }, 0);
 
-  const estimatedGOSIEmployer = filteredEmployees.reduce((sum, e) => {
-    const gosiWage = Math.min((e.basic_salary || 0) + (e.housing_allowance || 0), 45000);
-    return sum + (e.is_saudi ? gosiWage * gosiEmployerRate : gosiWage * gosiNonSaudiRate);
+  const estimatedSocialInsuranceEmployer = filteredEmployees.reduce((sum, e) => {
+    const socialInsuranceWage = Math.min((e.basic_salary || 0) + (e.housing_allowance || 0), 45000);
+    return sum + (e.is_saudi ? socialInsuranceWage * employerSocialInsuranceRate : socialInsuranceWage * nonSaudiSocialInsuranceRate);
   }, 0);
 
   const statusColors = {
@@ -247,13 +247,13 @@ export default function PayrollDashboard({ onNavigate }) {
           </Card>
         </JurisdictionFeatureGate>
 
-        <JurisdictionFeatureGate featureKeys={GOSI_FEATURES}>
+        <JurisdictionFeatureGate featureKeys={SOCIAL_INSURANCE_FEATURES}>
           <Card className="bg-white">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">{isRTL ? 'التأمينات (موظف)' : 'GOSI (Employee)'}</p>
-                  <p className="text-2xl font-bold mt-1">{(estimatedGOSIEmployee / 1000).toFixed(1)}K</p>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'التأمينات (موظف)' : 'Social Insurance (Employee)'}</p>
+                  <p className="text-2xl font-bold mt-1">{(estimatedSocialInsuranceEmployee / 1000).toFixed(1)}K</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
                   <Landmark className="w-6 h-6 text-purple-600" />
@@ -266,8 +266,8 @@ export default function PayrollDashboard({ onNavigate }) {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">{isRTL ? 'التأمينات (صاحب العمل)' : 'GOSI (Employer)'}</p>
-                  <p className="text-2xl font-bold mt-1">{(estimatedGOSIEmployer / 1000).toFixed(1)}K</p>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'التأمينات (صاحب العمل)' : 'Social Insurance (Employer)'}</p>
+                  <p className="text-2xl font-bold mt-1">{(estimatedSocialInsuranceEmployer / 1000).toFixed(1)}K</p>
                 </div>
                 <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center">
                   <Building2 className="w-6 h-6 text-amber-600" />

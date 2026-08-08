@@ -17,7 +17,7 @@ export const GOVERNMENT_RELATIONS_FEATURES = [
 
 export const GOV_INTEGRATIONS_FEATURES = GOVERNMENT_RELATIONS_FEATURES;
 
-export const GOSI_FEATURES = ['gosi'];
+export const SOCIAL_INSURANCE_FEATURES = ['gosi'];
 export const NATIONALISATION_FEATURES = ['nationalisation_quota'];
 export const HIJRI_CALENDAR_FEATURES = ['hijri_calendar'];
 export const EINVOICING_FEATURES = ['einvoicing'];

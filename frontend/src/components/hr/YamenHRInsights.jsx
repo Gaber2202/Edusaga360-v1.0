@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Bot, Loader2 } from 'lucide-react';
 import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
-import { NATIONALISATION_FEATURES, GOSI_FEATURES, GOVERNMENT_RELATIONS_FEATURES } from '../../lib/jurisdictionFeatures.js';
+import { NATIONALISATION_FEATURES, SOCIAL_INSURANCE_FEATURES, GOVERNMENT_RELATIONS_FEATURES } from '../../lib/jurisdictionFeatures.js';
 
 /**
  * Reusable Yamen AI insights panel — pass any data context.
@@ -13,8 +13,10 @@ import { NATIONALISATION_FEATURES, GOSI_FEATURES, GOVERNMENT_RELATIONS_FEATURES 
 export default function YamenHRInsights({ module, data = {}, isRTL }) {
   const { isFeatureEnabled } = useJurisdictionFeatures();
   const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
-  const gosiEnabled = isFeatureEnabled(GOSI_FEATURES[0]);
+  const socialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);
   const governmentEnabled = isFeatureEnabled(GOVERNMENT_RELATIONS_FEATURES[0]);
+  const socialInsuranceCount = data?.gosiCount ?? 0;
+  const socialInsuranceCompliance = data?.gosiCompliance ?? 0;
   const [insight, setInsight] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -65,8 +67,8 @@ export default function YamenHRInsights({ module, data = {}, isRTL }) {
       - Average salary: ${data.avgSalary || 0}
       - Pay runs processed: ${data.payRuns || 0}
       - Employees with salary changes: ${data.salaryChanges || 0}
-      ${gosiEnabled ? `- Social insurance (GOSI) registered: ${data.gosiCount || 0}` : ''}
-      Detect payroll anomalies, unusual salary changes, ${gosiEnabled ? 'social insurance (GOSI) compliance gaps' : 'payroll compliance gaps'}. Arabic and English.`,
+      ${socialInsuranceEnabled ? `- Social insurance registered: ${socialInsuranceCount}` : ''}
+      Detect payroll anomalies, unusual salary changes, ${socialInsuranceEnabled ? 'social insurance compliance gaps' : 'payroll compliance gaps'}. Arabic and English.`,
 
     eos: `You are Yamen AI. Review End of Service data:
       - Employees with EOS calculations pending: ${data.pending || 0}
@@ -79,7 +81,7 @@ export default function YamenHRInsights({ module, data = {}, isRTL }) {
       ${nationalisationEnabled ? `- Saudization rate: ${data.saudization || 0}%` : ''}
       ${governmentEnabled ? `- Expiring Iqama (60 days): ${data.iqamaExpiring || 0}
       - Qiwa violations: ${data.violations || 0}` : ''}
-      ${gosiEnabled ? `- GOSI compliance: ${data.gosiCompliance || 0}%` : ''}
+      ${socialInsuranceEnabled ? `- Social insurance compliance: ${socialInsuranceCompliance}%` : ''}
       Predict ${nationalisationEnabled ? 'compliance risks and nationalisation targets gap' : 'compliance risks'}. Arabic and English.`,
 
     approvals: `You are Yamen AI. Analyze HR approval workflow performance:

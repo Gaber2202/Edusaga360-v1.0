@@ -11,7 +11,7 @@ import YamenEmployeeAssistant from '../components/yamen/YamenEmployeeAssistant';
 import YamenInsightsDashboard from '../components/yamen/YamenInsightsDashboard';
 import YamenDocumentGenerator from '../components/yamen/YamenDocumentGenerator';
 import YamenDocumentProcessor from '../components/yamen/YamenDocumentProcessor';
-import NitaqatDashboard from '../components/hr/NitaqatDashboard';
+import SaudizationDashboard from '../components/hr/NitaqatDashboard';
 import { useJurisdictionFeatures } from '../components/JurisdictionFeatureContext';
 import { NATIONALISATION_FEATURES } from '../lib/jurisdictionFeatures.js';
 import DocumentExpiryTracker from '../components/hr/DocumentExpiryTracker';
@@ -142,7 +142,7 @@ export default function YamenAI() {
   const allTabs = isHRMode ? [
     { id: 'dashboard', label: { ar: 'لوحة يامن', en: 'Dashboard' }, icon: Bot },
     { id: 'risk', label: { ar: 'مراقبة المخاطر', en: 'Risk Monitor' }, icon: AlertTriangle },
-    { id: 'nitaqat', label: { ar: 'السعودة — نطاقات', en: 'Saudization' }, icon: Target },
+    { id: 'saudization', label: { ar: 'السعودة — نطاقات', en: 'Saudization' }, icon: Target },
     { id: 'docs_expiry', label: { ar: 'انتهاء الوثائق', en: 'Doc Expiry' }, icon: AlertCircle },
     { id: 'insights', label: { ar: 'الرؤى المتقدمة', en: 'Advanced Insights' }, icon: TrendingDown },
     { id: 'documents', label: { ar: 'المستندات', en: 'Documents' }, icon: FileText },
@@ -154,7 +154,7 @@ export default function YamenAI() {
   ] : [
     { id: 'chat', label: { ar: 'اسأل يامن', en: 'Ask YAMEN' }, icon: MessageSquare },
   ];
-  const tabs = isHRMode ? (nationalisationEnabled ? allTabs : allTabs.filter(t => t.id !== 'nitaqat' && t.id !== 'compliance')) : allTabs;
+  const tabs = isHRMode ? (nationalisationEnabled ? allTabs : allTabs.filter(t => t.id !== 'saudization' && t.id !== 'compliance')) : allTabs;
 
   const tabColors = {
     dashboard: 'emerald',
@@ -242,7 +242,7 @@ export default function YamenAI() {
       <div>
         {isHRMode && activeTab === 'dashboard' && <YamenDashboard isRTL={isRTL} />}
         {isHRMode && activeTab === 'risk' && <YamenRiskMonitor isRTL={isRTL} />}
-        {isHRMode && nationalisationEnabled && activeTab === 'nitaqat' && <NitaqatDashboard isRTL={isRTL} />}
+        {isHRMode && nationalisationEnabled && activeTab === 'saudization' && <SaudizationDashboard isRTL={isRTL} />}
         {isHRMode && activeTab === 'docs_expiry' && <DocumentExpiryTracker isRTL={isRTL} />}
         {isHRMode && activeTab === 'insights' && <YamenInsightsDashboard isRTL={isRTL} />}
         {isHRMode && activeTab === 'documents' && <YamenDocumentGenerator isRTL={isRTL} />}

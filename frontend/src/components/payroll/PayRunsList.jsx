@@ -24,12 +24,12 @@ import {
 } from 'lucide-react';
 import { logAuditEvent, AuditActions } from '../AuditService';
 import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
-import { GOSI_FEATURES, NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
+import { SOCIAL_INSURANCE_FEATURES, NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
 
 export default function PayRunsList({ onViewPayRun }) {
   const { isRTL } = useLanguage();
   const { isFeatureEnabled } = useJurisdictionFeatures();
-  const gosiEnabled = isFeatureEnabled(GOSI_FEATURES[0]);
+  const socialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);
   const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
   const { selectedBranchId, filterByBranch: _filterByBranch, branchFilter, branches } = useBranch();
   const { user: currentUser, userRole } = useRole();
@@ -149,9 +149,9 @@ export default function PayRunsList({ onViewPayRun }) {
         const isSaudi = nationalisationEnabled ? (emp.is_saudi ?? false) : false;
         const grossSalary = (emp.basic_salary || 0) + (emp.housing_allowance || 0) + 
                           (emp.transport_allowance || 0) + (emp.other_allowances || 0);
-        const gosiWage = gosiEnabled ? Math.min((emp.basic_salary || 0) + (emp.housing_allowance || 0), 45000) : 0;
-        const gosiEmployee = gosiEnabled && isSaudi ? gosiWage * 0.0975 : 0;
-        const gosiEmployer = gosiEnabled ? (isSaudi ? gosiWage * 0.1175 : gosiWage * 0.02) : 0;
+        const socialInsuranceWage = socialInsuranceEnabled ? Math.min((emp.basic_salary || 0) + (emp.housing_allowance || 0), 45000) : 0;
+        const employeeSocialInsurance = socialInsuranceEnabled && isSaudi ? socialInsuranceWage * 0.0975 : 0;
+        const employerSocialInsurance = socialInsuranceEnabled ? (isSaudi ? socialInsuranceWage * 0.1175 : socialInsuranceWage * 0.02) : 0;
 
         return {
           pay_run_id: payRun.id,
@@ -168,11 +168,11 @@ export default function PayRunsList({ onViewPayRun }) {
           transport_allowance: emp.transport_allowance || 0,
           other_allowances: emp.other_allowances || 0,
           gross_salary: grossSalary,
-          gosi_employee: gosiEmployee,
-          gosi_employer: gosiEmployer,
-          gosi_wage: gosiWage,
-          total_deductions: gosiEmployee,
-          net_salary: grossSalary - gosiEmployee,
+          gosi_employee: employeeSocialInsurance,
+          gosi_employer: employerSocialInsurance,
+          gosi_wage: socialInsuranceWage,
+          total_deductions: employeeSocialInsurance,
+          net_salary: grossSalary - employeeSocialInsurance,
           bank_name: emp.bank_name,
           iban: emp.iban,
           status: 'draft'
@@ -181,15 +181,15 @@ export default function PayRunsList({ onViewPayRun }) {
 
       await supabase.PayrollInput.bulkCreate(inputs);
 
-      // Update pay run with GOSI totals
-      const totalGosiEmployee = inputs.reduce((sum, i) => sum + i.gosi_employee, 0);
-      const totalGosiEmployer = inputs.reduce((sum, i) => sum + i.gosi_employer, 0);
+      // Update pay run with social insurance totals
+      const totalEmployeeSocialInsurance = inputs.reduce((sum, i) => sum + i.gosi_employee, 0);
+      const totalEmployerSocialInsurance = inputs.reduce((sum, i) => sum + i.gosi_employer, 0);
       const netPayroll = inputs.reduce((sum, i) => sum + i.net_salary, 0);
 
       await tenantQuery('pay_runs').update({
-        total_gosi_employee: totalGosiEmployee,
-        total_gosi_employer: totalGosiEmployer,
-        total_deductions: totalGosiEmployee,
+        total_gosi_employee: totalEmployeeSocialInsurance,
+        total_gosi_employer: totalEmployerSocialInsurance,
+        total_deductions: totalEmployeeSocialInsurance,
         net_payroll: netPayroll
       });
 
@@ -205,9 +205,9 @@ export default function PayRunsList({ onViewPayRun }) {
       setTimeout(() => {
         const updatedPayRun = {
           ...payRun,
-          total_gosi_employee: totalGosiEmployee,
-          total_gosi_employer: totalGosiEmployer,
-          total_deductions: totalGosiEmployee,
+          total_gosi_employee: totalEmployeeSocialInsurance,
+          total_gosi_employer: totalEmployerSocialInsurance,
+          total_deductions: totalEmployeeSocialInsurance,
           net_payroll: netPayroll
         };
         onViewPayRun(updatedPayRun);
