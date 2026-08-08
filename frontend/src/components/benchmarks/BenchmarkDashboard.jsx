@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { useTenant } from '../TenantContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { RefreshCw, TrendingUp, TrendingDown, Minus, Users, GraduationCap, Star, Clock, CreditCard, Shield } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatCurrency } from '../../lib/localization';
 
 const METRIC_CONFIG = {
   employee_count:      { label: { ar: 'عدد الموظفين',        en: 'Employees' },           icon: Users,         unit: '',     higherBetter: true  },
@@ -13,7 +15,7 @@ const METRIC_CONFIG = {
   avg_attendance_rate: { label: { ar: 'معدل الحضور',          en: 'Attendance Rate' },       icon: Clock,         unit: '%',    higherBetter: true  },
   avg_late_rate:       { label: { ar: 'معدل التأخر',          en: 'Late Rate' },             icon: Clock,         unit: '%',    higherBetter: false },
   fee_collection_rate: { label: { ar: 'معدل تحصيل الرسوم',    en: 'Fee Collection Rate' },   icon: CreditCard,    unit: '%',    higherBetter: true  },
-  avg_basic_salary:    { label: { ar: 'متوسط الراتب الأساسي',  en: 'Avg. Basic Salary' },     icon: Star,          unit: ' SAR', higherBetter: null  },
+  avg_basic_salary:    { label: { ar: 'متوسط الراتب الأساسي',  en: 'Avg. Basic Salary' },     icon: Star,          unit: '', isCurrency: true, higherBetter: null  },
 };
 
 function PercentileBar({ pct }) {
@@ -35,6 +37,7 @@ function TrendIcon({ value, avg, higherBetter }) {
 
 export default function BenchmarkDashboard() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -102,8 +105,8 @@ export default function BenchmarkDashboard() {
               const Icon    = config.icon;
               const pctRank = comp.percentile;
               const label   = isRTL ? config.label.ar : config.label.en;
-              const fmt     = v => config.unit === ' SAR'
-                ? v.toLocaleString('en-SA', { maximumFractionDigits: 0 })
+              const fmt     = v => config.isCurrency
+                ? formatCurrency(v, tenant?.localization, isRTL)
                 : v.toFixed(config.unit === '%' ? 1 : 0);
 
               return (

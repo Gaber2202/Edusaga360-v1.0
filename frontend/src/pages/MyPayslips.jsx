@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { getCurrencySymbol } from '../lib/localization';
+import { useTenant } from '../components/TenantContext';
 import { useRole } from '../components/RoleContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
@@ -14,6 +16,7 @@ import PayslipViewer from '../components/payroll/PayslipViewer';
 
 export default function MyPayslips() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { user } = useRole();
   const [selectedPeriod, setSelectedPeriod] = useState('all');
   const [viewingPayslip, setViewingPayslip] = useState(null);
@@ -158,7 +161,7 @@ export default function MyPayslips() {
                   <TableRow key={payslip.id}>
                     <TableCell className="font-medium">{payslip.period}</TableCell>
                     <TableCell className="text-emerald-600 font-semibold">
-                      {payslip.net_salary?.toLocaleString()} {t('sar')}
+                      {payslip.net_salary?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}
                     </TableCell>
                     <TableCell>
                       {payslip.payment_date ? format(new Date(payslip.payment_date), 'dd/MM/yyyy') : '-'}

@@ -9,10 +9,10 @@
  * `the backend/functions/approveTenantRequest/entry.ts` under a clearly-labeled comment.
  * If you change a limit here, update that file in the same commit.
  *
- * Pricing (annual SAR, excl. VAT):
- *   Starter   — 120,000 SAR/yr  (Core + Academic & Operations)
- *   Growth    — 190,000 SAR/yr  (+ Financials ERP, HR & Payroll)
- *   Enterprise — 342,000 SAR/yr  (All modules, 100 staff users, 6,000 general access)
+ * Pricing (annual, excl. VAT):
+ *   Starter   — 120,000 /yr  (Core + Academic & Operations)
+ *   Growth    — 190,000 /yr  (+ Financials ERP, HR & Payroll)
+ *   Enterprise — 342,000 /yr  (All modules, 100 staff users, 6,000 general access)
  */
 
 export const ALL_MODULE_KEYS = [

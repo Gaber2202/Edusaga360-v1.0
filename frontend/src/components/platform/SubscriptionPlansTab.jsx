@@ -1,4 +1,6 @@
+import { getCurrencySymbol } from '../../lib/localization';
 import React, { useState } from 'react';
+import { useTenant } from '../TenantContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { Button } from '../ui/button';
@@ -75,6 +77,7 @@ const PLAN_DEFS = {
 
 /* ─── Plan Card ─── */
 function PlanCard({ plan, def, isRTL, onEdit }) {
+  const { tenant } = useTenant();
   const label = (ar, en) => isRTL ? ar : en;
   const Icon = def.icon;
   const limits = def.limits;
@@ -95,8 +98,8 @@ function PlanCard({ plan, def, isRTL, onEdit }) {
 
       {/* Price */}
       <div className="px-5 py-2 bg-sand/80 border-b border-border">
-        <p className="text-xs text-muted-foreground">{label('السعر السنوي (ر.س)', 'Annual price (SAR, excl. VAT)')}</p>
-        <p className="text-lg font-bold text-ink">{def.price} <span className="text-xs font-normal text-muted-foreground">SAR/yr</span></p>
+        <p className="text-xs text-muted-foreground">{label(`السعر السنوي (${getCurrencySymbol(tenant?.localization, isRTL)})`, `Annual price (${getCurrencySymbol(tenant?.localization, isRTL)}, excl. VAT)`)}</p>
+        <p className="text-lg font-bold text-ink">{def.price} <span className="text-xs font-normal text-muted-foreground">{getCurrencySymbol(tenant?.localization, isRTL)}/{isRTL ? 'سنة' : 'yr'}</span></p>
       </div>
 
       {/* Limits */}
@@ -250,8 +253,8 @@ export default function SubscriptionPlansTab({ isRTL }) {
             <div className="border-t border-border pt-3">
               <p className="text-xs text-muted-foreground mb-2">{label('الأسعار (اختياري - اتركها فارغة للتسعير المخصص)', 'Pricing (optional — leave 0 for custom pricing)')}</p>
               <div className="grid grid-cols-2 gap-3">
-                <div><Label>{label('السعر الشهري (ر.س)', 'Monthly Price (SAR)')}</Label><Input type="number" value={form.price_monthly_sar || 0} onChange={e => set('price_monthly_sar', +e.target.value)} /></div>
-                <div><Label>{label('السعر السنوي (ر.س)', 'Yearly Price (SAR)')}</Label><Input type="number" value={form.price_yearly_sar || 0} onChange={e => set('price_yearly_sar', +e.target.value)} /></div>
+                <div><Label>{label(`السعر الشهري (${getCurrencySymbol(tenant?.localization, isRTL)})`, `Monthly Price (${getCurrencySymbol(tenant?.localization, isRTL)})`)}</Label><Input type="number" value={form.price_monthly_sar || 0} onChange={e => set('price_monthly_sar', +e.target.value)} /></div>
+                <div><Label>{label(`السعر السنوي (${getCurrencySymbol(tenant?.localization, isRTL)})`, `Yearly Price (${getCurrencySymbol(tenant?.localization, isRTL)})`)}</Label><Input type="number" value={form.price_yearly_sar || 0} onChange={e => set('price_yearly_sar', +e.target.value)} /></div>
               </div>
             </div>
             <div className="border-t border-border pt-3">

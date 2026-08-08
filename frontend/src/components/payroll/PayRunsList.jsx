@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { formatCurrency } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { useBranch } from '../BranchContext';
 import { useRole } from '../RoleContext';
 import { Card, CardContent } from '../ui/card';
@@ -28,6 +30,7 @@ import { SOCIAL_INSURANCE_FEATURES, NATIONALISATION_FEATURES } from '../../lib/j
 
 export default function PayRunsList({ onViewPayRun }) {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { isFeatureEnabled } = useJurisdictionFeatures();
   const socialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);
   const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
@@ -303,11 +306,11 @@ export default function PayRunsList({ onViewPayRun }) {
                     </div>
                     <div className="text-center hidden lg:block">
                       <p className="text-xs text-muted-foreground">{isRTL ? 'الإجمالي' : 'Gross'}</p>
-                      <p className="font-semibold text-ink mt-0.5">{(run.total_earnings || 0).toLocaleString()} <span className="text-xs font-normal text-muted-foreground">{isRTL ? 'ر.س' : 'SAR'}</span></p>
+                      <p className="font-semibold text-ink mt-0.5">{formatCurrency((run.total_earnings || 0), tenant?.localization, isRTL)}</p>
                     </div>
                     <div className="text-center">
                       <p className="text-xs text-muted-foreground">{isRTL ? 'الصافي' : 'Net'}</p>
-                      <p className="font-bold text-emerald-600 mt-0.5">{(run.net_payroll || 0).toLocaleString()} <span className="text-xs font-normal text-muted-foreground">{isRTL ? 'ر.س' : 'SAR'}</span></p>
+                      <p className="font-bold text-emerald-600 mt-0.5">{formatCurrency((run.net_payroll || 0), tenant?.localization, isRTL)}</p>
                     </div>
                     <Eye className="w-5 h-5 text-muted-foreground group-hover:text-najdi-500 transition-colors" />
                   </div>

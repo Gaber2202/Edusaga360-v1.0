@@ -2,6 +2,8 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { formatCurrency } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -31,6 +33,7 @@ import {
 
 export default function PayrollDashboard({ onNavigate }) {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const navigate = useNavigate();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
@@ -171,8 +174,8 @@ export default function PayrollDashboard({ onNavigate }) {
               <span className="text-muted-foreground text-sm">{isRTL ? 'صافي الرواتب' : 'Net Payroll'}</span>
               <span className="text-4xl font-bold">
                 {currentPayRun 
-                  ? `${(currentPayRun.net_payroll || 0).toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}`
-                  : `${(totalGrossSalary * 0.85).toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}`
+                  ? `${formatCurrency((currentPayRun.net_payroll || 0), tenant?.localization, isRTL)}`
+                  : `${formatCurrency((totalGrossSalary * 0.85), tenant?.localization, isRTL)}`
                 }
               </span>
               {currentPayRun?.payment_date && (
@@ -221,7 +224,7 @@ export default function PayrollDashboard({ onNavigate }) {
               <div>
                 <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الموظفين' : 'Total Employees'}</p>
                 <p className="text-2xl font-bold mt-1">{filteredEmployees.length}</p>
-                <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'إجمالي الرواتب:' : 'Total Payroll:'} {totalGrossSalary.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p>
+                <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'إجمالي الرواتب:' : 'Total Payroll:'} {formatCurrency(totalGrossSalary, tenant?.localization, isRTL)}</p>
               </div>
               <div className="w-12 h-12 bg-najdi-50 rounded-xl flex items-center justify-center">
                 <Users className="w-6 h-6 text-najdi-700" />
@@ -426,7 +429,7 @@ export default function PayrollDashboard({ onNavigate }) {
                 <div>
                   <p className="font-medium">{run.period}</p>
                   <p className="text-sm text-muted-foreground">
-                    {run.employee_count} {isRTL ? 'موظف' : 'employees'} • {(run.net_payroll || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}
+                    {run.employee_count} {isRTL ? 'موظف' : 'employees'} • {formatCurrency((run.net_payroll || 0), tenant?.localization, isRTL)}
                   </p>
                 </div>
                 <Badge className={statusColors[run.status]}>

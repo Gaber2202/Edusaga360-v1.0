@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { useTenant } from '../TenantContext';
+import { getCurrencySymbol, formatCurrency } from '../../lib/localization';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -24,6 +26,7 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
 
 export default function ExecutiveDashboard() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const [period, setPeriod] = useState('year');
@@ -174,9 +177,9 @@ export default function ExecutiveDashboard() {
     y += 7;
     doc.text(`${isRTL ? 'نسبة التحصيل' : 'Collection Rate'}: ${collectionRate}%`, 20, y);
     y += 7;
-    doc.text(`${isRTL ? 'إجمالي المفوتر' : 'Total Billed'}: ${totalBilled.toLocaleString()} SAR`, 20, y);
+    doc.text(`${isRTL ? 'إجمالي المفوتر' : 'Total Billed'}: $<Currency amount={totalBilled} />`, 20, y);
     y += 7;
-    doc.text(`${isRTL ? 'إجمالي المحصل' : 'Total Collected'}: ${totalCollected.toLocaleString()} SAR`, 20, y);
+    doc.text(`${isRTL ? 'إجمالي المحصل' : 'Total Collected'}: $<Currency amount={totalCollected} />`, 20, y);
     
     doc.save(`dashboard_${format(new Date(), 'yyyyMMdd')}.pdf`);
     toast.success(isRTL ? 'تم التنزيل' : 'Downloaded');
@@ -187,8 +190,8 @@ export default function ExecutiveDashboard() {
       ['Metric', 'Value'],
       [isRTL ? 'الطلاب النشطين' : 'Active Students', activeStudents],
       [isRTL ? 'نسبة التحصيل' : 'Collection Rate', `${collectionRate}%`],
-      [isRTL ? 'إجمالي المفوتر' : 'Total Billed', `${totalBilled.toLocaleString()} SAR`],
-      [isRTL ? 'إجمالي المحصل' : 'Total Collected', `${totalCollected.toLocaleString()} SAR`],
+      [isRTL ? 'إجمالي المفوتر' : 'Total Billed', `$<Currency amount={totalBilled} />`],
+      [isRTL ? 'إجمالي المحصل' : 'Total Collected', `$<Currency amount={totalCollected} />`],
       [isRTL ? 'فواتير متأخرة' : 'Overdue Invoices', overdueInvoices],
       ['', ''],
       [isRTL ? 'اتجاهات التسجيل' : 'Enrollment Trends', ''],
@@ -213,7 +216,7 @@ export default function ExecutiveDashboard() {
 
   const emailDashboard = () => {
     const subject = `${isRTL ? 'لوحة المؤشرات التنفيذية' : 'Executive Dashboard'} - ${format(new Date(), 'dd/MM/yyyy')}`;
-    const body = `Active Students: ${activeStudents}\nCollection Rate: ${collectionRate}%\nTotal Billed: ${totalBilled.toLocaleString()} SAR`;
+    const body = `Active Students: ${activeStudents}\nCollection Rate: ${collectionRate}%\nTotal Billed: $<Currency amount={totalBilled} />`;
     window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
   };
 
@@ -294,8 +297,8 @@ export default function ExecutiveDashboard() {
 
       {/* Second Row KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard title={isRTL ? 'إجمالي المفوتر' : 'Total Billed'} value={`${(totalBilled/1000).toFixed(0)}K`} subtitle={t('sar')} icon={FileText} color="bg-sand" />
-        <KPICard title={isRTL ? 'إجمالي المحصل' : 'Total Collected'} value={`${(totalCollected/1000).toFixed(0)}K`} subtitle={t('sar')} icon={DollarSign} color="bg-emerald-50" />
+        <KPICard title={isRTL ? 'إجمالي المفوتر' : 'Total Billed'} value={`${(totalBilled/1000).toFixed(0)}K`} subtitle={getCurrencySymbol(tenant?.localization, isRTL)} icon={FileText} color="bg-sand" />
+        <KPICard title={isRTL ? 'إجمالي المحصل' : 'Total Collected'} value={`${(totalCollected/1000).toFixed(0)}K`} subtitle={getCurrencySymbol(tenant?.localization, isRTL)} icon={DollarSign} color="bg-emerald-50" />
         <KPICard title={isRTL ? 'فواتير متأخرة' : 'Overdue Invoices'} value={overdueInvoices} icon={AlertTriangle} color="bg-red-50" />
         <KPICard title={isRTL ? 'مدفوعات فاشلة' : 'Failed Payments'} value={failedPayments} icon={RefreshCw} color="bg-amber-50" />
       </div>
@@ -333,7 +336,7 @@ export default function ExecutiveDashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip formatter={(value) => `${value}K SAR`} />
+                <Tooltip formatter={(value) => formatCurrency((value || 0) * 1000, tenant?.localization, isRTL)} />
                 <Legend />
                 <Bar dataKey="billed" name={isRTL ? 'المفوتر' : 'Billed'} fill="#3b82f6" />
                 <Bar dataKey="collected" name={isRTL ? 'المحصل' : 'Collected'} fill="#10b981" />

@@ -2,6 +2,8 @@ import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { getCurrencySymbol } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { differenceInDays, parseISO } from 'date-fns';
 import {
   Users, Shield, AlertTriangle, FileText, TrendingUp,
@@ -13,6 +15,7 @@ const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'];
 
 export default function GovComplianceDashboard() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
 
   const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').order()) });
   const { data: iqamas = [] } = useQuery({ queryKey: ['iqamas'], queryFn: () => fetchData(tenantQuery('iqama_records').select('*').order()) });
@@ -97,7 +100,7 @@ export default function GovComplianceDashboard() {
   { icon: FileText, label: isRTL ? 'تأشيرات تنتهي' : 'Visas Expiring', value: kpis.visasExpiring, color: kpis.visasExpiring > 3 ? 'text-amber-600' : 'text-ink', bg: 'bg-white' },
   { icon: AlertTriangle, label: isRTL ? 'تناقضات غوزي' : 'GOSI Mismatches', value: kpis.gosiMismatches, color: kpis.gosiMismatches > 0 ? 'text-red-500' : 'text-ink', bg: 'bg-white' },
   { icon: TrendingUp, label: isRTL ? 'امتثال WPS %' : 'WPS Compliance %', value: `${kpis.wpsPct}%`, color: kpis.wpsPct >= 90 ? 'text-emerald-600' : 'text-red-500', bg: 'bg-white' },
-  { icon: DollarSign, label: isRTL ? 'قيمة المخالفات المفتوحة' : 'Open Violations (SAR)', value: kpis.totalViolationSAR.toLocaleString(), color: kpis.totalViolationSAR > 0 ? 'text-red-500' : 'text-ink', bg: 'bg-white' },
+  { icon: DollarSign, label: isRTL ? 'قيمة المخالفات المفتوحة' : `Open Violations (${getCurrencySymbol(tenant?.localization, isRTL)})`, value: kpis.totalViolationSAR.toLocaleString(), color: kpis.totalViolationSAR > 0 ? 'text-red-500' : 'text-ink', bg: 'bg-white' },
   { icon: FileText, label: isRTL ? 'مستندات تنتهي' : 'Expiring Documents', value: kpis.expiringDocs, color: kpis.expiringDocs > 0 ? 'text-amber-600' : 'text-ink', bg: 'bg-white' }];
 
 

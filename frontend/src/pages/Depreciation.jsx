@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { getCurrencySymbol } from '../lib/localization';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -24,6 +25,7 @@ import { createJournalEntry } from '../api/journalEntry';
 
 export default function Depreciation() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
@@ -198,17 +200,17 @@ export default function Depreciation() {
   const scheduleColumns = [
     { header: isRTL ? 'رمز الأصل' : 'Asset Code', cell: (row) => <span className="font-mono text-sm">{row.asset_code}</span> },
     { header: isRTL ? 'الأصل' : 'Asset', accessorKey: 'name_ar' },
-    { header: isRTL ? 'القيمة الأصلية' : 'Original Cost', cell: (row) => `${row.acquisition_cost?.toLocaleString()} ${t('sar')}` },
-    { header: isRTL ? 'الإهلاك المتراكم' : 'Acc. Depreciation', cell: (row) => <span className="text-red-600">{(row.accumulated_depreciation || 0).toLocaleString()} {t('sar')}</span> },
-    { header: isRTL ? 'صافي القيمة' : 'NBV', cell: (row) => <span className="font-semibold">{(row.net_book_value || row.acquisition_cost)?.toLocaleString()} {t('sar')}</span> },
-    { header: isRTL ? 'الإهلاك الشهري' : 'Monthly Dep.', cell: (row) => <span className="text-orange-600">{calculateMonthlyDepreciation(row).toFixed(2)} {t('sar')}</span> }
+    { header: isRTL ? 'القيمة الأصلية' : 'Original Cost', cell: (row) => `${row.acquisition_cost?.toLocaleString()} ${getCurrencySymbol(tenant?.localization, isRTL)}` },
+    { header: isRTL ? 'الإهلاك المتراكم' : 'Acc. Depreciation', cell: (row) => <span className="text-red-600">{(row.accumulated_depreciation || 0).toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span> },
+    { header: isRTL ? 'صافي القيمة' : 'NBV', cell: (row) => <span className="font-semibold">{(row.net_book_value || row.acquisition_cost)?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span> },
+    { header: isRTL ? 'الإهلاك الشهري' : 'Monthly Dep.', cell: (row) => <span className="text-orange-600">{calculateMonthlyDepreciation(row).toFixed(2)} {getCurrencySymbol(tenant?.localization, isRTL)}</span> }
   ];
 
   const runsColumns = [
     { header: isRTL ? 'الفترة' : 'Period', accessorKey: 'period' },
     { header: isRTL ? 'التاريخ' : 'Date', cell: (row) => format(new Date(row.run_date), 'dd/MM/yyyy') },
     { header: isRTL ? 'عدد الأصول' : 'Asset Count', accessorKey: 'asset_count' },
-    { header: isRTL ? 'إجمالي الإهلاك' : 'Total Depreciation', cell: (row) => `${row.total_depreciation?.toLocaleString()} ${t('sar')}` },
+    { header: isRTL ? 'إجمالي الإهلاك' : 'Total Depreciation', cell: (row) => `${row.total_depreciation?.toLocaleString()} ${getCurrencySymbol(tenant?.localization, isRTL)}` },
     { header: t('status'), cell: (row) => {
       const colors = { completed: 'bg-najdi-50 text-najdi-900', posted: 'bg-emerald-100 text-emerald-700' };
       const labels = { completed: isRTL ? 'مكتمل' : 'Completed', posted: isRTL ? 'مرحل' : 'Posted' };
@@ -316,7 +318,7 @@ export default function Depreciation() {
               <div className="flex justify-between">
                 <span>{isRTL ? 'الإهلاك الشهري المتوقع' : 'Estimated Monthly Depreciation'}:</span>
                 <span className="font-semibold">
-                  {filteredAssets.reduce((sum, a) => sum + calculateMonthlyDepreciation(a), 0).toFixed(2)} {t('sar')}
+                  {filteredAssets.reduce((sum, a) => sum + calculateMonthlyDepreciation(a), 0).toFixed(2)} {getCurrencySymbol(tenant?.localization, isRTL)}
                 </span>
               </div>
             </div>

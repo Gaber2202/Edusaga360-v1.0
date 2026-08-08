@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { tenantQuery, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useTenant } from '../TenantContext';
+import { formatCurrency } from '../lib/localization';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Loader2, CreditCard, Smartphone, CheckCircle2, Clock, AlertCircle, Download } from 'lucide-react';
@@ -131,8 +132,8 @@ export default function PaymentPortal({ student }) {
               <AlertCircle className="w-5 h-5" />
               <span className="font-medium text-sm">
                 {isRTL
-                  ? `${unpaid.length} فاتورة غير مسددة — الإجمالي: ${totalDue.toLocaleString('en-SA', { minimumFractionDigits: 2 })} ريال`
-                  : `${unpaid.length} unpaid invoice${unpaid.length > 1 ? 's' : ''} — Total: SAR ${totalDue.toLocaleString('en-SA', { minimumFractionDigits: 2 })}`}
+                  ? `${unpaid.length} فاتورة غير مسددة — الإجمالي: ${formatCurrency(totalDue, tenant?.localization, isRTL)}`
+                  : `${unpaid.length} unpaid invoice${unpaid.length > 1 ? 's' : ''} — Total: ${formatCurrency(totalDue, tenant?.localization, isRTL)}`}
               </span>
             </div>
           </CardContent>
@@ -183,7 +184,7 @@ export default function PaymentPortal({ student }) {
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-sm">
-                          {invoice.total_amount.toLocaleString('en-SA', { minimumFractionDigits: 2 })} {isRTL ? 'ر.س' : 'SAR'}
+                          {formatCurrency(invoice.total_amount, tenant?.localization, isRTL)}
                         </p>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${color}`}>{label}</span>
                       </div>
@@ -195,17 +196,17 @@ export default function PaymentPortal({ student }) {
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           <div>
                             <span className="text-muted-foreground">{isRTL ? 'الإجمالي' : 'Total'}</span>
-                            <p className="font-medium">{invoice.total_amount.toLocaleString('en-SA', { minimumFractionDigits: 2 })} {isRTL ? 'ر.س' : 'SAR'}</p>
+                            <p className="font-medium">{formatCurrency(invoice.total_amount, tenant?.localization, isRTL)}</p>
                           </div>
                           {invoice.paid_amount > 0 && (
                             <div>
                               <span className="text-muted-foreground">{isRTL ? 'المدفوع' : 'Paid'}</span>
-                              <p className="font-medium text-green-600">{invoice.paid_amount.toLocaleString('en-SA', { minimumFractionDigits: 2 })} {isRTL ? 'ر.س' : 'SAR'}</p>
+                              <p className="font-medium text-green-600">{formatCurrency(invoice.paid_amount, tenant?.localization, isRTL)}</p>
                             </div>
                           )}
                           <div>
                             <span className="text-muted-foreground">{isRTL ? 'المتبقي' : 'Outstanding'}</span>
-                            <p className="font-semibold text-red-600">{outstanding.toLocaleString('en-SA', { minimumFractionDigits: 2 })} {isRTL ? 'ر.س' : 'SAR'}</p>
+                            <p className="font-semibold text-red-600">{formatCurrency(outstanding, tenant?.localization, isRTL)}</p>
                           </div>
                         </div>
 

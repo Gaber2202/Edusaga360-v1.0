@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { useTenant } from '../components/TenantContext';
+import { formatCurrency } from '../lib/localization';
 import { useJurisdictionFeatures } from '../components/JurisdictionFeatureContext';
 import { NATIONALISATION_FEATURES } from '../lib/jurisdictionFeatures.js';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -32,10 +34,6 @@ function fmtNumber(n, isRTL) {
   return new Intl.NumberFormat(isRTL ? 'ar-SA' : 'en-US').format(n);
 }
 
-function fmtSAR(n, isRTL) {
-  if (n === null || n === undefined) return '—';
-  return new Intl.NumberFormat(isRTL ? 'ar-SA' : 'en-US', { style: 'currency', currency: 'SAR', maximumFractionDigits: 0 }).format(n);
-}
 
 function fmtPct(n) {
   if (n === null || n === undefined) return '—';
@@ -91,6 +89,7 @@ function DataQualityNote({ quality, isRTL }) {
 
 export default function ExecutiveCommandCenter() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const dashboardRef = useRef(null);
 
   const [access, setAccess] = useState(null);
@@ -508,7 +507,7 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <KPICard
           title={isRTL ? 'الإيرادات' : 'Revenue'}
-          value={fmtSAR(financials?.revenue, isRTL)}
+          value={formatCurrency(financials?.revenue, tenant?.localization, isRTL)}
           delta={financials?.revenue_delta_pct}
           sparkData={revenue_trend?.map((v, i) => ({ name: i, value: v.revenue || v }))}
           color={COLORS.najdi}
@@ -516,7 +515,7 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
         />
         <KPICard
           title={isRTL ? 'الأرباح قبل الفوائد والضرائب والإهلاك' : 'EBITDA'}
-          value={fmtSAR(financials?.ebitda, isRTL)}
+          value={formatCurrency(financials?.ebitda, tenant?.localization, isRTL)}
           delta={financials?.ebitda_delta_pct}
           sparkData={revenue_trend?.map((v, i) => ({ name: i, value: v.ebitda || 0 }))}
           color={COLORS.green}
@@ -797,9 +796,9 @@ function CFODashboard({ data, isRTL, t }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard title={t('revenue')} value={fmtSAR(kpis.revenue, isRTL)} icon={DollarSign} iconClassName="bg-najdi-50" />
-        <StatCard title={t('ebitda')} value={fmtSAR(kpis.ebitda, isRTL)} subtitle={fmtPct(kpis.margin_pct)} icon={TrendingUp} iconClassName="bg-emerald-50" />
-        <StatCard title={t('cashCollected')} value={fmtSAR(kpis.cash_collected_30d, isRTL)} icon={ShieldCheck} iconClassName="bg-purple-50" />
+        <StatCard title={t('revenue')} value={formatCurrency(kpis.revenue, tenant?.localization, isRTL)} icon={DollarSign} iconClassName="bg-najdi-50" />
+        <StatCard title={t('ebitda')} value={formatCurrency(kpis.ebitda, tenant?.localization, isRTL)} subtitle={fmtPct(kpis.margin_pct)} icon={TrendingUp} iconClassName="bg-emerald-50" />
+        <StatCard title={t('cashCollected')} value={formatCurrency(kpis.cash_collected_30d, tenant?.localization, isRTL)} icon={ShieldCheck} iconClassName="bg-purple-50" />
         <StatCard title={t('dsoDays')} value={fmtNumber(kpis.dso_days, isRTL)} icon={Clock} iconClassName="bg-amber-50" />
       </div>
 
@@ -865,7 +864,7 @@ function CFODashboard({ data, isRTL, t }) {
                   {overdue_by_campus.map((c) => (
                     <tr key={c.branch_id} className="border-b border-sand">
                       <td className="py-2 text-ink">{isRTL ? c.name_ar : c.name_en}</td>
-                      <td className="py-2 text-ink">{fmtSAR(c.overdue_amount, isRTL)}</td>
+                      <td className="py-2 text-ink">{formatCurrency(c.overdue_amount, tenant?.localization, isRTL)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -895,9 +894,9 @@ function CFODashboard({ data, isRTL, t }) {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4 pt-2">
-            <div className="text-center"><p className="text-xs text-muted-foreground">{t('revenue')}</p><p className="font-semibold">{fmtSAR(simRevenue, isRTL)}</p></div>
-            <div className="text-center"><p className="text-xs text-muted-foreground">{isRTL ? 'المصروفات' : 'Expenses'}</p><p className="font-semibold">{fmtSAR(simExpenses, isRTL)}</p></div>
-            <div className="text-center"><p className="text-xs text-muted-foreground">{t('ebitda')}</p><p className="font-semibold">{fmtSAR(simEbitda, isRTL)}</p></div>
+            <div className="text-center"><p className="text-xs text-muted-foreground">{t('revenue')}</p><p className="font-semibold">{formatCurrency(simRevenue, tenant?.localization, isRTL)}</p></div>
+            <div className="text-center"><p className="text-xs text-muted-foreground">{isRTL ? 'المصروفات' : 'Expenses'}</p><p className="font-semibold">{formatCurrency(simExpenses, tenant?.localization, isRTL)}</p></div>
+            <div className="text-center"><p className="text-xs text-muted-foreground">{t('ebitda')}</p><p className="font-semibold">{formatCurrency(simEbitda, tenant?.localization, isRTL)}</p></div>
           </div>
         </CardContent>
       </Card>
@@ -950,7 +949,7 @@ function COODashboard({ data, isRTL, t }) {
                       <td className="py-2 text-ink">{fmtNumber(c.capacity, isRTL)}</td>
                       <td className="py-2 text-ink">{fmtNumber(c.enrolled, isRTL)}</td>
                       <td className="py-2 text-ink">{fmtPct(c.utilization_pct)}</td>
-                      <td className="py-2 text-ink">{fmtSAR(c.cash_collected, isRTL)}</td>
+                      <td className="py-2 text-ink">{formatCurrency(c.cash_collected, tenant?.localization, isRTL)}</td>
                     </tr>
                   ))}
                 </tbody>

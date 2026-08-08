@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { useTenant } from '../components/TenantContext';
+import { formatCurrency, getCurrencySymbol } from '../lib/localization';
 import { isExpired, isExpiringWithin } from '../lib/dateCompare';
 import { countSeries, amountSeries, cumulativeSeries } from '../lib/dashboardMetrics';
 
@@ -203,7 +204,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <DashboardKPICard title={isRTL ? 'طلاب نشطون' : 'Active Students'} value={activeStudents} icon={Users} color="blue" href={createPageUrl('Students')} series={studentSeries.series} trend={studentSeries.trend} animDelay={0} />
             <DashboardKPICard title={isRTL ? 'طلبات تسجيل معلقة' : 'Pending Admissions'} value={pendingApplications} icon={GraduationCap} color="amber" alert={pendingApplications > 0} href={createPageUrl('Admissions')} series={applicationSeries.series} trend={applicationSeries.trend} animDelay={60} />
-            <DashboardKPICard title={isRTL ? 'مستحقات مالية' : 'Outstanding Fees'} value={`${pendingFees.toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}`} icon={CreditCard} color="red" alert={pendingFees > 0} href={createPageUrl('Fees')} series={feesSeries.series} trend={feesSeries.trend} animDelay={120} />
+            <DashboardKPICard title={isRTL ? 'مستحقات مالية' : 'Outstanding Fees'} value={formatCurrency(pendingFees, tenant?.localization, isRTL)} icon={CreditCard} color="red" alert={pendingFees > 0} href={createPageUrl('Fees')} series={feesSeries.series} trend={feesSeries.trend} animDelay={120} />
             <DashboardKPICard title={isRTL ? 'الفروع' : 'Branches'} value={branches.length} icon={Building2} color="teal" animDelay={180} />
           </div>
         </div>
@@ -264,7 +265,7 @@ export default function Dashboard() {
         <div>
           <SectionLabel>{isRTL ? 'مؤشرات المالية' : 'Finance KPIs'}</SectionLabel>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <DashboardKPICard title={isRTL ? 'مستحقات (ر.س)' : 'Outstanding (SAR)'} value={pendingFees.toLocaleString()} icon={DollarSign} color="red" href={createPageUrl('Collections')} series={feesSeries.series} trend={feesSeries.trend} animDelay={0} />
+            <DashboardKPICard title={isRTL ? `مستحقات (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Outstanding (${getCurrencySymbol(tenant?.localization, isRTL)})`} value={formatCurrency(pendingFees, tenant?.localization, isRTL)} icon={DollarSign} color="red" href={createPageUrl('Collections')} series={feesSeries.series} trend={feesSeries.trend} animDelay={0} />
             <DashboardKPICard title={isRTL ? 'إجمالي الفواتير' : 'Total Invoices'} value={invoices.length} icon={FileText} color="blue" href={createPageUrl('Fees')} series={invoiceSeries.series} trend={invoiceSeries.trend} animDelay={60} />
             <DashboardKPICard title={isRTL ? 'آخر رواتب' : 'Last Payrun'} value={lastPayRun ? (lastPayRun.period || `${lastPayRun.period_month}/${lastPayRun.period_year}`) : '—'} icon={Banknote} color="emerald" href={createPageUrl('Payroll')} animDelay={120} />
             <DashboardKPICard title={isRTL ? 'الفروع' : 'Branches'} value={branches.length} icon={Building2} color="teal" animDelay={180} />

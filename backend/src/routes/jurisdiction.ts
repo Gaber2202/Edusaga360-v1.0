@@ -76,6 +76,15 @@ router.get('/context', async (
       currencyCode: pack.currencyCode,
       vatRate,
       features,
+      localization: pack.localization ?? {
+        currencyCode: pack.currencyCode,
+        currencySymbol: { en: pack.currencyCode, ar: pack.currencyCode },
+        minorUnits: 2,
+        numberFormat: { locale: 'en-US', options: { minimumFractionDigits: 2, maximumFractionDigits: 2 } },
+        dateFormat: { locale: 'en-US', options: { year: 'numeric', month: 'short', day: 'numeric' } },
+        calendarSystems: ['gregorian'],
+        textDirection: 'ltr',
+      },
     });
   } catch (err) {
     next(err);

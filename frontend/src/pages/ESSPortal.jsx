@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { getCurrencySymbol } from '../lib/localization';
 import { useRole } from '../components/RoleContext';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -28,6 +29,7 @@ import { useTenantFilter } from '../hooks/useTenantFilter';
 
 export default function ESSPortal() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { user } = useRole();
   const { selectedBranchId } = useBranch();
   const queryClient = useQueryClient();
@@ -565,7 +567,7 @@ export default function ESSPortal() {
                         </div>
                         <div className="flex justify-between font-bold text-lg border-t pt-2 mt-4">
                           <span>{isRTL ? 'صافي الراتب' : 'Net Salary'}</span>
-                          <span className="text-emerald-600">{latest.net_salary?.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                          <span className="text-emerald-600"><Currency amount={latest.net_salary} /></span>
                         </div>
                       </div>
                     </div>
@@ -735,7 +737,7 @@ export default function ESSPortal() {
                         <p className="font-medium">{requestTypeLabels[req.request_type]}</p>
                         <p className="text-sm text-muted-foreground">
                           {format(new Date(req.created_at), 'dd/MM/yyyy')}
-                          {req.amount > 0 && <span className="mx-2">• {req.amount.toLocaleString()} {t('sar')}</span>}
+                          {req.amount > 0 && <span className="mx-2">• {req.amount.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span>}
                         </p>
                       </div>
                       <StatusBadge status={req.status} />

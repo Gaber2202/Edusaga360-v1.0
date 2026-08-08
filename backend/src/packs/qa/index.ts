@@ -11,7 +11,7 @@ import { qaEInvoice } from './eInvoice.js';
 import { qaFeeGovernance } from './feeGovernance.js';
 import { qaGovIntegrations } from './govIntegrations.js';
 import { qaIdentity } from './identity.js';
-import { qaLocalisation } from './localisation.js';
+import { qaLocalisation, qaLocalization } from './localisation.js';
 import { qaPayments } from './payments.js';
 import { qaPayroll } from './payroll.js';
 import { qaRegulatorReports } from './regulatorReports.js';
@@ -31,4 +31,5 @@ export const qaPack: CountryPack = {
   feeGovernance: qaFeeGovernance,
   documents: qaDocuments,
   localisation: qaLocalisation,
+  localization: qaLocalization,
 };

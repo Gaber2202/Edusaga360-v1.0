@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '../LanguageContext';
+import { formatCurrency, getCurrencySymbol } from '../../lib/localization';
 import { useBranch } from '../BranchContext';
 import { tenantQuery, fetchData, callApi, supabase } from '../../api/supabaseClient';
 import { Button } from '../ui/button';
@@ -548,7 +549,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
                         className="pe-12"
                       />
                       <span className="absolute top-1/2 -translate-y-1/2 end-3 text-muted-foreground text-sm">
-                        {t('sar')}
+                        {getCurrencySymbol(tenant?.localization, isRTL)}
                       </span>
                     </div>
                   </div>
@@ -583,7 +584,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
                     className="pe-12"
                   />
                   <span className="absolute top-1/2 -translate-y-1/2 end-3 text-muted-foreground text-sm">
-                    {t('sar')}
+                    {getCurrencySymbol(tenant?.localization, isRTL)}
                   </span>
                 </div>
               </div>
@@ -600,21 +601,21 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
             <div className="bg-sand rounded-lg p-4 space-y-2">
               <div className="flex justify-between text-muted-foreground">
                 <span>{isRTL ? 'المجموع الفرعي' : 'Subtotal'}</span>
-                <span>{subtotal.toLocaleString()} {t('sar')}</span>
+                <span>{formatCurrency(subtotal, tenant?.localization, isRTL)}</span>
               </div>
               <div className="flex justify-between text-amber-700 font-medium">
                 <span>{isRTL ? 'ضريبة القيمة المضافة 15%' : 'VAT 15%'}</span>
-                <span>+{vatAmount.toLocaleString()} {t('sar')}</span>
+                <span>+{formatCurrency(vatAmount, tenant?.localization, isRTL)}</span>
               </div>
               {parseFloat(formData.discount_amount) > 0 && (
                 <div className="flex justify-between text-red-600">
                   <span>{t('discount')}</span>
-                  <span>-{parseFloat(formData.discount_amount).toLocaleString()} {t('sar')}</span>
+                  <span>-{parseFloat(formData.discount_amount).toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span>
                 </div>
               )}
               <div className="flex justify-between text-lg font-bold text-ink border-t pt-2">
                 <span>{t('total')}</span>
-                <span>{total.toLocaleString()} {t('sar')}</span>
+                <span>{formatCurrency(total, tenant?.localization, isRTL)}</span>
               </div>
               {formData.status === 'issued' && (
                 <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">

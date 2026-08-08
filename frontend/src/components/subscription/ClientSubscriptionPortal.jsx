@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { tenantQuery, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useTenant } from '../TenantContext';
+import { formatCurrency } from '../../lib/localization';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -21,9 +22,9 @@ import AttachmentUploader from '../ui/AttachmentUploader';
 const VAT_RATE = 0.15;
 const PER_SEAT_PRICE = 500;
 
-function formatSAR(amount, isRTL) {
-  const formatted = amount.toLocaleString('en-SA');
-  return isRTL ? `${formatted} ر.س` : `SAR ${formatted}`;
+function formatPlanPrice(price, tenant, isRTL) {
+  const n = typeof price === 'number' ? price : Number(String(price).replace(/,/g, ''));
+  return formatCurrency(n, tenant?.localization, isRTL);
 }
 
 export default function ClientSubscriptionPortal() {
@@ -313,8 +314,8 @@ export default function ClientSubscriptionPortal() {
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
               {isRTL 
-                ? `لديك ${availableUsers} مقعد متاح | ${PER_SEAT_PRICE} ر.س / مقعد / سنة`
-                : `${availableUsers} seats available | SAR ${PER_SEAT_PRICE} / seat / yr`}
+                ? `لديك ${availableUsers} مقعد متاح | ${formatCurrency(PER_SEAT_PRICE, tenant?.localization, isRTL)} / مقعد / سنة`
+                : `${availableUsers} seats available | ${formatCurrency(PER_SEAT_PRICE, tenant?.localization, isRTL)} / seat / yr`}
             </p>
             {pendingUserRequest && (
               <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs">
@@ -385,7 +386,7 @@ export default function ClientSubscriptionPortal() {
                   ].map(({ code, label: lbl, price }) => (
                     <th key={code} className={`text-center py-3 px-3 font-semibold ${tenant.plan_code === code ? 'bg-najdi-50 text-najdi-900' : 'text-ink'}`}>
                       <div>{lbl}</div>
-                      <div className="text-xs font-normal text-muted-foreground">{price} {isRTL ? 'ر.س/سنة' : 'SAR/yr'}</div>
+                      <div className="text-xs font-normal text-muted-foreground">{formatPlanPrice(price, tenant, isRTL)} / {isRTL ? 'سنة' : 'yr'}</div>
                       {tenant.plan_code === code && (
                         <div className="mt-1 inline-block text-[10px] bg-najdi-700 text-white rounded-full px-2 py-0.5">
                           {isRTL ? 'خطتك' : 'Your plan'}
@@ -450,7 +451,7 @@ export default function ClientSubscriptionPortal() {
               </tbody>
             </table>
           </div>
-          <p className="text-xs text-muted-foreground mt-3">{isRTL ? '* الأسعار سنوية بالريال السعودي، لا تشمل ضريبة القيمة المضافة.' : '* Prices are annual in SAR, excluding VAT.'}</p>
+          <p className="text-xs text-muted-foreground mt-3">{isRTL ? `* الأسعار سنوية بـ${tenant?.currency_code || 'XXX'}، لا تشمل ضريبة القيمة المضافة.` : `* Prices are annual in ${tenant?.currency_code || 'XXX'}, excluding VAT.`}</p>
         </CardContent>
       </Card>
 
@@ -587,7 +588,7 @@ export default function ClientSubscriptionPortal() {
                         </div>
                         <p className="text-sm font-semibold text-ink mb-3">
                           {plan.priceYearly > 0
-                            ? `${plan.priceYearly.toLocaleString()} ${isRTL ? 'ر.س / سنة' : 'SAR / yr'}`
+                            ? `${formatCurrency(plan.priceYearly, tenant?.localization, isRTL)} / {isRTL ? 'سنة' : 'yr'}`
                             : (isRTL ? 'حسب الطلب' : 'Custom')}
                         </p>
                         <ul className="space-y-2 text-xs text-muted-foreground">
@@ -826,9 +827,9 @@ export default function ClientSubscriptionPortal() {
             <>
               <div className="space-y-4 py-4">
                 <div className="p-3 bg-najdi-50 border border-najdi-100 rounded-lg text-xs text-najdi-900">
-                  {isRTL 
-                    ? `المقاعد المتاحة: ${availableUsers} | السعر لكل مقعد: ${PER_SEAT_PRICE} ر.س / سنة`
-                    : `Available seats: ${availableUsers} | Price per seat: SAR ${PER_SEAT_PRICE} / yr`}
+                  {isRTL
+                    ? `المقاعد المتاحة: ${availableUsers} | السعر لكل مقعد: ${formatCurrency(PER_SEAT_PRICE, tenant?.localization, isRTL)} / سنة`
+                    : `Available seats: ${availableUsers} | Price per seat: ${formatCurrency(PER_SEAT_PRICE, tenant?.localization, isRTL)} / yr`}
                 </div>
 
                 <div className="space-y-1.5">

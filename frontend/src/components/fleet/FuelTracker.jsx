@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { getCurrencySymbol } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -17,6 +19,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 export default function FuelTracker() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const queryClient = useQueryClient();
 
@@ -94,8 +97,8 @@ export default function FuelTracker() {
     { header: isRTL ? 'المركبة' : 'Vehicle', accessorKey: 'vehicle_number' },
     { header: isRTL ? 'التاريخ' : 'Date', cell: (row) => format(new Date(row.fuel_date), 'dd/MM/yyyy') },
     { header: isRTL ? 'اللترات' : 'Liters', cell: (row) => `${row.liters} ${isRTL ? 'لتر' : 'L'}` },
-    { header: isRTL ? 'السعر/لتر' : 'Price/L', cell: (row) => `${row.cost_per_liter?.toFixed(2)} ${t('sar')}` },
-    { header: isRTL ? 'الإجمالي' : 'Total', cell: (row) => `${row.total_cost?.toLocaleString()} ${t('sar')}` },
+    { header: isRTL ? 'السعر/لتر' : 'Price/L', cell: (row) => `${row.cost_per_liter?.toFixed(2)} ${getCurrencySymbol(tenant?.localization, isRTL)}` },
+    { header: isRTL ? 'الإجمالي' : 'Total', cell: (row) => `${row.total_cost?.toLocaleString()} ${getCurrencySymbol(tenant?.localization, isRTL)}` },
     { header: isRTL ? 'العداد' : 'Odometer', cell: (row) => row.odometer_reading?.toLocaleString() || '-' },
     { header: isRTL ? 'المحطة' : 'Station', accessorKey: 'station_name' }
   ];
@@ -129,7 +132,7 @@ export default function FuelTracker() {
               <div>
                 <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي المصروف' : 'Total Spent'}</p>
                 <p className="text-2xl font-bold">{totalSpent.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">{t('sar')}</p>
+                <p className="text-xs text-muted-foreground">{getCurrencySymbol(tenant?.localization, isRTL)}</p>
               </div>
               <Fuel className="w-10 h-10 text-najdi-500" />
             </div>
@@ -152,7 +155,7 @@ export default function FuelTracker() {
               <div>
                 <p className="text-sm text-muted-foreground">{isRTL ? 'متوسط السعر' : 'Avg Price/L'}</p>
                 <p className="text-2xl font-bold">{avgPerLiter.toFixed(2)}</p>
-                <p className="text-xs text-muted-foreground">{t('sar')}</p>
+                <p className="text-xs text-muted-foreground">{getCurrencySymbol(tenant?.localization, isRTL)}</p>
               </div>
               <TrendingUp className="w-10 h-10 text-amber-400" />
             </div>
@@ -169,7 +172,7 @@ export default function FuelTracker() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="date" />
                 <YAxis />
-                <Tooltip formatter={(value) => `${value} SAR`} />
+                <Tooltip formatter={(value) => `${formatCurrency(value, tenant?.localization, isRTL)}`} />
                 <Bar dataKey="cost" fill="#3b82f6" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -243,7 +246,7 @@ export default function FuelTracker() {
             {formData.liters > 0 && formData.cost_per_liter > 0 && (
               <div className="bg-sand p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">{isRTL ? 'الإجمالي' : 'Total Cost'}</p>
-                <p className="text-2xl font-bold">{(formData.liters * formData.cost_per_liter).toFixed(2)} {t('sar')}</p>
+                <p className="text-2xl font-bold">{(formData.liters * formData.cost_per_liter).toFixed(2)} {getCurrencySymbol(tenant?.localization, isRTL)}</p>
               </div>
             )}
           </div>

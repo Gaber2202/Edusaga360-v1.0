@@ -6,6 +6,8 @@ import React, { useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { useTenant } from '../components/TenantContext';
+import { formatCurrency } from '../lib/localization';
 import { useBranch } from '../components/BranchContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -23,7 +25,6 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const SAR = (v) => `SAR ${(v || 0).toLocaleString('en-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const PCT = (v) => `${(v || 0).toFixed(1)}%`;
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
@@ -57,6 +58,8 @@ function KPICard({ title, value, subtitle, trend, trendLabel, icon: KPIIcon, ico
 
 export default function FinanceDashboard() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
+  const fmt = (v) => formatCurrency(v, tenant?.localization, isRTL);
   const { branchFilter } = useBranch();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
 
@@ -227,8 +230,8 @@ export default function FinanceDashboard() {
             type: 'duplicate',
             severity: 'high',
             message: isRTL
-              ? `دفعة مكررة محتملة: ${sorted[0].student_name || 'غير معروف'} — SAR ${(sorted[0].amount || 0).toLocaleString()}`
-              : `Possible duplicate payment: ${sorted[0].student_name || 'Unknown'} — SAR ${(sorted[0].amount || 0).toLocaleString()}`,
+              ? `دفعة مكررة محتملة: ${sorted[0].student_name || 'غير معروف'} — ${formatCurrency(sorted[0].amount, tenant?.localization, isRTL)}`
+              : `Possible duplicate payment: ${sorted[0].student_name || 'Unknown'} — ${formatCurrency(sorted[0].amount, tenant?.localization, isRTL)}`,
           });
         }
       }
@@ -239,8 +242,8 @@ export default function FinanceDashboard() {
         type: 'approval',
         severity: 'medium',
         message: isRTL
-          ? `قيد بمبلغ SAR ${(j.total_debit || 0).toLocaleString()} بانتظار الاعتماد`
-          : `Journal SAR ${(j.total_debit || 0).toLocaleString()} pending approval`,
+          ? `قيد بمبلغ ${formatCurrency(j.total_debit, tenant?.localization, isRTL)} بانتظار الاعتماد`
+          : `Journal ${formatCurrency(j.total_debit, tenant?.localization, isRTL)} pending approval`,
       });
     });
     // Salary cost alert
@@ -285,14 +288,14 @@ export default function FinanceDashboard() {
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        <KPICard title={isRTL ? 'الإيرادات (سنوي)' : 'Revenue YTD'} value={SAR(kpis.ytdRevenue)} subtitle={isRTL ? 'منذ بداية السنة' : 'Since year start'} icon={TrendingUp} iconBg="bg-emerald-50" to="/Fees" />
-        <KPICard title={isRTL ? 'إجمالي المصروفات' : 'Expenses YTD'} value={SAR(kpis.totalExpenses)} icon={TrendingDown} iconBg="bg-red-50" to="/JournalEntries" />
-        <KPICard title={isRTL ? 'صافي الربح' : 'Net Profit'} value={SAR(kpis.grossProfit)} subtitle={PCT(kpis.netMargin) + (isRTL ? ' هامش' : ' margin')} icon={DollarSign} iconBg="bg-najdi-50" />
-        <KPICard title={isRTL ? 'نسبة التحصيل' : 'Collection Rate'} value={PCT(kpis.collectionRate)} subtitle={SAR(kpis.ytdCollected) + (isRTL ? ' محصّل' : ' collected')} icon={CreditCard} iconBg="bg-purple-50" to="/Collections" />
-        <KPICard title={isRTL ? 'ذمم مدينة' : 'AR Outstanding'} value={SAR(kpis.totalAR)} subtitle={isRTL ? `${SAR(kpis.overdueAR)} متأخر` : `${SAR(kpis.overdueAR)} overdue`} alert={kpis.overdueAR > 50000} icon={AlertCircle} iconBg="bg-amber-50" to="/Fees" />
-        <KPICard title={isRTL ? 'ذمم دائنة' : 'AP Outstanding'} value={SAR(kpis.totalAP)} subtitle={isRTL ? `${SAR(kpis.apDueThisWeek)} هذا الأسبوع` : `${SAR(kpis.apDueThisWeek)} due this week`} icon={Wallet} iconBg="bg-orange-50" to="/APBills" />
+        <KPICard title={isRTL ? 'الإيرادات (سنوي)' : 'Revenue YTD'} value={fmt(kpis.ytdRevenue)} subtitle={isRTL ? 'منذ بداية السنة' : 'Since year start'} icon={TrendingUp} iconBg="bg-emerald-50" to="/Fees" />
+        <KPICard title={isRTL ? 'إجمالي المصروفات' : 'Expenses YTD'} value={fmt(kpis.totalExpenses)} icon={TrendingDown} iconBg="bg-red-50" to="/JournalEntries" />
+        <KPICard title={isRTL ? 'صافي الربح' : 'Net Profit'} value={fmt(kpis.grossProfit)} subtitle={PCT(kpis.netMargin) + (isRTL ? ' هامش' : ' margin')} icon={DollarSign} iconBg="bg-najdi-50" />
+        <KPICard title={isRTL ? 'نسبة التحصيل' : 'Collection Rate'} value={PCT(kpis.collectionRate)} subtitle={fmt(kpis.ytdCollected) + (isRTL ? ' محصّل' : ' collected')} icon={CreditCard} iconBg="bg-purple-50" to="/Collections" />
+        <KPICard title={isRTL ? 'ذمم مدينة' : 'AR Outstanding'} value={fmt(kpis.totalAR)} subtitle={isRTL ? `${fmt(kpis.overdueAR)} متأخر` : `${fmt(kpis.overdueAR)} overdue`} alert={kpis.overdueAR > 50000} icon={AlertCircle} iconBg="bg-amber-50" to="/Fees" />
+        <KPICard title={isRTL ? 'ذمم دائنة' : 'AP Outstanding'} value={fmt(kpis.totalAP)} subtitle={isRTL ? `${fmt(kpis.apDueThisWeek)} هذا الأسبوع` : `${fmt(kpis.apDueThisWeek)} due this week`} icon={Wallet} iconBg="bg-orange-50" to="/APBills" />
         <KPICard title={isRTL ? 'الرواتب % من الإيرادات' : 'Salary % Revenue'} value={PCT(kpis.salaryPct)} subtitle={isRTL ? 'الهدف: أقل من 55%' : 'Target: <55%'} alert={kpis.salaryPct > 55} icon={Users} iconBg="bg-indigo-50" />
-        <KPICard title={isRTL ? 'تكلفة الطالب' : 'Cost per Student'} value={SAR(kpis.costPerStudent)} subtitle={`${kpis.studentCount} ${isRTL ? 'طالب' : 'students'}`} icon={BarChart3} iconBg="bg-teal-50" />
+        <KPICard title={isRTL ? 'تكلفة الطالب' : 'Cost per Student'} value={fmt(kpis.costPerStudent)} subtitle={`${kpis.studentCount} ${isRTL ? 'طالب' : 'students'}`} icon={BarChart3} iconBg="bg-teal-50" />
       </div>
 
       {/* Charts row */}
@@ -309,7 +312,7 @@ export default function FinanceDashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="month" tickFormatter={fmtM} tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 10 }} tickFormatter={v => (v/1000).toFixed(0) + 'K'} />
-                  <Tooltip formatter={(v) => SAR(v)} labelFormatter={fmtM} />
+                  <Tooltip formatter={(v) => fmt(v)} labelFormatter={fmtM} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                   <Bar dataKey="revenue" name={isRTL ? 'الإيرادات' : 'Revenue'} fill="#10b981" radius={[4,4,0,0]} />
                   <Bar dataKey="collected" name={isRTL ? 'المحصّل' : 'Collected'} fill="#3b82f6" radius={[4,4,0,0]} />
@@ -345,7 +348,7 @@ export default function FinanceDashboard() {
                   >
                     {revenuePie.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
-                  <Tooltip formatter={(v) => SAR(v)} />
+                  <Tooltip formatter={(v) => fmt(v)} />
                   {isMobile && <Legend wrapperStyle={{ fontSize: 11 }} />}
                 </PieChart>
               </ResponsiveContainer>
@@ -364,7 +367,7 @@ export default function FinanceDashboard() {
             {arAging.map(bucket => (
               <div key={bucket.name} className="text-center p-3 rounded-xl border bg-sand">
                 <p className="text-xs text-muted-foreground mb-1">{bucket.name}</p>
-                <p className="font-bold text-sm" style={{ color: bucket.color }}>{SAR(bucket.value)}</p>
+                <p className="font-bold text-sm" style={{ color: bucket.color }}>{fmt(bucket.value)}</p>
                 {kpis.totalAR > 0 && (
                   <p className="text-xs text-muted-foreground mt-1">{((bucket.value / kpis.totalAR) * 100).toFixed(0)}%</p>
                 )}

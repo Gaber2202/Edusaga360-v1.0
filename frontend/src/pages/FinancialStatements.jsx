@@ -6,6 +6,7 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { useTenant } from '../components/TenantContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -16,13 +17,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
 import { format, startOfYear } from 'date-fns';
 import { Printer, RefreshCw, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-const SAR = (v) => (v || 0).toLocaleString('en-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const _NEG = (v) => v < 0 ? `(${SAR(Math.abs(v))})` : SAR(v);
+import { formatNumber } from '../lib/localization';
 
 function StatLine({ label, value, bold, indent = 0, negative, subtotal, total, accountId }) {
+  const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const isNeg = negative || value < 0;
-  const displayVal = value !== undefined ? (isNeg && value < 0 ? `(${SAR(Math.abs(value))})` : SAR(Math.abs(value || 0))) : '';
+  const displayVal = value !== undefined ? formatNumber(Math.abs(value || 0), tenant?.localization, isRTL) : '';
   return (
     <div className={`flex items-center justify-between py-1.5 border-b border-sand ${
       total ? 'border-t-2 border-border font-bold text-ink bg-sand px-2 rounded' :
@@ -51,6 +52,7 @@ function StatLine({ label, value, bold, indent = 0, negative, subtotal, total, a
 
 export default function FinancialStatements() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { branchFilter } = useBranch();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const [tab, setTab] = useState('bs');

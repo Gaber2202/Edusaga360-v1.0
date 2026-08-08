@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { getCurrencySymbol } from '../lib/localization';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -22,6 +23,7 @@ import { useTenantFilter } from '../hooks/useTenantFilter';
 
 export default function Overtime() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
@@ -126,7 +128,7 @@ export default function Overtime() {
     { header: isRTL ? 'الموظف' : 'Employee', accessorKey: 'employee_name' },
     { header: t('date'), cell: (row) => format(new Date(row.date), 'dd/MM/yyyy') },
     { header: isRTL ? 'الساعات' : 'Hours', accessorKey: 'total_hours' },
-    { header: isRTL ? 'المبلغ المحسوب' : 'Amount', cell: (row) => `${row.calculated_amount?.toLocaleString()} ${t('sar')}` },
+    { header: isRTL ? 'المبلغ المحسوب' : 'Amount', cell: (row) => `${row.calculated_amount?.toLocaleString()} ${getCurrencySymbol(tenant?.localization, isRTL)}` },
     { header: t('status'), cell: (row) => <StatusBadge status={row.status} /> },
     { header: t('actions'), cell: (row) => (
       <div className="flex gap-1">
@@ -232,7 +234,7 @@ export default function Overtime() {
             </div>
             {formData.compensation_type === 'cash' && formData.hourly_rate > 0 && (
               <div className="bg-emerald-50 p-3 rounded-lg">
-                <p className="text-sm"><span className="font-medium">{isRTL ? 'المبلغ المحسوب (150%):' : 'Calculated (150%):'}</span> {calculateAmount().toLocaleString()} {t('sar')}</p>
+                <p className="text-sm"><span className="font-medium">{isRTL ? 'المبلغ المحسوب (150%):' : 'Calculated (150%):'}</span> {calculateAmount().toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</p>
               </div>
             )}
             <div className="space-y-2">

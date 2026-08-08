@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../LanguageContext';
+import { useTenant } from '../TenantContext';
+import { formatCurrency } from '../../lib/localization';
 import ServiceTile from './ServiceTile';
 import ServiceWorkflowDialog from './ServiceWorkflowDialog';
 import { Upload, CheckCircle, FileText, BarChart2 } from 'lucide-react';
@@ -48,6 +50,7 @@ const statusColor = { pending: 'bg-amber-900/60 text-amber-300 border-amber-700'
 
 export default function MudadServices() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const qc = useQueryClient();
   const [selected, setSelected] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -64,7 +67,7 @@ export default function MudadServices() {
     { header: isRTL ? 'الفترة' : 'Period', cell: r => `${isRTL ? monthsAr[r.period_month - 1] : months[r.period_month - 1]} ${r.period_year}` },
     { header: isRTL ? 'تاريخ الرفع' : 'Submission Date', accessorKey: 'submission_date' },
     { header: isRTL ? 'الموظفون' : 'Employees', accessorKey: 'employee_count' },
-    { header: isRTL ? 'إجمالي الأجور' : 'Total Wages', cell: r => `${(r.total_salary || 0).toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}` },
+    { header: isRTL ? 'إجمالي الأجور' : 'Total Wages', cell: r => formatCurrency(r.total_salary || 0, tenant?.localization, isRTL) },
     { header: isRTL ? 'الامتثال %' : 'Compliance %', cell: r => (
       <div className="flex items-center gap-2">
         <div className="w-16 bg-ink rounded-full h-2">

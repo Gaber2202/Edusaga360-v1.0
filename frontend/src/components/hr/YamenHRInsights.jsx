@@ -50,7 +50,7 @@ export default function YamenHRInsights({ module, data = {}, isRTL }) {
       - Total overtime requests: ${data.total || 0}
       - Pending approval: ${data.pending || 0}
       - Total hours logged: ${data.hours || 0}
-      - Total cost estimate: ${data.cost || 0} SAR
+      - Total cost estimate: ${formatCurrency(data.cost || 0, tenant?.localization, isRTL)}
       - Employees with 10+ OT hours this month: ${data.excessive || 0}
       Flag excessive overtime, budget overrun risks, and employees who may be at burnout risk. Arabic and English.`,
     

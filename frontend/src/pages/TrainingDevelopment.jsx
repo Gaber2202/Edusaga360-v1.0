@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { extractAiText } from '../components/yamen/yamenUtils';
 import { useLanguage } from '../components/LanguageContext';
+import { useTenant } from '../components/TenantContext';
+import { getCurrencySymbol, formatCurrency } from '../lib/localization';
 import { useBranch } from '../components/BranchContext';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -23,6 +25,7 @@ import { useTenantFilter } from '../hooks/useTenantFilter';
 
 export default function TrainingDevelopment() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { filterByBranch: _filterByBranch } = useBranch();
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
@@ -334,7 +337,7 @@ export default function TrainingDevelopment() {
                 <div className="flex justify-between"><span className="text-sm">{isRTL ? 'إجمالي ساعات CPD' : 'Total CPD Hours'}</span><span className="font-bold text-najdi-700">{trainings.reduce((s, t) => s + (t.cpd_hours || 0), 0)}</span></div>
                 <div className="flex justify-between"><span className="text-sm">{isRTL ? 'ساعات مكتملة' : 'Completed Hours'}</span><span className="font-bold text-emerald-600">{trainings.filter(t => t.status === 'completed').reduce((s, t) => s + (t.cpd_hours || 0), 0)}</span></div>
                 <div className="flex justify-between"><span className="text-sm">{isRTL ? 'إلزامية' : 'Mandatory'}</span><span className="font-bold text-red-600">{trainings.filter(t => t.is_mandatory).reduce((s, t) => s + (t.cpd_hours || 0), 0)}</span></div>
-                <div className="flex justify-between"><span className="text-sm">{isRTL ? 'إجمالي التكاليف' : 'Total Cost'}</span><span className="font-bold">{trainings.reduce((s, t) => s + (t.cost_per_participant || 0), 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span></div>
+                <div className="flex justify-between"><span className="text-sm">{isRTL ? 'إجمالي التكاليف' : 'Total Cost'}</span><span className="font-bold">{formatCurrency(trainings.reduce((s, t) => s + (t.cost_per_participant || 0), 0), tenant?.localization, isRTL)}</span></div>
               </div>
             </Card>
           </div>
@@ -438,7 +441,7 @@ export default function TrainingDevelopment() {
                 <Input type="number" min="0" value={form.cpd_hours} onChange={e => setForm(p => ({ ...p, cpd_hours: parseFloat(e.target.value) || 0 }))} />
               </div>
               <div className="space-y-2">
-                <Label>{isRTL ? 'التكلفة للمشترك' : 'Cost/Participant (SAR)'}</Label>
+                <Label>{isRTL ? 'التكلفة للمشترك' : `Cost/Participant (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label>
                 <Input type="number" min="0" value={form.cost_per_participant} onChange={e => setForm(p => ({ ...p, cost_per_participant: parseFloat(e.target.value) || 0 }))} />
               </div>
               <div className="space-y-2">

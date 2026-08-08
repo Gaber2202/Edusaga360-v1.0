@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { getCurrencySymbol } from '../lib/localization';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -24,6 +25,7 @@ import { useTenantFilter } from '../hooks/useTenantFilter';
 
 export default function PurchaseRequisitions() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
@@ -273,7 +275,7 @@ export default function PurchaseRequisitions() {
     { header: isRTL ? 'رقم الطلب' : 'PR #', cell: (row) => <span className="font-mono text-sm">{row.pr_number}</span> },
     { header: isRTL ? 'الغرض' : 'Purpose', accessorKey: 'purpose' },
     { header: isRTL ? 'عدد البنود' : 'Items', cell: (row) => row.items?.length || 0 },
-    { header: isRTL ? 'المبلغ التقديري' : 'Estimated', cell: (row) => <span className="font-semibold">{row.total_estimated?.toLocaleString()} {t('sar')}</span> },
+    { header: isRTL ? 'المبلغ التقديري' : 'Estimated', cell: (row) => <span className="font-semibold">{row.total_estimated?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span> },
     { header: t('date'), cell: (row) => row.request_date ? format(new Date(row.request_date), 'dd/MM/yyyy') : '-' },
     { header: t('status'), cell: (row) => <StatusBadge status={row.status} /> },
     { header: t('actions'), cell: (row) => (
@@ -373,7 +375,7 @@ export default function PurchaseRequisitions() {
                     ))}
                     <TableRow className="bg-sand font-semibold">
                       <TableCell colSpan={3}>{t('total')}</TableCell>
-                      <TableCell>{calculateTotal().toLocaleString()} {t('sar')}</TableCell>
+                      <TableCell>{calculateTotal().toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</TableCell>
                       <TableCell></TableCell>
                     </TableRow>
                   </TableBody>

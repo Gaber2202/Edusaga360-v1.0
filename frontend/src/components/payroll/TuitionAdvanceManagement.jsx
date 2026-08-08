@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { formatCurrency } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -28,6 +30,7 @@ import {
 
 export default function TuitionAdvanceManagement() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter, branches: _branches } = useBranch();
   const queryClient = useQueryClient();
 
@@ -495,7 +498,7 @@ export default function TuitionAdvanceManagement() {
                     <div>
                       <p className="text-sm text-emerald-700">{isRTL ? 'القسط الشهري' : 'Monthly Installment'}</p>
                       <p className="text-2xl font-bold text-emerald-700">
-                        {Math.ceil(parseFloat(newAdvance.advance_amount) / getInstallmentCount(newAdvance.installment_plan)).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}
+                        {formatCurrency(Math.ceil(parseFloat(newAdvance.advance_amount) / getInstallmentCount(newAdvance.installment_plan)), tenant?.localization, isRTL)}
                       </p>
                     </div>
                     <GraduationCap className="w-10 h-10 text-emerald-600" />

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { getCurrencySymbol } from '../lib/localization';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -24,6 +25,7 @@ const _DEPRECIATION_METHODS = ['straight_line', 'declining_balance'];
 
 export default function Assets() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
@@ -174,9 +176,9 @@ export default function Assets() {
   const columns = [
     { header: isRTL ? 'الرمز' : 'Code', cell: (row) => <span className="font-mono text-sm">{row.asset_code}</span> },
     { header: isRTL ? 'الأصل' : 'Asset', cell: (row) => <div><p className="font-medium">{row.name_ar}</p><p className="text-sm text-muted-foreground">{t(row.category)}</p></div> },
-    { header: isRTL ? 'تكلفة الاقتناء' : 'Cost', cell: (row) => <span>{row.acquisition_cost?.toLocaleString()} {t('sar')}</span> },
-    { header: isRTL ? 'الإهلاك المتراكم' : 'Acc. Dep.', cell: (row) => <span className="text-red-600">{(row.accumulated_depreciation || 0).toLocaleString()} {t('sar')}</span> },
-    { header: isRTL ? 'صافي القيمة' : 'NBV', cell: (row) => <span className="font-semibold">{(row.net_book_value || row.acquisition_cost)?.toLocaleString()} {t('sar')}</span> },
+    { header: isRTL ? 'تكلفة الاقتناء' : 'Cost', cell: (row) => <span>{row.acquisition_cost?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span> },
+    { header: isRTL ? 'الإهلاك المتراكم' : 'Acc. Dep.', cell: (row) => <span className="text-red-600">{(row.accumulated_depreciation || 0).toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span> },
+    { header: isRTL ? 'صافي القيمة' : 'NBV', cell: (row) => <span className="font-semibold">{(row.net_book_value || row.acquisition_cost)?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span> },
     { header: t('status'), cell: (row) => <StatusBadge status={row.status} /> },
     { header: t('actions'), cell: (row) => (
       <Button size="sm" variant="ghost" onClick={() => handleEdit(row)}>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { formatCurrency, getCurrencySymbol } from '../lib/localization';
 import { useRole } from '../components/RoleContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -34,7 +35,7 @@ import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import WhatsAppButton from '../components/communications/WhatsAppButton';
 import { WhatsAppMessageTypes } from '../components/communications/WhatsAppService';
-import { money, itemAmount, itemDesc, fmtDate } from '../lib/invoiceFormat';
+import { itemAmount, itemDesc, fmtDate } from '../lib/invoiceFormat';
 
 export default function InvoiceDetails() {
   const { t, isRTL } = useLanguage();
@@ -230,9 +231,9 @@ Dear Parent,
 Please find attached the invoice details for ${invoice.student_name}.
 
 Invoice Number: ${invoice.invoice_number}
-Amount: ${money(invoice.total_amount)} SAR
+Amount: ${formatCurrency((invoice.total_amount), tenant?.localization, isRTL)}
 Due Date: ${fmtDate(invoice.due_date)}
-Balance: ${money(Number(invoice.total_amount || 0) - Number(invoice.paid_amount || 0))} SAR
+Balance: ${formatCurrency((Number(invoice.total_amount || 0) - Number(invoice.paid_amount || 0)), tenant?.localization, isRTL)}
 
 Thank you,
 EduSaga 360
@@ -254,7 +255,7 @@ EduSaga 360
   const _shareViaWhatsApp = () => {
     if (!invoice) return;
     
-    const message = `*Invoice ${invoice.invoice_number}*\n\nStudent: ${invoice.student_name}\nAmount: ${money(invoice.total_amount)} SAR\nDue Date: ${fmtDate(invoice.due_date)}\nBalance: ${money(Number(invoice.total_amount || 0) - Number(invoice.paid_amount || 0))} SAR`;
+    const message = `*Invoice ${invoice.invoice_number}*\n\nStudent: ${invoice.student_name}\nAmount: ${formatCurrency((invoice.total_amount), tenant?.localization, isRTL)}\nDue Date: ${fmtDate(invoice.due_date)}\nBalance: ${formatCurrency((Number(invoice.total_amount || 0) - Number(invoice.paid_amount || 0)), tenant?.localization, isRTL)}`;
     
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
     
@@ -388,7 +389,7 @@ EduSaga 360
               variables={{
                 student_name: invoice.student_name,
                 invoice_number: invoice.invoice_number,
-                amount: money(invoice.total_amount),
+                amount: formatCurrency((invoice.total_amount), tenant?.localization, isRTL),
                 due_date: fmtDate(invoice.due_date),
                 payment_link: paymentLink?.paymentUrl
               }}
@@ -503,7 +504,7 @@ EduSaga 360
                     <p className="font-medium">{itemDesc(item, isRTL)}</p>
                     <p className="text-sm text-muted-foreground">{item.fee_type || item.category_code || ''}</p>
                   </div>
-                  <p className="font-semibold">{money(itemAmount(item))} {t('sar')}</p>
+                  <p className="font-semibold">{formatCurrency((itemAmount(item)), tenant?.localization, isRTL)} {getCurrencySymbol(tenant?.localization, isRTL)}</p>
                 </div>
               ))}
             </div>
@@ -530,27 +531,27 @@ EduSaga 360
           <div className="space-y-2">
             <div className="flex justify-between text-muted-foreground">
               <span>{isRTL ? 'المجموع الفرعي' : 'Subtotal'}</span>
-              <span>{money(invoice.subtotal)} {t('sar')}</span>
+              <span>{formatCurrency((invoice.subtotal), tenant?.localization, isRTL)} {getCurrencySymbol(tenant?.localization, isRTL)}</span>
             </div>
             {Number(invoice.vat_amount) > 0 && (
               <div className="flex justify-between text-muted-foreground">
                 <span>{isRTL ? 'ضريبة القيمة المضافة (15%)' : 'VAT (15%)'}</span>
-                <span>+{money(invoice.vat_amount)} {t('sar')}</span>
+                <span>+{formatCurrency((invoice.vat_amount), tenant?.localization, isRTL)} {getCurrencySymbol(tenant?.localization, isRTL)}</span>
               </div>
             )}
             {Number(invoice.discount_amount) > 0 && (
               <div className="flex justify-between text-red-600">
                 <span>{t('discount')}</span>
-                <span>-{money(invoice.discount_amount)} {t('sar')}</span>
+                <span>-{formatCurrency((invoice.discount_amount), tenant?.localization, isRTL)} {getCurrencySymbol(tenant?.localization, isRTL)}</span>
               </div>
             )}
             <div className="flex justify-between text-xl font-bold pt-2 border-t">
               <span>{t('total')}</span>
-              <span>{money(invoice.total_amount)} {t('sar')}</span>
+              <span>{formatCurrency((invoice.total_amount), tenant?.localization, isRTL)} {getCurrencySymbol(tenant?.localization, isRTL)}</span>
             </div>
             <div className="flex justify-between text-emerald-600">
               <span>{t('paid')}</span>
-              <span>{money(invoice.paid_amount)} {t('sar')}</span>
+              <span>{formatCurrency((invoice.paid_amount), tenant?.localization, isRTL)} {getCurrencySymbol(tenant?.localization, isRTL)}</span>
             </div>
             {paymentLogs.length > 0 && (
               <div className="flex justify-between items-center text-sm text-muted-foreground pt-2 border-t border-border">
@@ -567,7 +568,7 @@ EduSaga 360
             )}
             <div className="flex justify-between text-xl font-bold text-red-600 pt-2 border-t">
               <span>{isRTL ? 'المتبقي' : 'Balance'}</span>
-              <span>{money(balance)} {t('sar')}</span>
+              <span>{formatCurrency((balance), tenant?.localization, isRTL)} {getCurrencySymbol(tenant?.localization, isRTL)}</span>
             </div>
           </div>
           </TabsContent>
@@ -578,19 +579,19 @@ EduSaga 360
               <Card>
                 <CardContent className="p-4">
                   <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الفاتورة' : 'Total Invoice'}</p>
-                  <p className="text-2xl font-bold">{money(invoice.total_amount)} {t('sar')}</p>
+                  <p className="text-2xl font-bold">{formatCurrency((invoice.total_amount), tenant?.localization, isRTL)} {getCurrencySymbol(tenant?.localization, isRTL)}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
                   <p className="text-sm text-muted-foreground">{isRTL ? 'المدفوع' : 'Paid to Date'}</p>
-                  <p className="text-2xl font-bold text-emerald-600">{money(invoice.paid_amount)} {t('sar')}</p>
+                  <p className="text-2xl font-bold text-emerald-600">{formatCurrency((invoice.paid_amount), tenant?.localization, isRTL)} {getCurrencySymbol(tenant?.localization, isRTL)}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
                   <p className="text-sm text-muted-foreground">{isRTL ? 'الرصيد المتبقي' : 'Remaining Balance'}</p>
-                  <p className="text-2xl font-bold text-red-600">{money(balance)} {t('sar')}</p>
+                  <p className="text-2xl font-bold text-red-600">{formatCurrency((balance), tenant?.localization, isRTL)} {getCurrencySymbol(tenant?.localization, isRTL)}</p>
                 </CardContent>
               </Card>
             </div>
@@ -765,12 +766,12 @@ EduSaga 360
                               </TableCell>
                               <TableCell>
                                 <span className="font-bold text-emerald-600">
-                                  {log.status === 'reversed' ? '-' : ''}{log.amount.toLocaleString()} {t('sar')}
+                                  {log.status === 'reversed' ? '-' : ''}{log.amount.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}
                                 </span>
                               </TableCell>
                               <TableCell>
                                 <span className="font-medium text-ink">
-                                  {remainingAfter.toLocaleString()} {t('sar')}
+                                  {remainingAfter.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}
                                 </span>
                               </TableCell>
                               <TableCell>
@@ -882,7 +883,7 @@ EduSaga 360
                         }`} />
                       </div>
                       <div>
-                        <p className="font-semibold">{log.amount.toLocaleString()} {t('sar')}</p>
+                        <p className="font-semibold">{log.amount.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</p>
                         <p className="text-sm text-muted-foreground">
                           {log.payment_method === 'credit_card' && (isRTL ? 'بطاقة ائتمان' : 'Credit Card')}
                           {log.payment_method === 'bank_transfer' && (isRTL ? 'تحويل بنكي' : 'Bank Transfer')}

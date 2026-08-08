@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { getCurrencySymbol } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -15,6 +17,7 @@ import { toast } from 'sonner';
 
 export default function VisaServices() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -118,7 +121,7 @@ export default function VisaServices() {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label>{isRTL ? 'الرسوم' : 'Fee (SAR)'}</Label>
+              <Label>{isRTL ? 'الرسوم' : `Fee (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label>
               <Input type="number" value={form.fee_amount} onChange={e => setForm(p => ({ ...p, fee_amount: parseFloat(e.target.value) || 0 }))} />
             </div>
           </div>

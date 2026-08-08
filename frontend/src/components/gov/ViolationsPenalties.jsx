@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { formatCurrency } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -15,6 +17,7 @@ import { toast } from 'sonner';
 
 export default function ViolationsPenalties() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -35,7 +38,7 @@ export default function ViolationsPenalties() {
     { header: isRTL ? 'النوع' : 'Type', cell: r => violationTypes[r.violation_type] || r.violation_type },
     { header: isRTL ? 'الجهة' : 'Authority', cell: r => authorities[r.authority] || r.authority },
     { header: isRTL ? 'الموظف' : 'Employee', cell: r => r.employee_name || '—' },
-    { header: isRTL ? 'المبلغ' : 'Amount', cell: r => <span className="font-semibold text-red-600">{(r.amount_sar || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span> },
+    { header: isRTL ? 'المبلغ' : 'Amount', cell: r => <span className="font-semibold text-red-600">{formatCurrency(r.amount_sar || 0, tenant?.localization, isRTL)}</span> },
     { header: isRTL ? 'تاريخ الاستحقاق' : 'Due Date', accessorKey: 'due_date' },
     { header: isRTL ? 'رقم المرجع' : 'Reference', accessorKey: 'reference_number' },
     { header: isRTL ? 'الحالة' : 'Status', cell: r => <Badge className={statusColors[r.status] || 'bg-sand-alt text-ink'}>{statusLabels[r.status] || r.status}</Badge> },
@@ -64,7 +67,7 @@ export default function ViolationsPenalties() {
         </CardContent></Card>
         <Card className="border-red-200 bg-red-50"><CardContent className="p-4">
           <div className="text-xl font-bold text-red-700">{totalExposure.toLocaleString()}</div>
-          <div className="text-sm text-red-600">{isRTL ? 'الإجمالي المعرض (ر.س)' : 'Total Exposure (SAR)'}</div>
+          <div className="text-sm text-red-600">{isRTL ? `الإجمالي المعرض (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Total Exposure (${getCurrencySymbol(tenant?.localization, isRTL)})`}</div>
         </CardContent></Card>
         <Card className="border-emerald-200 bg-emerald-50"><CardContent className="p-4">
           <div className="text-2xl font-bold text-emerald-700">{violations.filter(v => v.status === 'paid').length}</div>
@@ -113,7 +116,7 @@ export default function ViolationsPenalties() {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label>{isRTL ? 'المبلغ (ر.س)' : 'Amount (SAR)'} *</Label>
+              <Label>{isRTL ? `المبلغ (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Amount (${getCurrencySymbol(tenant?.localization, isRTL)})`} *</Label>
               <Input type="number" value={form.amount_sar} onChange={e => setForm(p => ({ ...p, amount_sar: parseFloat(e.target.value) || 0 }))} />
             </div>
             <div className="space-y-1">

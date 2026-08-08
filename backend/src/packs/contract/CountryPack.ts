@@ -344,6 +344,23 @@ export interface DocumentsService {
 // Localisation
 // ─────────────────────────────────────────────────────────────────────────────
 
+export interface LocalizationConfig {
+  /** ISO 4217 currency code. */
+  currencyCode: string;
+  /** Currency symbol in English and Arabic. */
+  currencySymbol: { en: string; ar: string };
+  /** Number of minor units per major unit (e.g. 2 for halalas/fils). */
+  minorUnits: number;
+  /** Default locale and options for number formatting. */
+  numberFormat: { locale: string; options?: Intl.NumberFormatOptions };
+  /** Default locale and options for date formatting. */
+  dateFormat: { locale: string; options?: Intl.DateTimeFormatOptions };
+  /** Supported calendar systems, in display priority order. */
+  calendarSystems: ('gregorian' | 'hijri')[];
+  /** Default text direction for the jurisdiction. */
+  textDirection: 'ltr' | 'rtl';
+}
+
 export interface CurrencyFormatOptions {
   value: number;
   currency?: string;
@@ -394,6 +411,8 @@ export interface CountryPack {
   readonly feeGovernance?: FeeGovernanceService;
   readonly documents?: DocumentsService;
   readonly localisation?: LocalisationService;
+  /** Static localization payload served to the frontend per ADR-006. */
+  readonly localization?: LocalizationConfig;
 }
 
 export type { JurisdictionCode, RequestContext };

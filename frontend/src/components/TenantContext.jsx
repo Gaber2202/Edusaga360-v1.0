@@ -52,6 +52,7 @@ export function TenantProvider({ user, children }) {
             vat_rate: ctx.vatRate,
             currency_code: ctx.currencyCode,
             jurisdiction_code: ctx.jurisdiction,
+            localization: ctx.localization,
           };
         } catch (e) {
           console.warn('TenantContext: could not load jurisdiction context', e);

@@ -43,6 +43,7 @@ const FIELD_OPTIONS = {
 
 export default function ReportBuilder() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch: _filterByBranch, branches } = useBranch();
   const { tenantFilter, tenantId: _tenantId, hasTenantAccess: _hasTenantAccess } = useTenantFilter();
   
@@ -176,7 +177,7 @@ export default function ReportBuilder() {
 
   const formatCellValue = (value, field) => {
     if (value === null || value === undefined) return '-';
-    if (field.includes('amount') || field.includes('balance')) return `${Number(value).toLocaleString()} SAR`;
+    if (field.includes('amount') || field.includes('balance')) return `${formatCurrency(Number(value).toLocaleString(), tenant?.localization, isRTL)}`;
     if (field.includes('date')) return value ? format(new Date(value), 'dd/MM/yyyy') : '-';
     if (field === 'status' || field === 'grade') return t(value) || value;
     return value;

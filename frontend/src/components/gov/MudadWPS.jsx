@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { useTenant } from '../TenantContext';
+import { formatCurrency } from '../../lib/localization';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -19,6 +21,7 @@ const monthsAr = ['يناير','فبراير','مارس','أبريل','مايو'
 
 export default function MudadWPS() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -38,7 +41,7 @@ export default function MudadWPS() {
     { header: isRTL ? 'الفترة' : 'Period', cell: r => `${isRTL ? monthsAr[r.period_month - 1] : months[r.period_month - 1]} ${r.period_year}` },
     { header: isRTL ? 'تاريخ الرفع' : 'Submission Date', accessorKey: 'submission_date' },
     { header: isRTL ? 'الموظفون' : 'Employees', accessorKey: 'employee_count' },
-    { header: isRTL ? 'إجمالي الأجور' : 'Total Wages', cell: r => `${(r.total_salary || 0).toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}` },
+    { header: isRTL ? 'إجمالي الأجور' : 'Total Wages', cell: r => formatCurrency(r.total_salary || 0, tenant?.localization, isRTL) },
     { header: isRTL ? 'الامتثال %' : 'Compliance %', cell: r => (
       <div className="flex items-center gap-2">
         <div className="w-16 bg-sand-alt rounded-full h-2">

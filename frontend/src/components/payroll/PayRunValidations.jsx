@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../LanguageContext';
+import { formatCurrency } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
@@ -60,6 +62,7 @@ const VIOLATION_META = {
 
 export default function PayRunValidations({ payrollInputs }) {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const [selectedViolation, setSelectedViolation] = useState(null);
 
   const validations = [];
@@ -201,7 +204,7 @@ export default function PayRunValidations({ payrollInputs }) {
                           {emp.employee_number && <p className="text-xs text-muted-foreground">{emp.employee_number}</p>}
                         </div>
                         <div className="text-right text-xs text-muted-foreground flex-shrink-0">
-                          <p>{isRTL ? 'صافي:' : 'Net:'} {(emp.net_salary || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p>
+                          <p>{isRTL ? 'صافي:' : 'Net:'} {formatCurrency((emp.net_salary || 0), tenant?.localization, isRTL)}</p>
                         </div>
                       </div>
                     ))}

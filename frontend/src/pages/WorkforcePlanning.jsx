@@ -3,6 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { extractAiText } from '../components/yamen/yamenUtils';
 import { useLanguage } from '../components/LanguageContext';
+import { useTenant } from '../components/TenantContext';
+import Currency from '../components/Currency';
+import { getCurrencySymbol, formatCurrency } from '../lib/localization';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -17,6 +20,7 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export default function WorkforcePlanning() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const [activeTab, setActiveTab] = useState('overview');
   const [aiInsight, setAiInsight] = useState('');
@@ -79,8 +83,8 @@ export default function WorkforcePlanning() {
     const prompt = `You are Yamen AI, an HR workforce planning advisor for a Saudi school.
     Current workforce data:
     - Total active employees: ${activeEmployees.length}
-    - Total monthly payroll: ${totalPayroll.toLocaleString()} SAR
-    - Average salary: ${avgSalary.toLocaleString()} SAR
+    - Total monthly payroll: ${formatCurrency(totalPayroll, tenant?.localization, isRTL)}
+    - Average salary: ${formatCurrency(avgSalary, tenant?.localization, isRTL)}
     - Saudization rate: ${saudizationRate}%
     - Open vacancies: ${openVacancies}
     - Department breakdown: ${JSON.stringify(deptData)}
@@ -195,9 +199,9 @@ export default function WorkforcePlanning() {
             <Card className="p-5">
               <h3 className="font-semibold text-ink mb-4">{isRTL ? 'ملخص الرواتب' : 'Payroll Summary'}</h3>
               <div className="space-y-3">
-                <div className="flex justify-between py-2 border-b"><span className="text-muted-foreground">{isRTL ? 'إجمالي شهري' : 'Monthly Total'}</span><span className="font-bold">{totalPayroll.toLocaleString()} SAR</span></div>
-                <div className="flex justify-between py-2 border-b"><span className="text-muted-foreground">{isRTL ? 'متوسط الراتب' : 'Avg Salary'}</span><span className="font-bold">{avgSalary.toLocaleString()} SAR</span></div>
-                <div className="flex justify-between py-2 border-b"><span className="text-muted-foreground">{isRTL ? 'سنوي تقديري' : 'Annual Estimate'}</span><span className="font-bold">{(totalPayroll * 12).toLocaleString()} SAR</span></div>
+                <div className="flex justify-between py-2 border-b"><span className="text-muted-foreground">{isRTL ? 'إجمالي شهري' : 'Monthly Total'}</span><span className="font-bold"><Currency amount={totalPayroll} /></span></div>
+                <div className="flex justify-between py-2 border-b"><span className="text-muted-foreground">{isRTL ? 'متوسط الراتب' : 'Avg Salary'}</span><span className="font-bold"><Currency amount={avgSalary} /></span></div>
+                <div className="flex justify-between py-2 border-b"><span className="text-muted-foreground">{isRTL ? 'سنوي تقديري' : 'Annual Estimate'}</span><span className="font-bold">{formatCurrency((totalPayroll * 12).toLocaleString(), tenant?.localization, isRTL)}</span></div>
                 <div className="flex justify-between py-2"><span className="text-muted-foreground">{isRTL ? 'نسبة السعودة' : 'Saudization Rate'}</span><span className={`font-bold ${saudizationRate >= 50 ? 'text-green-600' : 'text-red-600'}`}>{saudizationRate}%</span></div>
               </div>
             </Card>
@@ -213,7 +217,7 @@ export default function WorkforcePlanning() {
                 <Input type="number" min="1" value={hiringScenario.count} onChange={e => setHiringScenario(p => ({ ...p, count: parseInt(e.target.value) || 1 }))} />
               </div>
               <div className="space-y-2">
-                <Label>{isRTL ? 'متوسط الراتب (SAR)' : 'Avg Salary (SAR)'}</Label>
+                <Label>{isRTL ? `متوسط الراتب (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Avg Salary (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label>
                 <Input type="number" min="0" value={hiringScenario.avg_salary} onChange={e => setHiringScenario(p => ({ ...p, avg_salary: parseFloat(e.target.value) || 0 }))} />
               </div>
               <div className="space-y-2">
@@ -224,8 +228,7 @@ export default function WorkforcePlanning() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-najdi-50 rounded-xl p-4 text-center">
                 <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'التكلفة الإجمالية' : 'Total Cost'}</p>
-                <p className="text-xl font-bold text-najdi-900">{simulatedCost.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">SAR</p>
+                <p className="text-xl font-bold text-najdi-900"><Currency amount={simulatedCost} /></p>
               </div>
               <div className="bg-green-50 rounded-xl p-4 text-center">
                 <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'الرواتب الجديدة' : 'New Payroll'}</p>

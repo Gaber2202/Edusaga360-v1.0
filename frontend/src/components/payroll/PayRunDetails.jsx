@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { formatCurrency } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -33,6 +35,7 @@ import { SOCIAL_INSURANCE_FEATURES, NATIONALISATION_FEATURES } from '../../lib/j
 
 export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { isFeatureEnabled } = useJurisdictionFeatures();
   const socialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);
   const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
@@ -577,12 +580,12 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
                 ].map((item, i) => item.value > 0 && (
                   <div key={i} className="flex justify-between">
                     <span className="text-muted-foreground">{item.label}</span>
-                    <span className="font-medium">{(item.value || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                    <span className="font-medium">{formatCurrency((item.value || 0), tenant?.localization, isRTL)}</span>
                   </div>
                 ))}
                 <div className="flex justify-between font-semibold border-t pt-2 text-najdi-900">
                   <span>{isRTL ? 'الإجمالي' : 'Gross'}</span>
-                  <span>{(selectedRow.gross_salary || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                  <span>{formatCurrency((selectedRow.gross_salary || 0), tenant?.localization, isRTL)}</span>
                 </div>
               </div>
 
@@ -592,25 +595,25 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
                 {selectedRow.gosi_employee > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{isRTL ? 'تأمينات الموظف (9.75%)' : 'Social Insurance Employee (9.75%)'}</span>
-                    <span className="text-red-600 font-medium">{(selectedRow.gosi_employee || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                    <span className="text-red-600 font-medium">{formatCurrency((selectedRow.gosi_employee || 0), tenant?.localization, isRTL)}</span>
                   </div>
                 )}
                 {(selectedRow.total_deductions || 0) - (selectedRow.gosi_employee || 0) > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{isRTL ? 'استقطاعات أخرى' : 'Other Deductions'}</span>
-                    <span className="text-red-600 font-medium">{((selectedRow.total_deductions || 0) - (selectedRow.gosi_employee || 0)).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                    <span className="text-red-600 font-medium">{formatCurrency(((selectedRow.total_deductions || 0) - (selectedRow.gosi_employee || 0)), tenant?.localization, isRTL)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-semibold border-t pt-2 text-red-700">
                   <span>{isRTL ? 'إجمالي الاستقطاعات' : 'Total Deductions'}</span>
-                  <span>{(selectedRow.total_deductions || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                  <span>{formatCurrency((selectedRow.total_deductions || 0), tenant?.localization, isRTL)}</span>
                 </div>
               </div>
 
               {/* Net */}
               <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200 flex justify-between items-center">
                 <span className="font-bold text-emerald-800 text-base">{isRTL ? 'صافي الراتب' : 'Net Salary'}</span>
-                <span className="text-2xl font-bold text-emerald-700">{(selectedRow.net_salary || 0).toLocaleString()} <span className="text-sm font-normal">{isRTL ? 'ر.س' : 'SAR'}</span></span>
+                <span className="text-2xl font-bold text-emerald-700">{formatCurrency((selectedRow.net_salary || 0), tenant?.localization, isRTL)}</span>
               </div>
 
               {/* Employer Social Insurance */}
@@ -619,7 +622,7 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
                   <p className="text-amber-800 font-semibold mb-1">{isRTL ? 'تكلفة صاحب العمل' : 'Employer Cost'}</p>
                   <div className="flex justify-between">
                     <span>{isRTL ? 'تأمينات صاحب العمل' : 'Social Insurance Employer'}</span>
-                    <span className="font-medium">{(selectedRow.gosi_employer || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                    <span className="font-medium">{formatCurrency((selectedRow.gosi_employer || 0), tenant?.localization, isRTL)}</span>
                   </div>
                 </div>
               )}

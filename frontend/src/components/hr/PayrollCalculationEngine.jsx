@@ -8,6 +8,8 @@ import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { createJournalEntry } from '../../api/journalEntry';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import { useBranch } from '../BranchContext';
+import { useTenant } from '../TenantContext';
+import { formatCurrency } from '../../lib/localization';
 import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
 import { SOCIAL_INSURANCE_FEATURES } from '../../lib/jurisdictionFeatures.js';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -20,7 +22,6 @@ import {
   Loader2, Users, DollarSign, Lock, FileText, Zap
 } from 'lucide-react';
 
-const SAR = v => (v || 0).toLocaleString('en-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const SOCIAL_INSURANCE_CEILING = 45000;
 const SOCIAL_INSURANCE_EMPLOYEE_RATE = 0.10;   // Saudi employee 10%
@@ -119,6 +120,9 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const { branchFilter, selectedBranchId } = useBranch();
   const { isFeatureEnabled } = useJurisdictionFeatures();
+  const { tenant } = useTenant();
+  const fmt = (v) => formatCurrency(v, tenant?.localization, isRTL);
+  const currencyCode = tenant?.currency_code || 'XXX';
 
   const [currentStep, setCurrentStep] = useState(0);
   const [processing, setProcessing] = useState(false);
@@ -210,13 +214,13 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
     const payDate = format(new Date(), 'yyyyMMdd');
 
     // SIF format header
-    let sif = `H|EMPLOYER_CR|${payDate}|SAR|${calculatedLines.length}|${Math.round(totalAmount * 100)}\n`;
+    let sif = `H|EMPLOYER_CR|${payDate}|${currencyCode}|${calculatedLines.length}|${Math.round(totalAmount * 100)}\n`;
 
     // Detail records
     calculatedLines.forEach(line => {
       const iban = line.iban.replace(/\s/g, '');
       const amountHalalas = Math.round(line.netSalary * 100);
-      sif += `D|${iban}|${line.name_ar}|${amountHalalas}|SAR|${payDate}\n`;
+      sif += `D|${iban}|${line.name_ar}|${amountHalalas}|${currencyCode}|${payDate}\n`;
     });
 
     // Trailer
@@ -351,7 +355,7 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
               <Card key={item.label}>
                 <CardContent className="p-3">
                   <p className="text-xs text-muted-foreground">{item.label}</p>
-                  <p className={`text-base font-bold ${item.color}`}>SAR {SAR(item.value)}</p>
+                  <p className={`text-base font-bold ${item.color}`}>{fmt(item.value)}</p>
                 </CardContent>
               </Card>
             ))}
@@ -386,10 +390,10 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
                             <span className="text-muted-foreground text-xs">{line.employee_id}</span>
                           </div>
                         </td>
-                        <td className="text-end py-2 px-3 font-mono">{SAR(line.grossSalary)}</td>
-                        <td className="text-end py-2 px-3 font-mono text-najdi-700">({SAR(line.employeeSocialInsurance)})</td>
-                        <td className="text-end py-2 px-3 font-mono text-red-500">({SAR(line.totalDeductions)})</td>
-                        <td className="text-end py-2 px-3 font-mono font-bold text-emerald-600">{SAR(line.netSalary)}</td>
+                        <td className="text-end py-2 px-3 font-mono">{fmt(line.grossSalary)}</td>
+                        <td className="text-end py-2 px-3 font-mono text-najdi-700">({fmt(line.employeeSocialInsurance)})</td>
+                        <td className="text-end py-2 px-3 font-mono text-red-500">({fmt(line.totalDeductions)})</td>
+                        <td className="text-end py-2 px-3 font-mono font-bold text-emerald-600">{fmt(line.netSalary)}</td>
                         <td className="py-2 px-3">
                           {!line.iban && <AlertTriangle className="w-4 h-4 text-amber-500" title="Missing IBAN" />}
                         </td>

@@ -10,7 +10,7 @@
  */
 import { format } from 'date-fns';
 
-/** Format any numeric value (number, numeric string, null) as SAR money. */
+/** Format any numeric value (number, numeric string, null) as a decimal amount. */
 export const money = (n) =>
   Number(n ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 

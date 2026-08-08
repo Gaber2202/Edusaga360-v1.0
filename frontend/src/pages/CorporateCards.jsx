@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { useTenant } from '../components/TenantContext';
+import Currency from '../components/Currency';
+import { getCurrencySymbol } from '../lib/localization';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -21,6 +24,7 @@ import { CreditCard, Plus, Loader2, BarChart3, ArrowUpDown } from 'lucide-react'
 
 export default function CorporateCards() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId } = useBranch();
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
@@ -30,7 +34,7 @@ export default function CorporateCards() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     card_type: 'virtual', cardholder_name: '', employee_id: '',
-    spend_limit: 5000, currency: 'SAR', vendor_restrictions: '',
+    spend_limit: 5000, currency: tenant?.currency_code || 'XXX', vendor_restrictions: '',
     category_restrictions: '', status: 'active'
   });
 
@@ -81,8 +85,8 @@ export default function CorporateCards() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'بطاقات نشطة' : 'Active Cards'}</p><p className="text-2xl font-bold text-najdi-700">{cards.filter(c => c.status === 'active').length}</p></Card>
-        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الحد' : 'Total Limit'}</p><p className="text-2xl font-bold text-emerald-600">{totalLimit.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p></Card>
-        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الإنفاق' : 'Total Spend'}</p><p className="text-2xl font-bold text-amber-600">{totalSpend.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الحد' : 'Total Limit'}</p><p className="text-2xl font-bold text-emerald-600"><Currency amount={totalLimit} /></p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الإنفاق' : 'Total Spend'}</p><p className="text-2xl font-bold text-amber-600"><Currency amount={totalSpend} /></p></Card>
         <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'معاملات' : 'Transactions'}</p><p className="text-2xl font-bold">{transactions.length}</p></Card>
       </div>
 
@@ -116,7 +120,7 @@ export default function CorporateCards() {
                     <TableCell className="font-medium">{c.cardholder_name}</TableCell>
                     <TableCell><Badge variant="outline">{c.card_type === 'virtual' ? (isRTL ? 'افتراضية' : 'Virtual') : (isRTL ? 'فعلية' : 'Physical')}</Badge></TableCell>
                     <TableCell className="font-mono text-sm">{c.card_number}</TableCell>
-                    <TableCell>{c.spend_limit?.toLocaleString()} {c.currency || 'SAR'}</TableCell>
+                    <TableCell>{<Currency amount={c.spend_limit} />} {c.currency || tenant?.currency_code || 'XXX'}</TableCell>
                     <TableCell className="text-xs max-w-xs truncate">{c.vendor_restrictions || c.category_restrictions || '-'}</TableCell>
                     <TableCell><StatusBadge status={c.status} /></TableCell>
                   </TableRow>
@@ -148,7 +152,7 @@ export default function CorporateCards() {
                     <TableCell>{t.cardholder_name}</TableCell>
                     <TableCell>{t.merchant || '-'}</TableCell>
                     <TableCell><Badge variant="outline">{t.category || '-'}</Badge></TableCell>
-                    <TableCell className="font-medium">{t.amount?.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</TableCell>
+                    <TableCell className="font-medium"><Currency amount={t.amount} /></TableCell>
                     <TableCell><StatusBadge status={t.status || 'completed'} /></TableCell>
                   </TableRow>
                 ))}
@@ -191,7 +195,7 @@ export default function CorporateCards() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>{isRTL ? 'حد الإنفاق (ر.س)' : 'Spend Limit (SAR)'}</Label>
+                <Label>{isRTL ? `حد الإنفاق (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Spend Limit (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label>
                 <Input type="number" min="0" value={form.spend_limit} onChange={(e) => setForm(p => ({...p, spend_limit: parseFloat(e.target.value) || 0}))} />
               </div>
             </div>

@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
 import { extractAiText } from '../yamen/yamenUtils';
 import { useLanguage } from '../LanguageContext';
+import Currency from '../Currency';
+import { useTenant } from '../TenantContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
@@ -15,6 +17,7 @@ import { toast } from 'sonner';
 
 export default function ESSProfileTab({ employee, departments, jobTitles: _jobTitles, branches }) {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const [aiInsight, setAiInsight] = useState('');
   const [loadingAI, setLoadingAI] = useState(false);
   const [showBankDialog, setShowBankDialog] = useState(false);
@@ -147,7 +150,7 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
         <Card>
           <CardHeader><CardTitle className="text-base">{isRTL ? 'هيكل الراتب' : 'Salary Structure'}</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'الراتب الأساسي' : 'Basic Salary'}</span><span className="font-medium">{employee?.compensation?.salary_structure?.basic_salary?.toLocaleString() || employee?.basic_salary?.toLocaleString() || '-'} {isRTL ? 'ر.س' : 'SAR'}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'الراتب الأساسي' : 'Basic Salary'}</span><span className="font-medium"><Currency amount={employee?.compensation?.salary_structure?.basic_salary || employee?.basic_salary} /></span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'بدل السكن' : 'Housing'}</span><span className="font-medium">{employee?.housing_allowance?.toLocaleString() || '-'}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'بدل النقل' : 'Transport'}</span><span className="font-medium">{employee?.transport_allowance?.toLocaleString() || '-'}</span></div>
             {(() => {
@@ -166,7 +169,7 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
                 <>
                   {allowances > 0 && <div className="flex justify-between text-emerald-700"><span className="text-muted-foreground">{isRTL ? 'البدلات الدورية' : 'Recurring Allowances'}</span><span>+{allowances.toLocaleString()}</span></div>}
                   {deductions > 0 && <div className="flex justify-between text-red-600"><span className="text-muted-foreground">{isRTL ? 'الخصومات الدورية' : 'Recurring Deductions'}</span><span>-{deductions.toLocaleString()}</span></div>}
-                  <div className="flex justify-between border-t pt-2 font-semibold"><span>{isRTL ? 'صافي الراتب' : 'Net Salary'}</span><span className="text-emerald-600">{net.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span></div>
+                  <div className="flex justify-between border-t pt-2 font-semibold"><span>{isRTL ? 'صافي الراتب' : 'Net Salary'}</span><span className="text-emerald-600"><Currency amount={net} /></span></div>
                 </>
               );
             })()}

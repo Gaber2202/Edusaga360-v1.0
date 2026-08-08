@@ -3,6 +3,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, callApi } from '../../api/supabaseClient';
 import { extractAiText } from '../yamen/yamenUtils';
 import { useLanguage } from '../LanguageContext';
+import { getCurrencySymbol, formatCurrency } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -29,6 +31,7 @@ const STAGES = [
 
 export default function RecruitmentPipeline({ applicants, recruitments, employees, departments, branches, companies }) {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const queryClient = useQueryClient();
 
   const [selectedApplicant, setSelectedApplicant] = useState(null);
@@ -218,14 +221,14 @@ Candidate:
 - Nationality: ${applicant.nationality || 'N/A'}
 - Interview Score: ${applicant.interview_score || 'Not yet scored'}
 - Interview Notes: ${applicant.interview_notes || 'None'}
-- Expected Salary: ${applicant.expected_salary || 0} SAR
-- Current Salary: ${applicant.current_salary || 0} SAR
+- Expected Salary: ${applicant.expected_salary || 0} ${getCurrencySymbol(tenant?.localization, isRTL)}
+- Current Salary: ${applicant.current_salary || 0} ${getCurrencySymbol(tenant?.localization, isRTL)}
 - Position: ${rec?.position_name || 'General'}
-- Salary Range: ${rec?.salary_range_min || 0}–${rec?.salary_range_max || 0} SAR
+- Salary Range: ${rec?.salary_range_min || 0}–${rec?.salary_range_max || 0} ${getCurrencySymbol(tenant?.localization, isRTL)}
 
 Provide:
 1. Hiring success probability (0-100%)
-2. Salary recommendation (SAR) with justification
+2. Salary recommendation (${getCurrencySymbol(tenant?.localization, isRTL)}) with justification
 3. Missing documents or information
 4. Pipeline bottleneck risk
 5. Hire / Hold / No-Hire recommendation with clear reasoning
@@ -389,11 +392,11 @@ Respond in both Arabic and English. Be concise and specific.`;
                     <Input type="number" min="0" value={editForm.years_of_experience} onChange={e => setEditForm(p => ({ ...p, years_of_experience: Number(e.target.value) }))} />
                   </div>
                   <div className="space-y-1">
-                    <Label>{isRTL ? 'الراتب الحالي (ر.س)' : 'Current Salary (SAR)'}</Label>
+                    <Label>{isRTL ? `الراتب الحالي (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Current Salary (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label>
                     <Input type="number" min="0" value={editForm.current_salary ?? ''} onChange={e => setEditForm(p => ({ ...p, current_salary: e.target.value === '' ? '' : parseFloat(e.target.value) || 0 }))} />
                   </div>
                   <div className="space-y-1">
-                    <Label>{isRTL ? 'الراتب المتوقع (ر.س)' : 'Expected Salary (SAR)'}</Label>
+                    <Label>{isRTL ? `الراتب المتوقع (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Expected Salary (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label>
                     <Input type="number" min="0" value={editForm.expected_salary ?? ''} onChange={e => setEditForm(p => ({ ...p, expected_salary: e.target.value === '' ? '' : parseFloat(e.target.value) || 0 }))} />
                   </div>
                   <div className="col-span-2 space-y-1">
@@ -417,7 +420,7 @@ Respond in both Arabic and English. Be concise and specific.`;
                 <div><Label className="text-muted-foreground">{isRTL ? 'الهاتف' : 'Phone'}</Label><p>{selectedApplicant.phone || '-'}</p></div>
                 <div><Label className="text-muted-foreground">{isRTL ? 'التعليم' : 'Education'}</Label><p>{selectedApplicant.education_level || '-'}</p></div>
                 <div><Label className="text-muted-foreground">{isRTL ? 'الخبرة' : 'Experience'}</Label><p>{selectedApplicant.years_of_experience || 0} {isRTL ? 'سنوات' : 'yrs'}</p></div>
-                <div><Label className="text-muted-foreground">{isRTL ? 'الراتب المتوقع' : 'Expected Salary'}</Label><p className="font-semibold text-emerald-700">{(selectedApplicant.expected_salary || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p></div>
+                <div><Label className="text-muted-foreground">{isRTL ? 'الراتب المتوقع' : 'Expected Salary'}</Label><p className="font-semibold text-emerald-700">{formatCurrency(selectedApplicant.expected_salary || 0, tenant?.localization, isRTL)}</p></div>
                 <div><Label className="text-muted-foreground">{isRTL ? 'الجنسية' : 'Nationality'}</Label><p>{selectedApplicant.nationality || '-'}</p></div>
                 {selectedApplicant.recruiter_notes && (
                   <div className="col-span-2"><Label className="text-muted-foreground">{isRTL ? 'ملاحظات' : 'Notes'}</Label><p className="text-ink">{selectedApplicant.recruiter_notes}</p></div>

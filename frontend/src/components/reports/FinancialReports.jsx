@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { getCurrencySymbol } from '../../lib/localization';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -35,6 +36,7 @@ const FINANCIAL_REPORTS = [
 
 export default function FinancialReports() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter, branches: _branches } = useBranch();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   
@@ -212,13 +214,13 @@ export default function FinancialReports() {
     if (reportType === 'income_statement') {
       reportData.items?.forEach(item => {
         doc.setFontSize(item.highlight ? 12 : 10);
-        doc.text(`${item.category}: ${item.amount.toLocaleString()} SAR`, 20, y);
+        doc.text(`${item.category}: $<Currency amount={item.amount} />`, 20, y);
         y += item.highlight ? 10 : 7;
       });
     } else if (reportType === 'ar_summary' || reportType === 'ap_summary') {
-      doc.text(`${isRTL ? 'الإجمالي' : 'Total'}: ${(reportData.totalBilled || reportData.totalBills || 0).toLocaleString()} SAR`, 20, y);
+      doc.text(`${isRTL ? 'الإجمالي' : 'Total'}: ${formatCurrency((reportData.totalBilled || reportData.totalBills || 0).toLocaleString(), tenant?.localization, isRTL)}`, 20, y);
       y += 7;
-      doc.text(`${isRTL ? 'المتبقي' : 'Outstanding'}: ${reportData.outstanding.toLocaleString()} SAR`, 20, y);
+      doc.text(`${isRTL ? 'المتبقي' : 'Outstanding'}: $<Currency amount={reportData.outstanding} />`, 20, y);
     }
     
     doc.save(`${reportType}_${format(new Date(), 'yyyyMMdd')}.pdf`);
@@ -340,16 +342,16 @@ export default function FinancialReports() {
                 <div className="grid grid-cols-3 gap-4">
                   {reportType === 'income_statement' && (
                     <>
-                      <Card className="bg-emerald-50"><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'الإيرادات' : 'Revenue'}</div><div className="text-xl font-bold">{reportData.revenue?.toLocaleString()} {t('sar')}</div></CardContent></Card>
-                      <Card className="bg-red-50"><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'المصروفات' : 'Expenses'}</div><div className="text-xl font-bold">{reportData.expenses?.toLocaleString()} {t('sar')}</div></CardContent></Card>
-                      <Card className="bg-najdi-50"><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'صافي الدخل' : 'Net Income'}</div><div className="text-xl font-bold">{reportData.netIncome?.toLocaleString()} {t('sar')}</div></CardContent></Card>
+                      <Card className="bg-emerald-50"><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'الإيرادات' : 'Revenue'}</div><div className="text-xl font-bold">{reportData.revenue?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</div></CardContent></Card>
+                      <Card className="bg-red-50"><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'المصروفات' : 'Expenses'}</div><div className="text-xl font-bold">{reportData.expenses?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</div></CardContent></Card>
+                      <Card className="bg-najdi-50"><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'صافي الدخل' : 'Net Income'}</div><div className="text-xl font-bold">{reportData.netIncome?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</div></CardContent></Card>
                     </>
                   )}
                   {reportType === 'ar_summary' && (
                     <>
-                      <Card><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'المفوتر' : 'Billed'}</div><div className="text-xl font-bold">{reportData.totalBilled?.toLocaleString()} {t('sar')}</div></CardContent></Card>
-                      <Card><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'المحصل' : 'Collected'}</div><div className="text-xl font-bold text-emerald-600">{reportData.totalCollected?.toLocaleString()} {t('sar')}</div></CardContent></Card>
-                      <Card><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'المتبقي' : 'Outstanding'}</div><div className="text-xl font-bold text-red-600">{reportData.outstanding?.toLocaleString()} {t('sar')}</div></CardContent></Card>
+                      <Card><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'المفوتر' : 'Billed'}</div><div className="text-xl font-bold">{reportData.totalBilled?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</div></CardContent></Card>
+                      <Card><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'المحصل' : 'Collected'}</div><div className="text-xl font-bold text-emerald-600">{reportData.totalCollected?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</div></CardContent></Card>
+                      <Card><CardContent className="p-4"><div className="text-sm text-muted-foreground">{isRTL ? 'المتبقي' : 'Outstanding'}</div><div className="text-xl font-bold text-red-600">{reportData.outstanding?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</div></CardContent></Card>
                     </>
                   )}
                 </div>
@@ -371,7 +373,7 @@ export default function FinancialReports() {
                         {Object.entries(item).map(([key, value]) => (
                           <TableCell key={key}>
                             {typeof value === 'number' && key.includes('amount') || key.includes('balance') || key.includes('total') || key.includes('revenue') 
-                              ? `${value.toLocaleString()} ${t('sar')}` 
+                              ? `${value.toLocaleString()} ${getCurrencySymbol(tenant?.localization, isRTL)}` 
                               : value}
                           </TableCell>
                         ))}

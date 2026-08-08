@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import Currency from '../components/Currency';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -18,6 +19,7 @@ import { filterByDateRange } from '../lib/dateRange';
 
 export default function OperationsDashboard() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranch: _selectedBranch, selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const [dateRange, setDateRange] = useState('30');
@@ -258,7 +260,7 @@ export default function OperationsDashboard() {
             <div className="pt-4 border-t">
               <div className="flex justify-between">
                 <span className="text-sm text-gray-500">{isRTL ? 'إجمالي التكلفة' : 'Total Cost'}</span>
-                <span className="font-bold text-lg">{totalMaintenanceCost.toLocaleString()} SAR</span>
+                <span className="font-bold text-lg"><Currency amount={totalMaintenanceCost} /></span>
               </div>
             </div>
           </CardContent>

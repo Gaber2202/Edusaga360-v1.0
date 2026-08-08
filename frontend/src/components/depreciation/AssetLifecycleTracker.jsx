@@ -1,5 +1,7 @@
 import React from 'react';
 import { useLanguage } from '../LanguageContext';
+import { getCurrencySymbol } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Progress } from '../ui/progress';
 import { Badge } from '../ui/badge';
@@ -7,6 +9,7 @@ import { TrendingDown, AlertTriangle, CheckCircle } from 'lucide-react';
 
 export default function AssetLifecycleTracker({ asset }) {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
 
   if (!asset) return null;
 
@@ -72,8 +75,8 @@ export default function AssetLifecycleTracker({ asset }) {
           </div>
           <Progress value={parseFloat(depreciationProgress)} className="h-2" />
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{accumulatedDep.toLocaleString()} {t('sar')}</span>
-            <span>{depreciableAmount.toLocaleString()} {t('sar')}</span>
+            <span>{accumulatedDep.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span>
+            <span>{depreciableAmount.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span>
           </div>
         </div>
 
@@ -81,15 +84,15 @@ export default function AssetLifecycleTracker({ asset }) {
         <div className="bg-sand rounded-lg p-4 space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">{isRTL ? 'القيمة الأصلية' : 'Original Cost'}:</span>
-            <span className="font-semibold">{acquisitionCost.toLocaleString()} {t('sar')}</span>
+            <span className="font-semibold">{acquisitionCost.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">{isRTL ? 'الإهلاك المتراكم' : 'Accumulated Dep.'}:</span>
-            <span className="font-semibold text-red-600">-{accumulatedDep.toLocaleString()} {t('sar')}</span>
+            <span className="font-semibold text-red-600">-{accumulatedDep.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span>
           </div>
           <div className="flex justify-between border-t border-border pt-2">
             <span className="text-ink font-medium">{isRTL ? 'صافي القيمة الدفترية' : 'Net Book Value'}:</span>
-            <span className="font-bold text-ink">{nbv.toLocaleString()} {t('sar')}</span>
+            <span className="font-bold text-ink">{nbv.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span>
           </div>
         </div>
 

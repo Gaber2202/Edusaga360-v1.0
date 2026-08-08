@@ -22,6 +22,7 @@ import { useTenantFilter } from '../hooks/useTenantFilter';
 
 export default function AssetRentals() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate: _getTenantIdForCreate } = useTenantFilter();
@@ -166,7 +167,7 @@ export default function AssetRentals() {
               {showVendor && <TableCell>{r.vendor_name || '—'}</TableCell>}
               <TableCell>{r.rental_start_date}</TableCell>
               <TableCell>{r.rental_end_date || '—'}</TableCell>
-              <TableCell>{r.rental_fee ? `${r.rental_fee.toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}` : '—'}</TableCell>
+              <TableCell>{r.rental_fee ? `${formatCurrency(r.rental_fee, tenant?.localization, isRTL)}` : '—'}</TableCell>
               <TableCell><Badge className={statusColors[r.status] || 'bg-sand-alt'}>{isRTL ? statusLabels[r.status]?.ar : statusLabels[r.status]?.en || r.status}</Badge></TableCell>
               <TableCell>
                 {r.status === 'active' && (

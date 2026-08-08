@@ -6,6 +6,8 @@ import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { useTenant } from '../components/TenantContext';
+import { formatCurrency } from '../lib/localization';
 import BenchmarkDashboard from '../components/benchmarks/BenchmarkDashboard';
 import { useBranch } from '../components/BranchContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
@@ -25,7 +27,6 @@ import {
 } from 'lucide-react';
 import { format, differenceInDays, differenceInYears, addDays } from 'date-fns';
 
-const SAR = v => `${(v || 0).toLocaleString('en-SA', { maximumFractionDigits: 0 })} SAR`;
 const PCT = v => `${(v || 0).toFixed(1)}%`;
 
 const NITAQAT_BANDS = [
@@ -65,6 +66,8 @@ function KPICard({ title, value, subtitle, icon: KPIIcon, iconBg, alert, warn, t
 
 export default function HRManagerDashboard() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
+  const fmt = (v) => formatCurrency(v, tenant?.localization, isRTL);
   const { branchFilter } = useBranch();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const { areAnyEnabled, isFeatureEnabled } = useJurisdictionFeatures();
@@ -281,8 +284,8 @@ export default function HRManagerDashboard() {
 
       {/* KPI row 2: finance */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KPICard title={isRTL ? 'إجمالي الرواتب الشهرية' : 'Monthly Payroll'} value={SAR(kpis.totalPayroll)} icon={DollarSign} iconBg="bg-green-50" to="/Payroll" />
-        <KPICard title={isRTL ? 'مخصص نهاية الخدمة' : 'EOSB Provision'} value={SAR(kpis.totalEOSB)} icon={Shield} iconBg="bg-najdi-50" to="/EOSBCalculator" />
+        <KPICard title={isRTL ? 'إجمالي الرواتب الشهرية' : 'Monthly Payroll'} value={fmt(kpis.totalPayroll)} icon={DollarSign} iconBg="bg-green-50" to="/Payroll" />
+        <KPICard title={isRTL ? 'مخصص نهاية الخدمة' : 'EOSB Provision'} value={fmt(kpis.totalEOSB)} icon={Shield} iconBg="bg-najdi-50" to="/EOSBCalculator" />
         <KPICard title={isRTL ? 'نسبة الدوران' : 'Turnover Rate YTD'} value={PCT(kpis.turnoverRate)} subtitle={`${kpis.terminated} ${isRTL ? 'غادروا' : 'left'}`} icon={TrendingDown} iconBg="bg-red-50" warn={kpis.turnoverRate > 15} />
         <KPICard title={isRTL ? 'WPS آخر شهر' : 'Last WPS Status'} value={kpis.wpsCompliant ? (isRTL ? 'ممتثل ✓' : 'Compliant ✓') : (isRTL ? 'بانتظار' : 'Pending')} subtitle={kpis.lastPayRunPeriod} icon={CheckCircle} iconBg={kpis.wpsCompliant ? 'bg-green-50' : 'bg-amber-50'} to="/Payroll" />
       </div>

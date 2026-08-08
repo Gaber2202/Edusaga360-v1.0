@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { useTenant } from '../components/TenantContext';
+import { getCurrencySymbol, formatCurrency } from '../lib/localization';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -32,6 +34,7 @@ const BLANK_ITEM = { name_ar: '', name_en: '', category: 'main', price: 0, calor
 
 export default function CanteenManagement() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
   const queryClient = useQueryClient();
 
@@ -124,7 +127,7 @@ export default function CanteenManagement() {
       });
       queryClient.invalidateQueries({ queryKey: ['canteenWallets', 'canteenTransactions'] });
       setShowTopupForm(false); setTopupData({ student_id: '', student_name: '', amount: 50 }); setStudentSearch('');
-      toast.success(isRTL ? `تم إضافة ${topupData.amount} ر.س` : `Topped up ${topupData.amount} SAR`);
+      toast.success(isRTL ? `تم إضافة ${formatCurrency(topupData.amount, tenant?.localization, isRTL)}` : `Topped up ${formatCurrency(topupData.amount, tenant?.localization, isRTL)}`);
     } finally { setSaving(false); }
   };
 
@@ -155,7 +158,7 @@ export default function CanteenManagement() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title={isRTL ? 'إيراد اليوم' : "Today's Revenue"} value={`${todayRevenue} SAR`} icon={ShoppingCart} iconClassName="bg-orange-50" />
+        <StatCard title={isRTL ? 'إيراد اليوم' : "Today's Revenue"} value={`${formatCurrency(todayRevenue, tenant?.localization, isRTL)}`} icon={ShoppingCart} iconClassName="bg-orange-50" />
         <StatCard title={isRTL ? 'رصيد منخفض' : 'Low Balance'} value={lowBalanceWallets} icon={AlertTriangle} iconClassName="bg-amber-50" />
         <StatCard title={isRTL ? 'رصيد صفر' : 'Zero Balance'} value={zeroBalanceWallets} icon={AlertTriangle} iconClassName="bg-red-50" />
         <StatCard title={isRTL ? 'أصناف ممنوعة' : 'Prohibited Items'} value={prohibitedCount} icon={UtensilsCrossed} iconClassName="bg-red-50" />
@@ -219,7 +222,7 @@ export default function CanteenManagement() {
                       <p className="text-sm font-medium">{w.student_name}</p>
                       <p className="text-xs text-muted-foreground">{w.grade}</p>
                     </div>
-                    <span className={`text-sm font-bold ${w.balance <= 0 ? 'text-red-600' : 'text-amber-600'}`}>{w.balance} SAR</span>
+                    <span className={`text-sm font-bold ${w.balance <= 0 ? 'text-red-600' : 'text-amber-600'}`}>{formatCurrency(w.balance, tenant?.localization, isRTL)}</span>
                   </div>
                 ))}
                 {wallets.filter(w => w.balance < 20).length === 0 && <p className="text-muted-foreground text-sm text-center py-6">{isRTL ? 'جميع الأرصدة جيدة' : 'All balances are good'}</p>}
@@ -253,7 +256,7 @@ export default function CanteenManagement() {
                       {item.name_en && <p className="text-xs text-muted-foreground">{item.name_en}</p>}
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-orange-600">{item.price} SAR</p>
+                      <p className="font-bold text-orange-600">{formatCurrency(item.price, tenant?.localization, isRTL)}</p>
                       {item.calories && <p className="text-xs text-muted-foreground">{item.calories} cal</p>}
                     </div>
                   </div>
@@ -302,9 +305,9 @@ export default function CanteenManagement() {
                       <TableCell className="font-medium text-sm">{w.student_name}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{w.grade}</TableCell>
                       <TableCell className="text-end">
-                        <span className={`font-bold ${w.balance <= 0 ? 'text-red-600' : w.balance < 20 ? 'text-amber-600' : 'text-green-600'}`}>{w.balance} SAR</span>
+                        <span className={`font-bold ${w.balance <= 0 ? 'text-red-600' : w.balance < 20 ? 'text-amber-600' : 'text-green-600'}`}>{formatCurrency(w.balance, tenant?.localization, isRTL)}</span>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{w.daily_limit ? `${w.daily_limit} SAR` : '—'}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{w.daily_limit ? `${formatCurrency(w.daily_limit, tenant?.localization, isRTL)}` : '—'}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{w.last_transaction_date || '—'}</TableCell>
                       <TableCell>
                         <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setTopupData({ student_id: w.student_id, student_name: w.student_name, amount: 50 }); setStudentSearch(w.student_name); setShowTopupForm(true); }}>
@@ -344,9 +347,9 @@ export default function CanteenManagement() {
                         </span>
                       </TableCell>
                       <TableCell className={`text-end font-semibold ${t.transaction_type === 'purchase' ? 'text-red-600' : 'text-green-600'}`}>
-                        {t.transaction_type === 'purchase' ? '-' : '+'}{t.amount} SAR
+                        {t.transaction_type === 'purchase' ? '-' : '+'}{formatCurrency(t.amount, tenant?.localization, isRTL)}
                       </TableCell>
-                      <TableCell className="text-end text-sm">{t.balance_after?.toFixed(2)} SAR</TableCell>
+                      <TableCell className="text-end text-sm">{formatCurrency(t.balance_after?.toFixed(2), tenant?.localization, isRTL)}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{t.transaction_date} {t.transaction_time}</TableCell>
                     </TableRow>
                   ))}
@@ -372,7 +375,7 @@ export default function CanteenManagement() {
                   <SelectContent>{CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{isRTL ? c.ar : c.en}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1"><Label>{isRTL ? 'السعر (ر.س)' : 'Price (SAR)'}</Label><Input type="number" value={itemForm.price} onChange={e => setItemForm(f => ({ ...f, price: parseFloat(e.target.value) || 0 }))} /></div>
+              <div className="space-y-1"><Label>{isRTL ? `السعر (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Price (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label><Input type="number" value={itemForm.price} onChange={e => setItemForm(f => ({ ...f, price: parseFloat(e.target.value) || 0 }))} /></div>
               <div className="space-y-1"><Label>{isRTL ? 'السعرات الحرارية' : 'Calories'}</Label><Input type="number" value={itemForm.calories} onChange={e => setItemForm(f => ({ ...f, calories: parseInt(e.target.value) || 0 }))} /></div>
             </div>
             <div className="space-y-2">
@@ -423,7 +426,7 @@ export default function CanteenManagement() {
               )}
             </div>
             <div className="space-y-2">
-              <Label>{isRTL ? 'المبلغ (ر.س)' : 'Amount (SAR)'}</Label>
+              <Label>{isRTL ? `المبلغ (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Amount (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label>
               <Input type="number" min="1" value={topupData.amount} onChange={e => setTopupData(d => ({ ...d, amount: e.target.value }))} />
               <div className="flex gap-2">
                 {[20, 50, 100, 200].map(a => <button key={a} onClick={() => setTopupData(d => ({ ...d, amount: a }))} className="flex-1 py-1 text-xs border rounded hover:bg-sand">{a}</button>)}

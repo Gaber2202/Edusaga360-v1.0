@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { getCurrencySymbol } from '../lib/localization';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -38,6 +39,7 @@ const PAYMENT_METHODS = [
 
 export default function Collections() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
@@ -206,11 +208,11 @@ export default function Collections() {
   const columns = [
     { header: isRTL ? 'رقم الفاتورة' : 'Invoice #', cell: (row) => <span className="font-mono text-sm">{row.invoice_number}</span> },
     { header: t('studentName'), cell: (row) => <div><p className="font-medium">{row.student_name}</p><p className="text-sm text-muted-foreground">{t(row.grade)}</p></div> },
-    { header: t('total'), cell: (row) => <span className="font-semibold">{row.total_amount?.toLocaleString()} {t('sar')}</span> },
-    { header: t('paid'), cell: (row) => <span className="text-emerald-600">{(row.paid_amount || 0).toLocaleString()} {t('sar')}</span> },
+    { header: t('total'), cell: (row) => <span className="font-semibold">{row.total_amount?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span> },
+    { header: t('paid'), cell: (row) => <span className="text-emerald-600">{(row.paid_amount || 0).toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span> },
     { header: isRTL ? 'المتبقي' : 'Balance', cell: (row) => {
       const balance = (row.total_amount || 0) - (row.paid_amount || 0);
-      return <span className={balance > 0 ? 'text-red-600 font-medium' : 'text-muted-foreground'}>{balance.toLocaleString()} {t('sar')}</span>;
+      return <span className={balance > 0 ? 'text-red-600 font-medium' : 'text-muted-foreground'}>{balance.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span>;
     }},
     { header: t('dueDate'), cell: (row) => row.due_date ? format(new Date(row.due_date), 'dd/MM/yyyy') : '-' },
     { header: t('status'), cell: (row) => <StatusBadge status={row.status} /> },
@@ -280,9 +282,9 @@ export default function Collections() {
                 <CardContent className="p-4 space-y-2">
                   <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'الفاتورة' : 'Invoice'}</span><span className="font-mono">{selectedInvoice.invoice_number}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">{t('studentName')}</span><span className="font-medium">{selectedInvoice.student_name}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">{t('total')}</span><span>{selectedInvoice.total_amount?.toLocaleString()} {t('sar')}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">{t('paid')}</span><span className="text-emerald-600">{(selectedInvoice.paid_amount || 0).toLocaleString()} {t('sar')}</span></div>
-                  <div className="flex justify-between border-t pt-2"><span className="text-muted-foreground font-medium">{isRTL ? 'المتبقي' : 'Remaining'}</span><span className="font-bold text-red-600">{((selectedInvoice.total_amount || 0) - (selectedInvoice.paid_amount || 0)).toLocaleString()} {t('sar')}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t('total')}</span><span>{selectedInvoice.total_amount?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t('paid')}</span><span className="text-emerald-600">{(selectedInvoice.paid_amount || 0).toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span></div>
+                  <div className="flex justify-between border-t pt-2"><span className="text-muted-foreground font-medium">{isRTL ? 'المتبقي' : 'Remaining'}</span><span className="font-bold text-red-600">{((selectedInvoice.total_amount || 0) - (selectedInvoice.paid_amount || 0)).toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span></div>
                 </CardContent>
               </Card>
 

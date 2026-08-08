@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { formatCurrency } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { useBranch } from '../BranchContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Button } from '../ui/button';
@@ -16,12 +18,11 @@ import { toast } from 'sonner';
 import { Loader2, Users, FileText, X } from 'lucide-react';
 import { logAuditEvent } from '../AuditService';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
-import JurisdictionFeatureGate from '../JurisdictionFeatureGate';
-import { NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
 import { planBulkInvoices } from '../../lib/bulkInvoicePlan';
 
 export default function BulkInvoiceGeneration({ open, onClose }) {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { branches } = useBranch();
   const queryClient = useQueryClient();
   const { tenantId } = useTenantFilter();
@@ -35,7 +36,6 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
     branch_id: '',
     company_id: '',
     fee_plan: '',
-    nationality_category: '',
     discount_group: ''
   });
   const [selectedStudents, setSelectedStudents] = useState([]);
@@ -49,7 +49,7 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
       setStep(1);
       setCriteria({
         academic_year: '',
-        grade: '', section: '', branch_id: '', company_id: '', fee_plan: '', nationality_category: '', discount_group: ''
+        grade: '', section: '', branch_id: '', company_id: '', fee_plan: '', discount_group: ''
       });
       setExcludedStudents([]);
       setSelectedStudents([]);
@@ -106,10 +106,6 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
     if (criteria.grade && student.grade !== criteria.grade) return false;
     if (criteria.section && student.section !== criteria.section) return false;
     if (criteria.academic_year && student.academic_year !== criteria.academic_year && student.academic_year_id !== criteria.academic_year) return false;
-    if (criteria.nationality_category) {
-      if (criteria.nationality_category === 'citizen' && !student.is_saudi) return false;
-      if (criteria.nationality_category === 'non_citizen' && student.is_saudi) return false;
-    }
     return !excludedStudents.includes(student.id);
   });
 
@@ -123,10 +119,6 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
       if (criteria.branch_id && student.branch_id !== criteria.branch_id) return false;
       if (criteria.grade && student.grade !== criteria.grade) return false;
       if (criteria.section && student.section !== criteria.section) return false;
-      if (criteria.nationality_category) {
-        if (criteria.nationality_category === 'citizen' && !student.is_saudi) return false;
-        if (criteria.nationality_category === 'non_citizen' && student.is_saudi) return false;
-      }
       return !excludedStudents.includes(student.id);
     });
     if (allStudents.length === 0) {
@@ -242,7 +234,7 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
       setStep(1);
       setCriteria({
         academic_year: '',
-        grade: '', section: '', branch_id: '', company_id: '', fee_plan: '', nationality_category: '', discount_group: ''
+        grade: '', section: '', branch_id: '', company_id: '', fee_plan: '', discount_group: ''
       });
       setExcludedStudents([]);
       setSelectedStudents([]);
@@ -333,21 +325,6 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
                       </SelectContent>
                     </Select>
                   </div>
-                  <JurisdictionFeatureGate featureKeys={NATIONALISATION_FEATURES}>
-                    <div>
-                      <Label>{isRTL ? 'فئة الجنسية' : 'Nationality Category'}</Label>
-                      <Select value={criteria.nationality_category} onValueChange={(v) => setCriteria({...criteria, nationality_category: v})}>
-                        <SelectTrigger>
-                          <SelectValue placeholder={isRTL ? 'الكل' : 'All'} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={null}>{isRTL ? 'الكل' : 'All'}</SelectItem>
-                          <SelectItem value="citizen">{isRTL ? 'سعودي' : 'Saudi'}</SelectItem>
-                          <SelectItem value="non_citizen">{isRTL ? 'غير سعودي' : 'Non-Saudi'}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </JurisdictionFeatureGate>
                 </div>
                 <div className="pt-4 flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -383,7 +360,7 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">{isRTL ? 'القيمة المتوقعة (شاملة الضريبة)' : 'Est. Total (incl. VAT)'}</p>
-                    <p className="text-2xl font-bold text-emerald-600">{plan.estimatedTotal.toLocaleString()} {t('sar')}</p>
+                    <p className="text-2xl font-bold text-emerald-600">{formatCurrency(plan.estimatedTotal, tenant?.localization, isRTL)}</p>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mb-4">
@@ -451,8 +428,8 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
                             ))}
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium">{tuitionFee.toLocaleString()} {t('sar')}</TableCell>
-                        <TableCell className="font-semibold text-ink">{total.toLocaleString()} {t('sar')}</TableCell>
+                        <TableCell className="font-medium">{formatCurrency(tuitionFee, tenant?.localization, isRTL)}</TableCell>
+                        <TableCell className="font-semibold text-ink">{formatCurrency(total, tenant?.localization, isRTL)}</TableCell>
                         <TableCell>
                           {isExcluded ? (
                             <Badge className="bg-red-100 text-red-700">{isRTL ? 'مستبعد' : 'Excluded'}</Badge>

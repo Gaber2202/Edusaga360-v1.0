@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { useTenant } from '../TenantContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -36,6 +37,7 @@ const SAUDI_BANKS = [
 
 export default function BankExports() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter, branches } = useBranch();
   const queryClient = useQueryClient();
 
@@ -123,7 +125,7 @@ export default function BankExports() {
           input.iban,
           generateForm.bank_code,
           input.net_salary,
-          'SAR',
+          tenant?.currency_code || 'XXX',
           `SAL-${payRun.period}`,
         ])];
         csvContent = buildCsv(rows);

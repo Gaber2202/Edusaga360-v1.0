@@ -6,6 +6,8 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { useTenant } from '../components/TenantContext';
+import { formatCurrency } from '../lib/localization';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -19,7 +21,6 @@ import { differenceInDays, format, addDays } from 'date-fns';
 import { Calculator, Download, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
-const SAR = v => (v || 0).toLocaleString('en-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const TERMINATION_REASONS = [
   { value: 'resigned_lt2', label: { ar: 'استقالة أقل من سنتين (لا يستحق)', en: 'Resigned < 2 years (no EOSB)' }, multiplier: 0 },
@@ -69,6 +70,8 @@ function calcEOSB(basicSalary, startDate, endDate) {
 
 export default function EOSBCalculator() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
+  const fmt = (v) => formatCurrency(v, tenant?.localization, isRTL);
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const { branchFilter } = useBranch();
 
@@ -141,13 +144,13 @@ export default function EOSBCalculator() {
       ['Years of Service:', result.totalYears.toFixed(2)],
       ['Termination Reason:', termReason?.label?.en],
       [''],
-      ['EOSB (Full Entitlement):', `SAR ${SAR(result.fullEOSB)}`],
+      ['EOSB (Full Entitlement):', `${fmt(result.fullEOSB)}`],
       ['Applied Multiplier:', `${(result.multiplier * 100).toFixed(0)}%`],
-      ['EOSB Due:', `SAR ${SAR(result.eosbDue)}`],
-      ['Leave Encashment:', `SAR ${SAR(result.leaveEncashment)}`],
-      ['Unpaid Salary:', `SAR ${SAR(result.unpaidSalary)}`],
-      ['Outstanding Loan (deduction):', `(SAR ${SAR(result.loanDeduction)})`],
-      ['NET FINAL SETTLEMENT:', `SAR ${SAR(result.netSettlement)}`],
+      ['EOSB Due:', `${fmt(result.eosbDue)}`],
+      ['Leave Encashment:', `${fmt(result.leaveEncashment)}`],
+      ['Unpaid Salary:', `${fmt(result.unpaidSalary)}`],
+      ['Outstanding Loan (deduction):', `(${fmt(result.loanDeduction)})`],
+      ['NET FINAL SETTLEMENT:', `${fmt(result.netSettlement)}`],
       ['Payment Deadline:', format(result.paymentDeadline, 'dd/MM/yyyy')],
     ];
     const csv = '\uFEFF' + rows.map(r => r.join(',')).join('\n');
@@ -185,7 +188,7 @@ export default function EOSBCalculator() {
           {employee && (
             <div className="bg-sand rounded-xl p-4 grid grid-cols-2 gap-3 text-sm">
               <div><span className="text-muted-foreground">{isRTL ? 'تاريخ التعيين:' : 'Hire Date:'}</span><span className="font-medium ms-2">{employee.hire_date ? format(new Date(employee.hire_date), 'dd/MM/yyyy') : '—'}</span></div>
-              <div><span className="text-muted-foreground">{isRTL ? 'الراتب الأساسي:' : 'Basic Salary:'}</span><span className="font-medium ms-2">SAR {SAR(employee.basic_salary)}</span></div>
+              <div><span className="text-muted-foreground">{isRTL ? 'الراتب الأساسي:' : 'Basic Salary:'}</span><span className="font-medium ms-2">{fmt(employee.basic_salary)}</span></div>
               <div><span className="text-muted-foreground">{isRTL ? 'النوع:' : 'Type:'}</span><span className="font-medium ms-2">{employee.employment_type}</span></div>
               <div><span className="text-muted-foreground">{isRTL ? 'العقد:' : 'Contract:'}</span><span className="font-medium ms-2">{employee.contract_type}</span></div>
             </div>
@@ -265,16 +268,16 @@ export default function EOSBCalculator() {
               {result.breakdown.map((b, i) => (
                 <div key={i} className="flex justify-between text-sm py-1 border-b border-border">
                   <span className="text-muted-foreground">{isRTL ? b.label.ar : b.label.en}</span>
-                  <span className="font-mono">SAR {SAR(b.amount)}</span>
+                  <span className="font-mono">{fmt(b.amount)}</span>
                 </div>
               ))}
               <div className="flex justify-between text-sm font-semibold">
                 <span>{isRTL ? 'مستحق كامل (قبل التطبيق)' : 'Full EOSB (before multiplier)'}</span>
-                <span className="font-mono text-ink">SAR {SAR(result.fullEOSB)}</span>
+                <span className="font-mono text-ink">{fmt(result.fullEOSB)}</span>
               </div>
               <div className="flex justify-between text-sm font-bold text-najdi-900">
                 <span>{isRTL ? `مكافأة نهاية الخدمة المستحقة (${(result.multiplier * 100).toFixed(0)}%)` : `EOSB Due (${(result.multiplier * 100).toFixed(0)}%)`}</span>
-                <span className="font-mono">SAR {SAR(result.eosbDue)}</span>
+                <span className="font-mono">{fmt(result.eosbDue)}</span>
               </div>
             </div>
 
@@ -284,16 +287,16 @@ export default function EOSBCalculator() {
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{isRTL ? '+ تعويض الإجازة المتبقية' : '+ Leave Encashment'}</span>
-                <span className="font-mono text-emerald-600">+ SAR {SAR(result.leaveEncashment)}</span>
+                <span className="font-mono text-emerald-600">+ {fmt(result.leaveEncashment)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{isRTL ? '+ راتب الأيام العاملة هذا الشهر' : '+ Current Month Unpaid Salary'}</span>
-                <span className="font-mono text-emerald-600">+ SAR {SAR(result.unpaidSalary)}</span>
+                <span className="font-mono text-emerald-600">+ {fmt(result.unpaidSalary)}</span>
               </div>
               {result.loanDeduction > 0 && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{isRTL ? '- قروض/سلف مستحقة' : '- Outstanding Loans'}</span>
-                  <span className="font-mono text-red-600">− SAR {SAR(result.loanDeduction)}</span>
+                  <span className="font-mono text-red-600">− {fmt(result.loanDeduction)}</span>
                 </div>
               )}
             </div>
@@ -303,7 +306,7 @@ export default function EOSBCalculator() {
               <div className="flex items-center justify-between">
                 <span className="font-bold text-lg text-ink">{isRTL ? 'صافي المستحق النهائي' : 'NET FINAL SETTLEMENT'}</span>
                 <span className={`font-bold text-2xl ${result.netSettlement >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                  SAR {SAR(Math.abs(result.netSettlement))}
+                  {fmt(Math.abs(result.netSettlement))}
                   {result.netSettlement < 0 && <span className="text-sm ms-1">({isRTL ? 'يستحق من الموظف' : 'owed by employee'})</span>}
                 </span>
               </div>

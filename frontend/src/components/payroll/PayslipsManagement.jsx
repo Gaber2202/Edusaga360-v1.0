@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { formatCurrency, getCurrencySymbol } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { useBranch } from '../BranchContext';
 import { useRole } from '../RoleContext';
 import { Button } from '../ui/button';
@@ -34,6 +36,7 @@ import PayslipSettings from './PayslipSettings';
 
 export default function PayslipsManagement() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const { user } = useRole();
   const queryClient = useQueryClient();
@@ -91,8 +94,8 @@ export default function PayslipsManagement() {
               ? `قسيمة راتب - ${payslip.period}` 
               : `Payslip - ${payslip.period}`,
             body: isRTL
-              ? `مرحباً ${employee.name_ar},\n\nقسيمة راتبك لشهر ${payslip.period} جاهزة.\n\nصافي الراتب: ${payslip.net_salary?.toLocaleString()} ريال`
-              : `Dear ${employee.name_en || employee.name_ar},\n\nYour payslip for ${payslip.period} is ready.\n\nNet Salary: ${payslip.net_salary?.toLocaleString()} SAR`
+              ? `مرحباً ${employee.name_ar},\n\nقسيمة راتبك لشهر ${payslip.period} جاهزة.\n\nصافي الراتب: ${formatCurrency(payslip.net_salary, tenant?.localization, isRTL)}`
+              : `Dear ${employee.name_en || employee.name_ar},\n\nYour payslip for ${payslip.period} is ready.\n\nNet Salary: ${formatCurrency(payslip.net_salary, tenant?.localization, isRTL)}`
           });
           
           await tenantQuery('payslip_deliverys').update({
@@ -319,7 +322,7 @@ export default function PayslipsManagement() {
                     </TableCell>
                     <TableCell className="font-medium">{payslip.employee_name}</TableCell>
                     <TableCell>{payslip.period}</TableCell>
-                    <TableCell>{payslip.net_salary?.toLocaleString()} {t('sar')}</TableCell>
+                    <TableCell>{payslip.net_salary?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</TableCell>
                     <TableCell>{getStatusBadge(status.email)}</TableCell>
                     <TableCell>{getStatusBadge(status.whatsapp)}</TableCell>
                     <TableCell>

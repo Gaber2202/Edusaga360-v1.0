@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { useTenant } from '../components/TenantContext';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -21,6 +22,7 @@ import { logAuditEvent, AuditActions } from '../components/AuditService';
 
 export default function SuperAdminDashboard() {
   const { t: _t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [showCreateTenant, setShowCreateTenant] = useState(false);
@@ -173,7 +175,7 @@ export default function SuperAdminDashboard() {
           { label: isRTL ? 'تجريبي' : 'Trial', value: trialTenants, icon: Calendar, color: 'text-amber-600' },
           { label: isRTL ? 'طلبات الاشتراك' : 'Subscription Requests', value: pendingRequestsCount, icon: Clock, color: 'text-red-600' },
           { label: isRTL ? 'طلبات تسجيل جديدة' : 'New Registrations', value: pendingRegCount, icon: FileText, color: 'text-purple-600' },
-          { label: isRTL ? 'الإيرادات الشهرية' : 'Monthly Revenue', value: `${totalRevenue.toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}`, icon: DollarSign, color: 'text-emerald-600' },
+          { label: isRTL ? 'الإيرادات الشهرية' : 'Monthly Revenue', value: `${formatCurrency(totalRevenue, tenant?.localization, isRTL)}`, icon: DollarSign, color: 'text-emerald-600' },
         ].map((stat, i) => (
           <Card key={i}>
             <CardContent className="pt-4 pb-4">

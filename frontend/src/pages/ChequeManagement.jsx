@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { callApi, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { useTenant } from '../components/TenantContext';
+import { formatCurrency } from '../lib/localization';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -63,6 +65,7 @@ const EMPTY_FORM = {
 
 export default function ChequeManagement() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { tenantId } = useTenantFilter();
   const queryClient = useQueryClient();
   const tt = (ar, en) => (isRTL ? ar : en);
@@ -226,7 +229,7 @@ export default function ChequeManagement() {
                     <TableCell className="font-medium">{c.cheque_number}</TableCell>
                     <TableCell>{c.bank_name || '-'}</TableCell>
                     <TableCell>{c.drawer_name || '-'}</TableCell>
-                    <TableCell className="font-semibold">{Number(c.amount).toLocaleString()} {tt('ر.س', 'SAR')}</TableCell>
+                    <TableCell className="font-semibold">{formatCurrency(c.amount, tenant?.localization, isRTL)}</TableCell>
                     <TableCell className={isOverdue(c) ? 'text-red-600 font-medium' : ''}>{c.due_date || '-'}</TableCell>
                     <TableCell>{statusBadge(c.status)}</TableCell>
                     <TableCell>
@@ -288,7 +291,7 @@ export default function ChequeManagement() {
                 <SelectContent>
                   {openInvoices.map((i) => (
                     <SelectItem key={i.id} value={i.id}>
-                      {i.invoice_number} — {i.student_name} ({Number((i.total_amount || 0) - (i.paid_amount || 0)).toLocaleString()} {tt('ر.س', 'SAR')})
+                      {i.invoice_number} — {i.student_name} ({formatCurrency((i.total_amount || 0) - (i.paid_amount || 0), tenant?.localization, isRTL)})
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -74,7 +74,7 @@ const SAUDI_ENROLLMENT_TEMPLATE_EN = `
 <p>The Guardian agrees to enroll the above-named student at the School for the specified academic year and undertakes to pay the agreed tuition fees and abide by all school policies and regulations.</p>
 
 <h3>Article 2 — Tuition Fees</h3>
-<p>Total Annual Tuition Fees: <strong>{{total_fees}} SAR</strong></p>
+<p>Total Annual Tuition Fees: <strong>{{total_fees}} {{currency_code}}</strong></p>
 <p>Fees include:</p>
 <ul>
   <li>Core tuition fees</li>
@@ -102,7 +102,7 @@ const SAUDI_ENROLLMENT_TEMPLATE_EN = `
 <h3>Article 5 — Refund & Withdrawal Policy</h3>
 <p>Upon student withdrawal, the following refund schedule applies:</p>
 <ul>
-  <li>Before academic year commencement: full refund minus registration fee (SAR 500)</li>
+  <li>Before academic year commencement: full refund minus registration fee ({{registration_fee}} {{currency_code}})</li>
   <li>Within the first month of study: 50% refund of remaining term fees</li>
   <li>After the first month: no refund</li>
 </ul>
@@ -183,7 +183,7 @@ const SAUDI_ENROLLMENT_TEMPLATE_AR = `
 <p style="direction: rtl; text-align: right;">يقر الطرف الثاني بموجب هذا العقد بتسجيل الطالب المذكور أعلاه في المدرسة، ويلتزم بدفع الرسوم الدراسية المحددة والالتزام بسياسات وأنظمة المدرسة.</p>
 
 <h3 style="direction: rtl; text-align: right;">المادة الثانية: الرسوم الدراسية</h3>
-<p style="direction: rtl; text-align: right;">إجمالي الرسوم الدراسية السنوية: <strong>{{total_fees}} ريال سعودي</strong></p>
+<p style="direction: rtl; text-align: right;">إجمالي الرسوم الدراسية السنوية: <strong>{{total_fees}} {{currency_code}}</strong></p>
 <p style="direction: rtl; text-align: right;">تشمل الرسوم:</p>
 <ul style="direction: rtl; text-align: right; padding-right: 20px; padding-left: 0;">
   <li>الرسوم الدراسية الأساسية</li>
@@ -256,6 +256,7 @@ const SAUDI_ENROLLMENT_TEMPLATE_AR = `
 
 export default function ContractTemplates() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate: _getTenantIdForCreate } = useTenantFilter();

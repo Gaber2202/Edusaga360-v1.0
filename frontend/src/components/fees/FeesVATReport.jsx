@@ -7,10 +7,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { Download, Receipt, CheckCircle, AlertCircle } from 'lucide-react';
 import { logAuditEvent, AuditActions } from '../AuditService';
-
-const VAT_RATE = 0.15;
+import { useTenant } from '../TenantContext';
+import { formatCurrency } from '../../lib/localization';
 
 export default function FeesVATReport({ invoices, payments: _payments, isRTL }) {
+  const { tenant } = useTenant();
+  const VAT_RATE = tenant?.vat_rate ?? 0.15;
+  const vatPct = (VAT_RATE * 100).toFixed(0);
   const [dateFrom, setDateFrom] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [dateTo, setDateTo] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
 
@@ -26,7 +29,7 @@ export default function FeesVATReport({ invoices, payments: _payments, isRTL }) 
   const paidVAT = filteredInvoices.filter(i => i.status === 'paid').reduce((s, i) => s + (i.vat_amount || ((i.total_amount||0) * VAT_RATE / (1 + VAT_RATE))), 0);
 
   const exportVATReport = () => {
-    const headers = ['Invoice #', 'Student', 'Issue Date', 'Total (ex-VAT)', 'VAT (15%)', 'Total (inc-VAT)', 'Status'];
+    const headers = ['Invoice #', 'Student', 'Issue Date', 'Total (ex-VAT)', `VAT (${vatPct}%)`, 'Total (inc-VAT)', 'Status'];
     const rows = filteredInvoices.map(inv => {
       const exVAT = (inv.subtotal || inv.total_amount || 0) / (1 + VAT_RATE);
       const vat = inv.vat_amount || (inv.total_amount||0) * VAT_RATE / (1 + VAT_RATE);
@@ -66,10 +69,10 @@ export default function FeesVATReport({ invoices, payments: _payments, isRTL }) 
       {/* VAT Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: isRTL ? 'الإجمالي (بدون ضريبة)' : 'Total (ex-VAT)', value: `${totalExVAT.toLocaleString('en', {maximumFractionDigits:2})} SAR`, icon: Receipt, cls: 'bg-sand-alt text-muted-foreground' },
-          { label: isRTL ? 'ضريبة القيمة المضافة (15%)' : 'VAT (15%)', value: `${totalVAT.toLocaleString('en', {maximumFractionDigits:2})} SAR`, icon: Receipt, cls: 'bg-najdi-50 text-najdi-700' },
-          { label: isRTL ? 'الإجمالي (شامل الضريبة)' : 'Total (inc-VAT)', value: `${totalIncVAT.toLocaleString('en', {maximumFractionDigits:2})} SAR`, icon: CheckCircle, cls: 'bg-emerald-100 text-emerald-600' },
-          { label: isRTL ? 'ضريبة مدفوعة فعلياً' : 'VAT Collected', value: `${paidVAT.toLocaleString('en', {maximumFractionDigits:2})} SAR`, icon: CheckCircle, cls: 'bg-green-100 text-green-600' },
+          { label: isRTL ? 'الإجمالي (بدون ضريبة)' : 'Total (ex-VAT)', value: formatCurrency(totalExVAT, tenant?.localization, isRTL), icon: Receipt, cls: 'bg-sand-alt text-muted-foreground' },
+          { label: isRTL ? `ضريبة القيمة المضافة (${vatPct}%)` : `VAT (${vatPct}%)`, value: formatCurrency(totalVAT, tenant?.localization, isRTL), icon: Receipt, cls: 'bg-najdi-50 text-najdi-700' },
+          { label: isRTL ? 'الإجمالي (شامل الضريبة)' : 'Total (inc-VAT)', value: formatCurrency(totalIncVAT, tenant?.localization, isRTL), icon: CheckCircle, cls: 'bg-emerald-100 text-emerald-600' },
+          { label: isRTL ? 'ضريبة مدفوعة فعلياً' : 'VAT Collected', value: formatCurrency(paidVAT, tenant?.localization, isRTL), icon: CheckCircle, cls: 'bg-green-100 text-green-600' },
         ].map((kpi, i) => (
           <Card key={i}>
             <CardContent className="p-4">

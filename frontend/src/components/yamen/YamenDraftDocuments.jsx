@@ -1,3 +1,4 @@
+import { formatCurrency } from '../../lib/localization';
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
@@ -11,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { FileText, Plus, Download, Loader2, Edit3, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { useTenant } from '../TenantContext';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 
 const DOC_TYPES = [
@@ -22,7 +24,7 @@ const DOC_TYPES = [
   { id: 'iqama_renewal', ar: 'إشعار تجديد إقامة', en: 'Iqama Renewal Notice' },
 ];
 
-function generateDocContent({ type, employee, params, isAr }) {
+function generateDocContent({ type, employee, params, isAr, tenant, isRTL }) {
   const name = isAr ? employee.name_ar : (employee.name_en || employee.name_ar);
   const today = format(new Date(), 'dd/MM/yyyy');
   const empId = employee.employee_id || '-';
@@ -36,8 +38,8 @@ function generateDocContent({ type, employee, params, isAr }) {
   if (type === 'increment') {
     const newSalary = salary + (Number(params.increment_amount) || 0);
     return isAr
-      ? `بسم الله الرحمن الرحيم\n\nإلى: ${name}\nالرقم الوظيفي: ${empId}\nالتاريخ: ${today}\n\nالموضوع: خطاب زيادة الراتب\n\nيسعدنا إبلاغكم بأنه تقرر منحكم زيادة في الراتب اعترافاً بمجهوداتكم وأدائكم المتميز.\n\nالراتب الجديد: ${newSalary.toLocaleString()} ريال سعودي شهرياً\nاعتباراً من: ${params.effective_date || today}\n\nنتمنى لكم مزيداً من التوفيق.\n\nإدارة الموارد البشرية`
-      : `Dear: ${name}\nEmployee ID: ${empId}\nDate: ${today}\n\nSubject: Salary Increment\n\nWe are pleased to inform you of a salary increment in recognition of your performance.\n\nNew Salary: SAR ${newSalary.toLocaleString()} per month\nEffective: ${params.effective_date || today}\n\nBest regards,\nHR Department`;
+      ? `بسم الله الرحمن الرحيم\n\nإلى: ${name}\nالرقم الوظيفي: ${empId}\nالتاريخ: ${today}\n\nالموضوع: خطاب زيادة الراتب\n\nيسعدنا إبلاغكم بأنه تقرر منحكم زيادة في الراتب اعترافاً بمجهوداتكم وأدائكم المتميز.\n\nالراتب الجديد: ${formatCurrency(newSalary, tenant?.localization, isRTL)} شهرياً\nاعتباراً من: ${params.effective_date || today}\n\nنتمنى لكم مزيداً من التوفيق.\n\nإدارة الموارد البشرية`
+      : `Dear: ${name}\nEmployee ID: ${empId}\nDate: ${today}\n\nSubject: Salary Increment\n\nWe are pleased to inform you of a salary increment in recognition of your performance.\n\nNew Salary: ${formatCurrency(newSalary, tenant?.localization, isRTL)} per month\nEffective: ${params.effective_date || today}\n\nBest regards,\nHR Department`;
   }
   if (type === 'termination') {
     return isAr
@@ -48,8 +50,8 @@ function generateDocContent({ type, employee, params, isAr }) {
     const years = params.years_of_service || 1;
     const eos = salary * (years <= 5 ? years * 0.5 : (5 * 0.5 + (years - 5) * 1));
     return isAr
-      ? `بسم الله الرحمن الرحيم\n\nمخالصة نهائية\n\nالموظف: ${name}\nالرقم الوظيفي: ${empId}\nتاريخ الانضمام: ${params.hire_date || '-'}\nتاريخ المغادرة: ${params.last_day || today}\nسنوات الخدمة: ${years}\n\nالراتب الأساسي: ${salary.toLocaleString()} ريال\nمكافأة نهاية الخدمة (وفق نظام العمل السعودي): ${Math.round(eos).toLocaleString()} ريال\n\nإجمالي المستحقات: ${Math.round(eos).toLocaleString()} ريال\n\nوقّع الطرفان على هذه المخالصة إقراراً باستيفاء جميع المستحقات.\n\nإدارة الموارد البشرية`
-      : `FINAL SETTLEMENT LETTER\n\nEmployee: ${name}\nEmployee ID: ${empId}\nJoin Date: ${params.hire_date || '-'}\nLast Day: ${params.last_day || today}\nYears of Service: ${years}\n\nBasic Salary: SAR ${salary.toLocaleString()}\nEnd of Service Benefit (per Saudi Labor Law): SAR ${Math.round(eos).toLocaleString()}\n\nTotal Dues: SAR ${Math.round(eos).toLocaleString()}\n\nBoth parties agree this settles all outstanding dues.\n\nHR Department`;
+      ? `بسم الله الرحمن الرحيم\n\nمخالصة نهائية\n\nالموظف: ${name}\nالرقم الوظيفي: ${empId}\nتاريخ الانضمام: ${params.hire_date || '-'}\nتاريخ المغادرة: ${params.last_day || today}\nسنوات الخدمة: ${years}\n\nالراتب الأساسي: ${formatCurrency(salary, tenant?.localization, isRTL)}\nمكافأة نهاية الخدمة: ${formatCurrency(Math.round(eos), tenant?.localization, isRTL)}\n\nإجمالي المستحقات: ${formatCurrency(Math.round(eos), tenant?.localization, isRTL)}\n\nوقّع الطرفان على هذه المخالصة إقراراً باستيفاء جميع المستحقات.\n\nإدارة الموارد البشرية`
+      : `FINAL SETTLEMENT LETTER\n\nEmployee: ${name}\nEmployee ID: ${empId}\nJoin Date: ${params.hire_date || '-'}\nLast Day: ${params.last_day || today}\nYears of Service: ${years}\n\nBasic Salary: ${formatCurrency(salary, tenant?.localization, isRTL)}\nEnd of Service Benefit: ${formatCurrency(Math.round(eos), tenant?.localization, isRTL)}\n\nTotal Dues: ${formatCurrency(Math.round(eos), tenant?.localization, isRTL)}\n\nBoth parties agree this settles all outstanding dues.\n\nHR Department`;
   }
   return isAr
     ? `بسم الله الرحمن الرحيم\n\nإلى: ${name} (${empId})\nالتاريخ: ${today}\n\nهذا المستند صادر من إدارة الموارد البشرية.`
@@ -57,6 +59,7 @@ function generateDocContent({ type, employee, params, isAr }) {
 }
 
 export default function YamenDraftDocuments({ isRTL }) {
+  const { tenant } = useTenant();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const [showDialog, setShowDialog] = useState(false);
   const [selectedType, setSelectedType] = useState('');
@@ -75,7 +78,7 @@ export default function YamenDraftDocuments({ isRTL }) {
     if (!selectedType || !selectedEmployee) { toast.error(isRTL ? 'اختر نوع المستند والموظف' : 'Select document type and employee'); return; }
     setGenerating(true);
     await new Promise(r => setTimeout(r, 600));
-    const content = generateDocContent({ type: selectedType, employee: emp, params, isAr: isRTL });
+    const content = generateDocContent({ type: selectedType, employee: emp, params, isAr: isRTL, tenant, isRTL });
     setDocContent(content);
     setGenerating(false);
     setStep(2);
@@ -175,7 +178,7 @@ export default function YamenDraftDocuments({ isRTL }) {
                 )}
                 {selectedType === 'increment' && (
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1"><Label>{isRTL ? 'مبلغ الزيادة (SAR)' : 'Increment Amount (SAR)'}</Label><Input type="number" value={params.increment_amount || ''} onChange={e => setParams(p => ({ ...p, increment_amount: e.target.value }))} /></div>
+                    <div className="space-y-1"><Label>{isRTL ? `مبلغ الزيادة (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Increment Amount (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label><Input type="number" value={params.increment_amount || ''} onChange={e => setParams(p => ({ ...p, increment_amount: e.target.value }))} /></div>
                     <div className="space-y-1"><Label>{isRTL ? 'تاريخ التطبيق' : 'Effective Date'}</Label><Input type="date" value={params.effective_date || ''} onChange={e => setParams(p => ({ ...p, effective_date: e.target.value }))} /></div>
                   </div>
                 )}

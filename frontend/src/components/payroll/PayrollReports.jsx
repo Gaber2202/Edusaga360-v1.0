@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { formatCurrency } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -26,6 +28,7 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 
 export default function PayrollReports() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { isFeatureEnabled } = useJurisdictionFeatures();
   const socialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);
   const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
@@ -360,7 +363,7 @@ export default function PayrollReports() {
             <div className="p-4 bg-purple-50 rounded-lg">
               <p className="text-sm text-purple-600">{isRTL ? 'إجمالي التأمينات' : 'Total Social Insurance'}</p>
               <p className="text-2xl font-bold text-purple-700">
-                {((socialInsuranceSummary.total_employee_contribution || 0) + (socialInsuranceSummary.total_employer_contribution || 0)).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}
+                {formatCurrency(((socialInsuranceSummary.total_employee_contribution || 0) + (socialInsuranceSummary.total_employer_contribution || 0)), tenant?.localization, isRTL)}
               </p>
             </div>
           </CardContent>

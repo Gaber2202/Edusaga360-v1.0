@@ -11,7 +11,7 @@ import {
   toMajorUnits,
   roundToMinorUnits,
 } from '../../lib/money.js';
-import type { LocalisationService, CurrencyFormatOptions } from '../contract/CountryPack.js';
+import type { LocalisationService, LocalizationConfig, CurrencyFormatOptions } from '../contract/CountryPack.js';
 
 const DEFAULT_CURRENCY = 'QAR';
 const DEFAULT_LOCALE = 'ar-QA';
@@ -54,4 +54,14 @@ export const qaLocalisation: LocalisationService = {
   formatNumber,
   getDefaultLocale,
   getDefaultWeekend,
+};
+
+export const qaLocalization: LocalizationConfig = {
+  currencyCode: DEFAULT_CURRENCY,
+  currencySymbol: { en: 'QAR', ar: 'ر.ق' },
+  minorUnits: DEFAULT_MINOR_UNITS,
+  numberFormat: { locale: DEFAULT_LOCALE, options: { minimumFractionDigits: 2, maximumFractionDigits: 2 } },
+  dateFormat: { locale: DEFAULT_LOCALE, options: { year: 'numeric', month: 'short', day: 'numeric' } },
+  calendarSystems: ['gregorian'],
+  textDirection: 'rtl',
 };

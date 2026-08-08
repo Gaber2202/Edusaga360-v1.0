@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../LanguageContext';
+import { useTenant } from '../TenantContext';
+import { formatCurrency } from '../../lib/localization';
 import ServiceTile from './ServiceTile';
 import ServiceWorkflowDialog from './ServiceWorkflowDialog';
 import { UserPlus, RefreshCw, UserMinus, FileText, BarChart2 } from 'lucide-react';
@@ -41,6 +43,7 @@ const GOSI_SERVICES = [
 
 export default function GOSIServices() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const [selected, setSelected] = useState(null);
 
   const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').order()) });
@@ -67,11 +70,11 @@ export default function GOSIServices() {
         {r.isSaudi ? (isRTL ? 'سعودي' : 'Saudi') : (isRTL ? 'غير سعودي' : 'Non-Saudi')}
       </Badge>
     )},
-    { header: isRTL ? 'راتب الرواتب' : 'Payroll Salary', cell: r => `${r.payrollSalary.toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}` },
-    { header: isRTL ? 'راتب التأمينات' : 'GOSI Salary', cell: r => `${r.gosiSalary.toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}` },
+    { header: isRTL ? 'راتب الرواتب' : 'Payroll Salary', cell: r => `${formatCurrency(r.payrollSalary, tenant?.localization, isRTL)}` },
+    { header: isRTL ? 'راتب التأمينات' : 'GOSI Salary', cell: r => `${formatCurrency(r.gosiSalary, tenant?.localization, isRTL)}` },
     { header: isRTL ? 'الفرق' : 'Difference', cell: r => (
       <span className={r.isMismatch ? 'text-red-400 font-semibold' : 'text-emerald-400'}>
-        {r.diff > 0 ? `${r.diff.toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}` : '—'}
+        {r.diff > 0 ? `${formatCurrency(r.diff, tenant?.localization, isRTL)}` : '—'}
       </span>
     )},
     { header: isRTL ? 'الحالة' : 'Status', cell: r => r.isMismatch
@@ -122,7 +125,7 @@ export default function GOSIServices() {
         {mismatches.length > 0 && (
           <div className="bg-red-900/20 border border-red-700/50 rounded-lg p-4 flex items-center gap-3 mb-4">
             <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />
-            <p className="text-red-300 text-sm">{mismatches.length} {isRTL ? 'موظف لديه فارق بين راتب التأمينات وراتب الرواتب يتجاوز 100 ر.س' : 'employees have a GOSI salary mismatch exceeding 100 SAR'}</p>
+            <p className="text-red-300 text-sm">{mismatches.length} {isRTL ? `موظف لديه فارق بين راتب التأمينات وراتب الرواتب يتجاوز ${formatCurrency(100, tenant?.localization, isRTL)}` : `employees have a GOSI salary mismatch exceeding ${formatCurrency(100, tenant?.localization, isRTL)}`}</p>
           </div>
         )}
         <DataTable columns={columns} data={enriched} loading={isLoading} emptyMessage={isRTL ? 'لا توجد بيانات' : 'No data'} />

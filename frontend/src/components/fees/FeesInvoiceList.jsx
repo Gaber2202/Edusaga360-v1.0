@@ -125,9 +125,9 @@ export default function FeesInvoiceList({
     <div className="space-y-5">
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard title={isRTL ? 'إجمالي الرسوم' : 'Total Fees'} value={`${stats.total.toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}`} icon={DollarSign} iconClassName="bg-sand-alt" />
-        <StatCard title={isRTL ? 'المحصل' : 'Collected'} value={`${stats.paid.toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}`} icon={CheckCircle} iconClassName="bg-emerald-50" />
-        <StatCard title={isRTL ? 'المتبقي' : 'Outstanding'} value={`${stats.pending.toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}`} icon={Banknote} iconClassName="bg-amber-50" />
+        <StatCard title={isRTL ? 'إجمالي الرسوم' : 'Total Fees'} value={`${formatCurrency(stats.total, tenant?.localization, isRTL)}`} icon={DollarSign} iconClassName="bg-sand-alt" />
+        <StatCard title={isRTL ? 'المحصل' : 'Collected'} value={`${formatCurrency(stats.paid, tenant?.localization, isRTL)}`} icon={CheckCircle} iconClassName="bg-emerald-50" />
+        <StatCard title={isRTL ? 'المتبقي' : 'Outstanding'} value={`${formatCurrency(stats.pending, tenant?.localization, isRTL)}`} icon={Banknote} iconClassName="bg-amber-50" />
         <StatCard title={isRTL ? 'متأخرة' : 'Overdue'} value={stats.overdue} icon={AlertCircle} iconClassName="bg-red-50" />
       </div>
 
@@ -220,11 +220,11 @@ export default function FeesInvoiceList({
                         {inv.academic_year && <p className="text-xs text-muted-foreground">{inv.academic_year}</p>}
                       </TableCell>
                       <TableCell><span className="text-sm text-muted-foreground">{inv.grade}</span></TableCell>
-                      <TableCell className="text-end font-semibold text-sm">{inv.total_amount?.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</TableCell>
-                      <TableCell className="text-end text-emerald-600 text-sm">{(inv.paid_amount || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</TableCell>
+                      <TableCell className="text-end font-semibold text-sm">{formatCurrency(inv.total_amount, tenant?.localization, isRTL)}</TableCell>
+                      <TableCell className="text-end text-emerald-600 text-sm">{formatCurrency(inv.paid_amount || 0, tenant?.localization, isRTL)}</TableCell>
                       <TableCell className="text-end">
                         <span className={`text-sm font-medium ${balance > 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                          {balance.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}
+                          {formatCurrency(balance, tenant?.localization, isRTL)}
                         </span>
                       </TableCell>
                       <TableCell>

@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { extractAiText } from '../components/yamen/yamenUtils';
 import { useLanguage } from '../components/LanguageContext';
+import Currency from '../components/Currency';
+import { getCurrencySymbol } from '../lib/localization';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -32,6 +34,7 @@ import { useTenantFilter } from '../hooks/useTenantFilter';
 
 export default function RecruitmentPage() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter, branches } = useBranch();
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate: _getTenantIdForCreate } = useTenantFilter();
@@ -148,7 +151,7 @@ export default function RecruitmentPage() {
     try {
       const rec = recruitments.find(r => r.id === recruitmentId);
       const relevantApplicants = applicants.filter(a => a.recruitment_id === recruitmentId);
-      const prompt = `You are Yamen AI, an HR assistant for a Saudi school. Analyze these applicants for the position "${rec?.position_name}" and rank them. Requirements: ${rec?.required_qualifications || 'N/A'}. Job description: ${rec?.job_description || 'N/A'}.\n\nApplicants:\n${relevantApplicants.map((a, i) => `${i+1}. ${a.full_name_ar} (${a.full_name_en}) - Education: ${a.education_level}, Experience: ${a.years_of_experience} years, Specialization: ${a.specialization}, Expected Salary: ${a.expected_salary} SAR, Interview Scores: Tech=${a.interview_technical_score}/10 Comm=${a.interview_communication_score}/10 Culture=${a.interview_culture_score}/10`).join('\n')}\n\nProvide a ranked list with AI score (0-100) and reasoning for each. Format as JSON array: [{"name":"...","score":85,"reasoning":"..."}]. Also provide Arabic summary.`;
+      const prompt = `You are Yamen AI, an HR assistant for a Saudi school. Analyze these applicants for the position "${rec?.position_name}" and rank them. Requirements: ${rec?.required_qualifications || 'N/A'}. Job description: ${rec?.job_description || 'N/A'}.\n\nApplicants:\n${relevantApplicants.map((a, i) => `${i+1}. ${a.full_name_ar} (${a.full_name_en}) - Education: ${a.education_level}, Experience: ${a.years_of_experience} years, Specialization: ${a.specialization}, Expected Salary: ${formatCurrency(a.expected_salary, tenant?.localization, isRTL)}, Interview Scores: Tech=${a.interview_technical_score}/10 Comm=${a.interview_communication_score}/10 Culture=${a.interview_culture_score}/10`).join('\n')}\n\nProvide a ranked list with AI score (0-100) and reasoning for each. Format as JSON array: [{"name":"...","score":85,"reasoning":"..."}]. Also provide Arabic summary.`;
       const res = await callApi('/api/ai/invoke-llm', { prompt, source: 'recruitment' });
       const text = extractAiText(res);
       try {
@@ -720,7 +723,7 @@ export default function RecruitmentPage() {
                       <TableCell className="text-sm">{a.email}</TableCell>
                       <TableCell>{a.specialization || '-'}</TableCell>
                       <TableCell>{a.years_of_experience || 0} {isRTL ? 'سنة' : 'yr'}</TableCell>
-                      <TableCell>{a.expected_salary?.toLocaleString() || '-'} {isRTL ? 'ر.س' : 'SAR'}</TableCell>
+                      <TableCell><Currency amount={a.expected_salary} /></TableCell>
                       <TableCell><StatusBadge status={a.status} /></TableCell>
                       <TableCell>{avgScore > 0 ? <Badge className={avgScore >= 7 ? 'bg-emerald-100 text-emerald-700' : avgScore >= 5 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}>{avgScore.toFixed(1)}/10</Badge> : '-'}</TableCell>
                     </TableRow>
@@ -956,11 +959,11 @@ export default function RecruitmentPage() {
               <h3 className="font-semibold text-ink mb-3 text-sm border-b pb-1">{isRTL ? 'الراتب' : 'Salary'}</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>{isRTL ? 'الراتب الحالي (ر.س)' : 'Current Salary (SAR)'}</Label>
+                  <Label>{isRTL ? `الراتب الحالي (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Current Salary (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label>
                   <Input type="number" min="0" value={applicantForm.current_salary ?? ''} onChange={(e) => setApplicantForm(p => ({...p, current_salary: e.target.value === '' ? '' : parseFloat(e.target.value) || 0}))} />
                 </div>
                 <div className="space-y-2">
-                  <Label>{isRTL ? 'الراتب المتوقع (ر.س)' : 'Expected Salary (SAR)'}</Label>
+                  <Label>{isRTL ? `الراتب المتوقع (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Expected Salary (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label>
                   <Input type="number" min="0" value={applicantForm.expected_salary ?? ''} onChange={(e) => setApplicantForm(p => ({...p, expected_salary: e.target.value === '' ? '' : parseFloat(e.target.value) || 0}))} />
                 </div>
               </div>
@@ -1031,7 +1034,7 @@ export default function RecruitmentPage() {
                 <div><Label className="text-muted-foreground">{t('nationality')}</Label><p>{showApplicantDetails.nationality || '-'}</p></div>
                 <div><Label className="text-muted-foreground">{isRTL ? 'المستوى التعليمي' : 'Education'}</Label><p>{showApplicantDetails.education_level || '-'}</p></div>
                 <div><Label className="text-muted-foreground">{isRTL ? 'سنوات الخبرة' : 'Experience'}</Label><p>{showApplicantDetails.years_of_experience || 0} {isRTL ? 'سنوات' : 'years'}</p></div>
-                <div><Label className="text-muted-foreground">{isRTL ? 'الراتب المتوقع' : 'Expected Salary'}</Label><p className="font-medium text-emerald-600">{showApplicantDetails.expected_salary?.toLocaleString() || '-'} {isRTL ? 'ر.س' : 'SAR'}</p></div>
+                <div><Label className="text-muted-foreground">{isRTL ? 'الراتب المتوقع' : 'Expected Salary'}</Label><p className="font-medium text-emerald-600"><Currency amount={showApplicantDetails.expected_salary} /></p></div>
                 <div className="col-span-2"><Label className="text-muted-foreground">{t('status')}</Label><StatusBadge status={showApplicantDetails.status} /></div>
               </div>
 
