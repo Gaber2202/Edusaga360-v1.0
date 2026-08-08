@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../LanguageContext';
 import { useTenant } from '../TenantContext';
-import { getCurrencySymbol } from '../lib/localization';
+import { getCurrencySymbol } from '../../lib/localization';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';

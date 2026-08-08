@@ -22,10 +22,6 @@ import AttachmentUploader from '../ui/AttachmentUploader';
 const VAT_RATE = 0.15;
 const PER_SEAT_PRICE = 500;
 
-function formatPlanPrice(price, tenant, isRTL) {
-  const n = typeof price === 'number' ? price : Number(String(price).replace(/,/g, ''));
-  return formatCurrency(n, tenant?.localization, isRTL);
-}
 
 export default function ClientSubscriptionPortal() {
   const { isRTL } = useLanguage();
@@ -386,7 +382,7 @@ export default function ClientSubscriptionPortal() {
                   ].map(({ code, label: lbl, price }) => (
                     <th key={code} className={`text-center py-3 px-3 font-semibold ${tenant.plan_code === code ? 'bg-najdi-50 text-najdi-900' : 'text-ink'}`}>
                       <div>{lbl}</div>
-                      <div className="text-xs font-normal text-muted-foreground">{formatPlanPrice(price, tenant, isRTL)} / {isRTL ? 'سنة' : 'yr'}</div>
+                      <div className="text-xs font-normal text-muted-foreground">{formatCurrency(Number(String(price).replace(/,/g, '')), tenant?.localization, isRTL)} / {isRTL ? 'سنة' : 'yr'}</div>
                       {tenant.plan_code === code && (
                         <div className="mt-1 inline-block text-[10px] bg-najdi-700 text-white rounded-full px-2 py-0.5">
                           {isRTL ? 'خطتك' : 'Your plan'}
@@ -495,7 +491,7 @@ export default function ClientSubscriptionPortal() {
                           : (isRTL ? `إضافة ${order.additional_seats || '—'} مقعد` : `Add ${order.additional_seats || '—'} seats`)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {order.total_amount ? formatSAR(order.total_amount, isRTL) : '—'} &middot; {order.created_at ? new Date(order.created_at).toLocaleDateString() : '—'}
+                        {order.total_amount ? formatCurrency(order.total_amount, tenant?.localization, isRTL) : '—'} &middot; {order.created_at ? new Date(order.created_at).toLocaleDateString() : '—'}
                       </p>
                     </div>
                     <Badge className={statusColors[order.status] || 'bg-sand-alt text-ink'}>
@@ -654,15 +650,15 @@ export default function ClientSubscriptionPortal() {
                         ? (isRTL ? `ترقية إلى ${orderContext.plan_code}` : `Upgrade to ${orderContext.plan_code}`)
                         : (isRTL ? `${orderContext.seats} مقعد إضافي` : `${orderContext.seats} additional seats`)}
                     </span>
-                    <span className="text-ink">{formatSAR(orderContext.subtotal, isRTL)}</span>
+                    <span className="text-ink">{formatCurrency(orderContext.subtotal, tenant?.localization, isRTL)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{isRTL ? 'ضريبة القيمة المضافة (15%)' : 'VAT (15%)'}</span>
-                    <span className="text-ink">{formatSAR(orderContext.vat, isRTL)}</span>
+                    <span className="text-muted-foreground">{isRTL ? `ضريبة القيمة المضافة (${Math.round(VAT_RATE * 100)}%)` : `VAT (${Math.round(VAT_RATE * 100)}%)`}</span>
+                    <span className="text-ink">{formatCurrency(orderContext.vat, tenant?.localization, isRTL)}</span>
                   </div>
                   <div className="border-t border-border pt-2 flex justify-between text-sm font-bold">
                     <span className="text-ink">{isRTL ? 'الإجمالي' : 'Total'}</span>
-                    <span className="text-najdi-900">{formatSAR(orderContext.total, isRTL)}</span>
+                    <span className="text-najdi-900">{formatCurrency(orderContext.total, tenant?.localization, isRTL)}</span>
                   </div>
                 </div>
 
@@ -755,7 +751,7 @@ export default function ClientSubscriptionPortal() {
                     {orderContext && (
                       <div className="border-t border-najdi-200 pt-2">
                         <p className="text-xs font-semibold text-najdi-900">
-                          {isRTL ? 'المبلغ المطلوب تحويله:' : 'Amount to transfer:'} {formatSAR(orderContext.total, isRTL)}
+                          {isRTL ? 'المبلغ المطلوب تحويله:' : 'Amount to transfer:'} {formatCurrency(orderContext.total, tenant?.localization, isRTL)}
                         </p>
                       </div>
                     )}
@@ -845,16 +841,16 @@ export default function ClientSubscriptionPortal() {
                 {additionalUsers > 0 && (
                   <div className="bg-sand rounded-lg p-3 space-y-1 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">{additionalUsers} {isRTL ? 'مقعد' : 'seats'} × {formatSAR(PER_SEAT_PRICE, isRTL)}</span>
-                      <span className="text-ink">{formatSAR(additionalUsers * PER_SEAT_PRICE, isRTL)}</span>
+                      <span className="text-muted-foreground">{additionalUsers} {isRTL ? 'مقعد' : 'seats'} × {formatCurrency(PER_SEAT_PRICE, tenant?.localization, isRTL)}</span>
+                      <span className="text-ink">{formatCurrency(additionalUsers * PER_SEAT_PRICE, tenant?.localization, isRTL)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">{isRTL ? 'ض.ق.م 15%' : 'VAT 15%'}</span>
-                      <span className="text-ink">{formatSAR(Math.round(additionalUsers * PER_SEAT_PRICE * VAT_RATE * 100) / 100, isRTL)}</span>
+                      <span className="text-muted-foreground">{isRTL ? `ض.ق.م ${Math.round(VAT_RATE * 100)}%` : `VAT ${Math.round(VAT_RATE * 100)}%`}</span>
+                      <span className="text-ink">{formatCurrency(Math.round(additionalUsers * PER_SEAT_PRICE * VAT_RATE * 100) / 100, tenant?.localization, isRTL)}</span>
                     </div>
                     <div className="flex justify-between font-bold border-t border-border pt-1">
                       <span className="text-ink">{isRTL ? 'الإجمالي' : 'Total'}</span>
-                      <span className="text-najdi-900">{formatSAR(Math.round(additionalUsers * PER_SEAT_PRICE * (1 + VAT_RATE) * 100) / 100, isRTL)}</span>
+                      <span className="text-najdi-900">{formatCurrency(Math.round(additionalUsers * PER_SEAT_PRICE * (1 + VAT_RATE) * 100) / 100, tenant?.localization, isRTL)}</span>
                     </div>
                   </div>
                 )}
@@ -880,7 +876,7 @@ export default function ClientSubscriptionPortal() {
                 <div className="bg-sand rounded-lg p-4 space-y-2">
                   <div className="flex justify-between text-sm font-bold">
                     <span className="text-ink">{isRTL ? 'الإجمالي' : 'Total'}</span>
-                    <span className="text-najdi-900">{formatSAR(orderContext.total, isRTL)}</span>
+                    <span className="text-najdi-900">{formatCurrency(orderContext.total, tenant?.localization, isRTL)}</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -926,7 +922,7 @@ export default function ClientSubscriptionPortal() {
                     {bankDetails.iban && <p className="font-mono text-ink">IBAN: {bankDetails.iban}</p>}
                     {orderContext && (
                       <p className="font-semibold text-najdi-900 pt-1 border-t border-najdi-200">
-                        {isRTL ? 'المبلغ:' : 'Amount:'} {formatSAR(orderContext.total, isRTL)}
+                        {isRTL ? 'المبلغ:' : 'Amount:'} {formatCurrency(orderContext.total, tenant?.localization, isRTL)}
                       </p>
                     )}
                   </div>

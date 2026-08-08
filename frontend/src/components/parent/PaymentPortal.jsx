@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { tenantQuery, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useTenant } from '../TenantContext';
-import { formatCurrency } from '../lib/localization';
+import { formatCurrency } from '../../lib/localization';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Loader2, CreditCard, Smartphone, CheckCircle2, Clock, AlertCircle, Download } from 'lucide-react';

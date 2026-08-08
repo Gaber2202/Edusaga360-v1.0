@@ -7,7 +7,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { tenantQuery } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useTenant } from '../TenantContext';
-import { formatCurrency } from '../lib/localization';
+import { formatCurrency } from '../../lib/localization';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { format } from 'date-fns';

@@ -1,5 +1,3 @@
-import { useTenant } from '../components/TenantContext';
-
 const FALLBACK = {
   currencyCode: 'XXX',
   currencySymbol: { en: 'XXX', ar: 'XXX' },
@@ -9,11 +7,6 @@ const FALLBACK = {
   calendarSystems: ['gregorian'],
   textDirection: 'ltr',
 };
-
-export function useLocalization() {
-  const { tenant } = useTenant();
-  return tenant?.localization || FALLBACK;
-}
 
 function resolveLocale(localization, isRTL) {
   const base = localization?.numberFormat?.locale || FALLBACK.numberFormat.locale;
