@@ -59,6 +59,9 @@ description: End-to-end multi-country jurisdiction verification for EduSaga 360 
 - `jurisdiction_features` may be populated for a service-role query but invisible to the frontend if RLS is not configured, so `JurisdictionFeatureProvider` will load an empty feature set and hide all gated UI for **every** jurisdiction. Verify with an authenticated `fetch` using the anon key + user's access token.
 - `frontend/src/lib/vatRate.js` falls back to `0.15` when `tenant.vat_rate` is missing. The `tenants` table currently has no `vat_rate` column, so `VATManagement` will show 15% for AE/QA unless `getVatRate` is updated to read `jurisdiction_tax_rules`.
 - Currency labels on Dashboard/Payroll/VAT (`SAR`) are not jurisdiction-aware and will leak on AE/QA screens.
+- `frontend/src/pages/Fees.jsx` has `InvoicesTab` and `NewInvoiceDialog` components that reference `tenant` without receiving it as a prop; the page may crash with `ReferenceError: tenant is not defined` before any localization can be verified.
+- `frontend/src/components/subscription/ClientSubscriptionPortal.jsx` hardcodes `const VAT_RATE = 0.15`, so add-seat/upgrade order summaries always show 15% VAT for AE/QA.
+- `frontend/src/pages/CanteenManagement.jsx` contains hardcoded Saudi MOE compliance text that displays for every jurisdiction.
 
 ## Regression checks
 - `npm run typecheck` (backend)

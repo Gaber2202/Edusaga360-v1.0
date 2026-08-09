@@ -234,8 +234,8 @@ export default function CanteenManagement() {
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-amber-800">{isRTL ? 'متطلبات وزارة التعليم السعودية للمقصف' : 'Saudi MOE Canteen Compliance'}</p>
-              <p className="text-xs text-amber-700 mt-0.5">{isRTL ? 'جميع الأصناف يجب أن تكون حلال. يُمنع بيع مشروبات الطاقة والأصناف عالية السكر.' : 'All items must be Halal certified. Energy drinks and high-sugar items are prohibited by MOE regulations.'}</p>
+              <p className="text-sm font-semibold text-amber-800">{isRTL ? 'متطلبات الامتثال للمقصف' : 'Canteen Compliance Requirements'}</p>
+              <p className="text-xs text-amber-700 mt-0.5">{isRTL ? 'جميع الأصناف يجب أن تكون حلال. يُمنع بيع مشروبات الطاقة والأصناف عالية السكر وفقًا لسياسة المدرسة.' : 'All items must be Halal certified. Energy drinks and high-sugar items are prohibited by school policy.'}</p>
             </div>
           </div>
         </TabsContent>
@@ -388,7 +388,7 @@ export default function CanteenManagement() {
             </div>
             <div className="flex gap-6">
               <div className="flex items-center gap-2"><Switch checked={itemForm.is_halal} onCheckedChange={v => setItemForm(f => ({ ...f, is_halal: v }))} /><Label>{isRTL ? 'حلال' : 'Halal'}</Label></div>
-              <div className="flex items-center gap-2"><Switch checked={itemForm.is_prohibited} onCheckedChange={v => setItemForm(f => ({ ...f, is_prohibited: v }))} /><Label className="text-red-600">{isRTL ? 'ممنوع (MOE)' : 'Prohibited (MOE)'}</Label></div>
+              <div className="flex items-center gap-2"><Switch checked={itemForm.is_prohibited} onCheckedChange={v => setItemForm(f => ({ ...f, is_prohibited: v }))} /><Label className="text-red-600">{isRTL ? 'ممنوع' : 'Prohibited'}</Label></div>
               <div className="flex items-center gap-2"><Switch checked={itemForm.is_available} onCheckedChange={v => setItemForm(f => ({ ...f, is_available: v }))} /><Label>{isRTL ? 'متاح' : 'Available'}</Label></div>
             </div>
           </div>

@@ -77,10 +77,11 @@ function StatusBadge({ status, isRTL }) {
 
 // ─── VAT treatment badge ────────────────────────────────────────────────────────
 
-function VatBadge({ treatment }) {
+function VatBadge({ treatment, vatRate }) {
   if (treatment === 'exempt') return <span className="text-xs text-green-600 font-medium">VAT Exempt</span>;
   if (treatment === 'zero_rated') return <span className="text-xs text-najdi-700 font-medium">0%</span>;
-  return <span className="text-xs text-orange-600 font-medium">15% VAT</span>;
+  const rate = vatRate != null ? vatRate : 0.15;
+  return <span className="text-xs text-orange-600 font-medium">{Math.round(rate * 100)}% VAT</span>;
 }
 
 // ─── KPI cards ─────────────────────────────────────────────────────────────────
@@ -111,7 +112,7 @@ function KpiCard({ label, value, sub, icon: Icon, color = 'blue' }) {
 
 // ─── Invoice list tab ──────────────────────────────────────────────────────────
 
-function InvoicesTab({ token, isRTL, userRole, tenantId }) {
+function InvoicesTab({ token, isRTL, userRole, tenantId, tenant }) {
   const qc = useQueryClient();
   const [filters, setFilters] = useState({ status: '', page: 1 });
   const [dunningOpen, setDunningOpen] = useState(false);
@@ -471,8 +472,8 @@ function VATReportTab({ token, isRTL, tenantId, tenant }) {
           <div className="rounded-lg bg-najdi-50 border border-najdi-100 p-4 text-sm text-najdi-900">
             <strong>{isRTL ? 'ملاحظة ZATCA:' : 'ZATCA Note:'}</strong>{' '}
             {isRTL
-              ? 'التعليم معفى من ضريبة القيمة المضافة. يخضع للضريبة: النقل، الوجبات، الزي، الكتب، الأنشطة.'
-              : 'Tuition is VAT-exempt per ZATCA/GAZT rules. Taxable at 15%: transport, meals, uniforms, books, activities.'}
+              ? `التعليم معفى من ضريبة القيمة المضافة. يخضع للضريبة عند ${Math.round((tenant?.vat_rate || 0.15) * 100)}٪: النقل، الوجبات، الزي، الكتب، الأنشطة.`
+              : `Tuition is VAT-exempt. Taxable at ${Math.round((tenant?.vat_rate || 0.15) * 100)}%: transport, meals, uniforms, books, activities.`}
           </div>
         </div>
       ) : null}
@@ -540,7 +541,7 @@ function FeeStructuresTab({ token, isRTL, tenantId, tenant }) {
                 <td className="px-4 py-3 text-xs text-muted-foreground">{s.academic_year}</td>
                 <td className="px-4 py-3 text-xs text-muted-foreground">{s.grade || (isRTL ? 'كل الصفوف' : 'All Grades')}</td>
                 <td className="px-4 py-3 text-end text-xs font-semibold text-ink">{formatCurrency(s.amount, tenant?.localization, isRTL)}</td>
-                <td className="px-4 py-3"><VatBadge treatment={s.fee_categories?.vat_treatment} /></td>
+                <td className="px-4 py-3"><VatBadge treatment={s.fee_categories?.vat_treatment} vatRate={tenant?.vat_rate} /></td>
                 <td className="px-4 py-3 text-xs text-muted-foreground">{s.installment_count > 1 ? `${s.installment_count}×` : (isRTL ? 'دفعة واحدة' : 'Lump sum')}</td>
               </tr>
             ))}
@@ -868,7 +869,7 @@ const PAYMENT_METHOD_OPTIONS = [
   { id: 'cash', label: { ar: 'نقداً', en: 'Cash' } },
 ];
 
-function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) {
+function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, tenant, onSuccess }) {
   const [form, setForm] = useState({ student_id: '', academic_year: '2025-2026', due_date: '', installment_count: '1', notes_en: '', notes_ar: '', payment_methods: [] });
   const [feeLines, setFeeLines] = useState([{ category_id: '', description_en: '', description_ar: '', amount: '' }]);
   const [result, setResult] = useState(null);
@@ -1230,8 +1231,8 @@ export default function Fees() {
           <h1 className="text-xl font-bold text-ink">{isRTL ? 'الرسوم والفوترة' : 'Fees & Billing'}</h1>
           <p className="text-sm text-muted-foreground">
             {isRTL
-              ? 'محرك فوترة سعودي متكامل — ZATCA المرحلة 2، ضريبة القيمة المضافة، الأقساط، التحصيل الذكي'
-              : 'Saudi billing engine — ZATCA Phase 2, VAT-aware, installment plans, AI collections'}
+              ? 'محرك الفوترة والتحصيل — ضريبة القيمة المضافة، الأقساط، التحصيل الذكي'
+              : 'Billing & collections engine — VAT-aware, installment plans, AI collections'}
           </p>
         </div>
         {canCreate && (

@@ -19,13 +19,13 @@ import {
 import { PLAN_DEFINITIONS } from '../../hooks/useModuleAccess';
 import AttachmentUploader from '../ui/AttachmentUploader';
 
-const VAT_RATE = 0.15;
 const PER_SEAT_PRICE = 500;
 
 
 export default function ClientSubscriptionPortal() {
   const { isRTL } = useLanguage();
   const { tenant, loading: tenantLoading } = useTenant();
+  const vatRate = tenant?.vat_rate ?? 0.15;
   const queryClient = useQueryClient();
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -199,7 +199,7 @@ export default function ClientSubscriptionPortal() {
     } else if (orderType === 'add_seats' && seats) {
       subtotal = seats * PER_SEAT_PRICE;
     }
-    const vat = Math.round(subtotal * VAT_RATE * 100) / 100;
+    const vat = Math.round(subtotal * vatRate * 100) / 100;
     setOrderContext({ type: orderType, plan_code: planCode, seats, subtotal, vat, total: subtotal + vat });
     setPaymentStep('choose_method');
   }
@@ -653,7 +653,7 @@ export default function ClientSubscriptionPortal() {
                     <span className="text-ink">{formatCurrency(orderContext.subtotal, tenant?.localization, isRTL)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{isRTL ? `ضريبة القيمة المضافة (${Math.round(VAT_RATE * 100)}%)` : `VAT (${Math.round(VAT_RATE * 100)}%)`}</span>
+                    <span className="text-muted-foreground">{isRTL ? `ضريبة القيمة المضافة (${Math.round(vatRate * 100)}%)` : `VAT (${Math.round(vatRate * 100)}%)`}</span>
                     <span className="text-ink">{formatCurrency(orderContext.vat, tenant?.localization, isRTL)}</span>
                   </div>
                   <div className="border-t border-border pt-2 flex justify-between text-sm font-bold">
@@ -845,12 +845,12 @@ export default function ClientSubscriptionPortal() {
                       <span className="text-ink">{formatCurrency(additionalUsers * PER_SEAT_PRICE, tenant?.localization, isRTL)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">{isRTL ? `ض.ق.م ${Math.round(VAT_RATE * 100)}%` : `VAT ${Math.round(VAT_RATE * 100)}%`}</span>
-                      <span className="text-ink">{formatCurrency(Math.round(additionalUsers * PER_SEAT_PRICE * VAT_RATE * 100) / 100, tenant?.localization, isRTL)}</span>
+                      <span className="text-muted-foreground">{isRTL ? `ض.ق.م ${Math.round(vatRate * 100)}%` : `VAT ${Math.round(vatRate * 100)}%`}</span>
+                      <span className="text-ink">{formatCurrency(Math.round(additionalUsers * PER_SEAT_PRICE * vatRate * 100) / 100, tenant?.localization, isRTL)}</span>
                     </div>
                     <div className="flex justify-between font-bold border-t border-border pt-1">
                       <span className="text-ink">{isRTL ? 'الإجمالي' : 'Total'}</span>
-                      <span className="text-najdi-900">{formatCurrency(Math.round(additionalUsers * PER_SEAT_PRICE * (1 + VAT_RATE) * 100) / 100, tenant?.localization, isRTL)}</span>
+                      <span className="text-najdi-900">{formatCurrency(Math.round(additionalUsers * PER_SEAT_PRICE * (1 + vatRate) * 100) / 100, tenant?.localization, isRTL)}</span>
                     </div>
                   </div>
                 )}

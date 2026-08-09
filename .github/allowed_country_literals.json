@@ -1108,7 +1108,7 @@
   {
     "file": "frontend/src/pages/Fees.jsx",
     "term": "zatca",
-    "count": 14,
+    "count": 11,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
