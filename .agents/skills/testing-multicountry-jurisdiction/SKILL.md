@@ -60,8 +60,11 @@ description: End-to-end multi-country jurisdiction verification for EduSaga 360 
 - `frontend/src/lib/vatRate.js` falls back to `0.15` when `tenant.vat_rate` is missing. The `tenants` table currently has no `vat_rate` column, so `VATManagement` will show 15% for AE/QA unless `getVatRate` is updated to read `jurisdiction_tax_rules`.
 - Currency labels on Dashboard/Payroll/VAT (`SAR`) are not jurisdiction-aware and will leak on AE/QA screens.
 - `frontend/src/pages/Fees.jsx` has `InvoicesTab` and `NewInvoiceDialog` components that reference `tenant` without receiving it as a prop; the page may crash with `ReferenceError: tenant is not defined` before any localization can be verified.
-- `frontend/src/components/subscription/ClientSubscriptionPortal.jsx` hardcodes `const VAT_RATE = 0.15`, so add-seat/upgrade order summaries always show 15% VAT for AE/QA.
-- `frontend/src/pages/CanteenManagement.jsx` contains hardcoded Saudi MOE compliance text that displays for every jurisdiction.
+- `frontend/src/components/subscription/ClientSubscriptionPortal.jsx` should use `tenant?.vat_rate ?? 0.15` for add-seat/upgrade order summaries; verify the VAT line reads `5%` for AE, `0%` for QA, and `15%` for SA.
+- `frontend/src/pages/CanteenManagement.jsx` previously contained hardcoded Saudi MOE compliance text; verify it now shows generic school policy for AE/QA.
+- `frontend/src/pages/Fees.jsx` still displays a `ZATCA المرحلة 2` engine card and a `ZATCA` column in the Invoices table for all jurisdictions — a Saudi UI leak for AE/QA even after the `tenant` prop crash is fixed.
+- `frontend/src/components/payroll/PayrollSettings.jsx` still shows Saudi GOSI settings (`إعدادات التأمينات الاجتماعية`, `السعوديين`/`غير السعوديين`) for AE/QA; it uses pack currency but the content is not jurisdiction-gated.
+- `ExecutiveCommandCenter` may still fail to load dashboard data with `تعذر تحميل لوحة البيانات` on AE/QA/SA.
 
 ## Regression checks
 - `npm run typecheck` (backend)

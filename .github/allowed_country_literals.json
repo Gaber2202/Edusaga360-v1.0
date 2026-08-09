@@ -779,7 +779,7 @@
   {
     "file": "frontend/src/components/payroll/PayrollSettings.jsx",
     "term": "gosi",
-    "count": 26,
+    "count": 32,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -1108,7 +1108,7 @@
   {
     "file": "frontend/src/pages/Fees.jsx",
     "term": "zatca",
-    "count": 11,
+    "count": 3,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },

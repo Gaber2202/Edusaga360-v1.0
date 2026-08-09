@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../LanguageContext';
 import { useTenant } from '../TenantContext';
+import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
 import { getCurrencySymbol } from '../../lib/localization';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';
@@ -22,6 +23,8 @@ import {
 export default function PayrollSettings() {
   const { isRTL } = useLanguage();
   const { tenant } = useTenant();
+  const { isFeatureEnabled } = useJurisdictionFeatures();
+  const gosiEnabled = isFeatureEnabled('gosi');
   const [saving, setSaving] = useState(false);
 
   const [settings, setSettings] = useState({
@@ -86,12 +89,14 @@ export default function PayrollSettings() {
         </Button>
       </div>
 
-      <Tabs defaultValue="gosi">
-        <TabsList className="grid grid-cols-5 w-full max-w-2xl">
-          <TabsTrigger value="gosi" className="gap-2">
-            <Landmark className="w-4 h-4" />
-            {isRTL ? 'التأمينات' : 'GOSI'}
-          </TabsTrigger>
+      <Tabs defaultValue={gosiEnabled ? 'gosi' : 'payroll'}>
+        <TabsList className={`grid grid-cols-${gosiEnabled ? '5' : '4'} w-full max-w-2xl`}>
+          {gosiEnabled && (
+            <TabsTrigger value="gosi" className="gap-2">
+              <Landmark className="w-4 h-4" />
+              {isRTL ? 'التأمينات' : 'GOSI'}
+            </TabsTrigger>
+          )}
           <TabsTrigger value="payroll" className="gap-2">
             <Calculator className="w-4 h-4" />
             {isRTL ? 'الرواتب' : 'Payroll'}
@@ -111,7 +116,7 @@ export default function PayrollSettings() {
         </TabsList>
 
         {/* GOSI Settings */}
-        <TabsContent value="gosi" className="mt-6">
+        {gosiEnabled && <TabsContent value="gosi" className="mt-6">
           <Card>
             <CardHeader>
               <CardTitle>{isRTL ? 'إعدادات التأمينات الاجتماعية' : 'GOSI Settings'}</CardTitle>
@@ -184,7 +189,7 @@ export default function PayrollSettings() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent>}
 
         {/* Payroll Settings */}
         <TabsContent value="payroll" className="mt-6">

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { useTenant } from '../components/TenantContext';
+import { useJurisdictionFeatures } from '../components/JurisdictionFeatureContext';
 import { formatCurrency, getCurrencySymbol } from '../lib/localization';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -17,6 +18,8 @@ import {
 import { createPageUrl } from '../utils';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { supabase, tenantQuery, fetchData, callApi } from '../api/supabaseClient';
+import JurisdictionFeatureGate from '../components/JurisdictionFeatureGate';
+import { EINVOICING_FEATURES } from '../lib/jurisdictionFeatures';
 
 // ─── API helpers ───────────────────────────────────────────────────────────────
 
@@ -120,7 +123,10 @@ function InvoicesTab({ token, isRTL, userRole, tenantId, tenant }) {
   const [dunningResult, setDunningResult] = useState(null);
 
   const { tenantFilter, hasTenantAccess } = useTenantFilter();
+  const { areAnyEnabled } = useJurisdictionFeatures();
+  const showEInvoice = areAnyEnabled(EINVOICING_FEATURES);
   const PAGE_SIZE = 20;
+  const colCount = 9 - (showEInvoice ? 0 : 1);
 
   // Load invoices directly from Supabase (RLS-scoped) instead of via the billing
   // backend. The backend list resolved the wrong tenant for a platform owner
@@ -198,15 +204,17 @@ function InvoicesTab({ token, isRTL, userRole, tenantId, tenant }) {
               <th className="px-4 py-3 text-end text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'المبلغ' : 'Total'}</th>
               <th className="px-4 py-3 text-end text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'المتبقي' : 'Balance'}</th>
               <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'الحالة' : 'Status'}</th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide">ZATCA</th>
+              {showEInvoice && (
+                <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'الفاتورة الإلكترونية' : 'E-Invoice'}</th>
+              )}
               <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'إجراءات' : 'Actions'}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {isLoading ? (
-              <tr><td colSpan={9} className="py-12 text-center text-muted-foreground">{isRTL ? 'جاري التحميل…' : 'Loading…'}</td></tr>
+              <tr><td colSpan={colCount} className="py-12 text-center text-muted-foreground">{isRTL ? 'جاري التحميل…' : 'Loading…'}</td></tr>
             ) : invoices.length === 0 ? (
-              <tr><td colSpan={9} className="py-12 text-center text-muted-foreground">{isRTL ? 'لا توجد فواتير' : 'No invoices found'}</td></tr>
+              <tr><td colSpan={colCount} className="py-12 text-center text-muted-foreground">{isRTL ? 'لا توجد فواتير' : 'No invoices found'}</td></tr>
             ) : invoices.map((inv) => {
               const balance = (Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0);
               return (
@@ -227,11 +235,13 @@ function InvoicesTab({ token, isRTL, userRole, tenantId, tenant }) {
                     <span className={balance > 0 ? 'text-red-600 font-semibold' : 'text-green-600'}>{formatCurrency(balance, tenant?.localization, isRTL)}</span>
                   </td>
                   <td className="px-4 py-3"><StatusBadge status={inv.status} isRTL={isRTL} /></td>
-                  <td className="px-4 py-3">
-                    {inv.qr_code
-                      ? <span className="flex items-center gap-1 text-xs text-green-600"><CheckCircle className="w-3.5 h-3.5" />{isRTL ? 'معتمد' : 'QR OK'}</span>
-                      : <span className="flex items-center gap-1 text-xs text-muted-foreground"><Clock className="w-3.5 h-3.5" />{isRTL ? 'معلق' : 'Pending'}</span>}
-                  </td>
+                  {showEInvoice && (
+                    <td className="px-4 py-3">
+                      {inv.qr_code
+                        ? <span className="flex items-center gap-1 text-xs text-green-600"><CheckCircle className="w-3.5 h-3.5" />{isRTL ? 'معتمد' : 'QR OK'}</span>
+                        : <span className="flex items-center gap-1 text-xs text-muted-foreground"><Clock className="w-3.5 h-3.5" />{isRTL ? 'معلق' : 'Pending'}</span>}
+                    </td>
+                  )}
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1">
                       <button
@@ -470,7 +480,7 @@ function VATReportTab({ token, isRTL, tenantId, tenant }) {
             ))}
           </div>
           <div className="rounded-lg bg-najdi-50 border border-najdi-100 p-4 text-sm text-najdi-900">
-            <strong>{isRTL ? 'ملاحظة ZATCA:' : 'ZATCA Note:'}</strong>{' '}
+            <strong>{isRTL ? 'ملاحظة ضريبية:' : 'VAT Note:'}</strong>{' '}
             {isRTL
               ? `التعليم معفى من ضريبة القيمة المضافة. يخضع للضريبة عند ${Math.round((tenant?.vat_rate || 0.15) * 100)}٪: النقل، الوجبات، الزي، الكتب، الأنشطة.`
               : `Tuition is VAT-exempt. Taxable at ${Math.round((tenant?.vat_rate || 0.15) * 100)}%: transport, meals, uniforms, books, activities.`}
@@ -841,18 +851,19 @@ function DashboardTab({ token, isRTL, tenantId, tenant }) {
         </Card>
       )}
 
-      {/* ZATCA compliance note */}
-      <div className="rounded-lg bg-gradient-to-r from-najdi-50 to-sand border border-najdi-100 p-4 flex items-start gap-3">
-        <Zap className="w-5 h-5 text-najdi-700 shrink-0 mt-0.5" />
-        <div className="text-sm">
-          <p className="font-semibold text-najdi-900 mb-1">{isRTL ? 'محرك ZATCA المرحلة 2' : 'ZATCA Phase 2 Engine'}</p>
-          <p className="text-najdi-900 text-xs">
-            {isRTL
-              ? 'كل فاتورة تُولّد تلقائياً رمز QR، تجزئة SHA-256، وملف UBL/XML متوافق مع لوائح هيئة الزكاة والضريبة والجمارك.'
-              : 'Every invoice auto-generates a TLV QR code, SHA-256 hash chain, and UBL 2.1 XML compliant with ZATCA Phase 2 Fatoorah requirements.'}
-          </p>
+      <JurisdictionFeatureGate featureKeys={EINVOICING_FEATURES}>
+        <div className="rounded-lg bg-gradient-to-r from-najdi-50 to-sand border border-najdi-100 p-4 flex items-start gap-3">
+          <Zap className="w-5 h-5 text-najdi-700 shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-semibold text-najdi-900 mb-1">{isRTL ? 'الفاتورة الإلكترونية' : 'E-Invoicing Engine'}</p>
+            <p className="text-najdi-900 text-xs">
+              {isRTL
+                ? 'كل فاتورة تُولّد تلقائياً رمز QR وملف UBL/XML متوافق مع متطلبات الفاتورة الإلكترونية.'
+                : 'Every invoice auto-generates a QR code and UBL/XML file compliant with local e-invoicing requirements.'}
+            </p>
+          </div>
         </div>
-      </div>
+      </JurisdictionFeatureGate>
     </div>
   );
 }
@@ -955,7 +966,7 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, tenant, onSuc
             {result.zatca?.qr_code && (
               <div className="text-center">
                 <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                  <CheckCircle className="w-3.5 h-3.5" /> ZATCA QR Generated
+                  <CheckCircle className="w-3.5 h-3.5" /> {isRTL ? 'تم إنشاء QR' : 'QR Generated'}
                 </span>
               </div>
             )}

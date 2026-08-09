@@ -339,7 +339,7 @@ export class MetricsService {
     let applications: any[] = [];
     if (needsCEO || needsCOO) {
       const [sectionsRes, studentsRes, employeesRes, applicantsRes, applicationsRes] = await Promise.all([
-        this.branchFilter(this.supabase.from('sections').select('branch_id, capacity, id, name_en, name_ar, grade_id').eq('tenant_id', tenantId), branchId),
+        this.branchFilter(this.supabase.from('sections').select('branch_id, capacity, id, name, grade_id').eq('tenant_id', tenantId), branchId),
         this.branchFilter(this.supabase.from('students').select('id, branch_id, status').eq('tenant_id', tenantId).eq('status', 'active'), branchId),
         this.branchFilter(this.supabase.from('employees').select('id, job_title_id, job_titles(name_en, name_ar), status, branch_id').eq('tenant_id', tenantId).eq('status', 'active'), branchId),
         this.branchFilter(this.supabase.from('applicants').select('id, status, branch_id').eq('tenant_id', tenantId), branchId),
