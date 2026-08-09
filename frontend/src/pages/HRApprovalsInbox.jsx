@@ -15,6 +15,7 @@ import { CheckCircle, XCircle, Clock, Loader2, AlertTriangle } from 'lucide-reac
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { useTenant } from '../components/TenantContext';
 
 export default function HRApprovalsInbox() {
   const { isRTL } = useLanguage();

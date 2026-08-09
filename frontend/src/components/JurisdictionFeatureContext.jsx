@@ -16,12 +16,14 @@ export function JurisdictionFeatureProvider({ children }) {
   const tenantId = resolveTenantId(user);
   const [context, setContext] = useState({ features: [], vatRate: undefined, currencyCode: undefined, jurisdiction: undefined });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
 
     async function load() {
+      setError(null);
       if (!isAuthenticated || !tenantId) {
         if (!cancelled) {
           setContext({ features: [], vatRate: undefined, currencyCode: undefined, jurisdiction: undefined });
@@ -41,9 +43,10 @@ export function JurisdictionFeatureProvider({ children }) {
           });
         }
       } catch (error) {
-        console.warn('JurisdictionFeatureProvider: could not load context', error);
+        console.error('JurisdictionFeatureProvider: could not load context', error);
         if (!cancelled) {
           setContext({ features: [], vatRate: undefined, currencyCode: undefined, jurisdiction: undefined });
+          setError(error);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -69,8 +72,8 @@ export function JurisdictionFeatureProvider({ children }) {
   );
 
   const value = useMemo(
-    () => ({ ...context, features: context.features, loading, isFeatureEnabled, areAnyEnabled }),
-    [context, loading, isFeatureEnabled, areAnyEnabled],
+    () => ({ ...context, features: context.features, loading, error, isFeatureEnabled, areAnyEnabled }),
+    [context, loading, error, isFeatureEnabled, areAnyEnabled],
   );
 
   return (

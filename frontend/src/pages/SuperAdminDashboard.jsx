@@ -19,6 +19,7 @@ import TenantDetailDialog from '../components/superadmin/TenantDetailDialog';
 import TenantRequestsTab from '../components/superadmin/TenantRequestsTab';
 import PlatformUsersTab from '../components/superadmin/PlatformUsersTab';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
+import { formatCurrency } from '../lib/localization';
 
 export default function SuperAdminDashboard() {
   const { t: _t, isRTL } = useLanguage();

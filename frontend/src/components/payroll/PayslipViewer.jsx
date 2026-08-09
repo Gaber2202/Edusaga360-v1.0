@@ -10,6 +10,7 @@ import { Download, Mail, Building2, Shield, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
+import { useTenant } from '../TenantContext';
 
 export default function PayslipViewer({ payslip, employee, branch, open, onClose }) {
   const { t: _t, isRTL } = useLanguage();

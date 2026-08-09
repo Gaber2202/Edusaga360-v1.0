@@ -34,17 +34,41 @@ export async function authMiddleware(
       return res.status(401).json({ message: 'Invalid or expired token' });
     }
 
-    // Security: ALL privileged claims must come from app_metadata (admin-only write).
-    // user_metadata is user-writable via supabase.auth.updateUser() — do NOT use it
-    // for role or tenant_id, as that allows self-escalation (set role='admin' client-side).
-    // The user_metadata fallback has been removed. Any user missing app_metadata claims
-    // needs to be re-onboarded through the admin provisioning flow.
+    // Primary: app_metadata is admin-only and the most trustworthy source.
+    // user_metadata is user-writable, so we do NOT read tenant_id/role from it.
+    // The public.users table is the authoritative join between auth.users and tenants;
+    // fall back to it when app_metadata is missing (legacy/platform-owner accounts).
+    const appMeta = user.app_metadata || {};
+    let tenantId = appMeta?.tenant_id;
+    let role = appMeta?.role;
+    let isPlatformOwner = appMeta?.is_platform_owner === true;
+
+    if ((!tenantId || !role) && typeof supabase.from === 'function') {
+      try {
+        const { data: appUser } = await supabase
+          .from('users')
+          .select('tenant_id, user_role, is_platform_owner')
+          .eq('auth_id', user.id)
+          .eq('status', 'active')
+          .maybeSingle();
+        if (appUser) {
+          tenantId = tenantId ?? (appUser.tenant_id as string | undefined);
+          role = role ?? (appUser.user_role as string | undefined);
+          isPlatformOwner = isPlatformOwner || appUser.is_platform_owner === true;
+        }
+      } catch (e) {
+        // If the users table cannot be queried (e.g. legacy environment), continue
+        // with whatever claims are in the JWT so the request is not silently rejected.
+        console.error('[authMiddleware] could not load user row from public.users:', e);
+      }
+    }
+
     req.user = {
       id: user.id,
       email: user.email!,
-      tenant_id: user.app_metadata?.tenant_id,
-      role: user.app_metadata?.role,
-      is_platform_owner: user.app_metadata?.is_platform_owner === true,
+      tenant_id: tenantId,
+      role,
+      is_platform_owner: isPlatformOwner,
     };
 
     next();

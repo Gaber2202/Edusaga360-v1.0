@@ -23,6 +23,7 @@ import { format } from 'date-fns';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { Plane, Plus, Loader2, BarChart3, FileText, CheckCircle, XCircle } from 'lucide-react';
+import { useTenant } from '../components/TenantContext';
 
 export default function BusinessTravel() {
   const { isRTL, t } = useLanguage();

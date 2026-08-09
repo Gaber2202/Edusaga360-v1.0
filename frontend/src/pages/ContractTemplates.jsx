@@ -18,6 +18,7 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import ContractPreviewModal from '../components/contracts/ContractPreviewModal';
+import { useTenant } from '../components/TenantContext';
 
 const TEMPLATE_TYPES = [
   { value: 'enrollment', label_ar: 'عقد التسجيل والرسوم الدراسية', label_en: 'Enrollment & Tuition Contract' },

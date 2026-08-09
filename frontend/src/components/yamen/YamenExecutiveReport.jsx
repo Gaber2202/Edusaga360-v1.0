@@ -12,7 +12,7 @@ import { extractAiText, aiErrorMessage } from './yamenUtils';
 import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
 import { NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
 import { useTenant } from '../TenantContext';
-import { getCurrencySymbol } from '../../lib/localization';
+import { getCurrencySymbol, formatCurrency } from '../../lib/localization';
 
 const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'];
 

@@ -22,6 +22,7 @@ import AssetLifecycleTracker from '../components/depreciation/AssetLifecycleTrac
 import DepreciationReport from '../components/depreciation/DepreciationReport';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { createJournalEntry } from '../api/journalEntry';
+import { useTenant } from '../components/TenantContext';
 
 export default function Depreciation() {
   const { t, isRTL } = useLanguage();

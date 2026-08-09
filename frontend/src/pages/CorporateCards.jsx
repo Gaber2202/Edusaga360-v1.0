@@ -20,6 +20,7 @@ import StatusBadge from '../components/ui/StatusBadge';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { getCurrencyCode } from '../lib/localization';
 import { CreditCard, Plus, Loader2, BarChart3, ArrowUpDown } from 'lucide-react';
 
 export default function CorporateCards() {
@@ -34,7 +35,7 @@ export default function CorporateCards() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     card_type: 'virtual', cardholder_name: '', employee_id: '',
-    spend_limit: 5000, currency: tenant?.currency_code || 'XXX', vendor_restrictions: '',
+    spend_limit: 5000, currency: getCurrencyCode(tenant), vendor_restrictions: '',
     category_restrictions: '', status: 'active'
   });
 
@@ -120,7 +121,7 @@ export default function CorporateCards() {
                     <TableCell className="font-medium">{c.cardholder_name}</TableCell>
                     <TableCell><Badge variant="outline">{c.card_type === 'virtual' ? (isRTL ? 'افتراضية' : 'Virtual') : (isRTL ? 'فعلية' : 'Physical')}</Badge></TableCell>
                     <TableCell className="font-mono text-sm">{c.card_number}</TableCell>
-                    <TableCell>{<Currency amount={c.spend_limit} />} {c.currency || tenant?.currency_code || 'XXX'}</TableCell>
+                    <TableCell>{<Currency amount={c.spend_limit} />} {c.currency || getCurrencyCode(tenant)}</TableCell>
                     <TableCell className="text-xs max-w-xs truncate">{c.vendor_restrictions || c.category_restrictions || '-'}</TableCell>
                     <TableCell><StatusBadge status={c.status} /></TableCell>
                   </TableRow>

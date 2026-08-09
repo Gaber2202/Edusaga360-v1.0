@@ -1,4 +1,5 @@
 import { callApi } from '../../api/supabaseClient';
+import { getCurrencyCode } from '../../lib/localization';
 
 /**
  * Helper functions to create notifications from various app events
@@ -39,8 +40,8 @@ export const NotificationHelper = {
         severity: 'info',
         title_ar: `دفعة جديدة - ${payment.payment_number}`,
         title_en: `Payment Received - ${payment.payment_number}`,
-        message_ar: `تم استلام دفعة بمبلغ ${Number(payment.amount || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${invoice?.currency_code || 'XXX'} للفاتورة ${invoice.invoice_number}`,
-        message_en: `Payment of ${Number(payment.amount || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${invoice?.currency_code || 'XXX'} received for invoice ${invoice.invoice_number}`,
+        message_ar: `تم استلام دفعة بمبلغ ${Number(payment.amount || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${getCurrencyCode({ currency_code: invoice?.currency_code })} للفاتورة ${invoice.invoice_number}`,
+        message_en: `Payment of ${Number(payment.amount || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${getCurrencyCode({ currency_code: invoice?.currency_code })} received for invoice ${invoice.invoice_number}`,
         entity_type: 'Payment',
         entity_id: payment.id,
         link_url: `?page=Fees`,

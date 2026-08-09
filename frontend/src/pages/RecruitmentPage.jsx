@@ -4,7 +4,7 @@ import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { extractAiText } from '../components/yamen/yamenUtils';
 import { useLanguage } from '../components/LanguageContext';
 import Currency from '../components/Currency';
-import { getCurrencySymbol } from '../lib/localization';
+import { getCurrencySymbol, formatCurrency } from '../lib/localization';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -31,6 +31,7 @@ import YamenHRInsights from '../components/hr/YamenHRInsights';
 import OfferLetterGenerator from '../components/recruitment/OfferLetterGenerator';
 import ConvertToEmployee from '../components/recruitment/ConvertToEmployee';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { useTenant } from '../components/TenantContext';
 
 export default function RecruitmentPage() {
   const { t, isRTL } = useLanguage();

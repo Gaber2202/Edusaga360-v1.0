@@ -18,6 +18,8 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
+import { useTenant } from '../TenantContext';
+import { formatCurrency } from '../../lib/localization';
 
 const STATUS_CONFIG = {
   draft:    { label_ar: 'مسودة',        label_en: 'Draft',    cls: 'bg-sand-alt text-muted-foreground'  },
@@ -55,6 +57,7 @@ export default function FeesInvoiceList({
   invoices, paymentLogs, loading, userRole, isRTL,
   onRecordPayment, onEditInvoice, onRefresh: _onRefresh
 }) {
+  const { tenant } = useTenant();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [gradeFilter, setGradeFilter] = useState('all');

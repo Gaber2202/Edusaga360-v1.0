@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
-import { getCurrencySymbol } from '../lib/localization';
+import { getCurrencySymbol, formatCurrency } from '../lib/localization';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -24,6 +24,7 @@ import AttachmentUploader from '../components/ui/AttachmentUploader';
 import jsPDF from 'jspdf';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { createJournalEntry } from '../api/journalEntry';
+import { useTenant } from '../components/TenantContext';
 
 export default function APBills() {
   const { t, isRTL } = useLanguage();

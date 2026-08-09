@@ -23,6 +23,7 @@ import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { useTenant } from '../components/TenantContext';
 
 const _SERVICE_TYPES = ['tuition', 'transport', 'activities', 'uniform', 'books', 'devices', 'meals', 'registration'];
 const DISCOUNT_TYPES = ['none', 'sibling', 'staff', 'scholarship', 'early_payment', 'special'];

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
-import { getCurrencySymbol } from '../../lib/localization';
+import { getCurrencySymbol, formatCurrency } from '../../lib/localization';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -22,6 +22,7 @@ import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
+import { useTenant } from '../TenantContext';
 
 const FINANCIAL_REPORTS = [
   { id: 'income_statement', name_ar: 'قائمة الدخل', name_en: 'Income Statement' },

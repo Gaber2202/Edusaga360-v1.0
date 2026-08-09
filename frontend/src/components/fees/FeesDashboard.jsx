@@ -6,10 +6,13 @@ import {
   PieChart, Pie, Cell, LineChart, Line, Legend
 } from 'recharts';
 import { DollarSign, TrendingUp, AlertCircle, CheckCircle, Percent, Banknote } from 'lucide-react';
+import { useTenant } from '../TenantContext';
+import { formatCurrency, getCurrencySymbol } from '../../lib/localization';
 
 const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
 
 export default function FeesDashboard({ invoices, payments, isRTL }) {
+  const { tenant } = useTenant();
   const active = invoices.filter(i => !['cancelled','draft'].includes(i.status));
   const total = active.reduce((s, i) => s + (i.total_amount || 0), 0);
   const collected = active.reduce((s, i) => s + (i.paid_amount || 0), 0);

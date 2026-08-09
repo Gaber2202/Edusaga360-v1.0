@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import StudentFeesSection from './StudentFeesSection';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
+import { useTenant } from '../TenantContext';
 
 export default function StudentDetails({ open, onClose, student: studentProp, onUpdate }) {
   const { t, isRTL } = useLanguage();

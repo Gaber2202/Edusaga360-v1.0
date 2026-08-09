@@ -22,6 +22,7 @@ import { format } from 'date-fns';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { EXPENSE_CATEGORIES, expenseCategoryLabel } from '../lib/expenseCategories';
+import { useTenant } from '../components/TenantContext';
 
 export default function Expenses() {
   const { t, isRTL } = useLanguage();

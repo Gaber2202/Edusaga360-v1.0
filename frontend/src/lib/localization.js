@@ -1,6 +1,6 @@
 const FALLBACK = {
-  currencyCode: 'XXX',
-  currencySymbol: { en: 'XXX', ar: 'XXX' },
+  currencyCode: undefined,
+  currencySymbol: { en: '', ar: '' },
   minorUnits: 2,
   numberFormat: { locale: 'en-SA', options: { minimumFractionDigits: 2, maximumFractionDigits: 2 } },
   dateFormat: { locale: 'en-SA', options: { year: 'numeric', month: 'short', day: 'numeric' } },
@@ -18,9 +18,17 @@ export function formatCurrency(value, localization, isRTL = false) {
   if (value === null || value === undefined) return '—';
   if (Number.isNaN(Number(value))) return String(value);
   const loc = resolveLocale(localization, isRTL);
+  const currencyCode = localization?.currencyCode || FALLBACK.currencyCode;
+  if (!currencyCode) {
+    console.error('[localization] formatCurrency called without a resolved currencyCode; jurisdiction context may be missing');
+    return new Intl.NumberFormat(loc, {
+      minimumFractionDigits: localization?.numberFormat?.options?.minimumFractionDigits ?? FALLBACK.numberFormat.options.minimumFractionDigits,
+      maximumFractionDigits: localization?.numberFormat?.options?.maximumFractionDigits ?? FALLBACK.numberFormat.options.maximumFractionDigits,
+    }).format(Number(value));
+  }
   const opts = {
     style: 'currency',
-    currency: localization?.currencyCode || FALLBACK.currencyCode,
+    currency: currencyCode,
     minimumFractionDigits: localization?.numberFormat?.options?.minimumFractionDigits ?? FALLBACK.numberFormat.options.minimumFractionDigits,
     maximumFractionDigits: localization?.numberFormat?.options?.maximumFractionDigits ?? FALLBACK.numberFormat.options.maximumFractionDigits,
   };
@@ -36,8 +44,20 @@ export function formatNumber(value, localization, isRTL = false) {
 }
 
 export function getCurrencySymbol(localization, isRTL = false) {
-  if (!localization?.currencySymbol) return isRTL ? FALLBACK.currencySymbol.ar : FALLBACK.currencySymbol.en;
-  return isRTL ? localization.currencySymbol.ar : localization.currencySymbol.en;
+  const symbol = localization?.currencySymbol;
+  if (!symbol) {
+    console.error('[localization] getCurrencySymbol called without a resolved currencySymbol; jurisdiction context may be missing');
+    return isRTL ? FALLBACK.currencySymbol.ar : FALLBACK.currencySymbol.en;
+  }
+  return isRTL ? symbol.ar : symbol.en;
+}
+
+export function getCurrencyCode(source) {
+  const code = source?.currency_code ?? source?.localization?.currencyCode ?? source?.currencyCode;
+  if (!code) {
+    console.error('[localization] getCurrencyCode: no currency code resolved for source', source);
+  }
+  return code || '';
 }
 
 export function formatDate(date, localization, isRTL = false, options = null) {

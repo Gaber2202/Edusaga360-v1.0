@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { tenantQuery, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { useTenant } from '../TenantContext';
-import { formatCurrency } from '../../lib/localization';
+import { formatCurrency, getCurrencyCode } from '../../lib/localization';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -447,7 +447,7 @@ export default function ClientSubscriptionPortal() {
               </tbody>
             </table>
           </div>
-          <p className="text-xs text-muted-foreground mt-3">{isRTL ? `* الأسعار سنوية بـ${tenant?.currency_code || 'XXX'}، لا تشمل ضريبة القيمة المضافة.` : `* Prices are annual in ${tenant?.currency_code || 'XXX'}, excluding VAT.`}</p>
+          <p className="text-xs text-muted-foreground mt-3">{isRTL ? `* الأسعار سنوية بـ${getCurrencyCode(tenant)}، لا تشمل ضريبة القيمة المضافة.` : `* Prices are annual in ${getCurrencyCode(tenant)}, excluding VAT.`}</p>
         </CardContent>
       </Card>
 

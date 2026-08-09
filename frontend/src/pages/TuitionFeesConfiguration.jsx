@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import Currency from '../components/Currency';
-import { getCurrencySymbol } from '../lib/localization';
+import { getCurrencySymbol, formatCurrency } from '../lib/localization';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -19,6 +19,7 @@ import PageHeader from '../components/ui/PageHeader';
 import { Plus, Edit2, Loader2, DollarSign, Heart, Tag } from 'lucide-react';
 import FeeTypeManager from '../components/fees/FeeTypeManager';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { useTenant } from '../components/TenantContext';
 
 export default function TuitionFeesConfiguration() {
   const { t: _t, isRTL } = useLanguage();
