@@ -170,8 +170,8 @@
   {
     "file": "backend/src/routes/billingPublic.ts",
     "term": "moyasar",
-    "count": 10,
-    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "count": 19,
+    "reason": "Moyasar webhook route resolves tenant/branch and delegates to the jurisdiction pack",
     "expires": "2026-10-31"
   },
   {

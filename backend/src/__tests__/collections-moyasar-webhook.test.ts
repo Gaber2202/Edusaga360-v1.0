@@ -32,6 +32,29 @@ function paidBody(overrides: Record<string, unknown> = {}) {
 }
 
 function resolver(ctx: QueryContext) {
+  if (ctx.table === 'tenants' && ctx.op === 'select' && ctx.single) {
+    return {
+      data: {
+        id: TENANT_ID,
+        jurisdiction_code: 'SA',
+        name_en: 'Test School',
+        settings: {},
+      },
+    };
+  }
+
+  if (ctx.table === 'branches' && ctx.op === 'select') {
+    return { data: [] };
+  }
+
+  if (ctx.table === 'tenant_compliance_settings' && ctx.op === 'select' && ctx.single) {
+    return { data: null };
+  }
+
+  if (ctx.table === 'moyasar_invoices' && ctx.op === 'select' && ctx.single) {
+    return { data: { edusaga_invoice_id: INVOICE_ID, tenant_id: TENANT_ID } };
+  }
+
   if (ctx.table === 'invoices' && ctx.op === 'select' && ctx.single) {
     return {
       data: {

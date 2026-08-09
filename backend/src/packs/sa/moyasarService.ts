@@ -4,7 +4,7 @@ import { MoyasarClient, type MoyasarInvoiceItem } from './moyasarClient.js';
 import { toMinorUnits, toMajorUnits, roundToMinorUnits, getMinorUnits } from '../../lib/money.js';
 import { getTenantComplianceData } from '../../services/tenant.js';
 import { createReceiptForPayment } from '../../services/receipt.js';
-import { generateZATCAInvoicePDF } from './zatca.js';
+import { saDocuments } from './documents.js';
 
 export interface MoyasarLinkOptions {
   tenantId: string;
@@ -534,7 +534,7 @@ export async function processMoyasarWebhook(
           { id: (paymentRow?.id as string) || moyasarPaymentId, amount: amountMajor, method: 'online', reference: moyasarPaymentId, date: new Date().toISOString().split('T')[0] },
           tenantData,
           currencyCode,
-          generateZATCAInvoicePDF,
+          saDocuments.renderInvoicePdf as (invoice: any, tenant: any) => Promise<Buffer>,
         );
       } catch (receiptErr) {
         console.warn('[moyasarService] receipt generation failed:', (receiptErr as Error).message);
