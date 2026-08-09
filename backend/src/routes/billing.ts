@@ -21,12 +21,6 @@ import crypto from 'crypto';
 import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/auth.js';
 import { sanitizeSearchTerm } from '../lib/sanitize.js';
 import { type InvoiceData, type VatSummary, type BuildInvoiceLineInput, type BuiltInvoiceLine, type BuildInvoiceLinesResult } from '../packs/sa/vat.js';
-import {
-  generateTLVQR,
-  generateUBLXml,
-  generateInvoiceHash,
-  generateZATCAInvoicePDF,
-} from '../packs/sa/zatca.js';
 import type { TenantData } from '../types/tenant.js';
 import { getTenantComplianceData } from '../services/tenant.js';
 import { createReceiptForPayment } from '../services/receipt.js';
@@ -54,8 +48,6 @@ export const billingRouter = Router();
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const ZATCA_SANDBOX_URL = 'https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal';
-const ZATCA_PROD_URL = 'https://gw-fatoora.zatca.gov.sa/e-invoicing/core';
 const DIGITAL_PAYMENT_METHODS = new Set(['mada', 'creditcard', 'applepay', 'stcpay', 'samsungpay']);
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -493,14 +485,17 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
     let invoice_hash: string | null = null;
     let previous_hash: string | null = null;
     if (isEInvoiceEnabled) {
+      if (!pack.eInvoice) {
+        throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'e-invoice generation');
+      }
       chain = await getZatcaChain(tenant_id);
       invoiceData.previous_invoice_hash = chain.previous_invoice_hash;
       invoiceData.icv = chain.icv;
       previous_hash = chain.previous_invoice_hash ?? null;
 
-      qr_code = generateTLVQR(invoiceData, tenant);
-      ubl_xml = generateUBLXml(invoiceData, tenant);
-      invoice_hash = generateInvoiceHash(ubl_xml);
+      qr_code = pack.eInvoice.generateTLVQR!(invoiceData, tenant);
+      ubl_xml = pack.eInvoice.generateUBLXml!(invoiceData, tenant);
+      invoice_hash = pack.eInvoice.generateInvoiceHash!(ubl_xml);
     }
 
     // Insert invoice — try extended schema first, fall back to base columns
@@ -798,40 +793,39 @@ billingRouter.post('/invoices/:id/zatca-submit', requireRole(FINANCE_ROLES), asy
       return res.status(400).json({ error: 'E-invoicing is not enabled for this jurisdiction' });
     }
 
-    // Generate PDF
+    // Resolve the e-invoice pack and submit through it.
+    const ctx = await buildRequestContext(supabase, tenant_id, (invoice as { branch_id?: string | null } | null)?.branch_id ?? undefined);
+    const pack = resolvePack(ctx);
+    if (!pack.eInvoice?.generatePDF || !pack.eInvoice.reportInvoice || !pack.eInvoice.clearInvoice) {
+      throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'ZATCA e-invoice submission');
+    }
+
     const tenant = await getTenantComplianceData(supabase, tenant_id);
-    const pdfBuffer = await generateZATCAInvoicePDF(
-      { invoice_number: invoice?.invoice_number, issue_date: invoice?.date, subtotal: invoice?.subtotal, vat_amount: invoice?.vat_amount, total_amount: invoice?.total_amount } as InvoiceData,
+    const pdfBuffer = await pack.eInvoice.generatePDF!(
+      {
+        invoice_number: invoice?.invoice_number,
+        issue_date: (invoice?.date || invoice?.issue_date) as string,
+        subtotal: invoice?.subtotal,
+        vat_amount: invoice?.vat_amount,
+        total_amount: invoice?.total_amount,
+      } as InvoiceData,
       tenant,
     );
 
-    const baseUrl = process.env.ZATCA_ENV === 'production' ? ZATCA_PROD_URL : ZATCA_SANDBOX_URL;
-    const endpoint = sub.submission_type === 'clearance'
-      ? `${baseUrl}/invoices/clearance/single`
-      : `${baseUrl}/invoices/reporting/single`;
-
-    const payload = {
-      invoiceHash: sub.invoice_hash,
-      uuid: sub.zatca_uuid ?? crypto.randomUUID(),
-      invoice: Buffer.from(sub.ubl_xml ?? '').toString('base64'),
-    };
+    const xmlBase64 = Buffer.from(sub.ubl_xml ?? '', 'utf8').toString('base64');
+    const uuid = (sub.zatca_uuid as string | null) ?? crypto.randomUUID();
 
     let zatcaResponse: Record<string, unknown> = {};
     let newStatus = 'submitted';
 
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          'Accept-Version': 'V2',
-          Authorization: `Basic ${Buffer.from(`${process.env.ZATCA_CSID ?? ''}:${process.env.ZATCA_SECRET ?? ''}`).toString('base64')}`,
-        },
-        body: JSON.stringify(payload),
-      });
-      zatcaResponse = await response.json() as Record<string, unknown>;
-      newStatus = response.ok ? (sub.submission_type === 'clearance' ? 'cleared' : 'reported') : 'rejected';
+      if (sub.submission_type === 'clearance') {
+        zatcaResponse = await pack.eInvoice.clearInvoice!(xmlBase64, sub.invoice_hash as string, uuid);
+        newStatus = (zatcaResponse as Record<string, unknown>).clearanceStatus === 'CLEARED' ? 'cleared' : 'rejected';
+      } else {
+        zatcaResponse = await pack.eInvoice.reportInvoice!(xmlBase64, sub.invoice_hash as string, uuid);
+        newStatus = (zatcaResponse as Record<string, unknown>).reportingStatus === 'REPORTED' ? 'reported' : 'rejected';
+      }
     } catch (fetchErr) {
       console.error('ZATCA API call failed:', fetchErr);
       newStatus = 'error';
@@ -848,6 +842,9 @@ billingRouter.post('/invoices/:id/zatca-submit', requireRole(FINANCE_ROLES), asy
 
     return res.json({ status: newStatus, zatca_response: zatcaResponse });
   } catch (err) {
+    if (err instanceof NotImplementedInJurisdiction || (err as any).name === 'NotImplementedInJurisdiction') {
+      return res.status(501).json({ error: (err as Error).message, code: 501, feature: (err as any).feature });
+    }
     console.error('zatca-submit:', err);
     return res.status(500).json({ error: 'ZATCA submission failed' });
   }
@@ -938,6 +935,9 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
     if (!(await eInvoiceFeatureEnabled(tenant_id, original.branch_id ?? null))) {
       return res.status(400).json({ error: 'E-invoicing is not enabled for this jurisdiction' });
     }
+    if (!pack.eInvoice) {
+      throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'e-invoice generation');
+    }
 
     // ZATCA credit note submission record
     const tenant = await getTenantComplianceData(supabase, tenant_id);
@@ -958,8 +958,8 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
     const chain = await getZatcaChain(tenant_id);
     creditInvoiceData.previous_invoice_hash = chain.previous_invoice_hash;
     creditInvoiceData.icv = chain.icv;
-    const ubl_xml = generateUBLXml(creditInvoiceData, tenant);
-    const invoice_hash = generateInvoiceHash(ubl_xml);
+    const ubl_xml = pack.eInvoice.generateUBLXml!(creditInvoiceData, tenant);
+    const invoice_hash = pack.eInvoice.generateInvoiceHash!(ubl_xml);
 
     await supabase.from('zatca_submissions').insert({
       tenant_id,
@@ -1335,9 +1335,12 @@ export async function createInvoiceForStudent(
   let ubl_xml: string | null = null;
   let invoice_hash: string | null = null;
   if (isEInvoiceEnabled) {
-    ubl_xml = generateUBLXml(invoiceData, tenant);
-    invoice_hash = generateInvoiceHash(ubl_xml);
-    qr_code = generateTLVQR(invoiceData, tenant);
+    if (!pack.eInvoice) {
+      throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'e-invoice generation');
+    }
+    ubl_xml = pack.eInvoice.generateUBLXml!(invoiceData, tenant);
+    invoice_hash = pack.eInvoice.generateInvoiceHash!(ubl_xml);
+    qr_code = pack.eInvoice.generateTLVQR!(invoiceData, tenant);
   }
 
   const { data: invoice, error } = await supabase

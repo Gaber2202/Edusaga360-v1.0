@@ -12,6 +12,8 @@ const INVOICE_ID = '22222222-2222-2222-2222-222222222222';
 const TENANT_ID = 'tenant-A';
 const PROFILE_ID = '33333333-3333-3333-3333-333333333333';
 const PAYMENT_ID = 'pay_123';
+const MOYASAR_INVOICE_ID = 'moyasar-inv-1';
+const MOYASAR_INVOICE_ROW_ID = 'mi-1';
 
 function makeApp() {
   const app = express();
@@ -23,7 +25,9 @@ function makeApp() {
 function paidBody(overrides: Record<string, unknown> = {}) {
   return {
     id: PAYMENT_ID,
+    type: 'payment_paid',
     status: 'paid',
+    invoice_id: MOYASAR_INVOICE_ID,
     amount: 100000,
     metadata: { invoice_id: INVOICE_ID, tenant_id: TENANT_ID, collection_message_id: 'msg-1' },
     secret_token: 'super-secret',
@@ -52,7 +56,7 @@ function resolver(ctx: QueryContext) {
   }
 
   if (ctx.table === 'moyasar_invoices' && ctx.op === 'select' && ctx.single) {
-    return { data: { edusaga_invoice_id: INVOICE_ID, tenant_id: TENANT_ID } };
+    return { data: { id: MOYASAR_INVOICE_ROW_ID, edusaga_invoice_id: INVOICE_ID, tenant_id: TENANT_ID } };
   }
 
   if (ctx.table === 'invoices' && ctx.op === 'select' && ctx.single) {

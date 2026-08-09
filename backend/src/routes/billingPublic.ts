@@ -22,21 +22,38 @@ billingPublicRouter.post('/moyasar/webhook', async (req, res) => {
 
     const bodyData = (req.body?.data as Record<string, unknown>) || req.body;
     const metadata = (bodyData?.metadata as Record<string, string>) || {};
-    let tenantId: string | undefined = metadata.tenant_id;
-    let invoiceId: string | undefined = metadata.edusaga_invoice_id || metadata.invoice_id;
 
-    // Fallback: if metadata is stripped (e.g. bulk invoices), resolve via the
-    // moyasar_invoices mapping table.
-    if (!tenantId && bodyData?.invoice_id) {
-      const { data: moyasarInvoice } = await supabase
-        .from('moyasar_invoices')
-        .select('edusaga_invoice_id, tenant_id')
-        .eq('moyasar_id', bodyData.invoice_id as string)
-        .maybeSingle();
-      if (moyasarInvoice) {
-        tenantId = (moyasarInvoice.tenant_id as string) || undefined;
-        invoiceId = invoiceId || (moyasarInvoice.edusaga_invoice_id as string) || undefined;
-      }
+    // Tenant/invoice MUST be derived from our own moyasar_invoices row, keyed by
+    // the external Moyasar invoice id. Payload metadata is attacker-controllable.
+    const moyasarInvoiceId = bodyData?.invoice_id as string | undefined;
+    if (!moyasarInvoiceId) {
+      console.warn('[public/billing/moyasar/webhook] rejected: missing moyasar invoice id');
+      return res.status(400).json({ error: 'missing_moyasar_invoice_id' });
+    }
+
+    const { data: moyasarInvoice } = await supabase
+      .from('moyasar_invoices')
+      .select('edusaga_invoice_id, tenant_id')
+      .eq('moyasar_id', moyasarInvoiceId)
+      .maybeSingle();
+
+    if (!moyasarInvoice) {
+      console.warn('[public/billing/moyasar/webhook] rejected: moyasar invoice not found');
+      return res.status(404).json({ error: 'moyasar_invoice_not_found' });
+    }
+
+    const tenantId = (moyasarInvoice.tenant_id as string) || '';
+    const invoiceId = (moyasarInvoice.edusaga_invoice_id as string) || '';
+
+    // Defensive: if the payload metadata claims a different tenant/invoice, reject.
+    if (metadata.tenant_id && metadata.tenant_id !== tenantId) {
+      console.warn('[public/billing/moyasar/webhook] rejected: metadata tenant mismatch');
+      return res.status(400).json({ error: 'metadata_tenant_mismatch' });
+    }
+    const metaInvoiceId = metadata.edusaga_invoice_id || metadata.invoice_id;
+    if (metaInvoiceId && invoiceId && metaInvoiceId !== invoiceId) {
+      console.warn('[public/billing/moyasar/webhook] rejected: metadata invoice mismatch');
+      return res.status(400).json({ error: 'metadata_invoice_mismatch' });
     }
 
     if (!tenantId) {
@@ -47,16 +64,13 @@ billingPublicRouter.post('/moyasar/webhook', async (req, res) => {
     // Resolve the pack for the invoice's branch if we can find it; otherwise
     // fall back to the tenant-level jurisdiction. A non-Moyasar jurisdiction
     // must reject before any payment write.
-    let branchId: string | undefined;
-    if (invoiceId) {
-      const { data: invoice } = await supabase
-        .from('invoices')
-        .select('branch_id')
-        .eq('id', invoiceId)
-        .eq('tenant_id', tenantId)
-        .maybeSingle();
-      branchId = (invoice?.branch_id as string) || undefined;
-    }
+    const { data: invoice } = await supabase
+      .from('invoices')
+      .select('branch_id')
+      .eq('id', invoiceId)
+      .eq('tenant_id', tenantId)
+      .maybeSingle();
+    const branchId = (invoice?.branch_id as string) || undefined;
 
     const ctx = await buildRequestContext(supabase, tenantId, branchId);
     const pack = resolvePack(ctx);

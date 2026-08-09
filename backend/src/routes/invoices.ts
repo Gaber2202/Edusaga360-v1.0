@@ -6,18 +6,6 @@ import { AuthenticatedRequest, requireRole, FINANCE_ROLES } from '../middleware/
 import type { InvoiceData } from '../packs/sa/vat.js';
 import { buildRequestContext, NotImplementedInJurisdiction, resolveJurisdiction } from '../lib/jurisdiction.js';
 import { resolvePack } from '../packs/registry.js';
-import {
-  generateTLVQR,
-  generateUBLXml,
-  generateInvoiceHash,
-  generateZATCAInvoicePDF,
-  signInvoice,
-  generatePIH,
-  reportInvoice,
-  clearInvoice,
-  complianceCheck,
-  invoiceDataFromRow,
-} from '../packs/sa/zatca.js';
 import type { TenantData } from '../types/tenant.js';
 import { getTenantComplianceData } from '../services/tenant.js';
 import { PdfQueueSaturatedError } from '../lib/pdfConcurrency.js';
@@ -131,6 +119,21 @@ invoiceRouter.post('/generate-zatca', requireRole(FINANCE_ROLES), async (req: Au
     }
 
     const tenant = await getTenantComplianceData(supabase, tenantId);
+    const ctx = await buildRequestContext(supabase, tenantId);
+    const pack = resolvePack(ctx);
+    if (
+      !pack.eInvoice?.generateUBLXml ||
+      !pack.eInvoice.generateInvoiceHash ||
+      !pack.eInvoice.signInvoice ||
+      !pack.eInvoice.generatePIH ||
+      !pack.eInvoice.generateTLVQR ||
+      !pack.eInvoice.generatePDF ||
+      !pack.eInvoice.reportInvoice ||
+      !pack.eInvoice.clearInvoice
+    ) {
+      throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'ZATCA e-invoice generation');
+    }
+
     const icv = await getNextICV(tenantId);
     const previousHash = await getPreviousInvoiceHash(tenantId);
     const uuid = crypto.randomUUID();
@@ -142,15 +145,15 @@ invoiceRouter.post('/generate-zatca', requireRole(FINANCE_ROLES), async (req: Au
       previous_invoice_hash: previousHash,
     };
 
-    // Generate ZATCA artifacts
-    const ubl_xml = generateUBLXml(invoice, tenant);
-    const invoice_hash = generateInvoiceHash(ubl_xml);
-    const signature = signInvoice(invoice_hash);
-    const pih = generatePIH(previousHash);
-    const qr_code = generateTLVQR(invoice, tenant, signature);
+    // Generate ZATCA artifacts through the jurisdiction pack.
+    const ubl_xml = pack.eInvoice.generateUBLXml!(invoice, tenant);
+    const invoice_hash = pack.eInvoice.generateInvoiceHash!(ubl_xml);
+    const signature = pack.eInvoice.signInvoice!(invoice_hash);
+    const pih = pack.eInvoice.generatePIH!(previousHash);
+    const qr_code = pack.eInvoice.generateTLVQR!(invoice, tenant, signature);
 
     // Generate PDF with proper Arabic rendering
-    const pdfBuffer = await generateZATCAInvoicePDF(invoice, tenant);
+    const pdfBuffer = await pack.eInvoice.generatePDF!(invoice, tenant);
     const pdf_base64 = pdfBuffer.toString('base64');
 
     // Submit to ZATCA API based on invoice type
@@ -162,10 +165,10 @@ invoiceRouter.post('/generate-zatca', requireRole(FINANCE_ROLES), async (req: Au
 
     try {
       if (isSimplified) {
-        zatcaResponse = await reportInvoice(xmlBase64, invoice_hash, uuid);
+        zatcaResponse = await pack.eInvoice.reportInvoice!(xmlBase64, invoice_hash, uuid);
         zatcaStatus = zatcaResponse.reportingStatus === 'REPORTED' ? 'reported' : 'generated';
       } else {
-        zatcaResponse = await clearInvoice(xmlBase64, invoice_hash, uuid);
+        zatcaResponse = await pack.eInvoice.clearInvoice!(xmlBase64, invoice_hash, uuid);
         zatcaStatus = zatcaResponse.clearanceStatus === 'CLEARED' ? 'cleared' : 'generated';
       }
     } catch {
@@ -215,6 +218,9 @@ invoiceRouter.post('/generate-zatca', requireRole(FINANCE_ROLES), async (req: Au
       zatca_response: zatcaResponse,
     });
   } catch (err) {
+    if (err instanceof NotImplementedInJurisdiction || (err as any).name === 'NotImplementedInJurisdiction') {
+      return res.status(501).json({ message: (err as Error).message, code: 501, feature: (err as any).feature });
+    }
     console.error('Failed to generate ZATCA invoice:', err);
     return res.status(500).json({ message: 'Failed to generate ZATCA invoice' });
   }
@@ -237,17 +243,26 @@ invoiceRouter.post('/zatca-compliance-check', requireRole(FINANCE_ROLES), async 
     }
 
     const tenant = await getTenantComplianceData(supabase, tenantId);
+    const ctx = await buildRequestContext(supabase, tenantId);
+    const pack = resolvePack(ctx);
+    if (!pack.eInvoice?.generateUBLXml || !pack.eInvoice.generateInvoiceHash || !pack.eInvoice.complianceCheck) {
+      throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'ZATCA compliance check');
+    }
+
     const uuid = crypto.randomUUID();
 
     const invoice: InvoiceData = { ...parsed.data, uuid, icv: 1 };
-    const xml = generateUBLXml(invoice, tenant);
-    const hash = generateInvoiceHash(xml);
+    const xml = pack.eInvoice.generateUBLXml!(invoice, tenant);
+    const hash = pack.eInvoice.generateInvoiceHash!(xml);
     const xmlBase64 = Buffer.from(xml, 'utf8').toString('base64');
 
-    const result = await complianceCheck(xmlBase64, hash, uuid);
+    const result = await pack.eInvoice.complianceCheck!(xmlBase64, hash, uuid);
 
     return res.status(200).json({ uuid, invoice_hash: hash, compliance_result: result });
   } catch (err) {
+    if (err instanceof NotImplementedInJurisdiction || (err as any).name === 'NotImplementedInJurisdiction') {
+      return res.status(501).json({ message: (err as Error).message, code: 501, feature: (err as any).feature });
+    }
     console.error('ZATCA compliance check failed:', err);
     return res.status(500).json({ message: 'Compliance check failed' });
   }
@@ -322,20 +337,18 @@ invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Re
 
     const tenant = await getTenantComplianceData(supabase, tenantId);
 
-    const invoice: InvoiceData = invoiceDataFromRow(invoiceRow as Record<string, unknown>);
-
     const ctx = await buildRequestContext(supabase, tenantId, (invoiceRow.branch_id as string) ?? undefined);
     const pack = resolvePack(ctx);
     if (!pack.documents?.renderInvoicePdf) {
       throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'invoice PDF');
     }
-    const pdfBuffer = await pack.documents.renderInvoicePdf(invoice, tenant);
+    const pdfBuffer = await pack.documents.renderInvoicePdf!(invoiceRow, tenant);
 
     const inline = req.query.inline === '1' || req.query.inline === 'true';
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
       'Content-Disposition',
-      `${inline ? 'inline' : 'attachment'}; filename="invoice-${invoice.invoice_number}.pdf"`,
+      `${inline ? 'inline' : 'attachment'}; filename="invoice-${(invoiceRow as Record<string, unknown>).invoice_number}.pdf"`,
     );
     res.setHeader('Content-Length', pdfBuffer.length);
 

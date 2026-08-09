@@ -1,0 +1,10 @@
+[
+  {
+    "file": "backend/src/scripts/invoicePartASeed.ts",
+    "import": "../packs/sa/zatca.js",
+    "count": 1,
+    "reason": "Standalone seed script for local Part A testing; not production runtime. Move under packs/sa/scripts to remove exception.",
+    "tracked_issue": "https://github.com/EduSaga360/edusaga-360/issues/218",
+    "expires": "2026-10-31"
+  }
+]

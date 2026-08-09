@@ -146,6 +146,14 @@ jobs:
       - name: Block Saudi/GCC-specific literals outside packs and migrations
         run: python3 .github/scripts/guard_country_literals.py
 
+  guard-pack-imports:
+    name: Guard pack imports
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Block direct imports of packs/sa, packs/ae or packs/qa outside packs and tests
+        run: python3 .github/scripts/guard_pack_imports.py
+
   guard-frontend-nationality:
     name: Guard frontend nationality classification
     runs-on: ubuntu-latest
