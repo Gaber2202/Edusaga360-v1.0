@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../LanguageContext';
+import { formatCurrency, getCurrencySymbol } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { useRole } from '../RoleContext';
 import { tenantQuery } from '../../api/supabaseClient';
 import { Button } from '../ui/button';
@@ -31,6 +33,7 @@ const PAYMENT_METHODS = ['cash', 'bank_transfer', 'card', 'cheque', 'online'];
 
 export default function PaymentForm({ open, onClose, onSuccess, invoice }) {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { user } = useRole();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -139,10 +142,10 @@ export default function PaymentForm({ open, onClose, onSuccess, invoice }) {
           received_by: user?.email
         },
         page: 'Fees',
-        notes: `Payment of ${formData.amount} SAR recorded for invoice ${invoice.invoice_number}`
+        notes: `Payment of ${formatCurrency(formData.amount, tenant?.localization, isRTL)} recorded for invoice ${invoice.invoice_number}`
       });
 
-      // Notify finance team on large payments (>10k SAR)
+      // Notify finance team on large payments (>10k amount)
       if (parseFloat(formData.amount) >= 10000) {
         NotificationHelper.notifyPaymentReceived(payment, invoice);
       }
@@ -180,15 +183,15 @@ export default function PaymentForm({ open, onClose, onSuccess, invoice }) {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t('total')}</span>
-              <span className="font-medium">{invoice.total_amount?.toLocaleString()} {t('sar')}</span>
+              <span className="font-medium">{formatCurrency(invoice.total_amount, tenant?.localization, isRTL)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t('paid')}</span>
-              <span className="font-medium text-emerald-600">{(invoice.paid_amount || 0).toLocaleString()} {t('sar')}</span>
+              <span className="font-medium text-emerald-600">{(invoice.paid_amount || 0).toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span>
             </div>
             <div className="flex justify-between border-t pt-2">
               <span className="text-muted-foreground">{isRTL ? 'المتبقي' : 'Remaining'}</span>
-              <span className="font-bold text-red-600">{remaining.toLocaleString()} {t('sar')}</span>
+              <span className="font-bold text-red-600">{formatCurrency(remaining, tenant?.localization, isRTL)}</span>
             </div>
           </div>
 
@@ -205,7 +208,7 @@ export default function PaymentForm({ open, onClose, onSuccess, invoice }) {
                 className="pe-12"
               />
               <span className="absolute top-1/2 -translate-y-1/2 end-3 text-muted-foreground text-sm">
-                {t('sar')}
+                {getCurrencySymbol(tenant?.localization, isRTL)}
               </span>
             </div>
           </div>

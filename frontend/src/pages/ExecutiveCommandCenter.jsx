@@ -2,6 +2,10 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { useTenant } from '../components/TenantContext';
+import { formatCurrency, formatDate, formatDateTime } from '../lib/localization';
+import { useJurisdictionFeatures } from '../components/JurisdictionFeatureContext';
+import { NATIONALISATION_FEATURES, EINVOICING_FEATURES, WPS_FEATURES, SOCIAL_INSURANCE_FEATURES, LABOR_PORTAL_FEATURES } from '../lib/jurisdictionFeatures.js';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Badge } from '../components/ui/badge';
@@ -30,10 +34,6 @@ function fmtNumber(n, isRTL) {
   return new Intl.NumberFormat(isRTL ? 'ar-SA' : 'en-US').format(n);
 }
 
-function fmtSAR(n, isRTL) {
-  if (n === null || n === undefined) return '—';
-  return new Intl.NumberFormat(isRTL ? 'ar-SA' : 'en-US', { style: 'currency', currency: 'SAR', maximumFractionDigits: 0 }).format(n);
-}
 
 function fmtPct(n) {
   if (n === null || n === undefined) return '—';
@@ -89,6 +89,7 @@ function DataQualityNote({ quality, isRTL }) {
 
 export default function ExecutiveCommandCenter() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const dashboardRef = useRef(null);
 
   const [access, setAccess] = useState(null);
@@ -315,7 +316,7 @@ export default function ExecutiveCommandCenter() {
                 const d = new Date();
                 d.setMonth(d.getMonth() - i);
                 const key = d.toISOString().slice(0, 7);
-                const label = isRTL ? `${d.toLocaleString('ar-SA', { month: 'short' })} ${d.getFullYear()}` : `${d.toLocaleString('en-US', { month: 'short' })} ${d.getFullYear()}`;
+                const label = `${formatDate(d, tenant?.localization, isRTL, { month: 'short', year: 'numeric' })}`;
                 return <SelectItem key={key} value={key}>{label}</SelectItem>;
               })}
             </SelectContent>
@@ -341,7 +342,7 @@ export default function ExecutiveCommandCenter() {
           {dashboard?.computed_at && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
               <Clock className="w-3.5 h-3.5" />
-              <span>{new Date(dashboard.computed_at).toLocaleString(isRTL ? 'ar-SA' : 'en-US')}</span>
+              <span>{formatDateTime(dashboard.computed_at, tenant?.localization, isRTL)}</span>
             </div>
           )}
         </div>
@@ -461,6 +462,7 @@ function KPICard({ title, value, delta, sparkData, color, isRTL }) {
 }
 
 function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBrief, isRTL, t }) {
+  const { tenant } = useTenant();
   const { vitality, financials, collections, campus_vitality = [], strategic_alerts = [], revenue_trend = [], collection_trend = [], top_risks = [], cash_runway } = data;
 
   const collectionRate = collections?.collection_rate_pct;
@@ -506,7 +508,7 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <KPICard
           title={isRTL ? 'الإيرادات' : 'Revenue'}
-          value={fmtSAR(financials?.revenue, isRTL)}
+          value={formatCurrency(financials?.revenue, tenant?.localization, isRTL)}
           delta={financials?.revenue_delta_pct}
           sparkData={revenue_trend?.map((v, i) => ({ name: i, value: v.revenue || v }))}
           color={COLORS.najdi}
@@ -514,7 +516,7 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
         />
         <KPICard
           title={isRTL ? 'الأرباح قبل الفوائد والضرائب والإهلاك' : 'EBITDA'}
-          value={fmtSAR(financials?.ebitda, isRTL)}
+          value={formatCurrency(financials?.ebitda, tenant?.localization, isRTL)}
           delta={financials?.ebitda_delta_pct}
           sparkData={revenue_trend?.map((v, i) => ({ name: i, value: v.ebitda || 0 }))}
           color={COLORS.green}
@@ -777,6 +779,12 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
 }
 
 function CFODashboard({ data, isRTL, t }) {
+  const { tenant } = useTenant();
+  const { isFeatureEnabled } = useJurisdictionFeatures();
+  const einvoiceEnabled = isFeatureEnabled(EINVOICING_FEATURES[0]);
+  const wageProtectionEnabled = isFeatureEnabled(WPS_FEATURES[0]);
+  const socialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);
+  const showCompliance = einvoiceEnabled || wageProtectionEnabled || socialInsuranceEnabled;
   const { kpis = {}, ar_aging = {}, overdue_by_campus = [], revenue_vs_ebitda = [], compliance_traffic_lights = {}, scenario_baseline = {} } = data;
 
   const [growthRate, setGrowthRate] = useState(0);
@@ -795,9 +803,9 @@ function CFODashboard({ data, isRTL, t }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard title={t('revenue')} value={fmtSAR(kpis.revenue, isRTL)} icon={DollarSign} iconClassName="bg-najdi-50" />
-        <StatCard title={t('ebitda')} value={fmtSAR(kpis.ebitda, isRTL)} subtitle={fmtPct(kpis.margin_pct)} icon={TrendingUp} iconClassName="bg-emerald-50" />
-        <StatCard title={t('cashCollected')} value={fmtSAR(kpis.cash_collected_30d, isRTL)} icon={ShieldCheck} iconClassName="bg-purple-50" />
+        <StatCard title={t('revenue')} value={formatCurrency(kpis.revenue, tenant?.localization, isRTL)} icon={DollarSign} iconClassName="bg-najdi-50" />
+        <StatCard title={t('ebitda')} value={formatCurrency(kpis.ebitda, tenant?.localization, isRTL)} subtitle={fmtPct(kpis.margin_pct)} icon={TrendingUp} iconClassName="bg-emerald-50" />
+        <StatCard title={t('cashCollected')} value={formatCurrency(kpis.cash_collected_30d, tenant?.localization, isRTL)} icon={ShieldCheck} iconClassName="bg-purple-50" />
         <StatCard title={t('dsoDays')} value={fmtNumber(kpis.dso_days, isRTL)} icon={Clock} iconClassName="bg-amber-50" />
       </div>
 
@@ -836,16 +844,18 @@ function CFODashboard({ data, isRTL, t }) {
         </Card>
       </div>
 
+      {showCompliance && (
       <Card className="border-0 shadow-sm">
         <CardHeader><CardTitle className="text-base">{t('complianceTrafficLights')}</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <TrafficLight label="ZATCA / VAT" signal={compliance_traffic_lights.zatca_vat} />
-            <TrafficLight label="WPS / Mudad" signal={compliance_traffic_lights.wps_mudad} />
-            <TrafficLight label="GOSI" signal={compliance_traffic_lights.gosi} />
+            {einvoiceEnabled && <TrafficLight label={t('complianceEinvoice')} signal={compliance_traffic_lights[EINVOICING_FEATURES[0]]} />}
+            {wageProtectionEnabled && <TrafficLight label={t('complianceWps')} signal={compliance_traffic_lights[WPS_FEATURES[0]]} />}
+            {socialInsuranceEnabled && <TrafficLight label={t('complianceSocialInsurance')} signal={compliance_traffic_lights[SOCIAL_INSURANCE_FEATURES[0]]} />}
           </div>
         </CardContent>
       </Card>
+      )}
 
       <Card className="border-0 shadow-sm">
         <CardHeader><CardTitle className="text-base">{t('overdueByCampus')}</CardTitle></CardHeader>
@@ -863,7 +873,7 @@ function CFODashboard({ data, isRTL, t }) {
                   {overdue_by_campus.map((c) => (
                     <tr key={c.branch_id} className="border-b border-sand">
                       <td className="py-2 text-ink">{isRTL ? c.name_ar : c.name_en}</td>
-                      <td className="py-2 text-ink">{fmtSAR(c.overdue_amount, isRTL)}</td>
+                      <td className="py-2 text-ink">{formatCurrency(c.overdue_amount, tenant?.localization, isRTL)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -893,9 +903,9 @@ function CFODashboard({ data, isRTL, t }) {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4 pt-2">
-            <div className="text-center"><p className="text-xs text-muted-foreground">{t('revenue')}</p><p className="font-semibold">{fmtSAR(simRevenue, isRTL)}</p></div>
-            <div className="text-center"><p className="text-xs text-muted-foreground">{isRTL ? 'المصروفات' : 'Expenses'}</p><p className="font-semibold">{fmtSAR(simExpenses, isRTL)}</p></div>
-            <div className="text-center"><p className="text-xs text-muted-foreground">{t('ebitda')}</p><p className="font-semibold">{fmtSAR(simEbitda, isRTL)}</p></div>
+            <div className="text-center"><p className="text-xs text-muted-foreground">{t('revenue')}</p><p className="font-semibold">{formatCurrency(simRevenue, tenant?.localization, isRTL)}</p></div>
+            <div className="text-center"><p className="text-xs text-muted-foreground">{isRTL ? 'المصروفات' : 'Expenses'}</p><p className="font-semibold">{formatCurrency(simExpenses, tenant?.localization, isRTL)}</p></div>
+            <div className="text-center"><p className="text-xs text-muted-foreground">{t('ebitda')}</p><p className="font-semibold">{formatCurrency(simEbitda, tenant?.localization, isRTL)}</p></div>
           </div>
         </CardContent>
       </Card>
@@ -904,6 +914,7 @@ function CFODashboard({ data, isRTL, t }) {
 }
 
 function COODashboard({ data, isRTL, t }) {
+  const { tenant } = useTenant();
   const { kpis = {}, capacity_to_cash = [], admissions_funnel = {}, utilization_by_campus = [] } = data;
 
   return (
@@ -948,7 +959,7 @@ function COODashboard({ data, isRTL, t }) {
                       <td className="py-2 text-ink">{fmtNumber(c.capacity, isRTL)}</td>
                       <td className="py-2 text-ink">{fmtNumber(c.enrolled, isRTL)}</td>
                       <td className="py-2 text-ink">{fmtPct(c.utilization_pct)}</td>
-                      <td className="py-2 text-ink">{fmtSAR(c.cash_collected, isRTL)}</td>
+                      <td className="py-2 text-ink">{formatCurrency(c.cash_collected, tenant?.localization, isRTL)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -994,9 +1005,15 @@ function COODashboard({ data, isRTL, t }) {
 }
 
 function CHRODashboard({ data, isRTL, t }) {
-  const { kpis = {}, nitaqat = {}, workforce_composition = {}, payroll_gov_compliance = {}, open_roles = {}, contract_expiry_radar = {}, leave_absence_summary = {} } = data;
+  const { isFeatureEnabled } = useJurisdictionFeatures();
+  const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
+  const chroSocialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);
+  const chroWageProtectionEnabled = isFeatureEnabled(WPS_FEATURES[0]);
+  const chroLaborPortalEnabled = isFeatureEnabled(LABOR_PORTAL_FEATURES[0]);
+  const showPayrollGovCompliance = chroSocialInsuranceEnabled || chroWageProtectionEnabled || chroLaborPortalEnabled;
+  const { kpis = {}, nationalisation = {}, workforce_composition = {}, payroll_gov_compliance = {}, open_roles = {}, contract_expiry_radar = {}, leave_absence_summary = {} } = data;
 
-  const bandColor = { platinum: 'text-purple-600 border-purple-200', green: 'text-emerald-600 border-emerald-200', yellow: 'text-amber-600 border-amber-200', red: 'text-red-600 border-red-200' }[nitaqat.band] || 'text-muted-foreground border-border';
+  const bandColor = { platinum: 'text-purple-600 border-purple-200', green: 'text-emerald-600 border-emerald-200', yellow: 'text-amber-600 border-amber-200', red: 'text-red-600 border-red-200' }[nationalisation.band] || 'text-muted-foreground border-border';
 
   const genderData = workforce_composition.by_gender
     ? Object.entries(workforce_composition.by_gender).map(([k, v]) => ({ name: k, value: v }))
@@ -1006,7 +1023,9 @@ function CHRODashboard({ data, isRTL, t }) {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard title={t('headcount')} value={fmtNumber(kpis.headcount, isRTL)} icon={Users} iconClassName="bg-najdi-50" />
-        <StatCard title={t('saudizationRate')} value={fmtPct(kpis.saudization_pct)} icon={ShieldCheck} iconClassName="bg-emerald-50" />
+        {nationalisationEnabled && (
+          <StatCard title={t('saudizationRate')} value={fmtPct(kpis.saudization_pct)} icon={ShieldCheck} iconClassName="bg-emerald-50" />
+        )}
         <StatCard
           title={t('retentionRate')}
           value={kpis.retention_rate_pct !== null ? fmtPct(kpis.retention_rate_pct) : '—'}
@@ -1016,30 +1035,32 @@ function CHRODashboard({ data, isRTL, t }) {
         />
       </div>
 
+      {nationalisationEnabled && (
       <Card className="border-0 shadow-sm">
-        <CardHeader><CardTitle className="text-base">{t('nitaqatBand')}</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t('nationalisationBand')}</CardTitle></CardHeader>
         <CardContent>
-          {nitaqat.data_quality === 'not_tracked' ? (
+          {nationalisation.data_quality === 'not_tracked' ? (
             <EmptyState isRTL={isRTL} message={isRTL ? 'لا توجد بيانات موظفين مسجلة' : 'No employee data on record'} />
           ) : (
             <>
               <div className="flex items-center gap-4">
                 <Badge variant="outline" className={`text-base px-4 py-1.5 ${bandColor}`}>
-                  {(nitaqat.band || '—').toUpperCase()}
+                  {(nationalisation.band || '—').toUpperCase()}
                 </Badge>
                 <div className="flex-1">
-                  <ScoreBar label={t('saudizationRate')} value={nitaqat.saudization_pct} isRTL={isRTL} />
+                  <ScoreBar label={t('saudizationRate')} value={nationalisation.saudization_pct} isRTL={isRTL} />
                 </div>
               </div>
-              {nitaqat.thresholds && (
+              {nationalisation.thresholds && (
                 <p className="text-xs text-muted-foreground mt-3">
-                  {isRTL ? 'الحدود' : 'Thresholds'}: {isRTL ? 'بلاتيني' : 'Platinum'} ≥{nitaqat.thresholds.platinum}% · {isRTL ? 'أخضر' : 'Green'} ≥{nitaqat.thresholds.green}% · {isRTL ? 'أصفر' : 'Yellow'} ≥{nitaqat.thresholds.yellow}%
+                  {isRTL ? 'الحدود' : 'Thresholds'}: {isRTL ? 'بلاتيني' : 'Platinum'} ≥{nationalisation.thresholds.platinum}% · {isRTL ? 'أخضر' : 'Green'} ≥{nationalisation.thresholds.green}% · {isRTL ? 'أصفر' : 'Yellow'} ≥{nationalisation.thresholds.yellow}%
                 </p>
               )}
             </>
           )}
         </CardContent>
       </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="border-0 shadow-sm">
@@ -1059,6 +1080,7 @@ function CHRODashboard({ data, isRTL, t }) {
           </CardContent>
         </Card>
 
+        {nationalisationEnabled && (
         <Card className="border-0 shadow-sm">
           <CardHeader><CardTitle className="text-base">{isRTL ? 'السعوديون مقابل غير السعوديين' : 'Saudi vs Non-Saudi'}</CardTitle></CardHeader>
           <CardContent>
@@ -1076,18 +1098,21 @@ function CHRODashboard({ data, isRTL, t }) {
             )}
           </CardContent>
         </Card>
+        )}
       </div>
 
+      {showPayrollGovCompliance && (
       <Card className="border-0 shadow-sm">
         <CardHeader><CardTitle className="text-base">{t('payrollGovCompliance')}</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <TrafficLight label="WPS / Mudad" signal={payroll_gov_compliance.wps_mudad} />
-            <TrafficLight label="GOSI" signal={payroll_gov_compliance.gosi} />
-            <TrafficLight label="Qiwa" signal={payroll_gov_compliance.qiwa} />
+            {chroWageProtectionEnabled && <TrafficLight label={t('complianceWps')} signal={payroll_gov_compliance[WPS_FEATURES[0]]} />}
+            {chroSocialInsuranceEnabled && <TrafficLight label={t('complianceSocialInsurance')} signal={payroll_gov_compliance[SOCIAL_INSURANCE_FEATURES[0]]} />}
+            {chroLaborPortalEnabled && <TrafficLight label={t('complianceLaborPortal')} signal={payroll_gov_compliance[LABOR_PORTAL_FEATURES[0]]} />}
           </div>
         </CardContent>
       </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="border-0 shadow-sm">

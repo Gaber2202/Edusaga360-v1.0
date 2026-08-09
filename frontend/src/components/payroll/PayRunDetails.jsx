@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { formatCurrency } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -27,9 +29,17 @@ import {
 } from 'lucide-react';
 import PayRunWorkflowStepper from './PayRunWorkflowStepper';
 import PayRunValidations from './PayRunValidations';
+import JurisdictionFeatureGate from '../JurisdictionFeatureGate';
+import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
+import { SOCIAL_INSURANCE_FEATURES, NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
 
 export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
+  const { isFeatureEnabled } = useJurisdictionFeatures();
+  const socialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);
+  const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
+  const tableColSpan = socialInsuranceEnabled ? 9 : 8;
   const queryClient = useQueryClient();
 
   // Local state for payRun so UI updates instantly after actions
@@ -103,16 +113,18 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
       if (newStatus === 'completed') {
         try {
           const grossTotal = summary.totalEarnings;
-          const gosiEmployeeTotal = summary.totalGOSIEmployee;
-          const gosiEmployerTotal = summary.totalGOSIEmployer;
+          const employeeSocialInsuranceTotal = summary.totalSocialInsuranceEmployee;
+          const employerSocialInsuranceTotal = summary.totalSocialInsuranceEmployer;
           const netTotal = summary.netPayroll;
           const period = payRun.period || `${payRun.period_month}/${payRun.period_year}`;
 
           const jeLines = [
             { line_number: 1, account_code: '6000', account_name: 'Salary Expense', debit: grossTotal, credit: 0, description: `Gross Salaries - ${period}` },
-            { line_number: 2, account_code: '6010', account_name: 'GOSI Employer Expense', debit: gosiEmployerTotal, credit: 0, description: `GOSI Employer - ${period}` },
             { line_number: 3, account_code: '2100', account_name: 'Salaries Payable', debit: 0, credit: netTotal, description: `Net Payroll - ${period}` },
-            { line_number: 4, account_code: '2200', account_name: 'GOSI Payable', debit: 0, credit: gosiEmployeeTotal + gosiEmployerTotal, description: `GOSI Payable - ${period}` },
+            ...(socialInsuranceEnabled ? [
+              { line_number: 2, account_code: '6010', account_name: 'Social Insurance Employer Expense', debit: employerSocialInsuranceTotal, credit: 0, description: `Social Insurance Employer - ${period}` },
+              { line_number: 4, account_code: '2200', account_name: 'Social Insurance Payable', debit: 0, credit: employeeSocialInsuranceTotal + employerSocialInsuranceTotal, description: `Social Insurance Payable - ${period}` },
+            ] : []),
           ];
 
           const je = await createJournalEntry({
@@ -292,7 +304,7 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
   };
 
   const handleExportCSV = () => {
-    const headers = ['Employee ID', 'Name', 'Basic', 'Housing', 'Transport', 'Other', 'Gross', 'GOSI', 'Deductions', 'Net', 'IBAN'];
+    const headers = ['Employee ID', 'Name', 'Basic', 'Housing', 'Transport', 'Other', 'Gross', 'Social Insurance', 'Deductions', 'Net', 'IBAN'];
     const rows = filteredInputs.map(p => [
       p.employee_number,
       p.employee_name,
@@ -368,8 +380,8 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
     saudis: payrollInputs.filter(p => p.is_saudi).length,
     nonSaudis: payrollInputs.filter(p => !p.is_saudi).length,
     totalEarnings: payrollInputs.reduce((sum, p) => sum + (p.gross_salary || 0), 0),
-    totalGOSIEmployee: payrollInputs.reduce((sum, p) => sum + (p.gosi_employee || 0), 0),
-    totalGOSIEmployer: payrollInputs.reduce((sum, p) => sum + (p.gosi_employer || 0), 0),
+    totalSocialInsuranceEmployee: payrollInputs.reduce((sum, p) => sum + (p.gosi_employee || 0), 0),
+    totalSocialInsuranceEmployer: payrollInputs.reduce((sum, p) => sum + (p.gosi_employer || 0), 0),
     totalDeductions: payrollInputs.reduce((sum, p) => sum + (p.total_deductions || 0), 0),
     netPayroll: payrollInputs.reduce((sum, p) => sum + (p.net_salary || 0), 0),
   };
@@ -435,30 +447,34 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
             <p className="text-xl font-bold mt-1">{summary.employees}</p>
           </CardContent>
         </Card>
-        <Card className="bg-white">
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">{isRTL ? 'سعودي / غير سعودي' : 'Saudi / Non'}</p>
-            <p className="text-xl font-bold mt-1">{summary.saudis} / {summary.nonSaudis}</p>
-          </CardContent>
-        </Card>
+        <JurisdictionFeatureGate featureKeys={NATIONALISATION_FEATURES}>
+          <Card className="bg-white">
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">{isRTL ? 'سعودي / غير سعودي' : 'Saudi / Non'}</p>
+              <p className="text-xl font-bold mt-1">{summary.saudis} / {summary.nonSaudis}</p>
+            </CardContent>
+          </Card>
+        </JurisdictionFeatureGate>
         <Card className="bg-white">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">{isRTL ? 'إجمالي المكتسبات' : 'Total Earnings'}</p>
             <p className="text-xl font-bold mt-1">{(summary.totalEarnings / 1000).toFixed(1)}K</p>
           </CardContent>
         </Card>
-        <Card className="bg-white">
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">{isRTL ? 'تأمينات الموظف' : 'GOSI Employee'}</p>
-            <p className="text-xl font-bold mt-1 text-red-600">{(summary.totalGOSIEmployee / 1000).toFixed(1)}K</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-white">
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">{isRTL ? 'تأمينات صاحب العمل' : 'GOSI Employer'}</p>
-            <p className="text-xl font-bold mt-1 text-amber-600">{(summary.totalGOSIEmployer / 1000).toFixed(1)}K</p>
-          </CardContent>
-        </Card>
+        <JurisdictionFeatureGate featureKeys={SOCIAL_INSURANCE_FEATURES}>
+          <Card className="bg-white">
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">{isRTL ? 'تأمينات الموظف' : 'Social Insurance Employee'}</p>
+              <p className="text-xl font-bold mt-1 text-red-600">{(summary.totalSocialInsuranceEmployee / 1000).toFixed(1)}K</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-white">
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">{isRTL ? 'تأمينات صاحب العمل' : 'Social Insurance Employer'}</p>
+              <p className="text-xl font-bold mt-1 text-amber-600">{(summary.totalSocialInsuranceEmployer / 1000).toFixed(1)}K</p>
+            </CardContent>
+          </Card>
+        </JurisdictionFeatureGate>
         <Card className="bg-emerald-50">
           <CardContent className="p-4">
             <p className="text-xs text-emerald-700">{isRTL ? 'صافي الرواتب' : 'Net Payroll'}</p>
@@ -491,7 +507,7 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
                   <TableHead className="text-center">{isRTL ? 'النقل' : 'Transport'}</TableHead>
                   <TableHead className="text-center">{isRTL ? 'أخرى' : 'Other'}</TableHead>
                   <TableHead className="text-center">{isRTL ? 'الإجمالي' : 'Gross'}</TableHead>
-                  <TableHead className="text-center">{isRTL ? 'تأمينات' : 'GOSI'}</TableHead>
+                  {socialInsuranceEnabled && <TableHead className="text-center">{isRTL ? 'تأمينات' : 'Social Insurance'}</TableHead>}
                   <TableHead className="text-center">{isRTL ? 'استقطاعات' : 'Deductions'}</TableHead>
                   <TableHead className="text-center font-semibold">{isRTL ? 'الصافي' : 'Net'}</TableHead>
                 </TableRow>
@@ -499,13 +515,13 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8">
+                    <TableCell colSpan={tableColSpan} className="text-center py-8">
                       <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
                     </TableCell>
                   </TableRow>
                 ) : filteredInputs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={tableColSpan} className="text-center py-8 text-muted-foreground">
                       {isRTL ? 'لا توجد بيانات' : 'No data'}
                     </TableCell>
                   </TableRow>
@@ -528,7 +544,7 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
                       <TableCell className="text-center">{(input.transport_allowance || 0).toLocaleString()}</TableCell>
                       <TableCell className="text-center">{(input.other_allowances || 0).toLocaleString()}</TableCell>
                       <TableCell className="text-center font-medium">{(input.gross_salary || 0).toLocaleString()}</TableCell>
-                      <TableCell className="text-center text-red-600">{(input.gosi_employee || 0).toLocaleString()}</TableCell>
+                      {socialInsuranceEnabled && <TableCell className="text-center text-red-600">{(input.gosi_employee || 0).toLocaleString()}</TableCell>}
                       <TableCell className="text-center text-red-600">{(input.total_deductions || 0).toLocaleString()}</TableCell>
                       <TableCell className="text-center font-bold text-emerald-600">{(input.net_salary || 0).toLocaleString()}</TableCell>
                     </TableRow>
@@ -564,12 +580,12 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
                 ].map((item, i) => item.value > 0 && (
                   <div key={i} className="flex justify-between">
                     <span className="text-muted-foreground">{item.label}</span>
-                    <span className="font-medium">{(item.value || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                    <span className="font-medium">{formatCurrency((item.value || 0), tenant?.localization, isRTL)}</span>
                   </div>
                 ))}
                 <div className="flex justify-between font-semibold border-t pt-2 text-najdi-900">
                   <span>{isRTL ? 'الإجمالي' : 'Gross'}</span>
-                  <span>{(selectedRow.gross_salary || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                  <span>{formatCurrency((selectedRow.gross_salary || 0), tenant?.localization, isRTL)}</span>
                 </div>
               </div>
 
@@ -578,35 +594,35 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
                 <p className="font-semibold text-red-700 text-xs uppercase tracking-wide">{isRTL ? 'الاستقطاعات' : 'Deductions'}</p>
                 {selectedRow.gosi_employee > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">{isRTL ? 'تأمينات الموظف (9.75%)' : 'GOSI Employee (9.75%)'}</span>
-                    <span className="text-red-600 font-medium">{(selectedRow.gosi_employee || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                    <span className="text-muted-foreground">{isRTL ? 'تأمينات الموظف (9.75%)' : 'Social Insurance Employee (9.75%)'}</span>
+                    <span className="text-red-600 font-medium">{formatCurrency((selectedRow.gosi_employee || 0), tenant?.localization, isRTL)}</span>
                   </div>
                 )}
                 {(selectedRow.total_deductions || 0) - (selectedRow.gosi_employee || 0) > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{isRTL ? 'استقطاعات أخرى' : 'Other Deductions'}</span>
-                    <span className="text-red-600 font-medium">{((selectedRow.total_deductions || 0) - (selectedRow.gosi_employee || 0)).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                    <span className="text-red-600 font-medium">{formatCurrency(((selectedRow.total_deductions || 0) - (selectedRow.gosi_employee || 0)), tenant?.localization, isRTL)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-semibold border-t pt-2 text-red-700">
                   <span>{isRTL ? 'إجمالي الاستقطاعات' : 'Total Deductions'}</span>
-                  <span>{(selectedRow.total_deductions || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                  <span>{formatCurrency((selectedRow.total_deductions || 0), tenant?.localization, isRTL)}</span>
                 </div>
               </div>
 
               {/* Net */}
               <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200 flex justify-between items-center">
                 <span className="font-bold text-emerald-800 text-base">{isRTL ? 'صافي الراتب' : 'Net Salary'}</span>
-                <span className="text-2xl font-bold text-emerald-700">{(selectedRow.net_salary || 0).toLocaleString()} <span className="text-sm font-normal">{isRTL ? 'ر.س' : 'SAR'}</span></span>
+                <span className="text-2xl font-bold text-emerald-700">{formatCurrency((selectedRow.net_salary || 0), tenant?.localization, isRTL)}</span>
               </div>
 
-              {/* Employer GOSI */}
+              {/* Employer Social Insurance */}
               {selectedRow.gosi_employer > 0 && (
                 <div className="bg-amber-50 rounded-lg p-3 border border-amber-200 text-xs">
                   <p className="text-amber-800 font-semibold mb-1">{isRTL ? 'تكلفة صاحب العمل' : 'Employer Cost'}</p>
                   <div className="flex justify-between">
-                    <span>{isRTL ? 'تأمينات صاحب العمل' : 'GOSI Employer'}</span>
-                    <span className="font-medium">{(selectedRow.gosi_employer || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                    <span>{isRTL ? 'تأمينات صاحب العمل' : 'Social Insurance Employer'}</span>
+                    <span className="font-medium">{formatCurrency((selectedRow.gosi_employer || 0), tenant?.localization, isRTL)}</span>
                   </div>
                 </div>
               )}

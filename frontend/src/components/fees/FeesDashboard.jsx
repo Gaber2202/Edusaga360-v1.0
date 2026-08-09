@@ -81,12 +81,12 @@ export default function FeesDashboard({ invoices, payments, isRTL }) {
     <div className="space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-        <KPI title={isRTL ? 'إجمالي الرسوم' : 'Total Fees'} value={`${(total/1000).toFixed(0)}K`} sub="SAR" icon={DollarSign} iconCls="bg-sand-alt text-muted-foreground" />
-        <KPI title={isRTL ? 'المحصل' : 'Collected'} value={`${(collected/1000).toFixed(0)}K`} sub="SAR" icon={CheckCircle} iconCls="bg-green-100 text-green-600" />
-        <KPI title={isRTL ? 'المتبقي' : 'Outstanding'} value={`${(outstanding/1000).toFixed(0)}K`} sub="SAR" icon={Banknote} iconCls="bg-amber-100 text-amber-600" />
-        <KPI title={isRTL ? 'المتأخر' : 'Overdue'} value={`${(overdueAmt/1000).toFixed(0)}K`} sub="SAR" icon={AlertCircle} iconCls="bg-red-100 text-red-600" />
+        <KPI title={isRTL ? 'إجمالي الرسوم' : 'Total Fees'} value={`${(total/1000).toFixed(0)}K`} sub={getCurrencySymbol(tenant?.localization, isRTL)} icon={DollarSign} iconCls="bg-sand-alt text-muted-foreground" />
+        <KPI title={isRTL ? 'المحصل' : 'Collected'} value={`${(collected/1000).toFixed(0)}K`} sub={getCurrencySymbol(tenant?.localization, isRTL)} icon={CheckCircle} iconCls="bg-green-100 text-green-600" />
+        <KPI title={isRTL ? 'المتبقي' : 'Outstanding'} value={`${(outstanding/1000).toFixed(0)}K`} sub={getCurrencySymbol(tenant?.localization, isRTL)} icon={Banknote} iconCls="bg-amber-100 text-amber-600" />
+        <KPI title={isRTL ? 'المتأخر' : 'Overdue'} value={`${(overdueAmt/1000).toFixed(0)}K`} sub={getCurrencySymbol(tenant?.localization, isRTL)} icon={AlertCircle} iconCls="bg-red-100 text-red-600" />
         <KPI title={isRTL ? 'نسبة التحصيل' : 'Collection Rate'} value={`${collectionRate}%`} icon={Percent} iconCls="bg-najdi-50 text-najdi-700" />
-        <KPI title={isRTL ? 'ضريبة القيمة المضافة' : 'VAT Collected'} value={`${(vatCollected/1000).toFixed(1)}K`} sub="SAR" icon={TrendingUp} iconCls="bg-purple-100 text-purple-600" />
+        <KPI title={isRTL ? 'ضريبة القيمة المضافة' : 'VAT Collected'} value={`${(vatCollected/1000).toFixed(1)}K`} sub={getCurrencySymbol(tenant?.localization, isRTL)} icon={TrendingUp} iconCls="bg-purple-100 text-purple-600" />
       </div>
 
       {/* Charts row 1 */}
@@ -102,7 +102,7 @@ export default function FeesDashboard({ invoices, payments, isRTL }) {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v/1000).toFixed(0)}K`} />
-                <Tooltip formatter={v => [`${v.toLocaleString()} SAR`, isRTL ? 'المبلغ' : 'Amount']} />
+                <Tooltip formatter={v => [formatCurrency(v, tenant?.localization, isRTL), isRTL ? 'المبلغ' : 'Amount']} />
                 <Line type="monotone" dataKey="amount" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
@@ -140,7 +140,7 @@ export default function FeesDashboard({ invoices, payments, isRTL }) {
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                 <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={v => `${(v/1000).toFixed(0)}K`} />
                 <YAxis type="category" dataKey="grade" tick={{ fontSize: 10 }} width={60} />
-                <Tooltip formatter={v => `${v.toLocaleString()} SAR`} />
+                <Tooltip formatter={v => formatCurrency(v, tenant?.localization, isRTL)} />
                 <Legend />
                 <Bar dataKey="paid" stackId="a" fill="#10b981" name={isRTL ? 'مدفوع' : 'Paid'} />
                 <Bar dataKey="outstanding" stackId="a" fill="#ef4444" name={isRTL ? 'متبقي' : 'Outstanding'} radius={[0,4,4,0]} />
@@ -160,7 +160,7 @@ export default function FeesDashboard({ invoices, payments, isRTL }) {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="range" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v/1000).toFixed(0)}K`} />
-                <Tooltip formatter={v => [`${v.toLocaleString()} SAR`, isRTL ? 'المبلغ' : 'Amount']} />
+                <Tooltip formatter={v => [formatCurrency(v, tenant?.localization, isRTL), isRTL ? 'المبلغ' : 'Amount']} />
                 <Bar dataKey="amount" fill="#ef4444" radius={[4,4,0,0]} name={isRTL ? 'المتأخر' : 'Overdue'} />
               </BarChart>
             </ResponsiveContainer>

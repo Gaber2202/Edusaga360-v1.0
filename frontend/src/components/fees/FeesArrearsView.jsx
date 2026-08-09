@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useTenant } from '../TenantContext';
+import { formatCurrency, getCurrencySymbol } from '../../lib/localization';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -23,6 +25,7 @@ const ESCALATION_ACTIONS = {
 };
 
 export default function FeesArrearsView({ invoices, isRTL, userRole, onRecordPayment }) {
+  const { tenant } = useTenant();
   const [search, setSearch] = useState('');
   const [bucketFilter, setBucketFilter] = useState('all');
 
@@ -74,8 +77,8 @@ export default function FeesArrearsView({ invoices, isRTL, userRole, onRecordPay
             <div className={`text-xs px-2 py-0.5 rounded-full font-medium w-fit mb-2 ${b.color}`}>
               {isRTL ? b.label_ar : b.label_en}
             </div>
-            <div className="text-xl font-bold text-ink">{b.amount.toLocaleString()}</div>
-            <div className="text-xs text-muted-foreground">SAR · {b.count} {isRTL ? 'فاتورة' : 'invoices'}</div>
+            <div className="text-xl font-bold text-ink">{formatCurrency(b.amount, tenant?.localization, isRTL)}</div>
+            <div className="text-xs text-muted-foreground">{getCurrencySymbol(tenant?.localization, isRTL)} · {b.count} {isRTL ? 'فاتورة' : 'invoices'}</div>
           </button>
         ))}
       </div>
@@ -85,7 +88,7 @@ export default function FeesArrearsView({ invoices, isRTL, userRole, onRecordPay
         <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
         <div className="flex-1">
           <p className="font-semibold text-red-700">
-            {isRTL ? `إجمالي المتأخرات: ${totalOverdue.toLocaleString()} ر.س` : `Total Arrears: ${totalOverdue.toLocaleString()} SAR`}
+            {isRTL ? `إجمالي المتأخرات: ${formatCurrency(totalOverdue, tenant?.localization, isRTL)}` : `Total Arrears: ${formatCurrency(totalOverdue, tenant?.localization, isRTL)}`}
           </p>
           <p className="text-xs text-red-500">{filtered.length} {isRTL ? 'فاتورة متأخرة' : 'overdue invoices'}</p>
         </div>
@@ -136,7 +139,7 @@ export default function FeesArrearsView({ invoices, isRTL, userRole, onRecordPay
                         <span className="font-mono text-xs text-muted-foreground">{inv.invoice_number}</span>
                       </TableCell>
                       <TableCell className="text-end font-bold text-red-600">
-                        {inv.balance.toLocaleString()} ر.س
+                        {formatCurrency(inv.balance, tenant?.localization, isRTL)}
                       </TableCell>
                       <TableCell className="text-center">
                         <span className={`text-sm font-bold ${inv.daysOverdue > 30 ? 'text-red-600' : 'text-amber-600'}`}>

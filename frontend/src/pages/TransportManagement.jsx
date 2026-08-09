@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { getCurrencySymbol } from '../lib/localization';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -23,6 +24,7 @@ const BLANK_ROUTE = { route_code: '', name_ar: '', name_en: '', direction: 'both
 
 export default function TransportManagement() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
   const queryClient = useQueryClient();
 
@@ -230,7 +232,7 @@ export default function TransportManagement() {
                       {r.driver_name && <p>👤 {isRTL ? 'السائق:' : 'Driver:'} {r.driver_name}</p>}
                       {r.supervisor_name && <p>🛡 {isRTL ? 'المشرف:' : 'Supervisor:'} {r.supervisor_name}</p>}
                       <p>👥 {routeAssignments.length} {isRTL ? 'طالب' : 'students'}</p>
-                      {r.monthly_fee > 0 && <p>💰 {r.monthly_fee} SAR/{isRTL ? 'شهر' : 'month'}</p>}
+                      {r.monthly_fee > 0 && <p>💰 {formatCurrency(r.monthly_fee, tenant?.localization, isRTL)}/{isRTL ? 'شهر' : 'month'}</p>}
                     </div>
                     {r.stops?.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-2">
@@ -371,7 +373,7 @@ export default function TransportManagement() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1"><Label>{isRTL ? 'الرسوم الشهرية (ر.س)' : 'Monthly Fee (SAR)'}</Label><Input type="number" value={routeForm.monthly_fee} onChange={e => setRouteForm(f => ({ ...f, monthly_fee: parseFloat(e.target.value) || 0 }))} /></div>
+              <div className="space-y-1"><Label>{isRTL ? `الرسوم الشهرية (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Monthly Fee (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label><Input type="number" value={routeForm.monthly_fee} onChange={e => setRouteForm(f => ({ ...f, monthly_fee: parseFloat(e.target.value) || 0 }))} /></div>
             </div>
 
             {/* Stops */}

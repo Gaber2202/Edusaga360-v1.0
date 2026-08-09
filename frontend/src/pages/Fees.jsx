@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
+import { useTenant } from '../components/TenantContext';
+import { useJurisdictionFeatures } from '../components/JurisdictionFeatureContext';
+import { formatCurrency, getCurrencySymbol } from '../lib/localization';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import {
@@ -15,6 +18,8 @@ import {
 import { createPageUrl } from '../utils';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { supabase, tenantQuery, fetchData, callApi } from '../api/supabaseClient';
+import JurisdictionFeatureGate from '../components/JurisdictionFeatureGate';
+import { EINVOICING_FEATURES } from '../lib/jurisdictionFeatures';
 
 // ─── API helpers ───────────────────────────────────────────────────────────────
 
@@ -44,9 +49,6 @@ function useToken() {
   return token;
 }
 
-// ─── SAR formatter ─────────────────────────────────────────────────────────────
-
-const sarFmt = (n) => `SAR ${(Number(n) || 0).toLocaleString('en-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 // ─── Status badge ──────────────────────────────────────────────────────────────
 
@@ -78,10 +80,11 @@ function StatusBadge({ status, isRTL }) {
 
 // ─── VAT treatment badge ────────────────────────────────────────────────────────
 
-function VatBadge({ treatment }) {
+function VatBadge({ treatment, vatRate }) {
   if (treatment === 'exempt') return <span className="text-xs text-green-600 font-medium">VAT Exempt</span>;
   if (treatment === 'zero_rated') return <span className="text-xs text-najdi-700 font-medium">0%</span>;
-  return <span className="text-xs text-orange-600 font-medium">15% VAT</span>;
+  const rate = vatRate != null ? vatRate : 0.15;
+  return <span className="text-xs text-orange-600 font-medium">{Math.round(rate * 100)}% VAT</span>;
 }
 
 // ─── KPI cards ─────────────────────────────────────────────────────────────────
@@ -112,7 +115,7 @@ function KpiCard({ label, value, sub, icon: Icon, color = 'blue' }) {
 
 // ─── Invoice list tab ──────────────────────────────────────────────────────────
 
-function InvoicesTab({ token, isRTL, userRole, tenantId }) {
+function InvoicesTab({ token, isRTL, userRole, tenantId, tenant }) {
   const qc = useQueryClient();
   const [filters, setFilters] = useState({ status: '', page: 1 });
   const [dunningOpen, setDunningOpen] = useState(false);
@@ -120,7 +123,10 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
   const [dunningResult, setDunningResult] = useState(null);
 
   const { tenantFilter, hasTenantAccess } = useTenantFilter();
+  const { areAnyEnabled } = useJurisdictionFeatures();
+  const showEInvoice = areAnyEnabled(EINVOICING_FEATURES);
   const PAGE_SIZE = 20;
+  const colCount = 9 - (showEInvoice ? 0 : 1);
 
   // Load invoices directly from Supabase (RLS-scoped) instead of via the billing
   // backend. The backend list resolved the wrong tenant for a platform owner
@@ -198,15 +204,17 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
               <th className="px-4 py-3 text-end text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'المبلغ' : 'Total'}</th>
               <th className="px-4 py-3 text-end text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'المتبقي' : 'Balance'}</th>
               <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'الحالة' : 'Status'}</th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide">ZATCA</th>
+              {showEInvoice && (
+                <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'الفاتورة الإلكترونية' : 'E-Invoice'}</th>
+              )}
               <th className="px-4 py-3 text-start text-xs font-semibold text-muted-foreground uppercase tracking-wide">{isRTL ? 'إجراءات' : 'Actions'}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {isLoading ? (
-              <tr><td colSpan={9} className="py-12 text-center text-muted-foreground">{isRTL ? 'جاري التحميل…' : 'Loading…'}</td></tr>
+              <tr><td colSpan={colCount} className="py-12 text-center text-muted-foreground">{isRTL ? 'جاري التحميل…' : 'Loading…'}</td></tr>
             ) : invoices.length === 0 ? (
-              <tr><td colSpan={9} className="py-12 text-center text-muted-foreground">{isRTL ? 'لا توجد فواتير' : 'No invoices found'}</td></tr>
+              <tr><td colSpan={colCount} className="py-12 text-center text-muted-foreground">{isRTL ? 'لا توجد فواتير' : 'No invoices found'}</td></tr>
             ) : invoices.map((inv) => {
               const balance = (Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0);
               return (
@@ -222,16 +230,18 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{inv.date}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{inv.due_date || '—'}</td>
-                  <td className="px-4 py-3 text-end font-semibold text-ink text-xs">{sarFmt(inv.total_amount)}</td>
+                  <td className="px-4 py-3 text-end font-semibold text-ink text-xs">{formatCurrency(inv.total_amount, tenant?.localization, isRTL)}</td>
                   <td className="px-4 py-3 text-end text-xs">
-                    <span className={balance > 0 ? 'text-red-600 font-semibold' : 'text-green-600'}>{sarFmt(balance)}</span>
+                    <span className={balance > 0 ? 'text-red-600 font-semibold' : 'text-green-600'}>{formatCurrency(balance, tenant?.localization, isRTL)}</span>
                   </td>
                   <td className="px-4 py-3"><StatusBadge status={inv.status} isRTL={isRTL} /></td>
-                  <td className="px-4 py-3">
-                    {inv.qr_code
-                      ? <span className="flex items-center gap-1 text-xs text-green-600"><CheckCircle className="w-3.5 h-3.5" />{isRTL ? 'معتمد' : 'QR OK'}</span>
-                      : <span className="flex items-center gap-1 text-xs text-muted-foreground"><Clock className="w-3.5 h-3.5" />{isRTL ? 'معلق' : 'Pending'}</span>}
-                  </td>
+                  {showEInvoice && (
+                    <td className="px-4 py-3">
+                      {inv.qr_code
+                        ? <span className="flex items-center gap-1 text-xs text-green-600"><CheckCircle className="w-3.5 h-3.5" />{isRTL ? 'معتمد' : 'QR OK'}</span>
+                        : <span className="flex items-center gap-1 text-xs text-muted-foreground"><Clock className="w-3.5 h-3.5" />{isRTL ? 'معلق' : 'Pending'}</span>}
+                    </td>
+                  )}
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1">
                       <button
@@ -322,7 +332,7 @@ function InvoicesTab({ token, isRTL, userRole, tenantId }) {
 
 // ─── Collections / Arrears tab ─────────────────────────────────────────────────
 
-function ArrearsTab({ token, isRTL, tenantId }) {
+function ArrearsTab({ token, isRTL, tenantId, tenant }) {
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(`${currentYear}-${currentYear + 1}`);
 
@@ -360,7 +370,7 @@ function ArrearsTab({ token, isRTL, tenantId }) {
           <Card key={k} className="border-0 shadow-sm">
             <CardContent className="p-4">
               <p className="text-xs text-muted-foreground">{isRTL ? labels.ar : labels.en}</p>
-              <p className="text-lg font-bold text-ink mt-1">{sarFmt(buckets[k] ?? 0)}</p>
+              <p className="text-lg font-bold text-ink mt-1">{formatCurrency(buckets[k] ?? 0, tenant?.localization, isRTL)}</p>
             </CardContent>
           </Card>
         ))}
@@ -370,7 +380,7 @@ function ArrearsTab({ token, isRTL, tenantId }) {
       {data?.total_outstanding != null && (
         <div className="rounded-lg bg-red-50 border border-red-100 p-4 flex items-center justify-between">
           <span className="font-semibold text-red-700">{isRTL ? 'إجمالي المتأخرات' : 'Total Outstanding'}</span>
-          <span className="text-xl font-bold text-red-700">{sarFmt(data.total_outstanding)}</span>
+          <span className="text-xl font-bold text-red-700">{formatCurrency(data.total_outstanding, tenant?.localization, isRTL)}</span>
         </div>
       )}
 
@@ -400,7 +410,7 @@ function ArrearsTab({ token, isRTL, tenantId }) {
                 </td>
                 <td className="px-4 py-3 text-xs font-mono text-najdi-900">{inv.invoice_number}</td>
                 <td className="px-4 py-3 text-xs text-muted-foreground">{inv.due_date}</td>
-                <td className="px-4 py-3 text-end text-xs font-semibold text-red-600">{sarFmt(inv.outstanding_balance)}</td>
+                <td className="px-4 py-3 text-end text-xs font-semibold text-red-600">{formatCurrency(inv.outstanding_balance, tenant?.localization, isRTL)}</td>
                 <td className="px-4 py-3">
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                     inv.days_overdue > 90 ? 'bg-red-100 text-red-700' :
@@ -421,7 +431,7 @@ function ArrearsTab({ token, isRTL, tenantId }) {
 
 // ─── VAT Report tab ────────────────────────────────────────────────────────────
 
-function VATReportTab({ token, isRTL, tenantId }) {
+function VATReportTab({ token, isRTL, tenantId, tenant }) {
   const now = new Date();
   const [from, setFrom] = useState(new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]);
   const [to, setTo] = useState(now.toISOString().split('T')[0]);
@@ -454,12 +464,12 @@ function VATReportTab({ token, isRTL, tenantId }) {
         <div className="grid gap-4">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {[
-              { label: isRTL ? 'إجمالي الإيرادات' : 'Gross Revenue', value: sarFmt(data.gross_revenue), color: 'blue' },
-              { label: isRTL ? 'إجمالي الخصومات' : 'Total Discounts', value: sarFmt(data.total_discounts), color: 'yellow' },
-              { label: isRTL ? 'الإيرادات الخاضعة للضريبة' : 'Net Taxable', value: sarFmt(data.net_taxable_revenue), color: 'purple' },
-              { label: isRTL ? 'ضريبة القيمة المضافة المحصلة' : 'VAT Collected', value: sarFmt(data.vat_collected), color: 'green' },
-              { label: isRTL ? 'إشعارات الخصم' : 'Credit Notes VAT', value: sarFmt(data.credit_notes?.vat), color: 'red' },
-              { label: isRTL ? 'صافي الضريبة المستحقة' : 'Net VAT Payable', value: sarFmt(data.net_vat_payable), color: 'green' },
+              { label: isRTL ? 'إجمالي الإيرادات' : 'Gross Revenue', value: formatCurrency(data.gross_revenue, tenant?.localization, isRTL), color: 'blue' },
+              { label: isRTL ? 'إجمالي الخصومات' : 'Total Discounts', value: formatCurrency(data.total_discounts, tenant?.localization, isRTL), color: 'yellow' },
+              { label: isRTL ? 'الإيرادات الخاضعة للضريبة' : 'Net Taxable', value: formatCurrency(data.net_taxable_revenue, tenant?.localization, isRTL), color: 'purple' },
+              { label: isRTL ? 'ضريبة القيمة المضافة المحصلة' : 'VAT Collected', value: formatCurrency(data.vat_collected, tenant?.localization, isRTL), color: 'green' },
+              { label: isRTL ? 'إشعارات الخصم' : 'Credit Notes VAT', value: formatCurrency(data.credit_notes?.vat, tenant?.localization, isRTL), color: 'red' },
+              { label: isRTL ? 'صافي الضريبة المستحقة' : 'Net VAT Payable', value: formatCurrency(data.net_vat_payable, tenant?.localization, isRTL), color: 'green' },
             ].map((item) => (
               <Card key={item.label} className="border-0 shadow-sm">
                 <CardContent className="p-4">
@@ -470,10 +480,10 @@ function VATReportTab({ token, isRTL, tenantId }) {
             ))}
           </div>
           <div className="rounded-lg bg-najdi-50 border border-najdi-100 p-4 text-sm text-najdi-900">
-            <strong>{isRTL ? 'ملاحظة ZATCA:' : 'ZATCA Note:'}</strong>{' '}
+            <strong>{isRTL ? 'ملاحظة ضريبية:' : 'VAT Note:'}</strong>{' '}
             {isRTL
-              ? 'التعليم معفى من ضريبة القيمة المضافة. يخضع للضريبة: النقل، الوجبات، الزي، الكتب، الأنشطة.'
-              : 'Tuition is VAT-exempt per ZATCA/GAZT rules. Taxable at 15%: transport, meals, uniforms, books, activities.'}
+              ? `التعليم معفى من ضريبة القيمة المضافة. يخضع للضريبة عند ${Math.round((tenant?.vat_rate || 0.15) * 100)}٪: النقل، الوجبات، الزي، الكتب، الأنشطة.`
+              : `Tuition is VAT-exempt. Taxable at ${Math.round((tenant?.vat_rate || 0.15) * 100)}%: transport, meals, uniforms, books, activities.`}
           </div>
         </div>
       ) : null}
@@ -483,7 +493,7 @@ function VATReportTab({ token, isRTL, tenantId }) {
 
 // ─── Fee Structures tab ────────────────────────────────────────────────────────
 
-function FeeStructuresTab({ token, isRTL, tenantId }) {
+function FeeStructuresTab({ token, isRTL, tenantId, tenant }) {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ academic_year: '', category_id: '', grade: '', amount: '', installment_count: '1', is_mandatory: true });
@@ -540,8 +550,8 @@ function FeeStructuresTab({ token, isRTL, tenantId }) {
                 </td>
                 <td className="px-4 py-3 text-xs text-muted-foreground">{s.academic_year}</td>
                 <td className="px-4 py-3 text-xs text-muted-foreground">{s.grade || (isRTL ? 'كل الصفوف' : 'All Grades')}</td>
-                <td className="px-4 py-3 text-end text-xs font-semibold text-ink">{sarFmt(s.amount)}</td>
-                <td className="px-4 py-3"><VatBadge treatment={s.fee_categories?.vat_treatment} /></td>
+                <td className="px-4 py-3 text-end text-xs font-semibold text-ink">{formatCurrency(s.amount, tenant?.localization, isRTL)}</td>
+                <td className="px-4 py-3"><VatBadge treatment={s.fee_categories?.vat_treatment} vatRate={tenant?.vat_rate} /></td>
                 <td className="px-4 py-3 text-xs text-muted-foreground">{s.installment_count > 1 ? `${s.installment_count}×` : (isRTL ? 'دفعة واحدة' : 'Lump sum')}</td>
               </tr>
             ))}
@@ -557,7 +567,7 @@ function FeeStructuresTab({ token, isRTL, tenantId }) {
             {[
               { key: 'academic_year', label: isRTL ? 'السنة الأكاديمية' : 'Academic Year', placeholder: '2025-2026' },
               { key: 'grade', label: isRTL ? 'الصف (اختياري)' : 'Grade (optional)', placeholder: 'G1' },
-              { key: 'amount', label: isRTL ? 'المبلغ (ريال)' : 'Amount (SAR)', type: 'number' },
+              { key: 'amount', label: isRTL ? `المبلغ (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Amount (${getCurrencySymbol(tenant?.localization, isRTL)})`, type: 'number' },
               { key: 'installment_count', label: isRTL ? 'عدد الأقساط' : 'Installments', type: 'number' },
             ].map(({ key, label, placeholder, type }) => (
               <div key={key}>
@@ -598,7 +608,7 @@ function FeeStructuresTab({ token, isRTL, tenantId }) {
 
 // ─── Discount Rules tab ────────────────────────────────────────────────────────
 
-function DiscountRulesTab({ token, isRTL, tenantId }) {
+function DiscountRulesTab({ token, isRTL, tenantId, tenant }) {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
@@ -655,8 +665,8 @@ function DiscountRulesTab({ token, isRTL, tenantId }) {
               </div>
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <span className="px-2 py-0.5 rounded-full bg-sand-alt">{TYPE_LABELS[r.discount_type]?.[isRTL ? 'ar' : 'en'] ?? r.discount_type}</span>
-                <span className="font-semibold">{r.calculation === 'percentage' ? `${r.value}%` : sarFmt(r.value)}</span>
-                {r.max_amount && <span className="text-muted-foreground">{isRTL ? 'حد' : 'cap'} {sarFmt(r.max_amount)}</span>}
+                <span className="font-semibold">{r.calculation === 'percentage' ? `${r.value}%` : formatCurrency(r.value, tenant?.localization, isRTL)}</span>
+                {r.max_amount && <span className="text-muted-foreground">{isRTL ? 'حد' : 'cap'} {formatCurrency(r.max_amount, tenant?.localization, isRTL)}</span>}
                 <span className={`px-2 py-0.5 rounded-full ${r.stacking === 'allowed' ? 'bg-green-50 text-green-700' : r.stacking === 'blocked' ? 'bg-red-50 text-red-700' : 'bg-najdi-50 text-najdi-900'}`}>
                   {r.stacking}
                 </span>
@@ -678,7 +688,7 @@ function DiscountRulesTab({ token, isRTL, tenantId }) {
               { key: 'name_en', label: 'Name (EN)' },
               { key: 'name_ar', label: 'Name (AR)' },
               { key: 'value', label: isRTL ? 'القيمة' : 'Value', type: 'number' },
-              { key: 'max_amount', label: isRTL ? 'الحد الأقصى' : 'Max Amount (SAR)', type: 'number' },
+              { key: 'max_amount', label: isRTL ? 'الحد الأقصى' : `Max Amount (${getCurrencySymbol(tenant?.localization, isRTL)})`, type: 'number' },
               { key: 'priority', label: isRTL ? 'الأولوية' : 'Priority', type: 'number' },
               { key: 'academic_year', label: isRTL ? 'السنة (اختياري)' : 'Year (optional)', placeholder: '2025-2026' },
             ].map(({ key, label, placeholder, type }) => (
@@ -689,7 +699,7 @@ function DiscountRulesTab({ token, isRTL, tenantId }) {
             ))}
             {[
               { key: 'discount_type', label: isRTL ? 'النوع' : 'Type', options: [['sibling', 'Sibling'], ['scholarship', 'Scholarship'], ['staff', 'Staff'], ['early_bird', 'Early Bird'], ['bulk', 'Bulk'], ['custom', 'Custom']] },
-              { key: 'calculation', label: isRTL ? 'الحساب' : 'Calculation', options: [['percentage', 'Percentage %'], ['fixed_amount', 'Fixed Amount SAR']] },
+              { key: 'calculation', label: isRTL ? 'الحساب' : 'Calculation', options: [['percentage', 'Percentage %'], ['fixed_amount', `Fixed Amount`]] },
               { key: 'stacking', label: isRTL ? 'التراكم' : 'Stacking', options: [['allowed', 'Allowed'], ['blocked', 'Blocked'], ['override', 'Override']] },
             ].map(({ key, label, options }) => (
               <div key={key}>
@@ -714,7 +724,7 @@ function DiscountRulesTab({ token, isRTL, tenantId }) {
 
 // ─── Payment Plans tab ─────────────────────────────────────────────────────────
 
-function PaymentPlansTab({ token, isRTL, tenantId }) {
+function PaymentPlansTab({ token, isRTL, tenantId, tenant }) {
   const { data: plans = [], isLoading } = useQuery({
     queryKey: ['payment-plans', tenantId],
     queryFn: () => billingGet('/payment-plans', token),
@@ -739,7 +749,7 @@ function PaymentPlansTab({ token, isRTL, tenantId }) {
                   <div className="text-xs text-muted-foreground">{plan.plan_type} · {paidCount}/{installments.length} {isRTL ? 'مدفوع' : 'paid'}</div>
                 </div>
                 <div className="text-end">
-                  <div className="font-bold text-ink">{sarFmt(plan.total_amount)}</div>
+                  <div className="font-bold text-ink">{formatCurrency(plan.total_amount, tenant?.localization, isRTL)}</div>
                   <StatusBadge status={plan.status} isRTL={isRTL} />
                 </div>
               </div>
@@ -752,7 +762,7 @@ function PaymentPlansTab({ token, isRTL, tenantId }) {
                       inst.status === 'waived' ? 'bg-sand-alt text-muted-foreground' :
                       'bg-najdi-50 text-najdi-900'
                     }`}>
-                      #{inst.installment_no} · {sarFmt(inst.amount)} · {inst.due_date}
+                      #{inst.installment_no} · {formatCurrency(inst.amount, tenant?.localization, isRTL)} · {inst.due_date}
                     </div>
                   ))}
                 </div>
@@ -767,7 +777,7 @@ function PaymentPlansTab({ token, isRTL, tenantId }) {
 
 // ─── Dashboard summary tab ─────────────────────────────────────────────────────
 
-function DashboardTab({ token, isRTL, tenantId }) {
+function DashboardTab({ token, isRTL, tenantId, tenant }) {
   const today = new Date();
   const from = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
   const to = today.toISOString().split('T')[0];
@@ -789,9 +799,9 @@ function DashboardTab({ token, isRTL, tenantId }) {
   });
 
   const kpis = [
-    { label: isRTL ? 'إيرادات الشهر' : 'Month Revenue', value: sarFmt(vat?.gross_revenue), icon: TrendingUp, color: 'green' },
-    { label: isRTL ? 'ضريبة القيمة المضافة' : 'VAT Collected', value: sarFmt(vat?.vat_collected), icon: Receipt, color: 'purple' },
-    { label: isRTL ? 'إجمالي المتأخرات' : 'Total Arrears', value: sarFmt(arrears?.total_outstanding), icon: AlertTriangle, color: 'red' },
+    { label: isRTL ? 'إيرادات الشهر' : 'Month Revenue', value: formatCurrency(vat?.gross_revenue, tenant?.localization, isRTL), icon: TrendingUp, color: 'green' },
+    { label: isRTL ? 'ضريبة القيمة المضافة' : 'VAT Collected', value: formatCurrency(vat?.vat_collected, tenant?.localization, isRTL), icon: Receipt, color: 'purple' },
+    { label: isRTL ? 'إجمالي المتأخرات' : 'Total Arrears', value: formatCurrency(arrears?.total_outstanding, tenant?.localization, isRTL), icon: AlertTriangle, color: 'red' },
     { label: isRTL ? 'فواتير هذا الشهر' : 'Invoices (month)', value: invoiceData?.pagination?.total ?? '—', icon: FileText, color: 'blue' },
   ];
 
@@ -809,7 +819,7 @@ function DashboardTab({ token, isRTL, tenantId }) {
             {[['1_30', '1–30d'], ['31_60', '31–60d'], ['61_90', '61–90d'], ['90_plus', '90+d']].map(([key, label]) => (
               <div key={key} className="text-center">
                 <div className="text-xs text-muted-foreground mb-1">{label}</div>
-                <div className="text-sm font-bold text-ink">{sarFmt(arrears.buckets[key] ?? 0)}</div>
+                <div className="text-sm font-bold text-ink">{formatCurrency(arrears.buckets[key] ?? 0, tenant?.localization, isRTL)}</div>
               </div>
             ))}
           </CardContent>
@@ -832,7 +842,7 @@ function DashboardTab({ token, isRTL, tenantId }) {
                   <div className="text-xs text-muted-foreground">{isRTL ? inv.students?.name_ar : inv.students?.name_en}</div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-ink">{sarFmt(inv.total_amount)}</span>
+                  <span className="text-xs font-semibold text-ink">{formatCurrency(inv.total_amount, tenant?.localization, isRTL)}</span>
                   <StatusBadge status={inv.status} isRTL={isRTL} />
                 </div>
               </div>
@@ -841,18 +851,19 @@ function DashboardTab({ token, isRTL, tenantId }) {
         </Card>
       )}
 
-      {/* ZATCA compliance note */}
-      <div className="rounded-lg bg-gradient-to-r from-najdi-50 to-sand border border-najdi-100 p-4 flex items-start gap-3">
-        <Zap className="w-5 h-5 text-najdi-700 shrink-0 mt-0.5" />
-        <div className="text-sm">
-          <p className="font-semibold text-najdi-900 mb-1">{isRTL ? 'محرك ZATCA المرحلة 2' : 'ZATCA Phase 2 Engine'}</p>
-          <p className="text-najdi-900 text-xs">
-            {isRTL
-              ? 'كل فاتورة تُولّد تلقائياً رمز QR، تجزئة SHA-256، وملف UBL/XML متوافق مع لوائح هيئة الزكاة والضريبة والجمارك.'
-              : 'Every invoice auto-generates a TLV QR code, SHA-256 hash chain, and UBL 2.1 XML compliant with ZATCA Phase 2 Fatoorah requirements.'}
-          </p>
+      <JurisdictionFeatureGate featureKeys={EINVOICING_FEATURES}>
+        <div className="rounded-lg bg-gradient-to-r from-najdi-50 to-sand border border-najdi-100 p-4 flex items-start gap-3">
+          <Zap className="w-5 h-5 text-najdi-700 shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-semibold text-najdi-900 mb-1">{isRTL ? 'الفاتورة الإلكترونية' : 'E-Invoicing Engine'}</p>
+            <p className="text-najdi-900 text-xs">
+              {isRTL
+                ? 'كل فاتورة تُولّد تلقائياً رمز QR وملف UBL/XML متوافق مع متطلبات الفاتورة الإلكترونية.'
+                : 'Every invoice auto-generates a QR code and UBL/XML file compliant with local e-invoicing requirements.'}
+            </p>
+          </div>
         </div>
-      </div>
+      </JurisdictionFeatureGate>
     </div>
   );
 }
@@ -869,7 +880,7 @@ const PAYMENT_METHOD_OPTIONS = [
   { id: 'cash', label: { ar: 'نقداً', en: 'Cash' } },
 ];
 
-function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) {
+function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, tenant, onSuccess }) {
   const [form, setForm] = useState({ student_id: '', academic_year: '2025-2026', due_date: '', installment_count: '1', notes_en: '', notes_ar: '', payment_methods: [] });
   const [feeLines, setFeeLines] = useState([{ category_id: '', description_en: '', description_ar: '', amount: '' }]);
   const [result, setResult] = useState(null);
@@ -948,14 +959,14 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) 
               <p className="text-sm text-green-700 font-mono mt-1">{result.invoice?.invoice_number}</p>
             </div>
             <div className="grid grid-cols-3 gap-3 text-center text-sm">
-              <div><div className="text-muted-foreground text-xs">{isRTL ? 'المجموع قبل الضريبة' : 'Subtotal'}</div><div className="font-bold">{sarFmt(result.summary?.subtotal)}</div></div>
-              <div><div className="text-muted-foreground text-xs">VAT</div><div className="font-bold text-orange-600">{sarFmt(result.summary?.vat_amount)}</div></div>
-              <div><div className="text-muted-foreground text-xs">{isRTL ? 'الإجمالي' : 'Total'}</div><div className="font-bold text-najdi-900">{sarFmt(result.summary?.total_amount)}</div></div>
+              <div><div className="text-muted-foreground text-xs">{isRTL ? 'المجموع قبل الضريبة' : 'Subtotal'}</div><div className="font-bold">{formatCurrency(result.summary?.subtotal, tenant?.localization, isRTL)}</div></div>
+              <div><div className="text-muted-foreground text-xs">VAT</div><div className="font-bold text-orange-600">{formatCurrency(result.summary?.vat_amount, tenant?.localization, isRTL)}</div></div>
+              <div><div className="text-muted-foreground text-xs">{isRTL ? 'الإجمالي' : 'Total'}</div><div className="font-bold text-najdi-900">{formatCurrency(result.summary?.total_amount, tenant?.localization, isRTL)}</div></div>
             </div>
             {result.zatca?.qr_code && (
               <div className="text-center">
                 <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                  <CheckCircle className="w-3.5 h-3.5" /> ZATCA QR Generated
+                  <CheckCircle className="w-3.5 h-3.5" /> {isRTL ? 'تم إنشاء QR' : 'QR Generated'}
                 </span>
               </div>
             )}
@@ -1044,7 +1055,7 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) 
                       <input type="text" className="w-full h-8 rounded-md border border-border px-2 text-xs" placeholder={isRTL ? 'الوصف AR' : 'وصف بالعربي'} value={line.description_ar} onChange={(e) => updateLine(i, 'description_ar', e.target.value)} />
                     </div>
                     <div className="col-span-2">
-                      <input type="number" className="w-full h-8 rounded-md border border-border px-2 text-xs" placeholder="SAR" value={line.amount} onChange={(e) => updateLine(i, 'amount', e.target.value)} />
+                      <input type="number" className="w-full h-8 rounded-md border border-border px-2 text-xs" placeholder={getCurrencySymbol(tenant?.localization, isRTL)} value={line.amount} onChange={(e) => updateLine(i, 'amount', e.target.value)} />
                     </div>
                     <div className="col-span-1 flex justify-center">
                       {feeLines.length > 1 && <button type="button" onClick={() => removeLine(i)} className="text-muted-foreground hover:text-red-500 text-lg leading-none">×</button>}
@@ -1094,7 +1105,7 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, onSuccess }) 
 
 // ─── Bulk invoice generation dialog (backend-driven, ZATCA + GL aware) ──────────
 
-function BulkGenerateDialog({ open, onClose, token, isRTL, onSuccess }) {
+function BulkGenerateDialog({ open, onClose, token, isRTL, tenant, onSuccess }) {
   const [criteria, setCriteria] = useState({ academic_year: '', grade: '', campus_id: '', due_date: '' });
   const [preview, setPreview] = useState(null);
   const [result, setResult] = useState(null);
@@ -1167,7 +1178,7 @@ function BulkGenerateDialog({ open, onClose, token, isRTL, onSuccess }) {
               <div className="rounded-lg border border-border p-3 space-y-2">
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'سيتم الإنشاء' : 'Will generate'}</span><span className="font-bold text-najdi-900">{preview.estimated_invoices}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'القيمة المتوقعة' : 'Est. total'}</span><span className="font-bold text-emerald-700">{sarFmt(preview.estimated_total)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'القيمة المتوقعة' : 'Est. total'}</span><span className="font-bold text-emerald-700">{formatCurrency(preview.estimated_total, tenant?.localization, isRTL)}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'مفوتر مسبقاً' : 'Already invoiced'}</span><span className="font-medium text-ink">{preview.already_invoiced}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'بدون رسوم' : 'No fees'}</span><span className="font-medium text-ink">{preview.skipped_no_fees}</span></div>
                 </div>
@@ -1199,6 +1210,7 @@ function BulkGenerateDialog({ open, onClose, token, isRTL, onSuccess }) {
 
 export default function Fees() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { userRole } = useRole();
   const qc = useQueryClient();
   const { tenantId } = useTenantFilter();
@@ -1220,7 +1232,7 @@ export default function Fees() {
     { id: 'plans', ar: 'خطط الدفع', en: 'Payment Plans', icon: CreditCard },
   ];
 
-  const sharedProps = { token, isRTL, tenantId };
+  const sharedProps = { token, isRTL, tenantId, tenant };
 
   return (
     <div className="space-y-4">
@@ -1230,8 +1242,8 @@ export default function Fees() {
           <h1 className="text-xl font-bold text-ink">{isRTL ? 'الرسوم والفوترة' : 'Fees & Billing'}</h1>
           <p className="text-sm text-muted-foreground">
             {isRTL
-              ? 'محرك فوترة سعودي متكامل — ZATCA المرحلة 2، ضريبة القيمة المضافة، الأقساط، التحصيل الذكي'
-              : 'Saudi billing engine — ZATCA Phase 2, VAT-aware, installment plans, AI collections'}
+              ? 'محرك الفوترة والتحصيل — ضريبة القيمة المضافة، الأقساط، التحصيل الذكي'
+              : 'Billing & collections engine — VAT-aware, installment plans, AI collections'}
           </p>
         </div>
         {canCreate && (

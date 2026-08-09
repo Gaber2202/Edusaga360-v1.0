@@ -4,16 +4,24 @@ import { extractAiText } from '../yamen/yamenUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Bot, Loader2 } from 'lucide-react';
+import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
+import { NATIONALISATION_FEATURES, SOCIAL_INSURANCE_FEATURES, GOVERNMENT_RELATIONS_FEATURES } from '../../lib/jurisdictionFeatures.js';
 
 /**
  * Reusable Yamen AI insights panel — pass any data context.
  */
 export default function YamenHRInsights({ module, data = {}, isRTL }) {
+  const { isFeatureEnabled } = useJurisdictionFeatures();
+  const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
+  const socialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);
+  const governmentEnabled = isFeatureEnabled(GOVERNMENT_RELATIONS_FEATURES[0]);
+  const socialInsuranceCount = data?.gosiCount ?? 0;
+  const socialInsuranceCompliance = data?.gosiCompliance ?? 0;
   const [insight, setInsight] = useState('');
   const [loading, setLoading] = useState(false);
 
   const modulePrompts = {
-    recruitment: `You are Yamen AI, an enterprise HR recruitment advisor for a Saudi school group. Analyze only this recruitment data:
+    recruitment: `You are Yamen AI, an enterprise HR recruitment advisor for a school group. Analyze only this recruitment data:
       - Total job requisitions: ${data.total || 0}
       - Open positions: ${data.open || 0}
       - Applicants in pipeline: ${data.applicants || 0}
@@ -22,10 +30,9 @@ export default function YamenHRInsights({ module, data = {}, isRTL }) {
       - Hired this cycle: ${data.hired || 0}
       - Rejected: ${data.rejected || 0}
       - Avg time-to-fill (days): ${data.avgTimeFill || 'N/A'}
-      - Saudization impact: ${data.saudizationHires || 0} Saudi nationals hired
-      - Salary range used (SAR): ${data.salaryRangeMin || 0} – ${data.salaryRangeMax || 0}
+      ${nationalisationEnabled ? `- Saudization impact: ${data.saudizationHires || 0} citizen nationals hired` : ''}      - Salary range used: ${data.salaryRangeMin || 0} – ${data.salaryRangeMax || 0}
       
-      Analyze: candidate drop-off stages, offer acceptance rate, Saudization compliance impact, salary benchmarking, and hiring bottlenecks.
+      Analyze: candidate drop-off stages, offer acceptance rate, ${nationalisationEnabled ? 'nationalisation compliance impact, ' : ''}salary benchmarking, and hiring bottlenecks.
       Flag: incomplete candidate profiles, missing documents, positions open >30 days.
       Suggest: salary ranges, top candidate indicators, hiring probability.
       If data is insufficient, list exactly which data points are missing.
@@ -43,7 +50,7 @@ export default function YamenHRInsights({ module, data = {}, isRTL }) {
       - Total overtime requests: ${data.total || 0}
       - Pending approval: ${data.pending || 0}
       - Total hours logged: ${data.hours || 0}
-      - Total cost estimate: ${data.cost || 0} SAR
+      - Total cost estimate: ${formatCurrency(data.cost || 0, tenant?.localization, isRTL)}
       - Employees with 10+ OT hours this month: ${data.excessive || 0}
       Flag excessive overtime, budget overrun risks, and employees who may be at burnout risk. Arabic and English.`,
     
@@ -56,26 +63,26 @@ export default function YamenHRInsights({ module, data = {}, isRTL }) {
       Identify abnormal patterns, predict burnout risk, flag departments with issues. Arabic and English.`,
     
     payroll: `You are Yamen AI. Review payroll data for anomalies:
-      - Total payroll: ${data.totalPayroll || 0} SAR
-      - Average salary: ${data.avgSalary || 0} SAR
+      - Total payroll: ${data.totalPayroll || 0}
+      - Average salary: ${data.avgSalary || 0}
       - Pay runs processed: ${data.payRuns || 0}
       - Employees with salary changes: ${data.salaryChanges || 0}
-      - GOSI registered: ${data.gosiCount || 0}
-      Detect payroll anomalies, unusual salary changes, GOSI compliance gaps. Arabic and English.`,
+      ${socialInsuranceEnabled ? `- Social insurance registered: ${socialInsuranceCount}` : ''}
+      Detect payroll anomalies, unusual salary changes, ${socialInsuranceEnabled ? 'social insurance compliance gaps' : 'payroll compliance gaps'}. Arabic and English.`,
 
     eos: `You are Yamen AI. Review End of Service data:
       - Employees with EOS calculations pending: ${data.pending || 0}
       - Terminated this year: ${data.terminated || 0}
-      - Average EOS liability per employee: ${data.avgEOS || 0} SAR
-      - Saudi Labor Law compliance issues: ${data.issues || 0}
+      - Average EOS liability per employee: ${data.avgEOS || 0}
+      - Labor Law compliance issues: ${data.issues || 0}
       Validate EOS compliance, flag legal risks, estimate total EOS liability. Arabic and English.`,
 
     government: `You are Yamen AI. Review government compliance status:
-      - Saudization rate: ${data.saudization || 0}%
-      - Expiring Iqama (60 days): ${data.iqamaExpiring || 0}
-      - Qiwa violations: ${data.violations || 0}
-      - GOSI compliance: ${data.gosiCompliance || 0}%
-      Predict compliance risks, Vision 2030 Saudization targets gap, and HRSD violations. Arabic and English.`,
+      ${nationalisationEnabled ? `- Saudization rate: ${data.saudization || 0}%` : ''}
+      ${governmentEnabled ? `- Expiring Iqama (60 days): ${data.iqamaExpiring || 0}
+      - Qiwa violations: ${data.violations || 0}` : ''}
+      ${socialInsuranceEnabled ? `- Social insurance compliance: ${socialInsuranceCompliance}%` : ''}
+      Predict ${nationalisationEnabled ? 'compliance risks and nationalisation targets gap' : 'compliance risks'}. Arabic and English.`,
 
     approvals: `You are Yamen AI. Analyze HR approval workflow performance:
       - Total pending approvals: ${data.pending || 0}

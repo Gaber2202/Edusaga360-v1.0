@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, uploadFileApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { getCurrencySymbol } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { useRole } from '../RoleContext';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -16,6 +18,7 @@ import { logAuditEvent, AuditActions } from '../AuditService';
 
 export default function PaymentLogForm({ open, onClose, invoice }) {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { user } = useRole();
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
@@ -118,7 +121,7 @@ export default function PaymentLogForm({ open, onClose, invoice }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="bg-sand p-4 rounded-lg">
             <p className="text-sm text-muted-foreground">{isRTL ? 'فاتورة' : 'Invoice'}: #{invoice?.invoice_number}</p>
-            <p className="text-lg font-bold">{isRTL ? 'الرصيد المتبقي' : 'Balance'}: {invoice?.balance?.toLocaleString()} {t('sar')}</p>
+            <p className="text-lg font-bold">{isRTL ? 'الرصيد المتبقي' : 'Balance'}: {invoice?.balance?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { useTenant } from '../components/TenantContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { buildReport, REPORT_SOURCES } from '../lib/reportBuilders';
 import { buildReportPrintHtml } from '../lib/reportPrint';
@@ -19,6 +20,7 @@ import { toast } from 'sonner';
 
 export default function Reports() {
   const { t, isRTL, language } = useLanguage();
+  const { tenant } = useTenant();
   const { tenantFilter, hasTenantAccess } = useTenantFilter();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedReport, setSelectedReport] = useState(null);
@@ -48,7 +50,7 @@ export default function Reports() {
     setLoading(true);
     try {
       const datasets = await fetchDatasets(config.reportId);
-      setPreviewData(buildReport(config.reportId, datasets, resolveLang(config)));
+      setPreviewData(buildReport(config.reportId, datasets, resolveLang(config), tenant?.localization));
       setSelectedReport(config.reportId);
       toast.success(isRTL ? 'تم تحميل المعاينة' : 'Preview loaded');
     } catch (error) {
@@ -65,7 +67,7 @@ export default function Reports() {
     try {
       const useAr = resolveLang(config);
       const datasets = await fetchDatasets(config.reportId);
-      const built = buildReport(config.reportId, datasets, useAr);
+      const built = buildReport(config.reportId, datasets, useAr, tenant?.localization);
       const report = AVAILABLE_REPORTS.find((r) => r.id === config.reportId);
       const title = report ? (useAr ? report.name_ar : report.name_en) : 'report';
 

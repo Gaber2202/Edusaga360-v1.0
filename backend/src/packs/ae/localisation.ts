@@ -10,7 +10,7 @@ import {
   toMajorUnits,
   roundToMinorUnits,
 } from '../../lib/money.js';
-import type { LocalisationService, CurrencyFormatOptions } from '../contract/CountryPack.js';
+import type { LocalisationService, LocalizationConfig, CurrencyFormatOptions } from '../contract/CountryPack.js';
 
 const DEFAULT_CURRENCY = 'AED';
 const DEFAULT_LOCALE = 'en-AE';
@@ -53,4 +53,14 @@ export const aeLocalisation: LocalisationService = {
   formatNumber,
   getDefaultLocale,
   getDefaultWeekend,
+};
+
+export const aeLocalization: LocalizationConfig = {
+  currencyCode: DEFAULT_CURRENCY,
+  currencySymbol: { en: 'AED', ar: 'د.إ' },
+  minorUnits: DEFAULT_MINOR_UNITS,
+  numberFormat: { locale: DEFAULT_LOCALE, options: { minimumFractionDigits: 2, maximumFractionDigits: 2 } },
+  dateFormat: { locale: DEFAULT_LOCALE, options: { year: 'numeric', month: 'short', day: 'numeric' } },
+  calendarSystems: ['gregorian'],
+  textDirection: 'ltr',
 };

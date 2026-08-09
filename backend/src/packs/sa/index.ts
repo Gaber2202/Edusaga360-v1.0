@@ -18,7 +18,7 @@ import { saRegulatorReports } from './regulatorReports.js';
 import { saAcademicCalendar } from './academicCalendar.js';
 import { saFeeGovernance } from './feeGovernance.js';
 import { saDocuments } from './documents.js';
-import { saLocalisation } from './localisation.js';
+import { saLocalisation, saLocalization } from './localisation.js';
 
 export const saPack: CountryPack = {
   code: 'SA',
@@ -34,6 +34,7 @@ export const saPack: CountryPack = {
   feeGovernance: saFeeGovernance,
   documents: saDocuments,
   localisation: saLocalisation,
+  localization: saLocalization,
 };
 
 export default saPack;

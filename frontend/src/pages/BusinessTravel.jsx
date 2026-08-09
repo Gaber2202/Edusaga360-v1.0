@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import Currency from '../components/Currency';
+import { getCurrencySymbol } from '../lib/localization';
 import { useRole } from '../components/RoleContext';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
@@ -24,6 +26,7 @@ import { Plane, Plus, Loader2, BarChart3, FileText, CheckCircle, XCircle } from 
 
 export default function BusinessTravel() {
   const { isRTL, t } = useLanguage();
+  const { tenant } = useTenant();
   const { user, userRole } = useRole();
   const { selectedBranchId } = useBranch();
   const queryClient = useQueryClient();
@@ -105,8 +108,8 @@ export default function BusinessTravel() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'طلبات معلقة' : 'Pending'}</p><p className="text-2xl font-bold text-amber-600">{travelRequests.filter(r => r.status === 'pending').length}</p></Card>
         <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'معتمدة' : 'Approved'}</p><p className="text-2xl font-bold text-emerald-600">{travelRequests.filter(r => r.status === 'approved').length}</p></Card>
-        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'تكلفة مخططة' : 'Planned Cost'}</p><p className="text-2xl font-bold text-najdi-700">{totalPlanned.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p></Card>
-        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'تكلفة فعلية' : 'Actual Cost'}</p><p className="text-2xl font-bold text-purple-600">{totalActual.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'تكلفة مخططة' : 'Planned Cost'}</p><p className="text-2xl font-bold text-najdi-700"><Currency amount={totalPlanned} /></p></Card>
+        <Card className="p-4"><p className="text-sm text-muted-foreground">{isRTL ? 'تكلفة فعلية' : 'Actual Cost'}</p><p className="text-2xl font-bold text-purple-600"><Currency amount={totalActual} /></p></Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -143,7 +146,7 @@ export default function BusinessTravel() {
                     <TableCell>{r.destination}</TableCell>
                     <TableCell>{r.departure_date}</TableCell>
                     <TableCell>{r.return_date || '-'}</TableCell>
-                    <TableCell>{r.estimated_cost?.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</TableCell>
+                    <TableCell><Currency amount={r.estimated_cost} /></TableCell>
                     <TableCell><StatusBadge status={r.status} /></TableCell>
                     <TableCell>
                       {r.status === 'pending' && (userRole === 'admin' || userRole === 'hr_admin') && (
@@ -183,7 +186,7 @@ export default function BusinessTravel() {
                   {travelPolicies.map(p => (
                     <TableRow key={p.id}>
                       <TableCell className="font-medium">{p.role_name || p.department_name}</TableCell>
-                      <TableCell>{p.daily_limit?.toLocaleString()} SAR</TableCell>
+                      <TableCell><Currency amount={p.daily_limit} /></TableCell>
                       <TableCell>{p.flight_class || 'Economy'}</TableCell>
                       <TableCell>{p.hotel_category || '3-star'}</TableCell>
                     </TableRow>
@@ -201,15 +204,15 @@ export default function BusinessTravel() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center p-3 bg-najdi-50 rounded-lg">
                   <span className="text-sm">{isRTL ? 'التكلفة المخططة' : 'Planned'}</span>
-                  <span className="font-bold text-najdi-700">{totalPlanned.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                  <span className="font-bold text-najdi-700"><Currency amount={totalPlanned} /></span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-emerald-50 rounded-lg">
                   <span className="text-sm">{isRTL ? 'التكلفة الفعلية' : 'Actual'}</span>
-                  <span className="font-bold text-emerald-600">{totalActual.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                  <span className="font-bold text-emerald-600"><Currency amount={totalActual} /></span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-sand rounded-lg">
                   <span className="text-sm">{isRTL ? 'الفرق' : 'Variance'}</span>
-                  <span className={`font-bold ${totalPlanned - totalActual >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{(totalPlanned - totalActual).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                  <span className={`font-bold ${totalPlanned - totalActual >= 0 ? 'text-emerald-600' : 'text-red-600'}`}><Currency amount={totalPlanned - totalActual} /></span>
                 </div>
               </div>
             </Card>
@@ -274,11 +277,11 @@ export default function BusinessTravel() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>{isRTL ? 'التكلفة المقدرة (ر.س)' : 'Estimated Cost (SAR)'}</Label>
+                <Label>{isRTL ? `التكلفة المقدرة (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Estimated Cost (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label>
                 <Input type="number" min="0" value={form.estimated_cost} onChange={(e) => setForm(p => ({...p, estimated_cost: parseFloat(e.target.value) || 0}))} />
               </div>
               <div className="space-y-2">
-                <Label>{isRTL ? 'البدل اليومي (ر.س)' : 'Per Diem (SAR)'}</Label>
+                <Label>{isRTL ? `البدل اليومي (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Per Diem (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label>
                 <Input type="number" min="0" value={form.per_diem} onChange={(e) => setForm(p => ({...p, per_diem: parseFloat(e.target.value) || 0}))} />
               </div>
             </div>

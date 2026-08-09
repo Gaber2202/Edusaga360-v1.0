@@ -22,30 +22,42 @@ import PayRunDetails from '../components/payroll/PayRunDetails';
 import SalaryComponents from '../components/payroll/SalaryComponents';
 import LoansManagement from '../components/payroll/LoansManagement';
 import TuitionAdvanceManagement from '../components/payroll/TuitionAdvanceManagement';
-import GOSISubmissions from '../components/payroll/GOSISubmissions';
+import SocialInsuranceSubmissions from '../components/payroll/GOSISubmissions';
 import BankExports from '../components/payroll/BankExports';
 import PayrollReports from '../components/payroll/PayrollReports';
 import PayrollSettings from '../components/payroll/PayrollSettings';
 import PayrollCalculationEngine from '../components/hr/PayrollCalculationEngine';
+import { useJurisdictionFeatures } from '../components/JurisdictionFeatureContext';
+import { SOCIAL_INSURANCE_FEATURES, WPS_FEATURES, NATIONALISATION_FEATURES } from '../lib/jurisdictionFeatures.js';
 
 export default function Payroll() {
   const { isRTL } = useLanguage();
+  const { isFeatureEnabled, areAnyEnabled } = useJurisdictionFeatures();
+  const socialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);
+  const socialInsuranceSectionId = SOCIAL_INSURANCE_FEATURES[0];
+  const wpsEnabled = areAnyEnabled(WPS_FEATURES);
+  const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
   const [activeSection, setActiveSection] = useState('dashboard');
   const [selectedPayRun, setSelectedPayRun] = useState(null);
   const [enginePeriod, setEnginePeriod] = useState(new Date().toISOString().substring(0, 7));
 
-  const navItems = [
+  const allNavItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: { ar: 'لوحة التحكم', en: 'Dashboard' } },
     { id: 'engine', icon: PlayCircle, label: { ar: '⚡ محرك الرواتب', en: '⚡ Payroll Engine' } },
     { id: 'payruns', icon: PlayCircle, label: { ar: 'كشوفات الرواتب', en: 'Pay Runs' } },
     { id: 'components', icon: Sliders, label: { ar: 'عناصر الراتب', en: 'Salary Components' } },
     { id: 'loans', icon: Wallet, label: { ar: 'القروض والسلف', en: 'Loans & Advances' } },
     { id: 'tuition', icon: GraduationCap, label: { ar: 'سلف الرسوم', en: 'Tuition Advances' } },
-    { id: 'gosi', icon: CalendarClock, label: { ar: 'تقديمات GOSI', en: 'GOSI Submissions' } },
+    { id: socialInsuranceSectionId, icon: CalendarClock, label: { ar: 'تقديمات التأمينات', en: 'Social Insurance Submissions' } },
     { id: 'bank', icon: Landmark, label: { ar: 'ملفات البنك', en: 'Bank Exports' } },
     { id: 'reports', icon: FileText, label: { ar: 'التقارير', en: 'Reports' } },
     { id: 'settings', icon: Settings, label: { ar: 'الإعدادات', en: 'Settings' } },
   ];
+  const navItems = allNavItems.filter(item => {
+    if (item.id === socialInsuranceSectionId) return socialInsuranceEnabled;
+    if (item.id === 'bank') return wpsEnabled;
+    return true;
+  });
 
   const handleNavigate = (section) => {
     setActiveSection(section);
@@ -117,18 +129,18 @@ export default function Payroll() {
             <TuitionAdvanceManagement />
           </PayrollErrorBoundary>
         );
-      case 'gosi':
-        return (
-          <PayrollErrorBoundary page="GOSISubmissions" action="view_gosi">
-            <GOSISubmissions />
+      case socialInsuranceSectionId:
+        return socialInsuranceEnabled ? (
+          <PayrollErrorBoundary page="SocialInsuranceSubmissions" action="view_social_insurance">
+            <SocialInsuranceSubmissions />
           </PayrollErrorBoundary>
-        );
+        ) : null;
       case 'bank':
-        return (
+        return wpsEnabled ? (
           <PayrollErrorBoundary page="BankExports" action="view_bank">
             <BankExports />
           </PayrollErrorBoundary>
-        );
+        ) : null;
       case 'reports':
         return (
           <PayrollErrorBoundary page="PayrollReports" action="view_reports">

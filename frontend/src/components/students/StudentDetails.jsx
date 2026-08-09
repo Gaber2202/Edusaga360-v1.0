@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '../LanguageContext';
+import { getCurrencySymbol } from '../../lib/localization';
 import { useRole } from '../RoleContext';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { Button } from '../ui/button';
@@ -42,6 +43,7 @@ import { useTenantFilter } from '../../hooks/useTenantFilter';
 
 export default function StudentDetails({ open, onClose, student: studentProp, onUpdate }) {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { userRole } = useRole();
   const queryClient = useQueryClient();
   const { tenantId } = useTenantFilter();
@@ -402,15 +404,15 @@ export default function StudentDetails({ open, onClose, student: studentProp, on
           <TabsContent value="fees" className="space-y-4 mt-4">
             <div className="grid grid-cols-3 gap-4">
               <Card className="p-4 text-center">
-                <p className="text-2xl font-bold text-ink">{totalFees.toLocaleString()} {t('sar')}</p>
+                <p className="text-2xl font-bold text-ink">{totalFees.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</p>
                 <p className="text-sm text-muted-foreground">{t('total')}</p>
               </Card>
               <Card className="p-4 text-center">
-                <p className="text-2xl font-bold text-emerald-600">{paidFees.toLocaleString()} {t('sar')}</p>
+                <p className="text-2xl font-bold text-emerald-600">{paidFees.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</p>
                 <p className="text-sm text-muted-foreground">{t('paid')}</p>
               </Card>
               <Card className="p-4 text-center">
-                <p className="text-2xl font-bold text-red-600">{(totalFees - paidFees).toLocaleString()} {t('sar')}</p>
+                <p className="text-2xl font-bold text-red-600">{(totalFees - paidFees).toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</p>
                 <p className="text-sm text-muted-foreground">{isRTL ? 'المتبقي' : 'Remaining'}</p>
               </Card>
             </div>
@@ -420,7 +422,7 @@ export default function StudentDetails({ open, onClose, student: studentProp, on
                 <div key={invoice.id} className="flex items-center justify-between p-3 bg-sand rounded-lg">
                   <div>
                     <p className="font-medium text-ink">{invoice.invoice_number}</p>
-                    <p className="text-sm text-muted-foreground">{invoice.total_amount?.toLocaleString()} {t('sar')}</p>
+                    <p className="text-sm text-muted-foreground">{invoice.total_amount?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</p>
                   </div>
                   <StatusBadge status={invoice.status} />
                 </div>

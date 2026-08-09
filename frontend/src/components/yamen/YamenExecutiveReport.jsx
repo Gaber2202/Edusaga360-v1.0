@@ -9,10 +9,17 @@ import { toast } from 'sonner';
 import { differenceInDays } from 'date-fns';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import { extractAiText, aiErrorMessage } from './yamenUtils';
+import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
+import { NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
+import { useTenant } from '../TenantContext';
+import { getCurrencySymbol } from '../../lib/localization';
 
 const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'];
 
 export default function YamenExecutiveReport({ isRTL }) {
+  const { tenant } = useTenant();
+  const { isFeatureEnabled } = useJurisdictionFeatures();
+  const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const [generating, setGenerating] = useState(false);
   const [aiSummary, setAiSummary] = useState('');
@@ -83,8 +90,8 @@ export default function YamenExecutiveReport({ isRTL }) {
     setAiSummary('');
     try {
       const prompt = isRTL ?
-      `أنت يامن، مساعد الموارد البشرية الذكي لنظام EduSaga. اكتب تقريراً تنفيذياً أسبوعياً لإدارة الموارد البشرية بأسلوب احترافي سعودي باللغة العربية.\n\nالبيانات:\n- إجمالي الموظفين النشطين: ${stats.active}\n- نسبة السعودة: ${stats.saudizationPct}%\n- موظفون عالي المخاطر: ${stats.highRiskCount}\n- إقامات منتهية: ${stats.expiredIqama}\n- طلبات إجازة معلقة: ${stats.pendingLeaves}\n- إجمالي الرواتب هذا الشهر: ${stats.totalPayroll.toLocaleString()} ريال\n- درجة صحة الموارد البشرية: ${stats.healthScore}%\n\nاكتب ملخصاً تنفيذياً من 3 فقرات يشمل: الوضع العام، المخاطر الرئيسية، التوصيات. لا تختلق أرقاماً خارج المعطيات.` :
-      `You are YAMEN, the AI HR Companion for EduSaga. Write a professional weekly executive HR report summary in English.\n\nData:\n- Active employees: ${stats.active}\n- Saudization: ${stats.saudizationPct}%\n- High risk employees: ${stats.highRiskCount}\n- Expired Iqamas: ${stats.expiredIqama}\n- Pending leaves: ${stats.pendingLeaves}\n- Monthly payroll: SAR ${stats.totalPayroll.toLocaleString()}\n- HR Health Score: ${stats.healthScore}%\n\nWrite a 3-paragraph executive summary: overall status, key risks, recommendations. Use only the provided data.`;
+      `أنت يامن، مساعد الموارد البشرية الذكي لنظام EduSaga. اكتب تقريراً تنفيذياً أسبوعياً لإدارة الموارد البشرية بأسلوب احترافي سعودي باللغة العربية.\n\nالبيانات:\n- إجمالي الموظفين النشطين: ${stats.active}\n- نسبة السعودة: ${stats.saudizationPct}%\n- موظفون عالي المخاطر: ${stats.highRiskCount}\n- إقامات منتهية: ${stats.expiredIqama}\n- طلبات إجازة معلقة: ${stats.pendingLeaves}\n- إجمالي الرواتب هذا الشهر: ${formatCurrency(stats.totalPayroll, tenant?.localization, isRTL)}\n- درجة صحة الموارد البشرية: ${stats.healthScore}%\n\nاكتب ملخصاً تنفيذياً من 3 فقرات يشمل: الوضع العام، المخاطر الرئيسية، التوصيات. لا تختلق أرقاماً خارج المعطيات.` :
+      `You are YAMEN, the AI HR Companion for EduSaga. Write a professional weekly executive HR report summary in English.\n\nData:\n- Active employees: ${stats.active}\n- Saudization: ${stats.saudizationPct}%\n- High risk employees: ${stats.highRiskCount}\n- Expired Iqamas: ${stats.expiredIqama}\n- Pending leaves: ${stats.pendingLeaves}\n- Monthly payroll: ${formatCurrency(stats.totalPayroll, tenant?.localization, isRTL)}\n- HR Health Score: ${stats.healthScore}%\n\nWrite a 3-paragraph executive summary: overall status, key risks, recommendations. Use only the provided data.`;
 
       const res = await callApi('/api/ai/invoke-llm', { prompt, source: 'executive' });
       setAiSummary(extractAiText(res));
@@ -100,14 +107,16 @@ export default function YamenExecutiveReport({ isRTL }) {
           <p className="text-xs text-muted-foreground">{isRTL ? 'صحة الموارد البشرية' : 'HR Health'}</p>
           <p className={`text-3xl font-bold ${stats.healthScore >= 70 ? 'text-emerald-400' : stats.healthScore >= 50 ? 'text-amber-400' : 'text-red-400'}`}>{stats.healthScore}%</p>
         </CardContent></Card>
+        {nationalisationEnabled && (
         <Card><CardContent className="p-4">
           <p className="text-xs text-muted-foreground">{isRTL ? 'السعودة' : 'Saudization'}</p>
           <p className={`text-3xl font-bold ${stats.saudizationPct >= 40 ? 'text-emerald-400' : 'text-amber-400'}`}>{stats.saudizationPct}%</p>
         </CardContent></Card>
+        )}
         <Card><CardContent className="p-4">
           <p className="text-xs text-muted-foreground">{isRTL ? 'إجمالي الرواتب' : 'Monthly Payroll'}</p>
           <p className="text-2xl font-bold text-white">{stats.totalPayroll > 0 ? (stats.totalPayroll / 1000).toFixed(0) + 'K' : '-'}</p>
-          <p className="text-xs text-muted-foreground">SAR</p>
+          <p className="text-xs text-muted-foreground">{getCurrencySymbol(tenant?.localization, isRTL)}</p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
           <p className="text-xs text-muted-foreground">{isRTL ? 'عالي المخاطر' : 'High Risk'}</p>
@@ -134,6 +143,7 @@ export default function YamenExecutiveReport({ isRTL }) {
           </CardContent>
         </Card>
 
+        {nationalisationEnabled && (
         <Card>
           <CardHeader><CardTitle className="text-sm">{isRTL ? 'توزيع الجنسية' : 'Nationality Distribution'}</CardTitle></CardHeader>
           <CardContent>
@@ -147,6 +157,7 @@ export default function YamenExecutiveReport({ isRTL }) {
             </ResponsiveContainer>
           </CardContent>
         </Card>
+        )}
       </div>
 
       {/* AI Executive Summary */}

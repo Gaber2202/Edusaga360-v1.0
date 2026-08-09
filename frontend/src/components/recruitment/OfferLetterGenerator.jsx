@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { tenantQuery, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import Currency from '../Currency';
+import { getCurrencySymbol } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -33,6 +36,7 @@ const OFFER_STATUS_LABELS = {
 
 export default function OfferLetterGenerator({ applicant, recruitment, departments, branches, companies, onOfferCreated }) {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const [showForm, setShowForm] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -77,10 +81,10 @@ Contract Type: ${form.contract_type === 'limited' ? 'Fixed Term' : 'Unlimited'}
 Start Date: ${form.start_date}
 Probation Period: ${form.probation_months} months
 Contract Duration: ${form.contract_duration_months} months
-Basic Salary: ${form.basic_salary.toLocaleString()} SAR
-Housing Allowance: ${form.housing_allowance.toLocaleString()} SAR
-Transport Allowance: ${form.transport_allowance.toLocaleString()} SAR
-Total Package: ${totalSalary.toLocaleString()} SAR/month
+Basic Salary: $<Currency amount={form.basic_salary} />
+Housing Allowance: $<Currency amount={form.housing_allowance} />
+Transport Allowance: $<Currency amount={form.transport_allowance} />
+Total Package: $<Currency amount={totalSalary} />/month
 Offer Expiry: ${form.offer_expiry_date}
 
 Return JSON with keys: "offer_text_ar" (formal Arabic offer letter) and "offer_text_en" (formal English offer letter).
@@ -242,25 +246,25 @@ Both must be complete, professional, and include all the above details. Include 
               <h4 className="font-semibold text-ink mb-3">{isRTL ? 'الراتب والمزايا' : 'Salary & Benefits'}</h4>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>{isRTL ? 'الراتب الأساسي (ر.س)' : 'Basic Salary (SAR)'}</Label>
+                  <Label>{isRTL ? `الراتب الأساسي (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Basic Salary (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label>
                   <Input type="number" min="0" value={form.basic_salary} onChange={e => setForm(p => ({...p, basic_salary: parseFloat(e.target.value)||0}))} />
                 </div>
                 <div className="space-y-2">
-                  <Label>{isRTL ? 'بدل السكن (ر.س)' : 'Housing Allowance (SAR)'}</Label>
+                  <Label>{isRTL ? `بدل السكن (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Housing Allowance (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label>
                   <Input type="number" min="0" value={form.housing_allowance} onChange={e => setForm(p => ({...p, housing_allowance: parseFloat(e.target.value)||0}))} />
                 </div>
                 <div className="space-y-2">
-                  <Label>{isRTL ? 'بدل النقل (ر.س)' : 'Transport Allowance (SAR)'}</Label>
+                  <Label>{isRTL ? `بدل النقل (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Transport Allowance (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label>
                   <Input type="number" min="0" value={form.transport_allowance} onChange={e => setForm(p => ({...p, transport_allowance: parseFloat(e.target.value)||0}))} />
                 </div>
                 <div className="space-y-2">
-                  <Label>{isRTL ? 'بدلات أخرى (ر.س)' : 'Other Allowances (SAR)'}</Label>
+                  <Label>{isRTL ? `بدلات أخرى (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Other Allowances (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label>
                   <Input type="number" min="0" value={form.other_allowances} onChange={e => setForm(p => ({...p, other_allowances: parseFloat(e.target.value)||0}))} />
                 </div>
               </div>
               <div className="mt-3 bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex justify-between items-center">
                 <span className="font-semibold text-emerald-800">{isRTL ? 'إجمالي الراتب الشهري' : 'Total Monthly Package'}</span>
-                <span className="text-xl font-bold text-emerald-700">{totalSalary.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                <span className="text-xl font-bold text-emerald-700"><Currency amount={totalSalary} /></span>
               </div>
             </div>
 

@@ -103,7 +103,7 @@ export class MetricsService {
       { kpi: 'chro.kpis.saudization_pct', name_ar: 'نسبة التوطين', name_en: 'Saudization %', owner_persona: ['chro'], display_format: 'percent', threshold_green: 25, threshold_amber: 15, threshold_red: 10 },
       { kpi: 'chro.kpis.retention_rate_pct', name_ar: 'معدل الاستبقاء', name_en: 'Retention %', owner_persona: ['chro'], display_format: 'percent' },
       { kpi: 'chro.kpis.open_roles_count', name_ar: 'الوظائف الشاغرة', name_en: 'Open Roles', owner_persona: ['chro'], display_format: 'number' },
-      { kpi: 'chro.nitaqat', name_ar: 'فئة نطاقات', name_en: 'Nitaqat Band', owner_persona: ['chro'], display_format: 'text' },
+      { kpi: 'chro.nationalisation', name_ar: 'فئة نطاقات', name_en: 'Nationalisation Band', owner_persona: ['chro'], display_format: 'text' },
       { kpi: 'chro.workforce_composition', name_ar: 'تكوين القوى العاملة', name_en: 'Workforce Composition', owner_persona: ['chro'], display_format: 'text' },
       { kpi: 'chro.saudi_vs_non_saudi', name_ar: 'السعوديون مقابل غير السعوديين', name_en: 'Saudi vs Non-Saudi', owner_persona: ['chro'], display_format: 'text' },
       { kpi: 'chro.payroll_gov_compliance', name_ar: 'الالتزام الحكومي للرواتب', name_en: 'Payroll Government Compliance', owner_persona: ['chro'], display_format: 'text' },
@@ -339,7 +339,7 @@ export class MetricsService {
     let applications: any[] = [];
     if (needsCEO || needsCOO) {
       const [sectionsRes, studentsRes, employeesRes, applicantsRes, applicationsRes] = await Promise.all([
-        this.branchFilter(this.supabase.from('sections').select('branch_id, capacity, id, name_en, name_ar, grade_id').eq('tenant_id', tenantId), branchId),
+        this.branchFilter(this.supabase.from('sections').select('branch_id, capacity, id, name, grade_id').eq('tenant_id', tenantId), branchId),
         this.branchFilter(this.supabase.from('students').select('id, branch_id, status').eq('tenant_id', tenantId).eq('status', 'active'), branchId),
         this.branchFilter(this.supabase.from('employees').select('id, job_title_id, job_titles(name_en, name_ar), status, branch_id').eq('tenant_id', tenantId).eq('status', 'active'), branchId),
         this.branchFilter(this.supabase.from('applicants').select('id, status, branch_id').eq('tenant_id', tenantId), branchId),
@@ -426,23 +426,29 @@ export class MetricsService {
     }
     const activeEmployees = employeesFull.filter((e: any) => e.status === 'active');
 
-    if (!pack.regulatorReports?.calculateNitaqat) {
-      throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'Nitaqat calculation');
+    let nationalisationData: any = null;
+    if (pack.regulatorReports?.calculateNitaqat) {
+      try {
+        nationalisationData = await pack.regulatorReports.calculateNitaqat(this.supabase, tenantId, {
+          branchId,
+          employees: employeesFull,
+          departments,
+        }) as any;
+      } catch (err) {
+        if (err instanceof NotImplementedInJurisdiction) {
+          nationalisationData = null;
+        } else {
+          throw err;
+        }
+      }
     }
-    const nitaqatData = await pack.regulatorReports.calculateNitaqat(this.supabase, tenantId, {
-      branchId,
-      employees: employeesFull,
-      departments,
-    }) as any;
-    const {
-      headcount,
-      saudiCount,
-      saudizationPct,
-      nitaqatBand,
-      nitaqat,
-      workforce_composition: workforceComposition,
-      saudi_vs_non_saudi: saudiVsNonSaudi,
-    } = nitaqatData;
+    const headcount = nationalisationData?.headcount ?? activeEmployees.length;
+    const saudiCount = nationalisationData?.saudiCount ?? 0;
+    const saudizationPct = nationalisationData?.saudizationPct ?? null;
+    const nationalisationBand = nationalisationData?.nitaqatBand ?? null;
+    const nationalisation = nationalisationData?.nitaqat ?? { data_quality: 'not_tracked', message: 'Nationalisation tracking is not applicable for this jurisdiction.' };
+    const workforceComposition = nationalisationData?.workforce_composition ?? [];
+    const saudiVsNonSaudi = nationalisationData?.saudi_vs_non_saudi ?? { saudi: 0, non_saudi: headcount, other: 0 };
 
     // Retention: 12-mo rolling attrition
     const cutoff12mo = daysAgoStr(365);
@@ -478,7 +484,7 @@ export class MetricsService {
 
     // Compliance signals
     const cutoff30 = daysAgoStr(-30);
-    const [overdueCountRes, zatcaRes] = await Promise.all([
+    const [overdueCountRes, einvoiceRes] = await Promise.all([
       this.branchFilter(this.supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).neq('status', 'paid').lte('due_date', todayStr()).not('due_date', 'is', null), branchId),
       this.supabase.from('zatca_submissions').select('zatca_status, submitted_at').eq('tenant_id', tenantId).order('submitted_at', { ascending: false }).limit(1),
     ]);
@@ -491,26 +497,26 @@ export class MetricsService {
     }
     const overdueCount = (overdueCountRes as any).count ?? 0;
     const iqamaExpiringCount = (iqamaList ?? []).filter((e: any) => new Date(e.iqama_expiry).getTime() <= new Date(cutoff30).getTime()).length;
-    const zatca = zatcaRes.data?.[0] ?? null;
-    const zatcaColor = !zatca ? 'unknown' : ['cleared', 'reported'].includes(zatca.zatca_status) ? 'green' : ['pending', 'generated'].includes(zatca.zatca_status) ? 'yellow' : 'red';
+    const latestEinvoice = einvoiceRes.data?.[0] ?? null;
+    const einvoiceColor = !latestEinvoice ? 'unknown' : ['cleared', 'reported'].includes(latestEinvoice.zatca_status) ? 'green' : ['pending', 'generated'].includes(latestEinvoice.zatca_status) ? 'yellow' : 'red';
     const payrollColor = !payRun ? 'unknown' : payRun.status === 'paid' ? 'green' : ['processed', 'approved'].includes(payRun.status) ? 'yellow' : 'red';
-    const gosiColor = activeEmployees.length > 0 && activeEmployees.some((e: any) => e.is_saudi && e.is_gosi_applicable) ? 'yellow' : 'unknown';
+    const socialInsuranceColor = activeEmployees.length > 0 && activeEmployees.some((e: any) => e.is_saudi && e.is_gosi_applicable) ? 'yellow' : 'unknown';
 
     let complianceScore = 100;
     complianceScore -= Math.min(40, overdueCount * 2);
     complianceScore -= Math.min(30, iqamaExpiringCount * 3);
-    if (zatcaColor === 'red') complianceScore -= 10;
+    if (einvoiceColor === 'red') complianceScore -= 10;
     complianceScore = clamp(complianceScore);
 
     const complianceSignals = {
-      zatca_vat: zatca
-        ? { color: zatcaColor, status: zatca.zatca_status, submitted_at: zatca.submitted_at }
-        : { color: 'unknown', status: 'not_tracked', message: 'No ZATCA submissions yet.' },
-      wps_mudad: { color: payrollColor, status: payRun?.status ?? 'not_tracked', message: payRun ? 'Latest pay run status.' : 'No payroll run records found.' },
-      gosi: gosiColor === 'unknown'
-        ? { color: 'unknown', status: 'not_tracked', message: 'GOSI tracking not configured.' }
-        : { color: gosiColor, status: 'pending', message: 'GOSI applicable for Saudi employees.' },
-      qiwa: { color: 'unknown', status: 'not_tracked', message: 'No Qiwa contract-status table exists.' },
+      einvoicing: latestEinvoice
+        ? { color: einvoiceColor, status: latestEinvoice.zatca_status, submitted_at: latestEinvoice.submitted_at }
+        : { color: 'unknown', status: 'not_tracked', message: 'No e-invoicing submissions yet.' },
+      mudad: { color: payrollColor, status: payRun?.status ?? 'not_tracked', message: payRun ? 'Latest pay run status.' : 'No payroll run records found.' },
+      gosi: socialInsuranceColor === 'unknown'
+        ? { color: 'unknown', status: 'not_tracked', message: 'Social insurance tracking not configured.' }
+        : { color: socialInsuranceColor, status: 'pending', message: 'Social insurance applicable for Saudi employees.' },
+      qiwa: { color: 'unknown', status: 'not_tracked', message: 'No labor contract-status table exists.' },
     };
 
     // Vitality Index
@@ -555,7 +561,7 @@ export class MetricsService {
       { priority: overdueCount > 10 ? 1 : overdueCount > 0 ? 3 : 99, message_en: `${overdueCount} overdue invoices.`, message_ar: `${overdueCount} فاتورة متأخرة.` },
       { priority: capacityUtilization && capacityUtilization < 60 ? 2 : 99, message_en: `Low capacity utilization (${capacityUtilization}%).`, message_ar: `استغلال السعة منخفض (${capacityUtilization}٪).` },
       { priority: growthData.growth_rate !== null && growthData.growth_rate < 0 ? 1 : 99, message_en: `Enrollment declining ${growthData.growth_rate}%.`, message_ar: `عدد الطلاب ينخفض ${growthData.growth_rate}٪.` },
-      { priority: headcount > 0 && nitaqatBand === 'red' ? 1 : headcount > 0 && nitaqatBand === 'yellow' ? 2 : 99, message_en: `Nitaqat band is ${nitaqatBand}.`, message_ar: `فئة نطاقات ${nitaqatBand}.` },
+      { priority: headcount > 0 && nationalisationBand === 'red' ? 1 : headcount > 0 && nationalisationBand === 'yellow' ? 2 : 99, message_en: `Nationalisation band is ${nationalisationBand}.`, message_ar: `فئة نطاقات ${nationalisationBand}.` },
       { priority: iqamaExpiringCount > 0 ? 2 : 99, message_en: `${iqamaExpiringCount} iqamas expiring soon.`, message_ar: `${iqamaExpiringCount} إقامة ستنتهي قريباً.` },
     ].filter(r => r.priority < 99).sort((a, b) => a.priority - b.priority).slice(0, 5);
 
@@ -584,7 +590,7 @@ export class MetricsService {
       ar_aging: arAging,
       overdue_by_campus: overdue_by_campus,
       revenue_vs_ebitda: revenue_trend.slice(-6),
-      compliance_traffic_lights: { zatca_vat: complianceSignals.zatca_vat, wps_mudad: complianceSignals.wps_mudad, gosi: complianceSignals.gosi },
+      compliance_traffic_lights: { einvoicing: complianceSignals.einvoicing, mudad: complianceSignals.mudad, gosi: complianceSignals.gosi },
       revenue_by_fee_type: revenueByFeeType,
       collections_forecast: expectedCollections,
       vat_position: { output_vat_accrued: vatAccrued, next_filing_date: nextFilingDate, period_start: periodStart, period_end: periodEnd },
@@ -602,7 +608,8 @@ export class MetricsService {
     };
     const chroData = {
       kpis: { headcount, saudization_pct: saudizationPct, retention_rate_pct: retentionQuality === 'real' ? retentionRate : null, retention_data_quality: retentionQuality, open_roles_count: null },
-      nitaqat,
+      nitaqat: nationalisation,
+      nationalisation: nationalisation,
       workforce_composition: workforceComposition,
       saudi_vs_non_saudi: saudiVsNonSaudi,
       payroll_gov_compliance: complianceSignals,
@@ -640,7 +647,7 @@ export class MetricsService {
       metricValues['cfo.ar_aging'] = { metadata: arAging };
       metricValues['cfo.overdue_by_campus'] = { metadata: overdue_by_campus };
       metricValues['cfo.revenue_vs_ebitda'] = { metadata: revenue_trend.slice(-6) };
-      metricValues['cfo.compliance_traffic_lights'] = { metadata: { zatca_vat: complianceSignals.zatca_vat, wps_mudad: complianceSignals.wps_mudad, gosi: complianceSignals.gosi } };
+      metricValues['cfo.compliance_traffic_lights'] = { metadata: { einvoicing: complianceSignals.einvoicing, mudad: complianceSignals.mudad, gosi: complianceSignals.gosi } };
       metricValues['cfo.revenue_by_fee_type'] = { metadata: revenueByFeeType };
       metricValues['cfo.collections_forecast'] = { metadata: expectedCollections };
       metricValues['cfo.vat_position'] = { metadata: { output_vat_accrued: vatAccrued, next_filing_date: nextFilingDate, period_start: periodStart, period_end: periodEnd } };
@@ -656,7 +663,7 @@ export class MetricsService {
       metricValues['chro.kpis.headcount'] = { value: headcount };
       metricValues['chro.kpis.saudization_pct'] = { value: saudizationPct, numerator: saudiCount, denominator: headcount };
       metricValues['chro.kpis.retention_rate_pct'] = { value: retentionQuality === 'real' ? retentionRate : null, numerator: separations, denominator: avgHeadcount };
-      metricValues['chro.nitaqat'] = { metadata: nitaqat };
+      metricValues['chro.nationalisation'] = { metadata: nationalisation };
       metricValues['chro.workforce_composition'] = { metadata: workforceComposition };
       metricValues['chro.saudi_vs_non_saudi'] = { metadata: saudiVsNonSaudi };
       metricValues['chro.payroll_gov_compliance'] = { metadata: complianceSignals };

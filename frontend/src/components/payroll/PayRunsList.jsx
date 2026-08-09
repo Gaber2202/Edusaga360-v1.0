@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { formatCurrency } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { useBranch } from '../BranchContext';
 import { useRole } from '../RoleContext';
 import { Card, CardContent } from '../ui/card';
@@ -23,9 +25,15 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { logAuditEvent, AuditActions } from '../AuditService';
+import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
+import { SOCIAL_INSURANCE_FEATURES, NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
 
 export default function PayRunsList({ onViewPayRun }) {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
+  const { isFeatureEnabled } = useJurisdictionFeatures();
+  const socialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);
+  const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
   const { selectedBranchId, filterByBranch: _filterByBranch, branchFilter, branches } = useBranch();
   const { user: currentUser, userRole } = useRole();
   const queryClient = useQueryClient();
@@ -97,7 +105,7 @@ export default function PayRunsList({ onViewPayRun }) {
         totalHousing += emp.housing_allowance || 0;
         totalTransport += emp.transport_allowance || 0;
         totalOther += emp.other_allowances || 0;
-        const isSaudi = emp.is_saudi || emp.nationality === 'Saudi' || emp.nationality === 'سعودي';
+        const isSaudi = nationalisationEnabled ? (emp.is_saudi ?? false) : false;
         if (isSaudi) {
           saudiCount++;
         } else {
@@ -141,12 +149,12 @@ export default function PayRunsList({ onViewPayRun }) {
 
       // Create payroll inputs for each employee
       const inputs = branchEmployees.map(emp => {
-        const isSaudi = emp.is_saudi || emp.nationality === 'Saudi' || emp.nationality === 'سعودي';
+        const isSaudi = nationalisationEnabled ? (emp.is_saudi ?? false) : false;
         const grossSalary = (emp.basic_salary || 0) + (emp.housing_allowance || 0) + 
                           (emp.transport_allowance || 0) + (emp.other_allowances || 0);
-        const gosiWage = Math.min((emp.basic_salary || 0) + (emp.housing_allowance || 0), 45000);
-        const gosiEmployee = isSaudi ? gosiWage * 0.0975 : 0;
-        const gosiEmployer = isSaudi ? gosiWage * 0.1175 : gosiWage * 0.02;
+        const socialInsuranceWage = socialInsuranceEnabled ? Math.min((emp.basic_salary || 0) + (emp.housing_allowance || 0), 45000) : 0;
+        const employeeSocialInsurance = socialInsuranceEnabled && isSaudi ? socialInsuranceWage * 0.0975 : 0;
+        const employerSocialInsurance = socialInsuranceEnabled ? (isSaudi ? socialInsuranceWage * 0.1175 : socialInsuranceWage * 0.02) : 0;
 
         return {
           pay_run_id: payRun.id,
@@ -163,11 +171,11 @@ export default function PayRunsList({ onViewPayRun }) {
           transport_allowance: emp.transport_allowance || 0,
           other_allowances: emp.other_allowances || 0,
           gross_salary: grossSalary,
-          gosi_employee: gosiEmployee,
-          gosi_employer: gosiEmployer,
-          gosi_wage: gosiWage,
-          total_deductions: gosiEmployee,
-          net_salary: grossSalary - gosiEmployee,
+          gosi_employee: employeeSocialInsurance,
+          gosi_employer: employerSocialInsurance,
+          gosi_wage: socialInsuranceWage,
+          total_deductions: employeeSocialInsurance,
+          net_salary: grossSalary - employeeSocialInsurance,
           bank_name: emp.bank_name,
           iban: emp.iban,
           status: 'draft'
@@ -176,15 +184,15 @@ export default function PayRunsList({ onViewPayRun }) {
 
       await supabase.PayrollInput.bulkCreate(inputs);
 
-      // Update pay run with GOSI totals
-      const totalGosiEmployee = inputs.reduce((sum, i) => sum + i.gosi_employee, 0);
-      const totalGosiEmployer = inputs.reduce((sum, i) => sum + i.gosi_employer, 0);
+      // Update pay run with social insurance totals
+      const totalEmployeeSocialInsurance = inputs.reduce((sum, i) => sum + i.gosi_employee, 0);
+      const totalEmployerSocialInsurance = inputs.reduce((sum, i) => sum + i.gosi_employer, 0);
       const netPayroll = inputs.reduce((sum, i) => sum + i.net_salary, 0);
 
       await tenantQuery('pay_runs').update({
-        total_gosi_employee: totalGosiEmployee,
-        total_gosi_employer: totalGosiEmployer,
-        total_deductions: totalGosiEmployee,
+        total_gosi_employee: totalEmployeeSocialInsurance,
+        total_gosi_employer: totalEmployerSocialInsurance,
+        total_deductions: totalEmployeeSocialInsurance,
         net_payroll: netPayroll
       });
 
@@ -200,9 +208,9 @@ export default function PayRunsList({ onViewPayRun }) {
       setTimeout(() => {
         const updatedPayRun = {
           ...payRun,
-          total_gosi_employee: totalGosiEmployee,
-          total_gosi_employer: totalGosiEmployer,
-          total_deductions: totalGosiEmployee,
+          total_gosi_employee: totalEmployeeSocialInsurance,
+          total_gosi_employer: totalEmployerSocialInsurance,
+          total_deductions: totalEmployeeSocialInsurance,
           net_payroll: netPayroll
         };
         onViewPayRun(updatedPayRun);
@@ -298,11 +306,11 @@ export default function PayRunsList({ onViewPayRun }) {
                     </div>
                     <div className="text-center hidden lg:block">
                       <p className="text-xs text-muted-foreground">{isRTL ? 'الإجمالي' : 'Gross'}</p>
-                      <p className="font-semibold text-ink mt-0.5">{(run.total_earnings || 0).toLocaleString()} <span className="text-xs font-normal text-muted-foreground">{isRTL ? 'ر.س' : 'SAR'}</span></p>
+                      <p className="font-semibold text-ink mt-0.5">{formatCurrency((run.total_earnings || 0), tenant?.localization, isRTL)}</p>
                     </div>
                     <div className="text-center">
                       <p className="text-xs text-muted-foreground">{isRTL ? 'الصافي' : 'Net'}</p>
-                      <p className="font-bold text-emerald-600 mt-0.5">{(run.net_payroll || 0).toLocaleString()} <span className="text-xs font-normal text-muted-foreground">{isRTL ? 'ر.س' : 'SAR'}</span></p>
+                      <p className="font-bold text-emerald-600 mt-0.5">{formatCurrency((run.net_payroll || 0), tenant?.localization, isRTL)}</p>
                     </div>
                     <Eye className="w-5 h-5 text-muted-foreground group-hover:text-najdi-500 transition-colors" />
                   </div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { getCurrencySymbol } from '../lib/localization';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -31,6 +32,7 @@ const REFUND_REASONS = [
 
 export default function Refunds() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
@@ -251,7 +253,7 @@ export default function Refunds() {
   const columns = [
     { header: isRTL ? 'رقم الاسترداد' : 'Refund #', cell: (row) => <span className="font-mono text-sm">{row.refund_number}</span> },
     { header: t('studentName'), accessorKey: 'student_name' },
-    { header: isRTL ? 'المبلغ' : 'Amount', cell: (row) => <span className="font-semibold text-red-600">{row.refund_amount?.toLocaleString()} {t('sar')}</span> },
+    { header: isRTL ? 'المبلغ' : 'Amount', cell: (row) => <span className="font-semibold text-red-600">{row.refund_amount?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span> },
     { header: isRTL ? 'السبب' : 'Reason', cell: (row) => {
       const reason = REFUND_REASONS.find(r => r.value === row.refund_reason);
       return reason ? (isRTL ? reason.label_ar : reason.label_en) : row.refund_reason;

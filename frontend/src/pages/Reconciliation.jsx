@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { getCurrencySymbol } from '../lib/localization';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -20,6 +21,7 @@ import { useTenantFilter } from '../hooks/useTenantFilter';
 
 export default function Reconciliation() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
@@ -156,7 +158,7 @@ export default function Reconciliation() {
     { header: isRTL ? 'رقم الدفعة' : 'Payment #', cell: (row) => <span className="font-mono text-sm">{row.payment_number}</span> },
     { header: t('studentName'), accessorKey: 'student_name' },
     { header: isRTL ? 'الفاتورة' : 'Invoice', accessorKey: 'invoice_number' },
-    { header: t('amount'), cell: (row) => <span className="font-semibold">{row.amount?.toLocaleString()} {t('sar')}</span> },
+    { header: t('amount'), cell: (row) => <span className="font-semibold">{row.amount?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span> },
     { header: isRTL ? 'طريقة الدفع' : 'Method', cell: (row) => {
       const methods = { cash: 'نقداً', bank_transfer: 'تحويل', mada: 'مدى', visa: 'فيزا', mastercard: 'ماستر', cheque: 'شيك' };
       return isRTL ? (methods[row.payment_method] || row.payment_method) : row.payment_method;
@@ -231,7 +233,7 @@ export default function Reconciliation() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{isRTL ? 'إجمالي المبلغ' : 'Total Amount'}</span>
                 <span className="font-semibold text-emerald-600">
-                  {payments.filter(p => selectedPayments.includes(p.id)).reduce((sum, p) => sum + (p.amount || 0), 0).toLocaleString()} {t('sar')}
+                  {payments.filter(p => selectedPayments.includes(p.id)).reduce((sum, p) => sum + (p.amount || 0), 0).toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}
                 </span>
               </div>
             </div>

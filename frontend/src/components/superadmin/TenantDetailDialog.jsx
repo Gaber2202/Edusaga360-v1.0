@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { formatCurrency } from '../../lib/localization';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Button } from '../ui/button';
@@ -345,7 +346,7 @@ export default function TenantDetailDialog({ tenant, users, open, onClose, onUpd
               {[
                 { label: isRTL ? 'المستخدمين' : 'Users', value: `${users.length} / ${tenant.max_users || '∞'}`, icon: Users },
                 { label: isRTL ? 'الموظفين' : 'Employees', value: `${tenant.current_employees || 0} / ${tenant.max_employees || '∞'}`, icon: Users },
-                { label: isRTL ? 'الإيرادات' : 'Revenue', value: `${(tenant.monthly_revenue || 0).toLocaleString()} SAR`, icon: DollarSign },
+                { label: isRTL ? 'الإيرادات' : 'Revenue', value: formatCurrency(tenant.monthly_revenue || 0, tenant?.localization, isRTL), icon: DollarSign },
                 { label: isRTL ? 'الخطة' : 'Plan', value: isRTL ? plan.nameAr : plan.nameEn, icon: Shield },
               ].map((s, i) => (
                 <Card key={i} className="bg-sand">

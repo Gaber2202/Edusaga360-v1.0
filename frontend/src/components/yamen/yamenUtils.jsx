@@ -360,7 +360,7 @@ Manager`,
 We are pleased to offer you the position of {position} with our organization.
 
 Position: {position}
-Salary: {salary} SAR
+Salary: {formatCurrency(salary, tenant?.localization, isRTL)}
 Benefits: {benefits}
 Start Date: {startDate}
 
@@ -394,7 +394,7 @@ Regards`,
 Congratulations! We are pleased to promote you to {newPosition}.
 
 New Position: {newPosition}
-New Salary: {newSalary} SAR
+New Salary: {formatCurrency(newSalary, tenant?.localization, isRTL)}
 Effective Date: {effectiveDate}
 
 Your dedication and performance have been recognized. We look forward to your continued success.

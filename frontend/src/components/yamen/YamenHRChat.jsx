@@ -34,8 +34,8 @@ async function buildHRContext(isHRMode, userEmail) {
       return d >= 0 && d <= 60;
     });
     const lastPayRun = payRuns[0];
-    const saudiCount = employees.filter(e => e.is_saudi || e.nationality === 'Saudi').length;
     const activeEmployees = employees.filter(e => e.status === 'active');
+    const saudiCount = nationalisationEnabled ? employees.filter(e => e.is_saudi).length : 0;
 
     // Per-employee leave balance summary
     const balanceSummary = leaveBalances.map(b => {
@@ -81,8 +81,10 @@ async function buildHRContext(isHRMode, userEmail) {
       summary: {
         totalEmployees: employees.length,
         activeEmployees: activeEmployees.length,
-        saudiCount,
-        saudizationPct: activeEmployees.length > 0 ? Math.round(saudiCount / activeEmployees.length * 100) : 0,
+        ...(nationalisationEnabled ? {
+          saudiCount,
+          saudizationPct: activeEmployees.length > 0 ? Math.round(saudiCount / activeEmployees.length * 100) : 0,
+        } : {}),
         pendingLeaveRequests: pendingLeaves.length,
         approvedLeaveRequests: approvedLeaves.length,
         recentAbsencesLast50: recentAbsences,
@@ -120,7 +122,7 @@ function isAiAllowed(tenant) {
   return used < limit;
 }
 
-export default function YamenHRChat({ isRTL, isHRMode }) {
+export default function YamenHRChat({ isRTL, isHRMode, nationalisationEnabled = false }) {
   const { user } = useRole();
   const { tenant } = useTenant();
   const [messages, setMessages] = useState([

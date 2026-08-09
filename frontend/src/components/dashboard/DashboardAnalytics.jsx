@@ -6,6 +6,8 @@ import {
 } from 'recharts';
 import { format, subMonths } from 'date-fns';
 import { BarChart3 } from 'lucide-react';
+import { useTenant } from '../TenantContext';
+import { formatCurrency, getCurrencySymbol } from '../../lib/localization';
 
 function monthLabel(offset) {
   return format(subMonths(new Date(), offset), 'MMM');
@@ -49,6 +51,7 @@ function EmptyChartState({ isRTL }) {
 const PIE_COLORS = ['#10b981', '#f59e0b', '#ef4444'];
 
 export default function DashboardAnalytics({ students, invoices, employees: _employees, payRuns, attendanceRecords, isRTL }) {
+  const { tenant } = useTenant();
   const enrollmentData = React.useMemo(() => {
     return Array.from({ length: 6 }, (_, i) => {
       const label = monthLabel(5 - i);
@@ -118,7 +121,7 @@ export default function DashboardAnalytics({ students, invoices, employees: _emp
 
         <Card className="col-span-1">
           <CardHeader className="pb-2 px-4 pt-4">
-            <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{isRTL ? 'حالة التحصيل (ألف ر.س)' : 'Fee Collection (K SAR)'}</CardTitle>
+            <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{isRTL ? `حالة التحصيل (ألف ${getCurrencySymbol(tenant?.localization, isRTL)})` : `Fee Collection (K ${getCurrencySymbol(tenant?.localization, isRTL)})`}</CardTitle>
           </CardHeader>
           <CardContent className="px-2 pb-3 flex items-center justify-center">
             {feeData.length > 0 && feeData.some(d => d.value > 0) ? (
@@ -128,7 +131,7 @@ export default function DashboardAnalytics({ students, invoices, employees: _emp
                     {feeData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
                   </Pie>
                   <Legend iconSize={8} wrapperStyle={{ fontSize: 10 }} />
-                  <Tooltip formatter={(v) => [`${v}K SAR`]} contentStyle={{ fontSize: 11, borderRadius: 8 }} />
+                  <Tooltip formatter={(v) => [formatCurrency((v || 0) * 1000, tenant?.localization, isRTL)]} contentStyle={{ fontSize: 11, borderRadius: 8 }} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (

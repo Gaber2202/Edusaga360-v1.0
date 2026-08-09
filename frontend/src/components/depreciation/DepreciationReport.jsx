@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../LanguageContext';
+import { useTenant } from '../TenantContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Download, Printer, FileText } from 'lucide-react';
@@ -9,6 +10,7 @@ import { toast } from 'sonner';
 
 export default function DepreciationReport({ run, assets = [] }) {
   const { t: _t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
 
   const exportToPDF = () => {
     try {
@@ -28,7 +30,7 @@ export default function DepreciationReport({ run, assets = [] }) {
       doc.text(isRTL ? 'الملخص' : 'Summary', 20, 55);
       doc.setFontSize(10);
       doc.text(`${isRTL ? 'عدد الأصول' : 'Assets Count'}: ${run.asset_count}`, 20, 65);
-      doc.text(`${isRTL ? 'إجمالي الإهلاك' : 'Total Depreciation'}: ${run.total_depreciation?.toLocaleString()} SAR`, 20, 72);
+      doc.text(`${isRTL ? 'إجمالي الإهلاك' : 'Total Depreciation'}: $<Currency amount={run.total_depreciation} />`, 20, 72);
       
       // Table Headers
       let y = 85;
@@ -112,7 +114,7 @@ export default function DepreciationReport({ run, assets = [] }) {
             <p><strong>${isRTL ? 'الفترة' : 'Period'}:</strong> ${run.period}</p>
             <p><strong>${isRTL ? 'التاريخ' : 'Date'}:</strong> ${format(new Date(run.run_date), 'dd/MM/yyyy')}</p>
             <p><strong>${isRTL ? 'عدد الأصول' : 'Assets Count'}:</strong> ${run.asset_count}</p>
-            <p><strong>${isRTL ? 'إجمالي الإهلاك' : 'Total Depreciation'}:</strong> ${run.total_depreciation?.toLocaleString()} SAR</p>
+            <p><strong>${isRTL ? 'إجمالي الإهلاك' : 'Total Depreciation'}:</strong> $<Currency amount={run.total_depreciation} /></p>
           </div>
           <table>
             <thead>
@@ -127,7 +129,7 @@ export default function DepreciationReport({ run, assets = [] }) {
                 <tr>
                   <td>${entry.asset_code}</td>
                   <td>${entry.asset_name}</td>
-                  <td>${entry.depreciation_amount?.toLocaleString()} SAR</td>
+                  <td>$<Currency amount={entry.depreciation_amount} /></td>
                 </tr>
               `).join('') || ''}
             </tbody>

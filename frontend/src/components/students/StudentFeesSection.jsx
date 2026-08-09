@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import Currency from '../Currency';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
@@ -14,6 +15,7 @@ import { useTenantFilter } from '../../hooks/useTenantFilter';
 
 export default function StudentFeesSection({ student, onStudentUpdated }) {
   const { t: _t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const queryClient = useQueryClient();
   const { tenantId } = useTenantFilter();
 
@@ -250,14 +252,14 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
                     <TableRow key={idx}>
                       <TableCell>{isRTL ? f.fee_type_name_ar : (f.fee_type_name_en || f.fee_type_name_ar)}</TableCell>
                       <TableCell className="text-right font-semibold">
-                        {(f.amount || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}
+                        <Currency amount={f.amount} />
                       </TableCell>
                     </TableRow>
                   ))}
                   <TableRow className="bg-emerald-50 font-bold">
                     <TableCell>{isRTL ? 'الإجمالي' : 'Total'}</TableCell>
                     <TableCell className="text-right">
-                      {(liveStudent.total_applied_fees || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}
+                      <Currency amount={liveStudent.total_applied_fees} />
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -309,7 +311,7 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
                           <TableRow key={f.id}>
                             <TableCell>{isRTL ? f.fee_type_name_ar : (f.fee_type_name_en || f.fee_type_name_ar)}</TableCell>
                             <TableCell className="text-right font-semibold">
-                              {(f.amount || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}
+                              <Currency amount={f.amount} />
                             </TableCell>
                             <TableCell className="text-center">
                               {f.is_mandatory ? (
@@ -323,7 +325,7 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
                         <TableRow className="bg-najdi-50 font-bold">
                           <TableCell>{isRTL ? 'الإجمالي' : 'Total'}</TableCell>
                           <TableCell className="text-right">
-                            {totalNewFees.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}
+                            <Currency amount={totalNewFees} />
                           </TableCell>
                           <TableCell></TableCell>
                         </TableRow>

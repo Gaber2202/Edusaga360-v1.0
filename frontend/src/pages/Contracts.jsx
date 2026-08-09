@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { getCurrencySymbol } from '../lib/localization';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -28,6 +29,7 @@ const DISCOUNT_TYPES = ['none', 'sibling', 'staff', 'scholarship', 'early_paymen
 
 export default function Contracts() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter, branches } = useBranch();
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
@@ -646,7 +648,7 @@ export default function Contracts() {
       header: isRTL ? 'صافي المبلغ' : 'Net Amount', 
       width: '13%',
       align: 'center',
-      cell: (row) => <span className="font-semibold">{row.net_amount?.toLocaleString()} {t('sar')}</span> 
+      cell: (row) => <span className="font-semibold">{row.net_amount?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span> 
     },
     { 
       header: t('status'), 
@@ -861,7 +863,7 @@ export default function Contracts() {
                         {formData.services.map((s, i) => (
                           <tr key={i} className="border-t">
                             <td className="p-2">{s.service_name}</td>
-                            <td className="p-2">{s.amount?.toLocaleString()} {t('sar')}</td>
+                            <td className="p-2">{s.amount?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -888,9 +890,9 @@ export default function Contracts() {
                 </div>
 
                 <div className="bg-sand rounded-lg p-4 space-y-2">
-                  <div className="flex justify-between"><span>{isRTL ? 'إجمالي الرسوم' : 'Total Fees'}</span><span>{totalFees.toLocaleString()} {t('sar')}</span></div>
-                  {discountAmount > 0 && <div className="flex justify-between text-red-600"><span>{t('discount')}</span><span>-{discountAmount.toLocaleString()} {t('sar')}</span></div>}
-                  <div className="flex justify-between text-lg font-bold border-t pt-2"><span>{isRTL ? 'صافي المبلغ' : 'Net Amount'}</span><span>{netAmount.toLocaleString()} {t('sar')}</span></div>
+                  <div className="flex justify-between"><span>{isRTL ? 'إجمالي الرسوم' : 'Total Fees'}</span><span>{totalFees.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span></div>
+                  {discountAmount > 0 && <div className="flex justify-between text-red-600"><span>{t('discount')}</span><span>-{discountAmount.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span></div>}
+                  <div className="flex justify-between text-lg font-bold border-t pt-2"><span>{isRTL ? 'صافي المبلغ' : 'Net Amount'}</span><span>{netAmount.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span></div>
                 </div>
               </>
             )}
@@ -965,9 +967,9 @@ export default function Contracts() {
                 <div><Label className="text-muted-foreground">{t('academicYear')}</Label><p>{showDetails.academic_year}</p></div>
               </div>
               <div className="bg-sand rounded-lg p-4">
-                <div className="flex justify-between"><span>{isRTL ? 'إجمالي الرسوم' : 'Total Fees'}</span><span>{showDetails.total_fees?.toLocaleString()} {t('sar')}</span></div>
-                <div className="flex justify-between text-red-600"><span>{t('discount')}</span><span>-{showDetails.total_discount?.toLocaleString()} {t('sar')}</span></div>
-                <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2"><span>{isRTL ? 'صافي المبلغ' : 'Net Amount'}</span><span>{showDetails.net_amount?.toLocaleString()} {t('sar')}</span></div>
+                <div className="flex justify-between"><span>{isRTL ? 'إجمالي الرسوم' : 'Total Fees'}</span><span>{showDetails.total_fees?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span></div>
+                <div className="flex justify-between text-red-600"><span>{t('discount')}</span><span>-{showDetails.total_discount?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span></div>
+                <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2"><span>{isRTL ? 'صافي المبلغ' : 'Net Amount'}</span><span>{showDetails.net_amount?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span></div>
               </div>
               {showDetails.payment_schedule?.length > 0 && (
                 <div>
@@ -976,7 +978,7 @@ export default function Contracts() {
                     {showDetails.payment_schedule.map((p, i) => (
                       <div key={i} className="flex justify-between items-center p-2 bg-white border rounded">
                         <span>{isRTL ? `القسط ${p.installment_number}` : `Installment ${p.installment_number}`}</span>
-                        <span>{p.amount?.toLocaleString()} {t('sar')}</span>
+                        <span>{p.amount?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span>
                         <span className="text-sm text-muted-foreground">{p.due_date}</span>
                         <StatusBadge status={p.status} />
                       </div>

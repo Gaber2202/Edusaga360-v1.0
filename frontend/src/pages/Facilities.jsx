@@ -24,6 +24,7 @@ import { useTenantFilter } from '../hooks/useTenantFilter';
 
 export default function Facilities() {
   const { t: _t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranch: _selectedBranch, selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate: _getTenantIdForCreate } = useTenantFilter();
   
@@ -122,7 +123,7 @@ export default function Facilities() {
       return <Badge className={colors[row.status] || 'bg-gray-100'}>{row.status}</Badge>;
     }},
     { key: 'scheduled_date', label: isRTL ? 'الموعد' : 'Scheduled', render: (val) => val ? format(new Date(val), 'yyyy-MM-dd') : '-' },
-    { key: 'total_cost', label: isRTL ? 'التكلفة' : 'Cost', render: (val) => val ? `${val.toLocaleString()} SAR` : '-' }
+    { key: 'total_cost', label: isRTL ? 'التكلفة' : 'Cost', render: (val) => val ? `$<Currency amount={val} />` : '-' }
   ];
 
   const assetColumns = [
@@ -154,7 +155,7 @@ export default function Facilities() {
       return <span className={isLow ? 'text-red-600 font-bold' : ''}>{val}</span>;
     }},
     { key: 'reorder_level', label: isRTL ? 'حد الطلب' : 'Reorder Level' },
-    { key: 'unit_cost', label: isRTL ? 'السعر' : 'Unit Cost', render: (val) => val ? `${val} SAR` : '-' }
+    { key: 'unit_cost', label: isRTL ? 'السعر' : 'Unit Cost', render: (val) => val ? `${formatCurrency(val, tenant?.localization, isRTL)}` : '-' }
   ];
 
   return (

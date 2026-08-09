@@ -6,6 +6,8 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { useTenant } from '../components/TenantContext';
+import { getCurrencySymbol, formatNumber, formatCurrency } from '../lib/localization';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -17,8 +19,6 @@ import { Download, RefreshCw, CheckCircle, AlertCircle, ChevronRight } from 'luc
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 
-const SAR = (v) => (v || 0).toLocaleString('en-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
 const TYPE_ORDER = ['asset', 'liability', 'equity', 'revenue', 'expense'];
 const TYPE_LABELS = {
   ar: { asset: 'الأصول', liability: 'الالتزامات', equity: 'حقوق الملكية', revenue: 'الإيرادات', expense: 'المصروفات' },
@@ -27,6 +27,7 @@ const TYPE_LABELS = {
 
 export default function TrialBalance() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { branchFilter } = useBranch();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
 
@@ -98,7 +99,8 @@ export default function TrialBalance() {
   }, [accountBalances]);
 
   const exportCSV = () => {
-    const rows = [['Account Code', 'Account Name', 'Type', 'Debit SAR', 'Credit SAR']];
+    const sym = tenant?.currency_code || 'XXX';
+    const rows = [['Account Code', 'Account Name', 'Type', `Debit ${sym}`, `Credit ${sym}`]];
     accountBalances.sort((a, b) => (a.account_code || '').localeCompare(b.account_code || '')).forEach(acc => {
       rows.push([acc.account_code, acc.name_ar, acc.account_type, acc.debitBalance.toFixed(2), acc.creditBalance.toFixed(2)]);
     });
@@ -135,7 +137,7 @@ export default function TrialBalance() {
         }`}>
           {totals.balanced
             ? <><CheckCircle className="w-4 h-4" />{isRTL ? '✓ الميزان متوازن — المدين = الدائن' : '✓ Trial balance is balanced — Debit = Credit'}</>
-            : <><AlertCircle className="w-4 h-4" />{isRTL ? `⚠ فرق: SAR ${SAR(Math.abs(totals.totalDebit - totals.totalCredit))}` : `⚠ Out of balance by: SAR ${SAR(Math.abs(totals.totalDebit - totals.totalCredit))}`}</>}
+            : <><AlertCircle className="w-4 h-4" />{isRTL ? `⚠ فرق: ${formatCurrency(Math.abs(totals.totalDebit - totals.totalCredit), tenant?.localization, isRTL)}` : `⚠ Out of balance by: ${formatCurrency(Math.abs(totals.totalDebit - totals.totalCredit), tenant?.localization, isRTL)}`}</>}
         </div>
       )}
 
@@ -155,8 +157,8 @@ export default function TrialBalance() {
                 <TableRow className="bg-sand">
                   <TableHead className="w-24">{isRTL ? 'رمز' : 'Code'}</TableHead>
                   <TableHead>{isRTL ? 'اسم الحساب' : 'Account Name'}</TableHead>
-                  <TableHead className="text-end w-36">{isRTL ? 'مدين (ر.س)' : 'Debit (SAR)'}</TableHead>
-                  <TableHead className="text-end w-36">{isRTL ? 'دائن (ر.س)' : 'Credit (SAR)'}</TableHead>
+                  <TableHead className="text-end w-36">{isRTL ? `مدين (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Debit (${getCurrencySymbol(tenant?.localization, isRTL)})`}</TableHead>
+                  <TableHead className="text-end w-36">{isRTL ? `دائن (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Credit (${getCurrencySymbol(tenant?.localization, isRTL)})`}</TableHead>
                   <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -181,10 +183,10 @@ export default function TrialBalance() {
                           <TableCell className="font-mono text-xs text-muted-foreground py-2">{acc.account_code}</TableCell>
                           <TableCell className="py-2 text-sm">{isRTL ? acc.name_ar : (acc.name_en || acc.name_ar)}</TableCell>
                           <TableCell className="text-end py-2 font-mono text-sm">
-                            {acc.debitBalance > 0 ? SAR(acc.debitBalance) : '—'}
+                            {acc.debitBalance > 0 ? formatNumber(acc.debitBalance, tenant?.localization, isRTL) : '—'}
                           </TableCell>
                           <TableCell className="text-end py-2 font-mono text-sm">
-                            {acc.creditBalance > 0 ? SAR(acc.creditBalance) : '—'}
+                            {acc.creditBalance > 0 ? formatNumber(acc.creditBalance, tenant?.localization, isRTL) : '—'}
                           </TableCell>
                           {/* AC#7: drill-down to GL */}
                           <TableCell className="py-2">
@@ -198,8 +200,8 @@ export default function TrialBalance() {
                       <TableRow className="bg-sand font-semibold text-sm">
                         <TableCell className="py-2"></TableCell>
                         <TableCell className="py-2 text-muted-foreground">{isRTL ? `إجمالي ${labels[type]}` : `Total ${labels[type]}`}</TableCell>
-                        <TableCell className="text-end py-2 font-mono text-emerald-600">{typeDebit > 0 ? SAR(typeDebit) : '—'}</TableCell>
-                        <TableCell className="text-end py-2 font-mono text-najdi-700">{typeCredit > 0 ? SAR(typeCredit) : '—'}</TableCell>
+                        <TableCell className="text-end py-2 font-mono text-emerald-600">{typeDebit > 0 ? formatNumber(typeDebit, tenant?.localization, isRTL) : '—'}</TableCell>
+                        <TableCell className="text-end py-2 font-mono text-najdi-700">{typeCredit > 0 ? formatNumber(typeCredit, tenant?.localization, isRTL) : '—'}</TableCell>
                         <TableCell></TableCell>
                       </TableRow>
                     </React.Fragment>
@@ -210,8 +212,8 @@ export default function TrialBalance() {
                 <TableRow className="bg-najdi-900 text-white font-bold">
                   <TableCell className="py-3"></TableCell>
                   <TableCell className="py-3">{isRTL ? 'الإجمالي الكلي' : 'GRAND TOTAL'}</TableCell>
-                  <TableCell className="text-end py-3 font-mono text-emerald-300">{SAR(totals.totalDebit)}</TableCell>
-                  <TableCell className="text-end py-3 font-mono text-najdi-500">{SAR(totals.totalCredit)}</TableCell>
+                  <TableCell className="text-end py-3 font-mono text-emerald-300">{formatNumber(totals.totalDebit, tenant?.localization, isRTL)}</TableCell>
+                  <TableCell className="text-end py-3 font-mono text-najdi-500">{formatNumber(totals.totalCredit, tenant?.localization, isRTL)}</TableCell>
                   <TableCell className="py-3">
                     {totals.balanced
                       ? <CheckCircle className="w-4 h-4 text-emerald-400" />

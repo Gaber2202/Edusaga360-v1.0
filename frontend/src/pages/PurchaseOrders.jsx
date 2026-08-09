@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { getCurrencySymbol } from '../lib/localization';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -194,7 +195,7 @@ export default function PurchaseOrders() {
       y += 7;
     });
     y += 10;
-    doc.text(`${t('total')}: ${po.total_amount?.toLocaleString()} SAR`, 20, y);
+    doc.text(`${t('total')}: $<Currency amount={po.total_amount} />`, 20, y);
     doc.save(`PO_${po.po_number}.pdf`);
     toast.success(isRTL ? 'تم التنزيل' : 'Downloaded');
   };
@@ -213,7 +214,7 @@ export default function PurchaseOrders() {
         <p><strong>${isRTL ? 'التاريخ' : 'Date'}:</strong> ${format(new Date(po.order_date), 'dd/MM/yyyy')}</p>
         <table><thead><tr><th>#</th><th>${isRTL ? 'الوصف' : 'Description'}</th><th>${isRTL ? 'الكمية' : 'Qty'}</th><th>${isRTL ? 'السعر' : 'Price'}</th><th>${isRTL ? 'المجموع' : 'Total'}</th></tr></thead>
         <tbody>${itemsHtml}</tbody></table>
-        <p style="margin-top:20px"><strong>${t('total')}: ${po.total_amount?.toLocaleString()} SAR</strong></p>
+        <p style="margin-top:20px"><strong>${t('total')}: $<Currency amount={po.total_amount} /></strong></p>
       </body></html>
     `;
     const printWindow = window.open('', '_blank');
@@ -229,7 +230,7 @@ export default function PurchaseOrders() {
       return;
     }
     const subject = `Purchase Order ${po.po_number}`;
-    const body = `Dear ${po.vendor_name},\n\nPlease find the Purchase Order ${po.po_number}\nTotal: ${po.total_amount?.toLocaleString()} SAR\n\nThank you.`;
+    const body = `Dear ${po.vendor_name},\n\nPlease find the Purchase Order ${po.po_number}\nTotal: $<Currency amount={po.total_amount} />\n\nThank you.`;
     window.open(`mailto:${vendor.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
   };
 
@@ -306,7 +307,7 @@ export default function PurchaseOrders() {
     { header: isRTL ? 'رقم الأمر' : 'PO #', cell: (row) => <span className="font-mono text-sm">{row.po_number}</span> },
     { header: t('vendor'), accessorKey: 'vendor_name' },
     { header: isRTL ? 'عدد البنود' : 'Items', cell: (row) => row.items?.length || 0 },
-    { header: t('total'), cell: (row) => <span className="font-semibold">{row.total_amount?.toLocaleString()} {t('sar')}</span> },
+    { header: t('total'), cell: (row) => <span className="font-semibold">{row.total_amount?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span> },
     { header: t('date'), cell: (row) => row.order_date ? format(new Date(row.order_date), 'dd/MM/yyyy') : '-' },
     { header: t('status'), cell: (row) => <StatusBadge status={row.status} /> },
     { header: t('actions'), cell: (row) => (
@@ -422,7 +423,7 @@ export default function PurchaseOrders() {
                 <div className="w-64 space-y-2 bg-sand p-4 rounded-lg">
                   <div className="flex justify-between"><span>{t('subtotal')}</span><span>{subtotal.toLocaleString()}</span></div>
                   <div className="flex justify-between"><span>{t('vat')} (15%)</span><span>{vat.toLocaleString()}</span></div>
-                  <div className="flex justify-between font-bold border-t pt-2"><span>{t('total')}</span><span>{total.toLocaleString()} {t('sar')}</span></div>
+                  <div className="flex justify-between font-bold border-t pt-2"><span>{t('total')}</span><span>{total.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span></div>
                 </div>
               </div>
             </div>

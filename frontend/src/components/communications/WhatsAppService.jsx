@@ -57,21 +57,21 @@ export const getWhatsAppTemplate = (messageType, language = 'ar') => {
     invoice_notification: {
       ar: {
         subject: '🧾 فاتورة جديدة',
-        body: 'عزيزي ولي الأمر،\n\nتم إصدار فاتورة جديدة للطالب {{student_name}}\n\nرقم الفاتورة: {{invoice_number}}\nالمبلغ: {{amount}} ريال\nتاريخ الاستحقاق: {{due_date}}\n\nيمكنك الدفع عبر الرابط:\n{{payment_link}}\n\nشكراً لكم،\nEduSaga 360'
+        body: 'عزيزي ولي الأمر،\n\nتم إصدار فاتورة جديدة للطالب {{student_name}}\n\nرقم الفاتورة: {{invoice_number}}\nالمبلغ: {{amount}} {{currency_code}}\nتاريخ الاستحقاق: {{due_date}}\n\nيمكنك الدفع عبر الرابط:\n{{payment_link}}\n\nشكراً لكم،\nEduSaga 360'
       },
       en: {
         subject: '🧾 New Invoice',
-        body: 'Dear Parent,\n\nA new invoice has been issued for {{student_name}}\n\nInvoice #: {{invoice_number}}\nAmount: {{amount}} SAR\nDue Date: {{due_date}}\n\nPay online:\n{{payment_link}}\n\nThank you,\nEduSaga 360'
+        body: 'Dear Parent,\n\nA new invoice has been issued for {{student_name}}\n\nInvoice #: {{invoice_number}}\nAmount: {{amount}} {{currency_code}}\nDue Date: {{due_date}}\n\nPay online:\n{{payment_link}}\n\nThank you,\nEduSaga 360'
       }
     },
     payment_reminder: {
       ar: {
         subject: '⏰ تذكير بالدفع',
-        body: 'عزيزي ولي الأمر،\n\nنذكركم بوجود فاتورة مستحقة للطالب {{student_name}}\n\nرقم الفاتورة: {{invoice_number}}\nالمبلغ المتبقي: {{balance}} ريال\nتاريخ الاستحقاق: {{due_date}}\n\nالرجاء السداد في أقرب وقت ممكن.\n\nشكراً لكم،\nEduSaga 360'
+        body: 'عزيزي ولي الأمر،\n\nنذكركم بوجود فاتورة مستحقة للطالب {{student_name}}\n\nرقم الفاتورة: {{invoice_number}}\nالمبلغ المتبقي: {{balance}} {{currency_code}}\nتاريخ الاستحقاق: {{due_date}}\n\nالرجاء السداد في أقرب وقت ممكن.\n\nشكراً لكم،\nEduSaga 360'
       },
       en: {
         subject: '⏰ Payment Reminder',
-        body: 'Dear Parent,\n\nThis is a reminder about an overdue invoice for {{student_name}}\n\nInvoice #: {{invoice_number}}\nBalance: {{balance}} SAR\nDue Date: {{due_date}}\n\nPlease settle at your earliest convenience.\n\nThank you,\nEduSaga 360'
+        body: 'Dear Parent,\n\nThis is a reminder about an overdue invoice for {{student_name}}\n\nInvoice #: {{invoice_number}}\nBalance: {{balance}} {{currency_code}}\nDue Date: {{due_date}}\n\nPlease settle at your earliest convenience.\n\nThank you,\nEduSaga 360'
       }
     },
     attendance_notification: {
@@ -99,11 +99,11 @@ export const getWhatsAppTemplate = (messageType, language = 'ar') => {
     payslip_notification: {
       ar: {
         subject: '💰 كشف راتب',
-        body: 'عزيزي/عزيزتي {{employee_name}},\n\nكشف الراتب لشهر {{month}} جاهز للعرض.\n\nالراتب الإجمالي: {{gross_salary}} ريال\nالراتب الصافي: {{net_salary}} ريال\n\nيمكنك الاطلاع على التفاصيل من خلال بوابة الموظفين.\n\nالموارد البشرية\nEduSaga 360'
+        body: 'عزيزي/عزيزتي {{employee_name}},\n\nكشف الراتب لشهر {{month}} جاهز للعرض.\n\nالراتب الإجمالي: {{gross_salary}} {{currency_code}}\nالراتب الصافي: {{net_salary}} {{currency_code}}\n\nيمكنك الاطلاع على التفاصيل من خلال بوابة الموظفين.\n\nالموارد البشرية\nEduSaga 360'
       },
       en: {
         subject: '💰 Payslip Available',
-        body: 'Dear {{employee_name}},\n\nYour payslip for {{month}} is now available.\n\nGross Salary: {{gross_salary}} SAR\nNet Salary: {{net_salary}} SAR\n\nView details in the employee portal.\n\nHR Department\nEduSaga 360'
+        body: 'Dear {{employee_name}},\n\nYour payslip for {{month}} is now available.\n\nGross Salary: {{gross_salary}} {{currency_code}}\nNet Salary: {{net_salary}} {{currency_code}}\n\nView details in the employee portal.\n\nHR Department\nEduSaga 360'
       }
     },
     payroll_notification: {

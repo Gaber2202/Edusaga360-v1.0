@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { useTenant } from '../components/TenantContext';
+import { formatCurrency } from '../lib/localization';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -35,6 +37,7 @@ const BLANK_BOOK = { isbn: '', title_ar: '', title_en: '', author: '', publisher
 
 export default function LibraryManagement() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
   const queryClient = useQueryClient();
 
@@ -128,11 +131,11 @@ export default function LibraryManagement() {
   const handleReturn = async (loan) => {
     const book = books.find(b => b.id === loan.book_id);
     const daysLate = loan.due_date < today ? differenceInDays(new Date(today), new Date(loan.due_date)) : 0;
-    const fine = daysLate * 1; // SAR 1/day
+    const fine = daysLate * 1;
     await tenantQuery('library_loans').update({ status: 'returned', return_date: today, fine_amount: fine });
     if (book) await tenantQuery('library_books').update({ available_copies: (book.available_copies || 0) + 1 });
     queryClient.invalidateQueries({ queryKey: ['libraryBooks', 'libraryLoans'] });
-    toast.success(isRTL ? `تم الإرجاع${fine > 0 ? ` — غرامة: ${fine} ر.س` : ''}` : `Returned${fine > 0 ? ` — Fine: ${fine} SAR` : ''}`);
+    toast.success(isRTL ? `تم الإرجاع${fine > 0 ? ` — غرامة: ${formatCurrency(fine, tenant?.localization, isRTL)}` : ''}` : `Returned${fine > 0 ? ` — Fine: ${formatCurrency(fine, tenant?.localization, isRTL)}` : ''}`);
   };
 
   return (
@@ -315,7 +318,7 @@ export default function LibraryManagement() {
                           <TableCell className="text-sm">{l.book_title}</TableCell>
                           <TableCell className="text-xs text-red-600 font-medium">{l.due_date}</TableCell>
                           <TableCell><span className="text-red-600 font-bold">{days}</span></TableCell>
-                          <TableCell><span className="font-semibold">{days} SAR</span></TableCell>
+                          <TableCell><span className="font-semibold">{formatCurrency(days, tenant?.localization, isRTL)}</span></TableCell>
                           <TableCell><Button size="sm" variant="outline" onClick={() => handleReturn(l)} className="h-7 text-xs"><RotateCcw className="w-3 h-3 me-1" />{isRTL ? 'إرجاع' : 'Return'}</Button></TableCell>
                         </TableRow>
                       );

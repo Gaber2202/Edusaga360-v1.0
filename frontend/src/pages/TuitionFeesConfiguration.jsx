@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import Currency from '../components/Currency';
+import { getCurrencySymbol } from '../lib/localization';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -20,6 +22,7 @@ import { useTenantFilter } from '../hooks/useTenantFilter';
 
 export default function TuitionFeesConfiguration() {
   const { t: _t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
 
@@ -292,7 +295,7 @@ export default function TuitionFeesConfiguration() {
                           {isRTL ? fee.fee_type_name_ar : fee.fee_type_name_en}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-semibold">{fee.amount.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</TableCell>
+                      <TableCell className="font-semibold"><Currency amount={fee.amount} /></TableCell>
                       <TableCell>
                         <Badge className={fee.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-sand-alt'}>
                           {fee.is_active ? (isRTL ? 'نشط' : 'Active') : (isRTL ? 'معطل' : 'Inactive')}
@@ -356,7 +359,7 @@ export default function TuitionFeesConfiguration() {
                      </TableCell>
                       <TableCell className="font-semibold">
                         {fee.fee_calculation_type === 'fixed' 
-                          ? `${fee.fixed_amount?.toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}`
+                          ? `${formatCurrency(fee.fixed_amount, tenant?.localization, isRTL)}`
                           : `${fee.percentage}%`}
                       </TableCell>
                       <TableCell>
@@ -492,7 +495,7 @@ export default function TuitionFeesConfiguration() {
             </div>
 
             <div>
-              <Label>{isRTL ? 'المبلغ (ر.س)' : 'Amount (SAR)'} *</Label>
+              <Label>{isRTL ? `المبلغ (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Amount (${getCurrencySymbol(tenant?.localization, isRTL)})`} *</Label>
               <Input type="number" value={tuitionFormData.amount} onChange={(e) => setTuitionFormData({...tuitionFormData, amount: e.target.value})} />
             </div>
 
@@ -579,7 +582,7 @@ export default function TuitionFeesConfiguration() {
 
             {specialCareFormData.fee_calculation_type === 'fixed' ? (
               <div>
-                <Label>{isRTL ? 'المبلغ الثابت (ر.س)' : 'Fixed Amount (SAR)'}</Label>
+                <Label>{isRTL ? `المبلغ الثابت (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Fixed Amount (${getCurrencySymbol(tenant?.localization, isRTL)})`}</Label>
                 <Input type="number" value={specialCareFormData.fixed_amount} onChange={(e) => setSpecialCareFormData({...specialCareFormData, fixed_amount: e.target.value})} />
               </div>
             ) : (

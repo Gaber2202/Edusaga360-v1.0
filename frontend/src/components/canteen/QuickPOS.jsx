@@ -6,6 +6,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { tenantQuery } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { useTenant } from '../TenantContext';
+import { formatCurrency } from '../../lib/localization';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { format } from 'date-fns';
@@ -14,6 +16,7 @@ import { Scan, CheckCircle, AlertTriangle, Zap, X } from 'lucide-react';
 
 export default function QuickPOS({ students, wallets, menuItems, getTenantIdForCreate, onTransaction }) {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const scanRef = useRef(null);
 
   const [idScan, setIdScan] = useState('');
@@ -101,7 +104,7 @@ export default function QuickPOS({ students, wallets, menuItems, getTenantIdForC
 
       setPhase('done');
       onTransaction?.();
-      toast.success(isRTL ? `✓ تم الدفع — المتبقي: ${newBalance} ر.س` : `✓ Paid — Balance: ${newBalance} SAR`);
+      toast.success(isRTL ? `✓ تم الدفع — المتبقي: ${formatCurrency(newBalance, tenant?.localization, isRTL)}` : `✓ Paid — Balance: ${formatCurrency(newBalance, tenant?.localization, isRTL)}`);
 
       setTimeout(() => {
         setPhase('scan'); setIdScan(''); setStudent(null); setWallet(null); setCart([]);
@@ -151,7 +154,7 @@ export default function QuickPOS({ students, wallets, menuItems, getTenantIdForC
             </div>
             <div className="text-right">
               <p className="text-xs text-orange-500">{isRTL ? 'الرصيد' : 'Balance'}</p>
-              <p className={`text-xl font-bold ${wallet.balance < 20 ? 'text-red-600' : 'text-green-600'}`}>{wallet.balance} SAR</p>
+              <p className={`text-xl font-bold ${wallet.balance < 20 ? 'text-red-600' : 'text-green-600'}`}>{formatCurrency(wallet.balance, tenant?.localization, isRTL)}</p>
             </div>
           </div>
 
@@ -164,7 +167,7 @@ export default function QuickPOS({ students, wallets, menuItems, getTenantIdForC
                   className={`flex flex-col p-3 rounded-xl border-2 text-start transition-all ${inCart ? 'border-orange-500 bg-orange-50' : 'border-border hover:border-orange-300'}`}>
                   <p className="font-semibold text-sm text-ink leading-tight">{item.name_ar}</p>
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-orange-600 font-bold">{item.price} SAR</span>
+                    <span className="text-orange-600 font-bold">{formatCurrency(item.price, tenant?.localization, isRTL)}</span>
                     {inCart && <span className="text-xs bg-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-bold">×{inCart.qty}</span>}
                   </div>
                 </button>
@@ -179,14 +182,14 @@ export default function QuickPOS({ students, wallets, menuItems, getTenantIdForC
                 <div key={c.item.id} className="flex items-center justify-between text-sm">
                   <span>{c.item.name_ar} ×{c.qty}</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{(c.item.price * c.qty).toFixed(2)} SAR</span>
+                    <span className="font-medium">{formatCurrency((c.item.price * c.qty).toFixed(2), tenant?.localization, isRTL)}</span>
                     <button onClick={() => removeFromCart(c.item.id)} className="text-red-400 hover:text-red-600"><X className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
               ))}
               <div className="border-t pt-1 flex justify-between font-bold text-base">
                 <span>{isRTL ? 'الإجمالي' : 'Total'}</span>
-                <span className={cartTotal > wallet.balance ? 'text-red-600' : 'text-ink'}>{cartTotal.toFixed(2)} SAR</span>
+                <span className={cartTotal > wallet.balance ? 'text-red-600' : 'text-ink'}>{formatCurrency(cartTotal.toFixed(2), tenant?.localization, isRTL)}</span>
               </div>
             </div>
           )}
@@ -198,7 +201,7 @@ export default function QuickPOS({ students, wallets, menuItems, getTenantIdForC
             <Button onClick={handlePay} disabled={saving || cart.length === 0 || cartTotal > wallet.balance}
               className="flex-2 h-10 bg-orange-600 hover:bg-orange-700 text-white px-6">
               <Zap className="w-4 h-4 me-1" />
-              {isRTL ? `دفع ${cartTotal.toFixed(2)} SAR` : `Pay ${cartTotal.toFixed(2)} SAR`}
+              {isRTL ? `دفع ${formatCurrency(cartTotal.toFixed(2), tenant?.localization, isRTL)}` : `Pay ${formatCurrency(cartTotal.toFixed(2), tenant?.localization, isRTL)}`}
             </Button>
           </div>
         </div>
@@ -212,7 +215,7 @@ export default function QuickPOS({ students, wallets, menuItems, getTenantIdForC
           </div>
           <p className="text-lg font-bold text-green-700">{isRTL ? 'تم الدفع!' : 'Payment Done!'}</p>
           <p className="text-sm text-muted-foreground text-center">
-            {student?.name_ar} — {cartTotal.toFixed(2)} SAR<br />
+            {student?.name_ar} — {formatCurrency(cartTotal.toFixed(2), tenant?.localization, isRTL)}<br />
             <span className="text-xs text-muted-foreground">{isRTL ? 'سيتلقى ولي الأمر إشعاراً فورياً' : 'Parent notified in real time'}</span>
           </p>
         </div>

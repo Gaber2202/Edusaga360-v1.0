@@ -1,3 +1,4 @@
+import Currency from '../components/Currency';
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData, callApi, uploadFileApi } from '../api/supabaseClient';
@@ -564,12 +565,12 @@ export default function ParentIntake() {
                 {calculatedFees.breakdown && Object.entries(calculatedFees.breakdown).map(([code, fee]) => (
                   <div key={code} className="flex justify-between items-center py-2 border-b">
                     <span className="font-medium">{isRTL ? fee.name_ar : fee.name_en}</span>
-                    <span className="text-lg font-bold">{fee.amount.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                    <span className="text-lg font-bold"><Currency amount={fee.amount} /></span>
                   </div>
                 ))}
                 <div className="flex justify-between items-center py-3 bg-white rounded-lg px-4 mt-3">
                   <span className="font-bold text-lg">{isRTL ? 'الإجمالي التقديري' : 'Total Estimated'}</span>
-                  <span className="text-2xl font-bold text-najdi-900">{calculatedFees.total.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                  <span className="text-2xl font-bold text-najdi-900"><Currency amount={calculatedFees.total} /></span>
                 </div>
                 <p className="text-xs text-muted-foreground text-center mt-2">
                   {isRTL 

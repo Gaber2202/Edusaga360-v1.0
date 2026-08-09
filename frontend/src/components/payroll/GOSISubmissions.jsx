@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { getCurrencySymbol } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -17,6 +19,7 @@ import { logAuditEvent } from '../AuditService';
 
 export default function GOSISubmissions() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const queryClient = useQueryClient();
 
@@ -184,7 +187,7 @@ export default function GOSISubmissions() {
     { header: isRTL ? 'الفترة' : 'Period', accessorKey: 'period' },
     { header: isRTL ? 'النوع' : 'Type', cell: (row) => row.submission_type === 'monthly' ? (isRTL ? 'شهري' : 'Monthly') : (isRTL ? 'ربع سنوي' : 'Quarterly') },
     { header: isRTL ? 'عدد الموظفين' : 'Employees', accessorKey: 'employee_count' },
-    { header: isRTL ? 'إجمالي الاشتراكات' : 'Total Contribution', cell: (row) => `${row.total_contribution?.toLocaleString()} ${t('sar')}` },
+    { header: isRTL ? 'إجمالي الاشتراكات' : 'Total Contribution', cell: (row) => `${row.total_contribution?.toLocaleString()} ${getCurrencySymbol(tenant?.localization, isRTL)}` },
     { header: isRTL ? 'التاريخ' : 'Date', cell: (row) => row.generated_date ? format(new Date(row.generated_date), 'dd/MM/yyyy') : '-' },
     { header: t('status'), cell: (row) => {
       const colors = {

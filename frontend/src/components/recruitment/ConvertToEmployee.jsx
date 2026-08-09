@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { tenantQuery, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import Currency from '../Currency';
+import { useTenant } from '../TenantContext';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Input } from '../ui/input';
@@ -15,6 +17,7 @@ import { triggerOnboardingForEmployee } from './OnboardingEngine';
 
 export default function ConvertToEmployee({ applicant, recruitment, employees, onConverted, autoOpen = false }) {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const [open, setOpen] = useState(autoOpen);
   const [saving, setSaving] = useState(false);
 
@@ -53,7 +56,7 @@ export default function ConvertToEmployee({ applicant, recruitment, employees, o
     work_email: '',
     manager_id: '',
     status: 'active',
-    is_saudi: (applicant?.nationality?.toLowerCase().includes('saudi') || applicant?.residency_status === 'citizen'),
+    is_saudi: applicant?.is_saudi ?? false,
     recruitment_history: {
       applicant_id: applicant?.id,
       recruitment_id: recruitment?.id,
@@ -259,10 +262,10 @@ export default function ConvertToEmployee({ applicant, recruitment, employees, o
 
             <div className="bg-sand rounded-lg p-4 space-y-2 text-sm">
               <h4 className="font-semibold text-ink">{isRTL ? 'ملخص الراتب' : 'Salary Summary'}</h4>
-              <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'الأساسي' : 'Basic'}</span><span>{form.basic_salary.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'الأساسي' : 'Basic'}</span><span><Currency amount={form.basic_salary} /></span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'السكن' : 'Housing'}</span><span>{form.housing_allowance.toLocaleString()}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'النقل' : 'Transport'}</span><span>{form.transport_allowance.toLocaleString()}</span></div>
-              <div className="flex justify-between font-bold border-t pt-2"><span>{isRTL ? 'الإجمالي' : 'Total'}</span><span className="text-emerald-600">{totalSalary.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span></div>
+              <div className="flex justify-between font-bold border-t pt-2"><span>{isRTL ? 'الإجمالي' : 'Total'}</span><span className="text-emerald-600"><Currency amount={totalSalary} /></span></div>
             </div>
 
             <div className="flex items-center gap-2 text-sm text-najdi-900 bg-najdi-50 rounded-lg p-3">

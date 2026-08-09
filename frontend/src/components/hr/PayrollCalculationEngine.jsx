@@ -8,6 +8,10 @@ import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { createJournalEntry } from '../../api/journalEntry';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import { useBranch } from '../BranchContext';
+import { useTenant } from '../TenantContext';
+import { formatCurrency } from '../../lib/localization';
+import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
+import { SOCIAL_INSURANCE_FEATURES } from '../../lib/jurisdictionFeatures.js';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -18,14 +22,13 @@ import {
   Loader2, Users, DollarSign, Lock, FileText, Zap
 } from 'lucide-react';
 
-const SAR = v => (v || 0).toLocaleString('en-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const GOSI_CEILING = 45000;
-const GOSI_EMPLOYEE_RATE = 0.10;   // Saudi employee 10%
-const GOSI_EMPLOYER_SOCIAL = 0.12; // Saudi employer social 12%
-const GOSI_HAZARD_ALL = 0.02;      // Occupational hazard all 2%
+const SOCIAL_INSURANCE_CEILING = 45000;
+const SOCIAL_INSURANCE_EMPLOYEE_RATE = 0.10;   // Saudi employee 10%
+const SOCIAL_INSURANCE_EMPLOYER_SOCIAL = 0.12; // Saudi employer social 12%
+const OCCUPATIONAL_HAZARD_RATE = 0.02;      // Occupational hazard all 2%
 
-function calcEmployee(emp, period, attendanceMap, loansMap, advancesMap) {
+function calcEmployee(emp, period, attendanceMap, loansMap, advancesMap, socialInsuranceEnabled) {
   const periodStart = period + '-01';
   const periodEnd = new Date(period + '-01');
   periodEnd.setMonth(periodEnd.getMonth() + 1);
@@ -64,19 +67,19 @@ function calcEmployee(emp, period, attendanceMap, loansMap, advancesMap) {
 
   const grossSalary = proBasic + proHousing + proTransport + proOther + overtimePay;
 
-  // GOSI
-  const isSaudi = emp.is_saudi || emp.nationality?.toLowerCase().includes('saudi');
-  const gosiBase = Math.min((basic + housing) * prorateMultiplier, GOSI_CEILING);
-  const gosiEmployee = isSaudi ? gosiBase * GOSI_EMPLOYEE_RATE : 0;
-  const gosiEmployerSocial = isSaudi ? gosiBase * GOSI_EMPLOYER_SOCIAL : 0;
-  const gosiHazard = gosiBase * GOSI_HAZARD_ALL;
-  const gosiEmployerTotal = gosiEmployerSocial + gosiHazard;
+  // Social Insurance
+  const isSaudi = emp.is_saudi ?? false;
+  const socialInsuranceBase = socialInsuranceEnabled ? Math.min((basic + housing) * prorateMultiplier, SOCIAL_INSURANCE_CEILING) : 0;
+  const employeeSocialInsurance = socialInsuranceEnabled && isSaudi ? socialInsuranceBase * SOCIAL_INSURANCE_EMPLOYEE_RATE : 0;
+  const employerSocialInsurance = socialInsuranceEnabled && isSaudi ? socialInsuranceBase * SOCIAL_INSURANCE_EMPLOYER_SOCIAL : 0;
+  const occupationalHazard = socialInsuranceEnabled ? socialInsuranceBase * OCCUPATIONAL_HAZARD_RATE : 0;
+  const employerSocialInsuranceTotal = employerSocialInsurance + occupationalHazard;
 
   // Loans/advances
   const loanDeduction = (loansMap[emp.id] || []).reduce((s, l) => s + (l.installment_amount || 0), 0);
   const advanceDeduction = (advancesMap[emp.id] || []).reduce((s, a) => s + (a.monthly_deduction || 0), 0);
 
-  const totalDeductions = gosiEmployee + unpaidLeaveDeduction + loanDeduction + advanceDeduction;
+  const totalDeductions = employeeSocialInsurance + unpaidLeaveDeduction + loanDeduction + advanceDeduction;
   const netSalary = Math.max(0, grossSalary - totalDeductions);
 
   // EOSB monthly accrual
@@ -92,7 +95,7 @@ function calcEmployee(emp, period, attendanceMap, loansMap, advancesMap) {
     isSaudi, prorateMultiplier,
     basic: proBasic, housing: proHousing, transport: proTransport, other: proOther,
     overtimePay, grossSalary,
-    gosiEmployee, gosiEmployerTotal, eosbAccrual,
+    employeeSocialInsurance, employerSocialInsuranceTotal, eosbAccrual,
     unpaidLeaveDeduction, loanDeduction, advanceDeduction,
     totalDeductions, netSalary,
     iban: emp.iban || '', bankName: emp.bank_name || '',
@@ -116,6 +119,10 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const { branchFilter, selectedBranchId } = useBranch();
+  const { isFeatureEnabled } = useJurisdictionFeatures();
+  const { tenant } = useTenant();
+  const fmt = (v) => formatCurrency(v, tenant?.localization, isRTL);
+  const currencyCode = tenant?.currency_code || 'XXX';
 
   const [currentStep, setCurrentStep] = useState(0);
   const [processing, setProcessing] = useState(false);
@@ -167,7 +174,8 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
 
     if (step === 2) {
       // Calculate all employees
-      const lines = employees.map(emp => calcEmployee(emp, period, attendanceMap, loansMap, advancesMap));
+      const socialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);
+      const lines = employees.map(emp => calcEmployee(emp, period, attendanceMap, loansMap, advancesMap, socialInsuranceEnabled));
       setCalculatedLines(lines);
     }
 
@@ -206,13 +214,13 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
     const payDate = format(new Date(), 'yyyyMMdd');
 
     // SIF format header
-    let sif = `H|EMPLOYER_CR|${payDate}|SAR|${calculatedLines.length}|${Math.round(totalAmount * 100)}\n`;
+    let sif = `H|EMPLOYER_CR|${payDate}|${currencyCode}|${calculatedLines.length}|${Math.round(totalAmount * 100)}\n`;
 
     // Detail records
     calculatedLines.forEach(line => {
       const iban = line.iban.replace(/\s/g, '');
       const amountHalalas = Math.round(line.netSalary * 100);
-      sif += `D|${iban}|${line.name_ar}|${amountHalalas}|SAR|${payDate}\n`;
+      sif += `D|${iban}|${line.name_ar}|${amountHalalas}|${currencyCode}|${payDate}\n`;
     });
 
     // Trailer
@@ -229,8 +237,8 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
   const postToGL = async () => {
     const totalGross = calculatedLines.reduce((s, l) => s + l.grossSalary, 0);
     const totalNet = calculatedLines.reduce((s, l) => s + l.netSalary, 0);
-    const totalGosiEmployee = calculatedLines.reduce((s, l) => s + l.gosiEmployee, 0);
-    const totalGosiEmployer = calculatedLines.reduce((s, l) => s + l.gosiEmployerTotal, 0);
+    const totalEmployeeSocialInsurance = calculatedLines.reduce((s, l) => s + l.employeeSocialInsurance, 0);
+    const totalEmployerSocialInsurance = calculatedLines.reduce((s, l) => s + l.employerSocialInsuranceTotal, 0);
     const totalEOSB = calculatedLines.reduce((s, l) => s + l.eosbAccrual, 0);
 
     const jeRef = `PAY-${period}-${Date.now().toString(36).toUpperCase()}`;
@@ -247,11 +255,11 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
       lines: [
         { account_code: '5010', account_name: 'Teacher Salaries', debit: totalGross * 0.6, credit: 0, description: `Teacher salaries ${period}` },
         { account_code: '6010', account_name: 'Admin Salaries', debit: totalGross * 0.4, credit: 0, description: `Admin salaries ${period}` },
-        { account_code: '6030', account_name: 'GOSI Employer Expense', debit: totalGosiEmployer, credit: 0, description: `GOSI employer ${period}` },
+        { account_code: '6030', account_name: 'Social Insurance Employer Expense', debit: totalEmployerSocialInsurance, credit: 0, description: `Social Insurance employer ${period}` },
         { account_code: '6040', account_name: 'EOSB Expense', debit: totalEOSB, credit: 0, description: `EOSB accrual ${period}` },
         { account_code: '2080', account_name: 'Payroll Payable', debit: 0, credit: totalNet, description: `Net salaries payable ${period}` },
-        { account_code: '2081', account_name: 'GOSI Employee Payable', debit: 0, credit: totalGosiEmployee, description: `GOSI employee share ${period}` },
-        { account_code: '2082', account_name: 'GOSI Employer Payable', debit: 0, credit: totalGosiEmployer, description: `GOSI employer share ${period}` },
+        { account_code: '2081', account_name: 'Social Insurance Employee Payable', debit: 0, credit: totalEmployeeSocialInsurance, description: `Social Insurance employee share ${period}` },
+        { account_code: '2082', account_name: 'Social Insurance Employer Payable', debit: 0, credit: totalEmployerSocialInsurance, description: `Social Insurance employer share ${period}` },
         { account_code: '2050', account_name: 'EOSB Provision', debit: 0, credit: totalEOSB, description: `EOSB monthly provision ${period}` },
       ],
     });
@@ -263,10 +271,10 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
   const totals = useMemo(() => {
     const gross = calculatedLines.reduce((s, l) => s + l.grossSalary, 0);
     const net = calculatedLines.reduce((s, l) => s + l.netSalary, 0);
-    const gosiEmp = calculatedLines.reduce((s, l) => s + l.gosiEmployee, 0);
-    const gosiEmpl = calculatedLines.reduce((s, l) => s + l.gosiEmployerTotal, 0);
+    const totalEmployeeSocialInsurance = calculatedLines.reduce((s, l) => s + l.employeeSocialInsurance, 0);
+    const totalEmployerSocialInsurance = calculatedLines.reduce((s, l) => s + l.employerSocialInsuranceTotal, 0);
     const eosb = calculatedLines.reduce((s, l) => s + l.eosbAccrual, 0);
-    return { gross, net, gosiEmp, gosiEmpl, eosb, totalCost: gross + gosiEmpl + eosb };
+    return { gross, net, totalEmployeeSocialInsurance, totalEmployerSocialInsurance, eosb, totalCost: gross + totalEmployerSocialInsurance + eosb };
   }, [calculatedLines]);
 
   return (
@@ -339,15 +347,15 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
             {[
               { label: isRTL ? 'إجمالي الرواتب' : 'Gross Payroll', value: totals.gross, color: 'text-ink' },
               { label: isRTL ? 'صافي الرواتب' : 'Net Payroll', value: totals.net, color: 'text-emerald-600' },
-              { label: isRTL ? 'GOSI (موظف)' : 'GOSI (Employee)', value: totals.gosiEmp, color: 'text-najdi-700' },
-              { label: isRTL ? 'GOSI (صاحب عمل)' : 'GOSI (Employer)', value: totals.gosiEmpl, color: 'text-purple-600' },
+              { label: isRTL ? 'التأمينات (موظف)' : 'Social Insurance (Employee)', value: totals.totalEmployeeSocialInsurance, color: 'text-najdi-700' },
+              { label: isRTL ? 'التأمينات (صاحب عمل)' : 'Social Insurance (Employer)', value: totals.totalEmployerSocialInsurance, color: 'text-purple-600' },
               { label: isRTL ? 'مخصص EOSB' : 'EOSB Accrual', value: totals.eosb, color: 'text-amber-600' },
               { label: isRTL ? 'إجمالي التكلفة' : 'Total Cost', value: totals.totalCost, color: 'text-red-600' },
             ].map(item => (
               <Card key={item.label}>
                 <CardContent className="p-3">
                   <p className="text-xs text-muted-foreground">{item.label}</p>
-                  <p className={`text-base font-bold ${item.color}`}>SAR {SAR(item.value)}</p>
+                  <p className={`text-base font-bold ${item.color}`}>{fmt(item.value)}</p>
                 </CardContent>
               </Card>
             ))}
@@ -365,7 +373,7 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
                     <tr>
                       <th className="text-start py-2 px-3 font-medium text-muted-foreground">{isRTL ? 'الموظف' : 'Employee'}</th>
                       <th className="text-end py-2 px-3 font-medium text-muted-foreground">{isRTL ? 'الإجمالي' : 'Gross'}</th>
-                      <th className="text-end py-2 px-3 font-medium text-muted-foreground">{isRTL ? 'GOSI (موظف)' : 'GOSI Emp'}</th>
+                      <th className="text-end py-2 px-3 font-medium text-muted-foreground">{isRTL ? 'Social Insurance (موظف)' : 'Social Insurance Emp'}</th>
                       <th className="text-end py-2 px-3 font-medium text-muted-foreground">{isRTL ? 'استقطاعات' : 'Deductions'}</th>
                       <th className="text-end py-2 px-3 font-medium text-emerald-600">{isRTL ? 'الصافي' : 'Net'}</th>
                       <th className="py-2 px-3"></th>
@@ -382,10 +390,10 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
                             <span className="text-muted-foreground text-xs">{line.employee_id}</span>
                           </div>
                         </td>
-                        <td className="text-end py-2 px-3 font-mono">{SAR(line.grossSalary)}</td>
-                        <td className="text-end py-2 px-3 font-mono text-najdi-700">({SAR(line.gosiEmployee)})</td>
-                        <td className="text-end py-2 px-3 font-mono text-red-500">({SAR(line.totalDeductions)})</td>
-                        <td className="text-end py-2 px-3 font-mono font-bold text-emerald-600">{SAR(line.netSalary)}</td>
+                        <td className="text-end py-2 px-3 font-mono">{fmt(line.grossSalary)}</td>
+                        <td className="text-end py-2 px-3 font-mono text-najdi-700">({fmt(line.employeeSocialInsurance)})</td>
+                        <td className="text-end py-2 px-3 font-mono text-red-500">({fmt(line.totalDeductions)})</td>
+                        <td className="text-end py-2 px-3 font-mono font-bold text-emerald-600">{fmt(line.netSalary)}</td>
                         <td className="py-2 px-3">
                           {!line.iban && <AlertTriangle className="w-4 h-4 text-amber-500" title="Missing IBAN" />}
                         </td>

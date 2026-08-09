@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { formatCurrency } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -26,6 +28,7 @@ import {
 
 export default function LoansManagement() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter, branches: _branches } = useBranch();
   const queryClient = useQueryClient();
 
@@ -453,7 +456,7 @@ export default function LoansManagement() {
                 <CardContent className="p-4">
                   <p className="text-sm text-muted-foreground">{isRTL ? 'القسط الشهري' : 'Monthly Installment'}</p>
                   <p className="text-2xl font-bold">
-                    {Math.ceil(parseFloat(newLoan.loan_amount) / newLoan.installment_count).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}
+                    {formatCurrency(Math.ceil(parseFloat(newLoan.loan_amount) / newLoan.installment_count), tenant?.localization, isRTL)}
                   </p>
                 </CardContent>
               </Card>

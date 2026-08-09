@@ -35,7 +35,7 @@ export default function NitaqatDashboard({ isRTL }) {
   });
 
   const stats = useMemo(() => {
-    const saudis = employees.filter(e => e.is_saudi || e.nationality?.toLowerCase().includes('saudi'));
+    const saudis = employees.filter(e => e.is_saudi);
     const pct = employees.length > 0 ? (saudis.length / employees.length) * 100 : 0;
     const band = getBand(pct);
     const nextBandIdx = BANDS.findIndex(b => b.name === band.name) - 1;
@@ -50,7 +50,7 @@ export default function NitaqatDashboard({ isRTL }) {
       const dept = e.department_id || 'Other';
       if (!deptMap[dept]) deptMap[dept] = { total: 0, saudi: 0 };
       deptMap[dept].total++;
-      if (e.is_saudi || e.nationality?.toLowerCase().includes('saudi')) deptMap[dept].saudi++;
+      if (e.is_saudi) deptMap[dept].saudi++;
     });
 
     return { total: employees.length, saudis: saudis.length, pct, band, nextBand, saudisNeededForNextBand, deptMap, lastUpdated: new Date(dataUpdatedAt) };

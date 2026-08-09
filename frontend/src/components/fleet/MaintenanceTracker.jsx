@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { getCurrencySymbol } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -18,6 +20,7 @@ import { toast } from 'sonner';
 
 export default function MaintenanceTracker() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const queryClient = useQueryClient();
 
@@ -103,7 +106,7 @@ export default function MaintenanceTracker() {
       return types[row.maintenance_type] || row.maintenance_type;
     }},
     { header: isRTL ? 'التاريخ' : 'Date', cell: (row) => format(new Date(row.service_date), 'dd/MM/yyyy') },
-    { header: isRTL ? 'التكلفة' : 'Cost', cell: (row) => `${row.cost?.toLocaleString()} ${t('sar')}` },
+    { header: isRTL ? 'التكلفة' : 'Cost', cell: (row) => `${row.cost?.toLocaleString()} ${getCurrencySymbol(tenant?.localization, isRTL)}` },
     { header: isRTL ? 'مقدم الخدمة' : 'Provider', accessorKey: 'service_provider' },
     { header: t('status'), cell: (row) => <StatusBadge status={row.status} /> }
   ];

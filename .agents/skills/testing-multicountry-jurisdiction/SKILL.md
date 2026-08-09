@@ -49,6 +49,28 @@ description: End-to-end multi-country jurisdiction verification for EduSaga 360 
    - `auth.users` with `task11-*` emails
 2. Re-run the pre-flight counts and verify they match the baseline.
 
+## Frontend jurisdiction-gating checks
+- Log in as a tenant with `jurisdiction_code='AE'` (`is_demo=true`).
+- Dashboard: no Hijri date, no `ZATCA Filing`/`ملف زاتكا` quick action, no Saudization/Nitaqat, no GOSI widgets, no nationality split.
+- Payroll: no `GOSI Submissions`/`Bank Exports` sidebar items, no Saudi/non-Saudi split, no GOSI cards.
+- VATManagement: rate shown should match the jurisdiction tax rule (e.g. 5% for AE, 15% for SA, 0% for QA).
+
+### Common pitfalls
+- `jurisdiction_features` may be populated for a service-role query but invisible to the frontend if RLS is not configured, so `JurisdictionFeatureProvider` will load an empty feature set and hide all gated UI for **every** jurisdiction. Verify with an authenticated `fetch` using the anon key + user's access token.
+- `frontend/src/lib/vatRate.js` falls back to `0.15` when `tenant.vat_rate` is missing. The `tenants` table currently has no `vat_rate` column, so `VATManagement` will show 15% for AE/QA unless `getVatRate` is updated to read `jurisdiction_tax_rules`.
+- Currency labels on Dashboard/Payroll/VAT (`SAR`) are not jurisdiction-aware and will leak on AE/QA screens.
+- `frontend/src/pages/Fees.jsx` has `InvoicesTab` and `NewInvoiceDialog` components that reference `tenant` without receiving it as a prop; the page may crash with `ReferenceError: tenant is not defined` before any localization can be verified.
+- `frontend/src/components/subscription/ClientSubscriptionPortal.jsx` should use `tenant?.vat_rate ?? 0.15` for add-seat/upgrade order summaries; verify the VAT line reads `5%` for AE, `0%` for QA, and `15%` for SA.
+- `frontend/src/pages/CanteenManagement.jsx` previously contained hardcoded Saudi MOE compliance text; verify it now shows generic school policy for AE/QA.
+- `frontend/src/pages/Fees.jsx` previously displayed a `ZATCA المرحلة 2` engine card and a `ZATCA` column in the Invoices table for all jurisdictions; verify the card/column are gated behind `einvoicing` features.
+- `frontend/src/components/payroll/PayrollSettings.jsx` previously showed Saudi GOSI settings for AE/QA; verify the GOSI tab/content is gated behind `isFeatureEnabled('gosi')`.
+- `frontend/src/components/subscription/ClientSubscriptionPortal.jsx` should format plan prices and the footer in the tenant's pack currency and use `tenant?.vat_rate` for add-seat VAT.
+- `ExecutiveCommandCenter` can fail for two independent reasons:
+  - **Backend:** `MetricsService.computeAndStoreAll` guards `pack.regulatorReports.calculateNitaqat` by presence (`if (pack.regulatorReports?.calculateNitaqat)`) but the AE/QA packs *implement* the method and throw `NotImplementedInJurisdiction` inside it, so `GET /api/exec/{persona}` still returns HTTP 500 for AE/QA. The guard must also catch the thrown error (or check a capability flag) for ECC to load cross-border.
+  - **Frontend (fixed in commit 5b13816):** `ExecutiveCommandCenter.jsx` now calls `useTenant()` inside `CEODashboard`, `CFODashboard`, and `COODashboard`, and `CHRODashboard` destructures `nitaqat` as `nationalisation` and uses `isFeatureEnabled` for the nationalisation band card. Saudi ECC CEO/CFO/CHRO now render without `ReferenceError: tenant is not defined`.
+- If the Dashboard/Fees/VAT briefly shows currency symbol `XXX` after switching tenants, `getJurisdictionContext` may be returning a stale cached promise. A hard browser refresh (`Ctrl+R`) forces `TenantContext` to re-fetch the pack-derived localization.
+- `frontend/src/pages/Payroll.jsx` renders `PayrollSettings` as a tab (`case 'settings'`); there is no standalone `/PayrollSettings` route.
+
 ## Regression checks
 - `npm run typecheck` (backend)
 - `npx madge --circular src/index.ts` (backend)
@@ -56,4 +78,19 @@ description: End-to-end multi-country jurisdiction verification for EduSaga 360 
 - `python3 .github/scripts/guard_country_literals.py`
 - `python3 .github/scripts/guard_jurisdiction_resolution.py`
 - `python3 .github/scripts/guard_invoices_balance.py`
+
+## Post-392d15a verification notes (Task 13c)
+- `backend/src/services/metrics.ts` now catches `NotImplementedInJurisdiction` from `pack.regulatorReports.calculateNitaqat`, so `GET /api/exec/{ceo|cfo|coo|chro}` returns 200 for AE/QA.
+- `frontend/src/pages/ExecutiveCommandCenter.jsx` calls `useTenant()` inside the persona dashboards and uses `useJurisdictionFeatures()` to gate Saudi-labeled CFO/CHRO compliance widgets.
+- `frontend/src/lib/localization.js` now forces the `gregory` calendar in `formatDate`/`formatDateTime` so Gregorian dates are primary; the Hijri date is only rendered when `hijri_calendar` is enabled.
+- Compliance signal keys in `backend/src/services/metrics.ts` and `execExport.ts` use feature-flag names (`einvoicing`, `mudad`, `gosi`, `qiwa`) so the frontend can look them up via `EINVOICING_FEATURES`, `WPS_FEATURES`, `SOCIAL_INSURANCE_FEATURES`, `LABOR_PORTAL_FEATURES` without hardcoding `zatca_vat` / `wps_mudad`.
+- `python3 .github/scripts/guard_country_literals.py` baseline is 194 allowlist entries / 995 total counts; `python3 .github/scripts/guard_hardcoded_currency.py` remains 0 entries / 0 total.
 - `git diff origin/main -- src/__tests__/golden/snapshots/`
+
+## Post-a356878 verification notes (Task 13c final)
+- `backend/src/services/metrics.ts` now returns `nationalisation` as an alias alongside `nitaqat` for `CHRODashboard`, and `complianceSignals` use feature-flag keys `einvoicing`, `mudad`, `gosi`, `qiwa`.
+- `frontend/src/pages/ExecutiveCommandCenter.jsx` gates CFO/CHRO compliance widgets with `useJurisdictionFeatures()` and the `EINVOICING_FEATURES`, `WPS_FEATURES`, `SOCIAL_INSURANCE_FEATURES`, `LABOR_PORTAL_FEATURES` constants.
+- `frontend/src/lib/localization.js` forces `calendar: 'gregory'` in `formatDate`/`formatDateTime`. **Pitfall:** `formatDateTime` passes `{ dateStyle: 'medium', timeStyle: 'short' }` to `formatDate`, which merges them with the `dateFormat.options` (`year`, `month`, `day`) from the pack. `Intl.DateTimeFormat` throws `TypeError: Invalid option` when `dateStyle`/`timeStyle` are combined with explicit date/time component options. Until fixed, the Executive Command Center crashes on the first `formatDateTime` call. A temporary test patch is to skip `dateFormat.options` when `options` contains `dateStyle` or `timeStyle`.
+- `frontend/src/components/LanguageContext.jsx` uses generic compliance labels (`complianceEinvoice`, `complianceWps`, `complianceSocialInsurance`, `complianceLaborPortal`), so Saudi-specific terms no longer leak into AE/QA translations.
+- Create `TASK13C-{AE,QA,SA}-*` demo tenants with `is_demo=true` for acceptance runs; use `/home/ubuntu/task13c-cleanup.py` (or equivalent) to remove only `TASK13C-%` rows.
+- To verify all four Executive Command Center personas, puppeteer/browser automation can open the persona `<Select>` (label `تبديل العرض التنفيذي`) and switch among `CEO`, `CFO`, `COO`, `CHRO`.

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData, uploadFileApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { getCurrencySymbol } from '../lib/localization';
 import { useRole } from '../components/RoleContext';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
@@ -24,6 +25,7 @@ import { EXPENSE_CATEGORIES, expenseCategoryLabel } from '../lib/expenseCategori
 
 export default function Expenses() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { user, userRole } = useRole();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const queryClient = useQueryClient();
@@ -165,7 +167,7 @@ export default function Expenses() {
     { header: isRTL ? 'التاريخ' : 'Date', cell: (row) => format(new Date(row.expense_date), 'dd/MM/yyyy') },
     { header: isRTL ? 'الموظف' : 'Employee', accessorKey: 'employee_name' },
     { header: isRTL ? 'الفئة' : 'Category', cell: (row) => expenseCategoryLabel(row.category, isRTL) },
-    { header: isRTL ? 'المبلغ' : 'Amount', cell: (row) => `${row.amount?.toLocaleString()} ${t('sar')}` },
+    { header: isRTL ? 'المبلغ' : 'Amount', cell: (row) => `${row.amount?.toLocaleString()} ${getCurrencySymbol(tenant?.localization, isRTL)}` },
     { header: t('status'), cell: (row) => <StatusBadge status={row.status} /> },
     { header: t('actions'), cell: (row) => (
       <div className="flex gap-1">
@@ -202,9 +204,9 @@ export default function Expenses() {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard title={isRTL ? 'معلقة' : 'Pending'} value={pendingApproval} subtitle={`${totalPending.toLocaleString()} ${t('sar')}`} icon={Receipt} iconClassName="bg-amber-50" />
-        <StatCard title={isRTL ? 'معتمدة' : 'Approved'} value={approved} subtitle={`${totalApproved.toLocaleString()} ${t('sar')}`} icon={CheckCircle} iconClassName="bg-emerald-50" />
-        <StatCard title={isRTL ? 'مرفوضة' : 'Rejected'} value={rejected} subtitle={`${totalRejected.toLocaleString()} ${t('sar')}`} icon={XCircle} iconClassName="bg-red-50" />
+        <StatCard title={isRTL ? 'معلقة' : 'Pending'} value={pendingApproval} subtitle={`${totalPending.toLocaleString()} ${getCurrencySymbol(tenant?.localization, isRTL)}`} icon={Receipt} iconClassName="bg-amber-50" />
+        <StatCard title={isRTL ? 'معتمدة' : 'Approved'} value={approved} subtitle={`${totalApproved.toLocaleString()} ${getCurrencySymbol(tenant?.localization, isRTL)}`} icon={CheckCircle} iconClassName="bg-emerald-50" />
+        <StatCard title={isRTL ? 'مرفوضة' : 'Rejected'} value={rejected} subtitle={`${totalRejected.toLocaleString()} ${getCurrencySymbol(tenant?.localization, isRTL)}`} icon={XCircle} iconClassName="bg-red-50" />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>

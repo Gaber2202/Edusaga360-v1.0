@@ -9,7 +9,7 @@ import {
   toMajorUnits,
   roundToMinorUnits,
 } from '../../lib/money.js';
-import type { LocalisationService, CurrencyFormatOptions } from '../contract/CountryPack.js';
+import type { LocalisationService, LocalizationConfig, CurrencyFormatOptions } from '../contract/CountryPack.js';
 
 function formatMoney(options: CurrencyFormatOptions): string {
   const {
@@ -47,4 +47,14 @@ export const saLocalisation: LocalisationService = {
   formatNumber,
   getDefaultLocale,
   getDefaultWeekend,
+};
+
+export const saLocalization: LocalizationConfig = {
+  currencyCode: 'SAR',
+  currencySymbol: { en: 'SAR', ar: 'ر.س' },
+  minorUnits: 2,
+  numberFormat: { locale: 'en-SA', options: { minimumFractionDigits: 2, maximumFractionDigits: 2 } },
+  dateFormat: { locale: 'en-SA', options: { year: 'numeric', month: 'short', day: 'numeric' } },
+  calendarSystems: ['gregorian', 'hijri'],
+  textDirection: 'rtl',
 };

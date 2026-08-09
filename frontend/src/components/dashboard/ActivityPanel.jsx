@@ -1,3 +1,4 @@
+import Currency from '../Currency';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight } from 'lucide-react';
@@ -128,7 +129,7 @@ export default function ActivityPanel({ leaveRequests, applications, invoices, i
                 <InitialsAvatar name={inv.student_name} />
                 <div className="flex-1 min-w-0">
                   <p className="text-ink text-sm font-semibold truncate">{inv.student_name}</p>
-                  <p className="text-xs text-muted-foreground">{inv.total_amount?.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p>
+                  <p className="text-xs text-muted-foreground"><Currency amount={inv.total_amount} /></p>
                 </div>
                 <StatusBadge status={inv.status} />
               </div>

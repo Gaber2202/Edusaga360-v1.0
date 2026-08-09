@@ -5,7 +5,7 @@ import { aeEInvoice } from './eInvoice.js';
 import { aeFeeGovernance } from './feeGovernance.js';
 import { aeGovIntegrations } from './govIntegrations.js';
 import { aeIdentity } from './identity.js';
-import { aeLocalisation } from './localisation.js';
+import { aeLocalisation, aeLocalization } from './localisation.js';
 import { aePayments } from './payments.js';
 import { aePayroll } from './payroll.js';
 import { aeRegulatorReports } from './regulatorReports.js';
@@ -25,4 +25,5 @@ export const aePack: CountryPack = {
   feeGovernance: aeFeeGovernance,
   documents: aeDocuments,
   localisation: aeLocalisation,
+  localization: aeLocalization,
 };

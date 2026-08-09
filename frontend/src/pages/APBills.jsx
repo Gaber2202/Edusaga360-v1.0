@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { getCurrencySymbol } from '../lib/localization';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -26,6 +27,7 @@ import { createJournalEntry } from '../api/journalEntry';
 
 export default function APBills() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
@@ -125,9 +127,9 @@ export default function APBills() {
     doc.setFontSize(14);
     doc.text(isRTL ? 'تفاصيل المبلغ' : 'Amount Details', 20, 65);
     doc.setFontSize(11);
-    doc.text(`${isRTL ? 'المجموع' : 'Total'}: ${bill.total_amount?.toLocaleString()} SAR`, 20, 75);
-    doc.text(`${isRTL ? 'المدفوع' : 'Paid'}: ${(bill.paid_amount || 0).toLocaleString()} SAR`, 20, 82);
-    doc.text(`${isRTL ? 'المتبقي' : 'Balance'}: ${((bill.total_amount || 0) - (bill.paid_amount || 0)).toLocaleString()} SAR`, 20, 89);
+    doc.text(`${isRTL ? 'المجموع' : 'Total'}: $<Currency amount={bill.total_amount} />`, 20, 75);
+    doc.text(`${isRTL ? 'المدفوع' : 'Paid'}: ${formatCurrency((bill.paid_amount || 0).toLocaleString(), tenant?.localization, isRTL)}`, 20, 82);
+    doc.text(`${isRTL ? 'المتبقي' : 'Balance'}: ${formatCurrency(((bill.total_amount || 0) - (bill.paid_amount || 0)).toLocaleString(), tenant?.localization, isRTL)}`, 20, 89);
     
     doc.save(`bill_${bill.bill_number}.pdf`);
     toast.success(isRTL ? 'تم التنزيل' : 'Downloaded');
@@ -145,9 +147,9 @@ export default function APBills() {
           <p><strong>${isRTL ? 'المورد' : 'Vendor'}:</strong> ${bill.vendor_name}</p>
           <p><strong>${isRTL ? 'التاريخ' : 'Date'}:</strong> ${format(new Date(bill.bill_date), 'dd/MM/yyyy')}</p>
           <table>
-            <tr><td>${isRTL ? 'المجموع' : 'Total'}</td><td>${bill.total_amount?.toLocaleString()} SAR</td></tr>
-            <tr><td>${isRTL ? 'المدفوع' : 'Paid'}</td><td>${(bill.paid_amount || 0).toLocaleString()} SAR</td></tr>
-            <tr><td>${isRTL ? 'المتبقي' : 'Balance'}</td><td>${((bill.total_amount || 0) - (bill.paid_amount || 0)).toLocaleString()} SAR</td></tr>
+            <tr><td>${isRTL ? 'المجموع' : 'Total'}</td><td>$<Currency amount={bill.total_amount} /></td></tr>
+            <tr><td>${isRTL ? 'المدفوع' : 'Paid'}</td><td>${formatCurrency((bill.paid_amount || 0).toLocaleString(), tenant?.localization, isRTL)}</td></tr>
+            <tr><td>${isRTL ? 'المتبقي' : 'Balance'}</td><td>${formatCurrency(((bill.total_amount || 0) - (bill.paid_amount || 0)).toLocaleString(), tenant?.localization, isRTL)}</td></tr>
           </table>
         </body>
       </html>
@@ -165,7 +167,7 @@ export default function APBills() {
       return;
     }
     const subject = `Bill ${bill.bill_number}`;
-    const body = `Dear ${bill.vendor_name},\n\nPlease find the details of Bill ${bill.bill_number}\nTotal: ${bill.total_amount?.toLocaleString()} SAR\n\nThank you.`;
+    const body = `Dear ${bill.vendor_name},\n\nPlease find the details of Bill ${bill.bill_number}\nTotal: $<Currency amount={bill.total_amount} />\n\nThank you.`;
     window.open(`mailto:${vendor.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
   };
 
@@ -265,11 +267,11 @@ export default function APBills() {
     { header: isRTL ? 'رقم الفاتورة' : 'Bill #', cell: (row) => <span className="font-mono text-sm">{row.bill_number}</span> },
     { header: t('vendor'), accessorKey: 'vendor_name' },
     { header: isRTL ? 'رقم أمر الشراء' : 'PO #', cell: (row) => row.po_number || '-' },
-    { header: t('total'), cell: (row) => <span className="font-semibold">{row.total_amount?.toLocaleString()} {t('sar')}</span> },
-    { header: t('paid'), cell: (row) => <span className="text-emerald-600">{(row.paid_amount || 0).toLocaleString()} {t('sar')}</span> },
+    { header: t('total'), cell: (row) => <span className="font-semibold">{row.total_amount?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span> },
+    { header: t('paid'), cell: (row) => <span className="text-emerald-600">{(row.paid_amount || 0).toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span> },
     { header: isRTL ? 'المتبقي' : 'Balance', cell: (row) => {
       const balance = (row.total_amount || 0) - (row.paid_amount || 0);
-      return <span className={balance > 0 ? 'text-red-600 font-medium' : 'text-muted-foreground'}>{balance.toLocaleString()} {t('sar')}</span>;
+      return <span className={balance > 0 ? 'text-red-600 font-medium' : 'text-muted-foreground'}>{balance.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span>;
     }},
     { header: t('dueDate'), cell: (row) => row.due_date ? format(new Date(row.due_date), 'dd/MM/yyyy') : '-' },
     { header: t('status'), cell: (row) => <StatusBadge status={row.status} /> },
@@ -296,10 +298,10 @@ export default function APBills() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <StatCard title={isRTL ? 'إجمالي الفواتير' : 'Total Bills'} value={`${stats.total.toLocaleString()} ${t('sar')}`} icon={DollarSign} iconClassName="bg-najdi-50" />
-        <StatCard title={isRTL ? 'المدفوع' : 'Paid'} value={`${stats.paid.toLocaleString()} ${t('sar')}`} icon={Check} iconClassName="bg-emerald-50" />
-        <StatCard title={isRTL ? 'المستحق' : 'Due'} value={`${stats.pending.toLocaleString()} ${t('sar')}`} icon={Clock} iconClassName="bg-amber-50" />
-        <StatCard title={isRTL ? 'المتأخر' : 'Overdue'} value={`${stats.overdue.toLocaleString()} ${t('sar')}`} icon={AlertCircle} iconClassName="bg-red-50" />
+        <StatCard title={isRTL ? 'إجمالي الفواتير' : 'Total Bills'} value={`${stats.total.toLocaleString()} ${getCurrencySymbol(tenant?.localization, isRTL)}`} icon={DollarSign} iconClassName="bg-najdi-50" />
+        <StatCard title={isRTL ? 'المدفوع' : 'Paid'} value={`${stats.paid.toLocaleString()} ${getCurrencySymbol(tenant?.localization, isRTL)}`} icon={Check} iconClassName="bg-emerald-50" />
+        <StatCard title={isRTL ? 'المستحق' : 'Due'} value={`${stats.pending.toLocaleString()} ${getCurrencySymbol(tenant?.localization, isRTL)}`} icon={Clock} iconClassName="bg-amber-50" />
+        <StatCard title={isRTL ? 'المتأخر' : 'Overdue'} value={`${stats.overdue.toLocaleString()} ${getCurrencySymbol(tenant?.localization, isRTL)}`} icon={AlertCircle} iconClassName="bg-red-50" />
         <StatCard title={isRTL ? 'عدد الفواتير' : 'Count'} value={stats.billCount.toString()} icon={CreditCard} iconClassName="bg-sand" />
       </div>
 
@@ -337,9 +339,9 @@ export default function APBills() {
                 <CardContent className="p-4 space-y-2">
                   <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'الفاتورة' : 'Bill'}</span><span className="font-mono">{selectedBill.bill_number}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">{t('vendor')}</span><span className="font-medium">{selectedBill.vendor_name}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">{t('total')}</span><span>{selectedBill.total_amount?.toLocaleString()} {t('sar')}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">{t('paid')}</span><span className="text-emerald-600">{(selectedBill.paid_amount || 0).toLocaleString()} {t('sar')}</span></div>
-                  <div className="flex justify-between border-t pt-2"><span className="text-muted-foreground font-medium">{isRTL ? 'المتبقي' : 'Remaining'}</span><span className="font-bold text-red-600">{((selectedBill.total_amount || 0) - (selectedBill.paid_amount || 0)).toLocaleString()} {t('sar')}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t('total')}</span><span>{selectedBill.total_amount?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t('paid')}</span><span className="text-emerald-600">{(selectedBill.paid_amount || 0).toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span></div>
+                  <div className="flex justify-between border-t pt-2"><span className="text-muted-foreground font-medium">{isRTL ? 'المتبقي' : 'Remaining'}</span><span className="font-bold text-red-600">{((selectedBill.total_amount || 0) - (selectedBill.paid_amount || 0)).toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span></div>
                 </CardContent>
               </Card>
 

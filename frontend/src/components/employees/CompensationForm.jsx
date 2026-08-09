@@ -1,5 +1,7 @@
 import React from 'react';
 import { useLanguage } from '../LanguageContext';
+import { useTenant } from '../TenantContext';
+import { getCurrencySymbol } from '../../lib/localization';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -10,6 +12,7 @@ import { Plus, Trash2 } from 'lucide-react';
 
 export default function CompensationForm({ value = {}, onChange }) {
   const { t: _t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
 
   const compensation = value || {};
 
@@ -87,7 +90,7 @@ export default function CompensationForm({ value = {}, onChange }) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>{isRTL ? 'الراتب الأساسي' : 'Basic Salary'} (SAR)</Label>
+              <Label>{isRTL ? 'الراتب الأساسي' : 'Basic Salary'} ({getCurrencySymbol(tenant?.localization, isRTL)})</Label>
               <Input
                 type="number"
                 value={salaryStructure.basic_salary || 0}

@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
 import { useLanguage } from '../LanguageContext';
+import { getCurrencySymbol } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -11,6 +13,7 @@ const _COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'];
 
 export default function GovReports() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const today = new Date();
 
   const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').order()) });
@@ -20,7 +23,7 @@ export default function GovReports() {
 
   const stats = useMemo(() => {
     const active = employees.filter(e => e.status === 'active');
-    const saudis = active.filter(e => e.is_saudi || e.nationality === 'Saudi' || e.nationality === 'سعودي');
+    const saudis = active.filter(e => e.is_saudi);
     const saudizationPct = active.length ? Math.round((saudis.length / active.length) * 100) : 0;
 
     const expiredIqama = iqamas.filter(i => i.expiry_date && differenceInDays(parseISO(i.expiry_date), today) < 0);
@@ -109,7 +112,7 @@ export default function GovReports() {
           <DollarSign className="w-8 h-8 text-red-400 flex-shrink-0" />
           <div>
             <div className="text-xl font-bold text-red-400">{stats.totalFines.toLocaleString()}</div>
-            <div className="text-xs text-muted-foreground">{isRTL ? 'غرامات مفتوحة (ر.س)' : 'Open Fines (SAR)'}</div>
+            <div className="text-xs text-muted-foreground">{isRTL ? `غرامات مفتوحة (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Open Fines (${getCurrencySymbol(tenant?.localization, isRTL)})`}</div>
           </div>
         </div>
       </div>

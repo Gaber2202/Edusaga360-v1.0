@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import Currency from '../components/Currency';
 import { useRole } from '../components/RoleContext';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -17,6 +18,7 @@ import { useTenantFilter } from '../hooks/useTenantFilter';
 
 export default function HRApprovalsInbox() {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { user } = useRole();
   const qc = useQueryClient();
   const { tenantId } = useTenantFilter();
@@ -108,7 +110,7 @@ export default function HRApprovalsInbox() {
                 : item.reason}
             </p>
             {item.amount > 0 && (
-              <p className="text-sm text-emerald-600 font-medium">{item.amount?.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p>
+              <p className="text-sm text-emerald-600 font-medium"><Currency amount={item.amount} /></p>
             )}
             <p className="text-xs text-muted-foreground mt-1">
               {isRTL ? 'مقدم في:' : 'Submitted:'} {item.submitted_date ? format(new Date(item.submitted_date), 'dd/MM/yyyy HH:mm') : item.created_at ? format(new Date(item.created_at), 'dd/MM/yyyy') : '—'}

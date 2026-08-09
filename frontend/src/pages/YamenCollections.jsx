@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '../components/LanguageContext';
+import { getCurrencySymbol } from '../lib/localization';
+import { useTenant } from '../components/TenantContext';
 import { callApi } from '../api/supabaseClient';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -19,6 +21,7 @@ const TAB_KEYS = ['dashboard', 'profiles', 'approvals', 'settings'];
 
 export default function YamenCollections() {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [profileFilter, setProfileFilter] = useState('');
@@ -94,7 +97,7 @@ export default function YamenCollections() {
   const profileColumns = [
     { header: t('guardian'), cell: (row) => <div><p className="font-medium">{row.guardians?.name_en ?? row.guardian_id?.slice(0, 8)}</p><p className="text-xs text-muted-foreground">{row.guardians?.phone ?? '-'}</p></div> },
     { header: t('segment'), cell: (row) => <StatusBadge status={row.current_segment} /> },
-    { header: t('outstanding'), cell: (row) => <span className="font-semibold">{row.outstanding_balance?.toLocaleString()} {t('sar')}</span> },
+    { header: t('outstanding'), cell: (row) => <span className="font-semibold">{row.outstanding_balance?.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span> },
     { header: t('avgDaysToPay'), cell: (row) => row.avg_days_to_pay ?? '-' },
     { header: t('lastPayment'), cell: (row) => row.last_payment_at ? format(new Date(row.last_payment_at), 'dd/MM/yyyy') : '-' },
     { header: t('actions'), cell: (row) => (
@@ -151,7 +154,7 @@ export default function YamenCollections() {
 
         <TabsContent value="dashboard" className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <StatCard title={t('totalOutstanding')} value={`${dashboardResult.total_outstanding?.toLocaleString() ?? 0} ${t('sar')}`} icon={CheckCircle} iconClassName="bg-emerald-50" />
+            <StatCard title={t('totalOutstanding')} value={`${dashboardResult.total_outstanding?.toLocaleString() ?? 0} ${getCurrencySymbol(tenant?.localization, isRTL)}`} icon={CheckCircle} iconClassName="bg-emerald-50" />
             <StatCard title={t('profiles')} value={dashboardResult.total_profiles ?? 0} icon={Users} iconClassName="bg-najdi-50" />
             <StatCard title={t('collectionRate')} value={`${dashboardResult.collection_rate ?? 0}%`} icon={CheckCircle} iconClassName="bg-purple-50" />
             <StatCard title={t('pendingMessages')} value={dashboardResult.pending_messages ?? 0} icon={MessageSquare} iconClassName="bg-amber-50" />

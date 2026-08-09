@@ -1,5 +1,7 @@
 import React from 'react';
 import { useLanguage } from '../LanguageContext';
+import { getCurrencySymbol } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { DollarSign, Heart, TrendingDown, Calendar } from 'lucide-react';
@@ -7,6 +9,7 @@ import { format } from 'date-fns';
 
 export default function CompensationTab({ employee }) {
   const { t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const comp = employee?.compensation || {};
   const salary = comp.salary_structure || {};
   const benefits = comp.benefits || {};
@@ -42,25 +45,25 @@ export default function CompensationTab({ employee }) {
         <Card>
           <CardContent className="pt-6">
             <div className="text-xs text-muted-foreground">{isRTL ? 'الراتب الأساسي' : 'Basic Salary'}</div>
-            <div className="text-xl font-semibold text-ink">{(salary.basic_salary || 0).toLocaleString()} {t('sar')}</div>
+            <div className="text-xl font-semibold text-ink">{(salary.basic_salary || 0).toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-xs text-muted-foreground">{isRTL ? 'البدلات' : 'Allowances'}</div>
-            <div className="text-xl font-semibold text-emerald-600">{totalAllowances.toLocaleString()} {t('sar')}</div>
+            <div className="text-xl font-semibold text-emerald-600">{totalAllowances.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-xs text-muted-foreground">{isRTL ? 'الراتب الإجمالي' : 'Gross Salary'}</div>
-            <div className="text-xl font-semibold text-najdi-700">{grossSalary.toLocaleString()} {t('sar')}</div>
+            <div className="text-xl font-semibold text-najdi-700">{grossSalary.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-xs text-muted-foreground">{isRTL ? 'الخصومات' : 'Deductions'}</div>
-            <div className="text-xl font-semibold text-red-600">{totalDeductions.toLocaleString()} {t('sar')}</div>
+            <div className="text-xl font-semibold text-red-600">{totalDeductions.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</div>
           </CardContent>
         </Card>
       </div>
@@ -76,7 +79,7 @@ export default function CompensationTab({ employee }) {
         <CardContent className="space-y-4">
           <div className="bg-sand p-3 rounded-lg">
             <p className="text-sm text-muted-foreground">{isRTL ? 'الراتب الأساسي' : 'Basic Salary'}</p>
-            <p className="text-lg font-semibold">{(salary.basic_salary || 0).toLocaleString()} {t('sar')}</p>
+            <p className="text-lg font-semibold">{(salary.basic_salary || 0).toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</p>
           </div>
 
           {salary.allowances && salary.allowances.length > 0 && (
@@ -87,7 +90,7 @@ export default function CompensationTab({ employee }) {
                   <div key={idx} className="flex justify-between text-sm p-2 bg-sand rounded">
                     <span>{allow.name}</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{allow.amount.toLocaleString()} {t('sar')}</span>
+                      <span className="font-medium">{allow.amount.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span>
                       {allow.taxable && <Badge className="text-xs">{isRTL ? 'ضريبة' : 'Taxable'}</Badge>}
                     </div>
                   </div>
@@ -125,7 +128,7 @@ export default function CompensationTab({ employee }) {
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-sm">{isRTL ? 'مزية رسوم المدرسة' : 'School Fees Benefit'}</span>
                   <span className="font-semibold text-najdi-700">
-                    {benefits.school_fees_discount_type === 'percentage' ? `${benefits.school_fees_value}%` : `${benefits.school_fees_value.toLocaleString()} ${t('sar')}`}
+                    {benefits.school_fees_discount_type === 'percentage' ? `${benefits.school_fees_value}%` : `${benefits.school_fees_value.toLocaleString()} ${getCurrencySymbol(tenant?.localization, isRTL)}`}
                   </span>
                 </div>
               </div>
@@ -176,7 +179,7 @@ export default function CompensationTab({ employee }) {
                   {deductions.other_deductions.map((ded, idx) => (
                     <div key={idx} className="flex justify-between text-sm p-2 bg-sand rounded">
                       <span>{ded.name}</span>
-                      <span className="font-medium text-red-600">{ded.amount.toLocaleString()} {t('sar')}</span>
+                      <span className="font-medium text-red-600">{ded.amount.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</span>
                     </div>
                   ))}
                 </div>

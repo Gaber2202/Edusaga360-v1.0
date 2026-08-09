@@ -146,6 +146,22 @@ jobs:
       - name: Block Saudi/GCC-specific literals outside packs and migrations
         run: python3 .github/scripts/guard_country_literals.py
 
+  guard-frontend-nationality:
+    name: Guard frontend nationality classification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Block frontend comparisons against 'saudi', 'Saudi', or 'سعودي'
+        run: python3 .github/scripts/guard_frontend_nationality.py
+
+  guard-hardcoded-currency:
+    name: Guard hardcoded currency literals
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Block hardcoded SAR/AED/QAR/ريال/ر.س/د.إ/ر.ق in frontend/src
+        run: python3 .github/scripts/guard_hardcoded_currency.py
+
   dependency-audit:
     name: Dependency Audit (advisory)
     runs-on: ubuntu-latest

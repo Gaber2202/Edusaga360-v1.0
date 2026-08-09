@@ -2,6 +2,8 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { formatCurrency } from '../../lib/localization';
+import { useTenant } from '../TenantContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -12,7 +14,7 @@ import { format, differenceInDays } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import JurisdictionFeatureGate from '../JurisdictionFeatureGate';
-import { PAGE_FEATURE_KEYS } from '../../lib/jurisdictionFeatures.js';
+import { PAGE_FEATURE_KEYS, SOCIAL_INSURANCE_FEATURES, NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
 import {
   Users,
   DollarSign,
@@ -31,6 +33,7 @@ import {
 
 export default function PayrollDashboard({ onNavigate }) {
   const { isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const navigate = useNavigate();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
@@ -64,7 +67,7 @@ export default function PayrollDashboard({ onNavigate }) {
   const currentPayRun = payRuns.find(p => p.period === currentPeriod && (!selectedBranchId || p.branch_id === selectedBranchId));
 
   // Calculate stats
-  const saudiCount = filteredEmployees.filter(e => e.is_saudi || e.nationality === 'Saudi' || e.nationality === 'سعودي').length;
+  const saudiCount = filteredEmployees.filter(e => e.is_saudi).length;
   const nonSaudiCount = filteredEmployees.length - saudiCount;
   const teacherCount = filteredEmployees.filter(e => e.job_title_name?.toLowerCase().includes('teacher') || e.job_title_name?.includes('معلم')).length;
   const adminCount = filteredEmployees.length - teacherCount;
@@ -94,21 +97,19 @@ export default function PayrollDashboard({ onNavigate }) {
     return sum + (e.total_salary || (basic + housing + transport + other) || e.salary || 0);
   }, 0);
 
-  // GOSI Calculation (simplified)
-  const gosiEmployeeRate = 0.0975; // 9.75% for Saudis
-  const gosiEmployerRate = 0.1175; // 11.75% for Saudis
-  const gosiNonSaudiRate = 0.02; // 2% GOSI for non-Saudis (employer only)
+  // Social Insurance Calculation (simplified)
+  const employeeSocialInsuranceRate = 0.0975; // 9.75% for Saudis
+  const employerSocialInsuranceRate = 0.1175; // 11.75% for Saudis
+  const nonSaudiSocialInsuranceRate = 0.02; // 2% Social Insurance for non-Saudis (employer only)
 
-  const estimatedGOSIEmployee = filteredEmployees.reduce((sum, e) => {
-    const isSaudi = e.is_saudi || e.nationality === 'Saudi' || e.nationality === 'سعودي';
-    const gosiWage = Math.min((e.basic_salary || 0) + (e.housing_allowance || 0), 45000);
-    return sum + (isSaudi ? gosiWage * gosiEmployeeRate : 0);
+  const estimatedSocialInsuranceEmployee = filteredEmployees.reduce((sum, e) => {
+    const socialInsuranceWage = Math.min((e.basic_salary || 0) + (e.housing_allowance || 0), 45000);
+    return sum + (e.is_saudi ? socialInsuranceWage * employeeSocialInsuranceRate : 0);
   }, 0);
 
-  const estimatedGOSIEmployer = filteredEmployees.reduce((sum, e) => {
-    const isSaudi = e.is_saudi || e.nationality === 'Saudi' || e.nationality === 'سعودي';
-    const gosiWage = Math.min((e.basic_salary || 0) + (e.housing_allowance || 0), 45000);
-    return sum + (isSaudi ? gosiWage * gosiEmployerRate : gosiWage * gosiNonSaudiRate);
+  const estimatedSocialInsuranceEmployer = filteredEmployees.reduce((sum, e) => {
+    const socialInsuranceWage = Math.min((e.basic_salary || 0) + (e.housing_allowance || 0), 45000);
+    return sum + (e.is_saudi ? socialInsuranceWage * employerSocialInsuranceRate : socialInsuranceWage * nonSaudiSocialInsuranceRate);
   }, 0);
 
   const statusColors = {
@@ -173,8 +174,8 @@ export default function PayrollDashboard({ onNavigate }) {
               <span className="text-muted-foreground text-sm">{isRTL ? 'صافي الرواتب' : 'Net Payroll'}</span>
               <span className="text-4xl font-bold">
                 {currentPayRun 
-                  ? `${(currentPayRun.net_payroll || 0).toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}`
-                  : `${(totalGrossSalary * 0.85).toLocaleString()} ${isRTL ? 'ر.س' : 'SAR'}`
+                  ? `${formatCurrency((currentPayRun.net_payroll || 0), tenant?.localization, isRTL)}`
+                  : `${formatCurrency((totalGrossSalary * 0.85), tenant?.localization, isRTL)}`
                 }
               </span>
               {currentPayRun?.payment_date && (
@@ -223,7 +224,7 @@ export default function PayrollDashboard({ onNavigate }) {
               <div>
                 <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الموظفين' : 'Total Employees'}</p>
                 <p className="text-2xl font-bold mt-1">{filteredEmployees.length}</p>
-                <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'إجمالي الرواتب:' : 'Total Payroll:'} {totalGrossSalary.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</p>
+                <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'إجمالي الرواتب:' : 'Total Payroll:'} {formatCurrency(totalGrossSalary, tenant?.localization, isRTL)}</p>
               </div>
               <div className="w-12 h-12 bg-najdi-50 rounded-xl flex items-center justify-center">
                 <Users className="w-6 h-6 text-najdi-700" />
@@ -233,47 +234,51 @@ export default function PayrollDashboard({ onNavigate }) {
         </Card>
         </Link>
 
-        <Card className="bg-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{isRTL ? 'سعودي / غير سعودي' : 'Saudi / Non-Saudi'}</p>
-                <p className="text-2xl font-bold mt-1">{saudiCount} / {nonSaudiCount}</p>
+        <JurisdictionFeatureGate featureKeys={NATIONALISATION_FEATURES}>
+          <Card className="bg-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'سعودي / غير سعودي' : 'Saudi / Non-Saudi'}</p>
+                  <p className="text-2xl font-bold mt-1">{saudiCount} / {nonSaudiCount}</p>
+                </div>
+                <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
+                  <UserCheck className="w-6 h-6 text-emerald-600" />
+                </div>
               </div>
-              <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
-                <UserCheck className="w-6 h-6 text-emerald-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </JurisdictionFeatureGate>
 
-        <Card className="bg-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{isRTL ? 'التأمينات (موظف)' : 'GOSI (Employee)'}</p>
-                <p className="text-2xl font-bold mt-1">{(estimatedGOSIEmployee / 1000).toFixed(1)}K</p>
+        <JurisdictionFeatureGate featureKeys={SOCIAL_INSURANCE_FEATURES}>
+          <Card className="bg-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'التأمينات (موظف)' : 'Social Insurance (Employee)'}</p>
+                  <p className="text-2xl font-bold mt-1">{(estimatedSocialInsuranceEmployee / 1000).toFixed(1)}K</p>
+                </div>
+                <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
+                  <Landmark className="w-6 h-6 text-purple-600" />
+                </div>
               </div>
-              <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
-                <Landmark className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{isRTL ? 'التأمينات (صاحب العمل)' : 'GOSI (Employer)'}</p>
-                <p className="text-2xl font-bold mt-1">{(estimatedGOSIEmployer / 1000).toFixed(1)}K</p>
+          <Card className="bg-white">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'التأمينات (صاحب العمل)' : 'Social Insurance (Employer)'}</p>
+                  <p className="text-2xl font-bold mt-1">{(estimatedSocialInsuranceEmployer / 1000).toFixed(1)}K</p>
+                </div>
+                <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center">
+                  <Building2 className="w-6 h-6 text-amber-600" />
+                </div>
               </div>
-              <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-amber-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </JurisdictionFeatureGate>
       </div>
 
       {/* Secondary Stats */}
@@ -424,7 +429,7 @@ export default function PayrollDashboard({ onNavigate }) {
                 <div>
                   <p className="font-medium">{run.period}</p>
                   <p className="text-sm text-muted-foreground">
-                    {run.employee_count} {isRTL ? 'موظف' : 'employees'} • {(run.net_payroll || 0).toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}
+                    {run.employee_count} {isRTL ? 'موظف' : 'employees'} • {formatCurrency((run.net_payroll || 0), tenant?.localization, isRTL)}
                   </p>
                 </div>
                 <Badge className={statusColors[run.status]}>

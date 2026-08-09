@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
+import { formatCurrency } from '../../lib/localization';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Alert, AlertDescription } from '../ui/alert';
@@ -12,6 +13,7 @@ import { useTenantFilter } from '../../hooks/useTenantFilter';
 
 export default function PayslipViewer({ payslip, employee, branch, open, onClose }) {
   const { t: _t, isRTL } = useLanguage();
+  const { tenant } = useTenant();
   const { tenantId } = useTenantFilter();
   const [showPasswordNote, setShowPasswordNote] = React.useState(false);
 
@@ -196,7 +198,7 @@ export default function PayslipViewer({ payslip, employee, branch, open, onClose
               )}
               <div className="flex justify-between font-semibold border-t pt-2 mt-2 text-emerald-700">
                 <span>{isRTL ? 'إجمالي المكتسبات' : 'Gross Salary'}</span>
-                <span>{payslip.gross_salary?.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                <span>{formatCurrency(payslip.gross_salary, tenant?.localization, isRTL)}</span>
               </div>
             </div>
           </div>
@@ -243,7 +245,7 @@ export default function PayslipViewer({ payslip, employee, branch, open, onClose
               )}
               <div className="flex justify-between font-semibold border-t pt-2 mt-2 text-red-700">
                 <span>{isRTL ? 'إجمالي الاستقطاعات' : 'Total Deductions'}</span>
-                <span>{payslip.total_deductions?.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+                <span>{formatCurrency(payslip.total_deductions, tenant?.localization, isRTL)}</span>
               </div>
             </div>
           </div>
@@ -252,7 +254,7 @@ export default function PayslipViewer({ payslip, employee, branch, open, onClose
           <div className="bg-najdi-900 text-white rounded-lg p-6">
             <div className="flex justify-between items-center">
               <span className="text-lg">{isRTL ? 'صافي الراتب' : 'Net Salary'}</span>
-              <span className="text-3xl font-bold">{payslip.net_salary?.toLocaleString()} {isRTL ? 'ر.س' : 'SAR'}</span>
+              <span className="text-3xl font-bold">{formatCurrency(payslip.net_salary, tenant?.localization, isRTL)}</span>
             </div>
           </div>
 
