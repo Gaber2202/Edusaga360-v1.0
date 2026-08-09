@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { AuthenticatedRequest, requireRole, EXEC_ROLES } from '../middleware/auth.js';
-import { buildRequestContext, resolveScopeJurisdiction, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
+import { buildRequestContext, resolveScopeJurisdiction, isSaudiScope, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
 import { resolvePack } from '../packs/registry.js';
 
 export const benchmarksRouter = Router();
@@ -42,10 +42,10 @@ async function computeSnapshot(tenantId: string): Promise<Record<string, unknown
   const tenant    = tenantRes.data as any;
 
   const scope = await resolveScopeJurisdiction(supabase, tenantId);
-  const isSaudiScope = !scope.isMixed && scope.code === 'SA';
+  const saudiScope = isSaudiScope(scope);
 
   let saudi_pct: number | null = null;
-  if (isSaudiScope) {
+  if (saudiScope) {
     const ctx = await buildRequestContext(supabase, tenantId);
     const pack = resolvePack(ctx);
     if (pack.regulatorReports?.calculateNitaqat) {

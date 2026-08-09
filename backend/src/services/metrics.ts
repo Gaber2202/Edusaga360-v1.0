@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { sar, getAgingReport, getExpectedCollections, getRevenueByFeeType } from './reports.js';
-import { buildRequestContext, resolveJurisdiction, resolveScopeJurisdiction, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
+import { buildRequestContext, resolveJurisdiction, resolveScopeJurisdiction, isSaudiScope as checkSaudiScope, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
 import { resolvePack } from '../packs/registry.js';
 
 const DAY_MS = 86400000;
@@ -170,7 +170,7 @@ export class MetricsService {
     await this.ensureRegistry();
 
     const scope = await resolveScopeJurisdiction(this.supabase, tenantId, branchId ?? undefined);
-    const isSaudiScope = !scope.isMixed && scope.code === 'SA';
+    const isSaudiScope = checkSaudiScope(scope);
 
     const ctx = await buildRequestContext(this.supabase, tenantId, branchId ?? undefined);
     const pack = resolvePack(ctx);
@@ -519,7 +519,7 @@ export class MetricsService {
         : { color: 'unknown', status: 'not_tracked', message: 'No e-invoicing submissions yet.' },
       mudad: isSaudiScope
         ? { color: payrollColor, status: payRun?.status ?? 'not_tracked', message: payRun ? 'Latest pay run status.' : 'No payroll run records found.' }
-        : { color: 'unknown', status: 'not_tracked', message: 'Wage Protection / Mudad tracking is not applicable for this jurisdiction.' },
+        : { color: 'unknown', status: 'not_tracked', message: 'Wage Protection tracking is not applicable for this jurisdiction.' },
       gosi: socialInsuranceColor === 'unknown'
         ? { color: 'unknown', status: 'not_tracked', message: 'Social insurance tracking not applicable for this jurisdiction.' }
         : { color: socialInsuranceColor, status: 'pending', message: 'Social insurance applicable for Saudi employees.' },

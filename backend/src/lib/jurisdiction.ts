@@ -75,6 +75,16 @@ export interface JurisdictionScope {
   branchCodes: JurisdictionCode[];
 }
 
+const SA: JurisdictionCode = 'SA';
+
+/**
+ * True when the resolved scope represents a single Saudi jurisdiction.
+ * Prefer this helper to inline country-code checks outside the pack layer.
+ */
+export function isSaudiScope(scope: JurisdictionScope): boolean {
+  return !scope.isMixed && scope.code === SA;
+}
+
 /**
  * Determine the jurisdiction scope for a tenant + optional branch.
  * - A specific branch resolves to that branch's code.
