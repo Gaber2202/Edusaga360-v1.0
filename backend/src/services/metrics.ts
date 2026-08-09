@@ -428,11 +428,19 @@ export class MetricsService {
 
     let nationalisationData: any = null;
     if (pack.regulatorReports?.calculateNitaqat) {
-      nationalisationData = await pack.regulatorReports.calculateNitaqat(this.supabase, tenantId, {
-        branchId,
-        employees: employeesFull,
-        departments,
-      }) as any;
+      try {
+        nationalisationData = await pack.regulatorReports.calculateNitaqat(this.supabase, tenantId, {
+          branchId,
+          employees: employeesFull,
+          departments,
+        }) as any;
+      } catch (err) {
+        if (err instanceof NotImplementedInJurisdiction) {
+          nationalisationData = null;
+        } else {
+          throw err;
+        }
+      }
     }
     const headcount = nationalisationData?.headcount ?? activeEmployees.length;
     const saudiCount = nationalisationData?.saudiCount ?? 0;

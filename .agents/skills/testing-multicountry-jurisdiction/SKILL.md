@@ -66,8 +66,10 @@ description: End-to-end multi-country jurisdiction verification for EduSaga 360 
 - `frontend/src/components/payroll/PayrollSettings.jsx` previously showed Saudi GOSI settings for AE/QA; verify the GOSI tab/content is gated behind `isFeatureEnabled('gosi')`.
 - `frontend/src/components/subscription/ClientSubscriptionPortal.jsx` should format plan prices and the footer in the tenant's pack currency and use `tenant?.vat_rate` for add-seat VAT.
 - `ExecutiveCommandCenter` can fail for two independent reasons:
-  - **Backend:** `MetricsService.computeAndStoreAll` calls `pack.regulatorReports.calculateNitaqat` unconditionally; AE/QA packs throw `NotImplementedInJurisdiction`, causing `GET /api/exec/{persona}` to return HTTP 500.
-  - **Frontend:** `ExecutiveCommandCenter.jsx` defines `KPICard` and other helper components at module scope and references `tenant`/`isRTL` from the parent scope without `useTenant` or props. When the dashboard finally renders for SA it crashes with `ReferenceError: tenant is not defined`.
+  - **Backend:** `MetricsService.computeAndStoreAll` guards `pack.regulatorReports.calculateNitaqat` by presence (`if (pack.regulatorReports?.calculateNitaqat)`) but the AE/QA packs *implement* the method and throw `NotImplementedInJurisdiction` inside it, so `GET /api/exec/{persona}` still returns HTTP 500 for AE/QA. The guard must also catch the thrown error (or check a capability flag) for ECC to load cross-border.
+  - **Frontend (fixed in commit 5b13816):** `ExecutiveCommandCenter.jsx` now calls `useTenant()` inside `CEODashboard`, `CFODashboard`, and `COODashboard`, and `CHRODashboard` destructures `nitaqat` as `nationalisation` and uses `isFeatureEnabled` for the nationalisation band card. Saudi ECC CEO/CFO/CHRO now render without `ReferenceError: tenant is not defined`.
+- If the Dashboard/Fees/VAT briefly shows currency symbol `XXX` after switching tenants, `getJurisdictionContext` may be returning a stale cached promise. A hard browser refresh (`Ctrl+R`) forces `TenantContext` to re-fetch the pack-derived localization.
+- `frontend/src/pages/Payroll.jsx` renders `PayrollSettings` as a tab (`case 'settings'`); there is no standalone `/PayrollSettings` route.
 
 ## Regression checks
 - `npm run typecheck` (backend)
