@@ -324,14 +324,14 @@
   {
     "file": "backend/src/services/execExport.ts",
     "term": "gosi",
-    "count": 2,
+    "count": 1,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
   {
     "file": "backend/src/services/execExport.ts",
     "term": "mudad",
-    "count": 2,
+    "count": 1,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -345,14 +345,7 @@
   {
     "file": "backend/src/services/execExport.ts",
     "term": "qiwa",
-    "count": 2,
-    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "backend/src/services/execExport.ts",
-    "term": "zatca",
-    "count": 2,
+    "count": 1,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -366,7 +359,7 @@
   {
     "file": "backend/src/services/metrics.ts",
     "term": "gosi",
-    "count": 11,
+    "count": 6,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -387,14 +380,14 @@
   {
     "file": "backend/src/services/metrics.ts",
     "term": "qiwa",
-    "count": 2,
+    "count": 1,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
   {
     "file": "backend/src/services/metrics.ts",
     "term": "zatca",
-    "count": 23,
+    "count": 5,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -940,7 +933,7 @@
   {
     "file": "frontend/src/lib/jurisdictionFeatures.js",
     "term": "qiwa",
-    "count": 1,
+    "count": 2,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -1045,41 +1038,6 @@
   {
     "file": "frontend/src/pages/Employees.jsx",
     "term": "gosi",
-    "count": 2,
-    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/pages/ExecutiveCommandCenter.jsx",
-    "term": "gosi",
-    "count": 4,
-    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/pages/ExecutiveCommandCenter.jsx",
-    "term": "mudad",
-    "count": 4,
-    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/pages/ExecutiveCommandCenter.jsx",
-    "term": "nitaqat",
-    "count": 1,
-    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/pages/ExecutiveCommandCenter.jsx",
-    "term": "qiwa",
-    "count": 2,
-    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/pages/ExecutiveCommandCenter.jsx",
-    "term": "zatca",
     "count": 2,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"

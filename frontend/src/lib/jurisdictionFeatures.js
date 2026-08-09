@@ -22,6 +22,7 @@ export const NATIONALISATION_FEATURES = ['nationalisation_quota'];
 export const HIJRI_CALENDAR_FEATURES = ['hijri_calendar'];
 export const EINVOICING_FEATURES = ['einvoicing'];
 export const WPS_FEATURES = ['mudad'];
+export const LABOR_PORTAL_FEATURES = ['qiwa'];
 
 export const PAGE_FEATURE_KEYS = {
   GovernmentRelations: GOVERNMENT_RELATIONS_FEATURES,

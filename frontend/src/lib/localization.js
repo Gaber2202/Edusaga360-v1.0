@@ -40,10 +40,14 @@ export function getCurrencySymbol(localization, isRTL = false) {
   return isRTL ? localization.currencySymbol.ar : localization.currencySymbol.en;
 }
 
-export function formatDate(date, localization, isRTL = false) {
+export function formatDate(date, localization, isRTL = false, options = null) {
   if (!date) return '';
   const d = typeof date === 'string' ? new Date(date) : date;
   const loc = (isRTL ? localization?.dateFormat?.locale?.replace(/^en/, 'ar') : localization?.dateFormat?.locale) || FALLBACK.dateFormat.locale;
-  const opts = localization?.dateFormat?.options || FALLBACK.dateFormat.options;
+  const opts = { ...(localization?.dateFormat?.options || FALLBACK.dateFormat.options), ...(options || {}), calendar: 'gregory' };
   return new Intl.DateTimeFormat(loc, opts).format(d);
+}
+
+export function formatDateTime(date, localization, isRTL = false) {
+  return formatDate(date, localization, isRTL, { dateStyle: 'medium', timeStyle: 'short' });
 }

@@ -484,7 +484,7 @@ export class MetricsService {
 
     // Compliance signals
     const cutoff30 = daysAgoStr(-30);
-    const [overdueCountRes, zatcaRes] = await Promise.all([
+    const [overdueCountRes, einvoiceRes] = await Promise.all([
       this.branchFilter(this.supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).neq('status', 'paid').lte('due_date', todayStr()).not('due_date', 'is', null), branchId),
       this.supabase.from('zatca_submissions').select('zatca_status, submitted_at').eq('tenant_id', tenantId).order('submitted_at', { ascending: false }).limit(1),
     ]);
@@ -497,26 +497,26 @@ export class MetricsService {
     }
     const overdueCount = (overdueCountRes as any).count ?? 0;
     const iqamaExpiringCount = (iqamaList ?? []).filter((e: any) => new Date(e.iqama_expiry).getTime() <= new Date(cutoff30).getTime()).length;
-    const zatca = zatcaRes.data?.[0] ?? null;
-    const zatcaColor = !zatca ? 'unknown' : ['cleared', 'reported'].includes(zatca.zatca_status) ? 'green' : ['pending', 'generated'].includes(zatca.zatca_status) ? 'yellow' : 'red';
+    const latestEinvoice = einvoiceRes.data?.[0] ?? null;
+    const einvoiceColor = !latestEinvoice ? 'unknown' : ['cleared', 'reported'].includes(latestEinvoice.zatca_status) ? 'green' : ['pending', 'generated'].includes(latestEinvoice.zatca_status) ? 'yellow' : 'red';
     const payrollColor = !payRun ? 'unknown' : payRun.status === 'paid' ? 'green' : ['processed', 'approved'].includes(payRun.status) ? 'yellow' : 'red';
-    const gosiColor = activeEmployees.length > 0 && activeEmployees.some((e: any) => e.is_saudi && e.is_gosi_applicable) ? 'yellow' : 'unknown';
+    const socialInsuranceColor = activeEmployees.length > 0 && activeEmployees.some((e: any) => e.is_saudi && e.is_gosi_applicable) ? 'yellow' : 'unknown';
 
     let complianceScore = 100;
     complianceScore -= Math.min(40, overdueCount * 2);
     complianceScore -= Math.min(30, iqamaExpiringCount * 3);
-    if (zatcaColor === 'red') complianceScore -= 10;
+    if (einvoiceColor === 'red') complianceScore -= 10;
     complianceScore = clamp(complianceScore);
 
     const complianceSignals = {
-      zatca_vat: zatca
-        ? { color: zatcaColor, status: zatca.zatca_status, submitted_at: zatca.submitted_at }
-        : { color: 'unknown', status: 'not_tracked', message: 'No ZATCA submissions yet.' },
-      wps_mudad: { color: payrollColor, status: payRun?.status ?? 'not_tracked', message: payRun ? 'Latest pay run status.' : 'No payroll run records found.' },
-      gosi: gosiColor === 'unknown'
-        ? { color: 'unknown', status: 'not_tracked', message: 'GOSI tracking not configured.' }
-        : { color: gosiColor, status: 'pending', message: 'GOSI applicable for Saudi employees.' },
-      qiwa: { color: 'unknown', status: 'not_tracked', message: 'No Qiwa contract-status table exists.' },
+      einvoicing: latestEinvoice
+        ? { color: einvoiceColor, status: latestEinvoice.zatca_status, submitted_at: latestEinvoice.submitted_at }
+        : { color: 'unknown', status: 'not_tracked', message: 'No e-invoicing submissions yet.' },
+      mudad: { color: payrollColor, status: payRun?.status ?? 'not_tracked', message: payRun ? 'Latest pay run status.' : 'No payroll run records found.' },
+      gosi: socialInsuranceColor === 'unknown'
+        ? { color: 'unknown', status: 'not_tracked', message: 'Social insurance tracking not configured.' }
+        : { color: socialInsuranceColor, status: 'pending', message: 'Social insurance applicable for Saudi employees.' },
+      qiwa: { color: 'unknown', status: 'not_tracked', message: 'No labor contract-status table exists.' },
     };
 
     // Vitality Index
@@ -590,7 +590,7 @@ export class MetricsService {
       ar_aging: arAging,
       overdue_by_campus: overdue_by_campus,
       revenue_vs_ebitda: revenue_trend.slice(-6),
-      compliance_traffic_lights: { zatca_vat: complianceSignals.zatca_vat, wps_mudad: complianceSignals.wps_mudad, gosi: complianceSignals.gosi },
+      compliance_traffic_lights: { einvoicing: complianceSignals.einvoicing, mudad: complianceSignals.mudad, gosi: complianceSignals.gosi },
       revenue_by_fee_type: revenueByFeeType,
       collections_forecast: expectedCollections,
       vat_position: { output_vat_accrued: vatAccrued, next_filing_date: nextFilingDate, period_start: periodStart, period_end: periodEnd },
@@ -609,6 +609,7 @@ export class MetricsService {
     const chroData = {
       kpis: { headcount, saudization_pct: saudizationPct, retention_rate_pct: retentionQuality === 'real' ? retentionRate : null, retention_data_quality: retentionQuality, open_roles_count: null },
       nitaqat: nationalisation,
+      nationalisation: nationalisation,
       workforce_composition: workforceComposition,
       saudi_vs_non_saudi: saudiVsNonSaudi,
       payroll_gov_compliance: complianceSignals,
@@ -646,7 +647,7 @@ export class MetricsService {
       metricValues['cfo.ar_aging'] = { metadata: arAging };
       metricValues['cfo.overdue_by_campus'] = { metadata: overdue_by_campus };
       metricValues['cfo.revenue_vs_ebitda'] = { metadata: revenue_trend.slice(-6) };
-      metricValues['cfo.compliance_traffic_lights'] = { metadata: { zatca_vat: complianceSignals.zatca_vat, wps_mudad: complianceSignals.wps_mudad, gosi: complianceSignals.gosi } };
+      metricValues['cfo.compliance_traffic_lights'] = { metadata: { einvoicing: complianceSignals.einvoicing, mudad: complianceSignals.mudad, gosi: complianceSignals.gosi } };
       metricValues['cfo.revenue_by_fee_type'] = { metadata: revenueByFeeType };
       metricValues['cfo.collections_forecast'] = { metadata: expectedCollections };
       metricValues['cfo.vat_position'] = { metadata: { output_vat_accrued: vatAccrued, next_filing_date: nextFilingDate, period_start: periodStart, period_end: periodEnd } };

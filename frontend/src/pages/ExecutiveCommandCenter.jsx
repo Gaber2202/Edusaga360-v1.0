@@ -3,9 +3,9 @@ import { toast } from 'sonner';
 import { callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useTenant } from '../components/TenantContext';
-import { formatCurrency } from '../lib/localization';
+import { formatCurrency, formatDate, formatDateTime } from '../lib/localization';
 import { useJurisdictionFeatures } from '../components/JurisdictionFeatureContext';
-import { NATIONALISATION_FEATURES } from '../lib/jurisdictionFeatures.js';
+import { NATIONALISATION_FEATURES, EINVOICING_FEATURES, WPS_FEATURES, SOCIAL_INSURANCE_FEATURES, LABOR_PORTAL_FEATURES } from '../lib/jurisdictionFeatures.js';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Badge } from '../components/ui/badge';
@@ -316,7 +316,7 @@ export default function ExecutiveCommandCenter() {
                 const d = new Date();
                 d.setMonth(d.getMonth() - i);
                 const key = d.toISOString().slice(0, 7);
-                const label = isRTL ? `${d.toLocaleString('ar-SA', { month: 'short' })} ${d.getFullYear()}` : `${d.toLocaleString('en-US', { month: 'short' })} ${d.getFullYear()}`;
+                const label = `${formatDate(d, tenant?.localization, isRTL, { month: 'short', year: 'numeric' })}`;
                 return <SelectItem key={key} value={key}>{label}</SelectItem>;
               })}
             </SelectContent>
@@ -342,7 +342,7 @@ export default function ExecutiveCommandCenter() {
           {dashboard?.computed_at && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
               <Clock className="w-3.5 h-3.5" />
-              <span>{new Date(dashboard.computed_at).toLocaleString(isRTL ? 'ar-SA' : 'en-US')}</span>
+              <span>{formatDateTime(dashboard.computed_at, tenant?.localization, isRTL)}</span>
             </div>
           )}
         </div>
@@ -780,6 +780,11 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
 
 function CFODashboard({ data, isRTL, t }) {
   const { tenant } = useTenant();
+  const { isFeatureEnabled } = useJurisdictionFeatures();
+  const einvoiceEnabled = isFeatureEnabled(EINVOICING_FEATURES[0]);
+  const wageProtectionEnabled = isFeatureEnabled(WPS_FEATURES[0]);
+  const socialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);
+  const showCompliance = einvoiceEnabled || wageProtectionEnabled || socialInsuranceEnabled;
   const { kpis = {}, ar_aging = {}, overdue_by_campus = [], revenue_vs_ebitda = [], compliance_traffic_lights = {}, scenario_baseline = {} } = data;
 
   const [growthRate, setGrowthRate] = useState(0);
@@ -839,16 +844,18 @@ function CFODashboard({ data, isRTL, t }) {
         </Card>
       </div>
 
+      {showCompliance && (
       <Card className="border-0 shadow-sm">
         <CardHeader><CardTitle className="text-base">{t('complianceTrafficLights')}</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <TrafficLight label="ZATCA / VAT" signal={compliance_traffic_lights.zatca_vat} />
-            <TrafficLight label="WPS / Mudad" signal={compliance_traffic_lights.wps_mudad} />
-            <TrafficLight label="GOSI" signal={compliance_traffic_lights.gosi} />
+            {einvoiceEnabled && <TrafficLight label={t('complianceEinvoice')} signal={compliance_traffic_lights[EINVOICING_FEATURES[0]]} />}
+            {wageProtectionEnabled && <TrafficLight label={t('complianceWps')} signal={compliance_traffic_lights[WPS_FEATURES[0]]} />}
+            {socialInsuranceEnabled && <TrafficLight label={t('complianceSocialInsurance')} signal={compliance_traffic_lights[SOCIAL_INSURANCE_FEATURES[0]]} />}
           </div>
         </CardContent>
       </Card>
+      )}
 
       <Card className="border-0 shadow-sm">
         <CardHeader><CardTitle className="text-base">{t('overdueByCampus')}</CardTitle></CardHeader>
@@ -1000,7 +1007,11 @@ function COODashboard({ data, isRTL, t }) {
 function CHRODashboard({ data, isRTL, t }) {
   const { isFeatureEnabled } = useJurisdictionFeatures();
   const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
-  const { kpis = {}, nitaqat: nationalisation = {}, workforce_composition = {}, payroll_gov_compliance = {}, open_roles = {}, contract_expiry_radar = {}, leave_absence_summary = {} } = data;
+  const chroSocialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);
+  const chroWageProtectionEnabled = isFeatureEnabled(WPS_FEATURES[0]);
+  const chroLaborPortalEnabled = isFeatureEnabled(LABOR_PORTAL_FEATURES[0]);
+  const showPayrollGovCompliance = chroSocialInsuranceEnabled || chroWageProtectionEnabled || chroLaborPortalEnabled;
+  const { kpis = {}, nationalisation = {}, workforce_composition = {}, payroll_gov_compliance = {}, open_roles = {}, contract_expiry_radar = {}, leave_absence_summary = {} } = data;
 
   const bandColor = { platinum: 'text-purple-600 border-purple-200', green: 'text-emerald-600 border-emerald-200', yellow: 'text-amber-600 border-amber-200', red: 'text-red-600 border-red-200' }[nationalisation.band] || 'text-muted-foreground border-border';
 
@@ -1069,6 +1080,7 @@ function CHRODashboard({ data, isRTL, t }) {
           </CardContent>
         </Card>
 
+        {nationalisationEnabled && (
         <Card className="border-0 shadow-sm">
           <CardHeader><CardTitle className="text-base">{isRTL ? 'السعوديون مقابل غير السعوديين' : 'Saudi vs Non-Saudi'}</CardTitle></CardHeader>
           <CardContent>
@@ -1086,18 +1098,21 @@ function CHRODashboard({ data, isRTL, t }) {
             )}
           </CardContent>
         </Card>
+        )}
       </div>
 
+      {showPayrollGovCompliance && (
       <Card className="border-0 shadow-sm">
         <CardHeader><CardTitle className="text-base">{t('payrollGovCompliance')}</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <TrafficLight label="WPS / Mudad" signal={payroll_gov_compliance.wps_mudad} />
-            <TrafficLight label="GOSI" signal={payroll_gov_compliance.gosi} />
-            <TrafficLight label="Qiwa" signal={payroll_gov_compliance.qiwa} />
+            {chroWageProtectionEnabled && <TrafficLight label={t('complianceWps')} signal={payroll_gov_compliance[WPS_FEATURES[0]]} />}
+            {chroSocialInsuranceEnabled && <TrafficLight label={t('complianceSocialInsurance')} signal={payroll_gov_compliance[SOCIAL_INSURANCE_FEATURES[0]]} />}
+            {chroLaborPortalEnabled && <TrafficLight label={t('complianceLaborPortal')} signal={payroll_gov_compliance[LABOR_PORTAL_FEATURES[0]]} />}
           </div>
         </CardContent>
       </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="border-0 shadow-sm">

@@ -78,4 +78,11 @@ description: End-to-end multi-country jurisdiction verification for EduSaga 360 
 - `python3 .github/scripts/guard_country_literals.py`
 - `python3 .github/scripts/guard_jurisdiction_resolution.py`
 - `python3 .github/scripts/guard_invoices_balance.py`
+
+## Post-392d15a verification notes (Task 13c)
+- `backend/src/services/metrics.ts` now catches `NotImplementedInJurisdiction` from `pack.regulatorReports.calculateNitaqat`, so `GET /api/exec/{ceo|cfo|coo|chro}` returns 200 for AE/QA.
+- `frontend/src/pages/ExecutiveCommandCenter.jsx` calls `useTenant()` inside the persona dashboards and uses `useJurisdictionFeatures()` to gate Saudi-labeled CFO/CHRO compliance widgets.
+- `frontend/src/lib/localization.js` now forces the `gregory` calendar in `formatDate`/`formatDateTime` so Gregorian dates are primary; the Hijri date is only rendered when `hijri_calendar` is enabled.
+- Compliance signal keys in `backend/src/services/metrics.ts` and `execExport.ts` use feature-flag names (`einvoicing`, `mudad`, `gosi`, `qiwa`) so the frontend can look them up via `EINVOICING_FEATURES`, `WPS_FEATURES`, `SOCIAL_INSURANCE_FEATURES`, `LABOR_PORTAL_FEATURES` without hardcoding `zatca_vat` / `wps_mudad`.
+- `python3 .github/scripts/guard_country_literals.py` baseline is 194 allowlist entries / 995 total counts; `python3 .github/scripts/guard_hardcoded_currency.py` remains 0 entries / 0 total.
 - `git diff origin/main -- src/__tests__/golden/snapshots/`
