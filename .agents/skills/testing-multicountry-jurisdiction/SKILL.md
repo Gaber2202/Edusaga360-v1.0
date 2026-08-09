@@ -86,3 +86,11 @@ description: End-to-end multi-country jurisdiction verification for EduSaga 360 
 - Compliance signal keys in `backend/src/services/metrics.ts` and `execExport.ts` use feature-flag names (`einvoicing`, `mudad`, `gosi`, `qiwa`) so the frontend can look them up via `EINVOICING_FEATURES`, `WPS_FEATURES`, `SOCIAL_INSURANCE_FEATURES`, `LABOR_PORTAL_FEATURES` without hardcoding `zatca_vat` / `wps_mudad`.
 - `python3 .github/scripts/guard_country_literals.py` baseline is 194 allowlist entries / 995 total counts; `python3 .github/scripts/guard_hardcoded_currency.py` remains 0 entries / 0 total.
 - `git diff origin/main -- src/__tests__/golden/snapshots/`
+
+## Post-a356878 verification notes (Task 13c final)
+- `backend/src/services/metrics.ts` now returns `nationalisation` as an alias alongside `nitaqat` for `CHRODashboard`, and `complianceSignals` use feature-flag keys `einvoicing`, `mudad`, `gosi`, `qiwa`.
+- `frontend/src/pages/ExecutiveCommandCenter.jsx` gates CFO/CHRO compliance widgets with `useJurisdictionFeatures()` and the `EINVOICING_FEATURES`, `WPS_FEATURES`, `SOCIAL_INSURANCE_FEATURES`, `LABOR_PORTAL_FEATURES` constants.
+- `frontend/src/lib/localization.js` forces `calendar: 'gregory'` in `formatDate`/`formatDateTime`. **Pitfall:** `formatDateTime` passes `{ dateStyle: 'medium', timeStyle: 'short' }` to `formatDate`, which merges them with the `dateFormat.options` (`year`, `month`, `day`) from the pack. `Intl.DateTimeFormat` throws `TypeError: Invalid option` when `dateStyle`/`timeStyle` are combined with explicit date/time component options. Until fixed, the Executive Command Center crashes on the first `formatDateTime` call. A temporary test patch is to skip `dateFormat.options` when `options` contains `dateStyle` or `timeStyle`.
+- `frontend/src/components/LanguageContext.jsx` uses generic compliance labels (`complianceEinvoice`, `complianceWps`, `complianceSocialInsurance`, `complianceLaborPortal`), so Saudi-specific terms no longer leak into AE/QA translations.
+- Create `TASK13C-{AE,QA,SA}-*` demo tenants with `is_demo=true` for acceptance runs; use `/home/ubuntu/task13c-cleanup.py` (or equivalent) to remove only `TASK13C-%` rows.
+- To verify all four Executive Command Center personas, puppeteer/browser automation can open the persona `<Select>` (label `تبديل العرض التنفيذي`) and switch among `CEO`, `CFO`, `COO`, `CHRO`.

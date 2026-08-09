@@ -44,10 +44,12 @@ export function formatDate(date, localization, isRTL = false, options = null) {
   if (!date) return '';
   const d = typeof date === 'string' ? new Date(date) : date;
   const loc = (isRTL ? localization?.dateFormat?.locale?.replace(/^en/, 'ar') : localization?.dateFormat?.locale) || FALLBACK.dateFormat.locale;
-  const opts = { ...(localization?.dateFormat?.options || FALLBACK.dateFormat.options), ...(options || {}), calendar: 'gregory' };
+  const baseOpts = options || localization?.dateFormat?.options || FALLBACK.dateFormat.options;
+  const opts = { ...baseOpts, calendar: 'gregory' };
   return new Intl.DateTimeFormat(loc, opts).format(d);
 }
 
 export function formatDateTime(date, localization, isRTL = false) {
-  return formatDate(date, localization, isRTL, { dateStyle: 'medium', timeStyle: 'short' });
+  const dateOpts = localization?.dateFormat?.options || FALLBACK.dateFormat.options;
+  return formatDate(date, localization, isRTL, { ...dateOpts, hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
