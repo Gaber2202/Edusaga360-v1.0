@@ -103,7 +103,7 @@ export class MetricsService {
       { kpi: 'chro.kpis.saudization_pct', name_ar: 'نسبة التوطين', name_en: 'Saudization %', owner_persona: ['chro'], display_format: 'percent', threshold_green: 25, threshold_amber: 15, threshold_red: 10 },
       { kpi: 'chro.kpis.retention_rate_pct', name_ar: 'معدل الاستبقاء', name_en: 'Retention %', owner_persona: ['chro'], display_format: 'percent' },
       { kpi: 'chro.kpis.open_roles_count', name_ar: 'الوظائف الشاغرة', name_en: 'Open Roles', owner_persona: ['chro'], display_format: 'number' },
-      { kpi: 'chro.nitaqat', name_ar: 'فئة نطاقات', name_en: 'Nitaqat Band', owner_persona: ['chro'], display_format: 'text' },
+      { kpi: 'chro.nationalisation', name_ar: 'فئة نطاقات', name_en: 'Nationalisation Band', owner_persona: ['chro'], display_format: 'text' },
       { kpi: 'chro.workforce_composition', name_ar: 'تكوين القوى العاملة', name_en: 'Workforce Composition', owner_persona: ['chro'], display_format: 'text' },
       { kpi: 'chro.saudi_vs_non_saudi', name_ar: 'السعوديون مقابل غير السعوديين', name_en: 'Saudi vs Non-Saudi', owner_persona: ['chro'], display_format: 'text' },
       { kpi: 'chro.payroll_gov_compliance', name_ar: 'الالتزام الحكومي للرواتب', name_en: 'Payroll Government Compliance', owner_persona: ['chro'], display_format: 'text' },
@@ -426,23 +426,21 @@ export class MetricsService {
     }
     const activeEmployees = employeesFull.filter((e: any) => e.status === 'active');
 
-    if (!pack.regulatorReports?.calculateNitaqat) {
-      throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'Nitaqat calculation');
+    let nationalisationData: any = null;
+    if (pack.regulatorReports?.calculateNitaqat) {
+      nationalisationData = await pack.regulatorReports.calculateNitaqat(this.supabase, tenantId, {
+        branchId,
+        employees: employeesFull,
+        departments,
+      }) as any;
     }
-    const nitaqatData = await pack.regulatorReports.calculateNitaqat(this.supabase, tenantId, {
-      branchId,
-      employees: employeesFull,
-      departments,
-    }) as any;
-    const {
-      headcount,
-      saudiCount,
-      saudizationPct,
-      nitaqatBand,
-      nitaqat,
-      workforce_composition: workforceComposition,
-      saudi_vs_non_saudi: saudiVsNonSaudi,
-    } = nitaqatData;
+    const headcount = nationalisationData?.headcount ?? activeEmployees.length;
+    const saudiCount = nationalisationData?.saudiCount ?? 0;
+    const saudizationPct = nationalisationData?.saudizationPct ?? null;
+    const nationalisationBand = nationalisationData?.nitaqatBand ?? null;
+    const nationalisation = nationalisationData?.nitaqat ?? { data_quality: 'not_tracked', message: 'Nationalisation tracking is not applicable for this jurisdiction.' };
+    const workforceComposition = nationalisationData?.workforce_composition ?? [];
+    const saudiVsNonSaudi = nationalisationData?.saudi_vs_non_saudi ?? { saudi: 0, non_saudi: headcount, other: 0 };
 
     // Retention: 12-mo rolling attrition
     const cutoff12mo = daysAgoStr(365);
@@ -555,7 +553,7 @@ export class MetricsService {
       { priority: overdueCount > 10 ? 1 : overdueCount > 0 ? 3 : 99, message_en: `${overdueCount} overdue invoices.`, message_ar: `${overdueCount} فاتورة متأخرة.` },
       { priority: capacityUtilization && capacityUtilization < 60 ? 2 : 99, message_en: `Low capacity utilization (${capacityUtilization}%).`, message_ar: `استغلال السعة منخفض (${capacityUtilization}٪).` },
       { priority: growthData.growth_rate !== null && growthData.growth_rate < 0 ? 1 : 99, message_en: `Enrollment declining ${growthData.growth_rate}%.`, message_ar: `عدد الطلاب ينخفض ${growthData.growth_rate}٪.` },
-      { priority: headcount > 0 && nitaqatBand === 'red' ? 1 : headcount > 0 && nitaqatBand === 'yellow' ? 2 : 99, message_en: `Nitaqat band is ${nitaqatBand}.`, message_ar: `فئة نطاقات ${nitaqatBand}.` },
+      { priority: headcount > 0 && nationalisationBand === 'red' ? 1 : headcount > 0 && nationalisationBand === 'yellow' ? 2 : 99, message_en: `Nationalisation band is ${nationalisationBand}.`, message_ar: `فئة نطاقات ${nationalisationBand}.` },
       { priority: iqamaExpiringCount > 0 ? 2 : 99, message_en: `${iqamaExpiringCount} iqamas expiring soon.`, message_ar: `${iqamaExpiringCount} إقامة ستنتهي قريباً.` },
     ].filter(r => r.priority < 99).sort((a, b) => a.priority - b.priority).slice(0, 5);
 
@@ -602,7 +600,7 @@ export class MetricsService {
     };
     const chroData = {
       kpis: { headcount, saudization_pct: saudizationPct, retention_rate_pct: retentionQuality === 'real' ? retentionRate : null, retention_data_quality: retentionQuality, open_roles_count: null },
-      nitaqat,
+      nitaqat: nationalisation,
       workforce_composition: workforceComposition,
       saudi_vs_non_saudi: saudiVsNonSaudi,
       payroll_gov_compliance: complianceSignals,
@@ -656,7 +654,7 @@ export class MetricsService {
       metricValues['chro.kpis.headcount'] = { value: headcount };
       metricValues['chro.kpis.saudization_pct'] = { value: saudizationPct, numerator: saudiCount, denominator: headcount };
       metricValues['chro.kpis.retention_rate_pct'] = { value: retentionQuality === 'real' ? retentionRate : null, numerator: separations, denominator: avgHeadcount };
-      metricValues['chro.nitaqat'] = { metadata: nitaqat };
+      metricValues['chro.nationalisation'] = { metadata: nationalisation };
       metricValues['chro.workforce_composition'] = { metadata: workforceComposition };
       metricValues['chro.saudi_vs_non_saudi'] = { metadata: saudiVsNonSaudi };
       metricValues['chro.payroll_gov_compliance'] = { metadata: complianceSignals };

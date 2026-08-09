@@ -338,7 +338,7 @@
   {
     "file": "backend/src/services/execExport.ts",
     "term": "nitaqat",
-    "count": 2,
+    "count": 1,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -380,7 +380,7 @@
   {
     "file": "backend/src/services/metrics.ts",
     "term": "nitaqat",
-    "count": 17,
+    "count": 5,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -430,13 +430,6 @@
     "file": "frontend/src/components/LanguageContext.jsx",
     "term": "gosi",
     "count": 9,
-    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/components/LanguageContext.jsx",
-    "term": "nitaqat",
-    "count": 3,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -1073,7 +1066,7 @@
   {
     "file": "frontend/src/pages/ExecutiveCommandCenter.jsx",
     "term": "nitaqat",
-    "count": 10,
+    "count": 1,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },

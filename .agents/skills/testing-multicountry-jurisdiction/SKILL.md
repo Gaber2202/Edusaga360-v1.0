@@ -62,9 +62,12 @@ description: End-to-end multi-country jurisdiction verification for EduSaga 360 
 - `frontend/src/pages/Fees.jsx` has `InvoicesTab` and `NewInvoiceDialog` components that reference `tenant` without receiving it as a prop; the page may crash with `ReferenceError: tenant is not defined` before any localization can be verified.
 - `frontend/src/components/subscription/ClientSubscriptionPortal.jsx` should use `tenant?.vat_rate ?? 0.15` for add-seat/upgrade order summaries; verify the VAT line reads `5%` for AE, `0%` for QA, and `15%` for SA.
 - `frontend/src/pages/CanteenManagement.jsx` previously contained hardcoded Saudi MOE compliance text; verify it now shows generic school policy for AE/QA.
-- `frontend/src/pages/Fees.jsx` still displays a `ZATCA المرحلة 2` engine card and a `ZATCA` column in the Invoices table for all jurisdictions — a Saudi UI leak for AE/QA even after the `tenant` prop crash is fixed.
-- `frontend/src/components/payroll/PayrollSettings.jsx` still shows Saudi GOSI settings (`إعدادات التأمينات الاجتماعية`, `السعوديين`/`غير السعوديين`) for AE/QA; it uses pack currency but the content is not jurisdiction-gated.
-- `ExecutiveCommandCenter` may still fail to load dashboard data with `تعذر تحميل لوحة البيانات` on AE/QA/SA.
+- `frontend/src/pages/Fees.jsx` previously displayed a `ZATCA المرحلة 2` engine card and a `ZATCA` column in the Invoices table for all jurisdictions; verify the card/column are gated behind `einvoicing` features.
+- `frontend/src/components/payroll/PayrollSettings.jsx` previously showed Saudi GOSI settings for AE/QA; verify the GOSI tab/content is gated behind `isFeatureEnabled('gosi')`.
+- `frontend/src/components/subscription/ClientSubscriptionPortal.jsx` should format plan prices and the footer in the tenant's pack currency and use `tenant?.vat_rate` for add-seat VAT.
+- `ExecutiveCommandCenter` can fail for two independent reasons:
+  - **Backend:** `MetricsService.computeAndStoreAll` calls `pack.regulatorReports.calculateNitaqat` unconditionally; AE/QA packs throw `NotImplementedInJurisdiction`, causing `GET /api/exec/{persona}` to return HTTP 500.
+  - **Frontend:** `ExecutiveCommandCenter.jsx` defines `KPICard` and other helper components at module scope and references `tenant`/`isRTL` from the parent scope without `useTenant` or props. When the dashboard finally renders for SA it crashes with `ReferenceError: tenant is not defined`.
 
 ## Regression checks
 - `npm run typecheck` (backend)

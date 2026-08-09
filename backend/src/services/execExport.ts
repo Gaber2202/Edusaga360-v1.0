@@ -196,7 +196,7 @@ function renderCHRO(data: any, isRTL: boolean): string {
       [isRTL ? 'إجمالي الموظفين' : 'Headcount', String(k.headcount ?? '—')],
       [isRTL ? 'نسبة التوطين' : 'Saudization', fmtPct(k.saudization_pct)],
       [isRTL ? 'معدل الاستبقاء' : 'Retention', fmtPct(k.retention_rate_pct)],
-      [isRTL ? 'فئة نطاقات' : 'Nitaqat Band', band],
+      [isRTL ? 'فئة نطاقات' : 'Nationalisation Band', band],
     ]),
     section(isRTL ? 'التكوين حسب القسم' : 'Composition by Department', deptRows.length ? table([isRTL ? 'القسم' : 'Department', isRTL ? 'العدد' : 'Count'], deptRows) : '<p>No department data.</p>', isRTL),
     section(isRTL ? 'عقود تنتهي قريباً' : 'Contract Expiry Radar', `<div class="kpi-row"><div class="kpi"><div class="kpi-label">0-30 ${isRTL ? 'يوم' : 'days'}</div><div class="kpi-value">${ce['0_30'] || 0}</div></div><div class="kpi"><div class="kpi-label">31-60 ${isRTL ? 'يوم' : 'days'}</div><div class="kpi-value">${ce['31_60'] || 0}</div></div><div class="kpi"><div class="kpi-label">61-90 ${isRTL ? 'يوم' : 'days'}</div><div class="kpi-value">${ce['61_90'] || 0}</div></div></div>`, isRTL),

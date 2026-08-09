@@ -462,6 +462,7 @@ function KPICard({ title, value, delta, sparkData, color, isRTL }) {
 }
 
 function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBrief, isRTL, t }) {
+  const { tenant } = useTenant();
   const { vitality, financials, collections, campus_vitality = [], strategic_alerts = [], revenue_trend = [], collection_trend = [], top_risks = [], cash_runway } = data;
 
   const collectionRate = collections?.collection_rate_pct;
@@ -778,6 +779,7 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
 }
 
 function CFODashboard({ data, isRTL, t }) {
+  const { tenant } = useTenant();
   const { kpis = {}, ar_aging = {}, overdue_by_campus = [], revenue_vs_ebitda = [], compliance_traffic_lights = {}, scenario_baseline = {} } = data;
 
   const [growthRate, setGrowthRate] = useState(0);
@@ -905,6 +907,7 @@ function CFODashboard({ data, isRTL, t }) {
 }
 
 function COODashboard({ data, isRTL, t }) {
+  const { tenant } = useTenant();
   const { kpis = {}, capacity_to_cash = [], admissions_funnel = {}, utilization_by_campus = [] } = data;
 
   return (
@@ -997,9 +1000,9 @@ function COODashboard({ data, isRTL, t }) {
 function CHRODashboard({ data, isRTL, t }) {
   const { isFeatureEnabled } = useJurisdictionFeatures();
   const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
-  const { kpis = {}, nitaqat = {}, workforce_composition = {}, payroll_gov_compliance = {}, open_roles = {}, contract_expiry_radar = {}, leave_absence_summary = {} } = data;
+  const { kpis = {}, nitaqat: nationalisation = {}, workforce_composition = {}, payroll_gov_compliance = {}, open_roles = {}, contract_expiry_radar = {}, leave_absence_summary = {} } = data;
 
-  const bandColor = { platinum: 'text-purple-600 border-purple-200', green: 'text-emerald-600 border-emerald-200', yellow: 'text-amber-600 border-amber-200', red: 'text-red-600 border-red-200' }[nitaqat.band] || 'text-muted-foreground border-border';
+  const bandColor = { platinum: 'text-purple-600 border-purple-200', green: 'text-emerald-600 border-emerald-200', yellow: 'text-amber-600 border-amber-200', red: 'text-red-600 border-red-200' }[nationalisation.band] || 'text-muted-foreground border-border';
 
   const genderData = workforce_composition.by_gender
     ? Object.entries(workforce_composition.by_gender).map(([k, v]) => ({ name: k, value: v }))
@@ -1023,23 +1026,23 @@ function CHRODashboard({ data, isRTL, t }) {
 
       {nationalisationEnabled && (
       <Card className="border-0 shadow-sm">
-        <CardHeader><CardTitle className="text-base">{t('nitaqatBand')}</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t('nationalisationBand')}</CardTitle></CardHeader>
         <CardContent>
-          {nitaqat.data_quality === 'not_tracked' ? (
+          {nationalisation.data_quality === 'not_tracked' ? (
             <EmptyState isRTL={isRTL} message={isRTL ? 'لا توجد بيانات موظفين مسجلة' : 'No employee data on record'} />
           ) : (
             <>
               <div className="flex items-center gap-4">
                 <Badge variant="outline" className={`text-base px-4 py-1.5 ${bandColor}`}>
-                  {(nitaqat.band || '—').toUpperCase()}
+                  {(nationalisation.band || '—').toUpperCase()}
                 </Badge>
                 <div className="flex-1">
-                  <ScoreBar label={t('saudizationRate')} value={nitaqat.saudization_pct} isRTL={isRTL} />
+                  <ScoreBar label={t('saudizationRate')} value={nationalisation.saudization_pct} isRTL={isRTL} />
                 </div>
               </div>
-              {nitaqat.thresholds && (
+              {nationalisation.thresholds && (
                 <p className="text-xs text-muted-foreground mt-3">
-                  {isRTL ? 'الحدود' : 'Thresholds'}: {isRTL ? 'بلاتيني' : 'Platinum'} ≥{nitaqat.thresholds.platinum}% · {isRTL ? 'أخضر' : 'Green'} ≥{nitaqat.thresholds.green}% · {isRTL ? 'أصفر' : 'Yellow'} ≥{nitaqat.thresholds.yellow}%
+                  {isRTL ? 'الحدود' : 'Thresholds'}: {isRTL ? 'بلاتيني' : 'Platinum'} ≥{nationalisation.thresholds.platinum}% · {isRTL ? 'أخضر' : 'Green'} ≥{nationalisation.thresholds.green}% · {isRTL ? 'أصفر' : 'Yellow'} ≥{nationalisation.thresholds.yellow}%
                 </p>
               )}
             </>
