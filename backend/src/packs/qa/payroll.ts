@@ -55,7 +55,13 @@ function calculateGosi(_basicSalary: number, _nationality?: string): GosiResult 
   );
 }
 
-function calculatePayroll(): Promise<unknown> {
+function calculatePayroll(
+  _supabase: unknown,
+  _tenantId: string,
+  _period: { start: string; end: string },
+  _employeeIds?: string[],
+  _branchId?: string,
+): Promise<unknown> {
   return Promise.reject(
     new NotImplementedInJurisdiction(
       JURISDICTION_CODE,

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { sar, getAgingReport, getExpectedCollections, getRevenueByFeeType } from './reports.js';
-import { buildRequestContext, resolveJurisdiction, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
+import { buildRequestContext, resolveJurisdiction, resolveScopeJurisdiction, isSaudiScope as checkSaudiScope, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
 import { resolvePack } from '../packs/registry.js';
 
 const DAY_MS = 86400000;
@@ -168,6 +168,9 @@ export class MetricsService {
 
   async computeAndStoreAll(tenantId: string, period = 'current', branchId?: string, persona?: 'ceo' | 'cfo' | 'coo' | 'chro'): Promise<DashboardData> {
     await this.ensureRegistry();
+
+    const scope = await resolveScopeJurisdiction(this.supabase, tenantId, branchId ?? undefined);
+    const isSaudiScope = checkSaudiScope(scope);
 
     const ctx = await buildRequestContext(this.supabase, tenantId, branchId ?? undefined);
     const pack = resolvePack(ctx);
@@ -427,7 +430,7 @@ export class MetricsService {
     const activeEmployees = employeesFull.filter((e: any) => e.status === 'active');
 
     let nationalisationData: any = null;
-    if (pack.regulatorReports?.calculateNitaqat) {
+    if (isSaudiScope && pack.regulatorReports?.calculateNitaqat) {
       try {
         nationalisationData = await pack.regulatorReports.calculateNitaqat(this.supabase, tenantId, {
           branchId,
@@ -496,11 +499,13 @@ export class MetricsService {
       payRun = null;
     }
     const overdueCount = (overdueCountRes as any).count ?? 0;
-    const iqamaExpiringCount = (iqamaList ?? []).filter((e: any) => new Date(e.iqama_expiry).getTime() <= new Date(cutoff30).getTime()).length;
-    const latestEinvoice = einvoiceRes.data?.[0] ?? null;
+    const iqamaExpiringCount = isSaudiScope
+      ? (iqamaList ?? []).filter((e: any) => new Date(e.iqama_expiry).getTime() <= new Date(cutoff30).getTime()).length
+      : 0;
+    const latestEinvoice = isSaudiScope ? (einvoiceRes.data?.[0] ?? null) : null;
     const einvoiceColor = !latestEinvoice ? 'unknown' : ['cleared', 'reported'].includes(latestEinvoice.zatca_status) ? 'green' : ['pending', 'generated'].includes(latestEinvoice.zatca_status) ? 'yellow' : 'red';
     const payrollColor = !payRun ? 'unknown' : payRun.status === 'paid' ? 'green' : ['processed', 'approved'].includes(payRun.status) ? 'yellow' : 'red';
-    const socialInsuranceColor = activeEmployees.length > 0 && activeEmployees.some((e: any) => e.is_saudi && e.is_gosi_applicable) ? 'yellow' : 'unknown';
+    const socialInsuranceColor = isSaudiScope && activeEmployees.length > 0 && activeEmployees.some((e: any) => e.is_saudi && e.is_gosi_applicable) ? 'yellow' : 'unknown';
 
     let complianceScore = 100;
     complianceScore -= Math.min(40, overdueCount * 2);
@@ -512,9 +517,11 @@ export class MetricsService {
       einvoicing: latestEinvoice
         ? { color: einvoiceColor, status: latestEinvoice.zatca_status, submitted_at: latestEinvoice.submitted_at }
         : { color: 'unknown', status: 'not_tracked', message: 'No e-invoicing submissions yet.' },
-      mudad: { color: payrollColor, status: payRun?.status ?? 'not_tracked', message: payRun ? 'Latest pay run status.' : 'No payroll run records found.' },
+      mudad: isSaudiScope
+        ? { color: payrollColor, status: payRun?.status ?? 'not_tracked', message: payRun ? 'Latest pay run status.' : 'No payroll run records found.' }
+        : { color: 'unknown', status: 'not_tracked', message: 'Wage Protection tracking is not applicable for this jurisdiction.' },
       gosi: socialInsuranceColor === 'unknown'
-        ? { color: 'unknown', status: 'not_tracked', message: 'Social insurance tracking not configured.' }
+        ? { color: 'unknown', status: 'not_tracked', message: 'Social insurance tracking not applicable for this jurisdiction.' }
         : { color: socialInsuranceColor, status: 'pending', message: 'Social insurance applicable for Saudi employees.' },
       qiwa: { color: 'unknown', status: 'not_tracked', message: 'No labor contract-status table exists.' },
     };

@@ -60,14 +60,26 @@ export interface EInvoiceService {
   /** Sign the invoice hash (ECDSA over SHA-256). */
   signInvoice?(xmlHash: string, privateKeyPem?: string): string;
 
+  /** Generate the previous invoice hash (PIH) for chaining. */
+  generatePIH?(previousHash?: string): string;
+
   /** Generate the base64 TLV payload for the ZATCA QR code. */
-  generateTLVQR?(invoice: unknown, tenant: unknown, signature: string): string;
+  generateTLVQR?(invoice: unknown, tenant: unknown, signature?: string): string;
 
   /** Build the bilingual HTML that is rendered into the PDF. */
   buildInvoiceHTML?(invoice: unknown, tenant: unknown, qrDataUrl: string, showFooter?: boolean): string;
 
   /** Render a complete ZATCA-compliant PDF/A-3 invoice. */
   generatePDF?(invoice: unknown, tenant: unknown): Promise<Buffer>;
+
+  /** Submit a simplified invoice to the tax authority. */
+  reportInvoice?(xmlBase64: string, invoiceHash: string, uuid: string): Promise<Record<string, unknown>>;
+
+  /** Submit a standard invoice for clearance to the tax authority. */
+  clearInvoice?(xmlBase64: string, invoiceHash: string, uuid: string): Promise<Record<string, unknown>>;
+
+  /** Validate a draft invoice against the tax authority compliance API. */
+  complianceCheck?(xmlBase64: string, invoiceHash: string, uuid: string): Promise<Record<string, unknown>>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -165,12 +177,13 @@ export interface PayrollService {
     employees: { id: string; nationality: string | null | undefined; basic_salary: number }[],
   ): { employees: unknown[]; totals: { total_gosi_employee: number; total_gosi_employer: number; total_gosi: number } };
 
-  /** Run a full payroll calculation for a period. */
+  /** Run a full payroll calculation for a period, optionally scoped to a branch. */
   calculatePayroll?(
     supabase: unknown,
     tenantId: string,
     period: { start: string; end: string },
     employeeIds?: string[],
+    branchId?: string,
   ): Promise<unknown>;
 
   /** Generate the WPS / Mudad bank file for a period. */

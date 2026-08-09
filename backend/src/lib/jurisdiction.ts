@@ -66,6 +66,56 @@ export class NotImplementedInJurisdiction extends Error {
  * This is the ONLY function that resolves jurisdiction. Callers must never read
  * `tenant.jurisdictionCode` or `branch.jurisdictionCode` directly; use this helper.
  */
+export interface JurisdictionScope {
+  /** Effective jurisdiction code for the scope (tenant fallback when mixed). */
+  code: JurisdictionCode;
+  /** True if the scope contains more than one jurisdiction (e.g. cross-border group with no branch selected). */
+  isMixed: boolean;
+  /** Distinct jurisdiction codes found in the scope. */
+  branchCodes: JurisdictionCode[];
+}
+
+const SA: JurisdictionCode = 'SA';
+
+/**
+ * True when the resolved scope represents a single Saudi jurisdiction.
+ * Prefer this helper to inline country-code checks outside the pack layer.
+ */
+export function isSaudiScope(scope: JurisdictionScope): boolean {
+  return !scope.isMixed && scope.code === SA;
+}
+
+/**
+ * Determine the jurisdiction scope for a tenant + optional branch.
+ * - A specific branch resolves to that branch's code.
+ * - No branch resolves to all branch codes; if they differ, the scope is mixed.
+ */
+export async function resolveScopeJurisdiction(
+  supabase: SupabaseClient,
+  tenantId: string,
+  branchId?: string,
+): Promise<JurisdictionScope> {
+  const [{ data: tenant }, { data: branches }] = await Promise.all([
+    supabase.from('tenants').select('jurisdiction_code').eq('id', tenantId).single(),
+    supabase.from('branches').select('id, jurisdiction_code').eq('tenant_id', tenantId),
+  ]);
+
+  const branchCodeById = new Map<string, JurisdictionCode>();
+  for (const b of (branches ?? [])) {
+    if (b.jurisdiction_code) branchCodeById.set(b.id as string, b.jurisdiction_code as string);
+  }
+
+  if (branchId) {
+    const code = branchCodeById.get(branchId) ?? (tenant?.jurisdiction_code as JurisdictionCode);
+    return { code, isMixed: false, branchCodes: [code].filter(Boolean) };
+  }
+
+  const codes = [...new Set([...(tenant?.jurisdiction_code ? [tenant.jurisdiction_code] : []), ...branchCodeById.values()])].filter(Boolean);
+  const isMixed = codes.length > 1;
+  const code = isMixed ? (tenant?.jurisdiction_code as JurisdictionCode) : codes[0];
+  return { code, isMixed, branchCodes: codes };
+}
+
 export function resolveJurisdiction(ctx: RequestContext): JurisdictionCode {
   const raw = ctx.branch?.jurisdictionCode;
   if (raw === '') {
@@ -105,6 +155,7 @@ export async function buildRequestContext(
       .from('branches')
       .select('id, jurisdiction_code, settings')
       .eq('id', branchId)
+      .eq('tenant_id', tenantId)
       .single();
     if (!bErr && b) {
       branch = {

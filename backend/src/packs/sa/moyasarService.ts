@@ -4,7 +4,7 @@ import { MoyasarClient, type MoyasarInvoiceItem } from './moyasarClient.js';
 import { toMinorUnits, toMajorUnits, roundToMinorUnits, getMinorUnits } from '../../lib/money.js';
 import { getTenantComplianceData } from '../../services/tenant.js';
 import { createReceiptForPayment } from '../../services/receipt.js';
-import { generateZATCAInvoicePDF } from './zatca.js';
+import { saDocuments } from './documents.js';
 
 export interface MoyasarLinkOptions {
   tenantId: string;
@@ -408,24 +408,40 @@ export async function processMoyasarWebhook(
   const data = payload.data;
 
   const moyasarPaymentId = data.id as string;
+  const moyasarInvoiceId = data.invoice_id as string | undefined;
+
+  // Tenant/invoice MUST be derived from our own moyasar_invoices row, keyed by
+  // the external Moyasar invoice id. Payload metadata is attacker-controllable.
+  if (!moyasarInvoiceId) {
+    return { received: false, error: 'missing_moyasar_invoice_id' };
+  }
+
+  const { data: moyasarInvoice } = await supabase
+    .from('moyasar_invoices')
+    .select('id, edusaga_invoice_id, tenant_id')
+    .eq('moyasar_id', moyasarInvoiceId)
+    .maybeSingle();
+
+  if (!moyasarInvoice) {
+    return { received: false, error: 'moyasar_invoice_not_found' };
+  }
+
+  const invoiceId = (moyasarInvoice.edusaga_invoice_id as string) || undefined;
+  const tenantId = (moyasarInvoice.tenant_id as string) || '';
+
   const metadata = (data.metadata as Record<string, string>) || {};
-  let invoiceId: string | undefined = metadata.edusaga_invoice_id || metadata.invoice_id;
-  let tenantId = metadata.tenant_id || '';
+  const metaTenantId = metadata.tenant_id;
+  const metaInvoiceId = metadata.edusaga_invoice_id || metadata.invoice_id;
+
+  if (metaTenantId && metaTenantId !== tenantId) {
+    return { received: false, error: 'metadata_tenant_mismatch' };
+  }
+  if (metaInvoiceId && invoiceId && metaInvoiceId !== invoiceId) {
+    return { received: false, error: 'metadata_invoice_mismatch' };
+  }
+
   const installmentId = metadata.installment_id || null;
   let invoiceStatus: string | undefined;
-
-  // Fallback: if metadata is stripped (e.g. bulk invoices), resolve via moyasar_invoices table.
-  if (data.invoice_id) {
-    const { data: moyasarInvoice } = await supabase
-      .from('moyasar_invoices')
-      .select('edusaga_invoice_id, tenant_id')
-      .eq('moyasar_id', data.invoice_id as string)
-      .maybeSingle();
-    if (moyasarInvoice) {
-      if (!invoiceId) invoiceId = (moyasarInvoice.edusaga_invoice_id as string) || undefined;
-      if (!tenantId) tenantId = (moyasarInvoice.tenant_id as string) || '';
-    }
-  }
 
   // Replay/idempotency guard (after tenant resolution).
   const { data: existing } = await supabase
@@ -443,7 +459,7 @@ export async function processMoyasarWebhook(
     event_id: eventId,
     event_type: eventType,
     moyasar_payment_id: moyasarPaymentId || null,
-    moyasar_invoice_id: (data.invoice_id as string) || null,
+    moyasar_invoice_id: (moyasarInvoice.id as string) || null,
     payload,
     processed_at: new Date().toISOString(),
   });
@@ -462,14 +478,6 @@ export async function processMoyasarWebhook(
     .single();
   if (!invoice) return { received: false, error: 'invoice_not_found' };
 
-  // Resolve the local moyasar_invoices row id from the external Moyasar invoice id.
-  const { data: moyasarInvoiceRow } = await supabase
-    .from('moyasar_invoices')
-    .select('id')
-    .eq('tenant_id', tenantId)
-    .eq('moyasar_id', data.invoice_id as string)
-    .maybeSingle();
-
   const currencyCode = (invoice.currency_code as string) || 'SAR';
   const minorUnits = await getMinorUnits(supabase, currencyCode);
   const epsilon = 1 / (10 ** minorUnits);
@@ -482,7 +490,7 @@ export async function processMoyasarWebhook(
     .upsert({
       tenant_id: tenantId,
       moyasar_payment_id: moyasarPaymentId,
-      moyasar_invoice_id: (moyasarInvoiceRow?.id as string) || null,
+      moyasar_invoice_id: (moyasarInvoice.id as string) || null,
       amount_minor: paymentAmountMinor,
       fee_minor: feeMinor,
       refunded_minor: Number(data.refunded) || 0,
@@ -534,7 +542,7 @@ export async function processMoyasarWebhook(
           { id: (paymentRow?.id as string) || moyasarPaymentId, amount: amountMajor, method: 'online', reference: moyasarPaymentId, date: new Date().toISOString().split('T')[0] },
           tenantData,
           currencyCode,
-          generateZATCAInvoicePDF,
+          saDocuments.renderInvoicePdf as (invoice: any, tenant: any) => Promise<Buffer>,
         );
       } catch (receiptErr) {
         console.warn('[moyasarService] receipt generation failed:', (receiptErr as Error).message);

@@ -170,8 +170,8 @@
   {
     "file": "backend/src/routes/billingPublic.ts",
     "term": "moyasar",
-    "count": 10,
-    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "count": 31,
+    "reason": "Moyasar webhook route resolves tenant/branch and delegates to the jurisdiction pack",
     "expires": "2026-10-31"
   },
   {
@@ -304,20 +304,6 @@
     "file": "backend/src/services/collections/messenger.ts",
     "term": "moyasar",
     "count": 2,
-    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "backend/src/services/collections/moyasar.ts",
-    "term": "moyasar",
-    "count": 12,
-    "reason": "legacy Saudi-specific code pending jurisdiction extraction",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "backend/src/services/collections/moyasar.ts",
-    "term": "sar",
-    "count": 1,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
     "expires": "2026-10-31"
   },
@@ -1355,6 +1341,13 @@
     "term": "gosi",
     "count": 2,
     "reason": "legacy Saudi-specific code pending jurisdiction extraction",
+    "expires": "2026-10-31"
+  },
+  {
+    "file": "backend/src/routes/benchmarks.ts",
+    "term": "nitaqat",
+    "count": 5,
+    "reason": "Saudization snapshot gate calls pack.regulatorReports.calculateNitaqat only under isSaudiScope",
     "expires": "2026-10-31"
   }
 ]

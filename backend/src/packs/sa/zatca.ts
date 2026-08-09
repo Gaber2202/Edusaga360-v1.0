@@ -423,6 +423,7 @@ function getZatcaBaseUrl(): string {
 }
 
 export interface ZatcaApiResponse {
+  [key: string]: unknown;
   reportingStatus?: string;
   clearanceStatus?: string;
   validationResults?: {
@@ -441,18 +442,8 @@ async function zatcaApiCall(
   invoiceHash: string,
   uuid: string,
 ): Promise<ZatcaApiResponse> {
-  const csid = process.env.ZATCA_CSID;
-  const secret = process.env.ZATCA_SECRET;
-
-  if (!csid || !secret) {
-    return {
-      reportingStatus: 'NOT_CONFIGURED',
-      validationResults: {
-        status: 'WARNING',
-        warningMessages: [{ type: 'WARNING', code: 'ZATCA_NOT_CONFIGURED', message: 'ZATCA credentials not configured. Set ZATCA_CSID and ZATCA_SECRET.' }],
-      },
-    };
-  }
+  const csid = process.env.ZATCA_CSID ?? '';
+  const secret = process.env.ZATCA_SECRET ?? '';
 
   const credentials = Buffer.from(`${csid}:${secret}`).toString('base64');
 
@@ -492,18 +483,8 @@ export function complianceCheck(
   invoiceHash: string,
   uuid: string,
 ): Promise<ZatcaApiResponse> {
-  const csid = process.env.ZATCA_COMPLIANCE_CSID || process.env.ZATCA_CSID;
-  const secret = process.env.ZATCA_COMPLIANCE_SECRET || process.env.ZATCA_SECRET;
-
-  if (!csid || !secret) {
-    return Promise.resolve({
-      reportingStatus: 'NOT_CONFIGURED',
-      validationResults: {
-        status: 'WARNING',
-        warningMessages: [{ type: 'WARNING', code: 'ZATCA_NOT_CONFIGURED', message: 'ZATCA compliance credentials not configured.' }],
-      },
-    });
-  }
+  const csid = process.env.ZATCA_COMPLIANCE_CSID || process.env.ZATCA_CSID || '';
+  const secret = process.env.ZATCA_COMPLIANCE_SECRET || process.env.ZATCA_SECRET || '';
 
   const credentials = Buffer.from(`${csid}:${secret}`).toString('base64');
 
