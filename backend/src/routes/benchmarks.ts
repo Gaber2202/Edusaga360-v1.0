@@ -150,21 +150,39 @@ benchmarksRouter.get('/', async (req: AuthenticatedRequest, res) => {
     ] as const;
 
     const comparison: Record<string, {
-      your_value:      number;
-      network_avg:     number;
-      network_min:     number;
-      network_max:     number;
-      percentile:      number;
+      your_value:      number | null;
+      network_avg:     number | null;
+      network_min:     number | null;
+      network_max:     number | null;
+      percentile:      number | null;
       pool_size:       number;
     }> = {};
 
     for (const metric of metrics) {
-      const myVal      = Number((mySnap as any)[metric] ?? 0);
-      const poolVals   = poolRows.map((r: any) => Number(r[metric] ?? 0)).filter((v: number) => !isNaN(v));
-      const networkAvg = avg(poolVals);
-      const networkMin = poolVals.length > 0 ? Math.min(...poolVals) : 0;
-      const networkMax = poolVals.length > 0 ? Math.max(...poolVals) : 0;
-      const pctRank    = percentileRank(myVal, poolVals);
+      const rawMyVal = (mySnap as any)[metric];
+      const myVal = rawMyVal === null || rawMyVal === undefined ? null : Number(rawMyVal);
+
+      const poolVals = poolRows
+        .map((r: any) => r[metric])
+        .filter((v: any) => v !== null && v !== undefined && !isNaN(Number(v)))
+        .map((v: any) => Number(v));
+
+      if (myVal === null) {
+        comparison[metric] = {
+          your_value:  null,
+          network_avg: null,
+          network_min: null,
+          network_max: null,
+          percentile:  null,
+          pool_size:   poolVals.length,
+        };
+        continue;
+      }
+
+      const networkAvg = poolVals.length > 0 ? avg(poolVals) : null;
+      const networkMin = poolVals.length > 0 ? Math.min(...poolVals) : null;
+      const networkMax = poolVals.length > 0 ? Math.max(...poolVals) : null;
+      const pctRank    = poolVals.length > 0 ? percentileRank(myVal, poolVals) : null;
 
       comparison[metric] = {
         your_value:  myVal,
@@ -172,7 +190,7 @@ benchmarksRouter.get('/', async (req: AuthenticatedRequest, res) => {
         network_min: networkMin,
         network_max: networkMax,
         percentile:  pctRank,
-        pool_size:   N,
+        pool_size:   poolVals.length,
       };
     }
 

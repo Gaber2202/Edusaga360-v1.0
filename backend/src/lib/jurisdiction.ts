@@ -155,6 +155,7 @@ export async function buildRequestContext(
       .from('branches')
       .select('id, jurisdiction_code, settings')
       .eq('id', branchId)
+      .eq('tenant_id', tenantId)
       .single();
     if (!bErr && b) {
       branch = {

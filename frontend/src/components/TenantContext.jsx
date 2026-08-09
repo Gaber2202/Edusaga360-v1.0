@@ -77,6 +77,8 @@ export function TenantProvider({ user, children }) {
   const loadTenant = async (u) => {
     setTenantLoading(true);
     setTenantLoadingError(null);
+    let tenantData = null;
+
     try {
       // creator/platform owner has no tenant — they manage all tenants
       if (isPlatformOwner(u)) {
@@ -85,7 +87,6 @@ export function TenantProvider({ user, children }) {
         return;
       }
 
-      let tenantData = null;
       if (u.tenant_id) {
         const { data } = await supabase.from('tenants').select('*').eq('id', u.tenant_id);
         tenantData = data?.[0] || null;
@@ -104,87 +105,87 @@ export function TenantProvider({ user, children }) {
       // tenant-level localization for a branch-level request.
       clearJurisdictionContext();
 
-      // Load branches to detect a mixed-currency scope. The branch list is
-      // small; it doubles as the source for branch-level context resolution.
-      const { data: branches } = await supabase
-        .from('branches')
-        .select('id, name_en, jurisdiction_code')
-        .eq('tenant_id', tenantData.id)
-        .eq('status', 'active');
+      try {
+        // Load branches to detect a mixed-currency scope. The branch list is
+        // small; it doubles as the source for branch-level context resolution.
+        const { data: branches } = await supabase
+          .from('branches')
+          .select('id, name_en, jurisdiction_code')
+          .eq('tenant_id', tenantData.id)
+          .eq('status', 'active');
 
-      const activeBranches = branches ?? [];
+        const activeBranches = branches ?? [];
+        const selectedBranch = activeBranches.find((b) => b.id === selectedBranchId);
 
-      let ctx;
-      let localization;
-      let isMultiCurrency = false;
-      let currencies = [];
+        let ctx = null;
+        let localization = null;
+        let isMultiCurrency = false;
+        let currencies = [];
 
-      const selectedBranch = activeBranches.find((b) => b.id === selectedBranchId);
+        const loadContext = async (branchId) => {
+          try {
+            return await getJurisdictionContext(tenantData.id, branchId);
+          } catch (e) {
+            console.error('TenantContext: could not resolve jurisdiction context', { tenantId: tenantData.id, branchId }, e);
+            setTenantLoadingError(e);
+            return null;
+          }
+        };
 
-      if (selectedBranch) {
-        // Branch-level jurisdiction context: currency, VAT, calendar, locale.
-        ctx = await getJurisdictionContext(tenantData.id, selectedBranchId);
-        localization = ctx.localization;
-      } else if (activeBranches.length > 0) {
-        // "All Branches" or no explicit branch selected. Resolve each branch's
-        // currency so we can detect multi-currency groups per ADR-008.
-        const branchContexts = await Promise.all(
-          activeBranches.map(async (b) => {
-            try {
-              return await getJurisdictionContext(tenantData.id, b.id);
-            } catch (e) {
-              console.error('TenantContext: could not resolve branch context', b.id, e);
-              return null;
+        if (selectedBranch) {
+          // Branch-level jurisdiction context: currency, VAT, calendar, locale.
+          ctx = await loadContext(selectedBranchId);
+          localization = ctx?.localization ?? null;
+        } else if (activeBranches.length > 0) {
+          // "All Branches" or no explicit branch selected. Resolve each branch's
+          // currency so we can detect multi-currency groups per ADR-008.
+          const branchContexts = await Promise.all(
+            activeBranches.map(async (b) => loadContext(b.id)),
+          );
+
+          const defined = branchContexts.filter(Boolean);
+          const distinct = [...new Map(defined.map((c) => [c.currencyCode, c])).values()];
+          currencies = distinct;
+
+          if (distinct.length === 1) {
+            // Single-currency group (all branches share the same currency).
+            ctx = distinct[0];
+            localization = ctx?.localization ?? null;
+          } else if (distinct.length > 1) {
+            // Multi-currency group: do not pick one currency or fabricate a sum.
+            isMultiCurrency = true;
+            const tenantCtx = await loadContext();
+            if (tenantCtx) {
+              localization = mixedCurrencyLocalization(tenantCtx.localization ?? {}, distinct);
+              ctx = { ...tenantCtx, currencyCode: null, localization };
             }
-          }),
-        );
-
-        const defined = branchContexts.filter(Boolean);
-        const distinct = [...new Map(defined.map((c) => [c.currencyCode, c])).values()];
-        currencies = distinct;
-
-        if (distinct.length === 1) {
-          // Single-currency group (all branches share the same currency).
-          ctx = distinct[0];
-          localization = ctx.localization;
-        } else if (distinct.length > 1) {
-          // Multi-currency group: do not pick one currency or fabricate a sum.
-          isMultiCurrency = true;
-          const tenantCtx = await getJurisdictionContext(tenantData.id);
-          localization = mixedCurrencyLocalization(tenantCtx.localization ?? {}, distinct);
+          } else {
+            // No branches resolved; fall back to tenant context.
+            ctx = await loadContext();
+            localization = ctx?.localization ?? null;
+          }
         } else {
-          // No branches resolved; fall back to tenant context.
-          ctx = await getJurisdictionContext(tenantData.id);
-          localization = ctx.localization;
+          // No active branches; use tenant fallback.
+          ctx = await loadContext();
+          localization = ctx?.localization ?? null;
         }
-      } else {
-        // No active branches; use tenant fallback.
-        ctx = await getJurisdictionContext(tenantData.id);
-        localization = ctx.localization;
-      }
 
-      if (ctx) {
-        tenantData = {
-          ...tenantData,
-          vat_rate: ctx.vatRate,
-          currency_code: ctx.currencyCode,
-          jurisdiction_code: ctx.jurisdiction,
-          localization,
-          selected_branch_id: selectedBranchId,
-          is_multi_currency: isMultiCurrency,
-          branch_currencies: currencies,
-        };
-      } else if (localization) {
-        tenantData = {
-          ...tenantData,
-          vat_rate: localization.vatRate ?? null,
-          currency_code: localization.currencyCode ?? null,
-          jurisdiction_code: localization.jurisdiction ?? null,
-          localization,
-          selected_branch_id: selectedBranchId,
-          is_multi_currency: isMultiCurrency,
-          branch_currencies: currencies,
-        };
+        if (ctx) {
+          tenantData = {
+            ...tenantData,
+            vat_rate: ctx.vatRate,
+            currency_code: ctx.currencyCode,
+            jurisdiction_code: ctx.jurisdiction,
+            localization,
+            selected_branch_id: selectedBranchId,
+            is_multi_currency: isMultiCurrency,
+            branch_currencies: currencies,
+          };
+        }
+      } catch (jurisdictionErr) {
+        console.error('TenantContext: branch/jurisdiction resolution failed', jurisdictionErr);
+        setTenantLoadingError(jurisdictionErr);
+        // tenantData stays as the base row so the app remains usable
       }
 
       setTenant(tenantData);

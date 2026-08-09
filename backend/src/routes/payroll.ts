@@ -40,7 +40,14 @@ payrollRouter.post('/calculate', requireRole(PAYROLL_ROLES), async (req: Authent
     }
 
     const tenant_id = req.user!.tenant_id!;
-    const branch_id = parsed.data.branch_id ?? (req.query.branch_id as string | undefined);
+    let branch_id: string | undefined = parsed.data.branch_id;
+    if (!branch_id && req.query.branch_id) {
+      const queryBranch = z.string().uuid().safeParse(req.query.branch_id);
+      if (!queryBranch.success) {
+        return res.status(400).json({ error: 'Validation failed', code: 400, errors: { branch_id: ['Invalid UUID'] } });
+      }
+      branch_id = queryBranch.data;
+    }
     const ctx = await buildRequestContext(supabase, tenant_id, branch_id);
     const pack = resolvePack(ctx);
     const payroll = pack.payroll;
