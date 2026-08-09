@@ -110,7 +110,7 @@ export function TenantProvider({ user, children }) {
         // small; it doubles as the source for branch-level context resolution.
         const { data: branches } = await supabase
           .from('branches')
-          .select('id, name_en, jurisdiction_code')
+          .select('id, name_en, name_ar, jurisdiction_code')
           .eq('tenant_id', tenantData.id)
           .eq('status', 'active');
 
@@ -180,6 +180,7 @@ export function TenantProvider({ user, children }) {
             selected_branch_id: selectedBranchId,
             is_multi_currency: isMultiCurrency,
             branch_currencies: currencies,
+            branches: activeBranches,
           };
         }
       } catch (jurisdictionErr) {

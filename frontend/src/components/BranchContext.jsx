@@ -10,11 +10,17 @@ export function BranchProvider({ children }) {
   const [selectedBranchId, setSelectedBranchId] = useState(null);
   const { tenant } = useTenant();
   const { user, isCreator } = useRole();
-  
+
   const tenantId = tenant?.id || user?.tenant_id;
   const isPlatformOwner = isCreator() && !tenantId;
 
-  const { data: branches = [], isLoading } = useQuery({
+  // The tenant context already loads the active branch list while resolving
+  // jurisdiction. Re-use it so the branch selector is in sync with the context
+  // and does not race tenantQuery's module-level context.
+  const tenantBranches = tenant?.branches;
+  const shouldFetchBranches = !tenantBranches && (isPlatformOwner || !!tenantId);
+
+  const { data: fetchedBranches = [], isLoading: fetchedBranchesLoading } = useQuery({
     queryKey: ['branches', tenantId],
     queryFn: async () => {
       if (isPlatformOwner) {
@@ -25,8 +31,11 @@ export function BranchProvider({ children }) {
       const { data } = await tenantQuery('branches').select('*').match({ status: 'active', tenant_id: tenantId });
       return data || [];
     },
-    enabled: isPlatformOwner || !!tenantId,
+    enabled: shouldFetchBranches,
+    staleTime: 60 * 1000,
   });
+
+  const branches = tenantBranches || fetchedBranches;
 
   useEffect(() => {
     const saved = localStorage.getItem('erp_selected_branch');
@@ -83,8 +92,8 @@ export function BranchProvider({ children }) {
     selectBranch,
     filterByBranch,
     branchFilter,
-    isLoading
-  }), [branches, selectedBranchId, selectedBranch, isLoading]);
+    isLoading: fetchedBranchesLoading
+  }), [branches, selectedBranchId, selectedBranch, fetchedBranchesLoading]);
 
   return (
     <BranchContext.Provider value={value}>
