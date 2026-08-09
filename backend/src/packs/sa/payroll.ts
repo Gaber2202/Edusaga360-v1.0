@@ -224,8 +224,144 @@ export const saPayroll: PayrollService = {
 
   calculateGosiForEmployees,
 
-  calculatePayroll: async () => {
-    throw new NotImplementedInJurisdiction('SA', 'PayrollService.calculatePayroll — see ADR-006 / Task 8b');
+  calculatePayroll: async (
+    supabase: SupabaseClient,
+    tenantId: string,
+    period: { start: string; end: string },
+    employeeIds?: string[],
+    branchId?: string,
+  ): Promise<{ summary: unknown; employees: unknown[]; policy_applied: boolean }> => {
+    const { start: period_start, end: period_end } = period;
+
+    let empQuery = supabase
+      .from('employees')
+      .select(
+        'id, employee_number, name_en, name_ar, nationality, basic_salary, ' +
+        'housing_allowance, transport_allowance, other_allowances, ' +
+        'bank_name, bank_iban, department_id, job_title_id',
+      )
+      .eq('tenant_id', tenantId)
+      .eq('status', 'active');
+    if (branchId) empQuery = empQuery.eq('branch_id', branchId);
+    if (employeeIds && employeeIds.length > 0) empQuery = empQuery.in('id', employeeIds);
+
+    const [empResult, policyResult, attResult] = await Promise.all([
+      empQuery,
+      supabase
+        .from('attendance_policies')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .eq('is_default', true)
+        .maybeSingle(),
+      supabase
+        .from('employee_attendance')
+        .select('employee_id, status, late_minutes, is_excused')
+        .eq('tenant_id', tenantId)
+        .gte('date', period_start)
+        .lte('date', period_end),
+    ]);
+
+    const employees = (empResult.data ?? []) as any[];
+    if (empResult.error) throw empResult.error;
+    if (!employees || employees.length === 0) {
+      throw Object.assign(new Error('No active employees found'), { status: 404 });
+    }
+
+    const policy = policyResult.data ?? {
+      working_days_per_month: 26,
+      late_grace_minutes: 15,
+      late_half_day_minutes: 120,
+      late_deduction_factor: 0.5,
+      absent_deduction_factor: 1.0,
+      half_day_deduction_factor: 0.5,
+      max_late_incidents_before_absent: 3,
+    };
+
+    const attByEmp = new Map<string, any[]>();
+    for (const r of (attResult.data ?? [])) {
+      if (!attByEmp.has(r.employee_id)) attByEmp.set(r.employee_id, []);
+      attByEmp.get(r.employee_id)!.push(r);
+    }
+
+    const results = employees.map((emp) => {
+      const basicSalary = Number(emp.basic_salary ?? 0);
+      const housingAllowance = Number(emp.housing_allowance ?? 0);
+      const transportAllowance = Number(emp.transport_allowance ?? 0);
+      const otherAllowancesObj = emp.other_allowances ?? {};
+      const otherAllowances = Object.values(otherAllowancesObj).reduce(
+        (sum: number, val) => sum + Number(val ?? 0),
+        0,
+      );
+      const grossSalary = basicSalary + housingAllowance + transportAllowance + otherAllowances;
+      const gosi = calculateGosiForEmployee(basicSalary, emp.nationality);
+
+      const dailyRate = Math.round((basicSalary / policy.working_days_per_month) * 100) / 100;
+      let absentDays = 0, lateIncidents = 0, halfDays = 0;
+      for (const r of (attByEmp.get(emp.id) ?? [])) {
+        if (r.is_excused) continue;
+        if (r.status === 'absent') { absentDays++; }
+        else if (r.status === 'half_day') { halfDays++; }
+        else if (r.status === 'late') {
+          const mins = r.late_minutes ?? 0;
+          if (mins <= policy.late_grace_minutes) continue;
+          if (mins >= policy.late_half_day_minutes) { halfDays++; }
+          else { lateIncidents++; }
+        }
+      }
+      const lateConvertedAbsents = Math.floor(lateIncidents / policy.max_late_incidents_before_absent);
+      const remainingLates = lateIncidents % policy.max_late_incidents_before_absent;
+      const absenceDeduction = Math.round((absentDays + lateConvertedAbsents) * dailyRate * policy.absent_deduction_factor * 100) / 100;
+      const halfDayDeduction = Math.round(halfDays * dailyRate * policy.half_day_deduction_factor * 100) / 100;
+      const lateDeduction = Math.round(remainingLates * dailyRate * policy.late_deduction_factor * 100) / 100;
+      const attendanceDeduction = absenceDeduction + halfDayDeduction + lateDeduction;
+      const totalDeductions = Math.round((gosi.gosi_employee + attendanceDeduction) * 100) / 100;
+      const netSalary = Math.round((grossSalary - totalDeductions) * 100) / 100;
+
+      return {
+        employee_id: emp.id,
+        employee_number: emp.employee_number,
+        name_en: emp.name_en,
+        name_ar: emp.name_ar,
+        nationality: emp.nationality,
+        bank_name: emp.bank_name,
+        bank_iban: emp.bank_iban,
+        period_start,
+        period_end,
+        basic_salary: basicSalary,
+        housing_allowance: housingAllowance,
+        transport_allowance: transportAllowance,
+        other_allowances: otherAllowances,
+        gross_salary: Math.round(grossSalary * 100) / 100,
+        gosi_wage: gosi.gosi_wage,
+        gosi_employee: gosi.gosi_employee,
+        gosi_employer: gosi.gosi_employer,
+        is_saudi: gosi.is_saudi,
+        gosi_rates: gosi.rates,
+        absence_deduction: Math.round(attendanceDeduction * 100) / 100,
+        attendance_detail: {
+          absent_days: absentDays,
+          late_incidents: lateIncidents,
+          half_days: halfDays,
+          late_converted_absents: lateConvertedAbsents,
+          daily_rate: dailyRate,
+        },
+        total_deductions: totalDeductions,
+        net_salary: netSalary,
+      };
+    });
+
+    const summary = {
+      period_start,
+      period_end,
+      employee_count: results.length,
+      total_gross: Math.round(results.reduce((s, r) => s + r.gross_salary, 0) * 100) / 100,
+      total_gosi_employee: Math.round(results.reduce((s, r) => s + r.gosi_employee, 0) * 100) / 100,
+      total_gosi_employer: Math.round(results.reduce((s, r) => s + r.gosi_employer, 0) * 100) / 100,
+      total_absence_deduction: Math.round(results.reduce((s, r) => s + (r.absence_deduction ?? 0), 0) * 100) / 100,
+      total_net: Math.round(results.reduce((s, r) => s + r.net_salary, 0) * 100) / 100,
+    };
+
+    return { summary, employees: results, policy_applied: !!policyResult.data };
   },
 
   generateWpsFile,

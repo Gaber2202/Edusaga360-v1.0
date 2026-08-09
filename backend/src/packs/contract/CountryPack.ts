@@ -165,12 +165,13 @@ export interface PayrollService {
     employees: { id: string; nationality: string | null | undefined; basic_salary: number }[],
   ): { employees: unknown[]; totals: { total_gosi_employee: number; total_gosi_employer: number; total_gosi: number } };
 
-  /** Run a full payroll calculation for a period. */
+  /** Run a full payroll calculation for a period, optionally scoped to a branch. */
   calculatePayroll?(
     supabase: unknown,
     tenantId: string,
     period: { start: string; end: string },
     employeeIds?: string[],
+    branchId?: string,
   ): Promise<unknown>;
 
   /** Generate the WPS / Mudad bank file for a period. */

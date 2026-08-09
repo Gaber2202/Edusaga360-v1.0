@@ -1,8 +1,7 @@
 import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { AuthenticatedRequest, requireRole, EXEC_ROLES } from '../middleware/auth.js';
-import { isSaudi } from '../packs/sa/nationality.js';
-import { buildRequestContext, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
+import { buildRequestContext, resolveScopeJurisdiction, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
 import { resolvePack } from '../packs/registry.js';
 
 export const benchmarksRouter = Router();
@@ -42,7 +41,25 @@ async function computeSnapshot(tenantId: string): Promise<Record<string, unknown
   const students  = (studRes.data ?? []) as any[];
   const tenant    = tenantRes.data as any;
 
-  const saudiCount = employees.filter((e: any) => isSaudi(e.nationality)).length;
+  const scope = await resolveScopeJurisdiction(supabase, tenantId);
+  const isSaudiScope = !scope.isMixed && scope.code === 'SA';
+
+  let saudi_pct: number | null = null;
+  if (isSaudiScope) {
+    const ctx = await buildRequestContext(supabase, tenantId);
+    const pack = resolvePack(ctx);
+    if (pack.regulatorReports?.calculateNitaqat) {
+      try {
+        const nitaqat = await pack.regulatorReports.calculateNitaqat(supabase, tenantId, { employees }) as any;
+        saudi_pct = nitaqat?.nitaqat?.saudization_pct ?? null;
+      } catch (err) {
+        if (!(err instanceof NotImplementedInJurisdiction || (err as any).name === 'NotImplementedInJurisdiction')) {
+          throw err;
+        }
+      }
+    }
+  }
+
   const salaries   = employees.map((e: any) => Number(e.basic_salary ?? 0)).filter(s => s > 0);
   const presentRecs = records.filter((r: any) => r.status === 'present').length;
   const lateRecs    = records.filter((r: any) => r.status === 'late').length;
@@ -57,7 +74,7 @@ async function computeSnapshot(tenantId: string): Promise<Record<string, unknown
     school_type:           tenant?.school_type ?? null,
     city:                  tenant?.city ?? null,
     employee_count:        employees.length,
-    saudi_pct:             pct(saudiCount, employees.length),
+    saudi_pct,
     avg_basic_salary:      avg(salaries),
     avg_attendance_rate:   pct(presentRecs, records.length),
     avg_late_rate:         pct(lateRecs, records.length),

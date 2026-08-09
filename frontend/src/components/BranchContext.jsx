@@ -36,8 +36,12 @@ export function BranchProvider({ children }) {
   }, []);
 
   const selectBranch = (branchId) => {
-    setSelectedBranchId(branchId === 'all' ? null : branchId);
+    const id = branchId === 'all' ? null : branchId;
+    setSelectedBranchId(id);
     localStorage.setItem('erp_selected_branch', branchId || 'all');
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('erp-branch-changed', { detail: { branchId: branchId || 'all' } }));
+    }
   };
 
   const selectedBranch = branches.find(b => b.id === selectedBranchId);
