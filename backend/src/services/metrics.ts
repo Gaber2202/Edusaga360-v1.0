@@ -21,6 +21,10 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
+function daysBetween(a: string, b: string): number {
+  return Math.floor((new Date(b).getTime() - new Date(a).getTime()) / 86400000);
+}
+
 function pctDelta(current: number, previous: number): number | null {
   if (!previous) return null;
   return round2(((current - previous) / Math.abs(previous)) * 100);
@@ -185,12 +189,35 @@ export class MetricsService {
     const periodStart = daysAgoStr(365);
     const startOfMonth = `${isoMonth(0)}-01`;
 
-    const [academicYear, branches] = await Promise.all([
+    const [academicYear, branchesRes] = await Promise.all([
       pack.academicCalendar?.currentAcademicYearForDate
         ? await pack.academicCalendar.currentAcademicYearForDate(this.supabase, tenantId) as { id: string; start_date: string } | null
         : null,
-      this.supabase.from('branches').select('id, name_en, name_ar').eq('tenant_id', tenantId).then(r => r.data ?? []),
+      this.supabase.from('branches').select('id, name_en, name_ar, jurisdiction_code').eq('tenant_id', tenantId).then(r => r.data ?? []),
     ]);
+    const branches = (branchesRes ?? []) as any[];
+
+    // === Branch-level currency resolution (ADR-008) ===
+    const scopeCurrency = pack.currencyCode;
+    const branchCurrencyMap = new Map<string, string>();
+    for (const b of branches) {
+      const branchCode = b.jurisdiction_code || ctx.tenant.jurisdictionCode;
+      try {
+        const branchPack = resolvePack({ tenant: ctx.tenant, branch: { id: b.id, jurisdictionCode: branchCode } });
+        branchCurrencyMap.set(b.id, branchPack.currencyCode);
+      } catch {
+        branchCurrencyMap.set(b.id, scopeCurrency);
+      }
+    }
+    const scopeCurrencies = [...new Set(branchCurrencyMap.values())].sort();
+    const isMultiCurrency = !branchId && scopeCurrencies.length > 1;
+    const currencyOf = (row: any) => (row.branch_id && branchCurrencyMap.get(row.branch_id)) || scopeCurrency;
+    function addBy(map: Map<string, number>, currency: string, amount: number) {
+      map.set(currency, round2((map.get(currency) || 0) + amount));
+    }
+    function byCurrencyObject(map: Map<string, number>): Record<string, number> {
+      return Object.fromEntries([...map.entries()].sort(([a], [b]) => a.localeCompare(b)));
+    }
 
     // === Financials (cash basis: paid invoices - approved expenses) ===
     let invoices: any[] = [];
@@ -204,83 +231,159 @@ export class MetricsService {
       expenses = (expRes.data ?? []) as any[];
     }
 
-    const revenue = round2(invoices.reduce((s, r) => s + Number(r.paid_amount ?? 0), 0));
-    const expTotal = round2(expenses.reduce((s, r) => s + Number(r.amount ?? 0), 0));
-    const ebitda = round2(revenue - expTotal);
-    const margin = revenue > 0 ? round2((ebitda / revenue) * 100) : 0;
+    const revenueByCurrency = new Map<string, number>();
+    const expByCurrency = new Map<string, number>();
+    const invoicedByCurrency = new Map<string, number>();
+    const collectedByCurrency = new Map<string, number>();
+    const vatByCurrency = new Map<string, number>();
+    for (const r of invoices) {
+      const c = currencyOf(r);
+      addBy(revenueByCurrency, c, Number(r.paid_amount ?? 0));
+      addBy(invoicedByCurrency, c, Number(r.total_amount ?? 0));
+      addBy(collectedByCurrency, c, Number(r.paid_amount ?? 0));
+      addBy(vatByCurrency, c, Number(r.vat_amount ?? 0));
+    }
+    for (const r of expenses) {
+      addBy(expByCurrency, currencyOf(r), Number(r.amount ?? 0));
+    }
+    const ebitdaByCurrency = new Map<string, number>();
+    for (const [c, rev] of revenueByCurrency) {
+      ebitdaByCurrency.set(c, round2(rev - (expByCurrency.get(c) || 0)));
+    }
+
+    // Single-currency scope keeps scalar totals; multi-currency keeps only per-currency breakdowns.
+    const revenue = isMultiCurrency ? null : round2(revenueByCurrency.get(scopeCurrency) || 0);
+    const expTotal = isMultiCurrency ? null : round2(expByCurrency.get(scopeCurrency) || 0);
+    const ebitda = isMultiCurrency ? null : round2((revenueByCurrency.get(scopeCurrency) || 0) - (expByCurrency.get(scopeCurrency) || 0));
+    const margin = revenue && revenue > 0 ? round2(((ebitda as number) / revenue) * 100) : null;
 
     // === Monthly trends (12 months) ===
-    const revByMonth = new Map<string, number>();
-    const expByMonth = new Map<string, number>();
-    const invByMonth = new Map<string, number>();
-    const collectedByMonth = new Map<string, number>();
+    const revByMonth = new Map<string, Map<string, number>>();
+    const expByMonth = new Map<string, Map<string, number>>();
+    const invByMonth = new Map<string, Map<string, number>>();
+    const collectedByMonth = new Map<string, Map<string, number>>();
     for (const r of invoices) {
       const key = (r.date ?? '').slice(0, 7);
+      const c = currencyOf(r);
       if (!key) continue;
-      revByMonth.set(key, (revByMonth.get(key) ?? 0) + Number(r.paid_amount ?? 0));
-      invByMonth.set(key, (invByMonth.get(key) ?? 0) + Number(r.total_amount ?? 0));
-      collectedByMonth.set(key, (collectedByMonth.get(key) ?? 0) + Number(r.paid_amount ?? 0));
+      addBy(revByMonth.get(key) || (revByMonth.set(key, new Map()), revByMonth.get(key)!)!, c, Number(r.paid_amount ?? 0));
+      addBy(invByMonth.get(key) || (invByMonth.set(key, new Map()), invByMonth.get(key)!)!, c, Number(r.total_amount ?? 0));
+      addBy(collectedByMonth.get(key) || (collectedByMonth.set(key, new Map()), collectedByMonth.get(key)!)!, c, Number(r.paid_amount ?? 0));
     }
     for (const r of expenses) {
       const key = (r.date ?? '').slice(0, 7);
+      const c = currencyOf(r);
       if (!key) continue;
-      expByMonth.set(key, (expByMonth.get(key) ?? 0) + Number(r.amount ?? 0));
+      addBy(expByMonth.get(key) || (expByMonth.set(key, new Map()), expByMonth.get(key)!)!, c, Number(r.amount ?? 0));
     }
-    const revenue_trend: { label: string; revenue: number; ebitda: number }[] = [];
-    const collection_trend: { label: string; rate: number; note?: string }[] = [];
+    const revenue_trend: any[] = [];
+    const collection_trend: any[] = [];
     for (let i = 11; i >= 0; i--) {
       const key = isoMonth(i);
-      const rev = round2(revByMonth.get(key) ?? 0);
-      const exp = round2(expByMonth.get(key) ?? 0);
-      const invoiced = invByMonth.get(key) ?? 0;
-      const collected = collectedByMonth.get(key) ?? 0;
-      revenue_trend.push({ label: key, revenue: rev, ebitda: round2(rev - exp) });
-      let rate = invoiced > 0 ? round2((collected / invoiced) * 100) : 0;
-      let note: string | undefined;
-      if (rate > 100) {
-        note = 'includes prior-period arrears collection';
-        rate = 100;
+      if (isMultiCurrency) {
+        const revs = byCurrencyObject(revByMonth.get(key) || new Map());
+        const exps = byCurrencyObject(expByMonth.get(key) || new Map());
+        const invs = invByMonth.get(key) || new Map();
+        const cols = collectedByMonth.get(key) || new Map();
+        const rateByCurrency: Record<string, number> = {};
+        for (const c of scopeCurrencies) {
+        const invoiced = invs.get(c) || 0;
+          const collected = cols.get(c) || 0;
+          rateByCurrency[c] = invoiced > 0 ? round2((collected / invoiced) * 100) : 0;
+        }
+        revenue_trend.push({ label: key, revenue_by_currency: revs, ebitda_by_currency: exps });
+        collection_trend.push({ label: key, collection_rate_by_currency: rateByCurrency });
+      } else {
+        const rev = round2((revByMonth.get(key) || new Map()).get(scopeCurrency) || 0);
+        const exp = round2((expByMonth.get(key) || new Map()).get(scopeCurrency) || 0);
+        const invoiced = (invByMonth.get(key) || new Map()).get(scopeCurrency) || 0;
+        const collected = (collectedByMonth.get(key) || new Map()).get(scopeCurrency) || 0;
+        revenue_trend.push({ label: key, revenue: rev, ebitda: round2(rev - exp) });
+        let rate = invoiced > 0 ? round2((collected / invoiced) * 100) : 0;
+        let note: string | undefined;
+        if (rate > 100) { note = 'includes prior-period arrears collection'; rate = 100; }
+        collection_trend.push({ label: key, rate, ...(note ? { note } : {}) });
       }
-      collection_trend.push({ label: key, rate, ...(note ? { note } : {}) });
     }
 
     const n = revenue_trend.length;
-    const revenueDelta = pctDelta(revenue_trend[n - 1]?.revenue ?? 0, revenue_trend[n - 2]?.revenue ?? 0);
-    const ebitdaDelta = pctDelta(revenue_trend[n - 1]?.ebitda ?? 0, revenue_trend[n - 2]?.ebitda ?? 0);
-    const collectionDelta = pctDelta(collection_trend[n - 1]?.rate ?? 0, collection_trend[n - 2]?.rate ?? 0);
+    const revenueDelta = isMultiCurrency ? null : pctDelta(revenue_trend[n - 1]?.revenue ?? 0, revenue_trend[n - 2]?.revenue ?? 0);
+    const ebitdaDelta = isMultiCurrency ? null : pctDelta(revenue_trend[n - 1]?.ebitda ?? 0, revenue_trend[n - 2]?.ebitda ?? 0);
+    const collectionDelta = isMultiCurrency ? null : pctDelta(collection_trend[n - 1]?.rate ?? 0, collection_trend[n - 2]?.rate ?? 0);
 
     // === Collection aggregates (12-month trailing for the branch filter) ===
-    const totalInvoicedAll = round2(invoices.reduce((s: number, r: any) => s + Number(r.total_amount ?? 0), 0));
-    const totalCollectedAll = round2(invoices.reduce((s: number, r: any) => s + Number(r.paid_amount ?? 0), 0));
-    let collectionRate = totalInvoicedAll > 0 ? round2((totalCollectedAll / totalInvoicedAll) * 100) : 0;
+    const totalInvoicedAll = isMultiCurrency ? null : round2(invoicedByCurrency.get(scopeCurrency) || 0);
+    const totalCollectedAll = isMultiCurrency ? null : round2(collectedByCurrency.get(scopeCurrency) || 0);
+    const totalInvoicedByCurrency = byCurrencyObject(invoicedByCurrency);
+    const totalCollectedByCurrency = byCurrencyObject(collectedByCurrency);
+    const collectionRateByCurrency: Record<string, number> = {};
+    for (const c of scopeCurrencies) {
+      const inv = invoicedByCurrency.get(c) || 0;
+      const col = collectedByCurrency.get(c) || 0;
+      collectionRateByCurrency[c] = inv > 0 ? round2((col / inv) * 100) : 0;
+    }
+    // For a single currency the old scalar rate is preserved. For multi-currency we
+    // do not combine amounts across currencies (no FX), so no scalar rate is reported.
+    let collectionRate = isMultiCurrency ? null : collectionRateByCurrency[scopeCurrency] ?? 0;
     let collectionRateNote: string | undefined;
-    if (collectionRate > 100) {
+    if (collectionRate && collectionRate > 100) {
       collectionRateNote = 'يشمل تحصيل متأخرات فترات سابقة / includes collection of prior-period arrears';
       collectionRate = 100;
     }
 
     // === Cash collected 30d & DSO ===
-    let cashCollected30d = 0;
+    const cashCollected30dByCurrency = new Map<string, number>();
+    let cashCollected30d: number | null = null;
     if (needsCEO || needsCFO) {
       const since30 = daysAgoStr(30);
       const payments30 = await this.branchFilter(this.supabase.from('payments').select('amount, date, branch_id').eq('tenant_id', tenantId).gte('date', since30), branchId).then((r: any) => (r.data ?? []) as any[]);
-      cashCollected30d = round2(payments30.reduce((s: number, r: any) => s + Number(r.amount ?? 0), 0));
+      for (const r of payments30) {
+        addBy(cashCollected30dByCurrency, currencyOf(r), Number(r.amount ?? 0));
+      }
+      cashCollected30d = isMultiCurrency ? null : round2(cashCollected30dByCurrency.get(scopeCurrency) || 0);
     }
 
     const unpaidInvoices = invoices.filter((r: any) => Number(r.total_amount ?? 0) - Number(r.paid_amount ?? 0) > 0);
-    const ar = round2(unpaidInvoices.reduce((s: number, r: any) => s + (Number(r.total_amount ?? 0) - Number(r.paid_amount ?? 0)), 0));
-    const dso = revenue > 0 ? round2(ar / (revenue / 365)) : null;
+    const arByCurrency = new Map<string, number>();
+    const arAgingByCurrency = new Map<string, { '0_30': number; '31_60': number; '61_90': number; '90_plus': number }>();
+    for (const r of unpaidInvoices) {
+      const c = currencyOf(r);
+      const balance = round2(Number(r.total_amount ?? 0) - Number(r.paid_amount ?? 0));
+      addBy(arByCurrency, c, balance);
+      const days = daysBetween(String(r.due_date), todayStr());
+      let bucket: keyof typeof buckets = '0_30';
+      if (days <= 0) bucket = '0_30';
+      else if (days <= 30) bucket = '0_30';
+      else if (days <= 60) bucket = '31_60';
+      else if (days <= 90) bucket = '61_90';
+      else bucket = '90_plus';
+      const buckets = arAgingByCurrency.get(c) || { '0_30': 0, '31_60': 0, '61_90': 0, '90_plus': 0 };
+      buckets[bucket] = round2(buckets[bucket] + balance);
+      arAgingByCurrency.set(c, buckets);
+    }
+    const ar = isMultiCurrency ? null : round2(arByCurrency.get(scopeCurrency) || 0);
+    const dso = ar && revenue && revenue > 0 ? round2(ar / (revenue / 365)) : null;
 
     // === AR aging (CFO only) ===
-    let arAging = { '0_30': 0, '31_60': 0, '61_90': 0, '90_plus': 0 };
+    let arAging: any = { '0_30': 0, '31_60': 0, '61_90': 0, '90_plus': 0 };
+    let arAgingData: any = { total_outstanding: 0, buckets: arAging, by_currency: {} };
     if (needsCFO) {
-      const aging = await getAgingReport(this.supabase, tenantId, { academic_year: academicYear?.id, includeStudents: false });
-      arAging = {
-        '0_30': aging.buckets.current ?? 0,
-        '31_60': aging.buckets['1_30'] ?? 0,
-        '61_90': aging.buckets['31_60'] ?? 0,
-        '90_plus': aging.buckets['90_plus'] ?? 0,
-      };
+      if (isMultiCurrency) {
+        arAgingData = {
+          total_outstanding: null,
+          buckets: null,
+          by_currency: Object.fromEntries([...arAgingByCurrency.entries()].sort(([a], [b]) => a.localeCompare(b))),
+        };
+      } else {
+        const aging = await getAgingReport(this.supabase, tenantId, { academic_year: academicYear?.id, includeStudents: false });
+        arAging = {
+          '0_30': aging.buckets.current ?? 0,
+          '31_60': aging.buckets['1_30'] ?? 0,
+          '61_90': aging.buckets['31_60'] ?? 0,
+          '90_plus': aging.buckets['90_plus'] ?? 0,
+        };
+        arAgingData = { total_outstanding: aging.total_outstanding, buckets: arAging, by_currency: {} };
+      }
     }
 
     // === Overdue by campus ===
@@ -290,7 +393,7 @@ export class MetricsService {
       const balance = Number(r.total_amount ?? 0) - Number(r.paid_amount ?? 0);
       if (r.branch_id) overdueByBranch.set(r.branch_id, (overdueByBranch.get(r.branch_id) ?? 0) + balance);
     }
-    const overdue_by_campus = branches.map((b: any) => ({ branch_id: b.id, name_en: b.name_en, name_ar: b.name_ar, overdue_amount: round2(overdueByBranch.get(b.id) ?? 0) }));
+    const overdue_by_campus = branches.map((b: any) => ({ branch_id: b.id, name_en: b.name_en, name_ar: b.name_ar, overdue_amount: round2(overdueByBranch.get(b.id) ?? 0), currency_code: branchCurrencyMap.get(b.id) || scopeCurrency }));
 
     // === Revenue by fee type & collections forecast (CFO only) ===
     let revenueByFeeType: any = { data_quality: 'not_tracked', message: 'Revenue by fee type not requested.' };
@@ -303,7 +406,8 @@ export class MetricsService {
     }
 
     // === VAT position ===
-    const vatAccrued = round2(invoices.reduce((s, r) => s + Number(r.vat_amount ?? 0), 0));
+    const vatAccrued = isMultiCurrency ? null : round2(vatByCurrency.get(scopeCurrency) || 0);
+    const vatAccruedByCurrency = byCurrencyObject(vatByCurrency);
     const nextFilingDate = (() => {
       const d = new Date();
       d.setMonth(d.getMonth() + 1);
@@ -370,6 +474,7 @@ export class MetricsService {
       const capacity = capacityByBranch.get(b.id) ?? 0;
       const enrolled = studentsByBranch.get(b.id) ?? 0;
       const branchInvoices = invoices.filter((r) => r.branch_id === b.id);
+      const branchCurrency = branchCurrencyMap.get(b.id) || scopeCurrency;
       const cash = round2(branchInvoices.reduce((s, r) => s + Number(r.paid_amount ?? 0), 0));
       return {
         branch_id: b.id,
@@ -379,6 +484,7 @@ export class MetricsService {
         enrolled,
         utilization_pct: capacity > 0 ? round2((enrolled / capacity) * 100) : null,
         cash_collected: cash,
+        currency_code: branchCurrency,
       };
     });
     const totalCapacity = [...capacityByBranch.values()].reduce((s, v) => s + v, 0);
@@ -534,8 +640,10 @@ export class MetricsService {
       compliance: Number(r.data?.compliance_weight ?? 20),
       retention: Number(r.data?.retention_weight ?? 15),
     }));
-    const financialScore = clamp(Math.round(50 + (margin - 0.5) * 100)); // 0% margin -> 50, 50% -> 100
-    const collectionScore = clamp(Math.round(collectionRate));
+    // For multi-currency scopes we cannot compute a combined margin or collection
+    // rate without FX, so keep the sub-score neutral rather than inventing a number.
+    const financialScore = margin != null ? clamp(Math.round(50 + (margin - 0.5) * 100)) : 50;
+    const collectionScore = collectionRate != null ? clamp(Math.round(collectionRate)) : 50;
     const complianceSub = complianceScore;
     const retentionSub = retentionQuality === 'real' ? retentionRate : 50;
     const totalWeight = weights.financial + weights.growth + weights.collections + weights.compliance + weights.retention || 1;
@@ -559,11 +667,11 @@ export class MetricsService {
     if (overdueCount > 0) strategicAlerts.push({ severity: overdueCount > 10 ? 'high' : 'medium', category: 'collections', message_en: `${overdueCount} invoices are overdue.`, message_ar: `يوجد ${overdueCount} فاتورة متأخرة السداد.` });
     if (iqamaExpiringCount > 0) strategicAlerts.push({ severity: 'medium', category: 'compliance', message_en: `${iqamaExpiringCount} employee iqamas expire within 30 days.`, message_ar: `${iqamaExpiringCount} إقامة موظف ستنتهي خلال 30 يوماً.` });
     if (growthData.data_quality === 'real' && growthData.growth_rate < 0) strategicAlerts.push({ severity: 'high', category: 'growth', message_en: `Enrollment declined ${Math.abs(growthData.growth_rate)}% year-over-year.`, message_ar: `انخفض عدد الطلاب المسجلين ${Math.abs(growthData.growth_rate)}٪ على أساس سنوي.` });
-    if (collectionRate < 80) strategicAlerts.push({ severity: 'medium', category: 'collections', message_en: `Collection rate is ${collectionRate}%, below the 80% target.`, message_ar: `نسبة التحصيل ${collectionRate}٪، أقل من الهدف 80٪.` });
+    if (collectionRate != null && collectionRate < 80) strategicAlerts.push({ severity: 'medium', category: 'collections', message_en: `Collection rate is ${collectionRate}%, below the 80% target.`, message_ar: `نسبة التحصيل ${collectionRate}٪، أقل من الهدف 80٪.` });
 
     // Top risks (rule-based priority list)
     const riskCandidates = [
-      { priority: collectionRate < 60 ? 1 : collectionRate < 80 ? 2 : 99, message_en: `Low collection rate (${collectionRate}%).`, message_ar: `نسبة تحصيل منخفضة (${collectionRate}٪).` },
+      { priority: collectionRate != null ? (collectionRate < 60 ? 1 : collectionRate < 80 ? 2 : 99) : 99, message_en: `Low collection rate (${collectionRate ?? '—'}%).`, message_ar: `نسبة تحصيل منخفضة (${collectionRate ?? '—'}٪).` },
       { priority: dso && dso > 90 ? 1 : dso && dso > 60 ? 2 : 99, message_en: `DSO is ${dso} days.`, message_ar: `متوسط أيام التحصيل ${dso} يوماً.` },
       { priority: overdueCount > 10 ? 1 : overdueCount > 0 ? 3 : 99, message_en: `${overdueCount} overdue invoices.`, message_ar: `${overdueCount} فاتورة متأخرة.` },
       { priority: capacityUtilization && capacityUtilization < 60 ? 2 : 99, message_en: `Low capacity utilization (${capacityUtilization}%).`, message_ar: `استغلال السعة منخفض (${capacityUtilization}٪).` },
@@ -573,15 +681,37 @@ export class MetricsService {
     ].filter(r => r.priority < 99).sort((a, b) => a.priority - b.priority).slice(0, 5);
 
     // Cash runway (best-effort: cash collected 30d * 12 / monthly expenses)
-    const monthlyExpenses = expTotal / 12 || expTotal;
-    const cashRunway = monthlyExpenses > 0 ? round2((cashCollected30d * 12) / monthlyExpenses) : null;
+    const monthlyExpenses = expTotal != null ? (expTotal / 12 || expTotal) : null;
+    const cashRunway = monthlyExpenses && monthlyExpenses > 0 && cashCollected30d != null ? round2((cashCollected30d * 12) / monthlyExpenses) : null;
 
     // Build snapshot payloads
     const computedAt = new Date().toISOString();
     const ceoData = {
       vitality: { score: vitalityScore, sub_scores: subScores },
-      financials: { revenue, ebitda, margin: margin * 100, revenue_delta_pct: revenueDelta, ebitda_delta_pct: ebitdaDelta, expenses: expTotal },
-      collections: { total_invoiced: totalInvoicedAll, total_collected: totalCollectedAll, collection_rate_pct: collectionRate, collection_rate_note: collectionRateNote, collection_delta_pct: collectionDelta },
+      financials: {
+        is_multi_currency: isMultiCurrency,
+        currency: isMultiCurrency ? null : scopeCurrency,
+        revenue,
+        revenue_by_currency: byCurrencyObject(revenueByCurrency),
+        ebitda,
+        ebitda_by_currency: byCurrencyObject(ebitdaByCurrency),
+        margin: margin != null ? margin * 100 : null,
+        revenue_delta_pct: revenueDelta,
+        ebitda_delta_pct: ebitdaDelta,
+        expenses: expTotal,
+        expenses_by_currency: byCurrencyObject(expByCurrency),
+      },
+      collections: {
+        is_multi_currency: isMultiCurrency,
+        total_invoiced: totalInvoicedAll,
+        total_invoiced_by_currency: totalInvoicedByCurrency,
+        total_collected: totalCollectedAll,
+        total_collected_by_currency: totalCollectedByCurrency,
+        collection_rate_pct: collectionRate,
+        collection_rate_by_currency: collectionRateByCurrency,
+        collection_rate_note: collectionRateNote,
+        collection_delta_pct: collectionDelta,
+      },
       growth: growthData,
       compliance: { score: complianceScore, overdue_invoices: overdueCount, iqama_expiring_30d: iqamaExpiringCount, ...complianceSignals },
       campus_vitality: capacityToCash.map((c) => ({ ...c, score: clamp(Math.round(c.utilization_pct ?? 0)) })),
@@ -592,17 +722,29 @@ export class MetricsService {
       cash_runway: cashRunway,
     };
     const cfoData = {
-      kpis: { revenue, ebitda, margin_pct: margin * 100, cash_collected_30d: cashCollected30d, dso_days: dso },
+      kpis: {
+        is_multi_currency: isMultiCurrency,
+        currency: isMultiCurrency ? null : scopeCurrency,
+        revenue,
+        revenue_by_currency: byCurrencyObject(revenueByCurrency),
+        ebitda,
+        ebitda_by_currency: byCurrencyObject(ebitdaByCurrency),
+        margin_pct: margin != null ? margin * 100 : null,
+        cash_collected_30d: cashCollected30d,
+        cash_collected_30d_by_currency: byCurrencyObject(cashCollected30dByCurrency),
+        dso_days: dso,
+      },
       collection_rate_pct: collectionRate,
-      ar_aging: arAging,
+      collection_rate_by_currency: collectionRateByCurrency,
+      ar_aging: arAgingData,
       overdue_by_campus: overdue_by_campus,
       revenue_vs_ebitda: revenue_trend.slice(-6),
       compliance_traffic_lights: { einvoicing: complianceSignals.einvoicing, mudad: complianceSignals.mudad, gosi: complianceSignals.gosi },
       revenue_by_fee_type: revenueByFeeType,
       collections_forecast: expectedCollections,
-      vat_position: { output_vat_accrued: vatAccrued, next_filing_date: nextFilingDate, period_start: periodStart, period_end: periodEnd },
+      vat_position: { output_vat_accrued: vatAccrued, output_vat_accrued_by_currency: vatAccruedByCurrency, next_filing_date: nextFilingDate, period_start: periodStart, period_end: periodEnd },
       budget_vs_actual: { data_quality: 'not_tracked', message: 'Budget ledger not configured.' },
-      scenario_baseline: { revenue, expenses: expTotal, ebitda },
+      scenario_baseline: { is_multi_currency: isMultiCurrency, revenue, revenue_by_currency: byCurrencyObject(revenueByCurrency), expenses: expTotal, expenses_by_currency: byCurrencyObject(expByCurrency), ebitda, ebitda_by_currency: byCurrencyObject(ebitdaByCurrency) },
     };
     const cooData = {
       kpis: { capacity_utilization_pct: capacityUtilization, student_teacher_ratio: studentTeacherRatio, student_teacher_ratio_data_quality: teacherCount > 0 ? 'estimated' : 'not_tracked', student_attendance_rate_pct: studentAttendanceRate, student_attendance_data_quality: 'not_tracked' },
@@ -648,16 +790,16 @@ export class MetricsService {
     if (needsCFO) {
       metricValues['cfo.kpis.revenue'] = { value: revenue };
       metricValues['cfo.kpis.ebitda'] = { value: ebitda };
-      metricValues['cfo.kpis.margin_pct'] = { value: margin * 100 };
+      metricValues['cfo.kpis.margin_pct'] = { value: margin != null ? margin * 100 : null };
       metricValues['cfo.kpis.cash_collected_30d'] = { value: cashCollected30d };
       metricValues['cfo.kpis.dso_days'] = { value: dso };
-      metricValues['cfo.ar_aging'] = { metadata: arAging };
+      metricValues['cfo.ar_aging'] = { metadata: arAgingData };
       metricValues['cfo.overdue_by_campus'] = { metadata: overdue_by_campus };
       metricValues['cfo.revenue_vs_ebitda'] = { metadata: revenue_trend.slice(-6) };
       metricValues['cfo.compliance_traffic_lights'] = { metadata: { einvoicing: complianceSignals.einvoicing, mudad: complianceSignals.mudad, gosi: complianceSignals.gosi } };
       metricValues['cfo.revenue_by_fee_type'] = { metadata: revenueByFeeType };
       metricValues['cfo.collections_forecast'] = { metadata: expectedCollections };
-      metricValues['cfo.vat_position'] = { metadata: { output_vat_accrued: vatAccrued, next_filing_date: nextFilingDate, period_start: periodStart, period_end: periodEnd } };
+      metricValues['cfo.vat_position'] = { metadata: { output_vat_accrued: vatAccrued, output_vat_accrued_by_currency: vatAccruedByCurrency, next_filing_date: nextFilingDate, period_start: periodStart, period_end: periodEnd } };
     }
     if (needsCOO) {
       metricValues['coo.kpis.capacity_utilization_pct'] = { value: capacityUtilization, numerator: totalEnrolled, denominator: totalCapacity };

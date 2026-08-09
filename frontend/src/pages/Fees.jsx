@@ -113,6 +113,49 @@ function KpiCard({ label, value, sub, icon: Icon, color = 'blue' }) {
   );
 }
 
+// ─── Currency helpers for branch-aware invoice rows ───────────────────────────
+function invoiceCurrencyLocalization(inv, tenant) {
+  return tenant?.branch_localization_map?.[inv.branch_id] || tenant?.localization || {};
+}
+
+function sumByCurrency(rows, tenant, valueFn) {
+  return rows.reduce((acc, row) => {
+    const loc = invoiceCurrencyLocalization(row, tenant);
+    const currency = loc.currencyCode || (tenant?.is_multi_currency ? '—' : '');
+    acc[currency] = (acc[currency] || 0) + valueFn(row);
+    return acc;
+  }, {});
+}
+
+function MultiCurrencyTotals({ amounts, tenant, isRTL, labelTotal, labelBalance }) {
+  const currencies = Object.keys(amounts || {});
+  if (currencies.length === 0) return null;
+  if (currencies.length === 1 && tenant?.is_multi_currency) {
+    const currency = currencies[0];
+    const loc = { ...tenant?.localization, currencyCode: currency };
+    return (
+      <div className="text-sm text-muted-foreground">
+        {labelTotal}: <span className="font-semibold text-ink">{formatCurrency(amounts[currency], loc, isRTL)}</span>
+      </div>
+    );
+  }
+  if (currencies.length > 1) {
+    return (
+      <div className="space-y-1">
+        {currencies.map((currency) => {
+          const loc = { ...tenant?.localization, currencyCode: currency };
+          return (
+            <div key={currency} className="text-sm text-muted-foreground">
+              {labelTotal} {currency}: <span className="font-semibold text-ink">{formatCurrency(amounts[currency], loc, isRTL)}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+  return null;
+}
+
 // ─── Invoice list tab ──────────────────────────────────────────────────────────
 
 function InvoicesTab({ token, isRTL, userRole, tenantId, tenant }) {
@@ -217,6 +260,7 @@ function InvoicesTab({ token, isRTL, userRole, tenantId, tenant }) {
               <tr><td colSpan={colCount} className="py-12 text-center text-muted-foreground">{isRTL ? 'لا توجد فواتير' : 'No invoices found'}</td></tr>
             ) : invoices.map((inv) => {
               const balance = (Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0);
+              const invLoc = invoiceCurrencyLocalization(inv, tenant);
               return (
                 <tr
                   key={inv.id}
@@ -230,9 +274,9 @@ function InvoicesTab({ token, isRTL, userRole, tenantId, tenant }) {
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{inv.date}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{inv.due_date || '—'}</td>
-                  <td className="px-4 py-3 text-end font-semibold text-ink text-xs">{formatCurrency(inv.total_amount, tenant?.localization, isRTL)}</td>
+                  <td className="px-4 py-3 text-end font-semibold text-ink text-xs">{formatCurrency(inv.total_amount, invLoc, isRTL)}</td>
                   <td className="px-4 py-3 text-end text-xs">
-                    <span className={balance > 0 ? 'text-red-600 font-semibold' : 'text-green-600'}>{formatCurrency(balance, tenant?.localization, isRTL)}</span>
+                    <span className={balance > 0 ? 'text-red-600 font-semibold' : 'text-green-600'}>{formatCurrency(balance, invLoc, isRTL)}</span>
                   </td>
                   <td className="px-4 py-3"><StatusBadge status={inv.status} isRTL={isRTL} /></td>
                   {showEInvoice && (
@@ -283,6 +327,27 @@ function InvoicesTab({ token, isRTL, userRole, tenantId, tenant }) {
         </table>
         </div>
       </div>
+
+      {/* Multi-currency totals (no combined sum when branches span currencies) */}
+      {tenant?.is_multi_currency && (
+        <div className="rounded-lg border border-border bg-sand/50 p-4 space-y-2">
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            {isRTL ? 'الإجماليات حسب العملة' : 'Totals by Currency'}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <MultiCurrencyTotals
+              amounts={sumByCurrency(allInvoices, tenant, (r) => Number(r.total_amount) || 0)}
+              tenant={tenant} isRTL={isRTL}
+              labelTotal={isRTL ? 'إجمالي المبالغ' : 'Total Invoiced'}
+            />
+            <MultiCurrencyTotals
+              amounts={sumByCurrency(allInvoices, tenant, (r) => (Number(r.total_amount) || 0) - (Number(r.paid_amount) || 0))}
+              tenant={tenant} isRTL={isRTL}
+              labelTotal={isRTL ? 'إجمالي الأرصدة' : 'Total Balance'}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Pagination */}
       {pagination.pages > 1 && (
