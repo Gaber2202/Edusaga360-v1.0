@@ -33,13 +33,15 @@ export function RoleProvider({ children }) {
       // policy blocks the users-table read (which previously left tenant_id
       // undefined and bounced freshly onboarded admins to /register forever).
       const appMeta = authUser.app_metadata || {};
+      // Privileged tenant/role claims come from app_metadata only.
+      // user_metadata is user-writable and must never be trusted for these fields.
       let currentUser = {
         ...authUser,
         ...authUser.user_metadata,
         email: authUser.email,
         id: authUser.id,
-        tenant_id: appMeta.tenant_id ?? authUser.user_metadata?.tenant_id,
-        role: appMeta.role ?? authUser.user_metadata?.role,
+        tenant_id: appMeta.tenant_id,
+        role: appMeta.role,
         is_platform_owner: appMeta.is_platform_owner ?? false,
       };
 

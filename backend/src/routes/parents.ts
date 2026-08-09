@@ -139,12 +139,13 @@ parentsRouter.post('/invite', async (req: AuthenticatedRequest, res) => {
     if (existingAuth) {
       authUserId = existingAuth.id;
       // Update metadata
+      // Privileged tenant/role claims live in app_metadata only.
+      // user_metadata is user-writable and must not contain tenant_id or role.
+      const cleanedUserMetadata = { ...(existingAuth.user_metadata || {}) };
+      delete (cleanedUserMetadata as Record<string, unknown>).tenant_id;
+      delete (cleanedUserMetadata as Record<string, unknown>).role;
       await supabase.auth.admin.updateUserById(authUserId, {
-        user_metadata: {
-          ...existingAuth.user_metadata,
-          role: 'parent',
-          tenant_id: d.tenant_id,
-        },
+        user_metadata: cleanedUserMetadata,
         app_metadata: {
           ...existingAuth.app_metadata,
           role: 'parent',
@@ -160,8 +161,6 @@ parentsRouter.post('/invite', async (req: AuthenticatedRequest, res) => {
         email_confirm: true,
         user_metadata: {
           full_name: d.guardian_name_en,
-          role: 'parent',
-          tenant_id: d.tenant_id,
         },
         app_metadata: {
           role: 'parent',

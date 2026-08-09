@@ -5,10 +5,9 @@ import { getJurisdictionContext } from '../api/jurisdiction';
 const JurisdictionFeatureContext = createContext(null);
 
 function resolveTenantId(user) {
-  return user?.tenant_id
-    || user?.app_metadata?.tenant_id
-    || user?.user_metadata?.tenant_id
-    || null;
+  // tenant_id/role must only come from admin-writable app_metadata.
+  // user_metadata is user-writable and is not a trustworthy source.
+  return user?.app_metadata?.tenant_id || null;
 }
 
 export function JurisdictionFeatureProvider({ children }) {
