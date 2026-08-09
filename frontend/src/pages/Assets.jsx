@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { useTenant } from '../components/TenantContext';
 
 const CATEGORIES = ['land', 'buildings', 'vehicles', 'furniture', 'equipment', 'computers', 'software', 'other'];
 const _DEPRECIATION_METHODS = ['straight_line', 'declining_balance'];

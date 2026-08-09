@@ -33,6 +33,7 @@ export default [
         'warn',
         { varsIgnorePattern: '^_', argsIgnorePattern: '^_' },
       ],
+      'no-undef': 'error',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
     settings: {

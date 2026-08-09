@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
-import { getCurrencySymbol } from '../lib/localization';
+import { getCurrencySymbol, formatCurrency } from '../lib/localization';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -19,6 +19,7 @@ import { Plus, Search, AlertTriangle, MapPin, Users, Route,
   CheckCircle, Shield, Navigation
 } from 'lucide-react';
 import LiveBusTracker from '../components/transport/LiveBusTracker';
+import { useTenant } from '../components/TenantContext';
 
 const BLANK_ROUTE = { route_code: '', name_ar: '', name_en: '', direction: 'both', vehicle_id: '', driver_id: '', supervisor_id: '', monthly_fee: 0, stops: [], is_active: true, notes: '' };
 

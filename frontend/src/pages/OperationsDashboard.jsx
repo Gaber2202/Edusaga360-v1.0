@@ -16,6 +16,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { filterByDateRange } from '../lib/dateRange';
+import { useTenant } from '../components/TenantContext';
 
 export default function OperationsDashboard() {
   const { isRTL } = useLanguage();

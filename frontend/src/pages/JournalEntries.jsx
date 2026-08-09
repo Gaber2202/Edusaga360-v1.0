@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { createJournalEntry } from '../api/journalEntry';
+import { useTenant } from '../components/TenantContext';
 
 const JOURNAL_TYPES = ['sales', 'receipts', 'purchases', 'payments', 'general', 'depreciation', 'adjustment'];
 

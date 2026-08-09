@@ -20,6 +20,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
+import { useTenant } from '../TenantContext';
+import { formatCurrency } from '../../lib/localization';
 
 const REPORT_TYPES = [
   { id: 'students', name_ar: 'تقرير الطلاب', name_en: 'Students Report', entity: 'Student' },

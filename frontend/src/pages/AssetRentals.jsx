@@ -19,6 +19,8 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { useTenant } from '../components/TenantContext';
+import { formatCurrency } from '../lib/localization';
 
 export default function AssetRentals() {
   const { isRTL } = useLanguage();

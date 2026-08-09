@@ -36,8 +36,10 @@ import { useTenantFilter } from '../hooks/useTenantFilter';
 import WhatsAppButton from '../components/communications/WhatsAppButton';
 import { WhatsAppMessageTypes } from '../components/communications/WhatsAppService';
 import { itemAmount, itemDesc, fmtDate } from '../lib/invoiceFormat';
+import { useTenant } from '../components/TenantContext';
 
 export default function InvoiceDetails() {
+  const { tenant } = useTenant();
   const { t, isRTL } = useLanguage();
   const { userRole, user } = useRole();
   const queryClient = useQueryClient();

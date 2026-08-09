@@ -12,6 +12,7 @@ import { AlertCircle, CheckCircle, DollarSign, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
+import { useTenant } from '../TenantContext';
 
 export default function StudentFeesSection({ student, onStudentUpdated }) {
   const { t: _t, isRTL } = useLanguage();

@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { createJournalEntry } from '../api/journalEntry';
+import { useTenant } from '../components/TenantContext';
 
 const PAYMENT_METHODS = [
   { value: 'cash', label_ar: 'نقداً', label_en: 'Cash' },

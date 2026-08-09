@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { useTenant } from '../components/TenantContext';
 
 export default function Overtime() {
   const { t, isRTL } = useLanguage();

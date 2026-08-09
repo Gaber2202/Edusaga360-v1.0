@@ -153,6 +153,7 @@ function PlanCard({ plan, def, isRTL, onEdit }) {
 /* ─── Main Tab ─── */
 export default function SubscriptionPlansTab({ isRTL }) {
   const qc = useQueryClient();
+  const { tenant } = useTenant();
   const label = (ar, en) => isRTL ? ar : en;
 
   const { data: plans = [], isLoading } = useQuery({

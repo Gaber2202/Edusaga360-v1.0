@@ -9,7 +9,7 @@ import { createJournalEntry } from '../../api/journalEntry';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import { useBranch } from '../BranchContext';
 import { useTenant } from '../TenantContext';
-import { formatCurrency } from '../../lib/localization';
+import { formatCurrency, getCurrencyCode } from '../../lib/localization';
 import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
 import { SOCIAL_INSURANCE_FEATURES } from '../../lib/jurisdictionFeatures.js';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -122,7 +122,7 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
   const { isFeatureEnabled } = useJurisdictionFeatures();
   const { tenant } = useTenant();
   const fmt = (v) => formatCurrency(v, tenant?.localization, isRTL);
-  const currencyCode = tenant?.currency_code || 'XXX';
+  const currencyCode = getCurrencyCode(tenant);
 
   const [currentStep, setCurrentStep] = useState(0);
   const [processing, setProcessing] = useState(false);

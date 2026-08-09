@@ -6,11 +6,14 @@ import { Button } from '../ui/button';
 import { Bot, Loader2 } from 'lucide-react';
 import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
 import { NATIONALISATION_FEATURES, SOCIAL_INSURANCE_FEATURES, GOVERNMENT_RELATIONS_FEATURES } from '../../lib/jurisdictionFeatures.js';
+import { useTenant } from '../TenantContext';
+import { formatCurrency } from '../../lib/localization';
 
 /**
  * Reusable Yamen AI insights panel — pass any data context.
  */
 export default function YamenHRInsights({ module, data = {}, isRTL }) {
+  const { tenant } = useTenant();
   const { isFeatureEnabled } = useJurisdictionFeatures();
   const nationalisationEnabled = isFeatureEnabled(NATIONALISATION_FEATURES[0]);
   const socialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);

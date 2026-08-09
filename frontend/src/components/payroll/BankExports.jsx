@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { buildCsv } from '../../lib/csv';
+import { getCurrencyCode } from '../../lib/localization';
 import {
   Download,
   Landmark,
@@ -125,7 +126,7 @@ export default function BankExports() {
           input.iban,
           generateForm.bank_code,
           input.net_salary,
-          tenant?.currency_code || 'XXX',
+          getCurrencyCode(tenant),
           `SAL-${payRun.period}`,
         ])];
         csvContent = buildCsv(rows);

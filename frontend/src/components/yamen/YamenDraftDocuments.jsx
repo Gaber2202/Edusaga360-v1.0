@@ -1,4 +1,4 @@
-import { formatCurrency } from '../../lib/localization';
+import { formatCurrency, getCurrencySymbol } from '../../lib/localization';
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';

@@ -22,6 +22,7 @@ import PRActions from '../components/procurement/PRActions';
 import AttachmentUploader from '../components/ui/AttachmentUploader';
 import jsPDF from 'jspdf';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { useTenant } from '../components/TenantContext';
 
 export default function PurchaseRequisitions() {
   const { t, isRTL } = useLanguage();

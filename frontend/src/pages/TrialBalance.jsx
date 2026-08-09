@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useTenant } from '../components/TenantContext';
-import { getCurrencySymbol, formatNumber, formatCurrency } from '../lib/localization';
+import { getCurrencySymbol, formatNumber, formatCurrency, getCurrencyCode } from '../lib/localization';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -99,7 +99,7 @@ export default function TrialBalance() {
   }, [accountBalances]);
 
   const exportCSV = () => {
-    const sym = tenant?.currency_code || 'XXX';
+    const sym = getCurrencyCode(tenant);
     const rows = [['Account Code', 'Account Name', 'Type', `Debit ${sym}`, `Credit ${sym}`]];
     accountBalances.sort((a, b) => (a.account_code || '').localeCompare(b.account_code || '')).forEach(acc => {
       rows.push([acc.account_code, acc.name_ar, acc.account_type, acc.debitBalance.toFixed(2), acc.creditBalance.toFixed(2)]);

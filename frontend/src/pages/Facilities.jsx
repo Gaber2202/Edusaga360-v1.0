@@ -21,6 +21,8 @@ import {
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { useTenant } from '../components/TenantContext';
+import { formatCurrency } from '../lib/localization';
 
 export default function Facilities() {
   const { t: _t, isRTL } = useLanguage();

@@ -15,11 +15,13 @@ const TenantContext = createContext(null);
 export function TenantProvider({ user, children }) {
   const [tenant, setTenant] = useState(null);
   const [tenantLoading, setTenantLoading] = useState(true);
+  const [tenantLoadingError, setTenantLoadingError] = useState(null);
 
   useEffect(() => {
     if (!user) {
       setTenant(null);
       setTenantLoading(false);
+      setTenantLoadingError(null);
       return;
     }
     loadTenant(user);
@@ -55,13 +57,15 @@ export function TenantProvider({ user, children }) {
             localization: ctx.localization,
           };
         } catch (e) {
-          console.warn('TenantContext: could not load jurisdiction context', e);
+          console.error('TenantContext: could not load jurisdiction context', e);
+          setTenantLoadingError(e);
         }
       }
 
       setTenant(tenantData);
     } catch (e) {
-      console.warn('TenantContext: could not load tenant', e);
+      console.error('TenantContext: could not load tenant', e);
+      setTenantLoadingError(e);
       setTenant(null);
     } finally {
       setTenantLoading(false);
@@ -117,13 +121,14 @@ export function TenantProvider({ user, children }) {
     tenant,
     tenantId,
     tenantLoading,
+    tenantLoadingError,
     isModuleEnabled,
     checkLimit,
     isTenantActive,
     isTrialExpired,
     needsOnboarding,
     refreshTenant,
-  }), [tenant, tenantId, tenantLoading, isModuleEnabled, checkLimit, isTenantActive, isTrialExpired, needsOnboarding, refreshTenant]);
+  }), [tenant, tenantId, tenantLoading, tenantLoadingError, isModuleEnabled, checkLimit, isTenantActive, isTrialExpired, needsOnboarding, refreshTenant]);
 
   return (
     <TenantContext.Provider value={value}>
@@ -139,6 +144,7 @@ export function useTenant() {
     return {
       tenant: null,
       tenantLoading: false,
+      tenantLoadingError: null,
       isModuleEnabled: () => true,
       checkLimit: () => ({ allowed: true, current: 0, max: Infinity }),
       isTenantActive: () => true,

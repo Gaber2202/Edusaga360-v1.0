@@ -26,6 +26,7 @@ import PayslipViewer from '../components/payroll/PayslipViewer';
 import ESSProfileTab from '../components/ess/ESSProfileTab';
 import ESSOnboardingTab from '../components/ess/ESSOnboardingTab';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { useTenant } from '../components/TenantContext';
 
 export default function ESSPortal() {
   const { t, isRTL } = useLanguage();

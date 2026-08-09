@@ -12,6 +12,7 @@
 import { tenantQuery } from '../api/supabaseClient';
 import { createJournalEntry } from '../api/journalEntry';
 import { registerHandler, namedHandler } from './integrationBus';
+import { getCurrencyCode } from './localization';
 
 // ─── ADMISSIONS EVENTS ────────────────────────────────────────────────────────
 
@@ -182,7 +183,7 @@ registerHandler('invoice_issued', namedHandler('Communications', async (payload)
     recipient_type: 'guardian',
     channel: 'whatsapp',
     subject: `فاتورة جديدة / New Invoice #${payload.invoice_number}`,
-    body: `فاتورتكم جاهزة بمبلغ ${Number(payload.total_amount || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${payload.currency_code || 'XXX'}.\nYour invoice #${payload.invoice_number} for ${Number(payload.total_amount || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${payload.currency_code || 'XXX'} is ready.`,
+    body: `فاتورتكم جاهزة بمبلغ ${Number(payload.total_amount || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${getCurrencyCode({ currency_code: payload.currency_code })}.\nYour invoice #${payload.invoice_number} for ${Number(payload.total_amount || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${getCurrencyCode({ currency_code: payload.currency_code })} is ready.`,
     status: 'sent',
     sent_date: new Date().toISOString(),
     source_module: 'Fees',
@@ -224,7 +225,7 @@ registerHandler('payment_received', namedHandler('Communications', async (payloa
     recipient_type: 'guardian',
     channel: 'whatsapp',
     subject: 'تأكيد الدفع / Payment Confirmation',
-    body: `تم استلام دفعتكم ${Number(payload.amount || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${payload.currency_code || 'XXX'} بنجاح. Payment of ${Number(payload.amount || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${payload.currency_code || 'XXX'} received successfully. Thank you.`,
+    body: `تم استلام دفعتكم ${Number(payload.amount || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${getCurrencyCode({ currency_code: payload.currency_code })} بنجاح. Payment of ${Number(payload.amount || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${getCurrencyCode({ currency_code: payload.currency_code })} received successfully. Thank you.`,
     status: 'sent',
     sent_date: new Date().toISOString(),
     source_module: 'Fees',
@@ -438,7 +439,7 @@ registerHandler('canteen_low_balance', namedHandler('Communications', async (pay
     recipient_type: 'guardian',
     channel: 'whatsapp',
     subject: 'رصيد منخفض — الكانتين / Low Canteen Balance',
-    body: `رصيد ${payload.student_name} في الكانتين ${Number(payload.balance || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${payload.currency_code || 'XXX'}. يرجى الشحن.\n${payload.student_name}'s canteen balance is ${Number(payload.balance || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${payload.currency_code || 'XXX'}. Please top up.`,
+    body: `رصيد ${payload.student_name} في الكانتين ${Number(payload.balance || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${getCurrencyCode({ currency_code: payload.currency_code })}. يرجى الشحن.\n${payload.student_name}'s canteen balance is ${Number(payload.balance || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${getCurrencyCode({ currency_code: payload.currency_code })}. Please top up.`,
     status: 'sent',
     sent_date: new Date().toISOString(),
     source_module: 'Canteen',
@@ -660,7 +661,7 @@ registerHandler('expense_approved', namedHandler('Communications', async (payloa
     recipient_type: 'employee',
     channel: 'email',
     subject: 'تمت الموافقة على المصروف / Expense Approved',
-    body: `تمت الموافقة على مطالبتك بمبلغ ${Number(payload.amount || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${payload.currency_code || 'XXX'}.\nYour expense claim of ${Number(payload.amount || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${payload.currency_code || 'XXX'} has been approved and is being processed.`,
+    body: `تمت الموافقة على مطالبتك بمبلغ ${Number(payload.amount || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${getCurrencyCode({ currency_code: payload.currency_code })}.\nYour expense claim of ${Number(payload.amount || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${getCurrencyCode({ currency_code: payload.currency_code })} has been approved and is being processed.`,
     status: 'sent',
     sent_date: new Date().toISOString(),
     source_module: 'Expenses',

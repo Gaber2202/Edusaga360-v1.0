@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { createJournalEntry } from '../api/journalEntry';
+import { useTenant } from '../components/TenantContext';
 
 const REFUND_REASONS = [
   { value: 'withdrawal', label_ar: 'انسحاب', label_en: 'Withdrawal' },

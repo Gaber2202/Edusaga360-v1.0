@@ -67,6 +67,14 @@ describe('resolveJurisdiction', () => {
     };
     expect(resolveJurisdiction(ctx)).toBe('QA');
   });
+
+  it('falls back to tenant jurisdiction when branch jurisdiction_code is null', () => {
+    const ctx: RequestContext = {
+      tenant: { id: 'tenant-1', jurisdictionCode: 'SA' },
+      branch: { id: 'branch-1', jurisdictionCode: null as unknown as string },
+    };
+    expect(resolveJurisdiction(ctx)).toBe('SA');
+  });
 });
 
 describe('NotImplementedInJurisdiction', () => {

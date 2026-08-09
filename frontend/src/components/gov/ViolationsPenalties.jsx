@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
-import { formatCurrency } from '../../lib/localization';
+import { formatCurrency, getCurrencySymbol } from '../../lib/localization';
 import { useTenant } from '../TenantContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
