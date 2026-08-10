@@ -201,7 +201,14 @@ export class MetricsService {
     const scopeCurrency = pack.currencyCode;
     const branchCurrencyMap = new Map<string, string>();
     for (const b of branches) {
-      const branchCode = b.jurisdiction_code || ctx.tenant.jurisdictionCode;
+      let branchCode: string;
+      if (b.jurisdiction_code) {
+        branchCode = b.jurisdiction_code;
+      } else {
+        // Fall back to the tenant jurisdiction; this is a tenant-scoped resolution,
+        // so go through the jurisdiction resolver instead of reading tenant directly.
+        branchCode = resolveJurisdiction({ tenant: ctx.tenant });
+      }
       try {
         const branchPack = resolvePack({ tenant: ctx.tenant, branch: { id: b.id, jurisdictionCode: branchCode } });
         branchCurrencyMap.set(b.id, branchPack.currencyCode);
