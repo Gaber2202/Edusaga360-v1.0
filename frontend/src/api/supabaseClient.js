@@ -56,6 +56,19 @@ export function subscribeTenantContext(fn) {
   return () => subscribers.delete(fn);
 }
 
+/**
+ * Thrown when tenantQuery is called before the module-level tenant context is
+ * set. React Query's default retry behaviour will re-run the queryFn once the
+ * context is populated by TenantContextSyncer.
+ */
+export class TenantContextNotReadyError extends Error {
+  constructor(tableName) {
+    super(`tenantQuery('${tableName}'): tenantId is not set`);
+    this.name = 'TenantContextNotReadyError';
+    this.tableName = tableName;
+  }
+}
+
 // Tables that are platform-wide (not tenant-scoped). Queries against these
 // tables must NOT have a tenant_id filter appended automatically.
 const PLATFORM_ONLY_ENTITIES = new Set([
@@ -87,26 +100,10 @@ export function tenantQuery(tableName) {
   }
 
   // Guard: if tenantId is null the filter `.eq('tenant_id', null)` would
-  // silently return 0 rows.  Throw so callers can detect misconfiguration.
+  // silently return 0 rows.  Throw so React Query retries once context is set.
   if (!tenantId) {
-    console.warn(`tenantQuery('${tableName}'): tenantId is not set — skipping query`);
-    // Return a fully-chainable mock that yields empty results.
-    // Must support every Supabase query-builder method (select, match, order,
-    // eq, in, limit, single, etc.) so callers never hit "X is not a function".
-    const empty = { data: [], error: null };
-    const emptySingle = { data: null, error: null };
-    function chainable(isSingle = false) {
-      const result = isSingle ? emptySingle : empty;
-      const self = new Proxy({}, {
-        get(_target, prop) {
-          if (prop === 'then') return (resolve) => resolve(result);
-          if (prop === 'single') return () => chainable(true);
-          return () => self;
-        },
-      });
-      return self;
-    }
-    return chainable();
+    console.warn(`tenantQuery('${tableName}'): tenantId is not set — will retry`);
+    throw new TenantContextNotReadyError(tableName);
   }
 
   return {
