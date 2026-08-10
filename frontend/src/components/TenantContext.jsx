@@ -121,6 +121,8 @@ export function TenantProvider({ user, children }) {
         let localization = null;
         let isMultiCurrency = false;
         let currencies = [];
+        let branchCurrencyMap = {};
+        let branchLocalizationMap = {};
 
         const loadContext = async (branchId) => {
           try {
@@ -132,22 +134,31 @@ export function TenantProvider({ user, children }) {
           }
         };
 
-        if (selectedBranch) {
-          // Branch-level jurisdiction context: currency, VAT, calendar, locale.
-          ctx = await loadContext(selectedBranchId);
-          localization = ctx?.localization ?? null;
-        } else if (activeBranches.length > 0) {
-          // "All Branches" or no explicit branch selected. Resolve each branch's
-          // currency so we can detect multi-currency groups per ADR-008.
+        if (activeBranches.length > 0) {
+          // Resolve context for every active branch once. This gives us both
+          // branch-level localization when one branch is selected and the
+          // branch → currency mapping needed for multi-currency UIs.
           const branchContexts = await Promise.all(
             activeBranches.map(async (b) => loadContext(b.id)),
           );
+
+          for (let i = 0; i < activeBranches.length; i += 1) {
+            const branch = activeBranches[i];
+            const branchCtx = branchContexts[i];
+            if (branch && branchCtx) {
+              branchCurrencyMap[branch.id] = branchCtx.currencyCode ?? null;
+              branchLocalizationMap[branch.id] = branchCtx.localization ?? null;
+            }
+          }
 
           const defined = branchContexts.filter(Boolean);
           const distinct = [...new Map(defined.map((c) => [c.currencyCode, c])).values()];
           currencies = distinct;
 
-          if (distinct.length === 1) {
+          if (selectedBranch) {
+            ctx = branchContexts.find((c) => c && branchCurrencyMap[selectedBranchId] === c.currencyCode) ?? null;
+            localization = ctx?.localization ?? null;
+          } else if (distinct.length === 1) {
             // Single-currency group (all branches share the same currency).
             ctx = distinct[0];
             localization = ctx?.localization ?? null;
@@ -164,6 +175,14 @@ export function TenantProvider({ user, children }) {
             ctx = await loadContext();
             localization = ctx?.localization ?? null;
           }
+        } else if (selectedBranch) {
+          // Branch-level jurisdiction context: currency, VAT, calendar, locale.
+          ctx = await loadContext(selectedBranchId);
+          if (ctx) {
+            branchCurrencyMap[selectedBranchId] = ctx.currencyCode ?? null;
+            branchLocalizationMap[selectedBranchId] = ctx.localization ?? null;
+          }
+          localization = ctx?.localization ?? null;
         } else {
           // No active branches; use tenant fallback.
           ctx = await loadContext();
@@ -176,10 +195,13 @@ export function TenantProvider({ user, children }) {
             vat_rate: ctx.vatRate,
             currency_code: ctx.currencyCode,
             jurisdiction_code: ctx.jurisdiction,
+            features: ctx.features ?? [],
             localization,
             selected_branch_id: selectedBranchId,
             is_multi_currency: isMultiCurrency,
             branch_currencies: currencies,
+            branch_currency_map: branchCurrencyMap,
+            branch_localization_map: branchLocalizationMap,
             branches: activeBranches,
           };
         }

@@ -435,6 +435,26 @@ function MiniSparkline({ data, color, height = 40 }) {
   );
 }
 
+function MultiCurrencyBreakdown({ amounts, localization, isRTL }) {
+  if (!amounts || Object.keys(amounts).length === 0) return '—';
+  return (
+    <div className="flex flex-col gap-0.5">
+      {Object.entries(amounts).map(([currency, amount]) => (
+        <span key={currency} className="text-sm font-semibold leading-tight">
+          {formatCurrency(Number(amount), { ...localization, currencyCode: currency }, isRTL)}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function CurrencyValue({ value, byCurrency, localization, isRTL }) {
+  if (byCurrency && Object.keys(byCurrency).length > 1) {
+    return <MultiCurrencyBreakdown amounts={byCurrency} localization={localization} isRTL={isRTL} />;
+  }
+  return formatCurrency(value, localization, isRTL);
+}
+
 function KPICard({ title, value, delta, sparkData, color, isRTL }) {
   const deltaColor = delta > 0 ? 'text-emerald-500' : delta < 0 ? 'text-red-500' : 'text-muted-foreground';
   const deltaIcon = delta > 0 ? '▲' : delta < 0 ? '▼' : '';
@@ -445,7 +465,7 @@ function KPICard({ title, value, delta, sparkData, color, isRTL }) {
         <p className="text-xs text-muted-foreground mb-1">{title}</p>
         <div className="flex items-end justify-between gap-2">
           <div>
-            <p className="text-xl font-bold text-ink">{value}</p>
+            <div className="text-xl font-bold text-ink">{value}</div>
             {delta !== undefined && delta !== null && (
               <span className={`text-xs font-medium ${deltaColor}`}>
                 {deltaIcon} {Math.abs(delta).toFixed(1)}%
@@ -467,8 +487,11 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
 
   const collectionRate = collections?.collection_rate_pct;
   const collectionTotalInvoiced = collections?.total_invoiced ?? 0;
-  const hasCollectionData = collectionTotalInvoiced > 0;
-  const isCollectionCritical = collectionRate !== undefined && collectionRate !== null && collectionRate === 0 && hasCollectionData;
+  const invoicedByCurrency = collections?.total_invoiced_by_currency ?? {};
+  const hasCollectionData = financials?.is_multi_currency
+    ? Object.values(invoicedByCurrency).some((v) => Number(v) > 0)
+    : collectionTotalInvoiced > 0;
+  const isCollectionCritical = !financials?.is_multi_currency && collectionRate !== undefined && collectionRate !== null && collectionRate === 0 && hasCollectionData;
 
   return (
     <div className="space-y-6">
@@ -508,23 +531,25 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <KPICard
           title={isRTL ? 'الإيرادات' : 'Revenue'}
-          value={formatCurrency(financials?.revenue, tenant?.localization, isRTL)}
-          delta={financials?.revenue_delta_pct}
-          sparkData={revenue_trend?.map((v, i) => ({ name: i, value: v.revenue || v }))}
+          value={<CurrencyValue value={financials?.revenue} byCurrency={financials?.revenue_by_currency} localization={tenant?.localization} isRTL={isRTL} />}
+          delta={financials?.is_multi_currency ? null : financials?.revenue_delta_pct}
+          sparkData={financials?.is_multi_currency ? null : revenue_trend?.map((v, i) => ({ name: i, value: v.revenue || 0 }))}
           color={COLORS.najdi}
           isRTL={isRTL}
         />
         <KPICard
           title={isRTL ? 'الأرباح قبل الفوائد والضرائب والإهلاك' : 'EBITDA'}
-          value={formatCurrency(financials?.ebitda, tenant?.localization, isRTL)}
-          delta={financials?.ebitda_delta_pct}
-          sparkData={revenue_trend?.map((v, i) => ({ name: i, value: v.ebitda || 0 }))}
+          value={<CurrencyValue value={financials?.ebitda} byCurrency={financials?.ebitda_by_currency} localization={tenant?.localization} isRTL={isRTL} />}
+          delta={financials?.is_multi_currency ? null : financials?.ebitda_delta_pct}
+          sparkData={financials?.is_multi_currency ? null : revenue_trend?.map((v, i) => ({ name: i, value: v.ebitda || 0 }))}
           color={COLORS.green}
           isRTL={isRTL}
         />
         <KPICard
           title={isRTL ? 'نسبة التحصيل' : 'Collection Rate'}
-          value={isCollectionCritical
+          value={financials?.is_multi_currency ? (
+            <MultiCurrencyBreakdown amounts={collections?.collection_rate_by_currency} localization={tenant?.localization} isRTL={isRTL} />
+          ) : isCollectionCritical
             ? <span className="text-red-500 font-bold">{fmtPct(0)}</span>
             : (
               <span
@@ -535,8 +560,8 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
               </span>
             )
           }
-          delta={hasCollectionData ? collections?.collection_delta_pct : null}
-          sparkData={collection_trend?.map((v, i) => ({ name: i, value: v.rate || v }))}
+          delta={financials?.is_multi_currency || !hasCollectionData ? null : collections?.collection_delta_pct}
+          sparkData={financials?.is_multi_currency ? null : collection_trend?.map((v, i) => ({ name: i, value: v.rate || 0 }))}
           color={isCollectionCritical ? COLORS.red : COLORS.gold}
           isRTL={isRTL}
         />
@@ -561,7 +586,18 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {(!revenue_trend || revenue_trend.length === 0) ? <EmptyState isRTL={isRTL} /> : (
+            {financials?.is_multi_currency ? (
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">{isRTL ? 'الإيرادات حسب العملة' : 'Revenue by currency'}</span>
+                  <CurrencyValue value={financials?.revenue} byCurrency={financials?.revenue_by_currency} localization={tenant?.localization} isRTL={isRTL} />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">{isRTL ? 'الأرباح حسب العملة' : 'EBITDA by currency'}</span>
+                  <CurrencyValue value={financials?.ebitda} byCurrency={financials?.ebitda_by_currency} localization={tenant?.localization} isRTL={isRTL} />
+                </div>
+              </div>
+            ) : (!revenue_trend || revenue_trend.length === 0) ? <EmptyState isRTL={isRTL} /> : (
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={revenue_trend}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
@@ -584,7 +620,18 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {(!collection_trend || collection_trend.length === 0) ? <EmptyState isRTL={isRTL} /> : (
+            {financials?.is_multi_currency ? (
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">{isRTL ? 'التحصيل حسب العملة' : 'Collection by currency'}</span>
+                  <MultiCurrencyBreakdown amounts={collections?.collection_rate_by_currency} localization={tenant?.localization} isRTL={isRTL} />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">{isRTL ? 'المدفوع حسب العملة' : 'Collected by currency'}</span>
+                  <CurrencyValue value={collections?.total_collected} byCurrency={collections?.total_collected_by_currency} localization={tenant?.localization} isRTL={isRTL} />
+                </div>
+              </div>
+            ) : (!collection_trend || collection_trend.length === 0) ? <EmptyState isRTL={isRTL} /> : (
               <ResponsiveContainer width="100%" height={240}>
                 <AreaChart data={collection_trend}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
@@ -786,49 +833,77 @@ function CFODashboard({ data, isRTL, t }) {
   const socialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);
   const showCompliance = einvoiceEnabled || wageProtectionEnabled || socialInsuranceEnabled;
   const { kpis = {}, ar_aging = {}, overdue_by_campus = [], revenue_vs_ebitda = [], compliance_traffic_lights = {}, scenario_baseline = {} } = data;
+  const isMultiCurrency = kpis?.is_multi_currency;
 
   const [growthRate, setGrowthRate] = useState(0);
   const [expenseRate, setExpenseRate] = useState(0);
-  const simRevenue = (scenario_baseline.revenue || 0) * (1 + growthRate / 100);
-  const simExpenses = (scenario_baseline.expenses || 0) * (1 + expenseRate / 100);
-  const simEbitda = simRevenue - simExpenses;
+  const simRevenue = isMultiCurrency ? null : (scenario_baseline.revenue || 0) * (1 + growthRate / 100);
+  const simExpenses = isMultiCurrency ? null : (scenario_baseline.expenses || 0) * (1 + expenseRate / 100);
+  const simEbitda = isMultiCurrency ? null : (simRevenue || 0) - (simExpenses || 0);
 
-  const agingData = [
-    { label: '0-30', value: ar_aging['0_30'] || 0 },
-    { label: '31-60', value: ar_aging['31_60'] || 0 },
-    { label: '61-90', value: ar_aging['61_90'] || 0 },
-    { label: '90+', value: ar_aging['90_plus'] || 0 },
-  ];
+  const agingData = ar_aging?.buckets ? [
+    { label: '0-30', value: ar_aging.buckets['0_30'] || 0 },
+    { label: '31-60', value: ar_aging.buckets['31_60'] || 0 },
+    { label: '61-90', value: ar_aging.buckets['61_90'] || 0 },
+    { label: '90+', value: ar_aging.buckets['90_plus'] || 0 },
+  ] : [];
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard title={t('revenue')} value={formatCurrency(kpis.revenue, tenant?.localization, isRTL)} icon={DollarSign} iconClassName="bg-najdi-50" />
-        <StatCard title={t('ebitda')} value={formatCurrency(kpis.ebitda, tenant?.localization, isRTL)} subtitle={fmtPct(kpis.margin_pct)} icon={TrendingUp} iconClassName="bg-emerald-50" />
-        <StatCard title={t('cashCollected')} value={formatCurrency(kpis.cash_collected_30d, tenant?.localization, isRTL)} icon={ShieldCheck} iconClassName="bg-purple-50" />
-        <StatCard title={t('dsoDays')} value={fmtNumber(kpis.dso_days, isRTL)} icon={Clock} iconClassName="bg-amber-50" />
+        <StatCard title={t('revenue')} value={<CurrencyValue value={kpis.revenue} byCurrency={kpis.revenue_by_currency} localization={tenant?.localization} isRTL={isRTL} />} icon={DollarSign} iconClassName="bg-najdi-50" />
+        <StatCard title={t('ebitda')} value={<CurrencyValue value={kpis.ebitda} byCurrency={kpis.ebitda_by_currency} localization={tenant?.localization} isRTL={isRTL} />} subtitle={isMultiCurrency ? null : fmtPct(kpis.margin_pct)} icon={TrendingUp} iconClassName="bg-emerald-50" />
+        <StatCard title={t('cashCollected')} value={<CurrencyValue value={kpis.cash_collected_30d} byCurrency={kpis.cash_collected_30d_by_currency} localization={tenant?.localization} isRTL={isRTL} />} icon={ShieldCheck} iconClassName="bg-purple-50" />
+        <StatCard title={t('dsoDays')} value={kpis.dso_days !== null && kpis.dso_days !== undefined ? fmtNumber(kpis.dso_days, isRTL) : '—'} icon={Clock} iconClassName="bg-amber-50" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="border-0 shadow-sm">
           <CardHeader><CardTitle className="text-base">{t('arAging')}</CardTitle></CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={agingData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="label" fontSize={12} />
-                <YAxis fontSize={12} />
-                <Tooltip />
-                <Bar dataKey="value" fill={COLORS.najdi} radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {isMultiCurrency ? (
+              <div className="space-y-2 text-sm">
+                {Object.entries(ar_aging?.by_currency || {}).map(([currency, buckets]) => (
+                  <div key={currency} className="space-y-1 border-b border-sand pb-2 last:border-0">
+                    <p className="text-xs font-medium text-muted-foreground">{isRTL ? 'العملة' : 'Currency'}: {currency}</p>
+                    {Object.entries(buckets || {}).map(([bucket, amount]) => (
+                      <div key={bucket} className="flex justify-between">
+                        <span className="text-muted-foreground">{bucket.replace('_', '-')}</span>
+                        <span className="font-medium">{formatCurrency(Number(amount), { ...tenant?.localization, currencyCode: currency }, isRTL)}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={agingData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="label" fontSize={12} />
+                  <YAxis fontSize={12} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill={COLORS.najdi} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm">
           <CardHeader><CardTitle className="text-base">{t('revenueVsEbitda')}</CardTitle></CardHeader>
           <CardContent>
-            {revenue_vs_ebitda.length === 0 ? <EmptyState isRTL={isRTL} /> : (
+            {isMultiCurrency ? (
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">{isRTL ? 'الإيرادات حسب العملة' : 'Revenue by currency'}</span>
+                  <CurrencyValue value={kpis.revenue} byCurrency={kpis.revenue_by_currency} localization={tenant?.localization} isRTL={isRTL} />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">{isRTL ? 'الأرباح حسب العملة' : 'EBITDA by currency'}</span>
+                  <CurrencyValue value={kpis.ebitda} byCurrency={kpis.ebitda_by_currency} localization={tenant?.localization} isRTL={isRTL} />
+                </div>
+              </div>
+            ) : revenue_vs_ebitda.length === 0 ? <EmptyState isRTL={isRTL} /> : (
               <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={revenue_vs_ebitda}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -873,7 +948,7 @@ function CFODashboard({ data, isRTL, t }) {
                   {overdue_by_campus.map((c) => (
                     <tr key={c.branch_id} className="border-b border-sand">
                       <td className="py-2 text-ink">{isRTL ? c.name_ar : c.name_en}</td>
-                      <td className="py-2 text-ink">{formatCurrency(c.overdue_amount, tenant?.localization, isRTL)}</td>
+                      <td className="py-2 text-ink">{formatCurrency(c.overdue_amount, { ...tenant?.localization, currencyCode: c.currency_code }, isRTL)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -902,11 +977,15 @@ function CFODashboard({ data, isRTL, t }) {
               <input type="range" min={-20} max={20} value={expenseRate} onChange={(e) => setExpenseRate(Number(e.target.value))} className="w-full" />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4 pt-2">
-            <div className="text-center"><p className="text-xs text-muted-foreground">{t('revenue')}</p><p className="font-semibold">{formatCurrency(simRevenue, tenant?.localization, isRTL)}</p></div>
-            <div className="text-center"><p className="text-xs text-muted-foreground">{isRTL ? 'المصروفات' : 'Expenses'}</p><p className="font-semibold">{formatCurrency(simExpenses, tenant?.localization, isRTL)}</p></div>
-            <div className="text-center"><p className="text-xs text-muted-foreground">{t('ebitda')}</p><p className="font-semibold">{formatCurrency(simEbitda, tenant?.localization, isRTL)}</p></div>
-          </div>
+          {isMultiCurrency ? (
+            <div className="text-sm text-muted-foreground">{isRTL ? 'المحاكاة غير متوفرة للعملات المتعددة' : 'Scenario simulator is not available for multi-currency scopes.'}</div>
+          ) : (
+            <div className="grid grid-cols-3 gap-4 pt-2">
+              <div className="text-center"><p className="text-xs text-muted-foreground">{t('revenue')}</p><p className="font-semibold">{formatCurrency(simRevenue, tenant?.localization, isRTL)}</p></div>
+              <div className="text-center"><p className="text-xs text-muted-foreground">{isRTL ? 'المصروفات' : 'Expenses'}</p><p className="font-semibold">{formatCurrency(simExpenses, tenant?.localization, isRTL)}</p></div>
+              <div className="text-center"><p className="text-xs text-muted-foreground">{t('ebitda')}</p><p className="font-semibold">{formatCurrency(simEbitda, tenant?.localization, isRTL)}</p></div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -959,7 +1038,7 @@ function COODashboard({ data, isRTL, t }) {
                       <td className="py-2 text-ink">{fmtNumber(c.capacity, isRTL)}</td>
                       <td className="py-2 text-ink">{fmtNumber(c.enrolled, isRTL)}</td>
                       <td className="py-2 text-ink">{fmtPct(c.utilization_pct)}</td>
-                      <td className="py-2 text-ink">{formatCurrency(c.cash_collected, tenant?.localization, isRTL)}</td>
+                      <td className="py-2 text-ink">{formatCurrency(c.cash_collected, { ...tenant?.localization, currencyCode: c.currency_code }, isRTL)}</td>
                     </tr>
                   ))}
                 </tbody>

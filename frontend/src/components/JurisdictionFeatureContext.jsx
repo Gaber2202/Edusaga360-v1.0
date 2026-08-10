@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useMemo, useEffect, useState } from 'react';
 import { useAuth } from '../lib/AuthContext';
 import { getJurisdictionContext } from '../api/jurisdiction';
+import { useTenant } from './TenantContext';
 
 const JurisdictionFeatureContext = createContext(null);
 
@@ -84,10 +85,29 @@ export function JurisdictionFeatureProvider({ children }) {
 
 export function useJurisdictionFeatures() {
   const ctx = useContext(JurisdictionFeatureContext);
+  const { tenant, tenantLoading } = useTenant();
   if (!ctx) {
-    throw new Error('useJurisdictionFeatures must be used within JurisdictionFeatureProvider');
+    throw new Error('useJurisdictionFeatures must be used within a JurisdictionFeatureProvider');
   }
-  return ctx;
+
+  // When rendered inside TenantProvider, prefer the branch-aware feature list
+  // that TenantContext already resolved. Otherwise (e.g. route-level gates)
+  // fall back to the provider-level tenant features.
+  const features = tenant?.features ?? ctx.features;
+  const enabledSet = useMemo(() => new Set(features), [features]);
+  const isFeatureEnabled = useMemo(() => (key) => enabledSet.has(key), [enabledSet]);
+  const areAnyEnabled = useMemo(
+    () => (keys) => keys.some((k) => enabledSet.has(k)),
+    [enabledSet],
+  );
+
+  return {
+    ...ctx,
+    features,
+    loading: ctx.loading || tenantLoading,
+    isFeatureEnabled,
+    areAnyEnabled,
+  };
 }
 
 export default JurisdictionFeatureContext;
