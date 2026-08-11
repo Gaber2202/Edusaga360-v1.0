@@ -22,17 +22,18 @@ export interface AgingReport {
 export async function getAgingReport(
   supabase: SupabaseClient,
   tenantId: string,
-  options?: { academic_year?: string; includeStudents?: boolean },
+  options?: { academic_year?: string; includeStudents?: boolean; branchId?: string },
 ): Promise<AgingReport> {
   const today = todayStr();
   const selectColumns = options?.includeStudents !== false
-    ? 'id, invoice_number, student_id, total_amount, paid_amount, due_date, status, students(name_en, name_ar, grade_id, guardian_id), academic_year'
-    : 'id, invoice_number, student_id, total_amount, paid_amount, due_date, status, academic_year';
+    ? 'id, invoice_number, student_id, branch_id, currency_code, total_amount, paid_amount, due_date, status, students(name_en, name_ar, grade_id, guardian_id), academic_year'
+    : 'id, invoice_number, student_id, branch_id, currency_code, total_amount, paid_amount, due_date, status, academic_year';
   let q: any = supabase
     .from('invoices')
     .select(selectColumns as any)
     .eq('tenant_id', tenantId)
     .in('status', ['issued', 'partial', 'overdue', 'viewed']);
+  if (options?.branchId) q = q.eq('branch_id', options.branchId);
   if (options?.academic_year) q = q.eq('academic_year', options.academic_year);
   const { data, error } = await q;
   if (error) throw error;
@@ -55,6 +56,8 @@ export async function getAgingReport(
     const item: any = {
       invoice_id: inv.id,
       invoice_number: inv.invoice_number,
+      branch_id: inv.branch_id,
+      currency_code: inv.currency_code,
       due_date: inv.due_date,
       balance,
       days_until_due: days,
@@ -82,22 +85,55 @@ export async function getExpectedCollections(
   tenantId: string,
   fromDate: string,
   toDate: string,
+  branchId?: string,
 ): Promise<ExpectedCollections> {
-  const { data: invoices } = await supabase
+  let invoiceQuery: any = supabase
     .from('invoices')
     .select('id, due_date, total_amount, paid_amount, status')
     .eq('tenant_id', tenantId)
     .gte('due_date', fromDate)
     .lte('due_date', toDate)
     .in('status', ['issued', 'partial', 'overdue', 'viewed']);
+  if (branchId) invoiceQuery = invoiceQuery.eq('branch_id', branchId);
+  const { data: invoices } = await invoiceQuery;
 
-  const { data: installments } = await supabase
-    .from('payment_plan_installments')
-    .select('id, due_date, amount, paid_amount, status')
-    .eq('tenant_id', tenantId)
-    .gte('due_date', fromDate)
-    .lte('due_date', toDate)
-    .in('status', ['pending', 'overdue']);
+  let installments: any[] = [];
+  if (branchId) {
+    const { data: branchStudents } = await supabase
+      .from('students')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .eq('branch_id', branchId);
+    const studentIds = (branchStudents ?? []).map((s: any) => s.id);
+    if (studentIds.length > 0) {
+      const { data: branchPlans } = await supabase
+        .from('payment_plans')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .in('student_id', studentIds);
+      const planIds = (branchPlans ?? []).map((p: any) => p.id);
+      if (planIds.length > 0) {
+        const { data: installmentData } = await supabase
+          .from('payment_plan_installments')
+          .select('id, due_date, amount, paid_amount, status')
+          .eq('tenant_id', tenantId)
+          .gte('due_date', fromDate)
+          .lte('due_date', toDate)
+          .in('status', ['pending', 'overdue'])
+          .in('plan_id', planIds);
+        installments = installmentData ?? [];
+      }
+    }
+  } else {
+    const { data: installmentData } = await supabase
+      .from('payment_plan_installments')
+      .select('id, due_date, amount, paid_amount, status')
+      .eq('tenant_id', tenantId)
+      .gte('due_date', fromDate)
+      .lte('due_date', toDate)
+      .in('status', ['pending', 'overdue']);
+    installments = installmentData ?? [];
+  }
 
   const byDate: Record<string, number> = {};
   let totalExpected = 0;
@@ -124,8 +160,8 @@ export async function getExpectedCollections(
     total_expected: totalExpected,
     by_date: byDate,
     sources: [
-      { source: 'invoices', amount: sar(invoices?.reduce((s, inv) => s + sar((Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0)), 0) ?? 0) },
-      { source: 'installments', amount: sar(installments?.reduce((s, inst) => s + sar((Number(inst.amount) || 0) - (Number(inst.paid_amount) || 0)), 0) ?? 0) },
+      { source: 'invoices', amount: sar(invoices?.reduce((s: number, inv: any) => s + sar((Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0)), 0) ?? 0) },
+      { source: 'installments', amount: sar(installments?.reduce((s: number, inst: any) => s + sar((Number(inst.amount) || 0) - (Number(inst.paid_amount) || 0)), 0) ?? 0) },
     ],
   };
 }

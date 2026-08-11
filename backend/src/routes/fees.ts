@@ -384,6 +384,7 @@ feesRouter.get('/invoices', async (req: AuthenticatedRequest, res) => {
 
     const status = req.query.status as string | undefined;
     const student_id = req.query.student_id as string | undefined;
+    const branch_id = req.query.branch_id as string | undefined;
 
     let query = supabase
       .from('invoices')
@@ -394,6 +395,7 @@ feesRouter.get('/invoices', async (req: AuthenticatedRequest, res) => {
 
     if (status) query = query.eq('status', status);
     if (student_id) query = query.eq('student_id', student_id);
+    if (branch_id) query = query.eq('branch_id', branch_id);
 
     const { data, count, error } = await query;
     if (error) throw error;

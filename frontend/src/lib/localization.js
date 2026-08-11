@@ -20,11 +20,8 @@ export function formatCurrency(value, localization, isRTL = false) {
   const loc = resolveLocale(localization, isRTL);
   const currencyCode = localization?.currencyCode || FALLBACK.currencyCode;
   if (!currencyCode) {
-    console.error('[localization] formatCurrency called without a resolved currencyCode; jurisdiction context may be missing');
-    return new Intl.NumberFormat(loc, {
-      minimumFractionDigits: localization?.numberFormat?.options?.minimumFractionDigits ?? FALLBACK.numberFormat.options.minimumFractionDigits,
-      maximumFractionDigits: localization?.numberFormat?.options?.maximumFractionDigits ?? FALLBACK.numberFormat.options.maximumFractionDigits,
-    }).format(Number(value));
+    // Localization not resolved yet; show a placeholder instead of an unlabelled number.
+    return '—';
   }
   const opts = {
     style: 'currency',
@@ -46,18 +43,13 @@ export function formatNumber(value, localization, isRTL = false) {
 export function getCurrencySymbol(localization, isRTL = false) {
   const symbol = localization?.currencySymbol;
   if (!symbol) {
-    console.error('[localization] getCurrencySymbol called without a resolved currencySymbol; jurisdiction context may be missing');
     return isRTL ? FALLBACK.currencySymbol.ar : FALLBACK.currencySymbol.en;
   }
   return isRTL ? symbol.ar : symbol.en;
 }
 
 export function getCurrencyCode(source) {
-  const code = source?.currency_code ?? source?.localization?.currencyCode ?? source?.currencyCode;
-  if (!code) {
-    console.error('[localization] getCurrencyCode: no currency code resolved for source', source);
-  }
-  return code || '';
+  return source?.currency_code ?? source?.localization?.currencyCode ?? source?.currencyCode ?? '';
 }
 
 export function formatDate(date, localization, isRTL = false, options = null) {

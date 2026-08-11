@@ -382,7 +382,7 @@ export class MetricsService {
           by_currency: Object.fromEntries([...arAgingByCurrency.entries()].sort(([a], [b]) => a.localeCompare(b))),
         };
       } else {
-        const aging = await getAgingReport(this.supabase, tenantId, { academic_year: academicYear?.id, includeStudents: false });
+        const aging = await getAgingReport(this.supabase, tenantId, { academic_year: academicYear?.id, includeStudents: false, branchId: branchId ?? undefined });
         arAging = {
           '0_30': aging.buckets.current ?? 0,
           '31_60': aging.buckets['1_30'] ?? 0,
@@ -409,7 +409,7 @@ export class MetricsService {
       revenueByFeeType = await getRevenueByFeeType(this.supabase, tenantId, periodStart, periodEnd);
       const forecastFrom = todayStr();
       const forecastTo = daysAgoStr(-90); // 90 days ahead
-      expectedCollections = await getExpectedCollections(this.supabase, tenantId, forecastFrom, forecastTo);
+      expectedCollections = await getExpectedCollections(this.supabase, tenantId, forecastFrom, forecastTo, branchId ?? undefined);
     }
 
     // === VAT position ===
