@@ -15,7 +15,7 @@ import { getTenantContext, subscribeTenantContext } from '../api/supabaseClient'
  * refetches when the tenant changes.
  */
 export function useTenantQuery(queryKey, queryFn, options = {}) {
-  const tenantCtx = useSyncExternalStore(subscribeTenantContext, getTenantContext);
+  const tenantCtx = useSyncExternalStore(subscribeTenantContext, getTenantContext, getTenantContext);
   const tenantReady = tenantCtx.isPlatformOwner || !!tenantCtx.tenantId;
   const { enabled: callerEnabled = true, ...rest } = options;
 
