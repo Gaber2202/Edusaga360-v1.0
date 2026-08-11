@@ -150,22 +150,29 @@ describe('platform-owner path still resolves to { data, error }', () => {
   });
 });
 
-describe('missing-tenant safety fallback never crashes array consumers', () => {
+describe('missing-tenant context fails closed so React Query retries', () => {
   beforeEach(() => {
-    // No tenant and not a platform owner -> tenantQuery returns its internal
-    // empty-but-chainable proxy. Pages must still be able to destructure + map.
+    // No tenant and not a platform owner -> tenantQuery must throw, not return
+    // an empty success that gets cached for 5 minutes.
     setTenantContext({ tenantId: null, isPlatformOwner: false });
   });
 
-  it('resolves to { data: [], error: null } through a full chain', async () => {
-    const { data = [] } = await tenantQuery('students')
+  it('throws TenantContextNotReadyError for a non-platform table', async () => {
+    await expect(
+      (async () =>
+        tenantQuery('students')
+          .select('*')
+          .match({ status: 'active' })
+          .order('created_date', { ascending: false })
+          .limit(100)
+      )()
+    ).rejects.toThrow(/tenantId is not set/);
+  });
+
+  it('still allows platform-only tables to be queried without a tenant', async () => {
+    const { data = [] } = await tenantQuery('currencies')
       .select('*')
-      .match({ status: 'active' })
-      .order('created_date', { ascending: false })
       .limit(100);
     expect(Array.isArray(data)).toBe(true);
-    expect(data.length).toBe(0);
-    // The downstream array ops that pages run must not throw.
-    expect(data.map((r) => r.id)).toEqual([]);
   });
 });
