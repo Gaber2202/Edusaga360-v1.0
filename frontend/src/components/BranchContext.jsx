@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { tenantQuery } from '../api/supabaseClient';
+import useTenantQuery from '../hooks/useTenantQuery';
 import { useTenant } from './TenantContext';
 import { useRole } from './RoleContext';
 
@@ -20,9 +20,9 @@ export function BranchProvider({ children }) {
   const tenantBranches = tenant?.branches;
   const shouldFetchBranches = !tenantBranches && (isPlatformOwner || !!tenantId);
 
-  const { data: fetchedBranches = [], isLoading: fetchedBranchesLoading } = useQuery({
-    queryKey: ['branches', tenantId],
-    queryFn: async () => {
+  const { data: fetchedBranches = [], isLoading: fetchedBranchesLoading } = useTenantQuery(
+    ['branches', tenantId],
+    async () => {
       if (isPlatformOwner) {
         const { data } = await tenantQuery('branches').select('*').match({ status: 'active' });
         return data || [];
@@ -31,9 +31,8 @@ export function BranchProvider({ children }) {
       const { data } = await tenantQuery('branches').select('*').match({ status: 'active', tenant_id: tenantId });
       return data || [];
     },
-    enabled: shouldFetchBranches,
-    staleTime: 60 * 1000,
-  });
+    { enabled: shouldFetchBranches, staleTime: 60 * 1000 }
+  );
 
   const branches = tenantBranches || fetchedBranches;
 
