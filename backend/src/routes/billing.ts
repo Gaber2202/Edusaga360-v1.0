@@ -245,16 +245,18 @@ const UpdateInstallmentSchema = z.object({
 billingRouter.get('/students', async (req: AuthenticatedRequest, res: Response) => {
   const tenant_id = await resolveTenantId(req);
   if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
-  const { search, limit: limitParam } = req.query as Record<string, string>;
+  const { search, limit: limitParam, branch_id } = req.query as Record<string, string>;
   const rowLimit = Math.min(parseInt(limitParam) || 50, 200);
 
   let q = supabase
     .from('students')
-    .select('id, name_en, name_ar, student_id, status, grades(name_en, name_ar)')
+    .select('id, name_en, name_ar, student_id, branch_id, status, grades(name_en, name_ar)')
     .eq('tenant_id', tenant_id)
     .eq('status', 'active')
     .order('name_en')
     .limit(rowLimit);
+
+  if (branch_id) q = q.eq('branch_id', branch_id);
 
   if (search) {
     const safe = sanitizeSearchTerm(search);
@@ -292,14 +294,15 @@ billingRouter.get('/fee-categories', async (req: AuthenticatedRequest, res: Resp
 
 billingRouter.get('/fee-structures', async (req: AuthenticatedRequest, res: Response) => {
   const tenant_id = req.user!.tenant_id!;
-  const { academic_year, grade, campus_id } = req.query as Record<string, string>;
+  const { academic_year, grade, campus_id, branch_id } = req.query as Record<string, string>;
+  const scopeId = branch_id || campus_id;
   let q = supabase
     .from('fee_structures')
     .select('*, fee_categories(code, name_ar, name_en, vat_treatment)')
     .eq('tenant_id', tenant_id);
   if (academic_year) q = q.eq('academic_year', academic_year);
   if (grade) q = q.or(`grade.eq.${grade},grade.is.null`);
-  if (campus_id) q = q.or(`campus_id.eq.${campus_id},campus_id.is.null`);
+  if (scopeId) q = q.or(`campus_id.eq.${scopeId},campus_id.is.null`);
   const { data, error } = await q.order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data);
@@ -724,7 +727,7 @@ billingRouter.get('/invoices', async (req: AuthenticatedRequest, res: Response) 
   if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
   const page = Math.max(1, parseInt((req.query.page as string) ?? '1', 10));
   const limit = Math.min(100, Math.max(1, parseInt((req.query.limit as string) ?? '20', 10)));
-  const { status, student_id, academic_year, from_date, to_date } = req.query as Record<string, string>;
+  const { status, student_id, academic_year, from_date, to_date, branch_id } = req.query as Record<string, string>;
 
   let q = supabase
     .from('invoices')
@@ -738,6 +741,7 @@ billingRouter.get('/invoices', async (req: AuthenticatedRequest, res: Response) 
   if (academic_year) q = q.eq('academic_year', academic_year);
   if (from_date) q = q.gte('date', from_date);
   if (to_date) q = q.lte('date', to_date);
+  if (branch_id) q = q.eq('branch_id', branch_id);
 
   const { data, count, error } = await q;
   if (error) return res.status(500).json({ error: error.message });
@@ -1120,13 +1124,14 @@ billingRouter.post('/payments', async (req: AuthenticatedRequest, res: Response)
 
 billingRouter.get('/payment-plans', async (req: AuthenticatedRequest, res: Response) => {
   const tenant_id = req.user!.tenant_id!;
-  const { student_id, status } = req.query as Record<string, string>;
+  const { student_id, status, branch_id } = req.query as Record<string, string>;
   let q = supabase
     .from('payment_plans')
-    .select('*, payment_plan_installments(*)')
+    .select('*, payment_plan_installments(*), students!inner(branch_id)')
     .eq('tenant_id', tenant_id);
   if (student_id) q = q.eq('student_id', student_id);
   if (status) q = q.eq('status', status);
+  if (branch_id) q = q.eq('students.branch_id', branch_id);
   const { data, error } = await q.order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data);
@@ -1891,12 +1896,13 @@ billingRouter.post('/moyasar/reconcile', requireRole(FINANCE_ROLES), async (req:
 billingRouter.get('/arrears', async (req: AuthenticatedRequest, res: Response) => {
   const tenant_id = await resolveTenantId(req);
   if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
-  const { academic_year, summary } = req.query as Record<string, string>;
+  const { academic_year, summary, branch_id } = req.query as Record<string, string>;
   const isAccountant = req.user?.role === 'accountant';
 
   const report = await getAgingReport(supabase, tenant_id, {
     academic_year,
     includeStudents: !isAccountant && summary !== 'true',
+    branchId: branch_id,
   });
   return res.json(report);
 });
@@ -1906,16 +1912,18 @@ billingRouter.get('/arrears', async (req: AuthenticatedRequest, res: Response) =
 billingRouter.get('/vat-report', async (req: AuthenticatedRequest, res: Response) => {
   const tenant_id = await resolveTenantId(req);
   if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
-  const { from_date, to_date } = req.query as Record<string, string>;
+  const { from_date, to_date, branch_id } = req.query as Record<string, string>;
   if (!from_date || !to_date) return res.status(400).json({ error: 'from_date and to_date required' });
 
-  const { data, error } = await supabase
+  let vatQuery: any = supabase
     .from('invoices')
     .select('total_amount, vat_amount, subtotal, discount_amount, invoice_type, status')
     .eq('tenant_id', tenant_id)
     .neq('status', 'cancelled')
     .gte('date', from_date)
     .lte('date', to_date);
+  if (branch_id) vatQuery = vatQuery.eq('branch_id', branch_id);
+  const { data, error } = await vatQuery;
 
   if (error) return res.status(500).json({ error: error.message });
 
@@ -2071,10 +2079,10 @@ billingRouter.post('/recurring-invoices/generate', requireRole(FINANCE_ROLES), a
 billingRouter.get('/expected-collections', async (req: AuthenticatedRequest, res: Response) => {
   const tenant_id = await resolveTenantId(req);
   if (!tenant_id) return res.status(400).json({ error: 'No tenant available' });
-  const { from_date, to_date } = req.query as Record<string, string>;
+  const { from_date, to_date, branch_id } = req.query as Record<string, string>;
   if (!from_date || !to_date) return res.status(400).json({ error: 'from_date and to_date required' });
 
-  const report = await getExpectedCollections(supabase, tenant_id, from_date, to_date);
+  const report = await getExpectedCollections(supabase, tenant_id, from_date, to_date, branch_id);
   return res.json(report);
 });
 

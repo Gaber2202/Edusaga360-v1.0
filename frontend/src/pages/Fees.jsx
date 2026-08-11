@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { useTenant } from '../components/TenantContext';
+import { useBranch } from '../components/BranchContext';
 import { useJurisdictionFeatures } from '../components/JurisdictionFeatureContext';
 import { formatCurrency, getCurrencySymbol } from '../lib/localization';
 import { Button } from '../components/ui/button';
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 import { createPageUrl } from '../utils';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { useTenantQuery } from '../hooks/useTenantQuery';
 import { supabase, tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import JurisdictionFeatureGate from '../components/JurisdictionFeatureGate';
 import { EINVOICING_FEATURES } from '../lib/jurisdictionFeatures';
@@ -89,7 +91,7 @@ function VatBadge({ treatment, vatRate }) {
 
 // ─── KPI cards ─────────────────────────────────────────────────────────────────
 
-function KpiCard({ label, value, sub, icon: Icon, color = 'blue' }) {
+function KpiCard({ label, value, amounts, tenant, isRTL, sub, icon: Icon, color = 'blue' }) {
   const colors = {
     blue: 'bg-najdi-50 text-najdi-700',
     green: 'bg-green-50 text-green-600',
@@ -97,6 +99,7 @@ function KpiCard({ label, value, sub, icon: Icon, color = 'blue' }) {
     red: 'bg-red-50 text-red-600',
     purple: 'bg-purple-50 text-purple-600',
   };
+  const display = amounts ? <CurrencyStack amounts={amounts} tenant={tenant} isRTL={isRTL} /> : value;
   return (
     <Card className="border-0 shadow-sm">
       <CardContent className="p-4 flex items-start gap-3">
@@ -105,7 +108,7 @@ function KpiCard({ label, value, sub, icon: Icon, color = 'blue' }) {
         </div>
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground truncate">{label}</p>
-          <p className="text-lg font-bold text-ink truncate">{value}</p>
+          <div className="text-lg font-bold text-ink truncate">{display}</div>
           {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
         </div>
       </CardContent>
@@ -114,46 +117,82 @@ function KpiCard({ label, value, sub, icon: Icon, color = 'blue' }) {
 }
 
 // ─── Currency helpers for branch-aware invoice rows ───────────────────────────
+function currencyLocalization(tenant, currencyCode) {
+  if (!currencyCode) return tenant?.localization || {};
+  if (tenant?.localization?.currencyCode === currencyCode) return tenant.localization;
+  const branchEntry = Object.values(tenant?.branch_localization_map || {}).find((loc) => loc?.currencyCode === currencyCode);
+  if (branchEntry) return branchEntry;
+  const branchCurrency = tenant?.branch_currencies?.find((c) => c.currencyCode === currencyCode);
+  const symbol = branchCurrency?.currencySymbol || { en: currencyCode, ar: currencyCode };
+  return { ...(tenant?.localization || {}), currencyCode, currencySymbol: symbol };
+}
+
+function rowCurrencyLocalization(row, tenant) {
+  const branchId = row?.branch_id || row?.campus_id || row?.students?.branch_id || null;
+  if (branchId && tenant?.branch_localization_map?.[branchId]) {
+    return tenant.branch_localization_map[branchId];
+  }
+  if (row?.currency_code) {
+    return currencyLocalization(tenant, row.currency_code);
+  }
+  return tenant?.localization || {};
+}
+
+function formatRowCurrency(value, row, tenant, isRTL) {
+  return formatCurrency(value, rowCurrencyLocalization(row, tenant), isRTL);
+}
+
 function invoiceCurrencyLocalization(inv, tenant) {
-  return tenant?.branch_localization_map?.[inv.branch_id] || tenant?.localization || {};
+  return rowCurrencyLocalization(inv, tenant);
 }
 
 function sumByCurrency(rows, tenant, valueFn) {
   return rows.reduce((acc, row) => {
-    const loc = invoiceCurrencyLocalization(row, tenant);
+    const loc = rowCurrencyLocalization(row, tenant);
     const currency = loc.currencyCode || (tenant?.is_multi_currency ? '—' : '');
-    acc[currency] = (acc[currency] || 0) + valueFn(row);
+    if (currency) {
+      acc[currency] = (acc[currency] || 0) + valueFn(row);
+    }
     return acc;
   }, {});
 }
 
-function MultiCurrencyTotals({ amounts, tenant, isRTL, labelTotal, labelBalance }) {
-  const currencies = Object.keys(amounts || {});
+function CurrencyStack({ amounts, tenant, isRTL }) {
+  const currencies = Object.keys(amounts || {}).filter((c) => c && c !== '—');
+  if (currencies.length === 0) return '—';
+  if (currencies.length === 1) {
+    return <span>{formatCurrency(amounts[currencies[0]], currencyLocalization(tenant, currencies[0]), isRTL)}</span>;
+  }
+  return (
+    <div className="space-y-0.5">
+      {currencies.map((currency) => (
+        <div key={currency} className="text-xs font-semibold text-ink">
+          {formatCurrency(amounts[currency], currencyLocalization(tenant, currency), isRTL)}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MultiCurrencyTotals({ amounts, tenant, isRTL, labelTotal }) {
+  const currencies = Object.keys(amounts || {}).filter((c) => c && c !== '—');
   if (currencies.length === 0) return null;
-  if (currencies.length === 1 && tenant?.is_multi_currency) {
-    const currency = currencies[0];
-    const loc = { ...tenant?.localization, currencyCode: currency };
+  if (currencies.length === 1) {
     return (
       <div className="text-sm text-muted-foreground">
-        {labelTotal}: <span className="font-semibold text-ink">{formatCurrency(amounts[currency], loc, isRTL)}</span>
+        {labelTotal}: <span className="font-semibold text-ink">{formatCurrency(amounts[currencies[0]], currencyLocalization(tenant, currencies[0]), isRTL)}</span>
       </div>
     );
   }
-  if (currencies.length > 1) {
-    return (
-      <div className="space-y-1">
-        {currencies.map((currency) => {
-          const loc = { ...tenant?.localization, currencyCode: currency };
-          return (
-            <div key={currency} className="text-sm text-muted-foreground">
-              {labelTotal} {currency}: <span className="font-semibold text-ink">{formatCurrency(amounts[currency], loc, isRTL)}</span>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-  return null;
+  return (
+    <div className="space-y-1">
+      {currencies.map((currency) => (
+        <div key={currency} className="text-sm text-muted-foreground">
+          {labelTotal} {currency}: <span className="font-semibold text-ink">{formatCurrency(amounts[currency], currencyLocalization(tenant, currency), isRTL)}</span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 // ─── Invoice list tab ──────────────────────────────────────────────────────────
@@ -166,6 +205,7 @@ function InvoicesTab({ token, isRTL, userRole, tenantId, tenant }) {
   const [dunningResult, setDunningResult] = useState(null);
 
   const { tenantFilter, hasTenantAccess } = useTenantFilter();
+  const { branchFilter, filterByBranch, selectedBranchId } = useBranch();
   const { areAnyEnabled } = useJurisdictionFeatures();
   const showEInvoice = areAnyEnabled(EINVOICING_FEATURES);
   const PAGE_SIZE = 20;
@@ -176,22 +216,19 @@ function InvoicesTab({ token, isRTL, userRole, tenantId, tenant }) {
   // (it falls back to "first active tenant"), which showed an empty list even
   // when invoices existed. Reading through tenantFilter shows this tenant's
   // invoices (or all of them for the platform owner) and survives a backend outage.
-  const { data: allInvoices = [], isLoading } = useQuery({
-    queryKey: ['invoices-list', tenantId, filters.status],
-    queryFn: () => fetchData(
-      // Select only invoice columns — the previous students(...) embed referenced
-      // students.grade, which doesn't exist (the column is grade_id), so PostgREST
-      // rejected the whole query and the list came back empty. The invoice already
-      // carries denormalized student_name + grade, so no join is needed.
+  const { data: rawInvoices = [], isLoading } = useTenantQuery(
+    ['invoices-list', tenantId, selectedBranchId, filters.status],
+    () => fetchData(
       tenantQuery('invoices')
         .select('*')
-        .match(tenantFilter(filters.status ? { status: filters.status } : {}))
+        .match(tenantFilter(branchFilter(filters.status ? { status: filters.status } : {})))
         .order('created_at', { ascending: false })
         .limit(500)
     ),
-    enabled: hasTenantAccess,
-  });
+    { enabled: hasTenantAccess && !!tenant },
+  );
 
+  const allInvoices = filterByBranch(rawInvoices);
   const total = allInvoices.length;
   const invoices = allInvoices.slice((filters.page - 1) * PAGE_SIZE, filters.page * PAGE_SIZE);
   const pagination = { page: filters.page, limit: PAGE_SIZE, total, pages: Math.ceil(total / PAGE_SIZE) };
@@ -400,14 +437,14 @@ function InvoicesTab({ token, isRTL, userRole, tenantId, tenant }) {
 function ArrearsTab({ token, isRTL, tenantId, tenant }) {
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(`${currentYear}-${currentYear + 1}`);
+  const { branchFilter, selectedBranchId } = useBranch();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['billing-arrears', tenantId, year],
-    queryFn: () => billingGet(`/arrears?academic_year=${year}`, token),
-    enabled: !!token,
+    queryKey: ['billing-arrears', tenantId, selectedBranchId, year],
+    queryFn: () => billingGet(`/arrears?academic_year=${year}${selectedBranchId ? `&branch_id=${selectedBranchId}` : ''}`, token),
+    enabled: !!token && !!tenant,
   });
 
-  const buckets = data?.buckets ?? {};
   const items = data?.items ?? [];
 
   const BUCKET_LABELS = {
@@ -416,6 +453,10 @@ function ArrearsTab({ token, isRTL, tenantId, tenant }) {
     '61_90': { ar: '61–90 يوم', en: '61–90 Days' },
     '90_plus': { ar: '+90 يوم', en: '90+ Days' },
   };
+
+  const bucketAmounts = (bucket) => sumByCurrency(items.filter((i) => i.bucket === bucket), tenant, (i) => i.balance);
+  const totalArrears = sumByCurrency(items, tenant, (i) => i.balance);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -435,17 +476,17 @@ function ArrearsTab({ token, isRTL, tenantId, tenant }) {
           <Card key={k} className="border-0 shadow-sm">
             <CardContent className="p-4">
               <p className="text-xs text-muted-foreground">{isRTL ? labels.ar : labels.en}</p>
-              <p className="text-lg font-bold text-ink mt-1">{formatCurrency(buckets[k] ?? 0, tenant?.localization, isRTL)}</p>
+              <div className="text-lg font-bold text-ink mt-1"><CurrencyStack amounts={bucketAmounts(k)} tenant={tenant} isRTL={isRTL} /></div>
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Total */}
-      {data?.total_outstanding != null && (
+      {items.length > 0 && (
         <div className="rounded-lg bg-red-50 border border-red-100 p-4 flex items-center justify-between">
           <span className="font-semibold text-red-700">{isRTL ? 'إجمالي المتأخرات' : 'Total Outstanding'}</span>
-          <span className="text-xl font-bold text-red-700">{formatCurrency(data.total_outstanding, tenant?.localization, isRTL)}</span>
+          <span className="text-xl font-bold text-red-700"><CurrencyStack amounts={totalArrears} tenant={tenant} isRTL={isRTL} /></span>
         </div>
       )}
 
@@ -468,21 +509,21 @@ function ArrearsTab({ token, isRTL, tenantId, tenant }) {
             ) : items.length === 0 ? (
               <tr><td colSpan={5} className="py-8 text-center text-green-600 font-medium">{isRTL ? 'لا توجد متأخرات' : 'No arrears — all clear!'}</td></tr>
             ) : items.map((inv) => (
-              <tr key={inv.id} className="hover:bg-sand">
+              <tr key={inv.invoice_id} className="hover:bg-sand">
                 <td className="px-4 py-3 text-xs font-medium text-ink">
-                  {isRTL ? inv.students?.name_ar || inv.students?.name_en : inv.students?.name_en || inv.students?.name_ar}
-                  {inv.students?.grade && <span className="text-muted-foreground ms-1">({inv.students.grade})</span>}
+                  {isRTL ? inv.student?.name_ar || inv.student?.name_en : inv.student?.name_en || inv.student?.name_ar}
+                  {inv.student?.grade && <span className="text-muted-foreground ms-1">({inv.student.grade})</span>}
                 </td>
                 <td className="px-4 py-3 text-xs font-mono text-najdi-900">{inv.invoice_number}</td>
                 <td className="px-4 py-3 text-xs text-muted-foreground">{inv.due_date}</td>
-                <td className="px-4 py-3 text-end text-xs font-semibold text-red-600">{formatCurrency(inv.outstanding_balance, tenant?.localization, isRTL)}</td>
+                <td className="px-4 py-3 text-end text-xs font-semibold text-red-600">{formatRowCurrency(inv.balance, inv, tenant, isRTL)}</td>
                 <td className="px-4 py-3">
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                    inv.days_overdue > 90 ? 'bg-red-100 text-red-700' :
-                    inv.days_overdue > 60 ? 'bg-orange-100 text-orange-700' :
-                    inv.days_overdue > 30 ? 'bg-yellow-100 text-yellow-700' :
+                    inv.days_until_due > 90 ? 'bg-red-100 text-red-700' :
+                    inv.days_until_due > 60 ? 'bg-orange-100 text-orange-700' :
+                    inv.days_until_due > 30 ? 'bg-yellow-100 text-yellow-700' :
                     'bg-najdi-50 text-najdi-900'
-                  }`}>{inv.days_overdue}d</span>
+                  }`}>{inv.days_until_due}d</span>
                 </td>
               </tr>
             ))}
@@ -500,12 +541,47 @@ function VATReportTab({ token, isRTL, tenantId, tenant }) {
   const now = new Date();
   const [from, setFrom] = useState(new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]);
   const [to, setTo] = useState(now.toISOString().split('T')[0]);
+  const { selectedBranchId } = useBranch();
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['billing-vat', tenantId, from, to],
-    queryFn: () => billingGet(`/vat-report?from_date=${from}&to_date=${to}`, token),
-    enabled: !!token,
+  const { data: invoiceData, isLoading, refetch } = useQuery({
+    queryKey: ['billing-vat-invoices', tenantId, selectedBranchId, from, to],
+    queryFn: () => billingGet(`/invoices?from_date=${from}&to_date=${to}&limit=500${selectedBranchId ? `&branch_id=${selectedBranchId}` : ''}`, token),
+    enabled: !!token && !!tenant,
   });
+
+  const invoices = (invoiceData?.data ?? []).filter((inv) => inv.status !== 'cancelled');
+  const regularInvoices = invoices.filter((inv) => inv.invoice_type !== 'credit_note');
+  const creditNotes = invoices.filter((inv) => inv.invoice_type === 'credit_note');
+
+  const grossRevenue = sumByCurrency(regularInvoices, tenant, (r) => Number(r.subtotal) || 0);
+  const discounts = sumByCurrency(regularInvoices, tenant, (r) => Number(r.discount_amount) || 0);
+  const netTaxable = {};
+  const vatCollected = sumByCurrency(regularInvoices, tenant, (r) => Number(r.vat_amount) || 0);
+  const creditVat = sumByCurrency(creditNotes, tenant, (r) => Math.abs(Number(r.vat_amount) || 0));
+  const netVatPayable = {};
+
+  const allCurrencies = new Set([...Object.keys(grossRevenue), ...Object.keys(discounts), ...Object.keys(vatCollected), ...Object.keys(creditVat)]);
+  allCurrencies.forEach((c) => {
+    netTaxable[c] = (grossRevenue[c] || 0) - (discounts[c] || 0);
+    netVatPayable[c] = (vatCollected[c] || 0) - (creditVat[c] || 0);
+  });
+
+  const vatCards = [
+    { label: isRTL ? 'إجمالي الإيرادات' : 'Gross Revenue', amounts: grossRevenue, color: 'blue' },
+    { label: isRTL ? 'إجمالي الخصومات' : 'Total Discounts', amounts: discounts, color: 'yellow' },
+    { label: isRTL ? 'الإيرادات الخاضعة للضريبة' : 'Net Taxable', amounts: netTaxable, color: 'purple' },
+    { label: isRTL ? 'ضريبة القيمة المضافة المحصلة' : 'VAT Collected', amounts: vatCollected, color: 'green' },
+    { label: isRTL ? 'إشعارات الخصم' : 'Credit Notes VAT', amounts: creditVat, color: 'red' },
+    { label: isRTL ? 'صافي الضريبة المستحقة' : 'Net VAT Payable', amounts: netVatPayable, color: 'green' },
+  ];
+
+  const vatNote = tenant?.is_multi_currency
+    ? (isRTL
+      ? 'تختلف معدلات ضريبة القيمة المضافة حسب الاختصاص: السعودية 15٪، الإمارات 5٪، قطر 0٪.'
+      : 'VAT rates vary by jurisdiction: Saudi Arabia 15%, UAE 5%, Qatar 0%.')
+    : (isRTL
+      ? `التعليم معفى من ضريبة القيمة المضافة. يخضع للضريبة عند ${Math.round((tenant?.vat_rate || 0.15) * 100)}٪: النقل، الوجبات، الزي، الكتب، الأنشطة.`
+      : `Tuition is VAT-exempt. Taxable at ${Math.round((tenant?.vat_rate || 0.15) * 100)}%: transport, meals, uniforms, books, activities.`);
 
   return (
     <div className="space-y-4">
@@ -525,33 +601,18 @@ function VATReportTab({ token, isRTL, tenantId, tenant }) {
 
       {isLoading ? (
         <div className="py-12 text-center text-muted-foreground">{isRTL ? 'جاري التحميل…' : 'Loading…'}</div>
-      ) : data ? (
+      ) : (
         <div className="grid gap-4">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {[
-              { label: isRTL ? 'إجمالي الإيرادات' : 'Gross Revenue', value: formatCurrency(data.gross_revenue, tenant?.localization, isRTL), color: 'blue' },
-              { label: isRTL ? 'إجمالي الخصومات' : 'Total Discounts', value: formatCurrency(data.total_discounts, tenant?.localization, isRTL), color: 'yellow' },
-              { label: isRTL ? 'الإيرادات الخاضعة للضريبة' : 'Net Taxable', value: formatCurrency(data.net_taxable_revenue, tenant?.localization, isRTL), color: 'purple' },
-              { label: isRTL ? 'ضريبة القيمة المضافة المحصلة' : 'VAT Collected', value: formatCurrency(data.vat_collected, tenant?.localization, isRTL), color: 'green' },
-              { label: isRTL ? 'إشعارات الخصم' : 'Credit Notes VAT', value: formatCurrency(data.credit_notes?.vat, tenant?.localization, isRTL), color: 'red' },
-              { label: isRTL ? 'صافي الضريبة المستحقة' : 'Net VAT Payable', value: formatCurrency(data.net_vat_payable, tenant?.localization, isRTL), color: 'green' },
-            ].map((item) => (
-              <Card key={item.label} className="border-0 shadow-sm">
-                <CardContent className="p-4">
-                  <p className="text-xs text-muted-foreground">{item.label}</p>
-                  <p className="text-base font-bold text-ink mt-1">{item.value}</p>
-                </CardContent>
-              </Card>
+            {vatCards.map((item) => (
+              <KpiCard key={item.label} label={item.label} amounts={item.amounts} tenant={tenant} isRTL={isRTL} icon={Receipt} color={item.color} />
             ))}
           </div>
           <div className="rounded-lg bg-najdi-50 border border-najdi-100 p-4 text-sm text-najdi-900">
-            <strong>{isRTL ? 'ملاحظة ضريبية:' : 'VAT Note:'}</strong>{' '}
-            {isRTL
-              ? `التعليم معفى من ضريبة القيمة المضافة. يخضع للضريبة عند ${Math.round((tenant?.vat_rate || 0.15) * 100)}٪: النقل، الوجبات، الزي، الكتب، الأنشطة.`
-              : `Tuition is VAT-exempt. Taxable at ${Math.round((tenant?.vat_rate || 0.15) * 100)}%: transport, meals, uniforms, books, activities.`}
+            <strong>{isRTL ? 'ملاحظة ضريبية:' : 'VAT Note:'}</strong>{' '}{vatNote}
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -562,11 +623,12 @@ function FeeStructuresTab({ token, isRTL, tenantId, tenant }) {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ academic_year: '', category_id: '', grade: '', amount: '', installment_count: '1', is_mandatory: true });
+  const { selectedBranchId } = useBranch();
 
   const { data: structures = [], isLoading } = useQuery({
-    queryKey: ['fee-structures', tenantId],
-    queryFn: () => billingGet('/fee-structures', token),
-    enabled: !!token,
+    queryKey: ['fee-structures', tenantId, selectedBranchId],
+    queryFn: () => billingGet(`/fee-structures${selectedBranchId ? `?branch_id=${selectedBranchId}` : ''}`, token),
+    enabled: !!token && !!tenant,
   });
 
   const { data: categories = [] } = useQuery({
@@ -615,7 +677,7 @@ function FeeStructuresTab({ token, isRTL, tenantId, tenant }) {
                 </td>
                 <td className="px-4 py-3 text-xs text-muted-foreground">{s.academic_year}</td>
                 <td className="px-4 py-3 text-xs text-muted-foreground">{s.grade || (isRTL ? 'كل الصفوف' : 'All Grades')}</td>
-                <td className="px-4 py-3 text-end text-xs font-semibold text-ink">{formatCurrency(s.amount, tenant?.localization, isRTL)}</td>
+                <td className="px-4 py-3 text-end text-xs font-semibold text-ink">{formatRowCurrency(s.amount, s, tenant, isRTL)}</td>
                 <td className="px-4 py-3"><VatBadge treatment={s.fee_categories?.vat_treatment} vatRate={tenant?.vat_rate} /></td>
                 <td className="px-4 py-3 text-xs text-muted-foreground">{s.installment_count > 1 ? `${s.installment_count}×` : (isRTL ? 'دفعة واحدة' : 'Lump sum')}</td>
               </tr>
@@ -632,7 +694,7 @@ function FeeStructuresTab({ token, isRTL, tenantId, tenant }) {
             {[
               { key: 'academic_year', label: isRTL ? 'السنة الأكاديمية' : 'Academic Year', placeholder: '2025-2026' },
               { key: 'grade', label: isRTL ? 'الصف (اختياري)' : 'Grade (optional)', placeholder: 'G1' },
-              { key: 'amount', label: isRTL ? `المبلغ (${getCurrencySymbol(tenant?.localization, isRTL)})` : `Amount (${getCurrencySymbol(tenant?.localization, isRTL)})`, type: 'number' },
+              { key: 'amount', label: isRTL ? `المبلغ (${getCurrencySymbol(selectedBranchId ? tenant?.branch_localization_map?.[selectedBranchId] : tenant?.localization, isRTL)})` : `Amount (${getCurrencySymbol(selectedBranchId ? tenant?.branch_localization_map?.[selectedBranchId] : tenant?.localization, isRTL)})`, type: 'number' },
               { key: 'installment_count', label: isRTL ? 'عدد الأقساط' : 'Installments', type: 'number' },
             ].map(({ key, label, placeholder, type }) => (
               <div key={key}>
@@ -681,11 +743,13 @@ function DiscountRulesTab({ token, isRTL, tenantId, tenant }) {
     calculation: 'percentage', value: '', max_amount: '', priority: '100',
     stacking: 'allowed', academic_year: '',
   });
+  const { selectedBranchId } = useBranch();
+  const discountCurrency = selectedBranchId ? tenant?.branch_localization_map?.[selectedBranchId] : tenant?.localization;
 
   const { data: rules = [], isLoading } = useQuery({
-    queryKey: ['discount-rules', tenantId],
+    queryKey: ['discount-rules', tenantId, selectedBranchId],
     queryFn: () => billingGet('/discount-rules', token),
-    enabled: !!token,
+    enabled: !!token && !!tenant,
   });
 
   const createMutation = useMutation({
@@ -730,8 +794,8 @@ function DiscountRulesTab({ token, isRTL, tenantId, tenant }) {
               </div>
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <span className="px-2 py-0.5 rounded-full bg-sand-alt">{TYPE_LABELS[r.discount_type]?.[isRTL ? 'ar' : 'en'] ?? r.discount_type}</span>
-                <span className="font-semibold">{r.calculation === 'percentage' ? `${r.value}%` : formatCurrency(r.value, tenant?.localization, isRTL)}</span>
-                {r.max_amount && <span className="text-muted-foreground">{isRTL ? 'حد' : 'cap'} {formatCurrency(r.max_amount, tenant?.localization, isRTL)}</span>}
+                <span className="font-semibold">{r.calculation === 'percentage' ? `${r.value}%` : formatCurrency(r.value, discountCurrency, isRTL)}</span>
+                {r.max_amount && <span className="text-muted-foreground">{isRTL ? 'حد' : 'cap'} {formatCurrency(r.max_amount, discountCurrency, isRTL)}</span>}
                 <span className={`px-2 py-0.5 rounded-full ${r.stacking === 'allowed' ? 'bg-green-50 text-green-700' : r.stacking === 'blocked' ? 'bg-red-50 text-red-700' : 'bg-najdi-50 text-najdi-900'}`}>
                   {r.stacking}
                 </span>
@@ -753,7 +817,7 @@ function DiscountRulesTab({ token, isRTL, tenantId, tenant }) {
               { key: 'name_en', label: 'Name (EN)' },
               { key: 'name_ar', label: 'Name (AR)' },
               { key: 'value', label: isRTL ? 'القيمة' : 'Value', type: 'number' },
-              { key: 'max_amount', label: isRTL ? 'الحد الأقصى' : `Max Amount (${getCurrencySymbol(tenant?.localization, isRTL)})`, type: 'number' },
+              { key: 'max_amount', label: isRTL ? 'الحد الأقصى' : `Max Amount (${getCurrencySymbol(discountCurrency, isRTL)})`, type: 'number' },
               { key: 'priority', label: isRTL ? 'الأولوية' : 'Priority', type: 'number' },
               { key: 'academic_year', label: isRTL ? 'السنة (اختياري)' : 'Year (optional)', placeholder: '2025-2026' },
             ].map(({ key, label, placeholder, type }) => (
@@ -790,10 +854,11 @@ function DiscountRulesTab({ token, isRTL, tenantId, tenant }) {
 // ─── Payment Plans tab ─────────────────────────────────────────────────────────
 
 function PaymentPlansTab({ token, isRTL, tenantId, tenant }) {
+  const { selectedBranchId } = useBranch();
   const { data: plans = [], isLoading } = useQuery({
-    queryKey: ['payment-plans', tenantId],
-    queryFn: () => billingGet('/payment-plans', token),
-    enabled: !!token,
+    queryKey: ['payment-plans', tenantId, selectedBranchId],
+    queryFn: () => billingGet(`/payment-plans${selectedBranchId ? `?branch_id=${selectedBranchId}` : ''}`, token),
+    enabled: !!token && !!tenant,
   });
 
   return (
@@ -814,7 +879,7 @@ function PaymentPlansTab({ token, isRTL, tenantId, tenant }) {
                   <div className="text-xs text-muted-foreground">{plan.plan_type} · {paidCount}/{installments.length} {isRTL ? 'مدفوع' : 'paid'}</div>
                 </div>
                 <div className="text-end">
-                  <div className="font-bold text-ink">{formatCurrency(plan.total_amount, tenant?.localization, isRTL)}</div>
+                  <div className="font-bold text-ink">{formatRowCurrency(plan.total_amount, plan, tenant, isRTL)}</div>
                   <StatusBadge status={plan.status} isRTL={isRTL} />
                 </div>
               </div>
@@ -827,7 +892,7 @@ function PaymentPlansTab({ token, isRTL, tenantId, tenant }) {
                       inst.status === 'waived' ? 'bg-sand-alt text-muted-foreground' :
                       'bg-najdi-50 text-najdi-900'
                     }`}>
-                      #{inst.installment_no} · {formatCurrency(inst.amount, tenant?.localization, isRTL)} · {inst.due_date}
+                      #{inst.installment_no} · {formatRowCurrency(inst.amount, plan, tenant, isRTL)} · {inst.due_date}
                     </div>
                   ))}
                 </div>
@@ -842,49 +907,65 @@ function PaymentPlansTab({ token, isRTL, tenantId, tenant }) {
 
 // ─── Dashboard summary tab ─────────────────────────────────────────────────────
 
+function bucketForInvoice(inv) {
+  if (inv.status === 'paid' || inv.status === 'cancelled') return null;
+  const due = new Date(inv.due_date);
+  const today = new Date();
+  const diff = Math.floor((today - due) / (1000 * 60 * 60 * 24));
+  if (diff <= 0) return null;
+  if (diff <= 30) return '1_30';
+  if (diff <= 60) return '31_60';
+  if (diff <= 90) return '61_90';
+  return '90_plus';
+}
+
 function DashboardTab({ token, isRTL, tenantId, tenant }) {
   const today = new Date();
   const from = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
   const to = today.toISOString().split('T')[0];
+  const { selectedBranchId } = useBranch();
 
-  const { data: vat } = useQuery({
-    queryKey: ['billing-vat-dash', tenantId, from, to],
-    queryFn: () => billingGet(`/vat-report?from_date=${from}&to_date=${to}`, token),
-    enabled: !!token,
+  const { data: invoiceData, isLoading } = useQuery({
+    queryKey: ['billing-dash-invoices', tenantId, selectedBranchId],
+    queryFn: () => billingGet(`/invoices?limit=500${selectedBranchId ? `&branch_id=${selectedBranchId}` : ''}`, token),
+    enabled: !!token && !!tenant,
   });
-  const { data: arrears } = useQuery({
-    queryKey: ['billing-arrears-dash', tenantId],
-    queryFn: () => billingGet('/arrears', token),
-    enabled: !!token,
-  });
-  const { data: invoiceData } = useQuery({
-    queryKey: ['billing-invoices-dash', tenantId],
-    queryFn: () => billingGet('/invoices?limit=5', token),
-    enabled: !!token,
-  });
+
+  const invoices = invoiceData?.data ?? [];
+  const monthInvoices = invoices.filter((inv) => inv.status !== 'cancelled' && inv.date >= from && inv.date <= to);
+  const outstandingInvoices = invoices.filter((inv) => ['issued', 'partial', 'overdue', 'viewed'].includes(inv.status));
+
+  const monthRevenue = sumByCurrency(monthInvoices, tenant, (r) => Number(r.subtotal) || 0);
+  const monthVat = sumByCurrency(monthInvoices, tenant, (r) => Number(r.vat_amount) || 0);
+  const totalArrears = sumByCurrency(outstandingInvoices, tenant, (r) => Math.max(0, (Number(r.total_amount) || 0) - (Number(r.paid_amount) || 0)));
+  const monthCount = monthInvoices.length;
+
+  const bucketAmounts = (key) => sumByCurrency(outstandingInvoices.filter((inv) => bucketForInvoice(inv) === key), tenant, (r) => Math.max(0, (Number(r.total_amount) || 0) - (Number(r.paid_amount) || 0)));
 
   const kpis = [
-    { label: isRTL ? 'إيرادات الشهر' : 'Month Revenue', value: formatCurrency(vat?.gross_revenue, tenant?.localization, isRTL), icon: TrendingUp, color: 'green' },
-    { label: isRTL ? 'ضريبة القيمة المضافة' : 'VAT Collected', value: formatCurrency(vat?.vat_collected, tenant?.localization, isRTL), icon: Receipt, color: 'purple' },
-    { label: isRTL ? 'إجمالي المتأخرات' : 'Total Arrears', value: formatCurrency(arrears?.total_outstanding, tenant?.localization, isRTL), icon: AlertTriangle, color: 'red' },
-    { label: isRTL ? 'فواتير هذا الشهر' : 'Invoices (month)', value: invoiceData?.pagination?.total ?? '—', icon: FileText, color: 'blue' },
+    { label: isRTL ? 'إيرادات الشهر' : 'Month Revenue', amounts: monthRevenue, icon: TrendingUp, color: 'green' },
+    { label: isRTL ? 'ضريبة القيمة المضافة' : 'VAT Collected', amounts: monthVat, icon: Receipt, color: 'purple' },
+    { label: isRTL ? 'إجمالي المتأخرات' : 'Total Arrears', amounts: totalArrears, icon: AlertTriangle, color: 'red' },
+    { label: isRTL ? 'فواتير هذا الشهر' : 'Invoices (month)', value: monthCount, icon: FileText, color: 'blue' },
   ];
+
+  const recentInvoices = [...monthInvoices].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {kpis.map((k) => <KpiCard key={k.label} {...k} />)}
+        {kpis.map((k) => <KpiCard key={k.label} {...k} tenant={tenant} isRTL={isRTL} />)}
       </div>
 
       {/* Aging breakdown */}
-      {arrears?.buckets && (
+      {outstandingInvoices.length > 0 && (
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-2"><CardTitle className="text-sm">{isRTL ? 'تحليل المتأخرات' : 'Arrears Aging'}</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-4 gap-3">
             {[['1_30', '1–30d'], ['31_60', '31–60d'], ['61_90', '61–90d'], ['90_plus', '90+d']].map(([key, label]) => (
               <div key={key} className="text-center">
                 <div className="text-xs text-muted-foreground mb-1">{label}</div>
-                <div className="text-sm font-bold text-ink">{formatCurrency(arrears.buckets[key] ?? 0, tenant?.localization, isRTL)}</div>
+                <div className="text-sm font-bold text-ink"><CurrencyStack amounts={bucketAmounts(key)} tenant={tenant} isRTL={isRTL} /></div>
               </div>
             ))}
           </CardContent>
@@ -892,11 +973,11 @@ function DashboardTab({ token, isRTL, tenantId, tenant }) {
       )}
 
       {/* Recent invoices */}
-      {invoiceData?.data?.length > 0 && (
+      {recentInvoices.length > 0 && (
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-2"><CardTitle className="text-sm">{isRTL ? 'أحدث الفواتير' : 'Recent Invoices'}</CardTitle></CardHeader>
           <CardContent className="divide-y divide-border">
-            {invoiceData.data.map((inv) => (
+            {recentInvoices.map((inv) => (
               <div
                 key={inv.id}
                 className="flex items-center justify-between py-2 cursor-pointer hover:bg-sand rounded px-1 -mx-1 transition-colors"
@@ -907,7 +988,7 @@ function DashboardTab({ token, isRTL, tenantId, tenant }) {
                   <div className="text-xs text-muted-foreground">{isRTL ? inv.students?.name_ar : inv.students?.name_en}</div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-ink">{formatCurrency(inv.total_amount, tenant?.localization, isRTL)}</span>
+                  <span className="text-xs font-semibold text-ink">{formatRowCurrency(inv.total_amount, inv, tenant, isRTL)}</span>
                   <StatusBadge status={inv.status} isRTL={isRTL} />
                 </div>
               </div>
@@ -966,6 +1047,7 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, tenant, onSuc
   });
 
   const selectedStudent = students.find((s) => s.id === form.student_id);
+  const newInvoiceLoc = selectedStudent?.branch_id ? tenant?.branch_localization_map?.[selectedStudent.branch_id] : tenant?.localization;
 
   const addLine = () => setFeeLines((l) => [...l, { category_id: '', description_en: '', description_ar: '', amount: '' }]);
   const removeLine = (i) => setFeeLines((l) => l.filter((_, j) => j !== i));
@@ -1024,9 +1106,9 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, tenant, onSuc
               <p className="text-sm text-green-700 font-mono mt-1">{result.invoice?.invoice_number}</p>
             </div>
             <div className="grid grid-cols-3 gap-3 text-center text-sm">
-              <div><div className="text-muted-foreground text-xs">{isRTL ? 'المجموع قبل الضريبة' : 'Subtotal'}</div><div className="font-bold">{formatCurrency(result.summary?.subtotal, tenant?.localization, isRTL)}</div></div>
-              <div><div className="text-muted-foreground text-xs">VAT</div><div className="font-bold text-orange-600">{formatCurrency(result.summary?.vat_amount, tenant?.localization, isRTL)}</div></div>
-              <div><div className="text-muted-foreground text-xs">{isRTL ? 'الإجمالي' : 'Total'}</div><div className="font-bold text-najdi-900">{formatCurrency(result.summary?.total_amount, tenant?.localization, isRTL)}</div></div>
+              <div><div className="text-muted-foreground text-xs">{isRTL ? 'المجموع قبل الضريبة' : 'Subtotal'}</div><div className="font-bold">{formatRowCurrency(result.summary?.subtotal, result.invoice, tenant, isRTL)}</div></div>
+              <div><div className="text-muted-foreground text-xs">VAT</div><div className="font-bold text-orange-600">{formatRowCurrency(result.summary?.vat_amount, result.invoice, tenant, isRTL)}</div></div>
+              <div><div className="text-muted-foreground text-xs">{isRTL ? 'الإجمالي' : 'Total'}</div><div className="font-bold text-najdi-900">{formatRowCurrency(result.summary?.total_amount, result.invoice, tenant, isRTL)}</div></div>
             </div>
             {result.zatca?.qr_code && (
               <div className="text-center">
@@ -1120,7 +1202,7 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, tenant, onSuc
                       <input type="text" className="w-full h-8 rounded-md border border-border px-2 text-xs" placeholder={isRTL ? 'الوصف AR' : 'وصف بالعربي'} value={line.description_ar} onChange={(e) => updateLine(i, 'description_ar', e.target.value)} />
                     </div>
                     <div className="col-span-2">
-                      <input type="number" className="w-full h-8 rounded-md border border-border px-2 text-xs" placeholder={getCurrencySymbol(tenant?.localization, isRTL)} value={line.amount} onChange={(e) => updateLine(i, 'amount', e.target.value)} />
+                      <input type="number" className="w-full h-8 rounded-md border border-border px-2 text-xs" placeholder={getCurrencySymbol(newInvoiceLoc, isRTL)} value={line.amount} onChange={(e) => updateLine(i, 'amount', e.target.value)} />
                     </div>
                     <div className="col-span-1 flex justify-center">
                       {feeLines.length > 1 && <button type="button" onClick={() => removeLine(i)} className="text-muted-foreground hover:text-red-500 text-lg leading-none">×</button>}
@@ -1173,6 +1255,7 @@ function NewInvoiceDialog({ open, onClose, token, isRTL, tenantId, tenant, onSuc
 function BulkGenerateDialog({ open, onClose, token, isRTL, tenant, onSuccess }) {
   const [criteria, setCriteria] = useState({ academic_year: '', grade: '', campus_id: '', due_date: '' });
   const [preview, setPreview] = useState(null);
+  const bulkLoc = criteria.campus_id ? tenant?.branch_localization_map?.[criteria.campus_id] : tenant?.localization;
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -1243,7 +1326,7 @@ function BulkGenerateDialog({ open, onClose, token, isRTL, tenant, onSuccess }) 
               <div className="rounded-lg border border-border p-3 space-y-2">
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'سيتم الإنشاء' : 'Will generate'}</span><span className="font-bold text-najdi-900">{preview.estimated_invoices}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'القيمة المتوقعة' : 'Est. total'}</span><span className="font-bold text-emerald-700">{formatCurrency(preview.estimated_total, tenant?.localization, isRTL)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'القيمة المتوقعة' : 'Est. total'}</span><span className="font-bold text-emerald-700">{formatCurrency(preview.estimated_total, bulkLoc, isRTL)}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'مفوتر مسبقاً' : 'Already invoiced'}</span><span className="font-medium text-ink">{preview.already_invoiced}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'بدون رسوم' : 'No fees'}</span><span className="font-medium text-ink">{preview.skipped_no_fees}</span></div>
                 </div>
