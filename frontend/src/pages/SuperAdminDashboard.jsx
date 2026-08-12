@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTenantQuery } from '../hooks/useTenantQuery';
 import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useTenant } from '../components/TenantContext';
@@ -31,15 +32,15 @@ export default function SuperAdminDashboard() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeMainTab, setActiveMainTab] = useState('tenants');
 
-  const { data: tenants = [], isLoading } = useQuery({
-    queryKey: ['all-tenants'],
-    queryFn: () => fetchData(tenantQuery('tenants').select('*').order('created_at', { ascending: false })),
-  });
+  const { data: tenants = [], isLoading } = useTenantQuery(
+    ['all-tenants'],
+    () => fetchData(tenantQuery('tenants').select('*').order('created_at', { ascending: false }))
+  );
 
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ['all-users-sa'],
-    queryFn: () => fetchData(tenantQuery('users').select('*').order()),
-  });
+  const { data: allUsers = [] } = useTenantQuery(
+    ['all-users-sa'],
+    () => fetchData(tenantQuery('users').select('*').order())
+  );
 
   const { data: requestsSummary = {} } = useQuery({
     queryKey: ['subscription-requests-summary'],

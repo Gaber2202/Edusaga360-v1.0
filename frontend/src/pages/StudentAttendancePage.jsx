@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useTenantQuery } from '../hooks/useTenantQuery';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
@@ -29,31 +30,31 @@ export default function StudentAttendancePage() {
   const [selectedGrade, setSelectedGrade] = useState('Grade1');
   const [selectedSection, setSelectedSection] = useState('all');
 
-  const { data: students = [] } = useQuery({
-    queryKey: ['students', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter(branchFilter({ status: 'active' })))),
-    enabled: hasTenantAccess,
-  });
+  const { data: students = [] } = useTenantQuery(
+    ['students', tenantId, selectedBranchId],
+    () => fetchData(tenantQuery('students').select('*').match(tenantFilter(branchFilter({ status: 'active' })))),
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: sections = [] } = useQuery({
-    queryKey: ['sections', tenantId],
-    queryFn: () => fetchData(tenantQuery('sections').select('*').match(tenantFilter({ is_active: true }))),
-    enabled: hasTenantAccess,
-  });
+  const { data: sections = [] } = useTenantQuery(
+    ['sections', tenantId],
+    () => fetchData(tenantQuery('sections').select('*').match(tenantFilter({ is_active: true }))),
+    { enabled: hasTenantAccess }
+  );
 
   // Attendance for selected date (used by bulk marker)
-  const { data: todayAttendance = [], refetch: refetchToday } = useQuery({
-    queryKey: ['studentAttendance', selectedDate, tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('student_attendances').select('*').match(tenantFilter(branchFilter({ date: selectedDate })))),
-    enabled: hasTenantAccess,
-  });
+  const { data: todayAttendance = [], refetch: refetchToday } = useTenantQuery(
+    ['studentAttendance', selectedDate, tenantId, selectedBranchId],
+    () => fetchData(tenantQuery('student_attendances').select('*').match(tenantFilter(branchFilter({ date: selectedDate })))),
+    { enabled: hasTenantAccess }
+  );
 
   // All attendance (for absence manager + reports) — last 120 days
-  const { data: allAttendance = [], refetch: refetchAll } = useQuery({
-    queryKey: ['allStudentAttendance', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('student_attendances').select('*').match(tenantFilter(branchFilter()))),
-    enabled: hasTenantAccess,
-  });
+  const { data: allAttendance = [], refetch: refetchAll } = useTenantQuery(
+    ['allStudentAttendance', tenantId, selectedBranchId],
+    () => fetchData(tenantQuery('student_attendances').select('*').match(tenantFilter(branchFilter()))),
+    { enabled: hasTenantAccess }
+  );
 
   const classStudents = filterByBranch(students).filter(s => {
     const matchGrade = s.grade === selectedGrade;

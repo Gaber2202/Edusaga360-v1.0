@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useTenantQuery } from '../hooks/useTenantQuery';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
@@ -38,11 +39,11 @@ export default function Students() {
   const [gradeFilter, setGradeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const { data: students = [], isLoading } = useQuery({
-    queryKey: ['students', tenantId],
-    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: students = [], isLoading } = useTenantQuery(
+    ['students', tenantId],
+    () => fetchData(tenantQuery('students').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
+    { enabled: hasTenantAccess }
+  );
 
   // Check URL params for direct student view
   useEffect(() => {
@@ -120,11 +121,11 @@ export default function Students() {
     });
   };
 
-  const { data: branches = [] } = useQuery({
-    queryKey: ['branches', tenantId],
-    queryFn: () => fetchData(tenantQuery('branches').select('*').match(tenantFilter({ status: 'active' }))),
-    enabled: hasTenantAccess,
-  });
+  const { data: branches = [] } = useTenantQuery(
+    ['branches', tenantId],
+    () => fetchData(tenantQuery('branches').select('*').match(tenantFilter({ status: 'active' }))),
+    { enabled: hasTenantAccess }
+  );
 
   const columns = [
     {

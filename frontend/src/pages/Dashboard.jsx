@@ -1,5 +1,5 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useTenantQuery } from '../hooks/useTenantQuery';
 import { tenantQuery } from '../api/supabaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -50,11 +50,11 @@ export default function Dashboard() {
   const isParent = userRole === 'parent';
 
   // ── Data queries (each gated to the personas that need it) ──────────────────
-  const useTableQuery = (key, table, filt = {}, enabled = true) => useQuery({
-    queryKey: [key, tenantId],
-    queryFn: async () => { const { data } = await tenantQuery(table).select('*').match(tenantFilter(filt)); return data || []; },
-    enabled: hasTenantAccess && enabled,
-  });
+  const useTableQuery = (key, table, filt = {}, enabled = true) => useTenantQuery(
+    [key, tenantId],
+    async () => { const { data } = await tenantQuery(table).select('*').match(tenantFilter(filt)); return data || []; },
+    { enabled: hasTenantAccess && enabled }
+  );
 
   const { data: students = [] } = useTableQuery('students', 'students', {}, isSchoolAdmin || isParent || isTeacher);
   const { data: applications = [] } = useTableQuery('applications', 'applications', {}, isSchoolAdmin);

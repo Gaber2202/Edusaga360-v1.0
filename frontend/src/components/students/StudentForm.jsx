@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useTenantQuery } from '../../hooks/useTenantQuery';
 import { useLanguage } from '../LanguageContext';
 import { useBranch } from '../BranchContext';
 import { tenantQuery, fetchData, callApi, uploadFileApi } from '../../api/supabaseClient';
@@ -149,25 +149,25 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const tt = (ar, en) => (isRTL ? ar : en);
 
-  const { data: grades = [] } = useQuery({
-    queryKey: ['grades', tenantId],
-    queryFn: async () => {
+  const { data: grades = [] } = useTenantQuery(
+    ['grades', tenantId],
+    async () => {
       const { data = [] } = await tenantQuery('grades').select('*').match({ is_active: true });
       return data.sort((a, b) => a.display_order - b.display_order);
-    },
-  });
-  const { data: academicYears = [] } = useQuery({
-    queryKey: ['academicYears', tenantId],
-    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true })),
-  });
-  const { data: feeStructures = [] } = useQuery({
-    queryKey: ['fee_structures', tenantId],
-    queryFn: () => fetchData(tenantQuery('fee_structures').select('id, fee_type_name_ar, fee_type_name_en, grade').order('fee_type_name_ar')),
-  });
-  const { data: paymentPlans = [] } = useQuery({
-    queryKey: ['payment_plans', tenantId],
-    queryFn: () => fetchData(tenantQuery('payment_plans').select('id, name_ar, name_en').order('name_ar')),
-  });
+    }
+  );
+  const { data: academicYears = [] } = useTenantQuery(
+    ['academicYears', tenantId],
+    () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true }))
+  );
+  const { data: feeStructures = [] } = useTenantQuery(
+    ['fee_structures', tenantId],
+    () => fetchData(tenantQuery('fee_structures').select('id, fee_type_name_ar, fee_type_name_en, grade').order('fee_type_name_ar'))
+  );
+  const { data: paymentPlans = [] } = useTenantQuery(
+    ['payment_plans', tenantId],
+    () => fetchData(tenantQuery('payment_plans').select('id, name_ar, name_en').order('name_ar'))
+  );
 
   React.useEffect(() => {
     if (student) {
