@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useTenantQuery } from '../../hooks/useTenantQuery';
 import { useLanguage } from '../LanguageContext';
 import { formatCurrency, getCurrencySymbol } from '../../lib/localization';
 import { useBranch } from '../BranchContext';
@@ -59,30 +59,30 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
     status: 'draft'
   });
 
-  const { data: students = [] } = useQuery({
-    queryKey: ['activeStudents', tenantId],
-    queryFn: () => fetchData(tenantQuery('students').select('*').match({ status: 'active' })),
-  });
+  const { data: students = [] } = useTenantQuery(
+    ['activeStudents', tenantId],
+    () => fetchData(tenantQuery('students').select('*').match({ status: 'active' }))
+  );
 
-  const { data: feeStructures = [] } = useQuery({
-    queryKey: ['feeStructures', tenantId],
-    queryFn: () => fetchData(tenantQuery('fee_structures').select('*').match({ is_active: true })),
-  });
+  const { data: feeStructures = [] } = useTenantQuery(
+    ['feeStructures', tenantId],
+    () => fetchData(tenantQuery('fee_structures').select('*').match({ is_active: true }))
+  );
 
-  const { data: bankAccounts = [] } = useQuery({
-    queryKey: ['bankAccounts', tenantId],
-    queryFn: () => fetchData(tenantQuery('school_bank_accounts').select('*').match({ status: 'active' })),
-  });
+  const { data: bankAccounts = [] } = useTenantQuery(
+    ['bankAccounts', tenantId],
+    () => fetchData(tenantQuery('school_bank_accounts').select('*').match({ status: 'active' }))
+  );
 
-  const { data: feeTypes = [] } = useQuery({
-    queryKey: ['feeTypes', tenantId],
-    queryFn: () => fetchData(tenantQuery('fee_types').select('*').match({ is_active: true })),
-  });
+  const { data: feeTypes = [] } = useTenantQuery(
+    ['feeTypes', tenantId],
+    () => fetchData(tenantQuery('fee_types').select('*').match({ is_active: true }))
+  );
 
-  const { data: academicYears = [] } = useQuery({
-    queryKey: ['academicYears', tenantId],
-    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true })),
-  });
+  const { data: academicYears = [] } = useTenantQuery(
+    ['academicYears', tenantId],
+    () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true }))
+  );
 
   // Default a NEW invoice to the active academic year (instead of a hardcoded
   // year) once the list loads — without clobbering an explicit user choice.

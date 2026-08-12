@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useTenantQuery } from '../../hooks/useTenantQuery';
 import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { Card } from '../ui/card';
@@ -31,10 +32,10 @@ export default function FeeTypeManager({ open, onClose }) {
     display_order: 0
   });
 
-  const { data: feeTypes = [], isLoading } = useQuery({
-    queryKey: ['feeTypes', tenantId],
-    queryFn: () => fetchData(tenantQuery('fee_types').select('*').order('display_order')),
-  });
+  const { data: feeTypes = [], isLoading } = useTenantQuery(
+    ['feeTypes', tenantId],
+    () => fetchData(tenantQuery('fee_types').select('*').order('display_order'))
+  );
 
   const handleSave = async () => {
     if (!formData.type_code || !formData.name_ar || !formData.name_en) {

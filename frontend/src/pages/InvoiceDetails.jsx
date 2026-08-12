@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useTenantQuery } from '../hooks/useTenantQuery';
 import { tenantQuery, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { formatCurrency, getCurrencySymbol } from '../lib/localization';
@@ -50,42 +51,42 @@ export default function InvoiceDetails() {
   const urlParams = new URLSearchParams(window.location.search);
   const invoiceId = urlParams.get('id');
 
-  const { data: invoice, isLoading } = useQuery({
-    queryKey: ['invoice', invoiceId, tenantId],
-    queryFn: async () => {
+  const { data: invoice, isLoading } = useTenantQuery(
+    ['invoice', invoiceId, tenantId],
+    async () => {
       const { data: invoices = [] } = await tenantQuery('invoices').select('*').match(tenantFilter());
       return invoices.find(inv => inv.id === invoiceId);
     },
-    enabled: !!invoiceId && hasTenantAccess
-  });
+    { enabled: !!invoiceId && hasTenantAccess }
+  );
 
-  const { data: _payments = [] } = useQuery({
-    queryKey: ['payments', invoiceId, tenantId],
-    queryFn: async () => {
+  const { data: _payments = [] } = useTenantQuery(
+    ['payments', invoiceId, tenantId],
+    async () => {
       const { data: allPayments = [] } = await tenantQuery('payments').select('*').match(tenantFilter()).order('created_at', { ascending: false });
       return allPayments.filter(p => p.invoice_id === invoiceId);
     },
-    enabled: !!invoiceId && hasTenantAccess
-  });
+    { enabled: !!invoiceId && hasTenantAccess }
+  );
 
-  const { data: paymentLogs = [] } = useQuery({
-    queryKey: ['invoicePaymentLogs', invoiceId, tenantId],
-    queryFn: async () => {
+  const { data: paymentLogs = [] } = useTenantQuery(
+    ['invoicePaymentLogs', invoiceId, tenantId],
+    async () => {
       const { data: allLogs = [] } = await tenantQuery('invoice_payment_logs').select('*').match(tenantFilter()).order('created_at', { ascending: false });
       return allLogs.filter(log => log.invoice_id === invoiceId);
     },
-    enabled: !!invoiceId && hasTenantAccess
-  });
+    { enabled: !!invoiceId && hasTenantAccess }
+  );
 
-  const { data: guardian } = useQuery({
-    queryKey: ['guardian', invoice?.guardian_id, tenantId],
-    queryFn: async () => {
+  const { data: guardian } = useTenantQuery(
+    ['guardian', invoice?.guardian_id, tenantId],
+    async () => {
       if (!invoice?.guardian_id) return null;
       const { data: guardians = [] } = await tenantQuery('guardians').select('*').match(tenantFilter());
       return guardians.find(g => g.id === invoice.guardian_id);
     },
-    enabled: !!invoice?.guardian_id && hasTenantAccess
-  });
+    { enabled: !!invoice?.guardian_id && hasTenantAccess }
+  );
 
   const [paymentLink, setPaymentLink] = useState(null);
   const [paymentLinkLoading, setPaymentLinkLoading] = useState(false);

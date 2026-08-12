@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useTenantQuery } from '../hooks/useTenantQuery';
 import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import Currency from '../components/Currency';
@@ -65,53 +66,53 @@ export default function TuitionFeesConfiguration() {
     is_active: true
   });
 
-  const { data: feeStructures = [], isLoading: loadingFees } = useQuery({
-    queryKey: ['feeStructures', tenantId],
-    queryFn: () => fetchData(tenantQuery('fee_structures').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: feeStructures = [], isLoading: loadingFees } = useTenantQuery(
+    ['feeStructures', tenantId],
+    () => fetchData(tenantQuery('fee_structures').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: specialCareFees = [], isLoading: loadingSpecialCare } = useQuery({
-    queryKey: ['specialCareFees', tenantId],
-    queryFn: () => fetchData(tenantQuery('special_care_fees').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: specialCareFees = [], isLoading: loadingSpecialCare } = useTenantQuery(
+    ['specialCareFees', tenantId],
+    () => fetchData(tenantQuery('special_care_fees').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: branches = [] } = useQuery({
-    queryKey: ['branches', tenantId],
-    queryFn: () => fetchData(tenantQuery('branches').select('*').match(tenantFilter({ status: 'active' }))),
-    enabled: hasTenantAccess,
-  });
+  const { data: branches = [] } = useTenantQuery(
+    ['branches', tenantId],
+    () => fetchData(tenantQuery('branches').select('*').match(tenantFilter({ status: 'active' }))),
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: academicYears = [] } = useQuery({
-    queryKey: ['academicYears', tenantId],
-    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match(tenantFilter({ is_active: true }))),
-    enabled: hasTenantAccess,
-  });
+  const { data: academicYears = [] } = useTenantQuery(
+    ['academicYears', tenantId],
+    () => fetchData(tenantQuery('academic_years').select('*').match(tenantFilter({ is_active: true }))),
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: feeTypes = [] } = useQuery({
-    queryKey: ['feeTypes', tenantId],
-    queryFn: () => fetchData(tenantQuery('fee_types').select('*').match(tenantFilter({ is_active: true }))),
-    enabled: hasTenantAccess,
-  });
+  const { data: feeTypes = [] } = useTenantQuery(
+    ['feeTypes', tenantId],
+    () => fetchData(tenantQuery('fee_types').select('*').match(tenantFilter({ is_active: true }))),
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: grades = [] } = useQuery({
-    queryKey: ['grades', tenantId],
-    queryFn: async () => {
+  const { data: grades = [] } = useTenantQuery(
+    ['grades', tenantId],
+    async () => {
       const { data = [] } = await tenantQuery('grades').select('*').match(tenantFilter({ is_active: true }));
       return data.sort((a, b) => a.display_order - b.display_order);
     },
-    enabled: hasTenantAccess,
-  });
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: sections = [] } = useQuery({
-    queryKey: ['sections', tuitionFormData.branch_id],
-    queryFn: () => fetchData(tenantQuery('sections').select('*').match({ 
+  const { data: sections = [] } = useTenantQuery(
+    ['sections', tuitionFormData.branch_id],
+    () => fetchData(tenantQuery('sections').select('*').match({
       branch_id: tuitionFormData.branch_id,
-      is_active: true 
+      is_active: true
     })),
-    enabled: !!tuitionFormData.branch_id,
-  });
+    { enabled: !!tuitionFormData.branch_id }
+  );
 
   const handleFeeTypeChange = (feeTypeId) => {
     const feeType = feeTypes.find(ft => ft.id === feeTypeId);

@@ -22,6 +22,9 @@ vi.mock('../api/supabaseClient', () => ({
   fetchData: async (q) => { const r = await q; return r?.data ?? r; },
   callApi: () => Promise.resolve({}),
   tenantTables: [],
+  getTenantContext: () => ({ tenantId: 't1', isPlatformOwner: false, ready: true }),
+  subscribeTenantContext: () => () => {},
+  TenantContextNotReadyError: class TenantContextNotReadyError extends Error {},
 }));
 
 const mockTenant = {

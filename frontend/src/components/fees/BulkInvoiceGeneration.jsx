@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useTenantQuery } from '../../hooks/useTenantQuery';
 import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { formatCurrency } from '../../lib/localization';
@@ -58,35 +59,35 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
     }
   }, [open]);
 
-  const { data: students = [] } = useQuery({
-    queryKey: ['students', 'active', tenantId],
-    queryFn: () => fetchData(tenantQuery('students').select('*').match({ status: 'active' })),
-  });
+  const { data: students = [] } = useTenantQuery(
+    ['students', 'active', tenantId],
+    () => fetchData(tenantQuery('students').select('*').match({ status: 'active' }))
+  );
 
-  const { data: companies = [] } = useQuery({
-    queryKey: ['companies', tenantId],
-    queryFn: () => fetchData(tenantQuery('companies').select('id, name_ar, name_en').match({ is_active: true })),
-  });
+  const { data: companies = [] } = useTenantQuery(
+    ['companies', tenantId],
+    () => fetchData(tenantQuery('companies').select('id, name_ar, name_en').match({ is_active: true }))
+  );
 
-  const { data: contracts = [] } = useQuery({
-    queryKey: ['contracts', tenantId],
-    queryFn: () => fetchData(tenantQuery('student_contracts').select('*').order()),
-  });
+  const { data: contracts = [] } = useTenantQuery(
+    ['contracts', tenantId],
+    () => fetchData(tenantQuery('student_contracts').select('*').order())
+  );
 
-  const { data: academicYears = [] } = useQuery({
-    queryKey: ['academicYears', tenantId],
-    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true })),
-  });
+  const { data: academicYears = [] } = useTenantQuery(
+    ['academicYears', tenantId],
+    () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true }))
+  );
 
   // Existing invoices for the chosen year — drives idempotency so a re-run never
   // silently duplicates an invoice a student already has.
-  const { data: existingInvoices = [] } = useQuery({
-    queryKey: ['invoices', 'byYear', tenantId, criteria.academic_year],
-    queryFn: () => fetchData(
+  const { data: existingInvoices = [] } = useTenantQuery(
+    ['invoices', 'byYear', tenantId, criteria.academic_year],
+    () => fetchData(
       tenantQuery('invoices').select('student_id, academic_year, status').match({ academic_year: criteria.academic_year })
     ),
-    enabled: !!criteria.academic_year,
-  });
+    { enabled: !!criteria.academic_year }
+  );
 
   const alreadyInvoicedIds = existingInvoices
     .filter((inv) => inv.status !== 'cancelled')
