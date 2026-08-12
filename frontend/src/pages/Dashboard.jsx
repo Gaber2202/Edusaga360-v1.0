@@ -38,7 +38,7 @@ const SectionLabel = ({ children }) => (
 export default function Dashboard() {
   const { t: _t, isRTL } = useLanguage();
   const { userRole, user } = useRole();
-  const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
+  const { tenantId, hasTenantAccess } = useTenantFilter();
   const { tenant } = useTenant();
 
   const isCreator = userRole === 'creator';
@@ -52,7 +52,7 @@ export default function Dashboard() {
   // ── Data queries (each gated to the personas that need it) ──────────────────
   const useTableQuery = (key, table, filt = {}, enabled = true) => useTenantQuery(
     [key, tenantId],
-    async () => { const { data } = await tenantQuery(table).select('*').match(tenantFilter(filt)); return data || []; },
+    async () => { const { data } = await tenantQuery(table).select('*').match(filt); return data || []; },
     { enabled: hasTenantAccess && enabled }
   );
 
@@ -64,7 +64,7 @@ export default function Dashboard() {
   const { data: payRuns = [] } = useTableQuery('payRunsDash', 'pay_runs', {}, isHR || isFinance);
   const { data: iqamas = [] } = useTableQuery('iqamasDash', 'iqama_records', {}, isHR);
   const { data: violations = [] } = useTableQuery('violationsDash', 'govi_violations', { status: 'open' }, isHR);
-  const { data: branches = [] } = useTableQuery('branches', 'branches', { is_active: true }, true);
+  const { data: branches = [] } = useTableQuery('branches', 'branches', { status: 'active' }, true);
   const { data: sections = [] } = useTableQuery('teacherSections', 'sections', {}, isTeacher);
   const { data: attendance = [] } = useTableQuery('teacherAttendance', 'student_attendances', {}, isTeacher);
   const { data: announcements = [] } = useTableQuery('teacherComms', 'communications', {}, isTeacher);
