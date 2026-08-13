@@ -1270,15 +1270,6 @@
   },
   {
     "file": "frontend/src/pages/AttendanceDevices.jsx",
-    "table": "employee_attendances",
-    "issue": "unknown_table",
-    "count": 3,
-    "reason": "typo/code bug: should target employee_attendance",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/pages/AttendanceDevices.jsx",
     "table": "punch_logs",
     "issue": "unknown_table",
     "count": 2,
@@ -1969,15 +1960,6 @@
     "reason": "migration exists in PR #238; remove when #238 lands",
     "tracked_issue": "#238",
     "expires": "2027-01-31"
-  },
-  {
-    "file": "frontend/src/pages/SuperAdminDashboard.jsx",
-    "table": "users",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/SystemHealth.jsx",
