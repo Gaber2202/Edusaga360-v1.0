@@ -21,7 +21,7 @@ export default function AdminRequestsTab({ isRTL }) {
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ['all-requests'],
     queryFn: async () => {
-      const { data: reqs = [] } = await tenantQuery('tenant_requests').select('*').order();
+      const { data: reqs = [] } = await tenantQuery('tenant_requests').select('*').order('created_at');
       return reqs;
     },
   });

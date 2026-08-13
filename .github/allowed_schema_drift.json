@@ -936,24 +936,6 @@
     "expires": "2027-01-31"
   },
   {
-    "file": "frontend/src/components/subscription/AdminRequestsTab.jsx",
-    "table": "tenant_requests",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/components/superadmin/PlatformUsersTab.jsx",
-    "table": "users",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
     "file": "frontend/src/components/transport/LiveBusTracker.jsx",
     "table": "trip_logs",
     "issue": "unknown_table",
@@ -1908,15 +1890,6 @@
     "expires": "2027-06-30"
   },
   {
-    "file": "frontend/src/pages/RolesPermissions.jsx",
-    "table": "roles",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
     "file": "frontend/src/pages/SchoolClinic.jsx",
     "table": "clinic_visits",
     "issue": "unknown_table",
@@ -1935,15 +1908,6 @@
     "expires": "2027-06-30"
   },
   {
-    "file": "frontend/src/pages/Settings.jsx",
-    "table": "users",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
     "file": "frontend/src/pages/StaffInbox.jsx",
     "table": "messages",
     "issue": "unknown_table",
@@ -1960,33 +1924,6 @@
     "reason": "migration exists in PR #238; remove when #238 lands",
     "tracked_issue": "#238",
     "expires": "2027-01-31"
-  },
-  {
-    "file": "frontend/src/pages/SystemHealth.jsx",
-    "table": "employees",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/pages/SystemHealth.jsx",
-    "table": "invoices",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/pages/SystemHealth.jsx",
-    "table": "students",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/SystemHealth.jsx",
@@ -2023,24 +1960,6 @@
     "reason": "no migration or typo mapping found; needs product decision",
     "tracked_issue": "#246",
     "expires": "2027-06-30"
-  },
-  {
-    "file": "frontend/src/pages/TrialUsers.jsx",
-    "table": "roles",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/pages/TrialUsers.jsx",
-    "table": "users",
-    "issue": "bad_order",
-    "count": 2,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/VATManagement.jsx",

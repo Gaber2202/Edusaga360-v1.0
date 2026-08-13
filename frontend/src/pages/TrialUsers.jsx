@@ -33,7 +33,7 @@ export default function TrialUsers() {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      const { data = [] } = await tenantQuery('users').select('*').order();
+      const { data = [] } = await tenantQuery('users').select('*').order('created_at');
       return data;
     },
     enabled: isCreator()
@@ -41,7 +41,7 @@ export default function TrialUsers() {
 
   const { data: _roles = [] } = useQuery({
     queryKey: ['roles'],
-    queryFn: () => fetchData(tenantQuery('roles').select('*').order()),
+    queryFn: () => fetchData(tenantQuery('roles').select('*').order('created_at')),
   });
 
   if (!isCreator()) {
@@ -81,7 +81,7 @@ export default function TrialUsers() {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Update user with trial settings
-      const { data: allUsers = [] } = await tenantQuery('users').select('*').order();
+      const { data: allUsers = [] } = await tenantQuery('users').select('*').order('created_at');
       const newUser = allUsers.find(u => u.email === form.email);
 
       if (newUser) {

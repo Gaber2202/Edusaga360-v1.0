@@ -50,17 +50,17 @@ export default function SystemHealth() {
   // Fetch counts for system health overview
   const { data: students = [] } = useQuery({
     queryKey: ['students'],
-    queryFn: () => fetchData(tenantQuery('students').select('*').order()),
+    queryFn: () => fetchData(tenantQuery('students').select('*').order('created_at')),
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').order()),
+    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').order('created_at')),
   });
 
   const { data: invoices = [] } = useQuery({
     queryKey: ['invoices'],
-    queryFn: () => fetchData(tenantQuery('invoices').select('*').order()),
+    queryFn: () => fetchData(tenantQuery('invoices').select('*').order('created_at')),
   });
 
   const modules = [

@@ -356,7 +356,7 @@ export default function Settings() {
   const { data: users = [], isLoading: _loadingUsers } = useQuery({
     queryKey: ['users', tenantId],
     queryFn: () => {
-      if (isPlatformOwner) return fetchData(tenantQuery('users').select('*').order());
+      if (isPlatformOwner) return fetchData(tenantQuery('users').select('*').order('created_at'));
       if (tenantId) return fetchData(tenantQuery('users').select('*').match({ tenant_id: tenantId }));
       return [];
     },

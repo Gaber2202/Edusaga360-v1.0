@@ -55,7 +55,7 @@ export default function PlatformUsersTab({ tenants = [] }) {
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['platform-all-users'],
-    queryFn: () => fetchData(tenantQuery('users').select('*').order()),
+    queryFn: () => fetchData(tenantQuery('users').select('*').order('created_at')),
   });
 
   const tenantMap = Object.fromEntries(tenants.map(t => [t.id, t]));
