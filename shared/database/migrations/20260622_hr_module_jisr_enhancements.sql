@@ -236,56 +236,56 @@ ALTER TABLE feedback_360 ENABLE ROW LEVEL SECURITY;
 
 -- Tenant isolation policies
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'recruitment_interviews', 'recruitment_interviews');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (select public.auth_tenant_id())) WITH CHECK (tenant_id = (select public.auth_tenant_id()))', 'recruitment_interviews', 'recruitment_interviews');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'career_postings', 'career_postings');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (select public.auth_tenant_id())) WITH CHECK (tenant_id = (select public.auth_tenant_id()))', 'career_postings', 'career_postings');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'corporate_cards', 'corporate_cards');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (select public.auth_tenant_id())) WITH CHECK (tenant_id = (select public.auth_tenant_id()))', 'corporate_cards', 'corporate_cards');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'card_transactions', 'card_transactions');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (select public.auth_tenant_id())) WITH CHECK (tenant_id = (select public.auth_tenant_id()))', 'card_transactions', 'card_transactions');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'travel_requests', 'travel_requests');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (select public.auth_tenant_id())) WITH CHECK (tenant_id = (select public.auth_tenant_id()))', 'travel_requests', 'travel_requests');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'travel_policies', 'travel_policies');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (select public.auth_tenant_id())) WITH CHECK (tenant_id = (select public.auth_tenant_id()))', 'travel_policies', 'travel_policies');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'announcements', 'announcements');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (select public.auth_tenant_id())) WITH CHECK (tenant_id = (select public.auth_tenant_id()))', 'announcements', 'announcements');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'employee_surveys', 'employee_surveys');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (select public.auth_tenant_id())) WITH CHECK (tenant_id = (select public.auth_tenant_id()))', 'employee_surveys', 'employee_surveys');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'survey_responses', 'survey_responses');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (select public.auth_tenant_id())) WITH CHECK (tenant_id = (select public.auth_tenant_id()))', 'survey_responses', 'survey_responses');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'learning_paths', 'learning_paths');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (select public.auth_tenant_id())) WITH CHECK (tenant_id = (select public.auth_tenant_id()))', 'learning_paths', 'learning_paths');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'feedback_360', 'feedback_360');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (select public.auth_tenant_id())) WITH CHECK (tenant_id = (select public.auth_tenant_id()))', 'feedback_360', 'feedback_360');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
