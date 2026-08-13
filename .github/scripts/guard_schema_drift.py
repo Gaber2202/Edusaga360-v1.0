@@ -37,7 +37,7 @@ TABLE_REF_RE = re.compile(
 # Match .order() with no/empty/undefined argument. We intentionally do not
 # evaluate variables here, only literal no-arg or explicit 'undefined'/null.
 BAD_ORDER_RE = re.compile(
-    r"\.order\s*\(\s*(?:undefined|null|'undefined'|\"undefined\"|'\"|\"')?\s*\)")
+    r"\.order\s*\(\s*(?:undefined|null|'undefined'|\"undefined\"|''|\")?\s*\)")
 
 CODE_SUFFIXES = {".js", ".jsx", ".ts", ".tsx"}
 SKIP_DIRS = {".git", "node_modules", "dist", "coverage", "build", ".devin-files"}

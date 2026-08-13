@@ -4,7 +4,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery, fetchData } from '../api/supabaseClient';
+import { tenantQuery, fetchData, normalizeJournalEntries } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useTenant } from '../components/TenantContext';
 import { getCurrencySymbol, formatNumber, formatCurrency, getCurrencyCode } from '../lib/localization';
@@ -35,13 +35,18 @@ export default function TrialBalance() {
 
   const { data: accounts = [], isLoading: loadingAccts } = useQuery({
     queryKey: ['coa-tb', tenantId],
-    queryFn: () => fetchData(tenantQuery('chart_of_accounts').select('*').match(tenantFilter({ is_active: true })).order('code')),
+    queryFn: () => fetchData(tenantQuery('chart_of_accounts').select('*, account_code:code, account_type:type, opening_balance:balance').match(tenantFilter({ is_active: true })).order('code')),
     enabled: hasTenantAccess,
   });
 
   const { data: journalEntries = [], isLoading: loadingJEs } = useQuery({
     queryKey: ['je-tb', tenantId],
-    queryFn: () => fetchData(tenantQuery('journal_entries').select('*').match(tenantFilter(branchFilter({ status: 'posted' })))),
+    queryFn: async () => {
+      const data = await fetchData(tenantQuery('journal_entries')
+        .select('*, journal_entry_lines(*, chart_of_accounts(code, type, name_ar, name_en))')
+        .match(tenantFilter(branchFilter({ status: 'posted' }))));
+      return normalizeJournalEntries(data);
+    },
     enabled: hasTenantAccess,
   });
 

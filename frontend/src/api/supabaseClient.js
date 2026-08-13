@@ -182,6 +182,25 @@ export async function fetchData(query) {
 }
 
 /**
+ * Normalize journal entries fetched with embedded journal_entry_lines.
+ * The production schema stores lines in a separate table, so a flat select('*')
+ * returns no `lines` array. This maps the embedded relation into the shape the
+ * components expect (account_code, account_type, account_name, line_number).
+ */
+export function normalizeJournalEntries(entries) {
+  return (entries || []).map((je) => ({
+    ...je,
+    lines: (je.journal_entry_lines || []).map((line) => ({
+      ...line,
+      account_code: line.chart_of_accounts?.code,
+      account_name: line.chart_of_accounts?.name_ar,
+      account_type: line.chart_of_accounts?.type,
+      line_number: line.id?.slice(0, 8),
+    })),
+  }));
+}
+
+/**
  * Call a backend API endpoint (replaces supabase.functions.*).
  */
 // VITE_API_BASE_URL must be set in Vercel env vars for each environment (dev/staging/prod).
