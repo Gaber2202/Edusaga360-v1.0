@@ -61,7 +61,7 @@ export default function FinancialReports() {
 
   const { data: journalEntries = [] } = useQuery({
     queryKey: ['journalEntries', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter()))),
+    queryFn: () => fetchData(tenantQuery('journal_entries').select('*').match(tenantFilter(branchFilter()))),
     enabled: hasTenantAccess,
   });
 

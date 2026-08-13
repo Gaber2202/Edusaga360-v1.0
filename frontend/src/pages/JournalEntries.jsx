@@ -46,7 +46,7 @@ export default function JournalEntries() {
 
   const { data: journalEntries = [], isLoading } = useQuery({
     queryKey: ['journalEntries', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false }).limit(200)),
+    queryFn: () => fetchData(tenantQuery('journal_entries').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false }).limit(200)),
     enabled: hasTenantAccess,
   });
 
@@ -143,11 +143,11 @@ export default function JournalEntries() {
   const handleApprove = async (journal) => {
     try {
       const user = await supabase.auth.getUser().then(r => r.data?.user);
-      await tenantQuery('journal_entrys').update({
+      await tenantQuery('journal_entries').update({
         status: 'approved',
         approved_by: user?.email,
         approved_date: format(new Date(), 'yyyy-MM-dd')
-      });
+      }).eq('id', journal.id);
       await logAuditEvent({ action: AuditActions.APPROVE, entityType: 'JournalEntry', entityId: journal.id });
       queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
       toast.success(isRTL ? 'تم اعتماد القيد' : 'Entry approved');
@@ -161,11 +161,11 @@ export default function JournalEntries() {
       const user = await supabase.auth.getUser().then(r => r.data?.user);
       
       // Update journal entry status
-      await tenantQuery('journal_entrys').update({
+      await tenantQuery('journal_entries').update({
         status: 'posted',
         posted_by: user?.email,
         posted_date: format(new Date(), 'yyyy-MM-dd')
-      });
+      }).eq('id', journal.id);
       
       await logAuditEvent({ action: AuditActions.POST, entityType: 'JournalEntry', entityId: journal.id });
       queryClient.invalidateQueries({ queryKey: ['journalEntries'] });

@@ -70,7 +70,7 @@ export default function FinanceDashboard() {
 
   const { data: journalEntries = [], isLoading: jeLoading, isError: jeError, refetch: refetchJe } = useQuery({
     queryKey: ['je-dashboard', tenantId],
-    queryFn: () => fetchData(tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter({ status: 'posted' })))),
+    queryFn: () => fetchData(tenantQuery('journal_entries').select('*').match(tenantFilter(branchFilter({ status: 'posted' })))),
     enabled: hasTenantAccess,
   });
 

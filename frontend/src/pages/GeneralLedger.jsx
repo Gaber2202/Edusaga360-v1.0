@@ -32,7 +32,7 @@ export default function GeneralLedger() {
 
   const { data: journalEntries = [], isLoading: _loadingEntries } = useQuery({
     queryKey: ['journalEntries', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter({ status: 'posted' })))),
+    queryFn: () => fetchData(tenantQuery('journal_entries').select('*').match(tenantFilter(branchFilter({ status: 'posted' })))),
     enabled: hasTenantAccess,
   });
 

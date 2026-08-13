@@ -61,13 +61,13 @@ export default function FinancialStatements() {
 
   const { data: accounts = [] } = useQuery({
     queryKey: ['coa-fs', tenantId],
-    queryFn: () => fetchData(tenantQuery('chart_of_accounts').select('*').match(tenantFilter({ is_active: true })).order('account_code')),
+    queryFn: () => fetchData(tenantQuery('chart_of_accounts').select('*').match(tenantFilter({ is_active: true })).order('code')),
     enabled: hasTenantAccess,
   });
 
   const { data: journalEntries = [], isLoading } = useQuery({
     queryKey: ['je-fs', tenantId],
-    queryFn: () => fetchData(tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter({ status: 'posted' })))),
+    queryFn: () => fetchData(tenantQuery('journal_entries').select('*').match(tenantFilter(branchFilter({ status: 'posted' })))),
     enabled: hasTenantAccess,
   });
 
