@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS recruitment_interviews (
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   applicant_id UUID,
   applicant_name TEXT,
-  recruitment_id UUID,
   interview_date DATE,
   interview_time TEXT,
   platform TEXT DEFAULT 'google_meet',
@@ -20,15 +19,14 @@ CREATE TABLE IF NOT EXISTS recruitment_interviews (
   status TEXT DEFAULT 'scheduled',
   feedback TEXT,
   score NUMERIC,
-  created_date TIMESTAMPTZ DEFAULT now(),
-  updated_date TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Recruitment: Career Postings (branded portal)
 CREATE TABLE IF NOT EXISTS career_postings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
-  recruitment_id UUID,
   title_ar TEXT,
   title_en TEXT,
   description_ar TEXT,
@@ -44,8 +42,8 @@ CREATE TABLE IF NOT EXISTS career_postings (
   application_deadline TIMESTAMPTZ,
   application_form_config JSONB DEFAULT '{}',
   status TEXT DEFAULT 'draft',
-  created_date TIMESTAMPTZ DEFAULT now(),
-  updated_date TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Corporate Cards
@@ -64,8 +62,8 @@ CREATE TABLE IF NOT EXISTS corporate_cards (
   issued_date DATE,
   expiry_date DATE,
   status TEXT DEFAULT 'active',
-  created_date TIMESTAMPTZ DEFAULT now(),
-  updated_date TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Card Transactions
@@ -85,7 +83,8 @@ CREATE TABLE IF NOT EXISTS card_transactions (
   flagged BOOLEAN DEFAULT false,
   gl_entry_id UUID,
   notes TEXT,
-  created_date TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Business Travel Requests
@@ -110,8 +109,8 @@ CREATE TABLE IF NOT EXISTS travel_requests (
   status TEXT DEFAULT 'pending',
   approved_by TEXT,
   approved_date DATE,
-  created_date TIMESTAMPTZ DEFAULT now(),
-  updated_date TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Travel Policies
@@ -125,7 +124,8 @@ CREATE TABLE IF NOT EXISTS travel_policies (
   hotel_category TEXT DEFAULT '3-star',
   per_diem_rate NUMERIC,
   requires_approval BOOLEAN DEFAULT true,
-  created_date TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Announcements
@@ -147,8 +147,8 @@ CREATE TABLE IF NOT EXISTS announcements (
   attachments JSONB DEFAULT '[]',
   created_by TEXT,
   status TEXT DEFAULT 'published',
-  created_date TIMESTAMPTZ DEFAULT now(),
-  updated_date TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Employee Surveys
@@ -166,8 +166,8 @@ CREATE TABLE IF NOT EXISTS employee_surveys (
   created_by TEXT,
   responses_count INT DEFAULT 0,
   status TEXT DEFAULT 'active',
-  created_date TIMESTAMPTZ DEFAULT now(),
-  updated_date TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Survey Responses
@@ -180,7 +180,9 @@ CREATE TABLE IF NOT EXISTS survey_responses (
   survey_type TEXT,
   answers JSONB DEFAULT '{}',
   score NUMERIC,
-  submitted_date TIMESTAMPTZ DEFAULT now()
+  submitted_date TIMESTAMPTZ DEFAULT now(),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Learning Paths
@@ -195,8 +197,8 @@ CREATE TABLE IF NOT EXISTS learning_paths (
   total_hours NUMERIC DEFAULT 0,
   status TEXT DEFAULT 'active',
   created_by TEXT,
-  created_date TIMESTAMPTZ DEFAULT now(),
-  updated_date TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- 360-Degree Feedback
@@ -215,7 +217,8 @@ CREATE TABLE IF NOT EXISTS feedback_360 (
   comments TEXT,
   status TEXT DEFAULT 'pending',
   submitted_date TIMESTAMPTZ,
-  created_date TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- RLS policies (enable row-level security)
@@ -233,56 +236,56 @@ ALTER TABLE feedback_360 ENABLE ROW LEVEL SECURITY;
 
 -- Tenant isolation policies
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid)', 'recruitment_interviews', 'recruitment_interviews');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'recruitment_interviews', 'recruitment_interviews');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid)', 'career_postings', 'career_postings');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'career_postings', 'career_postings');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid)', 'corporate_cards', 'corporate_cards');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'corporate_cards', 'corporate_cards');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid)', 'card_transactions', 'card_transactions');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'card_transactions', 'card_transactions');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid)', 'travel_requests', 'travel_requests');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'travel_requests', 'travel_requests');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid)', 'travel_policies', 'travel_policies');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'travel_policies', 'travel_policies');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid)', 'announcements', 'announcements');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'announcements', 'announcements');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid)', 'employee_surveys', 'employee_surveys');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'employee_surveys', 'employee_surveys');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid)', 'survey_responses', 'survey_responses');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'survey_responses', 'survey_responses');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid)', 'learning_paths', 'learning_paths');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'learning_paths', 'learning_paths');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid)', 'feedback_360', 'feedback_360');
+  EXECUTE format('CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = (((auth.jwt() -> ''app_metadata''::text) ->> ''tenant_id''::text))::uuid)', 'feedback_360', 'feedback_360');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
