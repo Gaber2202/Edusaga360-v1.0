@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
+import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { Card } from '../components/ui/card';
@@ -141,7 +141,7 @@ export default function Attendance() {
       for (const student of filteredStudents) {
         const data = attendanceData[student.id];
         if (!data?.status) continue;
-        
+
         const record = {
           student_id: student.id,
           student_name: student.name_ar,
@@ -152,18 +152,18 @@ export default function Attendance() {
           notes: data.notes || '',
           marked_by: user?.email
         };
-        
+
         if (data.id) {
           // Update existing record
-          await tenantQuery('attendances').update(record);
+          await tenantQuery('attendances').update(record).eq('id', data.id);
         } else {
           // Create new record
           records.push(record);
         }
       }
-      
+
       if (records.length > 0) {
-        await supabase.Attendance.bulkCreate(records);
+        await tenantQuery('attendances').insert(records);
       }
       
       queryClient.invalidateQueries({ queryKey: ['attendance', dateStr] });

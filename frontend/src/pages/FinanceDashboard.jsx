@@ -58,7 +58,7 @@ function KPICard({ title, value, subtitle, trend, trendLabel, icon: KPIIcon, ico
 
 export default function FinanceDashboard() {
   const { isRTL } = useLanguage();
-  const { tenant } = useTenant();
+  const { tenant, isModuleEnabled } = useTenant();
   const fmt = (v) => formatCurrency(v, tenant?.localization, isRTL);
   const { branchFilter } = useBranch();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
@@ -100,7 +100,7 @@ export default function FinanceDashboard() {
   const { data: apBills = [] } = useTenantQuery(
     ['apbills-dashboard', tenantId],
     () => fetchData(tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter()))),
-    { enabled: hasTenantAccess }
+    { enabled: hasTenantAccess && isModuleEnabled('reconciliation') }
   );
 
   const { data: _accounts = [] } = useTenantQuery(

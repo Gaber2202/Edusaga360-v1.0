@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../api/supabaseClient';
 import { isPlatformOwner } from '../lib/authHelpers';
 import { getJurisdictionContext, clearJurisdictionContext } from '../api/jurisdiction';
+import { DEFAULT_ENABLED_MODULES } from '../lib/moduleFeatures';
 
 const TenantContext = createContext(null);
 
@@ -226,8 +227,8 @@ export function TenantProvider({ user, children }) {
 
   const isModuleEnabled = React.useCallback((moduleKey) => {
     if (!tenant) return true;
-    if (!tenant.enabled_modules || tenant.enabled_modules.length === 0) return true;
-    return tenant.enabled_modules.includes(moduleKey);
+    const enabled = tenant.enabled_modules?.length ? tenant.enabled_modules : DEFAULT_ENABLED_MODULES;
+    return enabled.includes(moduleKey);
   }, [tenant]);
 
   const checkLimit = React.useCallback((limitKey) => {

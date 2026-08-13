@@ -26,7 +26,9 @@ import { useRole } from './components/RoleContext';
 import { isPlatformOwner } from './lib/authHelpers';
 import { JurisdictionFeatureProvider } from './components/JurisdictionFeatureContext';
 import JurisdictionFeatureRoute from './components/JurisdictionFeatureRoute';
+import ModuleFeatureRoute from './components/ModuleFeatureRoute';
 import { PAGE_FEATURE_KEYS } from './lib/jurisdictionFeatures.js';
+import { PAGE_MODULE_KEYS } from './lib/moduleFeatures.js';
 
 // Every page under ./pages is lazy-loaded (its own chunk) and rendered inside a
 // Suspense boundary, so navigating to a route only downloads that page.
@@ -153,7 +155,7 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
       {Object.entries(Pages)
-        .filter(([path]) => path !== 'MfaVerify' && !PAGE_FEATURE_KEYS[path])
+        .filter(([path]) => path !== 'MfaVerify' && !PAGE_FEATURE_KEYS[path] && !PAGE_MODULE_KEYS[path])
         .map(([path, Page]) => (
           <Route
             key={path}
@@ -166,7 +168,7 @@ const AuthenticatedApp = () => {
           />
         ))}
       {Object.entries(PAGE_FEATURE_KEYS)
-        .filter(([path]) => Pages[path])
+        .filter(([path]) => Pages[path] && !PAGE_MODULE_KEYS[path])
         .map(([path, featureKeys]) => {
           const Page = Pages[path];
           return (
@@ -179,6 +181,24 @@ const AuthenticatedApp = () => {
                     <Page />
                   </LayoutWrapper>
                 </JurisdictionFeatureRoute>
+              }
+            />
+          );
+        })}
+      {Object.entries(PAGE_MODULE_KEYS)
+        .filter(([path]) => Pages[path])
+        .map(([path, moduleKeys]) => {
+          const Page = Pages[path];
+          return (
+            <Route
+              key={path}
+              path={`/${path}`}
+              element={
+                <ModuleFeatureRoute moduleKeys={[moduleKeys]}>
+                  <LayoutWrapper currentPageName={path}>
+                    <Page />
+                  </LayoutWrapper>
+                </ModuleFeatureRoute>
               }
             />
           );
@@ -204,14 +224,14 @@ const AuthenticatedApp = () => {
       <Route path="/setup" element={<SetupAccount />} />
       <Route path="/payment/result" element={<PaymentResult />} />
       <Route path="/ParentSignContract" element={<ParentSignContractPage />} />
-      <Route path="/HRManagerDashboard" element={<LayoutWrapper currentPageName="HRManagerDashboard"><HRManagerDashboard /></LayoutWrapper>} />
-      <Route path="/EOSBCalculator" element={<LayoutWrapper currentPageName="EOSBCalculator"><EOSBCalculator /></LayoutWrapper>} />
-      <Route path="/FinanceDashboard" element={<LayoutWrapper currentPageName="FinanceDashboard"><FinanceDashboard /></LayoutWrapper>} />
-      <Route path="/TrialBalance" element={<LayoutWrapper currentPageName="TrialBalance"><TrialBalance /></LayoutWrapper>} />
-      <Route path="/MonthEndClose" element={<LayoutWrapper currentPageName="MonthEndClose"><MonthEndClose /></LayoutWrapper>} />
-      <Route path="/FinancialStatements" element={<LayoutWrapper currentPageName="FinancialStatements"><FinancialStatements /></LayoutWrapper>} />
-      <Route path="/IntegrationHub" element={<LayoutWrapper currentPageName="IntegrationHub"><IntegrationHub /></LayoutWrapper>} />
-      <Route path="/AdminMessaging" element={<LayoutWrapper currentPageName="AdminMessaging"><AdminMessaging /></LayoutWrapper>} />
+      <Route path="/HRManagerDashboard" element={<ModuleFeatureRoute moduleKeys={['basic_hr']}><LayoutWrapper currentPageName="HRManagerDashboard"><HRManagerDashboard /></LayoutWrapper></ModuleFeatureRoute>} />
+      <Route path="/EOSBCalculator" element={<ModuleFeatureRoute moduleKeys={['basic_hr']}><LayoutWrapper currentPageName="EOSBCalculator"><EOSBCalculator /></LayoutWrapper></ModuleFeatureRoute>} />
+      <Route path="/FinanceDashboard" element={<ModuleFeatureRoute moduleKeys={['accounting']}><LayoutWrapper currentPageName="FinanceDashboard"><FinanceDashboard /></LayoutWrapper></ModuleFeatureRoute>} />
+      <Route path="/TrialBalance" element={<ModuleFeatureRoute moduleKeys={['accounting']}><LayoutWrapper currentPageName="TrialBalance"><TrialBalance /></LayoutWrapper></ModuleFeatureRoute>} />
+      <Route path="/MonthEndClose" element={<ModuleFeatureRoute moduleKeys={['accounting']}><LayoutWrapper currentPageName="MonthEndClose"><MonthEndClose /></LayoutWrapper></ModuleFeatureRoute>} />
+      <Route path="/FinancialStatements" element={<ModuleFeatureRoute moduleKeys={['accounting']}><LayoutWrapper currentPageName="FinancialStatements"><FinancialStatements /></LayoutWrapper></ModuleFeatureRoute>} />
+      <Route path="/IntegrationHub" element={<ModuleFeatureRoute moduleKeys={['integrations']}><LayoutWrapper currentPageName="IntegrationHub"><IntegrationHub /></LayoutWrapper></ModuleFeatureRoute>} />
+      <Route path="/AdminMessaging" element={<ModuleFeatureRoute moduleKeys={['communications']}><LayoutWrapper currentPageName="AdminMessaging"><AdminMessaging /></LayoutWrapper></ModuleFeatureRoute>} />
 
       <Route path="*" element={<PageNotFound />} />
     </Routes>

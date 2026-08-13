@@ -100,16 +100,20 @@ import {
           } from 'lucide-react';
 
 import { PAGE_FEATURE_KEYS } from './lib/jurisdictionFeatures.js';
+import { PAGE_MODULE_KEYS } from './lib/moduleFeatures.js';
 
-function filterNavigationByFeatures(items, areAnyEnabled) {
+function filterNavigationByFeatures(items, areAnyEnabled, isModuleEnabled) {
   const out = [];
   for (const item of items) {
     const features = item.page ? PAGE_FEATURE_KEYS[item.page] : null;
     if (features && !areAnyEnabled(features)) continue;
 
+    const moduleKey = item.page ? PAGE_MODULE_KEYS[item.page] : null;
+    if (moduleKey && isModuleEnabled && !isModuleEnabled(moduleKey)) continue;
+
     const filtered = { ...item };
     if (item.children) {
-      filtered.children = filterNavigationByFeatures(item.children, areAnyEnabled);
+      filtered.children = filterNavigationByFeatures(item.children, areAnyEnabled, isModuleEnabled);
       // Drop parent menu if none of its children remain and it has no own route.
       if (filtered.children.length === 0 && !item.page) continue;
     }
@@ -121,7 +125,7 @@ function filterNavigationByFeatures(items, areAnyEnabled) {
 function LayoutContent({ children, currentPageName }) {
   const { t, isRTL, language: _language, toggleLanguage } = useLanguage();
   const { user, userRole, canAccess: _canAccess, loading, isTrial, isCreator } = useRole();
-  const { tenant, isTenantActive, isModuleEnabled: _isModuleEnabled } = useTenant();
+  const { tenant, isTenantActive, isModuleEnabled } = useTenant();
   const { branches, selectedBranchId, selectBranch } = useBranch();
   const { areAnyEnabled } = useJurisdictionFeatures();
   const queryClient = useQueryClient();
@@ -389,7 +393,7 @@ function LayoutContent({ children, currentPageName }) {
   });
 
   // Apply jurisdiction feature gating so Saudi-government pages are absent for non-SA tenants.
-  const filteredNavigation = filterNavigationByFeatures(roleFilteredNavigation, areAnyEnabled);
+  const filteredNavigation = filterNavigationByFeatures(roleFilteredNavigation, areAnyEnabled, isModuleEnabled);
 
   // Resolve a tappable target page for a top-level nav item (its own page, or
   // the first accessible child). Used to build a role-aware mobile bottom nav.

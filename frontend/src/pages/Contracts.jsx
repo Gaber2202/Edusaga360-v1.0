@@ -75,12 +75,6 @@ export default function Contracts() {
     enabled: hasTenantAccess,
   });
 
-  const { data: _feeServices = [] } = useQuery({
-    queryKey: ['feeServices', tenantId],
-    queryFn: () => fetchData(tenantQuery('fee_services').select('*').match(tenantFilter({ is_active: true }))),
-    enabled: hasTenantAccess,
-  });
-
   const { data: templates = [] } = useQuery({
     queryKey: ['contractTemplates', tenantId],
     queryFn: () => fetchData(tenantQuery('contract_templates').select('*').match(tenantFilter({ is_active: true }))),

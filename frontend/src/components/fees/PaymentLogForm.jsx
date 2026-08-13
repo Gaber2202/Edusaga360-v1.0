@@ -36,20 +36,19 @@ export default function PaymentLogForm({ open, onClose, invoice }) {
 
   const createPaymentMutation = useMutation({
     mutationFn: async (data) => {
-      // Create payment log
-      const logNumber = `PAY-${Date.now().toString(36).toUpperCase()}`;
-      const paymentLog = await tenantQuery('invoice_payment_logs').insert({
-        log_number: logNumber,
+      // Record the payment against the invoice
+      const paymentLog = await tenantQuery('payments').insert({
         invoice_id: invoice.id,
-        invoice_number: invoice.invoice_number,
-        student_id: invoice.student_id,
-        student_name: invoice.student_name,
-        branch_id: invoice.branch_id,
-        collected_by: user?.full_name || user?.email,
-        collected_by_email: user?.email,
+        amount: parseFloat(data.amount),
+        method: data.payment_method,
+        reference: data.reference_number,
+        date: data.payment_date ? data.payment_date.split('T')[0] : format(new Date(), 'yyyy-MM-dd'),
         status: 'recorded',
-        ...data
-      });
+        currency_code: invoice.currency_code || tenant?.localization?.currencyCode,
+        branch_id: invoice.branch_id,
+        notes: data.notes,
+        recorded_by: user?.full_name || user?.email,
+      }).select().single();
 
       // Update invoice paid amount and status
       const newPaidAmount = (invoice.paid_amount || 0) + parseFloat(data.amount);
@@ -60,13 +59,13 @@ export default function PaymentLogForm({ open, onClose, invoice }) {
         paid_amount: newPaidAmount,
         balance: newBalance,
         status: newStatus
-      });
+      }).eq('id', invoice.id);
 
       await logAuditEvent(
         AuditActions.CREATE,
         'InvoicePaymentLog',
         paymentLog.id,
-        { log_number: logNumber, amount: data.amount, method: data.payment_method },
+        { amount: data.amount, method: data.payment_method },
         user
       );
 
