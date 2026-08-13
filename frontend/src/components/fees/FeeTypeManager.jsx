@@ -34,7 +34,7 @@ export default function FeeTypeManager({ open, onClose }) {
 
   const { data: feeTypes = [], isLoading } = useTenantQuery(
     ['feeTypes', tenantId],
-    () => fetchData(tenantQuery('fee_types').select('*').order('display_order'))
+    () => fetchData(tenantQuery('fee_types').select('*').order('name_ar'))
   );
 
   const handleSave = async () => {

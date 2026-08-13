@@ -117,24 +117,6 @@
     "expires": "2027-06-30"
   },
   {
-    "file": "frontend/src/components/fees/BulkInvoiceGeneration.jsx",
-    "table": "companies",
-    "issue": "unknown_table",
-    "count": 1,
-    "reason": "typo/code bug: should target companys",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/components/fees/BulkInvoiceGeneration.jsx",
-    "table": "student_contracts",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
     "file": "frontend/src/components/fees/InvoiceForm.jsx",
     "table": "school_bank_accounts",
     "issue": "unknown_table",
