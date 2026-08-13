@@ -73,6 +73,7 @@ export const PAGE_MODULE_KEYS = {
   // School operations
   CanteenManagement: 'canteen',
   LibraryManagement: 'library',
+  FleetManagement: 'transport',
   TransportManagement: 'transport',
   SchoolClinic: 'clinic',
   ITHelpdesk: 'it_helpdesk',
@@ -90,6 +91,7 @@ export const PAGE_MODULE_KEYS = {
   ESSSettings: 'ess',
 
   // Government / integrations
+  Integrations: 'integrations',
   GovernmentRelations: 'gov_relations',
   GovIntegrations: 'gov_relations',
   IntegrationHub: 'integrations',
