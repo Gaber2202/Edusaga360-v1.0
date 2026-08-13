@@ -63,8 +63,11 @@ export default function InvoiceDetails() {
   const { data: paymentLogs = [] } = useTenantQuery(
     ['invoicePaymentLogs', invoiceId, tenantId],
     async () => {
-      const { data: allLogs = [] } = await tenantQuery('payments').select('*').match(tenantFilter()).order('created_at', { ascending: false });
-      return allLogs.filter(log => log.invoice_id === invoiceId);
+      const { data: logs = [] } = await tenantQuery('payments')
+        .select('*')
+        .match(tenantFilter({ invoice_id: invoiceId }))
+        .order('created_at', { ascending: false });
+      return logs;
     },
     { enabled: !!invoiceId && hasTenantAccess }
   );
@@ -731,8 +734,8 @@ EduSaga 360
                                 <div className="flex items-center gap-2">
                                   <Calendar className="w-4 h-4 text-muted-foreground" />
                                   <div>
-                                    <p className="font-medium text-sm">{format(new Date(log.payment_date), 'dd/MM/yyyy')}</p>
-                                    <p className="text-xs text-muted-foreground">{format(new Date(log.payment_date), 'HH:mm')}</p>
+                                    <p className="font-medium text-sm">{log.date ? format(new Date(log.date), 'dd/MM/yyyy') : '-'}</p>
+                                    <p className="text-xs text-muted-foreground">{log.date ? format(new Date(log.date), 'HH:mm') : ''}</p>
                                   </div>
                                 </div>
                               </TableCell>
@@ -776,7 +779,7 @@ EduSaga 360
                                 )}
                               </TableCell>
                               <TableCell>
-                                <p className="text-sm">{log.collected_by}</p>
+                                <p className="text-sm">{log.recorded_by || log.collected_by}</p>
                                 {log.notes && <p className="text-xs text-muted-foreground mt-1">{log.notes}</p>}
                               </TableCell>
                               <TableCell>
@@ -887,8 +890,8 @@ EduSaga 360
                           {log.reference && ` - ${isRTL ? 'رقم المرجع' : 'Ref'}: ${log.reference}`}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(log.payment_date), 'dd/MM/yyyy HH:mm')}
-                          {log.collected_by && ` • ${isRTL ? 'بواسطة' : 'by'} ${log.collected_by}`}
+                          {log.date ? format(new Date(log.date), 'dd/MM/yyyy HH:mm') : '-'}
+                          {(log.recorded_by || log.collected_by) && ` • ${isRTL ? 'بواسطة' : 'by'} ${log.recorded_by || log.collected_by}`}
                         </p>
                         {log.notes && <p className="text-xs text-muted-foreground mt-1">{log.notes}</p>}
                         {log.attachment_url && (

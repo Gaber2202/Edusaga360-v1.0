@@ -6,12 +6,16 @@
 
 -- Reusable updated_at trigger
 CREATE OR REPLACE FUNCTION public.set_updated_at()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $$
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Generic daily attendance (used by the legacy Attendance page)
 CREATE TABLE IF NOT EXISTS public.attendances (
@@ -72,41 +76,56 @@ ALTER TABLE public.employee_attendance
   ADD COLUMN IF NOT EXISTS recorded_by TEXT;
 CREATE INDEX IF NOT EXISTS idx_employee_attendance_branch_date ON public.employee_attendance(tenant_id, branch_id, date);
 
--- Extend payments to capture the notes and recorder fields the payment-log form uses.
+-- Extend payments to capture the fields the payment-log form and collections page use.
 ALTER TABLE public.payments
   ADD COLUMN IF NOT EXISTS notes TEXT,
-  ADD COLUMN IF NOT EXISTS recorded_by TEXT;
+  ADD COLUMN IF NOT EXISTS recorded_by TEXT,
+  ADD COLUMN IF NOT EXISTS collected_by TEXT,
+  ADD COLUMN IF NOT EXISTS payment_number TEXT,
+  ADD COLUMN IF NOT EXISTS invoice_number TEXT,
+  ADD COLUMN IF NOT EXISTS student_id UUID REFERENCES public.students(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS student_name TEXT,
+  ADD COLUMN IF NOT EXISTS guardian_id UUID,
+  ADD COLUMN IF NOT EXISTS reconciliation_status TEXT DEFAULT 'pending',
+  ADD COLUMN IF NOT EXISTS attachment_url TEXT,
+  ADD COLUMN IF NOT EXISTS tamara_order_id TEXT,
+  ADD COLUMN IF NOT EXISTS tamara_status TEXT;
 
--- RLS
+-- RLS (initplan-wrapped auth.jwt() to evaluate once per statement; compare tenant_id as text)
 ALTER TABLE public.attendances ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.student_attendances ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "tenant_isolation" ON public.attendances;
 CREATE POLICY "tenant_isolation" ON public.attendances
   FOR ALL TO authenticated
-  USING (tenant_id = (((auth.jwt() -> 'app_metadata'::text) ->> 'tenant_id'::text))::uuid)
-  WITH CHECK (tenant_id = (((auth.jwt() -> 'app_metadata'::text) ->> 'tenant_id'::text))::uuid);
+  USING ((tenant_id)::text = (((select auth.jwt()) -> 'app_metadata'::text) ->> 'tenant_id'::text))
+  WITH CHECK ((tenant_id)::text = (((select auth.jwt()) -> 'app_metadata'::text) ->> 'tenant_id'::text));
 
+DROP POLICY IF EXISTS "tenant_isolation" ON public.student_attendances;
 CREATE POLICY "tenant_isolation" ON public.student_attendances
   FOR ALL TO authenticated
-  USING (tenant_id = (((auth.jwt() -> 'app_metadata'::text) ->> 'tenant_id'::text))::uuid)
-  WITH CHECK (tenant_id = (((auth.jwt() -> 'app_metadata'::text) ->> 'tenant_id'::text))::uuid);
+  USING ((tenant_id)::text = (((select auth.jwt()) -> 'app_metadata'::text) ->> 'tenant_id'::text))
+  WITH CHECK ((tenant_id)::text = (((select auth.jwt()) -> 'app_metadata'::text) ->> 'tenant_id'::text));
 
--- updated_at triggers
+-- updated_at triggers (idempotent)
+DROP TRIGGER IF EXISTS attendances_updated_at ON public.attendances;
 CREATE TRIGGER attendances_updated_at
   BEFORE UPDATE ON public.attendances
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- Fix the legacy employee_attendance tenant isolation policy which used the wrong
--- JWT claim path (auth.jwt() ->> 'tenant_id' instead of app_metadata ->> 'tenant_id').
-DROP POLICY IF EXISTS "tenant_isolation" ON public.employee_attendance;
-CREATE POLICY "tenant_isolation" ON public.employee_attendance
-  FOR ALL TO authenticated
-  USING (tenant_id = (((auth.jwt() -> 'app_metadata'::text) ->> 'tenant_id'::text))::uuid)
-  WITH CHECK (tenant_id = (((auth.jwt() -> 'app_metadata'::text) ->> 'tenant_id'::text))::uuid);
-
+DROP TRIGGER IF EXISTS student_attendances_updated_at ON public.student_attendances;
 CREATE TRIGGER student_attendances_updated_at
   BEFORE UPDATE ON public.student_attendances
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- Fix the legacy employee_attendance tenant isolation policy which used the wrong
+-- JWT claim path (auth.jwt() ->> 'tenant_id' instead of app_metadata ->> 'tenant_id')
+-- and re-wrap auth.jwt() as an InitPlan per RLSPERF-03.
+DROP POLICY IF EXISTS "tenant_isolation" ON public.employee_attendance;
+CREATE POLICY "tenant_isolation" ON public.employee_attendance
+  FOR ALL TO authenticated
+  USING ((tenant_id)::text = (((select auth.jwt()) -> 'app_metadata'::text) ->> 'tenant_id'::text))
+  WITH CHECK ((tenant_id)::text = (((select auth.jwt()) -> 'app_metadata'::text) ->> 'tenant_id'::text));
 
 -- Seed enabled_modules for first-term on existing tenants that have not been configured yet.
 -- This ensures the new feature-flag menu does not hide core modules from live customers.

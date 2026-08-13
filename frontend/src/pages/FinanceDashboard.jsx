@@ -119,7 +119,7 @@ export default function FinanceDashboard() {
   const kpis = useMemo(() => {
     const ytdInvoices = invoices.filter(i => i.issue_date >= ytdStart);
     const ytdRevenue = ytdInvoices.reduce((s, i) => s + (i.net_amount || i.total_amount || 0), 0);
-    const ytdCollected = payments.filter(p => p.payment_date >= ytdStart).reduce((s, p) => s + (p.amount || 0), 0);
+    const ytdCollected = payments.filter(p => p.date >= ytdStart).reduce((s, p) => s + (p.amount || 0), 0);
     const collectionRate = ytdRevenue > 0 ? (ytdCollected / ytdRevenue) * 100 : 0;
 
     // AR outstanding
@@ -175,8 +175,8 @@ export default function FinanceDashboard() {
       months[m].revenue += (inv.net_amount || inv.total_amount || 0);
     });
     payments.forEach(p => {
-      if (!p.payment_date) return;
-      const m = p.payment_date.substring(0, 7);
+      if (!p.date) return;
+      const m = p.date.substring(0, 7);
       if (!months[m]) months[m] = { month: m, revenue: 0, collected: 0 };
       months[m].collected += (p.amount || 0);
     });
@@ -228,8 +228,8 @@ export default function FinanceDashboard() {
     });
     Object.entries(pMap).forEach(([_key, pList]) => {
       if (pList.length >= 2) {
-        const sorted = pList.sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date));
-        const daysDiff = Math.abs((new Date(sorted[0].payment_date) - new Date(sorted[1].payment_date)) / 86400000);
+        const sorted = pList.sort((a, b) => new Date(b.date) - new Date(a.date));
+        const daysDiff = Math.abs((new Date(sorted[0].date) - new Date(sorted[1].date)) / 86400000);
         if (daysDiff <= 30) {
           flags.push({
             type: 'duplicate',

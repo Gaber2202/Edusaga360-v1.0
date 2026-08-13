@@ -33,6 +33,8 @@ export const PAGE_MODULE_KEYS = {
   // Core HR
   Employees: 'basic_hr',
   EmployeeAttendance: 'basic_hr',
+  HRManagerDashboard: 'basic_hr',
+  EOSBCalculator: 'basic_hr',
   Leaves: 'basic_hr',
   Overtime: 'basic_hr',
   HRApprovalsInbox: 'basic_hr',
@@ -62,6 +64,7 @@ export const PAGE_MODULE_KEYS = {
   Expenses: 'travel_expenses',
 
   // Assets / facilities
+  Assets: 'assets',
   AssetAssignments: 'assets',
   AssetRentals: 'assets',
   Depreciation: 'assets',
@@ -97,10 +100,29 @@ export const PAGE_MODULE_KEYS = {
 
   // AI assistant
   YamenAI: 'yamen_ai',
+  YamenCollections: 'yamen_ai',
+
+  // Procurement
+  Vendors: 'procurement',
+  PurchaseRequisitions: 'procurement',
+  PurchaseOrders: 'procurement',
+
+  // Core accounting (gated by accounting so the module can be turned off)
+  FinanceDashboard: 'accounting',
+  ChartOfAccounts: 'accounting',
+  JournalEntries: 'accounting',
+  GeneralLedger: 'accounting',
+  TrialBalance: 'accounting',
+  FinancialStatements: 'accounting',
+  MonthEndClose: 'accounting',
+  FiscalPeriods: 'accounting',
+  CostCenters: 'accounting',
+
+  // Collections extras
+  ChequeManagement: 'collections',
 
   // Finance extras
   APBills: 'reconciliation',
-  PurchaseOrders: 'reconciliation',
   Reconciliation: 'reconciliation',
   Refunds: 'reconciliation',
   BankFileTemplates: 'reconciliation',

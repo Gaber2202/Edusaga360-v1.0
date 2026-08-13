@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { supabase } from './api/supabaseClient';
+import { isPlatformOwner } from './lib/authHelpers';
 import { LanguageProvider, useLanguage } from './components/LanguageContext';
 import { RoleProvider, useRole } from './components/RoleContext';
 import { BranchProvider, useBranch } from './components/BranchContext';
@@ -430,6 +431,17 @@ function LayoutContent({ children, currentPageName }) {
         <div className="animate-spin w-8 h-8 border-4 border-najdi-700 border-t-transparent rounded-full" />
       </div>
     );
+  }
+
+  // Platform-owner-only pages
+  if (currentPageName === 'SuperAdminDashboard' && !isPlatformOwner(user)) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Module feature flags: an unbuilt/disabled module is absent, not a 404.
+  const moduleKey = PAGE_MODULE_KEYS[currentPageName];
+  if (moduleKey && !isModuleEnabled(moduleKey)) {
+    return <Navigate to="/" replace />;
   }
 
   const NavItem = ({ item, mobile = false, depth: _depth = 0 }) => {

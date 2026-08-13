@@ -94,7 +94,7 @@ export default function Collections() {
     const pending = total - collected;
     const overdue = branchInvoices.filter(i => i.status === 'overdue').reduce((sum, i) => sum + ((i.total_amount || 0) - (i.paid_amount || 0)), 0);
     
-    const todayPayments = payments.filter(p => p.payment_date === format(new Date(), 'yyyy-MM-dd'));
+    const todayPayments = payments.filter(p => p.date === format(new Date(), 'yyyy-MM-dd'));
     const todayCollected = todayPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
     
     return { total, collected, pending, overdue, todayCollected, collectionRate: total > 0 ? (collected / total * 100).toFixed(1) : 0 };
@@ -125,7 +125,7 @@ export default function Collections() {
       
       // Create payment record
       const tid = getTenantIdForCreate();
-      const payment = await tenantQuery('payments').insert({
+      const { data: payment, error: paymentError } = await tenantQuery('payments').insert({
         ...(tid && { tenant_id: tid }),
         payment_number: paymentNumber,
         invoice_id: selectedInvoice.id,
@@ -134,15 +134,19 @@ export default function Collections() {
         student_name: selectedInvoice.student_name,
         guardian_id: selectedInvoice.guardian_id,
         branch_id: selectedInvoice.branch_id,
+        currency_code: selectedInvoice.currency_code,
         amount: parseFloat(paymentData.amount),
-        payment_date: paymentData.payment_date,
-        payment_method: paymentData.payment_method,
-        reference_number: paymentData.reference_number,
+        date: paymentData.payment_date,
+        method: paymentData.payment_method,
+        reference: paymentData.reference_number,
         notes: paymentData.notes,
         status: 'completed',
         reconciliation_status: 'pending',
-        received_by: user?.email
-      });
+        recorded_by: user?.email,
+        collected_by: user?.email,
+      }).select().single();
+
+      if (paymentError) throw paymentError;
 
       // Update invoice
       const newPaidAmount = (selectedInvoice.paid_amount || 0) + parseFloat(paymentData.amount);
@@ -154,11 +158,13 @@ export default function Collections() {
         newStatus = 'partial';
       }
 
-      await tenantQuery('invoices').update({
+      const { error: invoiceError } = await tenantQuery('invoices').update({
         paid_amount: newPaidAmount,
         balance: selectedInvoice.total_amount - newPaidAmount,
         status: newStatus
-      });
+      }).eq('id', selectedInvoice.id);
+
+      if (invoiceError) throw invoiceError;
 
       // Create journal entry for payment
       const cashAccount = accounts.find(a => a.is_bank_account || a.account_code?.startsWith('1101'));
