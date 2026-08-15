@@ -90,7 +90,7 @@ export default function TrialUsers() {
           user_role: form.role_code,
           is_trial_user: true,
           trial_expires_date: format(expiryDate, 'yyyy-MM-dd')
-        });
+        }).eq('id', newUser.id);
 
         // Audit log
         const currentUser = await supabase.auth.getUser().then(r => r.data?.user);

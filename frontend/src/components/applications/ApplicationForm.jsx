@@ -166,7 +166,7 @@ export default function ApplicationForm({ open, onClose, onSuccess, application 
       };
 
       if (application?.id) {
-        await tenantQuery('applications').update(data);
+        await tenantQuery('applications').update(data).eq('id', application.id);
         await logAuditEvent({
           action: AuditActions.UPDATE,
           entityType: 'Application',

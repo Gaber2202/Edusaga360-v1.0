@@ -88,7 +88,7 @@ export default function PlatformUsersTab({ tenants = [] }) {
       await tenantQuery('users').update({
         user_role: editUser.user_role,
         tenant_id: editUser.tenant_id || null,
-      });
+      }).eq('id', editUser.id);
       toast.success(isRTL ? 'تم تحديث المستخدم' : 'User updated');
       queryClient.invalidateQueries({ queryKey: ['platform-all-users'] });
       queryClient.invalidateQueries({ queryKey: ['all-users-sa'] });
@@ -123,7 +123,7 @@ export default function PlatformUsersTab({ tenants = [] }) {
           user_role: inviteRole,
           tenant_id: inviteTenant,
           tenant_code: selectedTenant?.tenant_code || '',
-        });
+        }).eq('id', newUsers[0].id);
       }
 
       toast.success(isRTL ? `تم إرسال الدعوة إلى ${inviteEmail}` : `Invitation sent to ${inviteEmail}`);

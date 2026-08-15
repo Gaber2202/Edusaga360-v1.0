@@ -75,12 +75,6 @@ export default function Contracts() {
     enabled: hasTenantAccess,
   });
 
-  const { data: _feeServices = [] } = useQuery({
-    queryKey: ['feeServices', tenantId],
-    queryFn: () => fetchData(tenantQuery('fee_services').select('*').match(tenantFilter({ is_active: true }))),
-    enabled: hasTenantAccess,
-  });
-
   const { data: templates = [] } = useQuery({
     queryKey: ['contractTemplates', tenantId],
     queryFn: () => fetchData(tenantQuery('contract_templates').select('*').match(tenantFilter({ is_active: true }))),
@@ -314,7 +308,7 @@ export default function Contracts() {
         updateData.academic_year = formData.academic_year;
       }
 
-      await tenantQuery('students').update(updateData);
+      await tenantQuery('students').update(updateData).eq('id', student.id);
 
 
       // Audit log
@@ -596,7 +590,7 @@ export default function Contracts() {
         status: 'sent',
         sent_date: new Date().toISOString(),
         delivery_status: 'sent'
-      });
+      }).eq('id', contract.id);
       // Notify admin in system
       await tenantQuery('notifications').insert({
         tenant_id: contract.tenant_id,

@@ -130,7 +130,7 @@ registerHandler('enrollment_confirmed', namedHandler('CRM', async (payload) => {
   await tenantQuery('applications').update({
     status: 'enrolled',
     pipeline_stage: 'decision_made',
-  });
+  }).eq('id', payload.application_id);
 }));
 
 // ─── APPLICATION STAGE CHANGE ─────────────────────────────────────────────────
@@ -300,7 +300,7 @@ registerHandler('clinic_visit_completed', namedHandler('Attendance', async (payl
     await tenantQuery('student_attendances').update({
       status: 'absent',
       notes: `Sent home from clinic at ${payload.visit_time}`,
-    });
+    }).eq('id', existing[0].id);
   }
 }));
 
@@ -353,7 +353,7 @@ registerHandler('monthly_timesheet_locked', namedHandler('Payroll', async (paylo
     await tenantQuery('pay_runs').update({
       attendance_locked: true,
       status: 'attendance_confirmed',
-    });
+    }).eq('id', existing[0].id);
   }
 }));
 
@@ -488,7 +488,7 @@ registerHandler('bus_delayed', namedHandler('Attendance', async (payload) => {
       await tenantQuery('student_attendances').update({
         notes: `Bus delay — route ${payload.route_name} — excused`,
         is_bus_excused: true,
-      });
+      }).eq('id', rec.id);
     }
   }
 }));
@@ -761,7 +761,7 @@ registerHandler('books_received', namedHandler('Library', async (payload) => {
       await tenantQuery('library_books').update({
         total_copies: (existing[0].total_copies || 1) + (book.quantity || 1),
         available_copies: (existing[0].available_copies || 1) + (book.quantity || 1),
-      });
+      }).eq('id', existing[0].id);
     } else {
       await tenantQuery('library_books').insert({
         tenant_id: payload.tenant_id,

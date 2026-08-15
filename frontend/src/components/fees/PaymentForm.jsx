@@ -73,18 +73,27 @@ export default function PaymentForm({ open, onClose, onSuccess, invoice }) {
       const paymentNumber = `PAY-${Date.now().toString(36).toUpperCase()}`;
       
       // Create payment record
-      const payment = await tenantQuery('payments').insert({
+      const { data: payment, error: paymentError } = await tenantQuery('payments').insert({
         payment_number: paymentNumber,
         invoice_id: invoice.id,
         student_id: invoice.student_id,
         student_name: invoice.student_name,
         amount: parseFloat(formData.amount),
-        payment_date: formData.payment_date,
-        payment_method: formData.payment_method,
-        reference_number: formData.reference_number,
+        date: formData.payment_date,
+        method: formData.payment_method,
+        reference: formData.reference_number,
         notes: formData.notes,
-        received_by: user?.email
-      });
+        status: 'completed',
+        reconciliation_status: 'pending',
+        recorded_by: user?.email,
+        collected_by: user?.email,
+        branch_id: invoice.branch_id,
+        currency_code: invoice.currency_code || tenant?.localization?.currencyCode,
+        invoice_number: invoice.invoice_number,
+        guardian_id: invoice.guardian_id,
+      }).select().single();
+
+      if (paymentError) throw paymentError;
 
       // Update invoice
       const newPaidAmount = (invoice.paid_amount || 0) + parseFloat(formData.amount);
@@ -96,10 +105,12 @@ export default function PaymentForm({ open, onClose, onSuccess, invoice }) {
         newStatus = 'partial';
       }
 
-      await tenantQuery('invoices').update({
+      const { error: invoiceError } = await tenantQuery('invoices').update({
         paid_amount: newPaidAmount,
         status: newStatus
-      });
+      }).eq('id', invoice.id);
+
+      if (invoiceError) throw invoiceError;
 
       // Create journal entry: Debit Cash/Bank, Credit AR
       try {

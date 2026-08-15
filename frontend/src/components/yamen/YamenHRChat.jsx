@@ -185,7 +185,7 @@ export default function YamenHRChat({ isRTL, isHRMode, nationalisationEnabled = 
       if (tenant?.id) {
         Promise.resolve(tenantQuery('tenants').update({
           yamen_ai_used_this_month: (tenant.yamen_ai_used_this_month || 0) + 1,
-        })).catch(() => {});
+        }).eq('id', tenant.id)).catch(() => {});
       }
 
       // Log interaction
