@@ -34,6 +34,23 @@ const Pages = Object.fromEntries(
 const mainPageKey = 'Dashboard';
 const MainPage = Pages[mainPageKey] ?? (() => <></>);
 
+// Public / auth-entry page keys are eagerly imported and routed explicitly below.
+// They must NOT be auto-registered through the lazy Pages map, otherwise React
+// Router's case-insensitive matching will wrap them in Layout/TenantAccessGate.
+const PUBLIC_PAGE_KEYS = new Set([
+  'Register',
+  'RegistrationWizard',
+  'OnboardingWizard',
+  'SchoolLogin',
+  'ForgotPassword',
+  'ResetPassword',
+  'SetupAccount',
+  'PaymentResult',
+  'ParentSignContract',
+  'InstitutionSetup',
+  'MfaVerify',
+]);
+
 // Spinner shown while a lazy page chunk downloads.
 const PageFallback = () => (
   <div className="flex items-center justify-center min-h-[60vh]">
@@ -58,6 +75,8 @@ const AuthenticatedApp = () => {
     pathname === '/setup' ||
     pathname === '/OnboardingWizard' ||
     pathname === '/payment/result' ||
+    pathname === '/ParentSignContract' ||
+    pathname === '/InstitutionSetup' ||
     pathname.startsWith('/onboarding/'); // /onboarding/:token is unauthenticated
 
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -95,6 +114,8 @@ const AuthenticatedApp = () => {
             <Route path="/OnboardingWizard" element={<OnboardingWizard />} />
             <Route path="/onboarding/:token" element={<OnboardingWizard />} />
             <Route path="/payment/result" element={<PaymentResult />} />
+            <Route path="/ParentSignContract" element={<ParentSignContractPage />} />
+            <Route path="/InstitutionSetup" element={<InstitutionSetup />} />
           </Routes>
         );
       }
@@ -113,6 +134,8 @@ const AuthenticatedApp = () => {
             <Route path="/OnboardingWizard" element={<OnboardingWizard />} />
             <Route path="/onboarding/:token" element={<OnboardingWizard />} />
             <Route path="/payment/result" element={<PaymentResult />} />
+            <Route path="/ParentSignContract" element={<ParentSignContractPage />} />
+            <Route path="/InstitutionSetup" element={<InstitutionSetup />} />
           </Routes>
         );
       }
@@ -131,7 +154,7 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
       {Object.entries(Pages)
-        .filter(([path]) => path !== 'MfaVerify')
+        .filter(([path]) => !PUBLIC_PAGE_KEYS.has(path))
         .map(([path, Page]) => {
           const featureKeys = PAGE_FEATURE_KEYS[path];
           const element = (
