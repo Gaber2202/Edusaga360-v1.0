@@ -41,6 +41,8 @@ import { useTenant } from '../components/TenantContext';
 
 export default function InvoiceDetails() {
   const { tenant } = useTenant();
+  const isEInvoiceEnabled = tenant?.features?.includes('einvoicing');
+  const vatPercent = Math.round((tenant?.vat_rate ?? 0.15) * 100);
   const { t, isRTL } = useLanguage();
   const { userRole, user } = useRole();
   const queryClient = useQueryClient();
@@ -113,9 +115,9 @@ export default function InvoiceDetails() {
       .finally(() => setPaymentLinkLoading(false));
   }, [invoice?.id, invoice?.status, invoice?.total_amount, invoice?.paid_amount, invoice?.document_type]);
 
-  // Load a live ZATCA PDF preview for the invoice details tab.
+  // Load a live ZATCA PDF preview for the invoice details tab (Saudi e-invoicing only).
   useEffect(() => {
-    if (!invoice?.id) {
+    if (!invoice?.id || invoice.document_type !== 'invoice' || !isEInvoiceEnabled) {
       setPdfPreviewUrl(null);
       return;
     }
@@ -129,7 +131,7 @@ export default function InvoiceDetails() {
     return () => {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [invoice?.id]);
+  }, [invoice?.id, invoice?.document_type, isEInvoiceEnabled]);
 
   // Primary download: server-generated, ZATCA-compliant PDF (bilingual EN/AR
   // with the Fatoora TLV QR code embedded).
@@ -364,14 +366,18 @@ EduSaga 360
         </Button>
 
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleDownloadPDF} className="gap-2">
-            <Download className="w-4 h-4" />
-            {isRTL ? 'تحميل' : 'Download'}
-          </Button>
-          <Button variant="outline" onClick={handlePrint} className="gap-2">
-            <Printer className="w-4 h-4" />
-            {t('print')}
-          </Button>
+          {isEInvoiceEnabled && (
+            <>
+              <Button variant="outline" onClick={handleDownloadPDF} className="gap-2">
+                <Download className="w-4 h-4" />
+                {isRTL ? 'تحميل' : 'Download'}
+              </Button>
+              <Button variant="outline" onClick={handlePrint} className="gap-2">
+                <Printer className="w-4 h-4" />
+                {t('print')}
+              </Button>
+            </>
+          )}
           <Button variant="outline" onClick={shareViaEmail} className="gap-2">
             <Mail className="w-4 h-4" />
             {isRTL ? 'بريد' : 'Email'}
@@ -433,8 +439,8 @@ EduSaga 360
           </TabsList>
 
           <TabsContent value="details" className="p-6 space-y-6 mt-0">
-          {/* ZATCA Invoice Preview */}
-          {pdfPreviewUrl && (
+          {/* ZATCA Invoice Preview (e-invoicing jurisdictions only) */}
+          {isEInvoiceEnabled && pdfPreviewUrl && (
             <div className="border rounded-lg overflow-hidden bg-white">
               <div className="bg-sand px-4 py-2 border-b flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-ink">
@@ -532,7 +538,7 @@ EduSaga 360
             </div>
             {Number(invoice.vat_amount) > 0 && (
               <div className="flex justify-between text-muted-foreground">
-                <span>{isRTL ? 'ضريبة القيمة المضافة (15%)' : 'VAT (15%)'}</span>
+                <span>{isRTL ? `ضريبة القيمة المضافة (${vatPercent}%)` : `VAT (${vatPercent}%)`}</span>
                 <span>+{formatCurrency((invoice.vat_amount), tenant?.localization, isRTL)} {getCurrencySymbol(tenant?.localization, isRTL)}</span>
               </div>
             )}
