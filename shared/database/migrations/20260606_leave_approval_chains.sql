@@ -2,6 +2,24 @@
 -- Leave Management: Approval Chains, Holidays, Audit
 -- ============================================================
 
+-- Canonical tenant-isolation helpers (idempotent; will be replaced by the
+-- 20260810 remediation migration but are required here for migration order).
+CREATE OR REPLACE FUNCTION public.auth_tenant_id()
+RETURNS UUID
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT nullif(((auth.jwt() -> 'app_metadata'::text) ->> 'tenant_id'::text), '')::uuid
+$$;
+
+CREATE OR REPLACE FUNCTION public.auth_is_platform_owner()
+RETURNS BOOLEAN
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT coalesce(((auth.jwt() -> 'app_metadata'::text) ->> 'is_platform_owner'::text)::boolean, false)
+$$;
+
 -- Public holidays / school closures (fixes missing table referenced in frontend)
 CREATE TABLE IF NOT EXISTS holidays (
   id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -17,7 +35,10 @@ CREATE TABLE IF NOT EXISTS holidays (
 );
 
 ALTER TABLE holidays ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "tenant_isolation" ON holidays USING (tenant_id = (current_setting('app.tenant_id', true))::uuid);
+CREATE POLICY "tenant_isolation" ON holidays
+  FOR ALL TO authenticated
+  USING (tenant_id = (select public.auth_tenant_id()))
+  WITH CHECK (tenant_id = (select public.auth_tenant_id()));
 CREATE INDEX IF NOT EXISTS idx_holidays_tenant_date ON holidays(tenant_id, date);
 
 -- Configurable multi-level approval chains per leave type
@@ -38,7 +59,10 @@ CREATE TABLE IF NOT EXISTS leave_approval_chains (
 );
 
 ALTER TABLE leave_approval_chains ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "tenant_isolation" ON leave_approval_chains USING (tenant_id = (current_setting('app.tenant_id', true))::uuid);
+CREATE POLICY "tenant_isolation" ON leave_approval_chains
+  FOR ALL TO authenticated
+  USING (tenant_id = (select public.auth_tenant_id()))
+  WITH CHECK (tenant_id = (select public.auth_tenant_id()));
 CREATE INDEX IF NOT EXISTS idx_leave_chains_tenant_type ON leave_approval_chains(tenant_id, leave_type_id);
 
 -- Add approval chain tracking columns to leave_requests
@@ -71,6 +95,9 @@ CREATE TABLE IF NOT EXISTS leave_balance_audits (
 );
 
 ALTER TABLE leave_balance_audits ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "tenant_isolation" ON leave_balance_audits USING (tenant_id = (current_setting('app.tenant_id', true))::uuid);
+CREATE POLICY "tenant_isolation" ON leave_balance_audits
+  FOR ALL TO authenticated
+  USING (tenant_id = (select public.auth_tenant_id()))
+  WITH CHECK (tenant_id = (select public.auth_tenant_id()));
 CREATE INDEX IF NOT EXISTS idx_leave_audits_tenant ON leave_balance_audits(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_leave_audits_employee ON leave_balance_audits(employee_id);
