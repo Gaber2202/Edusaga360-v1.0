@@ -268,7 +268,7 @@ function SchoolInfoSection({ isRTL }) {
   const handleSave = async () => {
     if (!tenant?.id) return;
     setSaving(true);
-    await tenantQuery('tenants').update(form);
+    await tenantQuery('tenants').update(form).eq('id', tenant.id);
     qc.invalidateQueries({ queryKey: ['tenant'] });
     toast.success(isRTL ? 'تم حفظ معلومات المدرسة' : 'School information saved');
     setSaving(false);

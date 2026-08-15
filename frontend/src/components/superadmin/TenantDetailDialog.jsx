@@ -77,7 +77,7 @@ function TenantUsersTab({ tenant, isRTL }) {
           user_role: inviteRole,
           tenant_id: tenant.id,
           tenant_code: tenant.tenant_code,
-        });
+        }).eq('id', found[0].id);
       }
       toast.success(isRTL ? `تم إرسال الدعوة إلى ${inviteEmail}` : `Invitation sent to ${inviteEmail}`);
       setInviteEmail('');
@@ -97,7 +97,7 @@ function TenantUsersTab({ tenant, isRTL }) {
     if (!editUser) return;
     setSaving(true);
     try {
-      await tenantQuery('users').update({ user_role: editUser.user_role });
+      await tenantQuery('users').update({ user_role: editUser.user_role }).eq('id', editUser.id);
       toast.success(isRTL ? 'تم تحديث الدور' : 'Role updated');
       queryClient.invalidateQueries({ queryKey: ['tenant-users', tenant.id] });
       queryClient.invalidateQueries({ queryKey: ['platform-all-users'] });
@@ -112,7 +112,7 @@ function TenantUsersTab({ tenant, isRTL }) {
   const handleRemoveFromTenant = async (u) => {
     if (!confirm(isRTL ? `هل تريد إزالة ${u.full_name || u.email} من هذه المؤسسة؟` : `Remove ${u.full_name || u.email} from this tenant?`)) return;
     try {
-      await tenantQuery('users').update({ tenant_id: null, tenant_code: null });
+      await tenantQuery('users').update({ tenant_id: null, tenant_code: null }).eq('id', u.id);
       toast.success(isRTL ? 'تم إزالة المستخدم من المؤسسة' : 'User removed from tenant');
       queryClient.invalidateQueries({ queryKey: ['tenant-users', tenant.id] });
       queryClient.invalidateQueries({ queryKey: ['platform-all-users'] });
@@ -269,7 +269,7 @@ export default function TenantDetailDialog({ tenant, users, open, onClose, onUpd
         monthly_revenue: newPlan.priceMonthly,
         status: changePlan === 'free_trial' ? 'trial' : 'active',
       };
-      await tenantQuery('tenants').update(patch);
+      await tenantQuery('tenants').update(patch).eq('id', tenant.id);
       await logAuditEvent({
         action: AuditActions.CONFIGURE,
         entityType: 'Tenant',
@@ -293,7 +293,7 @@ export default function TenantDetailDialog({ tenant, users, open, onClose, onUpd
       trial_end_date: format(addDays(end, 14), 'yyyy-MM-dd'),
       status: 'trial',
     };
-    await tenantQuery('tenants').update(patch);
+    await tenantQuery('tenants').update(patch).eq('id', tenant.id);
     await logAuditEvent({
       action: AuditActions.CONFIGURE,
       entityType: 'Tenant',

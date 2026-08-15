@@ -138,7 +138,7 @@ export default function TenantFormDialog({ open, onClose, tenant, isRTL }) {
     const saveData = { ...data, is_active: data.status !== 'cancelled' && data.status !== 'suspended' };
 
     if (isEdit) {
-      await tenantQuery('tenants').update(saveData);
+      await tenantQuery('tenants').update(saveData).eq('id', tenant.id);
       await logAuditEvent({
         action: AuditActions.UPDATE,
         entityType: 'Tenant',
@@ -176,7 +176,7 @@ export default function TenantFormDialog({ open, onClose, tenant, isRTL }) {
         try { await callApi('/api/auth/invite', { email: form.admin_email, role: 'admin' }); setInviteSent(true); } catch (_e) {}
         try {
           const { data: users = [] } = await tenantQuery('users').select('*').match({ email: form.admin_email });
-          if (users?.[0]) await tenantQuery('users').update({ tenant_id: created.id, tenant_code: form.tenant_code });
+          if (users?.[0]) await tenantQuery('users').update({ tenant_id: created.id, tenant_code: form.tenant_code }).eq('id', users[0].id);
         } catch (_e) {}
       }
     }
