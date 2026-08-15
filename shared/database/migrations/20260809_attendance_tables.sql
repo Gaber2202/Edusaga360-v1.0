@@ -9,7 +9,7 @@
 -- the same helpers with CREATE OR REPLACE.
 CREATE OR REPLACE FUNCTION public.auth_tenant_id()
 RETURNS UUID
-LANGUAGE sql STABLE SECURITY DEFINER
+LANGUAGE sql STABLE SECURITY INVOKER
 SET search_path = ''
 AS $$
   SELECT nullif(((auth.jwt() -> 'app_metadata'::text) ->> 'tenant_id'::text), '')::uuid
@@ -17,7 +17,7 @@ $$;
 
 CREATE OR REPLACE FUNCTION public.auth_is_platform_owner()
 RETURNS BOOLEAN
-LANGUAGE sql STABLE SECURITY DEFINER
+LANGUAGE sql STABLE SECURITY INVOKER
 SET search_path = ''
 AS $$
   SELECT coalesce(nullif(((auth.jwt() -> 'app_metadata'::text) ->> 'is_platform_owner'::text), '')::boolean, false)
