@@ -88,15 +88,29 @@ function sar(n: number) {
   return Math.round(n * 100) / 100;
 }
 
-/** Sequential invoice number with optimistic locking fallback */
+/** Sequential invoice number based on the highest existing number for this tenant/year. */
 async function generateInvoiceNumber(tenant_id: string): Promise<string> {
-  const { count } = await supabase
-    .from('invoices')
-    .select('*', { count: 'exact', head: true })
-    .eq('tenant_id', tenant_id);
-  const seq = ((count ?? 0) + 1).toString().padStart(6, '0');
   const year = new Date().getFullYear();
-  return `INV-${year}-${seq}`;
+  const prefix = `INV-${year}-`;
+  const { data: rows } = await supabase
+    .from('invoices')
+    .select('invoice_number')
+    .eq('tenant_id', tenant_id)
+    .ilike('invoice_number', `${prefix}%`)
+    .order('invoice_number', { ascending: false })
+    .limit(1);
+
+  let seq = 1;
+  const latest = rows?.[0]?.invoice_number;
+  if (typeof latest === 'string') {
+    const match = latest.match(/\d{4}-(\d{6})$/);
+    if (match) {
+      const lastSeq = parseInt(match[1], 10);
+      if (Number.isFinite(lastSeq) && lastSeq >= 0) seq = lastSeq + 1;
+    }
+  }
+
+  return `${prefix}${seq.toString().padStart(6, '0')}`;
 }
 
 /**
