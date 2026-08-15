@@ -148,7 +148,7 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
         section: section?.name_ar || liveStudent.section || null
       };
 
-      await tenantQuery('students').update(updatePayload);
+      await tenantQuery('students').update(updatePayload).eq('id', liveStudent.id);
 
       // Invalidate ALL student-related queries so every consumer gets fresh data
       await queryClient.invalidateQueries({ queryKey: ['students'] });

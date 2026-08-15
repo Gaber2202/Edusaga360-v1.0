@@ -180,9 +180,8 @@ export default function Refunds() {
           
           await tenantQuery('invoices').update({
             paid_amount: newPaidAmount,
-            balance: invoice.total_amount - newPaidAmount,
             status: newStatus
-          });
+          }).eq('id', invoice.id);
         }
       }
 

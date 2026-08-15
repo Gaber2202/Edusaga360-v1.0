@@ -138,7 +138,7 @@ export default function Reconciliation() {
     try {
       await tenantQuery('payments').update({
         reconciliation_status: 'exception'
-      });
+      }).eq('id', payment.id);
       await logAuditEvent({ action: 'MARK_EXCEPTION', entityType: 'Payment', entityId: payment.id });
       queryClient.invalidateQueries({ queryKey: ['payments'] });
       toast.success(isRTL ? 'تم تحديد الدفعة كاستثناء' : 'Payment marked as exception');
