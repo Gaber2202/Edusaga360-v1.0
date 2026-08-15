@@ -37,7 +37,7 @@ const FINANCIAL_REPORTS = [
 
 export default function FinancialReports() {
   const { t, isRTL } = useLanguage();
-  const { tenant } = useTenant();
+  const { tenant, isModuleEnabled } = useTenant();
   const { selectedBranchId, filterByBranch, branchFilter, branches: _branches } = useBranch();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   
@@ -73,7 +73,7 @@ export default function FinancialReports() {
   const { data: apBills = [] } = useQuery({
     queryKey: ['apBills', tenantId, selectedBranchId],
     queryFn: () => fetchData(tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter()))),
-    enabled: hasTenantAccess,
+    enabled: hasTenantAccess && isModuleEnabled('reconciliation'),
   });
 
   const currentReport = FINANCIAL_REPORTS.find(r => r.id === reportType);
@@ -91,7 +91,7 @@ export default function FinancialReports() {
       });
 
       const _filteredPayments = filterByBranch(payments).filter(p => {
-        const date = p.payment_date ? new Date(p.payment_date) : null;
+        const date = p.date ? new Date(p.date) : null;
         return date && date >= from && date <= to;
       });
 

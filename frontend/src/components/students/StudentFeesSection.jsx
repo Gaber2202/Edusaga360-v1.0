@@ -45,13 +45,13 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
 
   const { data: academicYears = [] } = useTenantQuery(
     ['academicYears', tenantId],
-    () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true }))
+    () => fetchData(tenantQuery('academic_years').select('*').match({ is_current: true }))
   );
 
   const { data: grades = [] } = useTenantQuery(
     ['grades', tenantId],
     async () => {
-      const { data = [] } = await tenantQuery('grades').select('*').match({ is_active: true });
+      const { data = [] } = await tenantQuery('grades').select('*');
       return data.sort((a, b) => a.display_order - b.display_order);
     }
   );
@@ -59,8 +59,7 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
   const { data: sections = [] } = useTenantQuery(
     ['sections', student?.branch_id],
     () => fetchData(tenantQuery('sections').select('*').match({
-      branch_id: student?.branch_id,
-      is_active: true
+      branch_id: student?.branch_id
     })),
     { enabled: !!student?.branch_id }
   );

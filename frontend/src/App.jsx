@@ -22,8 +22,6 @@ import SchoolLogin from './pages/SchoolLogin';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import PaymentResult from './pages/PaymentResult';
-import { useRole } from './components/RoleContext';
-import { isPlatformOwner } from './lib/authHelpers';
 import { JurisdictionFeatureProvider } from './components/JurisdictionFeatureContext';
 import JurisdictionFeatureRoute from './components/JurisdictionFeatureRoute';
 import { PAGE_FEATURE_KEYS } from './lib/jurisdictionFeatures.js';
@@ -36,19 +34,6 @@ const Pages = Object.fromEntries(
 const mainPageKey = 'Dashboard';
 const MainPage = Pages[mainPageKey] ?? (() => <></>);
 
-// Lazy pages that also have explicit (guarded / aliased) routes below.
-const SuperAdminDashboard = Pages.SuperAdminDashboard;
-const SubscriptionManagement = Pages.SubscriptionManagement;
-const ClientSubscription = Pages.ClientSubscription;
-const FinanceDashboard = Pages.FinanceDashboard;
-const TrialBalance = Pages.TrialBalance;
-const MonthEndClose = Pages.MonthEndClose;
-const FinancialStatements = Pages.FinancialStatements;
-const HRManagerDashboard = Pages.HRManagerDashboard;
-const EOSBCalculator = Pages.EOSBCalculator;
-const IntegrationHub = Pages.IntegrationHub;
-const AdminMessaging = Pages.AdminMessaging;
-
 // Spinner shown while a lazy page chunk downloads.
 const PageFallback = () => (
   <div className="flex items-center justify-center min-h-[60vh]">
@@ -59,13 +44,6 @@ const PageFallback = () => (
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
-
-/** Guard that renders children only for platform owners; redirects others to root. */
-const PlatformOwnerRoute = ({ children }) => {
-  const { currentUser } = useRole();
-  if (!isPlatformOwner(currentUser)) return <Navigate to="/" replace />;
-  return children;
-};
 
 const AuthenticatedApp = () => {
   const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings, authError, requiresMfa } = useAuth();
@@ -153,43 +131,28 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
       {Object.entries(Pages)
-        .filter(([path]) => path !== 'MfaVerify' && !PAGE_FEATURE_KEYS[path])
-        .map(([path, Page]) => (
-          <Route
-            key={path}
-            path={`/${path}`}
-            element={
-              <LayoutWrapper currentPageName={path}>
-                <Page />
-              </LayoutWrapper>
-            }
-          />
-        ))}
-      {Object.entries(PAGE_FEATURE_KEYS)
-        .filter(([path]) => Pages[path])
-        .map(([path, featureKeys]) => {
-          const Page = Pages[path];
+        .filter(([path]) => path !== 'MfaVerify')
+        .map(([path, Page]) => {
+          const featureKeys = PAGE_FEATURE_KEYS[path];
+          const element = (
+            <LayoutWrapper currentPageName={path}>
+              <Page />
+            </LayoutWrapper>
+          );
           return (
             <Route
               key={path}
               path={`/${path}`}
               element={
-                <JurisdictionFeatureRoute featureKeys={featureKeys}>
-                  <LayoutWrapper currentPageName={path}>
-                    <Page />
-                  </LayoutWrapper>
-                </JurisdictionFeatureRoute>
+                featureKeys ? (
+                  <JurisdictionFeatureRoute featureKeys={featureKeys}>
+                    {element}
+                  </JurisdictionFeatureRoute>
+                ) : element
               }
             />
           );
         })}
-      <Route path="/SuperAdminDashboard" element={<PlatformOwnerRoute><LayoutWrapper currentPageName="SuperAdminDashboard"><SuperAdminDashboard /></LayoutWrapper></PlatformOwnerRoute>} />
-      <Route path="/SubscriptionManagement" element={
-        <LayoutWrapper currentPageName="SubscriptionManagement"><SubscriptionManagement /></LayoutWrapper>
-      } />
-      <Route path="/ClientSubscription" element={
-        <LayoutWrapper currentPageName="ClientSubscription"><ClientSubscription /></LayoutWrapper>
-      } />
       <Route path="/OnboardingWizard" element={<OnboardingWizard />} />
       <Route path="/onboarding/:token" element={<OnboardingWizard />} />
       <Route path="/RegistrationWizard" element={<RegistrationWizard />} />
@@ -204,14 +167,6 @@ const AuthenticatedApp = () => {
       <Route path="/setup" element={<SetupAccount />} />
       <Route path="/payment/result" element={<PaymentResult />} />
       <Route path="/ParentSignContract" element={<ParentSignContractPage />} />
-      <Route path="/HRManagerDashboard" element={<LayoutWrapper currentPageName="HRManagerDashboard"><HRManagerDashboard /></LayoutWrapper>} />
-      <Route path="/EOSBCalculator" element={<LayoutWrapper currentPageName="EOSBCalculator"><EOSBCalculator /></LayoutWrapper>} />
-      <Route path="/FinanceDashboard" element={<LayoutWrapper currentPageName="FinanceDashboard"><FinanceDashboard /></LayoutWrapper>} />
-      <Route path="/TrialBalance" element={<LayoutWrapper currentPageName="TrialBalance"><TrialBalance /></LayoutWrapper>} />
-      <Route path="/MonthEndClose" element={<LayoutWrapper currentPageName="MonthEndClose"><MonthEndClose /></LayoutWrapper>} />
-      <Route path="/FinancialStatements" element={<LayoutWrapper currentPageName="FinancialStatements"><FinancialStatements /></LayoutWrapper>} />
-      <Route path="/IntegrationHub" element={<LayoutWrapper currentPageName="IntegrationHub"><IntegrationHub /></LayoutWrapper>} />
-      <Route path="/AdminMessaging" element={<LayoutWrapper currentPageName="AdminMessaging"><AdminMessaging /></LayoutWrapper>} />
 
       <Route path="*" element={<PageNotFound />} />
     </Routes>

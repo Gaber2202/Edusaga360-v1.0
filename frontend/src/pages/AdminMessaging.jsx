@@ -52,11 +52,8 @@ export default function AdminMessaging() {
 
         const enrichedStudents = await Promise.all(
           studentList.map(async (student) => {
-            const { data: guardians = [] } = await tenantQuery('guardians').select('*').match({
-              student_id: student.id,
-              tenant_id: tenant?.id
-            });
-            const primaryGuardian = guardians.find(g => g.is_primary) || guardians[0];
+            const { data: guardian } = await tenantQuery('guardians').select('*').eq('id', student.guardian_id).single();
+            const primaryGuardian = guardian || null;
             return { ...student, guardian: primaryGuardian };
           })
         );

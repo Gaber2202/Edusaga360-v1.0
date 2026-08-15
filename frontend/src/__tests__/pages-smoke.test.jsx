@@ -42,7 +42,7 @@ const mockTenant = {
 };
 
 vi.mock('../components/TenantContext', () => ({
-  useTenant: vi.fn(() => ({ tenant: mockTenant, loading: false })),
+  useTenant: vi.fn(() => ({ tenant: mockTenant, loading: false, isModuleEnabled: () => true })),
   TenantProvider: ({ children }) => children,
 }));
 

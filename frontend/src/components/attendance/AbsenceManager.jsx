@@ -56,8 +56,9 @@ export default function AbsenceManager({ attendanceRecords, students, onRefresh 
       await tenantQuery('student_attendances').update({
         status: 'excused',
         excuse_approved: true,
+        excuse_reviewed: true,
         excuse_approved_date: format(new Date(), 'yyyy-MM-dd'),
-      });
+      }).eq('id', record.id);
       toast.success(isRTL ? 'تم قبول العذر' : 'Excuse approved');
       onRefresh?.();
     } finally { setSaving(false); }
@@ -67,7 +68,7 @@ export default function AbsenceManager({ attendanceRecords, students, onRefresh 
     await tenantQuery('student_attendances').update({
       excuse_approved: false,
       excuse_reviewed: true,
-    });
+    }).eq('id', record.id);
     toast.success(isRTL ? 'تم رفض العذر' : 'Excuse rejected');
     onRefresh?.();
   };

@@ -152,13 +152,13 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
   const { data: grades = [] } = useTenantQuery(
     ['grades', tenantId],
     async () => {
-      const { data = [] } = await tenantQuery('grades').select('*').match({ is_active: true });
+      const { data = [] } = await tenantQuery('grades').select('*');
       return data.sort((a, b) => a.display_order - b.display_order);
     }
   );
   const { data: academicYears = [] } = useTenantQuery(
     ['academicYears', tenantId],
-    () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true }))
+    () => fetchData(tenantQuery('academic_years').select('*').match({ is_current: true }))
   );
   const { data: feeStructures = [] } = useTenantQuery(
     ['fee_structures', tenantId],
@@ -166,7 +166,7 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
   );
   const { data: paymentPlans = [] } = useTenantQuery(
     ['payment_plans', tenantId],
-    () => fetchData(tenantQuery('payment_plans').select('id, name_ar, name_en').order('name_ar'))
+    () => fetchData(tenantQuery('payment_plans').select('id, plan_type, notes').order('plan_type'))
   );
 
   React.useEffect(() => {
@@ -466,7 +466,7 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
                       <SelectContent>
                         <SelectItem value="none">{tt('لا يوجد', 'None')}</SelectItem>
                         {paymentPlans.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>{isRTL ? p.name_ar : p.name_en || p.name_ar}</SelectItem>
+                          <SelectItem key={p.id} value={p.id}>{isRTL ? (p.notes || p.plan_type) : (p.plan_type || p.notes)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

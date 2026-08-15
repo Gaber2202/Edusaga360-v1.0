@@ -1,23 +1,5 @@
 [
   {
-    "file": "frontend/src/components/attendance/AbsenceManager.jsx",
-    "table": "student_attendances",
-    "issue": "unknown_table",
-    "count": 2,
-    "reason": "migration exists in PR #238; remove when #238 lands",
-    "tracked_issue": "#238",
-    "expires": "2027-01-31"
-  },
-  {
-    "file": "frontend/src/components/attendance/BulkAttendanceMarker.jsx",
-    "table": "student_attendances",
-    "issue": "unknown_table",
-    "count": 2,
-    "reason": "migration exists in PR #238; remove when #238 lands",
-    "tracked_issue": "#238",
-    "expires": "2027-01-31"
-  },
-  {
     "file": "frontend/src/components/canteen/QuickPOS.jsx",
     "table": "canteen_transactions",
     "issue": "unknown_table",
@@ -117,35 +99,8 @@
     "expires": "2027-06-30"
   },
   {
-    "file": "frontend/src/components/fees/BulkInvoiceGeneration.jsx",
-    "table": "companies",
-    "issue": "unknown_table",
-    "count": 1,
-    "reason": "typo/code bug: should target companys",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/components/fees/BulkInvoiceGeneration.jsx",
-    "table": "student_contracts",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
     "file": "frontend/src/components/fees/InvoiceForm.jsx",
     "table": "school_bank_accounts",
-    "issue": "unknown_table",
-    "count": 1,
-    "reason": "no migration or typo mapping found; needs product decision",
-    "tracked_issue": "#246",
-    "expires": "2027-06-30"
-  },
-  {
-    "file": "frontend/src/components/fees/PaymentLogForm.jsx",
-    "table": "invoice_payment_logs",
     "issue": "unknown_table",
     "count": 1,
     "reason": "no migration or typo mapping found; needs product decision",
@@ -631,15 +586,6 @@
   },
   {
     "file": "frontend/src/components/parent/AcademicRecords.jsx",
-    "table": "attendances",
-    "issue": "unknown_table",
-    "count": 1,
-    "reason": "migration exists in PR #238; remove when #238 lands",
-    "tracked_issue": "#238",
-    "expires": "2027-01-31"
-  },
-  {
-    "file": "frontend/src/components/parent/AcademicRecords.jsx",
     "table": "student_grades",
     "issue": "unknown_table",
     "count": 1,
@@ -918,42 +864,6 @@
     "expires": "2027-06-30"
   },
   {
-    "file": "frontend/src/components/reports/ReportBuilder.jsx",
-    "table": "attendances",
-    "issue": "unknown_table",
-    "count": 1,
-    "reason": "migration exists in PR #238; remove when #238 lands",
-    "tracked_issue": "#238",
-    "expires": "2027-01-31"
-  },
-  {
-    "file": "frontend/src/components/students/StudentDetails.jsx",
-    "table": "attendances",
-    "issue": "unknown_table",
-    "count": 1,
-    "reason": "migration exists in PR #238; remove when #238 lands",
-    "tracked_issue": "#238",
-    "expires": "2027-01-31"
-  },
-  {
-    "file": "frontend/src/components/subscription/AdminRequestsTab.jsx",
-    "table": "tenant_requests",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/components/superadmin/PlatformUsersTab.jsx",
-    "table": "users",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
     "file": "frontend/src/components/transport/LiveBusTracker.jsx",
     "table": "trip_logs",
     "issue": "unknown_table",
@@ -1197,15 +1107,6 @@
     "expires": "2027-06-30"
   },
   {
-    "file": "frontend/src/lib/integrationHandlers.js",
-    "table": "student_attendances",
-    "issue": "unknown_table",
-    "count": 4,
-    "reason": "migration exists in PR #238; remove when #238 lands",
-    "tracked_issue": "#238",
-    "expires": "2027-01-31"
-  },
-  {
     "file": "frontend/src/pages/APBills.jsx",
     "table": "ap_bills",
     "issue": "unknown_table",
@@ -1251,15 +1152,6 @@
     "expires": "2027-06-30"
   },
   {
-    "file": "frontend/src/pages/Attendance.jsx",
-    "table": "attendances",
-    "issue": "unknown_table",
-    "count": 2,
-    "reason": "migration exists in PR #238; remove when #238 lands",
-    "tracked_issue": "#238",
-    "expires": "2027-01-31"
-  },
-  {
     "file": "frontend/src/pages/AttendanceDevices.jsx",
     "table": "attendance_devices",
     "issue": "unknown_table",
@@ -1267,15 +1159,6 @@
     "reason": "no migration or typo mapping found; needs product decision",
     "tracked_issue": "#246",
     "expires": "2027-06-30"
-  },
-  {
-    "file": "frontend/src/pages/AttendanceDevices.jsx",
-    "table": "employee_attendances",
-    "issue": "unknown_table",
-    "count": 3,
-    "reason": "typo/code bug: should target employee_attendance",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/AttendanceDevices.jsx",
@@ -1363,15 +1246,6 @@
     "table": "canteen_wallets",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "no migration or typo mapping found; needs product decision",
-    "tracked_issue": "#246",
-    "expires": "2027-06-30"
-  },
-  {
-    "file": "frontend/src/pages/Contracts.jsx",
-    "table": "fee_services",
-    "issue": "unknown_table",
-    "count": 1,
     "reason": "no migration or typo mapping found; needs product decision",
     "tracked_issue": "#246",
     "expires": "2027-06-30"
@@ -1492,15 +1366,6 @@
     "reason": "no migration or typo mapping found; needs product decision",
     "tracked_issue": "#246",
     "expires": "2027-06-30"
-  },
-  {
-    "file": "frontend/src/pages/EmployeeAttendance.jsx",
-    "table": "employee_attendances",
-    "issue": "unknown_table",
-    "count": 5,
-    "reason": "typo/code bug: should target employee_attendance",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/Engagement.jsx",
@@ -1658,15 +1523,6 @@
   {
     "file": "frontend/src/pages/IntegrationHub.jsx",
     "table": "integration_logs",
-    "issue": "unknown_table",
-    "count": 1,
-    "reason": "no migration or typo mapping found; needs product decision",
-    "tracked_issue": "#246",
-    "expires": "2027-06-30"
-  },
-  {
-    "file": "frontend/src/pages/InvoiceDetails.jsx",
-    "table": "invoice_payment_logs",
     "issue": "unknown_table",
     "count": 1,
     "reason": "no migration or typo mapping found; needs product decision",
@@ -1875,7 +1731,7 @@
     "file": "frontend/src/pages/Reconciliation.jsx",
     "table": "payment_reconciliations",
     "issue": "unknown_table",
-    "count": 2,
+    "count": 3,
     "reason": "no migration or typo mapping found; needs product decision",
     "tracked_issue": "#246",
     "expires": "2027-06-30"
@@ -1917,15 +1773,6 @@
     "expires": "2027-06-30"
   },
   {
-    "file": "frontend/src/pages/RolesPermissions.jsx",
-    "table": "roles",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
     "file": "frontend/src/pages/SchoolClinic.jsx",
     "table": "clinic_visits",
     "issue": "unknown_table",
@@ -1944,15 +1791,6 @@
     "expires": "2027-06-30"
   },
   {
-    "file": "frontend/src/pages/Settings.jsx",
-    "table": "users",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
     "file": "frontend/src/pages/StaffInbox.jsx",
     "table": "messages",
     "issue": "unknown_table",
@@ -1960,51 +1798,6 @@
     "reason": "no migration or typo mapping found; needs product decision",
     "tracked_issue": "#246",
     "expires": "2027-06-30"
-  },
-  {
-    "file": "frontend/src/pages/StudentAttendancePage.jsx",
-    "table": "student_attendances",
-    "issue": "unknown_table",
-    "count": 2,
-    "reason": "migration exists in PR #238; remove when #238 lands",
-    "tracked_issue": "#238",
-    "expires": "2027-01-31"
-  },
-  {
-    "file": "frontend/src/pages/SuperAdminDashboard.jsx",
-    "table": "users",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/pages/SystemHealth.jsx",
-    "table": "employees",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/pages/SystemHealth.jsx",
-    "table": "invoices",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/pages/SystemHealth.jsx",
-    "table": "students",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/SystemHealth.jsx",
@@ -2041,24 +1834,6 @@
     "reason": "no migration or typo mapping found; needs product decision",
     "tracked_issue": "#246",
     "expires": "2027-06-30"
-  },
-  {
-    "file": "frontend/src/pages/TrialUsers.jsx",
-    "table": "roles",
-    "issue": "bad_order",
-    "count": 1,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
-  },
-  {
-    "file": "frontend/src/pages/TrialUsers.jsx",
-    "table": "users",
-    "issue": "bad_order",
-    "count": 2,
-    "reason": "fixable code bug: .order() missing column argument",
-    "tracked_issue": "#245",
-    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/VATManagement.jsx",

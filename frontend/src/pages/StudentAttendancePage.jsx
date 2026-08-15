@@ -38,7 +38,7 @@ export default function StudentAttendancePage() {
 
   const { data: sections = [] } = useTenantQuery(
     ['sections', tenantId],
-    () => fetchData(tenantQuery('sections').select('*').match(tenantFilter({ is_active: true }))),
+    () => fetchData(tenantQuery('sections').select('*').match(tenantFilter())),
     { enabled: hasTenantAccess }
   );
 

@@ -76,20 +76,20 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
 
   const { data: feeTypes = [] } = useTenantQuery(
     ['feeTypes', tenantId],
-    () => fetchData(tenantQuery('fee_types').select('*').match({ is_active: true }))
+    () => fetchData(tenantQuery('fee_types').select('*'))
   );
 
   const { data: academicYears = [] } = useTenantQuery(
     ['academicYears', tenantId],
-    () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true }))
+    () => fetchData(tenantQuery('academic_years').select('*').match({ is_current: true }))
   );
 
   // Default a NEW invoice to the active academic year (instead of a hardcoded
   // year) once the list loads — without clobbering an explicit user choice.
   useEffect(() => {
     if (invoice || academicYears.length === 0) return;
-    const active = academicYears.find((y) => y.is_active) || academicYears[0];
-    const label = active?.year_label || active?.year_code;
+    const active = academicYears.find((y) => y.is_current) || academicYears[0];
+    const label = active?.name;
     if (!label) return;
     setFormData((prev) =>
       prev.academic_year && prev.academic_year !== '2024-2025'
