@@ -140,7 +140,7 @@ export default function UserManagement() {
       if (payload.user_role !== 'parent') {
         payload.linked_student_ids = [];
       }
-      await tenantQuery('users').update(payload);
+      await tenantQuery('users').update(payload).eq('id', editingUser.id);
       await logAuditEvent({ action: AuditActions.UPDATE, entityType: 'User', entityId: editingUser.id, oldValues: editingUser, newValues: payload });
       
       queryClient.invalidateQueries({ queryKey: ['users'] });

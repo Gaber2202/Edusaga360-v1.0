@@ -76,7 +76,7 @@ export default function SuperAdminDashboard() {
       suspended_date: newStatus === 'suspended' ? format(new Date(), 'yyyy-MM-dd') : null,
       suspended_reason: newStatus === 'suspended' ? 'Suspended by admin' : null,
     };
-    await tenantQuery('tenants').update(patch);
+    await tenantQuery('tenants').update(patch).eq('id', tenant.id);
     await logAuditEvent({
       action: AuditActions.CONFIGURE,
       entityType: 'Tenant',
@@ -96,7 +96,7 @@ export default function SuperAdminDashboard() {
       trial_end_date: format(newEnd, 'yyyy-MM-dd'),
       status: 'trial',
     };
-    await tenantQuery('tenants').update(patch);
+    await tenantQuery('tenants').update(patch).eq('id', tenant.id);
     await logAuditEvent({
       action: AuditActions.CONFIGURE,
       entityType: 'Tenant',

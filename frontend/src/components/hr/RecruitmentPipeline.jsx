@@ -84,7 +84,7 @@ export default function RecruitmentPipeline({ applicants, recruitments, employee
         expected_salary: parseFloat(editForm.expected_salary) || 0,
       };
       const updatedApplicant = { ...selectedApplicant, ...dataToSave };
-      await tenantQuery('applicants').update(dataToSave);
+      await tenantQuery('applicants').update(dataToSave).eq('id', selectedApplicant.id);
       try {
         await logAuditEvent({ action: AuditActions.UPDATE, entityType: 'Applicant', entityId: selectedApplicant.id, newValues: dataToSave, notes: 'Applicant info updated' });
       } catch (_) {}
@@ -104,7 +104,7 @@ export default function RecruitmentPipeline({ applicants, recruitments, employee
     setMovingId(applicant.id);
     try {
       const prevStage = applicant.status;
-      await tenantQuery('applicants').update({ status: nextStage, ...extraData });
+      await tenantQuery('applicants').update({ status: nextStage, ...extraData }).eq('id', applicant.id);
       try {
         await logAuditEvent({ action: AuditActions.UPDATE, entityType: 'Applicant', entityId: applicant.id, oldValues: { status: prevStage }, newValues: { status: nextStage, ...extraData }, notes: `Pipeline stage: ${prevStage} → ${nextStage}` });
       } catch (_) {}
@@ -159,7 +159,7 @@ export default function RecruitmentPipeline({ applicants, recruitments, employee
         interview_mode: scheduleForm.interview_mode,
         interview_location: scheduleForm.interview_location || '',
         interview_notes: scheduleForm.interview_notes || '',
-      });
+      }).eq('id', applicantSnapshot.id);
       try {
         await logAuditEvent({ action: AuditActions.UPDATE, entityType: 'Applicant', entityId: applicantSnapshot.id, newValues: { status: 'interview_scheduled', interview_scheduled_at: datetime }, notes: 'Interview scheduled' });
       } catch (_) {}
@@ -193,7 +193,7 @@ export default function RecruitmentPipeline({ applicants, recruitments, employee
         interview_culture_score: interviewScore.cultural,
         interview_notes: interviewScore.notes,
         status: 'interviewed',
-      });
+      }).eq('id', selectedApplicant.id);
       try {
         await logAuditEvent({ action: AuditActions.UPDATE, entityType: 'Applicant', entityId: selectedApplicant.id, newValues: { status: 'interviewed', interview_score: avg }, notes: 'Interview scored' });
       } catch (_) {}

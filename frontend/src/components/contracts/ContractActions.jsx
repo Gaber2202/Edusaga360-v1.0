@@ -40,7 +40,7 @@ export default function ContractActions({ contract }) {
         sent_date: new Date().toISOString(),
         sent_via: channels,
         delivery_status: 'sent'
-      });
+      }).eq('id', contract.id);
 
       // Log delivery
       await tenantQuery('contract_delivery_logs').insert({
@@ -86,7 +86,7 @@ export default function ContractActions({ contract }) {
         signed_by_guardian: true,
         signed_date: new Date().toISOString(),
         delivery_status: 'delivered'
-      });
+      }).eq('id', contract.id);
 
       await logAuditEvent({
         action: AuditActions.APPROVE,
@@ -119,7 +119,7 @@ export default function ContractActions({ contract }) {
         status: 'rejected',
         rejection_reason: rejectReason,
         rejected_date: new Date().toISOString()
-      });
+      }).eq('id', contract.id);
 
       await logAuditEvent({
         action: AuditActions.REJECT,

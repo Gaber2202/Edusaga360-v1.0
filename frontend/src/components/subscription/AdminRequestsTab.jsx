@@ -34,7 +34,7 @@ export default function AdminRequestsTab({ isRTL }) {
         status: approved ? 'approved' : 'rejected',
         admin_notes: notes,
         reviewed_at: new Date().toISOString()
-      });
+      }).eq('id', requestId);
 
       // If approving users request, update tenant max_users
       const request = requests.find(r => r.id === requestId);
@@ -44,7 +44,7 @@ export default function AdminRequestsTab({ isRTL }) {
           const t = tenant[0];
           await tenantQuery('tenants').update({
             max_users: (t.max_users || 0) + (request.additional_users || 0)
-          });
+          }).eq('id', request.tenant_id);
         }
       }
 
@@ -55,7 +55,7 @@ export default function AdminRequestsTab({ isRTL }) {
           const t = tenant[0];
           await tenantQuery('tenants').update({
             plan_code: request.requested_plan
-          });
+          }).eq('id', request.tenant_id);
         }
       }
     },
