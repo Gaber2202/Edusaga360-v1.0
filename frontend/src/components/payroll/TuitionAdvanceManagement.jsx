@@ -48,10 +48,7 @@ export default function TuitionAdvanceManagement() {
     notes: ''
   });
 
-  const { data: advances = [], isLoading } = useQuery({
-    queryKey: ['tuitionAdvances', selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('tuition_advances').select('*').match(branchFilter()).order('created_at', { ascending: false })),
-  });
+  const { data: advances = [], isLoading } = useQuery({ enabled: false /* tuition_advances table not built */, queryKey: ['tuitionAdvances', selectedBranchId], queryFn: () => fetchData(tenantQuery('tuition_advances').select('*').match(branchFilter()).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', selectedBranchId],

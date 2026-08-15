@@ -49,10 +49,7 @@ export default function SalaryComponents() {
     display_order: 0
   });
 
-  const { data: components = [], isLoading: _isLoading } = useQuery({
-    queryKey: ['salaryComponents', tenantId],
-    queryFn: () => fetchData(tenantQuery('salary_components').select('*').order('display_order')),
-  });
+  const { data: components = [], isLoading: _isLoading } = useQuery({ enabled: false /* salary_components table not built */, queryKey: ['salaryComponents', tenantId], queryFn: () => fetchData(tenantQuery('salary_components').select('*').order('display_order')), initialData: [] });
 
   const earnings = components.filter(c => c.component_type === 'earning');
   const deductions = components.filter(c => c.component_type === 'deduction');

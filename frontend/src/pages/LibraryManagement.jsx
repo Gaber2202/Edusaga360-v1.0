@@ -52,17 +52,9 @@ export default function LibraryManagement() {
   const [bookSearch, setBookSearch] = useState('');
   const [studentSearch, setStudentSearch] = useState('');
 
-  const { data: books = [], isLoading } = useQuery({
-    queryKey: ['libraryBooks', tenantId],
-    queryFn: () => fetchData(tenantQuery('library_books').select('*').match(tenantFilter())),
-    enabled: hasTenantAccess,
-  });
+  const { data: books = [], isLoading } = useQuery({ enabled: false /* library_books table not built */, queryKey: ['libraryBooks', tenantId], queryFn: () => fetchData(tenantQuery('library_books').select('*').match(tenantFilter())), initialData: [] });
 
-  const { data: loans = [] } = useQuery({
-    queryKey: ['libraryLoans', tenantId],
-    queryFn: () => fetchData(tenantQuery('library_loans').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: loans = [] } = useQuery({ enabled: false /* library_loans table not built */, queryKey: ['libraryLoans', tenantId], queryFn: () => fetchData(tenantQuery('library_loans').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: students = [] } = useQuery({
     queryKey: ['students', tenantId],

@@ -31,10 +31,7 @@ export default function QiwaContracts() {
   const [newStatus, setNewStatus] = useState('submitted');
   const [saving, setSaving] = useState(false);
 
-  const { data: contracts = [], isLoading } = useQuery({
-    queryKey: ['hrDocuments_contracts', tenantId],
-    queryFn: () => fetchData(tenantQuery('employee_documents').select('*').match({ document_type: 'employment_contract' })),
-  });
+  const { data: contracts = [], isLoading } = useQuery({ enabled: false /* employee_documents table not built */, queryKey: ['hrDocuments_contracts', tenantId], queryFn: () => fetchData(tenantQuery('employee_documents').select('*').match({ document_type: 'employment_contract' })), initialData: [] });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees_active', tenantId],

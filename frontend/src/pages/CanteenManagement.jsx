@@ -48,23 +48,11 @@ export default function CanteenManagement() {
   const [topupData, setTopupData] = useState({ student_id: '', student_name: '', amount: 50 });
   const [studentSearch, setStudentSearch] = useState('');
 
-  const { data: menuItems = [], isLoading: _menuLoading } = useQuery({
-    queryKey: ['canteenMenu', tenantId],
-    queryFn: () => fetchData(tenantQuery('canteen_menu_items').select('*').match(tenantFilter())),
-    enabled: hasTenantAccess,
-  });
+  const { data: menuItems = [], isLoading: _menuLoading } = useQuery({ enabled: false /* canteen_menu_items table not built */, queryKey: ['canteenMenu', tenantId], queryFn: () => fetchData(tenantQuery('canteen_menu_items').select('*').match(tenantFilter())), initialData: [] });
 
-  const { data: wallets = [] } = useQuery({
-    queryKey: ['canteenWallets', tenantId],
-    queryFn: () => fetchData(tenantQuery('canteen_wallets').select('*').match(tenantFilter())),
-    enabled: hasTenantAccess,
-  });
+  const { data: wallets = [] } = useQuery({ enabled: false /* canteen_wallets table not built */, queryKey: ['canteenWallets', tenantId], queryFn: () => fetchData(tenantQuery('canteen_wallets').select('*').match(tenantFilter())), initialData: [] });
 
-  const { data: transactions = [] } = useQuery({
-    queryKey: ['canteenTransactions', tenantId],
-    queryFn: () => fetchData(tenantQuery('canteen_transactions').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: transactions = [] } = useQuery({ enabled: false /* canteen_transactions table not built */, queryKey: ['canteenTransactions', tenantId], queryFn: () => fetchData(tenantQuery('canteen_transactions').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: students = [] } = useQuery({
     queryKey: ['students', tenantId],

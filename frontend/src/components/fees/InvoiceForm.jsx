@@ -72,7 +72,7 @@ export default function InvoiceForm({ open, onClose, onSuccess, invoice }) {
   const { data: bankAccounts = [] } = useTenantQuery(
     ['bankAccounts', tenantId],
     () => fetchData(tenantQuery('school_bank_accounts').select('*').match({ status: 'active' }))
-  );
+  , { enabled: false /* school_bank_accounts table not built */, initialData: [] });
 
   const { data: feeTypes = [] } = useTenantQuery(
     ['feeTypes', tenantId],

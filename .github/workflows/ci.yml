@@ -180,6 +180,20 @@ jobs:
       - name: Prove the guard with fixture tests
         run: python3 .github/scripts/test_guard_schema_drift.py
 
+  guard-frontend-query-tables:
+    name: Guard frontend query table existence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: cd frontend && npm ci
+      - name: Block useQuery/useTenantQuery/useTableQuery against non-existent tables unless disabled
+        run: node .github/scripts/guard_frontend_query_tables.cjs
+
   dependency-audit:
     name: Dependency Audit (advisory)
     runs-on: ubuntu-latest

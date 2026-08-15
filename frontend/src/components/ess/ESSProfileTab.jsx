@@ -25,23 +25,11 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: trainings = [] } = useQuery({
-    queryKey: ['trainings_emp', employee?.id],
-    queryFn: () => fetchData(tenantQuery('trainings').select('*').order()),
-    enabled: !!employee?.id,
-  });
+  const { data: trainings = [] } = useQuery({ enabled: false /* trainings table not built */, queryKey: ['trainings_emp', employee?.id], queryFn: () => fetchData(tenantQuery('trainings').select('*').order()), initialData: [] });
 
-  const { data: discCases = [] } = useQuery({
-    queryKey: ['disc_cases_emp', employee?.id],
-    queryFn: () => fetchData(tenantQuery('disciplinary_cases').select('*').match({ employee_id: employee?.id })),
-    enabled: !!employee?.id,
-  });
+  const { data: discCases = [] } = useQuery({ enabled: false /* disciplinary_cases table not built */, queryKey: ['disc_cases_emp', employee?.id], queryFn: () => fetchData(tenantQuery('disciplinary_cases').select('*').match({ employee_id: employee?.id })), initialData: [] });
 
-  const { data: assetAssignments = [] } = useQuery({
-    queryKey: ['asset_assignments_emp', employee?.id],
-    queryFn: () => fetchData(tenantQuery('asset_assignments').select('*').match({ employee_id: employee?.id })),
-    enabled: !!employee?.id,
-  });
+  const { data: assetAssignments = [] } = useQuery({ enabled: false /* asset_assignments table not built */, queryKey: ['asset_assignments_emp', employee?.id], queryFn: () => fetchData(tenantQuery('asset_assignments').select('*').match({ employee_id: employee?.id })), initialData: [] });
 
   const { data: contracts = [] } = useQuery({
     queryKey: ['emp_contracts', employee?.id],
@@ -49,11 +37,7 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
     enabled: !!employee?.id,
   });
 
-  const { data: attendance = [] } = useQuery({
-    queryKey: ['att_emp', employee?.id],
-    queryFn: () => fetchData(tenantQuery('employee_attendances').select('*').match({ employee_id: employee?.id })),
-    enabled: !!employee?.id,
-  });
+  const { data: attendance = [] } = useQuery({ enabled: false /* employee_attendances table not built */, queryKey: ['att_emp', employee?.id], queryFn: () => fetchData(tenantQuery('employee_attendances').select('*').match({ employee_id: employee?.id })), initialData: [] });
 
   const myTrainings = trainings.filter(t => t.attendees?.some(a => a.employee_id === employee?.id));
 

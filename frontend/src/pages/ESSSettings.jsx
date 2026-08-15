@@ -18,14 +18,10 @@ export default function ESSSettings() {
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const [saving, setSaving] = useState(false);
 
-  const { data: essSettings, isLoading } = useQuery({
-    queryKey: ['essSettings', tenantId],
-    queryFn: async () => {
+  const { data: essSettings, isLoading } = useQuery({ enabled: false /* ess_settings table not built */, queryKey: ['essSettings', tenantId], queryFn: async () => {
       const { data: settings = [] } = await tenantQuery('ess_settings').select('*').match(tenantFilter());
       return settings[0] || { test_mode_enabled: false, test_employee_id: '', test_employee_name: '' };
-    },
-    enabled: hasTenantAccess,
-  });
+    }, initialData: [] });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],

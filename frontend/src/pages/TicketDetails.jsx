@@ -37,11 +37,7 @@ export default function TicketDetails() {
     enabled: !!ticketId
   });
 
-  const { data: activities = [] } = useQuery({
-    queryKey: ['ticketActivities', ticketId],
-    queryFn: () => fetchData(tenantQuery('ticket_activitys').select('*').match({ ticket_id: ticketId }).order('created_at', { ascending: false })),
-    enabled: !!ticketId
-  });
+  const { data: activities = [] } = useQuery({ enabled: false /* ticket_activitys table not built */, queryKey: ['ticketActivities', ticketId], queryFn: () => fetchData(tenantQuery('ticket_activitys').select('*').match({ ticket_id: ticketId }).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],

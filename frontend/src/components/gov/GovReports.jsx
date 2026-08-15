@@ -17,9 +17,9 @@ export default function GovReports() {
   const today = new Date();
 
   const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').order()) });
-  const { data: iqamas = [] } = useQuery({ queryKey: ['iqamas'], queryFn: () => fetchData(tenantQuery('iqama_records').select('*').order()) });
-  const { data: violations = [] } = useQuery({ queryKey: ['violations'], queryFn: () => fetchData(tenantQuery('govi_violations').select('*').order()) });
-  const { data: mudad = [] } = useQuery({ queryKey: ['mudad'], queryFn: () => fetchData(tenantQuery('mudad_submissions').select('*').order()) });
+  const { data: iqamas = [] } = useQuery({ enabled: false /* iqama_records table not built */, queryKey: ['iqamas'], queryFn: () => fetchData(tenantQuery('iqama_records').select('*').order()), initialData: [] });
+  const { data: violations = [] } = useQuery({ enabled: false /* govi_violations table not built */, queryKey: ['violations'], queryFn: () => fetchData(tenantQuery('govi_violations').select('*').order()), initialData: [] });
+  const { data: mudad = [] } = useQuery({ enabled: false /* mudad_submissions table not built */, queryKey: ['mudad'], queryFn: () => fetchData(tenantQuery('mudad_submissions').select('*').order()), initialData: [] });
 
   const stats = useMemo(() => {
     const active = employees.filter(e => e.status === 'active');

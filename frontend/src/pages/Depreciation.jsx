@@ -44,11 +44,7 @@ export default function Depreciation() {
     enabled: hasTenantAccess,
   });
 
-  const { data: depRuns = [], isLoading: loadingRuns } = useQuery({
-    queryKey: ['depreciationRuns', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('asset_depreciations').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: depRuns = [], isLoading: loadingRuns } = useQuery({ enabled: false /* asset_depreciations table not built */, queryKey: ['depreciationRuns', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('asset_depreciations').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })), initialData: [] });
 
   const filteredAssets = filterByBranch(assets);
   const filteredRuns = filterByBranch(depRuns);

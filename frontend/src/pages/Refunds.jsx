@@ -54,11 +54,7 @@ export default function Refunds() {
     notes: ''
   });
 
-  const { data: refunds = [], isLoading } = useQuery({
-    queryKey: ['refundRequests', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('refund_requests').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: refunds = [], isLoading } = useQuery({ enabled: false /* refund_requests table not built */, queryKey: ['refundRequests', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('refund_requests').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: students = [] } = useQuery({
     queryKey: ['students', tenantId],

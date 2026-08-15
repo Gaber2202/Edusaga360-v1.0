@@ -49,11 +49,7 @@ export default function VATManagement() {
     notes: ''
   });
 
-  const { data: vatReturns = [], isLoading } = useQuery({
-    queryKey: ['vatReturns', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('vat_returns').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: vatReturns = [], isLoading } = useQuery({ enabled: false /* vat_returns table not built */, queryKey: ['vatReturns', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('vat_returns').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: invoices = [] } = useQuery({
     queryKey: ['invoices', tenantId, selectedBranchId],
@@ -61,11 +57,7 @@ export default function VATManagement() {
     enabled: hasTenantAccess,
   });
 
-  const { data: bills = [] } = useQuery({
-    queryKey: ['apBills', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter()))),
-    enabled: hasTenantAccess,
-  });
+  const { data: bills = [] } = useQuery({ enabled: false /* ap_bills table not built */, queryKey: ['apBills', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter()))), initialData: [] });
 
   const filteredReturns = filterByBranch(vatReturns).filter(r => 
     statusFilter === 'all' || r.status === statusFilter

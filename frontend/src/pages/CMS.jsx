@@ -29,11 +29,7 @@ export default function CMS() {
   const [showNewContent, setShowNewContent] = useState(false);
   const [editingContent, setEditingContent] = useState(null);
   
-  const { data: contents = [], isLoading } = useQuery({
-    queryKey: ['cmsContent', tenantId],
-    queryFn: () => fetchData(tenantQuery('cms_contents').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: contents = [], isLoading } = useQuery({ enabled: false /* cms_contents table not built */, queryKey: ['cmsContent', tenantId], queryFn: () => fetchData(tenantQuery('cms_contents').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],

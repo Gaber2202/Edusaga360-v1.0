@@ -65,12 +65,7 @@ export default function ParentIntake() {
     if (code) setLinkCode(code);
   }, []);
 
-  const { data: intakeLink } = useQuery({
-    queryKey: ['intakeLink', linkCode],
-    queryFn: () => fetchData(tenantQuery('parent_intake_links').select('*').match({ link_code: linkCode, is_active: true })),
-    enabled: !!linkCode,
-    select: (data) => data[0]
-  });
+  const { data: intakeLink } = useQuery({ enabled: false /* parent_intake_links table not built */, queryKey: ['intakeLink', linkCode], queryFn: () => fetchData(tenantQuery('parent_intake_links').select('*').match({ link_code: linkCode, is_active: true })), select: (data) => data[0], initialData: [] });
 
   const { data: _branches = [] } = useQuery({
     queryKey: ['branches'],
@@ -92,11 +87,7 @@ export default function ParentIntake() {
     queryFn: () => fetchData(tenantQuery('special_care_fees').select('*').match({ is_active: true })),
   });
 
-  const { data: currentTC } = useQuery({
-    queryKey: ['currentTC'],
-    queryFn: () => fetchData(tenantQuery('tc_versions').select('*').match({ is_current: true, applies_to: 'admissions' })),
-    select: (data) => data[0]
-  });
+  const { data: currentTC } = useQuery({ enabled: false /* tc_versions table not built */, queryKey: ['currentTC'], queryFn: () => fetchData(tenantQuery('tc_versions').select('*').match({ is_current: true, applies_to: 'admissions' })), select: (data) => data[0], initialData: [] });
 
   useEffect(() => {
     if (formData.academic_year && formData.applying_for_grade && intakeLink?.branch_id) {

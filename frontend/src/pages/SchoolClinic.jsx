@@ -65,17 +65,9 @@ export default function SchoolClinic() {
   const [search, setSearch] = useState('');
   const [studentSearch, setStudentSearch] = useState('');
 
-  const { data: visits = [], isLoading } = useQuery({
-    queryKey: ['clinicVisits', tenantId],
-    queryFn: () => fetchData(tenantQuery('clinic_visits').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: visits = [], isLoading } = useQuery({ enabled: false /* clinic_visits table not built */, queryKey: ['clinicVisits', tenantId], queryFn: () => fetchData(tenantQuery('clinic_visits').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
 
-  const { data: healthRecords = [] } = useQuery({
-    queryKey: ['healthRecords', tenantId],
-    queryFn: () => fetchData(tenantQuery('student_health_records').select('*').match(tenantFilter())),
-    enabled: hasTenantAccess,
-  });
+  const { data: healthRecords = [] } = useQuery({ enabled: false /* student_health_records table not built */, queryKey: ['healthRecords', tenantId], queryFn: () => fetchData(tenantQuery('student_health_records').select('*').match(tenantFilter())), initialData: [] });
 
   const { data: students = [] } = useQuery({
     queryKey: ['students', tenantId],

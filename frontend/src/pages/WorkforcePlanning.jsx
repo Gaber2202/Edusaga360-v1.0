@@ -39,11 +39,7 @@ export default function WorkforcePlanning() {
     enabled: hasTenantAccess,
   });
 
-  const { data: recruitments = [] } = useQuery({
-    queryKey: ['recruitments', tenantId],
-    queryFn: () => fetchData(tenantQuery('recruitments').select('*').match(tenantFilter())),
-    enabled: hasTenantAccess,
-  });
+  const { data: recruitments = [] } = useQuery({ enabled: false /* recruitments table not built */, queryKey: ['recruitments', tenantId], queryFn: () => fetchData(tenantQuery('recruitments').select('*').match(tenantFilter())), initialData: [] });
 
   // Metrics
   const activeEmployees = employees.filter(e => e.status === 'active');

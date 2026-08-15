@@ -52,13 +52,10 @@ export default function ESSPortal() {
   });
 
   // Get ESS settings for test mode
-  const { data: essSettings } = useQuery({
-    queryKey: ['essSettings'],
-    queryFn: async () => {
+  const { data: essSettings } = useQuery({ enabled: false /* ess_settings table not built */, queryKey: ['essSettings'], queryFn: async () => {
       const { data: settings = [] } = await tenantQuery('ess_settings').select('*').order();
       return settings[0] || { test_mode_enabled: false };
-    },
-  });
+    }, initialData: [] });
 
   // Get employee record linked to current user
   const { data: employees = [] } = useQuery({
@@ -74,11 +71,7 @@ export default function ESSPortal() {
     return employees.find(e => e.email === user?.email);
   })();
 
-  const { data: myRequests = [] } = useQuery({
-    queryKey: ['essRequests', currentEmployee?.id],
-    queryFn: () => fetchData(tenantQuery('ess_requests').select('*').match({ employee_id: currentEmployee?.id })),
-    enabled: !!currentEmployee?.id,
-  });
+  const { data: myRequests = [] } = useQuery({ enabled: false /* ess_requests table not built */, queryKey: ['essRequests', currentEmployee?.id], queryFn: () => fetchData(tenantQuery('ess_requests').select('*').match({ employee_id: currentEmployee?.id })), initialData: [] });
 
   const { data: myLeaves = [] } = useQuery({
     queryKey: ['leaveRequests', currentEmployee?.id],
@@ -86,35 +79,15 @@ export default function ESSPortal() {
     enabled: !!currentEmployee?.id,
   });
 
-  const { data: myAttendance = [] } = useQuery({
-    queryKey: ['employeeAttendance', currentEmployee?.id],
-    queryFn: () => fetchData(tenantQuery('employee_attendances').select('*').match({ employee_id: currentEmployee?.id })),
-    enabled: !!currentEmployee?.id,
-  });
+  const { data: myAttendance = [] } = useQuery({ enabled: false /* employee_attendances table not built */, queryKey: ['employeeAttendance', currentEmployee?.id], queryFn: () => fetchData(tenantQuery('employee_attendances').select('*').match({ employee_id: currentEmployee?.id })), initialData: [] });
 
-  const { data: myViolations = [] } = useQuery({
-    queryKey: ['violations', currentEmployee?.id],
-    queryFn: () => fetchData(tenantQuery('attendance_violations').select('*').match({ employee_id: currentEmployee?.id })),
-    enabled: !!currentEmployee?.id,
-  });
+  const { data: myViolations = [] } = useQuery({ enabled: false /* attendance_violations table not built */, queryKey: ['violations', currentEmployee?.id], queryFn: () => fetchData(tenantQuery('attendance_violations').select('*').match({ employee_id: currentEmployee?.id })), initialData: [] });
 
-  const { data: myLoans = [] } = useQuery({
-    queryKey: ['employeeLoans', currentEmployee?.id],
-    queryFn: () => fetchData(tenantQuery('employee_loans').select('*').match({ employee_id: currentEmployee?.id })),
-    enabled: !!currentEmployee?.id,
-  });
+  const { data: myLoans = [] } = useQuery({ enabled: false /* employee_loans table not built */, queryKey: ['employeeLoans', currentEmployee?.id], queryFn: () => fetchData(tenantQuery('employee_loans').select('*').match({ employee_id: currentEmployee?.id })), initialData: [] });
 
-  const { data: myTuitionAdvances = [] } = useQuery({
-    queryKey: ['tuitionAdvances', currentEmployee?.id],
-    queryFn: () => fetchData(tenantQuery('tuition_advances').select('*').match({ employee_id: currentEmployee?.id })),
-    enabled: !!currentEmployee?.id,
-  });
+  const { data: myTuitionAdvances = [] } = useQuery({ enabled: false /* tuition_advances table not built */, queryKey: ['tuitionAdvances', currentEmployee?.id], queryFn: () => fetchData(tenantQuery('tuition_advances').select('*').match({ employee_id: currentEmployee?.id })), initialData: [] });
 
-  const { data: myPayslips = [] } = useQuery({
-    queryKey: ['payrollInputs', currentEmployee?.id],
-    queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').match({ employee_id: currentEmployee?.id })),
-    enabled: !!currentEmployee?.id,
-  });
+  const { data: myPayslips = [] } = useQuery({ enabled: false /* payroll_inputs table not built */, queryKey: ['payrollInputs', currentEmployee?.id], queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').match({ employee_id: currentEmployee?.id })), initialData: [] });
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],

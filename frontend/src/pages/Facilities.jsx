@@ -36,41 +36,25 @@ export default function Facilities() {
   const [showNewWorkOrder, setShowNewWorkOrder] = useState(false);
   const [showNewAsset, setShowNewAsset] = useState(false);
   
-  const { data: workOrders = [], isLoading: workOrdersLoading } = useQuery({
-    queryKey: ['workOrders', tenantId, selectedBranchId],
-    queryFn: async () => {
+  const { data: workOrders = [], isLoading: workOrdersLoading } = useQuery({ enabled: false /* work_orders table not built */, queryKey: ['workOrders', tenantId, selectedBranchId], queryFn: async () => {
       const { data = [], error } = await tenantQuery('work_orders').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false });
       if (error) throw error;
       return filterByBranch(data);
-    },
-    enabled: hasTenantAccess,
-  });
+    }, initialData: [] });
 
-  const { data: facilityAssets = [], isLoading: assetsLoading } = useQuery({
-    queryKey: ['facilityAssets', tenantId, selectedBranchId],
-    queryFn: async () => {
+  const { data: facilityAssets = [], isLoading: assetsLoading } = useQuery({ enabled: false /* facility_assets table not built */, queryKey: ['facilityAssets', tenantId, selectedBranchId], queryFn: async () => {
       const { data = [], error } = await tenantQuery('facility_assets').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false });
       if (error) throw error;
       return filterByBranch(data);
-    },
-    enabled: hasTenantAccess,
-  });
+    }, initialData: [] });
 
-  const { data: spareParts = [], isLoading: partsLoading } = useQuery({
-    queryKey: ['spareParts', tenantId, selectedBranchId],
-    queryFn: async () => {
+  const { data: spareParts = [], isLoading: partsLoading } = useQuery({ enabled: false /* spare_parts table not built */, queryKey: ['spareParts', tenantId, selectedBranchId], queryFn: async () => {
       const { data = [], error } = await tenantQuery('spare_parts').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false });
       if (error) throw error;
       return filterByBranch(data);
-    },
-    enabled: hasTenantAccess,
-  });
+    }, initialData: [] });
 
-  const { data: contractors = [] } = useQuery({
-    queryKey: ['contractors', tenantId],
-    queryFn: () => fetchData(tenantQuery('contractors').select('*').match(tenantFilter({ status: 'active' }))),
-    enabled: hasTenantAccess,
-  });
+  const { data: contractors = [] } = useQuery({ enabled: false /* contractors table not built */, queryKey: ['contractors', tenantId], queryFn: () => fetchData(tenantQuery('contractors').select('*').match(tenantFilter({ status: 'active' }))), initialData: [] });
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],

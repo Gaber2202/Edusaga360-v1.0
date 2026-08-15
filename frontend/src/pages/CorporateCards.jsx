@@ -39,17 +39,9 @@ export default function CorporateCards() {
     category_restrictions: '', status: 'active'
   });
 
-  const { data: cards = [], isLoading } = useQuery({
-    queryKey: ['corporate_cards', tenantId],
-    queryFn: () => fetchData(tenantQuery('corporate_cards').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: cards = [], isLoading } = useQuery({ enabled: false /* corporate_cards table not built */, queryKey: ['corporate_cards', tenantId], queryFn: () => fetchData(tenantQuery('corporate_cards').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
 
-  const { data: transactions = [] } = useQuery({
-    queryKey: ['card_transactions', tenantId],
-    queryFn: () => fetchData(tenantQuery('card_transactions').select('*').match(tenantFilter()).order('transaction_date', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: transactions = [] } = useQuery({ enabled: false /* card_transactions table not built */, queryKey: ['card_transactions', tenantId], queryFn: () => fetchData(tenantQuery('card_transactions').select('*').match(tenantFilter()).order('transaction_date', { ascending: false })), initialData: [] });
 
   const handleSave = async () => {
     if (!form.cardholder_name) { toast.error(isRTL ? 'الاسم مطلوب' : 'Name required'); return; }

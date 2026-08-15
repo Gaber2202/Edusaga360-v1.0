@@ -94,11 +94,7 @@ export default function PerformanceEvaluation() {
 
   const [form, setForm] = useState(emptyForm());
 
-  const { data: evaluations = [], isLoading } = useQuery({
-    queryKey: ['performanceEvals', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('performance_evaluations').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: evaluations = [], isLoading } = useQuery({ enabled: false /* performance_evaluations table not built */, queryKey: ['performanceEvals', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('performance_evaluations').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],
@@ -106,11 +102,7 @@ export default function PerformanceEvaluation() {
     enabled: hasTenantAccess,
   });
 
-  const { data: customTemplates = [] } = useQuery({
-    queryKey: ['evalTemplates', tenantId],
-    queryFn: () => fetchData(tenantQuery('eval_criteria_templates').select('*').match(tenantFilter({ is_active: true }))),
-    enabled: hasTenantAccess,
-  });
+  const { data: customTemplates = [] } = useQuery({ enabled: false /* eval_criteria_templates table not built */, queryKey: ['evalTemplates', tenantId], queryFn: () => fetchData(tenantQuery('eval_criteria_templates').select('*').match(tenantFilter({ is_active: true }))), initialData: [] });
 
   const filtered = filterByBranch(evaluations);
 
@@ -580,10 +572,7 @@ function CriteriaTemplatesTab({ isRTL }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(EMPTY_TEMPLATE);
 
-  const { data: templates = [], isLoading } = useQuery({
-    queryKey: ['evalTemplates', tenantId],
-    queryFn: () => fetchData(tenantQuery('eval_criteria_templates').select('*').order('created_at', { ascending: false })),
-  });
+  const { data: templates = [], isLoading } = useQuery({ enabled: false /* eval_criteria_templates table not built */, queryKey: ['evalTemplates', tenantId], queryFn: () => fetchData(tenantQuery('eval_criteria_templates').select('*').order('created_at', { ascending: false })), initialData: [] });
 
   const totalWeight = form.criteria.reduce((s, c) => s + (Number(c.weight) || 0), 0);
   const weightOk = totalWeight === 100;
@@ -812,10 +801,7 @@ function WarningsTab({ isRTL, selectedBranchId, filterByBranch, employees }) {
     improvement_plan: '', status: 'draft'
   });
 
-  const { data: warnings = [], isLoading } = useQuery({
-    queryKey: ['disciplinaryWarnings', tenantId],
-    queryFn: () => fetchData(tenantQuery('disciplinary_warnings').select('*').order('created_at', { ascending: false })),
-  });
+  const { data: warnings = [], isLoading } = useQuery({ enabled: false /* disciplinary_warnings table not built */, queryKey: ['disciplinaryWarnings', tenantId], queryFn: () => fetchData(tenantQuery('disciplinary_warnings').select('*').order('created_at', { ascending: false })), initialData: [] });
 
   const filtered = filterByBranch(warnings);
 

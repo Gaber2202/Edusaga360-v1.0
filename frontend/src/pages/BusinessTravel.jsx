@@ -43,17 +43,9 @@ export default function BusinessTravel() {
     notes: '', department_id: '', employee_name: ''
   });
 
-  const { data: travelRequests = [], isLoading } = useQuery({
-    queryKey: ['travel_requests', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('travel_requests').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: travelRequests = [], isLoading } = useQuery({ enabled: false /* travel_requests table not built */, queryKey: ['travel_requests', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('travel_requests').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
 
-  const { data: travelPolicies = [] } = useQuery({
-    queryKey: ['travel_policies', tenantId],
-    queryFn: () => fetchData(tenantQuery('travel_policies').select('*').match(tenantFilter())),
-    enabled: hasTenantAccess,
-  });
+  const { data: travelPolicies = [] } = useQuery({ enabled: false /* travel_policies table not built */, queryKey: ['travel_policies', tenantId], queryFn: () => fetchData(tenantQuery('travel_policies').select('*').match(tenantFilter())), initialData: [] });
 
   const handleSave = async () => {
     if (!form.destination || !form.departure_date) {

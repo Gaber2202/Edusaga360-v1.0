@@ -45,11 +45,7 @@ export default function AssetAssignments() {
 
   const [returnForm, setReturnForm] = useState({ condition_on_return: 'good', return_notes: '' });
 
-  const { data: assignments = [], isLoading } = useQuery({
-    queryKey: ['assetAssignments', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('asset_assignments').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: assignments = [], isLoading } = useQuery({ enabled: false /* asset_assignments table not built */, queryKey: ['assetAssignments', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('asset_assignments').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: assets = [] } = useQuery({
     queryKey: ['availableAssets', tenantId],

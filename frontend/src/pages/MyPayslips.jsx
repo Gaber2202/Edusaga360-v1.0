@@ -36,19 +36,12 @@ export default function MyPayslips() {
     enabled: !!employee?.id
   });
 
-  const { data: deliveries = [] } = useQuery({
-    queryKey: ['myPayslipDeliveries', employee?.id],
-    queryFn: () => fetchData(tenantQuery('payslip_deliverys').select('*').match({ employee_id: employee?.id })),
-    enabled: !!employee?.id
-  });
+  const { data: deliveries = [] } = useQuery({ enabled: false /* payslip_deliverys table not built */, queryKey: ['myPayslipDeliveries', employee?.id], queryFn: () => fetchData(tenantQuery('payslip_deliverys').select('*').match({ employee_id: employee?.id })), initialData: [] });
 
-  const { data: securitySettings } = useQuery({
-    queryKey: ['payslipSettings'],
-    queryFn: async () => {
+  const { data: securitySettings } = useQuery({ enabled: false /* payslip_settings table not built */, queryKey: ['payslipSettings'], queryFn: async () => {
       const { data: all = [] } = await tenantQuery('payslip_settings').select('*').order();
       return all[0];
-    },
-  });
+    }, initialData: [] });
 
   const getDeliveryHistory = (payslipId) => {
     return deliveries.filter(d => d.payslip_id === payslipId);

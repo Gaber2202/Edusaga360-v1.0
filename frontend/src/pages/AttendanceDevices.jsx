@@ -52,17 +52,9 @@ export default function AttendanceDevices() {
     is_active: true
   });
 
-  const { data: devices = [], isLoading: loadingDevices } = useQuery({
-    queryKey: ['attendanceDevices', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('attendance_devices').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: devices = [], isLoading: loadingDevices } = useQuery({ enabled: false /* attendance_devices table not built */, queryKey: ['attendanceDevices', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('attendance_devices').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })), initialData: [] });
 
-  const { data: punchLogs = [], isLoading: loadingLogs } = useQuery({
-    queryKey: ['punchLogs', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('punch_logs').select('*').match(tenantFilter(branchFilter())).order('punch_time', { ascending: false }).limit(100)),
-    enabled: hasTenantAccess,
-  });
+  const { data: punchLogs = [], isLoading: loadingLogs } = useQuery({ enabled: false /* punch_logs table not built */, queryKey: ['punchLogs', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('punch_logs').select('*').match(tenantFilter(branchFilter())).order('punch_time', { ascending: false }).limit(100)), initialData: [] });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],

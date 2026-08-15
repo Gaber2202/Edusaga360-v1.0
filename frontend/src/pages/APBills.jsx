@@ -48,11 +48,7 @@ export default function APBills() {
     attachments: []
   });
 
-  const { data: bills = [], isLoading } = useQuery({
-    queryKey: ['apBills', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: bills = [], isLoading } = useQuery({ enabled: false /* ap_bills table not built */, queryKey: ['apBills', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: accounts = [] } = useQuery({
     queryKey: ['chartOfAccounts', tenantId],

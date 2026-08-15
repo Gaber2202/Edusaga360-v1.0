@@ -78,12 +78,7 @@ export default function IntegrationHub() {
   const [activeTab, setActiveTab] = useState('log');
   const [expandedRow, setExpandedRow] = useState(null);
 
-  const { data: logs = [], isLoading, dataUpdatedAt } = useQuery({
-    queryKey: ['integrationLogs', tenantId],
-    queryFn: () => fetchData(tenantQuery('integration_logs').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit(200)),
-    enabled: hasTenantAccess,
-    refetchInterval: 15000, // auto-refresh every 15s
-  });
+  const { data: logs = [], isLoading, dataUpdatedAt } = useQuery({ enabled: false /* integration_logs table not built */, queryKey: ['integrationLogs', tenantId], queryFn: () => fetchData(tenantQuery('integration_logs').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit(200)), refetchInterval: 15000, initialData: [] });
 
   const allModules = [...new Set(MODULE_MAP.map(m => m.source))].sort();
 

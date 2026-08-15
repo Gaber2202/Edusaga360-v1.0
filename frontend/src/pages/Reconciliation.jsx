@@ -39,11 +39,7 @@ export default function Reconciliation() {
     enabled: hasTenantAccess,
   });
 
-  const { data: _reconciliations = [] } = useQuery({
-    queryKey: ['reconciliations', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('payment_reconciliations').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: _reconciliations = [] } = useQuery({ enabled: false /* payment_reconciliations table not built */, queryKey: ['reconciliations', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('payment_reconciliations').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })), initialData: [] });
 
   const filteredPayments = filterByBranch(payments).filter(p => {
     const matchesStatus = statusFilter === 'all' || p.reconciliation_status === statusFilter;

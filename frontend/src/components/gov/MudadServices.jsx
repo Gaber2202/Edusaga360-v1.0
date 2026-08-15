@@ -61,7 +61,7 @@ export default function MudadServices() {
     total_salary: 0, status: 'pending', compliance_percentage: 100, bank_name: 'Al Rajhi Bank', file_format: 'wps', notes: ''
   });
 
-  const { data: submissions = [], isLoading } = useQuery({ queryKey: ['mudad'], queryFn: () => fetchData(tenantQuery('mudad_submissions').select('*').order('created_at', { ascending: false })) });
+  const { data: submissions = [], isLoading } = useQuery({ enabled: false /* mudad_submissions table not built */, queryKey: ['mudad'], queryFn: () => fetchData(tenantQuery('mudad_submissions').select('*').order('created_at', { ascending: false })), initialData: [] });
 
   const columns = [
     { header: isRTL ? 'الفترة' : 'Period', cell: r => `${isRTL ? monthsAr[r.period_month - 1] : months[r.period_month - 1]} ${r.period_year}` },

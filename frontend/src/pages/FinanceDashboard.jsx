@@ -100,7 +100,7 @@ export default function FinanceDashboard() {
   const { data: apBills = [] } = useTenantQuery(
     ['apbills-dashboard', tenantId],
     () => fetchData(tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter()))),
-    { enabled: hasTenantAccess && isModuleEnabled('reconciliation') }
+    { enabled: false /* ap_bills table not built */, initialData: [] }
   );
 
   const { data: _accounts = [] } = useTenantQuery(

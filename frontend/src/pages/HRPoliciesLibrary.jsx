@@ -29,15 +29,11 @@ export default function HRPoliciesLibrary() {
   const [viewMode, _setViewMode] = useState('grid');
   const [initializing, setInitializing] = useState(false);
 
-  const { data: policies = [], isLoading: _isLoading } = useQuery({
-    queryKey: ['hrPolicies', tenantId, selectedBranchId],
-    queryFn: () => {
+  const { data: policies = [], isLoading: _isLoading } = useQuery({ enabled: false /* hr_policys table not built */, queryKey: ['hrPolicies', tenantId, selectedBranchId], queryFn: () => {
       const filter = tenantFilter();
       if (selectedBranchId) filter.branch_id = selectedBranchId;
       return fetchData(tenantQuery('hr_policys').select('*').match(filter));
-    },
-    enabled: hasTenantAccess,
-  });
+    }, initialData: [] });
 
   const getCategoryLabel = (categoryKey) => {
     return isRTL ? POLICY_CATEGORIES[categoryKey]?.ar : POLICY_CATEGORIES[categoryKey]?.en;

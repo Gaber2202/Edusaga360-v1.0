@@ -46,11 +46,7 @@ export default function TransportManagement() {
     enabled: hasTenantAccess,
   });
 
-  const { data: assignments = [] } = useQuery({
-    queryKey: ['busAssignments', tenantId],
-    queryFn: () => fetchData(tenantQuery('student_bus_assignments').select('*').match(tenantFilter({ status: 'active' }))),
-    enabled: hasTenantAccess,
-  });
+  const { data: assignments = [] } = useQuery({ enabled: false /* student_bus_assignments table not built */, queryKey: ['busAssignments', tenantId], queryFn: () => fetchData(tenantQuery('student_bus_assignments').select('*').match(tenantFilter({ status: 'active' }))), initialData: [] });
 
   const { data: vehicles = [] } = useQuery({
     queryKey: ['vehicles', tenantId],

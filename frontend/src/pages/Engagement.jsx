@@ -53,23 +53,11 @@ export default function Engagement() {
     questions: [{ question_ar: '', question_en: '', type: 'rating' }]
   });
 
-  const { data: announcements = [], isLoading: loadingAnnouncements } = useQuery({
-    queryKey: ['announcements', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('announcements').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: announcements = [], isLoading: loadingAnnouncements } = useQuery({ enabled: false /* announcements table not built */, queryKey: ['announcements', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('announcements').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
 
-  const { data: surveys = [] } = useQuery({
-    queryKey: ['employee_surveys', tenantId],
-    queryFn: () => fetchData(tenantQuery('employee_surveys').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: surveys = [] } = useQuery({ enabled: false /* employee_surveys table not built */, queryKey: ['employee_surveys', tenantId], queryFn: () => fetchData(tenantQuery('employee_surveys').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
 
-  const { data: surveyResponses = [] } = useQuery({
-    queryKey: ['survey_responses', tenantId],
-    queryFn: () => fetchData(tenantQuery('survey_responses').select('*').match(tenantFilter())),
-    enabled: hasTenantAccess,
-  });
+  const { data: surveyResponses = [] } = useQuery({ enabled: false /* survey_responses table not built */, queryKey: ['survey_responses', tenantId], queryFn: () => fetchData(tenantQuery('survey_responses').select('*').match(tenantFilter())), initialData: [] });
 
   const handleSaveAnnouncement = async () => {
     if (!announcementForm.title_ar) {

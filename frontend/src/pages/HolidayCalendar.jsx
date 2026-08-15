@@ -34,11 +34,7 @@ export default function HolidayCalendar() {
     is_active: true
   });
 
-  const { data: holidays = [], isLoading } = useQuery({
-    queryKey: ['holidays', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('holidays').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: holidays = [], isLoading } = useQuery({ enabled: false /* holidays table not built */, queryKey: ['holidays', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('holidays').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: _branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
