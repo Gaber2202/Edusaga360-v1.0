@@ -3,7 +3,7 @@
  * Real-time KPIs covering the full employee lifecycle
  */
 import React, { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useTenantQuery } from '../hooks/useTenantQuery';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useTenant } from '../components/TenantContext';
@@ -75,29 +75,29 @@ export default function HRManagerDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const today = new Date();
 
-  const { data: employees = [], isLoading } = useQuery({
-    queryKey: ['employees-hrdash', tenantId],
-    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').match(tenantFilter(branchFilter()))),
-    enabled: hasTenantAccess,
-  });
+  const { data: employees = [], isLoading } = useTenantQuery(
+    ['employees-hrdash', tenantId],
+    () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').match(tenantFilter(branchFilter()))),
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: leaveRequests = [] } = useQuery({
-    queryKey: ['leaves-hrdash', tenantId],
-    queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match(tenantFilter({ status: 'pending' }))),
-    enabled: hasTenantAccess,
-  });
+  const { data: leaveRequests = [] } = useTenantQuery(
+    ['leaves-hrdash', tenantId],
+    () => fetchData(tenantQuery('leave_requests').select('*').match(tenantFilter({ status: 'pending' }))),
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: recruitments = [] } = useQuery({
-    queryKey: ['recruitment-hrdash', tenantId],
-    queryFn: () => fetchData(tenantQuery('recruitments').select('*').match(tenantFilter())),
-    enabled: hasTenantAccess,
-  });
+  const { data: recruitments = [] } = useTenantQuery(
+    ['recruitment-hrdash', tenantId],
+    () => fetchData(tenantQuery('recruitments').select('*').match(tenantFilter())),
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: payRuns = [] } = useQuery({
-    queryKey: ['payruns-hrdash', tenantId],
-    queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit(3)),
-    enabled: hasTenantAccess,
-  });
+  const { data: payRuns = [] } = useTenantQuery(
+    ['payruns-hrdash', tenantId],
+    () => fetchData(tenantQuery('pay_runs').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit(3)),
+    { enabled: hasTenantAccess }
+  );
 
   // ── Computed KPIs ─────────────────────────────────────
   const kpis = useMemo(() => {

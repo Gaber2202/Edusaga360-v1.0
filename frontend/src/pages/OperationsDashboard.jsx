@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useTenantQuery } from '../hooks/useTenantQuery';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import Currency from '../components/Currency';
@@ -25,51 +25,51 @@ export default function OperationsDashboard() {
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const [dateRange, setDateRange] = useState('30');
 
-  const { data: crmTickets = [] } = useQuery({
-    queryKey: ['crmTickets', tenantId, selectedBranchId],
-    queryFn: async () => {
+  const { data: crmTickets = [] } = useTenantQuery(
+    ['crmTickets', tenantId, selectedBranchId],
+    async () => {
       const { data = [], error } = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ ticket_type: 'crm' })));
       if (error) throw error;
       return filterByBranch(data);
     },
-    enabled: hasTenantAccess,
-  });
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: itTickets = [] } = useQuery({
-    queryKey: ['itTickets', tenantId, selectedBranchId],
-    queryFn: async () => {
+  const { data: itTickets = [] } = useTenantQuery(
+    ['itTickets', tenantId, selectedBranchId],
+    async () => {
       const { data = [], error } = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ ticket_type: 'it_helpdesk' })));
       if (error) throw error;
       return filterByBranch(data);
     },
-    enabled: hasTenantAccess,
-  });
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: workOrders = [] } = useQuery({
-    queryKey: ['workOrders', tenantId, selectedBranchId],
-    queryFn: async () => {
+  const { data: workOrders = [] } = useTenantQuery(
+    ['workOrders', tenantId, selectedBranchId],
+    async () => {
       const { data = [], error } = await tenantQuery('work_orders').select('*').match(tenantFilter(branchFilter()));
       if (error) throw error;
       return filterByBranch(data);
     },
-    enabled: hasTenantAccess,
-  });
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: customers = [] } = useQuery({
-    queryKey: ['customers', tenantId, selectedBranchId],
-    queryFn: async () => {
+  const { data: customers = [] } = useTenantQuery(
+    ['customers', tenantId, selectedBranchId],
+    async () => {
       const { data = [], error } = await tenantQuery('customers').select('*').match(tenantFilter(branchFilter()));
       if (error) throw error;
       return filterByBranch(data);
     },
-    enabled: hasTenantAccess,
-  });
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: branches = [] } = useQuery({
-    queryKey: ['branches', tenantId],
-    queryFn: () => fetchData(tenantQuery('branches').select('*').match(tenantFilter({ status: 'active' }))),
-    enabled: hasTenantAccess,
-  });
+  const { data: branches = [] } = useTenantQuery(
+    ['branches', tenantId],
+    () => fetchData(tenantQuery('branches').select('*').match(tenantFilter({ status: 'active' }))),
+    { enabled: hasTenantAccess }
+  );
 
   // Apply the selected reporting window — the date range now actually scopes
   // every metric and chart below (previously the selector did nothing).

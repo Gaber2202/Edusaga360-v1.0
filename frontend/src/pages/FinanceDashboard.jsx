@@ -3,7 +3,7 @@
  * AC#9: Anomaly detection flagging duplicate payments / unusual transactions
  */
 import React, { useMemo, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useTenantQuery } from '../hooks/useTenantQuery';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useTenant } from '../components/TenantContext';
@@ -68,23 +68,23 @@ export default function FinanceDashboard() {
   const ytdStart = format(startOfYear(new Date()), 'yyyy-MM-dd');
   const today = format(new Date(), 'yyyy-MM-dd');
 
-  const { data: journalEntries = [], isLoading: jeLoading, isError: jeError, refetch: refetchJe } = useQuery({
-    queryKey: ['je-dashboard', tenantId],
-    queryFn: () => fetchData(tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter({ status: 'posted' })))),
-    enabled: hasTenantAccess,
-  });
+  const { data: journalEntries = [], isLoading: jeLoading, isError: jeError, refetch: refetchJe } = useTenantQuery(
+    ['je-dashboard', tenantId],
+    () => fetchData(tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter({ status: 'posted' })))),
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: invoices = [], isLoading: invLoading, isError: invError, refetch: refetchInv } = useQuery({
-    queryKey: ['invoices-dashboard', tenantId],
-    queryFn: () => fetchData(tenantQuery('invoices').select('*').match(tenantFilter(branchFilter()))),
-    enabled: hasTenantAccess,
-  });
+  const { data: invoices = [], isLoading: invLoading, isError: invError, refetch: refetchInv } = useTenantQuery(
+    ['invoices-dashboard', tenantId],
+    () => fetchData(tenantQuery('invoices').select('*').match(tenantFilter(branchFilter()))),
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: payments = [], isLoading: payLoading, isError: payError, refetch: refetchPay } = useQuery({
-    queryKey: ['payments-dashboard', tenantId],
-    queryFn: () => fetchData(tenantQuery('payments').select('*').match(tenantFilter(branchFilter()))),
-    enabled: hasTenantAccess,
-  });
+  const { data: payments = [], isLoading: payLoading, isError: payError, refetch: refetchPay } = useTenantQuery(
+    ['payments-dashboard', tenantId],
+    () => fetchData(tenantQuery('payments').select('*').match(tenantFilter(branchFilter()))),
+    { enabled: hasTenantAccess }
+  );
 
   // Aggregate signals for the analytics charts so a silently-failed query shows
   // an error/retry state instead of a misleading all-zero chart.
@@ -92,23 +92,23 @@ export default function FinanceDashboard() {
   const chartsError = jeError || invError || payError;
   const refetchCharts = () => { refetchJe(); refetchInv(); refetchPay(); };
 
-  const { data: apBills = [] } = useQuery({
-    queryKey: ['apbills-dashboard', tenantId],
-    queryFn: () => fetchData(tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter()))),
-    enabled: hasTenantAccess,
-  });
+  const { data: apBills = [] } = useTenantQuery(
+    ['apbills-dashboard', tenantId],
+    () => fetchData(tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter()))),
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: _accounts = [] } = useQuery({
-    queryKey: ['coa-dashboard', tenantId],
-    queryFn: () => fetchData(tenantQuery('chart_of_accounts').select('*').match(tenantFilter({ is_active: true }))),
-    enabled: hasTenantAccess,
-  });
+  const { data: _accounts = [] } = useTenantQuery(
+    ['coa-dashboard', tenantId],
+    () => fetchData(tenantQuery('chart_of_accounts').select('*').match(tenantFilter({ is_active: true }))),
+    { enabled: hasTenantAccess }
+  );
 
-  const { data: students = [] } = useQuery({
-    queryKey: ['students-dashboard', tenantId],
-    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter({ status: 'active' }))),
-    enabled: hasTenantAccess,
-  });
+  const { data: students = [] } = useTenantQuery(
+    ['students-dashboard', tenantId],
+    () => fetchData(tenantQuery('students').select('*').match(tenantFilter({ status: 'active' }))),
+    { enabled: hasTenantAccess }
+  );
 
   // ── KPIs ────────────────────────────────────────────────
   const kpis = useMemo(() => {

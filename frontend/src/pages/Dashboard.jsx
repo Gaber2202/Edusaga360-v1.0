@@ -1,5 +1,5 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useTenantQuery } from '../hooks/useTenantQuery';
 import { tenantQuery } from '../api/supabaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -38,7 +38,7 @@ const SectionLabel = ({ children }) => (
 export default function Dashboard() {
   const { t: _t, isRTL } = useLanguage();
   const { userRole, user } = useRole();
-  const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
+  const { tenantId, hasTenantAccess } = useTenantFilter();
   const { tenant } = useTenant();
 
   const isCreator = userRole === 'creator';
@@ -50,11 +50,11 @@ export default function Dashboard() {
   const isParent = userRole === 'parent';
 
   // ── Data queries (each gated to the personas that need it) ──────────────────
-  const useTableQuery = (key, table, filt = {}, enabled = true) => useQuery({
-    queryKey: [key, tenantId],
-    queryFn: async () => { const { data } = await tenantQuery(table).select('*').match(tenantFilter(filt)); return data || []; },
-    enabled: hasTenantAccess && enabled,
-  });
+  const useTableQuery = (key, table, filt = {}, enabled = true) => useTenantQuery(
+    [key, tenantId],
+    async () => { const { data } = await tenantQuery(table).select('*').match(filt); return data || []; },
+    { enabled: hasTenantAccess && enabled }
+  );
 
   const { data: students = [] } = useTableQuery('students', 'students', {}, isSchoolAdmin || isParent || isTeacher);
   const { data: applications = [] } = useTableQuery('applications', 'applications', {}, isSchoolAdmin);
@@ -64,7 +64,7 @@ export default function Dashboard() {
   const { data: payRuns = [] } = useTableQuery('payRunsDash', 'pay_runs', {}, isHR || isFinance);
   const { data: iqamas = [] } = useTableQuery('iqamasDash', 'iqama_records', {}, isHR);
   const { data: violations = [] } = useTableQuery('violationsDash', 'govi_violations', { status: 'open' }, isHR);
-  const { data: branches = [] } = useTableQuery('branches', 'branches', { is_active: true }, true);
+  const { data: branches = [] } = useTableQuery('branches', 'branches', { status: 'active' }, true);
   const { data: sections = [] } = useTableQuery('teacherSections', 'sections', {}, isTeacher);
   const { data: attendance = [] } = useTableQuery('teacherAttendance', 'student_attendances', {}, isTeacher);
   const { data: announcements = [] } = useTableQuery('teacherComms', 'communications', {}, isTeacher);
