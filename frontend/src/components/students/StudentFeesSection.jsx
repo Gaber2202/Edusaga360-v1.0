@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useTenantQuery } from '../../hooks/useTenantQuery';
 import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import Currency from '../Currency';
@@ -21,11 +22,11 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
   const { tenantId } = useTenantFilter();
 
   // Use live student data from cache so UI auto-refreshes after save
-  const { data: liveStudents = [] } = useQuery({
-    queryKey: ['students', tenantId],
-    queryFn: () => fetchData(tenantQuery('students').select('*').order('created_at', { ascending: false })),
-    staleTime: 0,
-  });
+  const { data: liveStudents = [] } = useTenantQuery(
+    ['students', tenantId],
+    () => fetchData(tenantQuery('students').select('*').order('created_at', { ascending: false })),
+    { staleTime: 0 }
+  );
   const liveStudent = liveStudents.find(s => s.id === student?.id) || student;
   
   const [selectedYearId, setSelectedYearId] = useState('');
@@ -42,31 +43,31 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
     }
   }, [liveStudent?.id, liveStudent?.academic_year_id, liveStudent?.grade_id, liveStudent?.section_id]);
 
-  const { data: academicYears = [] } = useQuery({
-    queryKey: ['academicYears', tenantId],
-    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true })),
-  });
+  const { data: academicYears = [] } = useTenantQuery(
+    ['academicYears', tenantId],
+    () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true }))
+  );
 
-  const { data: grades = [] } = useQuery({
-    queryKey: ['grades', tenantId],
-    queryFn: async () => {
+  const { data: grades = [] } = useTenantQuery(
+    ['grades', tenantId],
+    async () => {
       const { data = [] } = await tenantQuery('grades').select('*').match({ is_active: true });
       return data.sort((a, b) => a.display_order - b.display_order);
-    },
-  });
+    }
+  );
 
-  const { data: sections = [] } = useQuery({
-    queryKey: ['sections', student?.branch_id],
-    queryFn: () => fetchData(tenantQuery('sections').select('*').match({ 
+  const { data: sections = [] } = useTenantQuery(
+    ['sections', student?.branch_id],
+    () => fetchData(tenantQuery('sections').select('*').match({
       branch_id: student?.branch_id,
-      is_active: true 
+      is_active: true
     })),
-    enabled: !!student?.branch_id,
-  });
+    { enabled: !!student?.branch_id }
+  );
 
-  const { data: feeConfigs = [] } = useQuery({
-    queryKey: ['feeStructuresByKeys', selectedYearId, selectedGradeId, liveStudent?.branch_id, selectedSectionId],
-    queryFn: async () => {
+  const { data: feeConfigs = [] } = useTenantQuery(
+    ['feeStructuresByKeys', selectedYearId, selectedGradeId, liveStudent?.branch_id, selectedSectionId],
+    async () => {
       if (!selectedYearId || !selectedGradeId) return [];
 
       // Fetch all active fee structures for this year+grade (any branch)
@@ -96,8 +97,8 @@ export default function StudentFeesSection({ student, onStudentUpdated }) {
       // Priority 3: Return all matches
       return pool;
     },
-    enabled: !!(selectedYearId && selectedGradeId),
-  });
+    { enabled: !!(selectedYearId && selectedGradeId) }
+  );
 
   const handleApplyFees = async () => {
     if (!selectedYearId || !selectedGradeId) {

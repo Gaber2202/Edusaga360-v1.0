@@ -24,11 +24,13 @@ description: How to end-to-end test branch filtering and per-row currency on the
 - Tabs: `لوحة التحكم` = Dashboard, `الفواتير` = Invoices.
 - Global branch selector is the first button in the top header.
 - Recent invoices / invoice tables show row-level currency. Totals-by-currency appear under the Invoices tab for multi-currency tenants.
+- If the Radix Select dropdown does not respond to mouse clicks, open the trigger and use `ArrowDown` + `Enter` to select the desired branch.
 
 ## Console checks
 - Clear localStorage (delete `erp_selected_branch`) to test cold load.
 - Search console for `[localization] formatCurrency called without a resolved currencyCode`; there should be none.
 - Pre-existing warnings (`React Router Future Flag`, `tenantQuery('notification_recipients'): tenantId is not set`) are unrelated to branch/currency.
+- Watch for `400 Bad Request` on the `branches` query from `Dashboard.jsx`; as of PR #230 it uses `is_active: true` while the table column is `status`, and it double-applies `tenant_id` through `tenantFilter` + `tenantQuery`.
 
 ## Devin Secrets Needed
 - None for UI login (create demo credentials per-session; do not commit or signpost them).

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useTenantQuery } from '../../hooks/useTenantQuery';
 import { useLanguage } from '../LanguageContext';
 import { getCurrencySymbol } from '../../lib/localization';
 import { useRole } from '../RoleContext';
@@ -78,10 +79,10 @@ export default function StudentDetails({ open, onClose, student: studentProp, on
     can_pickup: true
   });
 
-  const { data: branches = [] } = useQuery({
-    queryKey: ['branches', tenantId],
-    queryFn: () => fetchData(tenantQuery('branches').select('*').match({ status: 'active' })),
-  });
+  const { data: branches = [] } = useTenantQuery(
+    ['branches', tenantId],
+    () => fetchData(tenantQuery('branches').select('*').match({ status: 'active' }))
+  );
 
   // Enrich student with branch name
   const student = React.useMemo(() => {
@@ -90,23 +91,23 @@ export default function StudentDetails({ open, onClose, student: studentProp, on
     return { ...rawStudent, branch_name: branch ? (isRTL ? branch.name_ar : branch.name_en || branch.name_ar) : rawStudent.branch_id };
   }, [rawStudent, branches, isRTL]);
 
-  const { data: guardians = [], isLoading: loadingGuardians } = useQuery({
-    queryKey: ['guardians', rawStudent?.id],
-    queryFn: () => fetchData(tenantQuery('guardians').select('*').match({ student_id: rawStudent?.id })),
-    enabled: !!rawStudent?.id
-  });
+  const { data: guardians = [], isLoading: loadingGuardians } = useTenantQuery(
+    ['guardians', rawStudent?.id],
+    () => fetchData(tenantQuery('guardians').select('*').match({ student_id: rawStudent?.id })),
+    { enabled: !!rawStudent?.id }
+  );
 
-  const { data: attendanceRecords = [] } = useQuery({
-    queryKey: ['studentAttendance', rawStudent?.id],
-    queryFn: () => fetchData(tenantQuery('attendances').select('*').match({ student_id: rawStudent?.id }).order('date', { ascending: false }).limit(30)),
-    enabled: !!rawStudent?.id
-  });
+  const { data: attendanceRecords = [] } = useTenantQuery(
+    ['studentAttendance', rawStudent?.id],
+    () => fetchData(tenantQuery('attendances').select('*').match({ student_id: rawStudent?.id }).order('date', { ascending: false }).limit(30)),
+    { enabled: !!rawStudent?.id }
+  );
 
-  const { data: invoices = [] } = useQuery({
-    queryKey: ['studentInvoices', rawStudent?.id],
-    queryFn: () => fetchData(tenantQuery('invoices').select('*').match({ student_id: rawStudent?.id }).order('created_at', { ascending: false })),
-    enabled: !!rawStudent?.id
-  });
+  const { data: invoices = [] } = useTenantQuery(
+    ['studentInvoices', rawStudent?.id],
+    () => fetchData(tenantQuery('invoices').select('*').match({ student_id: rawStudent?.id }).order('created_at', { ascending: false })),
+    { enabled: !!rawStudent?.id }
+  );
 
   if (!rawStudent) return null;
 

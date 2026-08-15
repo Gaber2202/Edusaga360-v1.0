@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useTenantQuery } from '../hooks/useTenantQuery';
 import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { Card } from '../components/ui/card';
@@ -37,11 +38,11 @@ export default function StudentTags() {
     is_active: true
   });
 
-  const { data: tags = [], isLoading } = useQuery({
-    queryKey: ['studentTags', tenantId],
-    queryFn: () => fetchData(tenantQuery('student_tags').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: tags = [], isLoading } = useTenantQuery(
+    ['studentTags', tenantId],
+    () => fetchData(tenantQuery('student_tags').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
+    { enabled: hasTenantAccess }
+  );
 
   const handleEdit = (tag) => {
     setEditingTag(tag);
