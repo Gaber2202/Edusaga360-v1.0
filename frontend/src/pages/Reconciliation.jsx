@@ -105,13 +105,9 @@ export default function Reconciliation() {
         payment_ids: selectedPayments
       });
 
-      // Update each payment's reconciliation status
-      await Promise.all(selectedPayments.map(paymentId =>
-        tenantQuery('payments').update({
-          reconciliation_status: 'matched',
-          reconciliation_id: reconciliation.id
-        })
-      ));
+      // The reconciliation record in payment_reconciliations is the source of
+      // truth for which payments are matched; per-payment reconciliation_status
+      // columns do not exist on payments.
 
       await logAuditEvent({
         action: AuditActions.CREATE,
@@ -136,8 +132,16 @@ export default function Reconciliation() {
 
   const markAsException = async (payment) => {
     try {
-      await tenantQuery('payments').update({
-        reconciliation_status: 'exception'
+      const tid = getTenantIdForCreate();
+      await tenantQuery('payment_reconciliations').insert({
+        ...(tid && { tenant_id: tid }),
+        reconciliation_number: `EXC-${(payment.id || '').slice(0, 8)}-${Date.now()}`,
+        branch_id: payment.branch_id || selectedBranchId || 'all',
+        reconciliation_date: new Date().toISOString().split('T')[0],
+        payment_count: 1,
+        total_amount: payment.amount || 0,
+        status: 'exception',
+        payment_ids: [payment.id]
       });
       await logAuditEvent({ action: 'MARK_EXCEPTION', entityType: 'Payment', entityId: payment.id });
       queryClient.invalidateQueries({ queryKey: ['payments'] });

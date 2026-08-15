@@ -1,0 +1,39 @@
+name: Guard unfiltered frontend mutations
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/src/**'
+      - '.github/scripts/guard_unfiltered_mutations.py'
+      - '.github/scripts/test_guard_unfiltered_mutations.py'
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/src/**'
+      - '.github/scripts/guard_unfiltered_mutations.py'
+      - '.github/scripts/test_guard_unfiltered_mutations.py'
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run guard unit test
+        run: python3 .github/scripts/test_guard_unfiltered_mutations.py
+
+      - name: Run guard on changed frontend files
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="origin/${{ github.base_ref }}"
+          else
+            BASE="HEAD~1"
+          fi
+          python3 .github/scripts/guard_unfiltered_mutations.py --diff-base "$BASE"

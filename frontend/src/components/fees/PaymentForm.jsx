@@ -99,7 +99,7 @@ export default function PaymentForm({ open, onClose, onSuccess, invoice }) {
       await tenantQuery('invoices').update({
         paid_amount: newPaidAmount,
         status: newStatus
-      });
+      }).eq('id', invoice.id);
 
       // Create journal entry: Debit Cash/Bank, Credit AR
       try {

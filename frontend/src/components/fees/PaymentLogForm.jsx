@@ -58,9 +58,8 @@ export default function PaymentLogForm({ open, onClose, invoice }) {
 
       await tenantQuery('invoices').update({
         paid_amount: newPaidAmount,
-        balance: newBalance,
         status: newStatus
-      });
+      }).eq('id', invoice.id);
 
       await logAuditEvent(
         AuditActions.CREATE,

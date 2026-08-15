@@ -156,9 +156,8 @@ export default function Collections() {
 
       await tenantQuery('invoices').update({
         paid_amount: newPaidAmount,
-        balance: selectedInvoice.total_amount - newPaidAmount,
         status: newStatus
-      });
+      }).eq('id', selectedInvoice.id);
 
       // Create journal entry for payment
       const cashAccount = accounts.find(a => a.is_bank_account || a.account_code?.startsWith('1101'));
