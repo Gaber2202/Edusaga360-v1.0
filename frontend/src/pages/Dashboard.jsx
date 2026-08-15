@@ -25,6 +25,7 @@ import DashboardKPICard from '../components/dashboard/DashboardKPICard';
 import SaudizationRing from '../components/dashboard/SaudizationRing';
 import QuickActionTile from '../components/dashboard/QuickActionTile';
 import JurisdictionFeatureGate from '../components/JurisdictionFeatureGate';
+import { useJurisdictionFeatures } from '../components/JurisdictionFeatureContext';
 import { PAGE_FEATURE_KEYS, EINVOICING_FEATURES } from '../lib/jurisdictionFeatures.js';
 import DashboardAnalytics from '../components/dashboard/DashboardAnalytics';
 import ActivityPanel from '../components/dashboard/ActivityPanel';
@@ -49,6 +50,9 @@ export default function Dashboard() {
   const isTeacher = userRole === 'teacher';
   const isParent = userRole === 'parent';
 
+  const { areAnyEnabled } = useJurisdictionFeatures();
+  const governmentRelationsEnabled = areAnyEnabled(PAGE_FEATURE_KEYS.GovernmentRelations);
+
   // ── Data queries (each gated to the personas that need it) ──────────────────
   const useTableQuery = (key, table, filt = {}, enabled = true) => useTenantQuery(
     [key, tenantId],
@@ -62,8 +66,8 @@ export default function Dashboard() {
   const { data: employees = [] } = useTableQuery('employees', 'employees', {}, isHR || isBranchMgr);
   const { data: leaveRequests = [] } = useTableQuery('leaveReqDash', 'leave_requests', { status: 'pending' }, isHR || isBranchMgr);
   const { data: payRuns = [] } = useTableQuery('payRunsDash', 'pay_runs', {}, isHR || isFinance);
-  const { data: iqamas = [] } = useTableQuery('iqamasDash', 'iqama_records', {}, isHR);
-  const { data: violations = [] } = useTableQuery('violationsDash', 'govi_violations', { status: 'open' }, isHR);
+  const { data: iqamas = [] } = useTableQuery('iqamasDash', 'iqama_records', {}, isHR && governmentRelationsEnabled);
+  const { data: violations = [] } = useTableQuery('violationsDash', 'govi_violations', { status: 'open' }, isHR && governmentRelationsEnabled);
   const { data: branches = [] } = useTableQuery('branches', 'branches', { status: 'active' }, true);
   const { data: sections = [] } = useTableQuery('teacherSections', 'sections', {}, isTeacher);
   const { data: attendance = [] } = useTableQuery('teacherAttendance', 'student_attendances', {}, isTeacher);
