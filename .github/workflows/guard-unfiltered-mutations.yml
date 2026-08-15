@@ -36,9 +36,4 @@ jobs:
           else
             BASE="HEAD~1"
           fi
-          files=$(git diff --name-only --diff-filter=AM "$BASE" HEAD | grep -E '^frontend/src/.*\.(js|jsx|ts|tsx)$' || true)
-          if [ -z "$files" ]; then
-            echo "No changed frontend source files to scan."
-            exit 0
-          fi
-          echo "$files" | xargs -r python3 .github/scripts/guard_unfiltered_mutations.py --files
+          python3 .github/scripts/guard_unfiltered_mutations.py --diff-base "$BASE"
