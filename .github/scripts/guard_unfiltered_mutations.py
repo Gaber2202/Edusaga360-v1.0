@@ -153,17 +153,15 @@ def main():
 
     violations = []
     if args.files:
-        for p in args.files:
+        for raw in args.files:
+            p = raw.resolve() if not raw.is_absolute() else raw
             if not p.is_file():
                 continue
             if p.suffix not in (".js", ".jsx", ".ts", ".tsx"):
                 continue
             if ".test." in p.name or "__tests__" in p.parts:
                 continue
-            if str(p).startswith(str(args.path)):
-                rel_root = args.path
-            else:
-                rel_root = root
+            rel_root = args.path if str(p).startswith(str(args.path)) else root
             violations.extend(scan_file(p, rel_root))
     else:
         for p in args.path.rglob("*"):
