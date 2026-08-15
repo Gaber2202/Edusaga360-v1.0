@@ -203,7 +203,7 @@ export default function AttendanceDevices() {
           const punchTime = format(new Date(log.punch_time), 'HH:mm');
 
           // Check if attendance record exists for this day
-          const { data: existingAttendance = [] } = await tenantQuery('employee_attendances').select('*').match({
+          const { data: existingAttendance = [] } = await tenantQuery('employee_attendance').select('*').match({
             employee_id: employee.id,
             date: punchDate
           });
@@ -214,10 +214,10 @@ export default function AttendanceDevices() {
               ? { check_in: punchTime }
               : { check_out: punchTime };
             
-            await tenantQuery('employee_attendances').update(updateData);
+            await tenantQuery('employee_attendance').update(updateData).eq('id', existingAttendance[0].id);
           } else {
             // Create new attendance record
-            await tenantQuery('employee_attendances').insert({
+            await tenantQuery('employee_attendance').insert({
               employee_id: employee.id,
               employee_name: employee.name_ar,
               date: punchDate,
@@ -234,7 +234,7 @@ export default function AttendanceDevices() {
             processed_date: new Date().toISOString(),
             employee_id: employee.id,
             employee_name: employee.name_ar
-          });
+          }).eq('id', log.id);
 
           processedCount++;
         }

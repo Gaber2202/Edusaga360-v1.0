@@ -69,7 +69,7 @@ export default function ParentIntakeManagement() {
 
   const { data: academicYears = [] } = useQuery({
     queryKey: ['academicYears', tenantId],
-    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match(tenantFilter({ is_active: true }))),
+    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match(tenantFilter({ is_current: true }))),
     enabled: hasTenantAccess,
   });
 

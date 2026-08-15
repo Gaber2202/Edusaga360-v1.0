@@ -101,7 +101,7 @@ export default function BulkAttendanceMarker({
           date: selectedDate,
           grade: selectedGrade,
           section: selectedSection !== 'all' ? selectedSection : s.section,
-          branch_id: selectedBranchId || s.branch_id || '',
+          branch_id: selectedBranchId || s.branch_id || null,
           status,
           check_in_time: status === 'late' ? now : (status === 'present' ? now : undefined),
           recorded_by: user?.email,
@@ -109,7 +109,7 @@ export default function BulkAttendanceMarker({
           ...(tid && { tenant_id: tid }),
         };
         if (existing) {
-          await tenantQuery('student_attendances').update({ status, check_in_time: payload.check_in_time, recorded_by: user?.email });
+          await tenantQuery('student_attendances').update({ status, check_in_time: payload.check_in_time, recorded_by: user?.email }).eq('id', existing.id);
         } else {
           await tenantQuery('student_attendances').insert(payload);
         }

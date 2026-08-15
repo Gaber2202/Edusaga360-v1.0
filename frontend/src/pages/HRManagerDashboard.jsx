@@ -66,7 +66,7 @@ function KPICard({ title, value, subtitle, icon: KPIIcon, iconBg, alert, warn, t
 
 export default function HRManagerDashboard() {
   const { isRTL } = useLanguage();
-  const { tenant } = useTenant();
+  const { tenant, isModuleEnabled } = useTenant();
   const fmt = (v) => formatCurrency(v, tenant?.localization, isRTL);
   const { branchFilter } = useBranch();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
@@ -90,13 +90,13 @@ export default function HRManagerDashboard() {
   const { data: recruitments = [] } = useTenantQuery(
     ['recruitment-hrdash', tenantId],
     () => fetchData(tenantQuery('recruitments').select('*').match(tenantFilter())),
-    { enabled: hasTenantAccess }
+    { enabled: hasTenantAccess && isModuleEnabled('recruitment') }
   );
 
   const { data: payRuns = [] } = useTenantQuery(
     ['payruns-hrdash', tenantId],
     () => fetchData(tenantQuery('pay_runs').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit(3)),
-    { enabled: hasTenantAccess }
+    { enabled: hasTenantAccess && isModuleEnabled('payroll') }
   );
 
   // ── Computed KPIs ─────────────────────────────────────

@@ -92,9 +92,9 @@ export default function StudentDetails({ open, onClose, student: studentProp, on
   }, [rawStudent, branches, isRTL]);
 
   const { data: guardians = [], isLoading: loadingGuardians } = useTenantQuery(
-    ['guardians', rawStudent?.id],
-    () => fetchData(tenantQuery('guardians').select('*').match({ student_id: rawStudent?.id })),
-    { enabled: !!rawStudent?.id }
+    ['guardians', rawStudent?.guardian_id],
+    () => fetchData(tenantQuery('guardians').select('*').eq('id', rawStudent?.guardian_id)),
+    { enabled: !!rawStudent?.guardian_id }
   );
 
   const { data: attendanceRecords = [] } = useTenantQuery(

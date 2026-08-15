@@ -66,17 +66,17 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
 
   const { data: companies = [] } = useTenantQuery(
     ['companies', tenantId],
-    () => fetchData(tenantQuery('companies').select('id, name_ar, name_en').match({ is_active: true }))
+    () => fetchData(tenantQuery('companys').select('id, name_ar, name_en').match({ is_active: true }))
   );
 
   const { data: contracts = [] } = useTenantQuery(
     ['contracts', tenantId],
-    () => fetchData(tenantQuery('student_contracts').select('*').order())
+    () => fetchData(tenantQuery('student_contracts').select('*').order('created_at'))
   );
 
   const { data: academicYears = [] } = useTenantQuery(
     ['academicYears', tenantId],
-    () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true }))
+    () => fetchData(tenantQuery('academic_years').select('*').match({ is_current: true }))
   );
 
   // Existing invoices for the chosen year — drives idempotency so a re-run never

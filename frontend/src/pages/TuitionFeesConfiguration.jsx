@@ -86,20 +86,20 @@ export default function TuitionFeesConfiguration() {
 
   const { data: academicYears = [] } = useTenantQuery(
     ['academicYears', tenantId],
-    () => fetchData(tenantQuery('academic_years').select('*').match(tenantFilter({ is_active: true }))),
+    () => fetchData(tenantQuery('academic_years').select('*').match(tenantFilter({ is_current: true }))),
     { enabled: hasTenantAccess }
   );
 
   const { data: feeTypes = [] } = useTenantQuery(
     ['feeTypes', tenantId],
-    () => fetchData(tenantQuery('fee_types').select('*').match(tenantFilter({ is_active: true }))),
+    () => fetchData(tenantQuery('fee_types').select('*').match(tenantFilter())),
     { enabled: hasTenantAccess }
   );
 
   const { data: grades = [] } = useTenantQuery(
     ['grades', tenantId],
     async () => {
-      const { data = [] } = await tenantQuery('grades').select('*').match(tenantFilter({ is_active: true }));
+      const { data = [] } = await tenantQuery('grades').select('*').match(tenantFilter());
       return data.sort((a, b) => a.display_order - b.display_order);
     },
     { enabled: hasTenantAccess }
@@ -108,8 +108,7 @@ export default function TuitionFeesConfiguration() {
   const { data: sections = [] } = useTenantQuery(
     ['sections', tuitionFormData.branch_id],
     () => fetchData(tenantQuery('sections').select('*').match({
-      branch_id: tuitionFormData.branch_id,
-      is_active: true
+      branch_id: tuitionFormData.branch_id
     })),
     { enabled: !!tuitionFormData.branch_id }
   );

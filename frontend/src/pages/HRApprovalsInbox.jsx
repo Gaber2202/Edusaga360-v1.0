@@ -19,7 +19,7 @@ import { useTenant } from '../components/TenantContext';
 
 export default function HRApprovalsInbox() {
   const { isRTL } = useLanguage();
-  const { tenant } = useTenant();
+  const { tenant, isModuleEnabled } = useTenant();
   const { user } = useRole();
   const qc = useQueryClient();
   const { tenantId } = useTenantFilter();
@@ -35,6 +35,7 @@ export default function HRApprovalsInbox() {
   const { data: essRequests = [], isLoading: loadingESS } = useQuery({
     queryKey: ['essRequestsInbox', tenantId],
     queryFn: () => fetchData(tenantQuery('ess_requests').select('*').match({ status: 'pending' })),
+    enabled: isModuleEnabled('ess'),
   });
 
   const pendingLeave = leaveRequests.filter(r => ['pending', 'pending_manager', 'pending_hr'].includes(r.status));
@@ -57,11 +58,11 @@ export default function HRApprovalsInbox() {
       };
 
       if (type === 'leave') {
-        await tenantQuery('leave_requests').update(updateData);
+        await tenantQuery('leave_requests').update(updateData).eq('id', item.id);
         qc.invalidateQueries({ queryKey: ['leaveRequestsInbox'] });
         qc.invalidateQueries({ queryKey: ['leaveRequests'] });
       } else {
-        await tenantQuery('ess_requests').update(updateData);
+        await tenantQuery('ess_requests').update(updateData).eq('id', item.id);
         qc.invalidateQueries({ queryKey: ['essRequestsInbox'] });
         qc.invalidateQueries({ queryKey: ['essRequests'] });
       }

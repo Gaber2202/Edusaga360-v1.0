@@ -60,20 +60,14 @@ export default function InvoiceDetails() {
     { enabled: !!invoiceId && hasTenantAccess }
   );
 
-  const { data: _payments = [] } = useTenantQuery(
-    ['payments', invoiceId, tenantId],
-    async () => {
-      const { data: allPayments = [] } = await tenantQuery('payments').select('*').match(tenantFilter()).order('created_at', { ascending: false });
-      return allPayments.filter(p => p.invoice_id === invoiceId);
-    },
-    { enabled: !!invoiceId && hasTenantAccess }
-  );
-
   const { data: paymentLogs = [] } = useTenantQuery(
     ['invoicePaymentLogs', invoiceId, tenantId],
     async () => {
-      const { data: allLogs = [] } = await tenantQuery('invoice_payment_logs').select('*').match(tenantFilter()).order('created_at', { ascending: false });
-      return allLogs.filter(log => log.invoice_id === invoiceId);
+      const { data: logs = [] } = await tenantQuery('payments')
+        .select('*')
+        .match(tenantFilter({ invoice_id: invoiceId }))
+        .order('created_at', { ascending: false });
+      return logs;
     },
     { enabled: !!invoiceId && hasTenantAccess }
   );
@@ -560,7 +554,7 @@ EduSaga 360
               <div className="flex justify-between items-center text-sm text-muted-foreground pt-2 border-t border-border">
                 <span>{isRTL ? 'تم الدفع بواسطة' : 'Paid via'}:</span>
                 <div className="flex gap-2 flex-wrap justify-end">
-                  {[...new Set(paymentLogs.filter(log => log.status !== 'reversed').map(log => log.payment_method))].map((method, idx) => (
+                  {[...new Set(paymentLogs.filter(log => log.status !== 'reversed').map(log => log.method))].map((method, idx) => (
                     <Badge key={idx} variant="outline" className="gap-1.5 bg-sand">
                       {getPaymentMethodIcon(method)}
                       {getPaymentMethodText(method)}
@@ -740,17 +734,17 @@ EduSaga 360
                                 <div className="flex items-center gap-2">
                                   <Calendar className="w-4 h-4 text-muted-foreground" />
                                   <div>
-                                    <p className="font-medium text-sm">{format(new Date(log.payment_date), 'dd/MM/yyyy')}</p>
-                                    <p className="text-xs text-muted-foreground">{format(new Date(log.payment_date), 'HH:mm')}</p>
+                                    <p className="font-medium text-sm">{log.date ? format(new Date(log.date), 'dd/MM/yyyy') : '-'}</p>
+                                    <p className="text-xs text-muted-foreground">{log.date ? format(new Date(log.date), 'HH:mm') : ''}</p>
                                   </div>
                                 </div>
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-2">
-                                  {getPaymentMethodIcon(log.payment_method)}
+                                  {getPaymentMethodIcon(log.method)}
                                   <div>
-                                    <span className="text-sm">{getPaymentMethodText(log.payment_method)}</span>
-                                    {log.payment_method === 'tamara' && (
+                                    <span className="text-sm">{getPaymentMethodText(log.method)}</span>
+                                    {log.method === 'tamara' && (
                                       <div className="text-xs text-purple-600 mt-0.5">
                                         {log.tamara_order_id && `${t('tamaraReference')}: ${log.tamara_order_id}`}
                                         {log.tamara_status && (
@@ -778,14 +772,14 @@ EduSaga 360
                                 </span>
                               </TableCell>
                               <TableCell>
-                                {log.reference_number ? (
-                                  <span className="text-xs font-mono bg-sand-alt px-2 py-1 rounded">{log.reference_number}</span>
+                                {log.reference ? (
+                                  <span className="text-xs font-mono bg-sand-alt px-2 py-1 rounded">{log.reference}</span>
                                 ) : (
                                   <span className="text-muted-foreground text-sm">-</span>
                                 )}
                               </TableCell>
                               <TableCell>
-                                <p className="text-sm">{log.collected_by}</p>
+                                <p className="text-sm">{log.recorded_by || log.collected_by}</p>
                                 {log.notes && <p className="text-xs text-muted-foreground mt-1">{log.notes}</p>}
                               </TableCell>
                               <TableCell>
@@ -888,16 +882,16 @@ EduSaga 360
                       <div>
                         <p className="font-semibold">{log.amount.toLocaleString()} {getCurrencySymbol(tenant?.localization, isRTL)}</p>
                         <p className="text-sm text-muted-foreground">
-                          {log.payment_method === 'credit_card' && (isRTL ? 'بطاقة ائتمان' : 'Credit Card')}
-                          {log.payment_method === 'bank_transfer' && (isRTL ? 'تحويل بنكي' : 'Bank Transfer')}
-                          {log.payment_method === 'cash' && (isRTL ? 'نقداً' : 'Cash')}
-                          {log.payment_method === 'internal_settlement' && (isRTL ? 'تسوية داخلية' : 'Internal Settlement')}
-                          {log.payment_method === 'other' && (isRTL ? 'أخرى' : 'Other')}
-                          {log.reference_number && ` - ${isRTL ? 'رقم المرجع' : 'Ref'}: ${log.reference_number}`}
+                          {log.method === 'credit_card' && (isRTL ? 'بطاقة ائتمان' : 'Credit Card')}
+                          {log.method === 'bank_transfer' && (isRTL ? 'تحويل بنكي' : 'Bank Transfer')}
+                          {log.method === 'cash' && (isRTL ? 'نقداً' : 'Cash')}
+                          {log.method === 'internal_settlement' && (isRTL ? 'تسوية داخلية' : 'Internal Settlement')}
+                          {log.method === 'other' && (isRTL ? 'أخرى' : 'Other')}
+                          {log.reference && ` - ${isRTL ? 'رقم المرجع' : 'Ref'}: ${log.reference}`}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(log.payment_date), 'dd/MM/yyyy HH:mm')}
-                          {log.collected_by && ` • ${isRTL ? 'بواسطة' : 'by'} ${log.collected_by}`}
+                          {log.date ? format(new Date(log.date), 'dd/MM/yyyy HH:mm') : '-'}
+                          {(log.recorded_by || log.collected_by) && ` • ${isRTL ? 'بواسطة' : 'by'} ${log.recorded_by || log.collected_by}`}
                         </p>
                         {log.notes && <p className="text-xs text-muted-foreground mt-1">{log.notes}</p>}
                         {log.attachment_url && (

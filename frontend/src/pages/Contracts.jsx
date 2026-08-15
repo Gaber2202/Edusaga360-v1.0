@@ -75,12 +75,6 @@ export default function Contracts() {
     enabled: hasTenantAccess,
   });
 
-  const { data: _feeServices = [] } = useQuery({
-    queryKey: ['feeServices', tenantId],
-    queryFn: () => fetchData(tenantQuery('fee_services').select('*').match(tenantFilter({ is_active: true }))),
-    enabled: hasTenantAccess,
-  });
-
   const { data: templates = [] } = useQuery({
     queryKey: ['contractTemplates', tenantId],
     queryFn: () => fetchData(tenantQuery('contract_templates').select('*').match(tenantFilter({ is_active: true }))),
@@ -102,7 +96,7 @@ export default function Contracts() {
   const { data: grades = [] } = useQuery({
     queryKey: ['grades', tenantId],
     queryFn: async () => {
-      const { data = [] } = await tenantQuery('grades').select('*').match(tenantFilter({ is_active: true }));
+      const { data = [] } = await tenantQuery('grades').select('*').match(tenantFilter());
       return data.sort((a, b) => a.display_order - b.display_order);
     },
     enabled: hasTenantAccess,
@@ -110,7 +104,7 @@ export default function Contracts() {
 
   const { data: academicYears = [] } = useQuery({
     queryKey: ['academicYears', tenantId],
-    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match(tenantFilter({ is_active: true }))),
+    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match(tenantFilter({ is_current: true }))),
     enabled: hasTenantAccess,
   });
 

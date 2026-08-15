@@ -41,7 +41,7 @@ export default function EmployeeAttendance() {
 
   const { data: attendance = [] } = useQuery({
     queryKey: ['employeeAttendance', selectedDate, tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('employee_attendances').select('*').match(tenantFilter(branchFilter({ date: selectedDate })))),
+    queryFn: () => fetchData(tenantQuery('employee_attendance').select('*').match(tenantFilter(branchFilter({ date: selectedDate })))),
     enabled: hasTenantAccess,
   });
 
@@ -55,15 +55,15 @@ export default function EmployeeAttendance() {
       const existing = attendance.find(a => a.employee_id === empId);
       const user = await supabase.auth.getUser().then(r => r.data?.user);
       if (existing) {
-        await tenantQuery('employee_attendances').update({ status, recorded_by: user.email });
+        await tenantQuery('employee_attendance').update({ status, recorded_by: user.email }).eq('id', existing.id);
       } else {
         const tid = getTenantIdForCreate();
-        await tenantQuery('employee_attendances').insert({
+        await tenantQuery('employee_attendance').insert({
           ...(tid && { tenant_id: tid }),
           employee_id: empId,
           employee_name: empName,
           date: selectedDate,
-          branch_id: selectedBranchId || '',
+          branch_id: selectedBranchId || null,
           status,
           recorded_by: user.email
         });
@@ -87,15 +87,15 @@ export default function EmployeeAttendance() {
       await Promise.all([
         ...unmarked.map(e => {
           const tid = getTenantIdForCreate();
-          return tenantQuery('employee_attendances').insert({
+          return tenantQuery('employee_attendance').insert({
             ...(tid && { tenant_id: tid }),
             employee_id: e.id, employee_name: e.name_ar, date: selectedDate,
-            branch_id: selectedBranchId || '', status, recorded_by: user.email
+            branch_id: selectedBranchId || null, status, recorded_by: user.email
           });
         }),
         ...updates.map(e => {
           const rec = attendance.find(a => a.employee_id === e.id);
-          return tenantQuery('employee_attendances').update({ status, recorded_by: user.email });
+          return tenantQuery('employee_attendance').update({ status, recorded_by: user.email }).eq('id', rec.id);
         })
       ]);
       queryClient.invalidateQueries({ queryKey: ['employeeAttendance', selectedDate] });

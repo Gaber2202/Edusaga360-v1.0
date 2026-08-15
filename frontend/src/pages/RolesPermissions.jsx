@@ -52,7 +52,7 @@ export default function RolesPermissions() {
 
   const { data: roles = [], isLoading } = useQuery({
     queryKey: ['roles'],
-    queryFn: () => fetchData(tenantQuery('roles').select('*').order()),
+    queryFn: () => fetchData(tenantQuery('roles').select('*').order('created_at')),
   });
 
   if (!isCreator()) {

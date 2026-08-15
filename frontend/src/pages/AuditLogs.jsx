@@ -42,8 +42,8 @@ export default function AuditLogs() {
     queryKey: ['auditLogs', tenantId, isSuperAdmin],
     queryFn: async () => {
       const query = isSuperAdmin
-        ? tenantQuery('audit_logs').select('*').order('timestamp', { ascending: false }).limit(FETCH_LIMIT)
-        : tenantQuery('audit_logs').select('*').match(tenantFilter()).order('timestamp', { ascending: false }).limit(FETCH_LIMIT);
+        ? tenantQuery('audit_logs').select('*').order('created_at', { ascending: false }).limit(FETCH_LIMIT)
+        : tenantQuery('audit_logs').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit(FETCH_LIMIT);
       const { data } = await query;
       return data || [];
     },

@@ -79,7 +79,7 @@ export default function ParentIntake() {
 
   const { data: academicYears = [] } = useQuery({
     queryKey: ['academicYears'],
-    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match({ is_active: true })),
+    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match({ is_current: true })),
   });
 
   const { data: feeStructures = [] } = useQuery({
