@@ -6,6 +6,9 @@ import { NotificationService } from './NotificationService';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 
+// notification_recipients is Bucket C (#246) and not yet built.
+const NOTIFICATION_RECIPIENTS_BUILT = false;
+
 export default function NotificationBell() {
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -26,8 +29,8 @@ export default function NotificationBell() {
   }, []);
 
   const fetchUnreadCount = async () => {
-    if (!userEmail) return;
-    
+    if (!userEmail || !NOTIFICATION_RECIPIENTS_BUILT) return;
+
     try {
       const notifications = await NotificationService.getUserNotifications(userEmail, true);
       setUnreadCount(notifications.length);
@@ -37,8 +40,8 @@ export default function NotificationBell() {
   };
 
   useEffect(() => {
-    if (!userEmail) return;
-    
+    if (!userEmail || !NOTIFICATION_RECIPIENTS_BUILT) return;
+
     fetchUnreadCount();
 
     // Poll every 30 seconds for new notifications

@@ -43,7 +43,7 @@ export default function SystemHealth() {
   const { data: defects = [], isLoading: loadingDefects } = useQuery({
     queryKey: ['systemDefects'],
     queryFn: () => fetchData(tenantQuery('system_defects').select('*').order('created_at', { ascending: false })),
-    enabled: fixedIssuesEnabled,
+    enabled: false, // system_defects table not built (Bucket C, #246)
   });
 
   const { data: auditLogs = [] } = useQuery({
@@ -131,10 +131,10 @@ export default function SystemHealth() {
 
   const handleUpdateDefectStatus = async (defect, newStatus) => {
     try {
-      await tenantQuery('system_defects').update({ 
+      await tenantQuery('system_defects').update({
         status: newStatus,
         resolved_date: newStatus === 'resolved' ? format(new Date(), 'yyyy-MM-dd') : null
-      });
+      }).eq('id', defect.id);
       queryClient.invalidateQueries({ queryKey: ['systemDefects'] });
       toast.success(isRTL ? 'تم التحديث' : 'Updated');
     } catch (_error) {

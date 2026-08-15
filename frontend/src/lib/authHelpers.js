@@ -18,6 +18,7 @@
  */
 export function isPlatformOwner(user) {
   if (!user) return false;
+  if (user.is_platform_owner || user.app_metadata?.is_platform_owner) return true;
   if (user.role === 'creator') return !user.tenant_id;
   if (user.role === 'admin') return !user.tenant_id && !user.user_role;
   return false;

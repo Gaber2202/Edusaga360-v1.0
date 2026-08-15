@@ -54,13 +54,13 @@ export default function PayrollDashboard({ onNavigate }) {
   const { data: loans = [] } = useQuery({
     queryKey: ['employeeLoans', tenantId, selectedBranchId],
     queryFn: () => fetchData(tenantQuery('employee_loans').select('*').match(tenantFilter(branchFilter()))),
-    enabled: hasTenantAccess,
+    enabled: false, // employee_loans table not built (Bucket C, #246)
   });
 
   const { data: tuitionAdvances = [] } = useQuery({
     queryKey: ['tuitionAdvances', tenantId, selectedBranchId],
     queryFn: () => fetchData(tenantQuery('tuition_advances').select('*').match(tenantFilter(branchFilter()))),
-    enabled: hasTenantAccess,
+    enabled: false, // tuition_advances table not built (Bucket C, #246)
   });
 
   const filteredEmployees = filterByBranch(employees);
