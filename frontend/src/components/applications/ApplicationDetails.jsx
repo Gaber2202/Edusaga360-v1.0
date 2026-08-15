@@ -79,7 +79,7 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
         status: newStatus,
         pipeline_stage: newStatus,
         internal_notes: stageNote ? `[${new Date().toLocaleDateString()}] Stage changed to ${newStatus}: ${stageNote}` : undefined,
-      });
+      }).eq('id', application.id);
       await logAuditEvent({ action: 'UPDATE', entityType: 'Application', entityId: application.id, notes: `Stage changed to ${newStatus}: ${stageNote}` });
       toast.success(isRTL ? 'تم تحديث المرحلة' : 'Stage updated successfully');
       setNewStatus('');
@@ -95,7 +95,7 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
   const handleQuickDecision = async (decision) => {
     setSaving(true);
     try {
-      await tenantQuery('applications').update({ status: decision });
+      await tenantQuery('applications').update({ status: decision }).eq('id', application.id);
       await logAuditEvent({ action: decision === 'accepted' ? 'approve' : 'reject', entityType: 'Application', entityId: application.id });
       toast.success(decision === 'accepted'
         ? (isRTL ? 'تم قبول الطلب ✅' : 'Application accepted ✅')
@@ -120,7 +120,7 @@ export default function ApplicationDetails({ open, onClose, application, onUpdat
         status: 'interview',
         pipeline_stage: 'assessment_scheduled',
         internal_notes: `Interview scheduled: ${interviewDate} ${interviewTime} | Type: ${interviewType} | Link: ${interviewLink}`,
-      });
+      }).eq('id', application.id);
       toast.success(isRTL ? 'تم جدولة المقابلة' : 'Interview scheduled');
       onUpdate();
     } catch {

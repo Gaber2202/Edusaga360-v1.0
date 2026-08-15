@@ -590,7 +590,7 @@ export default function Contracts() {
         status: 'sent',
         sent_date: new Date().toISOString(),
         delivery_status: 'sent'
-      });
+      }).eq('id', contract.id);
       // Notify admin in system
       await tenantQuery('notifications').insert({
         tenant_id: contract.tenant_id,

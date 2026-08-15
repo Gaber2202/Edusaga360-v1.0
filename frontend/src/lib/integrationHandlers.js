@@ -130,7 +130,7 @@ registerHandler('enrollment_confirmed', namedHandler('CRM', async (payload) => {
   await tenantQuery('applications').update({
     status: 'enrolled',
     pipeline_stage: 'decision_made',
-  });
+  }).eq('id', payload.application_id);
 }));
 
 // ─── APPLICATION STAGE CHANGE ─────────────────────────────────────────────────
@@ -761,7 +761,7 @@ registerHandler('books_received', namedHandler('Library', async (payload) => {
       await tenantQuery('library_books').update({
         total_copies: (existing[0].total_copies || 1) + (book.quantity || 1),
         available_copies: (existing[0].available_copies || 1) + (book.quantity || 1),
-      });
+      }).eq('id', existing[0].id);
     } else {
       await tenantQuery('library_books').insert({
         tenant_id: payload.tenant_id,

@@ -75,7 +75,7 @@ export default function ContractSignaturePage({ contractId }) {
         signed_date: signedDate,
         signature_ip: 'web',
         delivery_status: 'viewed'
-      });
+      }).eq('id', contract.id);
 
       // Create notification for HR/admin
       await tenantQuery('notifications').insert({
@@ -108,7 +108,7 @@ export default function ContractSignaturePage({ contractId }) {
       await tenantQuery('student_contracts').update({
         status: 'rejected',
         rejected_date: new Date().toISOString()
-      });
+      }).eq('id', contract.id);
 
       await tenantQuery('notifications').insert({
         tenant_id: contract.tenant_id,

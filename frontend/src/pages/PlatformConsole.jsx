@@ -65,7 +65,7 @@ export default function PlatformConsole() {
 
   const handleSuspend = async (t) => {
     const patch = { status: 'suspended', suspended_date: new Date().toISOString().split('T')[0], is_active: false };
-    await tenantQuery('tenants').update(patch);
+    await tenantQuery('tenants').update(patch).eq('id', t.id);
     await logAuditEvent({
       action: AuditActions.CONFIGURE,
       entityType: 'Tenant',
@@ -79,7 +79,7 @@ export default function PlatformConsole() {
 
   const handleActivate = async (t) => {
     const patch = { status: 'active', suspended_reason: '', is_active: true };
-    await tenantQuery('tenants').update(patch);
+    await tenantQuery('tenants').update(patch).eq('id', t.id);
     await logAuditEvent({
       action: AuditActions.CONFIGURE,
       entityType: 'Tenant',
