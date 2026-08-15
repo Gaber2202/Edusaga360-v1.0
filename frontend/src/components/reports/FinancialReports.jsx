@@ -70,11 +70,7 @@ export default function FinancialReports() {
     enabled: hasTenantAccess,
   });
 
-  const { data: apBills = [] } = useQuery({
-    queryKey: ['apBills', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter()))),
-    enabled: hasTenantAccess && isModuleEnabled('reconciliation'),
-  });
+  const { data: apBills = [] } = useQuery({ enabled: false /* ap_bills table not built */, queryKey: ['apBills', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('ap_bills').select('*').match(tenantFilter(branchFilter()))), initialData: [] });
 
   const currentReport = FINANCIAL_REPORTS.find(r => r.id === reportType);
 

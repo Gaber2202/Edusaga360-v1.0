@@ -52,11 +52,7 @@ export default function TrainingDevelopment() {
     moe_license_required: false, license_expiry_date: ''
   });
 
-  const { data: trainings = [], isLoading } = useQuery({
-    queryKey: ['trainings', tenantId],
-    queryFn: () => fetchData(tenantQuery('trainings').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: trainings = [], isLoading } = useQuery({ enabled: false /* trainings table not built */, queryKey: ['trainings', tenantId], queryFn: () => fetchData(tenantQuery('trainings').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],

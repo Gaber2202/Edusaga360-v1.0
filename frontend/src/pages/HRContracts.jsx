@@ -48,11 +48,7 @@ export default function HRContracts() {
     notes: ''
   });
 
-  const { data: documents = [], isLoading } = useQuery({
-    queryKey: ['hrDocuments', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('employee_documents').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: documents = [], isLoading } = useQuery({ enabled: false /* employee_documents table not built */, queryKey: ['hrDocuments', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('employee_documents').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],

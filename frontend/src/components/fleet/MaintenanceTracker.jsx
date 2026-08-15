@@ -42,10 +42,7 @@ export default function MaintenanceTracker() {
     queryFn: () => fetchData(tenantQuery('vehicles').select('*').match(branchFilter())),
   });
 
-  const { data: records = [], isLoading } = useQuery({
-    queryKey: ['maintenanceRecords', selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('maintenance_records').select('*').match(branchFilter()).order('created_at', { ascending: false })),
-  });
+  const { data: records = [], isLoading } = useQuery({ enabled: false /* maintenance_records table not built */, queryKey: ['maintenanceRecords', selectedBranchId], queryFn: () => fetchData(tenantQuery('maintenance_records').select('*').match(branchFilter()).order('created_at', { ascending: false })), initialData: [] });
 
   const filteredRecords = filterByBranch(records);
 

@@ -124,6 +124,7 @@ export const PAGE_MODULE_KEYS = {
   Integrations: 'integrations',
   GovernmentRelations: 'gov_relations',
   GovIntegrations: 'gov_relations',
+  ViolationsPenalties: 'gov_relations',
   IntegrationHub: 'integrations',
 
   // Admissions extras

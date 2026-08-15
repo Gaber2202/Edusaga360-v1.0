@@ -28,7 +28,8 @@ export default function TenantContextSyncer() {
     if (roleLoading || tenantLoading) return;
 
     const effectiveTenantId = tenant?.id || user?.tenant_id || null;
-    const platformOwner = isPlatformOwner(user);
+    // Only bypass the tenant_id row filter for platform owners who have no tenant.
+    const platformOwner = isPlatformOwner(user) && !user?.tenant_id;
     setTenantContext({ tenantId: effectiveTenantId, isPlatformOwner: platformOwner });
 
     const key = `${platformOwner ? '*' : ''}|${effectiveTenantId || ''}`;

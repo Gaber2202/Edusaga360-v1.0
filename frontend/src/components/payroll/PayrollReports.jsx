@@ -44,21 +44,25 @@ export default function PayrollReports() {
   const { data: payrollInputs = [] } = useQuery({
     queryKey: ['payrollInputs', selectedBranchId],
     queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').match(branchFilter()).order('created_at', { ascending: false })),
+    enabled: false, // payroll_inputs table not built (Bucket C, #246)
   });
 
   const { data: loans = [] } = useQuery({
     queryKey: ['employeeLoans', selectedBranchId],
     queryFn: () => fetchData(tenantQuery('employee_loans').select('*').match(branchFilter())),
+    enabled: false, // employee_loans table not built (Bucket C, #246)
   });
 
   const { data: tuitionAdvances = [] } = useQuery({
     queryKey: ['tuitionAdvances', selectedBranchId],
     queryFn: () => fetchData(tenantQuery('tuition_advances').select('*').match(branchFilter())),
+    enabled: false, // tuition_advances table not built (Bucket C, #246)
   });
 
   const { data: socialInsuranceRecords = [] } = useQuery({
     queryKey: ['socialInsuranceRecords', selectedBranchId],
     queryFn: () => fetchData(tenantQuery('gosi_records').select('*').match(branchFilter()).order('created_at', { ascending: false })),
+    enabled: false, // gosi_records table not built (Bucket C, #246)
   });
 
   const filteredPayRuns = filterByBranch(payRuns);

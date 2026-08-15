@@ -90,7 +90,7 @@ export default function HRManagerDashboard() {
   const { data: recruitments = [] } = useTenantQuery(
     ['recruitment-hrdash', tenantId],
     () => fetchData(tenantQuery('recruitments').select('*').match(tenantFilter())),
-    { enabled: hasTenantAccess && isModuleEnabled('recruitment') }
+    { enabled: false /* recruitments table not built */, initialData: [] }
   );
 
   const { data: payRuns = [] } = useTenantQuery(

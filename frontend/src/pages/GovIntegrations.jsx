@@ -87,15 +87,9 @@ export default function GovIntegrations() {
     notes: ''
   });
 
-  const { data: connectors = [] } = useQuery({
-    queryKey: ['govIntegrations', tenantId],
-    queryFn: () => fetchData(tenantQuery('integration_connectors').select('*').match({ connector_type: 'government' })),
-  });
+  const { data: connectors = [] } = useQuery({ enabled: false /* integration_connectors table not built */, queryKey: ['govIntegrations', tenantId], queryFn: () => fetchData(tenantQuery('integration_connectors').select('*').match({ connector_type: 'government' })), initialData: [] });
 
-  const { data: syncLogs = [] } = useQuery({
-    queryKey: ['govSyncLogs', tenantId],
-    queryFn: () => fetchData(tenantQuery('integration_logs').select('*').order('created_at', { ascending: false }).limit()),
-  });
+  const { data: syncLogs = [] } = useQuery({ enabled: false /* integration_logs table not built */, queryKey: ['govSyncLogs', tenantId], queryFn: () => fetchData(tenantQuery('integration_logs').select('*').order('created_at', { ascending: false }).limit()), initialData: [] });
 
   const handleConfigure = (integration) => {
     const existing = connectors.find(c => c.integration_id === integration.id);

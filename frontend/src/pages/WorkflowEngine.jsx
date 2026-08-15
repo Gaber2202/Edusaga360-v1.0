@@ -63,17 +63,9 @@ export default function WorkflowEngine() {
 
   const [form, setForm] = useState(emptyTemplate());
 
-  const { data: templates = [], isLoading: loadingTemplates } = useQuery({
-    queryKey: ['workflowTemplates', tenantId],
-    queryFn: () => fetchData(tenantQuery('workflow_templates').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: templates = [], isLoading: loadingTemplates } = useQuery({ enabled: false /* workflow_templates table not built */, queryKey: ['workflowTemplates', tenantId], queryFn: () => fetchData(tenantQuery('workflow_templates').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
 
-  const { data: instances = [], isLoading: loadingInstances } = useQuery({
-    queryKey: ['workflowInstances', tenantId],
-    queryFn: () => fetchData(tenantQuery('workflow_instances').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit()),
-    enabled: hasTenantAccess,
-  });
+  const { data: instances = [], isLoading: loadingInstances } = useQuery({ enabled: false /* workflow_instances table not built */, queryKey: ['workflowInstances', tenantId], queryFn: () => fetchData(tenantQuery('workflow_instances').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit()), initialData: [] });
 
   const addStage = () => {
     setForm(prev => ({

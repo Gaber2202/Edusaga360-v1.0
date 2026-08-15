@@ -41,10 +41,7 @@ export default function FuelTracker() {
     queryFn: () => fetchData(tenantQuery('vehicles').select('*').match(branchFilter())),
   });
 
-  const { data: records = [], isLoading } = useQuery({
-    queryKey: ['fuelRecords', selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('fuel_records').select('*').match(branchFilter()).order('created_at', { ascending: false })),
-  });
+  const { data: records = [], isLoading } = useQuery({ enabled: false /* fuel_records table not built */, queryKey: ['fuelRecords', selectedBranchId], queryFn: () => fetchData(tenantQuery('fuel_records').select('*').match(branchFilter()).order('created_at', { ascending: false })), initialData: [] });
 
   const filteredRecords = filterByBranch(records);
 

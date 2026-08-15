@@ -56,10 +56,7 @@ export default function PayslipsManagement() {
     },
   });
 
-  const { data: deliveries = [] } = useQuery({
-    queryKey: ['payslipDeliveries'],
-    queryFn: () => fetchData(tenantQuery('payslip_deliverys').select('*').order('created_at', { ascending: false })),
-  });
+  const { data: deliveries = [] } = useQuery({ enabled: false /* payslip_deliverys table not built */, queryKey: ['payslipDeliveries'], queryFn: () => fetchData(tenantQuery('payslip_deliverys').select('*').order('created_at', { ascending: false })), initialData: [] });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],

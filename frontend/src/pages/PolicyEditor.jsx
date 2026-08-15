@@ -71,15 +71,11 @@ export default function PolicyEditor() {
     enabled: isEditing
   });
 
-  const { data: policyVersions = [] } = useQuery({
-    queryKey: ['policyVersions', policyId],
-    queryFn: async () => {
+  const { data: policyVersions = [] } = useQuery({ enabled: false /* policy_versions table not built */, queryKey: ['policyVersions', policyId], queryFn: async () => {
       if (!policyId) return [];
       const { data = [] } = await tenantQuery('policy_versions').select('*').match({ policy_id: policyId });
       return data;
-    },
-    enabled: isCompareMode
-  });
+    }, initialData: [] });
 
   React.useEffect(() => {
     if (policy) {

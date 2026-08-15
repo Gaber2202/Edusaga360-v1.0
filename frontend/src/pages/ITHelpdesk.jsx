@@ -44,15 +44,11 @@ export default function ITHelpdesk() {
     enabled: hasTenantAccess,
   });
 
-  const { data: assets = [], isLoading: assetsLoading } = useQuery({
-    queryKey: ['itAssets', tenantId, selectedBranchId],
-    queryFn: async () => {
+  const { data: assets = [], isLoading: assetsLoading } = useQuery({ enabled: false /* it_assets table not built */, queryKey: ['itAssets', tenantId, selectedBranchId], queryFn: async () => {
       const { data = [], error } = await tenantQuery('it_assets').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false });
       if (error) throw error;
       return filterByBranch(data);
-    },
-    enabled: hasTenantAccess,
-  });
+    }, initialData: [] });
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],

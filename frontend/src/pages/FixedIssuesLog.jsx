@@ -18,11 +18,7 @@ export default function FixedIssuesLog() {
 
   const isAdmin = userRole === 'admin';
 
-  const { data: issues = [], isLoading } = useQuery({
-    queryKey: ['fixedIssues'],
-    queryFn: () => fetchData(tenantQuery('fixed_issues').select('*').order('created_at', { ascending: false })),
-    enabled: isAdmin,
-  });
+  const { data: issues = [], isLoading } = useQuery({ enabled: false /* fixed_issues table not built */, queryKey: ['fixedIssues'], queryFn: () => fetchData(tenantQuery('fixed_issues').select('*').order('created_at', { ascending: false })), initialData: [] });
 
   // Admin only
   if (!isAdmin) {

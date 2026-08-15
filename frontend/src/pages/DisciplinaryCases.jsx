@@ -67,11 +67,7 @@ export default function DisciplinaryCases() {
     reported_by: '', assigned_investigator: '', grievance_notes: ''
   });
 
-  const { data: cases = [], isLoading } = useQuery({
-    queryKey: ['disciplinary_cases', tenantId],
-    queryFn: () => fetchData(tenantQuery('disciplinary_cases').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: cases = [], isLoading } = useQuery({ enabled: false /* disciplinary_cases table not built */, queryKey: ['disciplinary_cases', tenantId], queryFn: () => fetchData(tenantQuery('disciplinary_cases').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],

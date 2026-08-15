@@ -135,17 +135,9 @@ export default function PayrollCalculationEngine({ isRTL, period, onComplete }) 
     enabled: hasTenantAccess,
   });
 
-  const { data: loans = [] } = useQuery({
-    queryKey: ['loans-payroll', tenantId],
-    queryFn: () => fetchData(tenantQuery('employee_loans').select('*').match(tenantFilter({ status: 'active' }))),
-    enabled: hasTenantAccess,
-  });
+  const { data: loans = [] } = useQuery({ enabled: false /* employee_loans table not built */, queryKey: ['loans-payroll', tenantId], queryFn: () => fetchData(tenantQuery('employee_loans').select('*').match(tenantFilter({ status: 'active' }))), initialData: [] });
 
-  const { data: advances = [] } = useQuery({
-    queryKey: ['advances-payroll', tenantId],
-    queryFn: () => fetchData(tenantQuery('tuition_advances').select('*').match(tenantFilter({ status: 'active' }))),
-    enabled: hasTenantAccess,
-  });
+  const { data: advances = [] } = useQuery({ enabled: false /* tuition_advances table not built */, queryKey: ['advances-payroll', tenantId], queryFn: () => fetchData(tenantQuery('tuition_advances').select('*').match(tenantFilter({ status: 'active' }))), initialData: [] });
 
   // Build lookup maps
   const loansMap = useMemo(() => {

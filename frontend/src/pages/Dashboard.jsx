@@ -62,8 +62,8 @@ export default function Dashboard() {
   const { data: employees = [] } = useTableQuery('employees', 'employees', {}, isHR || isBranchMgr);
   const { data: leaveRequests = [] } = useTableQuery('leaveReqDash', 'leave_requests', { status: 'pending' }, isHR || isBranchMgr);
   const { data: payRuns = [] } = useTableQuery('payRunsDash', 'pay_runs', {}, isHR || isFinance);
-  const { data: iqamas = [] } = useTableQuery('iqamasDash', 'iqama_records', {}, isHR);
-  const { data: violations = [] } = useTableQuery('violationsDash', 'govi_violations', { status: 'open' }, isHR);
+  const { data: iqamas = [] } = useTableQuery('iqamasDash', 'iqama_records', {}, false); // table not built (Bucket C)
+  const { data: violations = [] } = useTableQuery('violationsDash', 'govi_violations', { status: 'open' }, false); // table not built (Bucket C)
   const { data: branches = [] } = useTableQuery('branches', 'branches', { status: 'active' }, true);
   const { data: sections = [] } = useTableQuery('teacherSections', 'sections', {}, isTeacher);
   const { data: attendance = [] } = useTableQuery('teacherAttendance', 'student_attendances', {}, isTeacher);

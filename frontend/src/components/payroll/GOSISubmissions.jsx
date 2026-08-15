@@ -31,10 +31,7 @@ export default function GOSISubmissions() {
     type: 'monthly'
   });
 
-  const { data: submissions = [], isLoading } = useQuery({
-    queryKey: ['gosiSubmissions', selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('gosi_records').select('*').match(branchFilter()).order('created_at', { ascending: false })),
-  });
+  const { data: submissions = [], isLoading } = useQuery({ enabled: false /* gosi_records table not built */, queryKey: ['gosiSubmissions', selectedBranchId], queryFn: () => fetchData(tenantQuery('gosi_records').select('*').match(branchFilter()).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', selectedBranchId],

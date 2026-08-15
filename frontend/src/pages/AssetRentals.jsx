@@ -53,11 +53,7 @@ export default function AssetRentals() {
 
   const [form, setForm] = useState(emptyForm('to_student'));
 
-  const { data: rentals = [], isLoading } = useQuery({
-    queryKey: ['assetRentals', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('asset_rentals').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: rentals = [], isLoading } = useQuery({ enabled: false /* asset_rentals table not built */, queryKey: ['assetRentals', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('asset_rentals').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: rentableAssets = [] } = useQuery({
     queryKey: ['rentableAssets', tenantId],

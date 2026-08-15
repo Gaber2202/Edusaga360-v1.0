@@ -24,11 +24,11 @@ export default function YamenDashboard({ isRTL }) {
   const governmentRelationsEnabled = areAnyEnabled(GOVERNMENT_RELATIONS_FEATURES);
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const { data: employees = [] } = useQuery({ queryKey: ['employees', tenantId], queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').match(tenantFilter())), enabled: hasTenantAccess });
-  const { data: attendance = [] } = useQuery({ queryKey: ['employeeAttendance', tenantId], queryFn: () => fetchData(tenantQuery('employee_attendances').select('*').match(tenantFilter()).order('date', { ascending: false }).limit(200)), enabled: hasTenantAccess });
+  const { data: attendance = [] } = useQuery({ queryKey: ['employeeAttendance', tenantId], queryFn: () => fetchData(tenantQuery('employee_attendances').select('*').match(tenantFilter()).order('date', { ascending: false }).limit(200)), enabled: false /* employee_attendances table not built (Bucket C, #246) */ });
   const { data: leaves = [] } = useQuery({ queryKey: ['leaveRequests', tenantId], queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit(100)), enabled: hasTenantAccess });
-  const { data: iqamaRecords = [] } = useQuery({ queryKey: ['iqamaRecords', tenantId], queryFn: () => fetchData(tenantQuery('iqama_records').select('*').match(tenantFilter())), enabled: hasTenantAccess });
-  const { data: evaluations = [] } = useQuery({ queryKey: ['performanceEvals', tenantId], queryFn: () => fetchData(tenantQuery('performance_evaluations').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit(100)), enabled: hasTenantAccess });
-  const { data: _payrollInputs = [] } = useQuery({ queryKey: ['payrollInputs', tenantId], queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit(200)), enabled: hasTenantAccess });
+  const { data: iqamaRecords = [] } = useQuery({ queryKey: ['iqamaRecords', tenantId], queryFn: () => fetchData(tenantQuery('iqama_records').select('*').match(tenantFilter())), enabled: false /* iqama_records table not built (Bucket C, #246) */ });
+  const { data: evaluations = [] } = useQuery({ queryKey: ['performanceEvals', tenantId], queryFn: () => fetchData(tenantQuery('performance_evaluations').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit(100)), enabled: false /* performance_evaluations table not built (Bucket C, #246) */ });
+  const { data: _payrollInputs = [] } = useQuery({ queryKey: ['payrollInputs', tenantId], queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit(200)), enabled: false /* payroll_inputs table not built (Bucket C, #246) */ });
 
   const today = new Date();
 

@@ -43,13 +43,10 @@ export default function PayslipSettings({ open, onClose }) {
     watermark_placement: 'diagonal'
   });
 
-  const { data: existingSettings } = useQuery({
-    queryKey: ['payslipSettings', tenantId],
-    queryFn: async () => {
+  const { data: existingSettings = null } = useQuery({ enabled: false /* payslip_settings table not built */, queryKey: ['payslipSettings', tenantId], queryFn: async () => {
       const { data: all = [] } = await tenantQuery('payslip_settings').select('*').order();
       return all[0];
-    },
-  });
+    }, initialData: null });
 
   useEffect(() => {
     if (existingSettings) {

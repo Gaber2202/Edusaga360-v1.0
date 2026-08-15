@@ -32,11 +32,7 @@ export default function HRApprovalsInbox() {
     queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match({ status: 'pending' })),
   });
 
-  const { data: essRequests = [], isLoading: loadingESS } = useQuery({
-    queryKey: ['essRequestsInbox', tenantId],
-    queryFn: () => fetchData(tenantQuery('ess_requests').select('*').match({ status: 'pending' })),
-    enabled: isModuleEnabled('ess'),
-  });
+  const { data: essRequests = [], isLoading: loadingESS } = useQuery({ enabled: false /* ess_requests table not built */, queryKey: ['essRequestsInbox', tenantId], queryFn: () => fetchData(tenantQuery('ess_requests').select('*').match({ status: 'pending' })), initialData: [] });
 
   const pendingLeave = leaveRequests.filter(r => ['pending', 'pending_manager', 'pending_hr'].includes(r.status));
   const pendingESS = essRequests.filter(r => ['pending', 'pending_manager', 'pending_hr'].includes(r.status));

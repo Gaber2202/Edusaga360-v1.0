@@ -52,7 +52,7 @@ export default function OperationsDashboard() {
       if (error) throw error;
       return filterByBranch(data);
     },
-    { enabled: hasTenantAccess }
+    { enabled: false /* work_orders table not built */, initialData: [] }
   );
 
   const { data: customers = [] } = useTenantQuery(
@@ -62,7 +62,7 @@ export default function OperationsDashboard() {
       if (error) throw error;
       return filterByBranch(data);
     },
-    { enabled: hasTenantAccess }
+    { enabled: false /* customers table not built */, initialData: [] }
   );
 
   const { data: branches = [] } = useTenantQuery(

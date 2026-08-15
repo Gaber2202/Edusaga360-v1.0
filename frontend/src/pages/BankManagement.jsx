@@ -34,11 +34,7 @@ export default function BankManagement() {
     is_active: true
   });
 
-  const { data: banks = [], isLoading } = useQuery({
-    queryKey: ['bankTemplates', tenantId],
-    queryFn: () => fetchData(tenantQuery('bank_templates').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: banks = [], isLoading } = useQuery({ enabled: false /* bank_templates table not built */, queryKey: ['bankTemplates', tenantId], queryFn: () => fetchData(tenantQuery('bank_templates').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
 
   const handleSave = async () => {
     if (!formData.bank_name_ar || !formData.bank_name_en) {

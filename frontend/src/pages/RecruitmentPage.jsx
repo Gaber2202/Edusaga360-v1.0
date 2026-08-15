@@ -99,11 +99,7 @@ export default function RecruitmentPage() {
     job_title: '',
   });
 
-  const { data: recruitments = [], isLoading: loadingRecruitments } = useQuery({
-    queryKey: ['recruitments', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('recruitments').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: recruitments = [], isLoading: loadingRecruitments } = useQuery({ enabled: false /* recruitments table not built */, queryKey: ['recruitments', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('recruitments').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: applicants = [], isLoading: loadingApplicants } = useQuery({
     queryKey: ['applicants', tenantId, selectedBranchId],
@@ -135,17 +131,9 @@ export default function RecruitmentPage() {
     enabled: hasTenantAccess,
   });
 
-  const { data: interviews = [] } = useQuery({
-    queryKey: ['recruitment_interviews', tenantId],
-    queryFn: () => fetchData(tenantQuery('recruitment_interviews').select('*').match(tenantFilter()).order('interview_date', { ascending: true })),
-    enabled: hasTenantAccess,
-  });
+  const { data: interviews = [] } = useQuery({ enabled: false /* recruitment_interviews table not built */, queryKey: ['recruitment_interviews', tenantId], queryFn: () => fetchData(tenantQuery('recruitment_interviews').select('*').match(tenantFilter()).order('interview_date', { ascending: true })), initialData: [] });
 
-  const { data: careerPostings = [] } = useQuery({
-    queryKey: ['career_postings', tenantId],
-    queryFn: () => fetchData(tenantQuery('career_postings').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: careerPostings = [] } = useQuery({ enabled: false /* career_postings table not built */, queryKey: ['career_postings', tenantId], queryFn: () => fetchData(tenantQuery('career_postings').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
 
   const handleAIShortlist = async (recruitmentId) => {
     setAiShortlisting(true);

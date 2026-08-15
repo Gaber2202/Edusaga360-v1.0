@@ -58,6 +58,7 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
   const { data: payrollInputs = [], isLoading } = useQuery({
     queryKey: ['payrollInputs', payRun.id],
     queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').match({ pay_run_id: payRun.id })),
+    enabled: false, // payroll_inputs table not built (Bucket C, #246)
   });
 
   const filteredInputs = payrollInputs.filter(p => 

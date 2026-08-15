@@ -156,10 +156,7 @@ export default function SubscriptionPlansTab({ isRTL }) {
   const { tenant } = useTenant();
   const label = (ar, en) => isRTL ? ar : en;
 
-  const { data: plans = [], isLoading } = useQuery({
-    queryKey: ['subscriptionPlans'],
-    queryFn: () => fetchData(tenantQuery('subscription_plans').select('*').order('display_order')),
-  });
+  const { data: plans = [], isLoading } = useQuery({ enabled: false /* subscription_plans table not built */, queryKey: ['subscriptionPlans'], queryFn: () => fetchData(tenantQuery('subscription_plans').select('*').order('display_order')), initialData: [] });
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);

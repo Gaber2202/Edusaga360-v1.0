@@ -21,12 +21,7 @@ export default function ESSOnboardingTab({ employee }) {
   const [policyDialog, setPolicyDialog] = useState(null);
   const [acknowledging, setAcknowledging] = useState(false);
 
-  const { data: onboarding, isLoading } = useQuery({
-    queryKey: ['onboarding', employee?.id],
-    queryFn: () => fetchData(tenantQuery('onboardings').select('*').match({ employee_id: employee?.id })),
-    enabled: !!employee?.id,
-    select: (data) => data[0] || null,
-  });
+  const { data: onboarding, isLoading } = useQuery({ enabled: false /* onboardings table not built */, queryKey: ['onboarding', employee?.id], queryFn: () => fetchData(tenantQuery('onboardings').select('*').match({ employee_id: employee?.id })), select: (data) => data[0] || null, initialData: [] });
 
   if (isLoading) {
     return (

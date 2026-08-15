@@ -45,10 +45,7 @@ export default function LoansManagement() {
     purpose: ''
   });
 
-  const { data: loans = [], isLoading } = useQuery({
-    queryKey: ['employeeLoans', selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('employee_loans').select('*').match(branchFilter()).order('created_at', { ascending: false })),
-  });
+  const { data: loans = [], isLoading } = useQuery({ enabled: false /* employee_loans table not built */, queryKey: ['employeeLoans', selectedBranchId], queryFn: () => fetchData(tenantQuery('employee_loans').select('*').match(branchFilter()).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', selectedBranchId],

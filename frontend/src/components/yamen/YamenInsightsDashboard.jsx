@@ -26,20 +26,14 @@ export default function YamenInsightsDashboard({ isRTL }) {
     queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').order('created_at', { ascending: false }).limit()),
   });
 
-  const { data: attendance } = useQuery({
-    queryKey: ['yamen-attendance', tenantId],
-    queryFn: () => fetchData(tenantQuery('employee_attendances').select('*').order('created_at', { ascending: false }).limit()),
-  });
+  const { data: attendance } = useQuery({ enabled: false /* employee_attendances table not built */, queryKey: ['yamen-attendance', tenantId], queryFn: () => fetchData(tenantQuery('employee_attendances').select('*').order('created_at', { ascending: false }).limit()), initialData: [] });
 
   const { data: leaveRequests } = useQuery({
     queryKey: ['yamen-leaves', tenantId],
     queryFn: () => fetchData(tenantQuery('leave_requests').select('*').order('created_at', { ascending: false }).limit()),
   });
 
-  const { data: evaluations } = useQuery({
-    queryKey: ['yamen-evaluations', tenantId],
-    queryFn: () => fetchData(tenantQuery('performance_evaluations').select('*').order('created_at', { ascending: false }).limit()).catch(() => []),
-  });
+  const { data: evaluations } = useQuery({ enabled: false /* performance_evaluations table not built */, queryKey: ['yamen-evaluations', tenantId], queryFn: () => fetchData(tenantQuery('performance_evaluations').select('*').order('created_at', { ascending: false }).limit()).catch(() => []), initialData: [] });
 
   const { data: payRuns } = useQuery({
     queryKey: ['yamen-payroll', tenantId],

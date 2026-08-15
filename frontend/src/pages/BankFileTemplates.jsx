@@ -42,11 +42,7 @@ export default function BankFileTemplates() {
     is_active: true
   });
 
-  const { data: templates = [], isLoading } = useQuery({
-    queryKey: ['bankFileTemplates', tenantId],
-    queryFn: () => fetchData(tenantQuery('bank_file_templates').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: templates = [], isLoading } = useQuery({ enabled: false /* bank_file_templates table not built */, queryKey: ['bankFileTemplates', tenantId], queryFn: () => fetchData(tenantQuery('bank_file_templates').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
 
   const banks = [
     { code: 'SNB', name_ar: 'البنك الأهلي السعودي', name_en: 'Saudi National Bank' },

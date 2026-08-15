@@ -81,8 +81,8 @@ export function TenantProvider({ user, children }) {
     let tenantData = null;
 
     try {
-      // creator/platform owner has no tenant — they manage all tenants
-      if (isPlatformOwner(u)) {
+      // Platform owner without a tenant manages all tenants.
+      if (isPlatformOwner(u) && !u.tenant_id) {
         setTenant(null);
         setTenantLoading(false);
         return;
@@ -226,10 +226,11 @@ export function TenantProvider({ user, children }) {
   const tenantId = tenant?.id || user?.tenant_id || null;
 
   const isModuleEnabled = React.useCallback((moduleKey) => {
+    if (isPlatformOwner(user)) return true;
     if (!tenant) return true;
     const enabled = normalizeEnabledModules(tenant.enabled_modules);
     return enabled.includes(moduleKey);
-  }, [tenant]);
+  }, [tenant, user]);
 
   const checkLimit = React.useCallback((limitKey) => {
     if (!tenant) return { allowed: true, current: 0, max: Infinity };

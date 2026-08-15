@@ -46,15 +46,11 @@ export default function CRM() {
     enabled: hasTenantAccess,
   });
 
-  const { data: customers = [], isLoading: customersLoading } = useQuery({
-    queryKey: ['customers', tenantId, selectedBranchId],
-    queryFn: async () => {
+  const { data: customers = [], isLoading: customersLoading } = useQuery({ enabled: false /* customers table not built */, queryKey: ['customers', tenantId, selectedBranchId], queryFn: async () => {
       const { data = [], error } = await tenantQuery('customers').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false });
       if (error) throw error;
       return filterByBranch(data);
-    },
-    enabled: hasTenantAccess,
-  });
+    }, initialData: [] });
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],

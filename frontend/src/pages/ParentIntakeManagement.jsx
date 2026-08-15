@@ -55,11 +55,7 @@ export default function ParentIntakeManagement() {
     expires_date: ''
   });
 
-  const { data: links = [], isLoading } = useQuery({
-    queryKey: ['parentIntakeLinks', tenantId],
-    queryFn: () => fetchData(tenantQuery('parent_intake_links').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    enabled: hasTenantAccess,
-  });
+  const { data: links = [], isLoading } = useQuery({ enabled: false /* parent_intake_links table not built */, queryKey: ['parentIntakeLinks', tenantId], queryFn: () => fetchData(tenantQuery('parent_intake_links').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
