@@ -56,7 +56,7 @@ export function computeVitalityIndex(
 function resolveTenantId(req: AuthenticatedRequest): string | null {
   if (req.user?.is_platform_owner) {
     const q = req.query.tenant_id;
-    return typeof q === 'string' && q.length > 0 ? q : null;
+    return (typeof q === 'string' && q.length > 0 ? q : req.user?.tenant_id) ?? null;
   }
   return req.user?.tenant_id ?? null;
 }
