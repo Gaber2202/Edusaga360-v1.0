@@ -4,7 +4,7 @@
  */
 import React, { useMemo, useRef } from 'react';
 import { useTenantQuery } from '../hooks/useTenantQuery';
-import { tenantQuery, fetchData } from '../api/supabaseClient';
+import { tenantQuery, fetchData, normalizeJournalEntries } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useTenant } from '../components/TenantContext';
 import { formatCurrency } from '../lib/localization';
@@ -70,7 +70,12 @@ export default function FinanceDashboard() {
 
   const { data: journalEntries = [], isLoading: jeLoading, isError: jeError, refetch: refetchJe } = useTenantQuery(
     ['je-dashboard', tenantId],
-    () => fetchData(tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter({ status: 'posted' })))),
+    async () => {
+      const data = await fetchData(tenantQuery('journal_entries')
+        .select('*, journal_entry_lines(*, chart_of_accounts(code, type, name_ar, name_en))')
+        .match(tenantFilter(branchFilter({ status: 'posted' }))));
+      return normalizeJournalEntries(data);
+    },
     { enabled: hasTenantAccess }
   );
 

@@ -170,6 +170,16 @@ jobs:
       - name: Block hardcoded SAR/AED/QAR/ريال/ر.س/د.إ/ر.ق in frontend/src
         run: python3 .github/scripts/guard_hardcoded_currency.py
 
+  guard-schema-drift:
+    name: Guard schema drift in frontend queries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Block unknown table names or no-arg .order() in tenantQuery/supabase.from calls
+        run: python3 .github/scripts/guard_schema_drift.py
+      - name: Prove the guard with fixture tests
+        run: python3 .github/scripts/test_guard_schema_drift.py
+
   dependency-audit:
     name: Dependency Audit (advisory)
     runs-on: ubuntu-latest

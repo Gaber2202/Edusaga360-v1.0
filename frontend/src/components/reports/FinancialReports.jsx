@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery, fetchData } from '../../api/supabaseClient';
+import { tenantQuery, fetchData, normalizeJournalEntries } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { getCurrencySymbol, formatCurrency } from '../../lib/localization';
 import { useBranch } from '../BranchContext';
@@ -61,7 +61,12 @@ export default function FinancialReports() {
 
   const { data: journalEntries = [] } = useQuery({
     queryKey: ['journalEntries', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('journal_entrys').select('*').match(tenantFilter(branchFilter()))),
+    queryFn: async () => {
+      const data = await fetchData(tenantQuery('journal_entries')
+        .select('*, journal_entry_lines(*, chart_of_accounts(code, type, name_ar, name_en))')
+        .match(tenantFilter(branchFilter())));
+      return normalizeJournalEntries(data);
+    },
     enabled: hasTenantAccess,
   });
 
