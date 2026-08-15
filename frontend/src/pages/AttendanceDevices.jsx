@@ -214,7 +214,7 @@ export default function AttendanceDevices() {
               ? { check_in: punchTime }
               : { check_out: punchTime };
             
-            await tenantQuery('employee_attendance').update(updateData);
+            await tenantQuery('employee_attendance').update(updateData).eq('id', existingAttendance[0].id);
           } else {
             // Create new attendance record
             await tenantQuery('employee_attendance').insert({
@@ -234,7 +234,7 @@ export default function AttendanceDevices() {
             processed_date: new Date().toISOString(),
             employee_id: employee.id,
             employee_name: employee.name_ar
-          });
+          }).eq('id', log.id);
 
           processedCount++;
         }
