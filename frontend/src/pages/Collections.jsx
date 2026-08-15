@@ -160,7 +160,6 @@ export default function Collections() {
 
       const { error: invoiceError } = await tenantQuery('invoices').update({
         paid_amount: newPaidAmount,
-        balance: selectedInvoice.total_amount - newPaidAmount,
         status: newStatus
       }).eq('id', selectedInvoice.id);
 

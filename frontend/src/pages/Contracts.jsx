@@ -308,7 +308,7 @@ export default function Contracts() {
         updateData.academic_year = formData.academic_year;
       }
 
-      await tenantQuery('students').update(updateData);
+      await tenantQuery('students').update(updateData).eq('id', student.id);
 
 
       // Audit log

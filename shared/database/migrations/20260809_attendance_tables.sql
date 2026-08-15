@@ -4,6 +4,30 @@
 -- ministry-reporting-ready excuse workflow.
 -- ============================================================
 
+-- Canonical tenant-isolation helpers. Defined here so the new tables below
+-- use them from the start; #239 remediates the rest of the schema and re-creates
+-- the same helpers with CREATE OR REPLACE.
+CREATE OR REPLACE FUNCTION public.auth_tenant_id()
+RETURNS UUID
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT nullif(((auth.jwt() -> 'app_metadata'::text) ->> 'tenant_id'::text), '')::uuid
+$$;
+
+CREATE OR REPLACE FUNCTION public.auth_is_platform_owner()
+RETURNS BOOLEAN
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT coalesce(nullif(((auth.jwt() -> 'app_metadata'::text) ->> 'is_platform_owner'::text), '')::boolean, false)
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.auth_tenant_id() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.auth_is_platform_owner() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.auth_tenant_id() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.auth_is_platform_owner() TO authenticated, service_role;
+
 -- Reusable updated_at trigger
 CREATE OR REPLACE FUNCTION public.set_updated_at()
 RETURNS TRIGGER
@@ -91,21 +115,31 @@ ALTER TABLE public.payments
   ADD COLUMN IF NOT EXISTS tamara_order_id TEXT,
   ADD COLUMN IF NOT EXISTS tamara_status TEXT;
 
--- RLS (initplan-wrapped auth.jwt() to evaluate once per statement; compare tenant_id as text)
+-- RLS using the canonical helpers (InitPlan-evaluated once per statement)
 ALTER TABLE public.attendances ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.student_attendances ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "tenant_isolation" ON public.attendances;
+DROP POLICY IF EXISTS "platform_owner_access" ON public.attendances;
 CREATE POLICY "tenant_isolation" ON public.attendances
   FOR ALL TO authenticated
-  USING ((tenant_id)::text = (((select auth.jwt()) -> 'app_metadata'::text) ->> 'tenant_id'::text))
-  WITH CHECK ((tenant_id)::text = (((select auth.jwt()) -> 'app_metadata'::text) ->> 'tenant_id'::text));
+  USING (tenant_id = (select public.auth_tenant_id()))
+  WITH CHECK (tenant_id = (select public.auth_tenant_id()));
+CREATE POLICY "platform_owner_access" ON public.attendances
+  FOR ALL TO authenticated
+  USING ((select public.auth_is_platform_owner()))
+  WITH CHECK ((select public.auth_is_platform_owner()));
 
 DROP POLICY IF EXISTS "tenant_isolation" ON public.student_attendances;
+DROP POLICY IF EXISTS "platform_owner_access" ON public.student_attendances;
 CREATE POLICY "tenant_isolation" ON public.student_attendances
   FOR ALL TO authenticated
-  USING ((tenant_id)::text = (((select auth.jwt()) -> 'app_metadata'::text) ->> 'tenant_id'::text))
-  WITH CHECK ((tenant_id)::text = (((select auth.jwt()) -> 'app_metadata'::text) ->> 'tenant_id'::text));
+  USING (tenant_id = (select public.auth_tenant_id()))
+  WITH CHECK (tenant_id = (select public.auth_tenant_id()));
+CREATE POLICY "platform_owner_access" ON public.student_attendances
+  FOR ALL TO authenticated
+  USING ((select public.auth_is_platform_owner()))
+  WITH CHECK ((select public.auth_is_platform_owner()));
 
 -- updated_at triggers (idempotent)
 DROP TRIGGER IF EXISTS attendances_updated_at ON public.attendances;
@@ -118,14 +152,17 @@ CREATE TRIGGER student_attendances_updated_at
   BEFORE UPDATE ON public.student_attendances
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- Fix the legacy employee_attendance tenant isolation policy which used the wrong
--- JWT claim path (auth.jwt() ->> 'tenant_id' instead of app_metadata ->> 'tenant_id')
--- and re-wrap auth.jwt() as an InitPlan per RLSPERF-03.
+-- Fix the legacy employee_attendance tenant isolation policy to use the canonical helpers.
 DROP POLICY IF EXISTS "tenant_isolation" ON public.employee_attendance;
+DROP POLICY IF EXISTS "platform_owner_access" ON public.employee_attendance;
 CREATE POLICY "tenant_isolation" ON public.employee_attendance
   FOR ALL TO authenticated
-  USING ((tenant_id)::text = (((select auth.jwt()) -> 'app_metadata'::text) ->> 'tenant_id'::text))
-  WITH CHECK ((tenant_id)::text = (((select auth.jwt()) -> 'app_metadata'::text) ->> 'tenant_id'::text));
+  USING (tenant_id = (select public.auth_tenant_id()))
+  WITH CHECK (tenant_id = (select public.auth_tenant_id()));
+CREATE POLICY "platform_owner_access" ON public.employee_attendance
+  FOR ALL TO authenticated
+  USING ((select public.auth_is_platform_owner()))
+  WITH CHECK ((select public.auth_is_platform_owner()));
 
 -- Seed enabled_modules for first-term on existing tenants that have not been configured yet.
 -- This ensures the new feature-flag menu does not hide core modules from live customers.

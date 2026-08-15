@@ -68,7 +68,6 @@ export default function PaymentLogForm({ open, onClose, invoice }) {
 
       const { error: invoiceError } = await tenantQuery('invoices').update({
         paid_amount: newPaidAmount,
-        balance: newBalance,
         status: newStatus
       }).eq('id', invoice.id);
 
