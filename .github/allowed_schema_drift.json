@@ -1731,7 +1731,7 @@
     "file": "frontend/src/pages/Reconciliation.jsx",
     "table": "payment_reconciliations",
     "issue": "unknown_table",
-    "count": 2,
+    "count": 3,
     "reason": "no migration or typo mapping found; needs product decision",
     "tracked_issue": "#246",
     "expires": "2027-06-30"
