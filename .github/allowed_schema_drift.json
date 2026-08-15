@@ -4,2105 +4,2105 @@
     "table": "student_attendances",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "migration exists in PR #238; remove when #238 lands",
+    "tracked_issue": "#238",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/components/attendance/BulkAttendanceMarker.jsx",
     "table": "student_attendances",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "migration exists in PR #238; remove when #238 lands",
+    "tracked_issue": "#238",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/components/canteen/QuickPOS.jsx",
     "table": "canteen_transactions",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/canteen/QuickPOS.jsx",
     "table": "canteen_wallets",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/clinic/QuickVisitPanel.jsx",
     "table": "clinic_visits",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/contracts/ContractActions.jsx",
     "table": "contract_delivery_logs",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/employees/CompanyTransferDialog.jsx",
     "table": "employee_company_transfers",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/ess/ESSOnboardingTab.jsx",
     "table": "onboardings",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/ess/ESSProfileTab.jsx",
     "table": "asset_assignments",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/ess/ESSProfileTab.jsx",
     "table": "disciplinary_cases",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/ess/ESSProfileTab.jsx",
     "table": "employee_attendances",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "typo/code bug: should target employee_attendance",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/ess/ESSProfileTab.jsx",
     "table": "trainings",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/ess/ESSProfileTab.jsx",
     "table": "trainings",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/fees/BulkInvoiceGeneration.jsx",
     "table": "companies",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "typo/code bug: should target companys",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/fees/BulkInvoiceGeneration.jsx",
     "table": "student_contracts",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/fees/InvoiceForm.jsx",
     "table": "school_bank_accounts",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/fees/PaymentLogForm.jsx",
     "table": "invoice_payment_logs",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/fleet/FuelTracker.jsx",
     "table": "fuel_records",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/fleet/MaintenanceTracker.jsx",
     "table": "maintenance_records",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/fleet/TripTracker.jsx",
     "table": "trip_logs",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/GOSIManagement.jsx",
     "table": "employees",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/GOSIManagement.jsx",
     "table": "gosi_records",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/GOSIManagement.jsx",
     "table": "gosi_records",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/GOSIServices.jsx",
     "table": "employees",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/GOSIServices.jsx",
     "table": "gosi_records",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/GOSIServices.jsx",
     "table": "gosi_records",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/GovComplianceDashboard.jsx",
     "table": "employees",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/GovComplianceDashboard.jsx",
     "table": "gosi_records",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/GovComplianceDashboard.jsx",
     "table": "gosi_records",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/GovComplianceDashboard.jsx",
     "table": "gov_documents",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/GovComplianceDashboard.jsx",
     "table": "gov_documents",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/GovComplianceDashboard.jsx",
     "table": "govi_violations",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/GovComplianceDashboard.jsx",
     "table": "govi_violations",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/GovComplianceDashboard.jsx",
     "table": "iqama_records",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/GovComplianceDashboard.jsx",
     "table": "iqama_records",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/GovComplianceDashboard.jsx",
     "table": "mudad_submissions",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/GovComplianceDashboard.jsx",
     "table": "mudad_submissions",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/GovComplianceDashboard.jsx",
     "table": "visa_records",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/GovComplianceDashboard.jsx",
     "table": "visa_records",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/GovDocuments.jsx",
     "table": "employees",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/GovDocuments.jsx",
     "table": "gov_documents",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/GovReports.jsx",
     "table": "employees",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/GovReports.jsx",
     "table": "govi_violations",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/GovReports.jsx",
     "table": "govi_violations",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/GovReports.jsx",
     "table": "iqama_records",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/GovReports.jsx",
     "table": "iqama_records",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/GovReports.jsx",
     "table": "mudad_submissions",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/GovReports.jsx",
     "table": "mudad_submissions",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/IqamaServices.jsx",
     "table": "employees",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/IqamaServices.jsx",
     "table": "iqama_records",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/MudadServices.jsx",
     "table": "mudad_submissions",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/MudadWPS.jsx",
     "table": "mudad_submissions",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/QiwaContracts.jsx",
     "table": "employee_documents",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/SaudizationTracker.jsx",
     "table": "employees",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/ServiceWorkflowDialog.jsx",
     "table": "employees",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/ViolationsPenalties.jsx",
     "table": "employees",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/ViolationsPenalties.jsx",
     "table": "govi_violations",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/gov/VisaServices.jsx",
     "table": "employees",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/gov/VisaServices.jsx",
     "table": "visa_records",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/hr/HRDemoDataSeeder.jsx",
     "table": "payslip_settings",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/hr/HRDemoDataSeeder.jsx",
     "table": "salary_components",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/hr/LeaveWorkflow.jsx",
     "table": "employee_attendances",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "typo/code bug: should target employee_attendance",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/hr/PayrollCalculationEngine.jsx",
     "table": "employee_loans",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/hr/PayrollCalculationEngine.jsx",
     "table": "tuition_advances",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/intake/SendIntakeLink.jsx",
     "table": "intake_comm_logs",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/library/BarcodeCheckout.jsx",
     "table": "library_books",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/library/BarcodeCheckout.jsx",
     "table": "library_loans",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/notifications/NotificationService.jsx",
     "table": "notification_preferences",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/notifications/NotificationService.jsx",
     "table": "notification_recipients",
     "issue": "unknown_table",
     "count": 4,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/onboarding/OnboardingDetailDialog.jsx",
     "table": "onboardings",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/parent/AcademicRecords.jsx",
     "table": "attendances",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "migration exists in PR #238; remove when #238 lands",
+    "tracked_issue": "#238",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/components/parent/AcademicRecords.jsx",
     "table": "student_grades",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/parent/SecureMessaging.jsx",
     "table": "messages",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/BankExports.jsx",
     "table": "bank_export_profiles",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/payroll/BankExports.jsx",
     "table": "bank_export_profiles",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/BankExports.jsx",
     "table": "bank_exports",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/BankExports.jsx",
     "table": "payroll_inputs",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/payroll/BankExports.jsx",
     "table": "payroll_inputs",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/GOSISubmissions.jsx",
     "table": "gosi_records",
     "issue": "unknown_table",
     "count": 4,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/GOSISubmissions.jsx",
     "table": "payroll_inputs",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/payroll/GOSISubmissions.jsx",
     "table": "payroll_inputs",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/LoansManagement.jsx",
     "table": "employee_loans",
     "issue": "unknown_table",
     "count": 4,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/PayRunDetails.jsx",
     "table": "payroll_inputs",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/PayRunsList.jsx",
     "table": "employees",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/payroll/PayrollDashboard.jsx",
     "table": "employee_loans",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/PayrollDashboard.jsx",
     "table": "tuition_advances",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/PayrollReports.jsx",
     "table": "employee_loans",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/PayrollReports.jsx",
     "table": "gosi_records",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/PayrollReports.jsx",
     "table": "payroll_inputs",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/PayrollReports.jsx",
     "table": "tuition_advances",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/PayslipSettings.jsx",
     "table": "payslip_settings",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/payroll/PayslipSettings.jsx",
     "table": "payslip_settings",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/PayslipViewer.jsx",
     "table": "payslip_settings",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/payroll/PayslipViewer.jsx",
     "table": "payslip_settings",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/PayslipsManagement.jsx",
     "table": "payslip_deliverys",
     "issue": "unknown_table",
     "count": 5,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/SalaryComponents.jsx",
     "table": "salary_components",
     "issue": "unknown_table",
     "count": 4,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/payroll/TuitionAdvanceManagement.jsx",
     "table": "tuition_advances",
     "issue": "unknown_table",
     "count": 4,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/platform/SubscriptionPlansTab.jsx",
     "table": "subscription_plans",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/recruitment/ConvertToEmployee.jsx",
     "table": "employee_documents",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/recruitment/OnboardingEngine.jsx",
     "table": "hr_policys",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/recruitment/OnboardingEngine.jsx",
     "table": "onboardings",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/reports/FinancialReports.jsx",
     "table": "ap_bills",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/reports/ReportBuilder.jsx",
     "table": "attendances",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "migration exists in PR #238; remove when #238 lands",
+    "tracked_issue": "#238",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/components/students/StudentDetails.jsx",
     "table": "attendances",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "migration exists in PR #238; remove when #238 lands",
+    "tracked_issue": "#238",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/components/subscription/AdminRequestsTab.jsx",
     "table": "tenant_requests",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/superadmin/PlatformUsersTab.jsx",
     "table": "users",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/transport/LiveBusTracker.jsx",
     "table": "trip_logs",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/yamen/YamenDashboard.jsx",
     "table": "employee_attendances",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "typo/code bug: should target employee_attendance",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/yamen/YamenDashboard.jsx",
     "table": "iqama_records",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/yamen/YamenDashboard.jsx",
     "table": "payroll_inputs",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/yamen/YamenDashboard.jsx",
     "table": "performance_evaluations",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/yamen/YamenDraftDocuments.jsx",
     "table": "employee_documents",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/yamen/YamenEmployeeAssistant.jsx",
     "table": "employees",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/yamen/YamenExecutiveReport.jsx",
     "table": "employee_attendances",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "typo/code bug: should target employee_attendance",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/yamen/YamenExecutiveReport.jsx",
     "table": "iqama_records",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/yamen/YamenExecutiveReport.jsx",
     "table": "payroll_inputs",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/yamen/YamenExecutiveReport.jsx",
     "table": "performance_evaluations",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/yamen/YamenHRChat.jsx",
     "table": "employee_attendances",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "typo/code bug: should target employee_attendance",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/yamen/YamenHRChat.jsx",
     "table": "ess_requests",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/yamen/YamenHRChat.jsx",
     "table": "gosi_records",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/yamen/YamenHRChat.jsx",
     "table": "gosi_records",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/yamen/YamenHRChat.jsx",
     "table": "govi_violations",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/yamen/YamenHRChat.jsx",
     "table": "iqama_records",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/yamen/YamenHRChat.jsx",
     "table": "iqama_records",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/yamen/YamenHRChat.jsx",
     "table": "leave_balances",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/yamen/YamenHRChat.jsx",
     "table": "payroll_inputs",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/yamen/YamenInsightsDashboard.jsx",
     "table": "employee_attendances",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "typo/code bug: should target employee_attendance",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/yamen/YamenInsightsDashboard.jsx",
     "table": "performance_evaluations",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/yamen/YamenRiskMonitor.jsx",
     "table": "employee_attendances",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "typo/code bug: should target employee_attendance",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/components/yamen/YamenRiskMonitor.jsx",
     "table": "iqama_records",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/components/yamen/YamenRiskMonitor.jsx",
     "table": "performance_evaluations",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/lib/integrationBus.js",
     "table": "integration_logs",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/lib/integrationHandlers.js",
     "table": "library_books",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/lib/integrationHandlers.js",
     "table": "student_attendances",
     "issue": "unknown_table",
     "count": 4,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "migration exists in PR #238; remove when #238 lands",
+    "tracked_issue": "#238",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/pages/APBills.jsx",
     "table": "ap_bills",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/APBills.jsx",
     "table": "ap_payments",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/AdminMessaging.jsx",
     "table": "messages",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/AssetAssignments.jsx",
     "table": "asset_assignments",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/AssetRentals.jsx",
     "table": "asset_rentals",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/Attendance.jsx",
     "table": "attendances",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "migration exists in PR #238; remove when #238 lands",
+    "tracked_issue": "#238",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/pages/AttendanceDevices.jsx",
     "table": "attendance_devices",
     "issue": "unknown_table",
     "count": 5,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/AttendanceDevices.jsx",
     "table": "employee_attendances",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "typo/code bug: should target employee_attendance",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/AttendanceDevices.jsx",
     "table": "punch_logs",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/BankFileTemplates.jsx",
     "table": "bank_file_templates",
     "issue": "unknown_table",
     "count": 4,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/BankManagement.jsx",
     "table": "bank_templates",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/BusinessTravel.jsx",
     "table": "travel_policies",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "unapplied Bucket B migration",
+    "tracked_issue": "#237",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/pages/BusinessTravel.jsx",
     "table": "travel_requests",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "unapplied Bucket B migration",
+    "tracked_issue": "#237",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/pages/CMS.jsx",
     "table": "cms_contents",
     "issue": "unknown_table",
     "count": 5,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/CRM.jsx",
     "table": "customers",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/CanteenManagement.jsx",
     "table": "canteen_menu_items",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/CanteenManagement.jsx",
     "table": "canteen_transactions",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/CanteenManagement.jsx",
     "table": "canteen_wallets",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/Contracts.jsx",
     "table": "fee_services",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/CorporateCards.jsx",
     "table": "card_transactions",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "unapplied Bucket B migration",
+    "tracked_issue": "#237",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/pages/CorporateCards.jsx",
     "table": "corporate_cards",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "unapplied Bucket B migration",
+    "tracked_issue": "#237",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/pages/Depreciation.jsx",
     "table": "asset_depreciations",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/DisciplinaryCases.jsx",
     "table": "disciplinary_cases",
     "issue": "unknown_table",
     "count": 4,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/ESSPortal.jsx",
     "table": "attendance_violations",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/ESSPortal.jsx",
     "table": "employee_attendances",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "typo/code bug: should target employee_attendance",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/ESSPortal.jsx",
     "table": "employee_loans",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/ESSPortal.jsx",
     "table": "ess_requests",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/ESSPortal.jsx",
     "table": "ess_settings",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/ESSPortal.jsx",
     "table": "ess_settings",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/ESSPortal.jsx",
     "table": "payroll_inputs",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/ESSPortal.jsx",
     "table": "tuition_advances",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/ESSSettings.jsx",
     "table": "ess_settings",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/EmployeeAttendance.jsx",
     "table": "employee_attendances",
     "issue": "unknown_table",
     "count": 5,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "typo/code bug: should target employee_attendance",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/Engagement.jsx",
     "table": "announcements",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "unapplied Bucket B migration",
+    "tracked_issue": "#237",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/pages/Engagement.jsx",
     "table": "employee_surveys",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "unapplied Bucket B migration",
+    "tracked_issue": "#237",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/pages/Engagement.jsx",
     "table": "survey_responses",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "unapplied Bucket B migration",
+    "tracked_issue": "#237",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/pages/Facilities.jsx",
     "table": "contractors",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/Facilities.jsx",
     "table": "facility_assets",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/Facilities.jsx",
     "table": "spare_parts",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/Facilities.jsx",
     "table": "work_orders",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/FinanceDashboard.jsx",
     "table": "ap_bills",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/FixedIssuesLog.jsx",
     "table": "fixed_issues",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/GovIntegrations.jsx",
     "table": "integration_connectors",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/GovIntegrations.jsx",
     "table": "integration_logs",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/HRApprovalsInbox.jsx",
     "table": "ess_requests",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/HRContracts.jsx",
     "table": "employee_documents",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/HRManagerDashboard.jsx",
     "table": "recruitments",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/HRPoliciesLibrary.jsx",
     "table": "hr_policys",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/HolidayCalendar.jsx",
     "table": "holidays",
     "issue": "unknown_table",
     "count": 4,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "unapplied Bucket B migration",
+    "tracked_issue": "#237",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/pages/ITHelpdesk.jsx",
     "table": "it_assets",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/IntegrationHub.jsx",
     "table": "integration_logs",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/InvoiceDetails.jsx",
     "table": "invoice_payment_logs",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/LeaveBalances.jsx",
     "table": "leave_balance_audits",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "unapplied Bucket B migration",
+    "tracked_issue": "#237",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/pages/Leaves.jsx",
     "table": "holidays",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "unapplied Bucket B migration",
+    "tracked_issue": "#237",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/pages/LibraryManagement.jsx",
     "table": "library_books",
     "issue": "unknown_table",
     "count": 5,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/LibraryManagement.jsx",
     "table": "library_loans",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/MyPayslips.jsx",
     "table": "payslip_deliverys",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/MyPayslips.jsx",
     "table": "payslip_settings",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/MyPayslips.jsx",
     "table": "payslip_settings",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/NotificationPreferences.jsx",
     "table": "notification_preferences",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/NotificationSettings.jsx",
     "table": "notification_settings",
     "issue": "unknown_table",
     "count": 4,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/Onboarding.jsx",
     "table": "hr_policys",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/Onboarding.jsx",
     "table": "onboardings",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/OperationsDashboard.jsx",
     "table": "customers",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/OperationsDashboard.jsx",
     "table": "work_orders",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/ParentIntake.jsx",
     "table": "parent_intake_links",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/ParentIntake.jsx",
     "table": "tc_versions",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/ParentIntakeManagement.jsx",
     "table": "parent_intake_links",
     "issue": "unknown_table",
     "count": 4,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/PerformanceEvaluation.jsx",
     "table": "disciplinary_warnings",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/PerformanceEvaluation.jsx",
     "table": "eval_criteria_templates",
     "issue": "unknown_table",
     "count": 4,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/PerformanceEvaluation.jsx",
     "table": "performance_evaluations",
     "issue": "unknown_table",
     "count": 5,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/PolicyEditor.jsx",
     "table": "hr_policys",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/PolicyEditor.jsx",
     "table": "policy_versions",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/PurchaseOrders.jsx",
     "table": "ap_bills",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/Reconciliation.jsx",
     "table": "payment_reconciliations",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/RecruitmentPage.jsx",
     "table": "career_postings",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "unapplied Bucket B migration",
+    "tracked_issue": "#237",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/pages/RecruitmentPage.jsx",
     "table": "recruitment_interviews",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "unapplied Bucket B migration",
+    "tracked_issue": "#237",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/pages/RecruitmentPage.jsx",
     "table": "recruitments",
     "issue": "unknown_table",
     "count": 5,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/Refunds.jsx",
     "table": "refund_requests",
     "issue": "unknown_table",
     "count": 5,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/RolesPermissions.jsx",
     "table": "roles",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/SchoolClinic.jsx",
     "table": "clinic_visits",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/SchoolClinic.jsx",
     "table": "student_health_records",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/Settings.jsx",
     "table": "users",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/StaffInbox.jsx",
     "table": "messages",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/StudentAttendancePage.jsx",
     "table": "student_attendances",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "migration exists in PR #238; remove when #238 lands",
+    "tracked_issue": "#238",
+    "expires": "2027-01-31"
   },
   {
     "file": "frontend/src/pages/SuperAdminDashboard.jsx",
     "table": "users",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/SystemHealth.jsx",
     "table": "employees",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/SystemHealth.jsx",
     "table": "invoices",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/SystemHealth.jsx",
     "table": "students",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/SystemHealth.jsx",
     "table": "system_defects",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/TicketDetails.jsx",
     "table": "ticket_activitys",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/TrainingDevelopment.jsx",
     "table": "trainings",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/TransportManagement.jsx",
     "table": "student_bus_assignments",
     "issue": "unknown_table",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/TrialUsers.jsx",
     "table": "roles",
     "issue": "bad_order",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/TrialUsers.jsx",
     "table": "users",
     "issue": "bad_order",
     "count": 2,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "fixable code bug: .order() missing column argument",
+    "tracked_issue": "#245",
+    "expires": "2026-10-31"
   },
   {
     "file": "frontend/src/pages/VATManagement.jsx",
     "table": "ap_bills",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/VATManagement.jsx",
     "table": "vat_returns",
     "issue": "unknown_table",
     "count": 3,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/WorkflowEngine.jsx",
     "table": "workflow_instances",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/WorkflowEngine.jsx",
     "table": "workflow_templates",
     "issue": "unknown_table",
     "count": 4,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   },
   {
     "file": "frontend/src/pages/WorkforcePlanning.jsx",
     "table": "recruitments",
     "issue": "unknown_table",
     "count": 1,
-    "reason": "legacy schema-drift reference pending fix",
-    "tracked_issue": "",
-    "expires": "2026-12-31"
+    "reason": "no migration or typo mapping found; needs product decision",
+    "tracked_issue": "#246",
+    "expires": "2027-06-30"
   }
 ]

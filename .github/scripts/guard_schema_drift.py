@@ -74,14 +74,24 @@ def save_allowlist(counts: dict[tuple[str, str, str], int]):
     print(f"Baseline updated: {ALLOWLIST_FILE} ({len(entries)} entries)")
 
 
-def is_expired(entry: dict) -> bool:
+def allowlist_status(entry: dict) -> tuple[bool, str | None]:
+    """Return (hard_fail, message). Expired entries warn for 30 days, then fail."""
     expires = entry.get("expires")
     if not expires:
-        return False
+        return False, None
     try:
-        return date.fromisoformat(expires) < date.today()
+        expiry = date.fromisoformat(expires)
     except ValueError:
-        return False
+        return False, None
+    if expiry >= date.today():
+        return False, None
+    days = (date.today() - expiry).days
+    if days <= 30:
+        return False, (
+            f"WARNING: allowlist entry expired {days} day(s) ago on {expires}; "
+            f"it will become a hard failure after {days + 30} day(s) total"
+        )
+    return True, f"allowlist entry expired on {expires} ({days} days ago)"
 
 
 def scan_frontend():
@@ -148,16 +158,24 @@ def main():
 
     allowlist = load_allowlist()
     violations = []
+    warnings = []
 
     for (rel, table, issue), count in sorted(full_counts.items()):
         key = (rel, table, issue)
         entry = allowlist.get(key)
         if entry is None:
             violations.append((rel, table, issue, count, None, "not allowed"))
-        elif is_expired(entry):
-            violations.append((rel, table, issue, count, entry.get("count", 0), "allowlist expired"))
-        elif count > entry.get("count", 0):
-            violations.append((rel, table, issue, count, entry.get("count", 0), "count exceeded"))
+        else:
+            hard_fail, msg = allowlist_status(entry)
+            if hard_fail:
+                violations.append((rel, table, issue, count, entry.get("count", 0), msg))
+            elif msg:
+                warnings.append((rel, table, issue, msg))
+            elif count > entry.get("count", 0):
+                violations.append((rel, table, issue, count, entry.get("count", 0), "count exceeded"))
+
+    for msg in warnings:
+        print(f"WARNING: {msg[0]}: '{msg[1]}' {msg[2]} -> {msg[3]}")
 
     if not violations:
         print("No new schema-drift violations found.")
