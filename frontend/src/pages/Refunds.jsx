@@ -149,7 +149,7 @@ export default function Refunds() {
         status: 'approved',
         approved_by: user?.email,
         approved_date: format(new Date(), 'yyyy-MM-dd')
-      });
+      }).eq('id', refund.id);
       await logAuditEvent({ action: AuditActions.APPROVE, entityType: 'RefundRequest', entityId: refund.id });
       queryClient.invalidateQueries({ queryKey: ['refundRequests'] });
       toast.success(isRTL ? 'تم اعتماد الطلب' : 'Request approved');
@@ -167,7 +167,7 @@ export default function Refunds() {
         status: 'executed',
         executed_by: user?.email,
         executed_date: format(new Date(), 'yyyy-MM-dd')
-      });
+      }).eq('id', refund.id);
 
       // Update invoice if linked
       if (refund.invoice_id) {
@@ -228,7 +228,7 @@ export default function Refunds() {
         status: 'rejected',
         rejected_by: user?.email,
         rejected_date: format(new Date(), 'yyyy-MM-dd')
-      });
+      }).eq('id', refund.id);
       await logAuditEvent({ action: AuditActions.REJECT, entityType: 'RefundRequest', entityId: refund.id });
       queryClient.invalidateQueries({ queryKey: ['refundRequests'] });
       toast.success(isRTL ? 'تم رفض الطلب' : 'Request rejected');

@@ -46,6 +46,14 @@ ALLOW_RE = re.compile(r"guard-allow-unfiltered\s*:\s*(.+)")
 DIFF_HUNK_RE = re.compile(r"@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 
 
+def _peek_next(text: str, i: int) -> str:
+    """Return next non-whitespace char after i, or empty string."""
+    j = i + 1
+    while j < len(text) and text[j] in " \t\r\n":
+        j += 1
+    return text[j] if j < len(text) else ""
+
+
 def has_top_level_semicolon(text: str, start: int, end: int) -> bool:
     i = start
     in_string = None
@@ -66,7 +74,8 @@ def has_top_level_semicolon(text: str, start: int, end: int) -> bool:
             elif c in "({[":
                 depth += 1
             elif c in ")}]":
-                depth -= 1
+                if depth > 0:
+                    depth -= 1
             elif c == ";" and depth == 0:
                 return True
         i += 1
@@ -94,7 +103,16 @@ def extract_statement(text: str, start: int) -> str:
             elif c in "({[":
                 depth += 1
             elif c in ")}]":
-                depth -= 1
+                if depth == 0:
+                    # For call chains, a closing paren followed by '.' is part of the chain.
+                    if c == ")" and _peek_next(text, i) == ".":
+                        pass
+                    else:
+                        return text[start:i]
+                else:
+                    depth -= 1
+            elif c == "," and depth == 0:
+                return text[start:i]
             elif c == ";" and depth == 0:
                 return text[start : i + 1]
         i += 1
