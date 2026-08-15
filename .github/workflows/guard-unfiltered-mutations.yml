@@ -29,8 +29,7 @@ jobs:
       - name: Run guard unit test
         run: python3 .github/scripts/test_guard_unfiltered_mutations.py
 
-      - name: Get changed frontend files
-        id: changed
+      - name: Run guard on changed frontend files
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             BASE="origin/${{ github.base_ref }}"
@@ -38,9 +37,8 @@ jobs:
             BASE="HEAD~1"
           fi
           files=$(git diff --name-only --diff-filter=AM "$BASE" HEAD | grep -E '^frontend/src/.*\.(js|jsx|ts|tsx)$' || true)
-          echo "files=$files" >> "$GITHUB_OUTPUT"
-
-      - name: Run guard on changed files
-        if: steps.changed.outputs.files != ''
-        run: |
-          python3 .github/scripts/guard_unfiltered_mutations.py --files ${{ steps.changed.outputs.files }}
+          if [ -z "$files" ]; then
+            echo "No changed frontend source files to scan."
+            exit 0
+          fi
+          echo "$files" | xargs -r python3 .github/scripts/guard_unfiltered_mutations.py --files
