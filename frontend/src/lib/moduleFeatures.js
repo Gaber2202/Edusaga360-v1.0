@@ -19,6 +19,36 @@ export const DEFAULT_ENABLED_MODULES = [
   'attendance',
 ];
 
+// Legacy module keys from planDefinitions.js / existing tenant.enabled_modules
+// map to the canonical module feature keys used above.
+export const LEGACY_TO_CANONICAL_MODULE_KEYS = {
+  hr: 'basic_hr',
+  employees: 'basic_hr',
+  payroll: 'payroll',
+  admissions: 'enrolment',
+  students: 'enrolment',
+  student_attendance: 'attendance',
+  finance: 'accounting',
+  procurement: 'procurement',
+  assets: 'assets',
+  crm: 'crm',
+  fleet: 'transport',
+  facilities: 'facilities',
+  communications: 'core',
+  reports: 'core',
+  integrations: 'integrations',
+};
+
+// Normalize a tenant's enabled_modules into canonical feature keys.
+export function normalizeEnabledModules(enabledModules) {
+  if (!Array.isArray(enabledModules) || enabledModules.length === 0) return DEFAULT_ENABLED_MODULES;
+  const canonical = new Set();
+  for (const key of enabledModules) {
+    canonical.add(LEGACY_TO_CANONICAL_MODULE_KEYS[key] || key);
+  }
+  return Array.from(canonical);
+}
+
 // Page name (matching the ./pages/*.jsx file name) -> module key.
 // Pages not listed here are treated as core and are always visible.
 export const PAGE_MODULE_KEYS = {
@@ -138,7 +168,6 @@ export const PAGE_MODULE_KEYS = {
   CMS: 'cms',
   WorkflowEngine: 'workflow',
   FixedIssuesLog: 'fixed_issues',
-  SystemHealth: 'fixed_issues', // only the defects tab; page is mostly telemetry
   TicketDetails: 'it_helpdesk',
 };
 
@@ -200,7 +229,6 @@ export const NAV_MODULE_KEYS = {
   cms: 'cms',
   workflowEngine: 'workflow',
   fixedIssuesLog: 'fixed_issues',
-  systemHealth: 'fixed_issues',
 };
 
 export function moduleFeatureKeysForPage(pageName) {

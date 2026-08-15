@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../api/supabaseClient';
 import { isPlatformOwner } from '../lib/authHelpers';
 import { getJurisdictionContext, clearJurisdictionContext } from '../api/jurisdiction';
-import { DEFAULT_ENABLED_MODULES } from '../lib/moduleFeatures';
+import { normalizeEnabledModules } from '../lib/moduleFeatures';
 
 const TenantContext = createContext(null);
 
@@ -227,7 +227,7 @@ export function TenantProvider({ user, children }) {
 
   const isModuleEnabled = React.useCallback((moduleKey) => {
     if (!tenant) return true;
-    const enabled = tenant.enabled_modules?.length ? tenant.enabled_modules : DEFAULT_ENABLED_MODULES;
+    const enabled = normalizeEnabledModules(tenant.enabled_modules);
     return enabled.includes(moduleKey);
   }, [tenant]);
 

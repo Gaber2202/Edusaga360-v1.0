@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
+import { useTenant } from '../components/TenantContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -23,6 +24,8 @@ import {
 export default function SystemHealth() {
   const { t, isRTL } = useLanguage();
   const queryClient = useQueryClient();
+  const { isModuleEnabled } = useTenant();
+  const fixedIssuesEnabled = isModuleEnabled('fixed_issues');
 
   const [activeTab, setActiveTab] = useState('overview');
   const [showDefectForm, setShowDefectForm] = useState(false);
@@ -40,6 +43,7 @@ export default function SystemHealth() {
   const { data: defects = [], isLoading: loadingDefects } = useQuery({
     queryKey: ['systemDefects'],
     queryFn: () => fetchData(tenantQuery('system_defects').select('*').order('created_at', { ascending: false })),
+    enabled: fixedIssuesEnabled,
   });
 
   const { data: auditLogs = [] } = useQuery({
@@ -207,19 +211,21 @@ export default function SystemHealth() {
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className={`w-10 h-10 ${openDefects > 0 ? 'bg-red-100' : 'bg-green-100'} rounded-full flex items-center justify-center`}>
-                <Bug className={`w-5 h-5 ${openDefects > 0 ? 'text-red-600' : 'text-green-600'}`} />
+        {fixedIssuesEnabled && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className={`w-10 h-10 ${openDefects > 0 ? 'bg-red-100' : 'bg-green-100'} rounded-full flex items-center justify-center`}>
+                  <Bug className={`w-5 h-5 ${openDefects > 0 ? 'text-red-600' : 'text-green-600'}`} />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{isRTL ? 'مشاكل مفتوحة' : 'Open Defects'}</p>
+                  <p className="text-2xl font-bold">{openDefects}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{isRTL ? 'مشاكل مفتوحة' : 'Open Defects'}</p>
-                <p className="text-2xl font-bold">{openDefects}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
@@ -245,11 +251,13 @@ export default function SystemHealth() {
             <CheckCircle className="w-4 h-4" />
             {isRTL ? 'اختبارات النظام' : 'Smoke Tests'}
           </TabsTrigger>
-          <TabsTrigger value="defects" className="gap-2">
-            <Bug className="w-4 h-4" />
-            {isRTL ? 'المشاكل' : 'Defects'}
-            {openDefects > 0 && <Badge variant="destructive" className="ms-2">{openDefects}</Badge>}
-          </TabsTrigger>
+          {fixedIssuesEnabled && (
+            <TabsTrigger value="defects" className="gap-2">
+              <Bug className="w-4 h-4" />
+              {isRTL ? 'المشاكل' : 'Defects'}
+              {openDefects > 0 && <Badge variant="destructive" className="ms-2">{openDefects}</Badge>}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -368,8 +376,9 @@ export default function SystemHealth() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="defects" className="space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between gap-3">
+        {fixedIssuesEnabled && (
+          <TabsContent value="defects" className="space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between gap-3">
             <div className="relative flex-1 max-w-md">
               <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
               <Input placeholder={isRTL ? 'بحث...' : 'Search...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${isRTL ? 'pr-10' : 'pl-10'} bg-white`} />
@@ -379,8 +388,9 @@ export default function SystemHealth() {
               {isRTL ? 'تسجيل مشكلة' : 'Report Defect'}
             </Button>
           </div>
-          <DataTable columns={defectColumns} data={filteredDefects} loading={loadingDefects} emptyMessage={t('noData')} />
-        </TabsContent>
+            <DataTable columns={defectColumns} data={filteredDefects} loading={loadingDefects} emptyMessage={t('noData')} />
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Defect Form Dialog */}
