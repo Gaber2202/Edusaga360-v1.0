@@ -18,9 +18,10 @@ export function useTenantFilter() {
   const isPlatformOwner = isCreator() && !tenantId;
 
   const tenantFilter = (additionalFilters = {}) => {
-    if (isPlatformOwner) return additionalFilters;
-    if (!tenantId) return { ...additionalFilters, tenant_id: '__BLOCK_ALL__' };
-    return { ...additionalFilters, tenant_id: tenantId };
+    // tenantQuery() already injects the tenant_id row filter on select/insert/
+    // update/delete, so tenantFilter must not add it again. This avoids duplicate
+    // tenant_id query parameters like ...&tenant_id=eq.x&tenant_id=eq.x.
+    return additionalFilters;
   };
 
   const useTenantQuery = (queryKey, entityName, filters = {}, sort = '-created_at', limit = undefined, enabled = true) => {

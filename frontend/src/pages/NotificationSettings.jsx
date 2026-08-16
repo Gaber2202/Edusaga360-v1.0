@@ -51,14 +51,15 @@ export default function NotificationSettings() {
   const fetchSettings = async () => {
     setLoading(true);
     try {
-      const { data: allSettings = [] } = await tenantQuery('notification_settings').select('*').match(tenantFilter());
+      const { data } = await tenantQuery('notification_settings').select('*').match(tenantFilter());
+      const allSettings = data || [];
       const settingsMap = {};
-      
+
       for (const setting of DEFAULT_SETTINGS) {
         const existing = allSettings.find(s => s.setting_key === setting.key);
         settingsMap[setting.key] = existing ? existing.setting_value : setting.value;
       }
-      
+
       setSettings(settingsMap);
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -70,26 +71,27 @@ export default function NotificationSettings() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { data: allSettings = [] } = await tenantQuery('notification_settings').select('*').match(tenantFilter());
-      
+      const { data } = await tenantQuery('notification_settings').select('*').match(tenantFilter());
+      const allSettings = data || [];
+
       for (const setting of DEFAULT_SETTINGS) {
         const existing = allSettings.find(s => s.setting_key === setting.key);
-        
+        const updatedBy = (await supabase.auth.getUser().then(r => r.data?.user))?.email;
+
         if (existing) {
-          await tenantQuery('notification_settings').update({
-            setting_value: settings[setting.key],
-            updated_by: (await supabase.auth.getUser().then(r => r.data?.user))?.email
-          });
+          await tenantQuery('notification_settings')
+            .update({ setting_value: settings[setting.key], updated_by: updatedBy })
+            .eq('id', existing.id);
         } else {
           await tenantQuery('notification_settings').insert({
             setting_key: setting.key,
             setting_value: settings[setting.key],
             description: setting.description,
-            updated_by: (await supabase.auth.getUser().then(r => r.data?.user))?.email
+            updated_by: updatedBy
           });
         }
       }
-      
+
       toast.success(isRTL ? 'تم الحفظ بنجاح' : 'Settings saved successfully');
     } catch (error) {
       console.error('Error saving settings:', error);

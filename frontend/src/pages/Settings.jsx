@@ -350,15 +350,15 @@ function SchoolInfoSection({ isRTL }) {
 export default function Settings() {
   const { t, isRTL, language, toggleLanguage } = useLanguage();
   const { userRole, user } = useRole();
-  const { tenantId, hasTenantAccess, isPlatformOwner } = useTenantFilter();
+  const { tenantId, hasTenantAccess } = useTenantFilter();
 
 
   const { data: users = [], isLoading: _loadingUsers } = useQuery({
     queryKey: ['users', tenantId],
     queryFn: () => {
-      if (isPlatformOwner) return fetchData(tenantQuery('users').select('*').order('created_at'));
-      if (tenantId) return fetchData(tenantQuery('users').select('*').match({ tenant_id: tenantId }));
-      return [];
+      // tenantQuery injects the tenant_id row filter automatically, so we do not
+      // repeat it in .match().
+      return fetchData(tenantQuery('users').select('*').order('created_at'));
     },
     enabled: userRole === 'admin' && hasTenantAccess,
   });

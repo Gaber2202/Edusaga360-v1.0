@@ -22,7 +22,7 @@ export default function GovDocuments() {
   const [form, setForm] = useState({ document_type: 'iqama_copy', title: '', employee_id: '', employee_name: '', issue_date: '', expiry_date: '', file_url: '', notes: '' });
 
   const { data: documents = [], isLoading } = useQuery({ enabled: false /* gov_documents table not built */, queryKey: ['govDocs'], queryFn: () => fetchData(tenantQuery('gov_documents').select('*').order('created_at', { ascending: false })), initialData: [] });
-  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').order()) });
+  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').order('created_at', { ascending: false })) });
 
   const today = new Date();
 

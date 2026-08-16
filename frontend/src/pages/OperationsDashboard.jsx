@@ -28,7 +28,7 @@ export default function OperationsDashboard() {
   const { data: crmTickets = [] } = useTenantQuery(
     ['crmTickets', tenantId, selectedBranchId],
     async () => {
-      const { data = [], error } = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ ticket_type: 'crm' })));
+      const { data = [], error } = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ category: 'crm' })));
       if (error) throw error;
       return filterByBranch(data);
     },
@@ -38,7 +38,7 @@ export default function OperationsDashboard() {
   const { data: itTickets = [] } = useTenantQuery(
     ['itTickets', tenantId, selectedBranchId],
     async () => {
-      const { data = [], error } = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ ticket_type: 'it_helpdesk' })));
+      const { data = [], error } = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ category: 'it_helpdesk' })));
       if (error) throw error;
       return filterByBranch(data);
     },

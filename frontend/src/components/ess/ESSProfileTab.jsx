@@ -25,7 +25,7 @@ export default function ESSProfileTab({ employee, departments, jobTitles: _jobTi
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: trainings = [] } = useQuery({ enabled: false /* trainings table not built */, queryKey: ['trainings_emp', employee?.id], queryFn: () => fetchData(tenantQuery('trainings').select('*').order()), initialData: [] });
+  const { data: trainings = [] } = useQuery({ enabled: false /* trainings table not built */, queryKey: ['trainings_emp', employee?.id], queryFn: () => fetchData(tenantQuery('trainings').select('*').order('created_at', { ascending: false })), initialData: [] });
 
   const { data: discCases = [] } = useQuery({ enabled: false /* disciplinary_cases table not built */, queryKey: ['disc_cases_emp', employee?.id], queryFn: () => fetchData(tenantQuery('disciplinary_cases').select('*').match({ employee_id: employee?.id })), initialData: [] });
 

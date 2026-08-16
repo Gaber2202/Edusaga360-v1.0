@@ -38,7 +38,7 @@ export default function ParentIntakeManagement() {
       const data = await fetchData(
         tenantQuery('applications')
           .select('id', { count: 'exact', head: true })
-          .match(tenantFilter({ document_status: 'pending_physical_verification' }))
+          .match(tenantFilter({ stage: 'pending_physical_verification' }))
       );
       return data?.length || 0;
     },

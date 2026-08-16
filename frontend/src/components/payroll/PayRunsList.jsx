@@ -59,7 +59,7 @@ export default function PayRunsList({ onViewPayRun }) {
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
-    queryFn: () => fetchData(tenantQuery('employees').select('*').order()), // fetch ALL - filter client-side with fallback
+    queryFn: () => fetchData(tenantQuery('employees').select('*').order('created_at', { ascending: false })), // fetch ALL - filter client-side with fallback
   });
 
   const filteredPayRuns = selectedBranchId 

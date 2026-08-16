@@ -397,7 +397,7 @@ intakeRouter.get('/pending-verifications', requireRole(['admin', 'admissions', '
     .from('applications')
     .select('*')
     .eq('tenant_id', tenantId)
-    .eq('document_status', 'pending_physical_verification')
+    .eq('stage', 'pending_physical_verification')
     .order('created_at', { ascending: false });
 
   if (error) return res.status(500).json({ error: error.message });

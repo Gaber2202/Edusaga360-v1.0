@@ -32,7 +32,7 @@ const USER_ROLES = [
 export default function UserManagement() {
   const { t, isRTL } = useLanguage();
   const queryClient = useQueryClient();
-  const { tenantFilter, tenantId, hasTenantAccess, isPlatformOwner } = useTenantFilter();
+  const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   
   const [showInvite, setShowInvite] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
@@ -59,10 +59,9 @@ export default function UserManagement() {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users', tenantId],
     queryFn: () => {
-      // For tenant users, filter by tenant_id; platform owner sees all
-      if (isPlatformOwner) return fetchData(tenantQuery('users').select('*').order('created_at', { ascending: false }));
-      if (tenantId) return fetchData(tenantQuery('users').select('*').match({ tenant_id: tenantId }).order('created_at', { ascending: false }));
-      return [];
+      // tenantQuery injects the tenant_id row filter automatically for non-platform
+      // callers, so we do not repeat it in .match().
+      return fetchData(tenantQuery('users').select('*').order('created_at', { ascending: false }));
     },
     enabled: hasTenantAccess,
   });

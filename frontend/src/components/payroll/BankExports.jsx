@@ -68,14 +68,14 @@ export default function BankExports() {
 
   const { data: exports = [], isLoading } = useQuery({ enabled: false /* bank_exports table not built */, queryKey: ['bankExports', selectedBranchId], queryFn: () => fetchData(tenantQuery('bank_exports').select('*').match(branchFilter()).order('created_at', { ascending: false })), initialData: [] });
 
-  const { data: profiles = [] } = useQuery({ enabled: false /* bank_export_profiles table not built */, queryKey: ['bankProfiles'], queryFn: () => fetchData(tenantQuery('bank_export_profiles').select('*').order()), initialData: [] });
+  const { data: profiles = [] } = useQuery({ enabled: false /* bank_export_profiles table not built */, queryKey: ['bankProfiles'], queryFn: () => fetchData(tenantQuery('bank_export_profiles').select('*').order('created_at', { ascending: false })), initialData: [] });
 
   const { data: payRuns = [] } = useQuery({
     queryKey: ['payRuns', selectedBranchId],
     queryFn: () => fetchData(tenantQuery('pay_runs').select('*').match(branchFilter()).order('created_at', { ascending: false })),
   });
 
-  const { data: payrollInputs = [] } = useQuery({ enabled: false /* payroll_inputs table not built */, queryKey: ['payrollInputs'], queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').order()), initialData: [] });
+  const { data: payrollInputs = [] } = useQuery({ enabled: false /* payroll_inputs table not built */, queryKey: ['payrollInputs'], queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').order('created_at', { ascending: false })), initialData: [] });
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],

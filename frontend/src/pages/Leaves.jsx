@@ -58,7 +58,7 @@ export default function Leaves() {
 
   const { data: leaveTypes = [] } = useQuery({
     queryKey: ['leaveTypes', tenantId],
-    queryFn: () => fetchData(tenantQuery('leave_types').select('*').match(tenantFilter({ is_active: true }))),
+    queryFn: () => fetchData(tenantQuery('leave_types').select('*').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 

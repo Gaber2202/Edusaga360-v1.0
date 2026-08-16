@@ -53,7 +53,7 @@ export default function ESSPortal() {
 
   // Get ESS settings for test mode
   const { data: essSettings = null } = useQuery({ enabled: false /* ess_settings table not built */, queryKey: ['essSettings'], queryFn: async () => {
-      const { data: settings = [] } = await tenantQuery('ess_settings').select('*').order();
+      const { data: settings = [] } = await tenantQuery('ess_settings').select('*').order('created_at', { ascending: false });
       return settings[0] || { test_mode_enabled: false };
     }, initialData: null });
 

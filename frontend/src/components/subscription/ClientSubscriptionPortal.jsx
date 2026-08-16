@@ -63,9 +63,11 @@ export default function ClientSubscriptionPortal() {
     queryKey: ['upgrade-requests', tenant?.id],
     queryFn: async () => {
       if (!tenant?.id) return [];
+      // tenant_requests is platform-scoped, so tenantQuery does not inject tenant_id;
+      // we filter by the tenant manually using the production `type` column.
       const { data } = await tenantQuery('tenant_requests').select('*').match({
         tenant_id: tenant.id,
-        request_type: 'plan_upgrade'
+        type: 'plan_upgrade'
       });
       return data || [];
     },
@@ -79,7 +81,7 @@ export default function ClientSubscriptionPortal() {
       if (!tenant?.id) return [];
       const { data } = await tenantQuery('tenant_requests').select('*').match({
         tenant_id: tenant.id,
-        request_type: 'additional_users'
+        type: 'additional_users'
       });
       return data || [];
     },

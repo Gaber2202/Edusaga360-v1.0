@@ -37,7 +37,7 @@ export default function DocumentVerificationQueue() {
     queryFn: () => fetchData(
       tenantQuery('applications')
         .select('*')
-        .match(tenantFilter({ document_status: 'pending_physical_verification' }))
+        .match(tenantFilter({ stage: 'pending_physical_verification' }))
         .order('created_at', { ascending: false })
     ),
     enabled: hasTenantAccess,

@@ -75,6 +75,7 @@
   "moyasar_refund_queue",
   "moyasar_webhook_events",
   "nitaqat_thresholds",
+  "notification_settings",
   "notifications",
   "otp_codes",
   "overtime_requests",
