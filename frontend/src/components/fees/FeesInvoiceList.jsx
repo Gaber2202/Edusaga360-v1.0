@@ -266,7 +266,7 @@ export default function FeesInvoiceList({
                             <Button size="icon" variant="ghost" className="h-7 w-7"><MoreVertical className="w-3.5 h-3.5" /></Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align={isRTL ? 'start' : 'end'}>
-                            {['admin','finance','accountant'].includes(userRole) && !['paid','cancelled'].includes(inv.status) && (
+                            {['admin','finance','accountant','creator'].includes(userRole) && !['paid','cancelled'].includes(inv.status) && (
                               <DropdownMenuItem onClick={() => onRecordPayment(inv)}>
                                 <CreditCard className="w-4 h-4 me-2" />{isRTL ? 'تسجيل دفعة' : 'Record Payment'}
                               </DropdownMenuItem>

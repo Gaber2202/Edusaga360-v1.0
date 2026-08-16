@@ -62,7 +62,7 @@ export default function FeesArrearsView({ invoices, isRTL, userRole, onRecordPay
   });
 
   const totalOverdue = withDays.reduce((s, i) => s + i.balance, 0);
-  const canManage = ['admin', 'finance', 'accountant'].includes(userRole);
+  const canManage = ['admin', 'finance', 'accountant', 'creator'].includes(userRole);
 
   return (
     <div className="space-y-5">
