@@ -1265,7 +1265,7 @@ function BulkGenerateDialog({ open, onClose, token, isRTL, tenant, onSuccess }) 
   const run = async (dry_run) => {
     setLoading(true); setError(null);
     try {
-      const body = { academic_year: criteria.academic_year, dry_run };
+      const body = { academic_year: criteria.academic_year, dry_run, approved: !dry_run };
       if (criteria.grade) body.grade = criteria.grade;
       if (criteria.campus_id) body.campus_id = criteria.campus_id;
       if (criteria.due_date) body.due_date = criteria.due_date;
