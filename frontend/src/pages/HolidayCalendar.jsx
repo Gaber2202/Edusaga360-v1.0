@@ -34,17 +34,11 @@ export default function HolidayCalendar() {
     is_active: true
   });
 
-  const holidaysQueryEnabled = hasTenantAccess;
-  console.log('[HolidayCalendar] hasTenantAccess:', hasTenantAccess, 'tenantId:', tenantId, 'selectedBranchId:', selectedBranchId);
-
   const { data: rawHolidays = [], isLoading, error: holidaysError } = useQuery({
-    enabled: holidaysQueryEnabled,
+    enabled: hasTenantAccess,
     queryKey: ['holidays', tenantId, selectedBranchId],
     queryFn: () => fetchData(tenantQuery('holidays').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
-    initialData: []
   });
-
-  if (holidaysError) console.error('[HolidayCalendar] holidays query error:', holidaysError);
 
   const holidays = useMemo(() => rawHolidays.map(h => ({
     ...h,
