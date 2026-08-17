@@ -2,11 +2,11 @@
 -- Leave Management: Approval Chains, Holidays, Audit
 -- ============================================================
 
--- Canonical tenant-isolation helpers (idempotent; will be replaced by the
--- 20260810 remediation migration but are required here for migration order).
+-- Canonical tenant-isolation helpers (idempotent; must match #238's invoker/grant
+-- pattern so applying this migration does not silently revert security properties).
 CREATE OR REPLACE FUNCTION public.auth_tenant_id()
 RETURNS UUID
-LANGUAGE sql STABLE SECURITY DEFINER
+LANGUAGE sql STABLE SECURITY INVOKER
 SET search_path = ''
 AS $$
   SELECT nullif(((auth.jwt() -> 'app_metadata'::text) ->> 'tenant_id'::text), '')::uuid
@@ -14,11 +14,16 @@ $$;
 
 CREATE OR REPLACE FUNCTION public.auth_is_platform_owner()
 RETURNS BOOLEAN
-LANGUAGE sql STABLE SECURITY DEFINER
+LANGUAGE sql STABLE SECURITY INVOKER
 SET search_path = ''
 AS $$
-  SELECT coalesce(((auth.jwt() -> 'app_metadata'::text) ->> 'is_platform_owner'::text)::boolean, false)
+  SELECT coalesce(nullif(((auth.jwt() -> 'app_metadata'::text) ->> 'is_platform_owner'::text), '')::boolean, false)
 $$;
+
+REVOKE EXECUTE ON FUNCTION public.auth_tenant_id() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.auth_is_platform_owner() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.auth_tenant_id() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.auth_is_platform_owner() TO authenticated, service_role;
 
 -- Public holidays / school closures (fixes missing table referenced in frontend)
 CREATE TABLE IF NOT EXISTS holidays (
