@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, fetchData } from '../api/supabaseClient';
+import { tenantQuery, fetchData, supabase } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent } from '../components/ui/card';
@@ -71,10 +71,11 @@ export default function LeaveBalances() {
       const balance = showAdjustment;
       const newValue = parseFloat(balance.remaining_days) + parseFloat(adjustmentDays);
       const deltaDays = parseFloat(adjustmentDays);
-      const usedDaysAfter = (balance.total_days || 0) - newValue;
+      const newUsedDays = (balance.total_days || 0) - newValue;
 
-      await tenantQuery('leave_balances').update({ remaining_days: newValue }).eq('id', balance.id);
+      await tenantQuery('leave_balances').update({ used_days: newUsedDays }).eq('id', balance.id);
 
+      const { data: { session } } = await supabase.auth.getSession();
       const tid = getTenantIdForCreate();
       await tenantQuery('leave_balance_audits').insert({
         ...(tid && { tenant_id: tid }),
@@ -83,9 +84,9 @@ export default function LeaveBalances() {
         leave_type_id: balance.leave_type_id,
         action: 'manual_adjustment',
         delta_days: deltaDays,
-        used_days_after: usedDaysAfter,
+        used_days_after: newUsedDays,
         note: `${adjustmentReason} (old: ${balance.remaining_days}, new: ${newValue})`,
-        performed_by: 'admin'
+        performed_by: session?.user?.id || null
       });
 
       await queryClient.invalidateQueries({ queryKey: ['leaveBalances'] });
