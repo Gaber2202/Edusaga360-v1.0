@@ -41,8 +41,62 @@ FORBIDDEN = [
 ]
 
 
+def _is_shallow() -> bool:
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "--is-shallow-repository"], text=True
+        ).strip() == "true"
+    except subprocess.CalledProcessError:
+        return False
+
+
 def _ensure_ref(ref: str) -> None:
-    """Fetch the base ref if it is not already available (e.g. shallow CI checkouts)."""
+    """Make the base ref available, converting shallow checkouts if necessary."""
+    try:
+        subprocess.run(
+            ["git", "rev-parse", "--verify", f"{ref}^{{commit}}"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return
+    except subprocess.CalledProcessError:
+        pass
+
+    remote_branch = ref.split("/", 1)[1] if ref.startswith("origin/") else ref
+
+    if _is_shallow():
+        try:
+            subprocess.run(
+                ["git", "fetch", "--unshallow", "origin"],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+        except subprocess.CalledProcessError:
+            # --unshallow may fail on partial/shallow clones; fall through to a
+            # targeted ref fetch with --update-shallow.
+            pass
+
+    try:
+        subprocess.run(
+            [
+                "git",
+                "fetch",
+                "--update-shallow",
+                "origin",
+                f"+refs/heads/{remote_branch}:refs/remotes/origin/{remote_branch}",
+            ],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        print(f"Could not fetch {remote_branch} from origin: {exc.stderr}")
+        sys.exit(1)
+
     try:
         subprocess.run(
             ["git", "rev-parse", "--verify", f"{ref}^{{commit}}"],
@@ -51,18 +105,8 @@ def _ensure_ref(ref: str) -> None:
             stderr=subprocess.DEVNULL,
         )
     except subprocess.CalledProcessError:
-        remote_branch = ref.split("/", 1)[1] if ref.startswith("origin/") else ref
-        try:
-            subprocess.run(
-                ["git", "fetch", "origin", f"+refs/heads/{remote_branch}:refs/remotes/origin/{remote_branch}"],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
-        except subprocess.CalledProcessError as exc:
-            print(f"Could not fetch {remote_branch} from origin: {exc.stderr}")
-            sys.exit(1)
+        print(f"Base ref {ref} is not available after fetch")
+        sys.exit(1)
 
 
 def changed_files(args_base: str | None = None) -> list[Path]:
