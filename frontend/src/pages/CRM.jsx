@@ -39,7 +39,7 @@ export default function CRM() {
   const { data: tickets = [], isLoading: ticketsLoading } = useQuery({
     queryKey: ['serviceTickets', tenantId, selectedBranchId],
     queryFn: async () => {
-      const { data = [], error } = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ ticket_type: 'crm' }))).order('created_at', { ascending: false });
+      const { data = [], error } = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ category: 'crm' }))).order('created_at', { ascending: false });
       if (error) throw error;
       return filterByBranch(data);
     },

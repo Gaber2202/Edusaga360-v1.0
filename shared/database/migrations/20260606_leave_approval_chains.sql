@@ -2,11 +2,11 @@
 -- Leave Management: Approval Chains, Holidays, Audit
 -- ============================================================
 
--- Canonical tenant-isolation helpers (idempotent; will be replaced by the
--- 20260810 remediation migration but are required here for migration order).
+-- Canonical tenant-isolation helpers (idempotent; must match #238's invoker/grant
+-- pattern so applying this migration does not silently revert security properties).
 CREATE OR REPLACE FUNCTION public.auth_tenant_id()
 RETURNS UUID
-LANGUAGE sql STABLE SECURITY DEFINER
+LANGUAGE sql STABLE SECURITY INVOKER
 SET search_path = ''
 AS $$
   SELECT nullif(((auth.jwt() -> 'app_metadata'::text) ->> 'tenant_id'::text), '')::uuid
@@ -14,11 +14,16 @@ $$;
 
 CREATE OR REPLACE FUNCTION public.auth_is_platform_owner()
 RETURNS BOOLEAN
-LANGUAGE sql STABLE SECURITY DEFINER
+LANGUAGE sql STABLE SECURITY INVOKER
 SET search_path = ''
 AS $$
-  SELECT coalesce(((auth.jwt() -> 'app_metadata'::text) ->> 'is_platform_owner'::text)::boolean, false)
+  SELECT coalesce(nullif(((auth.jwt() -> 'app_metadata'::text) ->> 'is_platform_owner'::text), '')::boolean, false)
 $$;
+
+REVOKE EXECUTE ON FUNCTION public.auth_tenant_id() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.auth_is_platform_owner() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.auth_tenant_id() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.auth_is_platform_owner() TO authenticated, service_role;
 
 -- Public holidays / school closures (fixes missing table referenced in frontend)
 CREATE TABLE IF NOT EXISTS holidays (
@@ -35,10 +40,16 @@ CREATE TABLE IF NOT EXISTS holidays (
 );
 
 ALTER TABLE holidays ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "tenant_isolation" ON holidays;
 CREATE POLICY "tenant_isolation" ON holidays
   FOR ALL TO authenticated
   USING (tenant_id = (select public.auth_tenant_id()))
   WITH CHECK (tenant_id = (select public.auth_tenant_id()));
+DROP POLICY IF EXISTS "platform_owner_access" ON holidays;
+CREATE POLICY "platform_owner_access" ON holidays
+  FOR ALL TO authenticated
+  USING ((select public.auth_is_platform_owner()))
+  WITH CHECK ((select public.auth_is_platform_owner()));
 CREATE INDEX IF NOT EXISTS idx_holidays_tenant_date ON holidays(tenant_id, date);
 
 -- Configurable multi-level approval chains per leave type
@@ -59,10 +70,16 @@ CREATE TABLE IF NOT EXISTS leave_approval_chains (
 );
 
 ALTER TABLE leave_approval_chains ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "tenant_isolation" ON leave_approval_chains;
 CREATE POLICY "tenant_isolation" ON leave_approval_chains
   FOR ALL TO authenticated
   USING (tenant_id = (select public.auth_tenant_id()))
   WITH CHECK (tenant_id = (select public.auth_tenant_id()));
+DROP POLICY IF EXISTS "platform_owner_access" ON leave_approval_chains;
+CREATE POLICY "platform_owner_access" ON leave_approval_chains
+  FOR ALL TO authenticated
+  USING ((select public.auth_is_platform_owner()))
+  WITH CHECK ((select public.auth_is_platform_owner()));
 CREATE INDEX IF NOT EXISTS idx_leave_chains_tenant_type ON leave_approval_chains(tenant_id, leave_type_id);
 
 -- Add approval chain tracking columns to leave_requests
@@ -95,9 +112,15 @@ CREATE TABLE IF NOT EXISTS leave_balance_audits (
 );
 
 ALTER TABLE leave_balance_audits ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "tenant_isolation" ON leave_balance_audits;
 CREATE POLICY "tenant_isolation" ON leave_balance_audits
   FOR ALL TO authenticated
   USING (tenant_id = (select public.auth_tenant_id()))
   WITH CHECK (tenant_id = (select public.auth_tenant_id()));
+DROP POLICY IF EXISTS "platform_owner_access" ON leave_balance_audits;
+CREATE POLICY "platform_owner_access" ON leave_balance_audits
+  FOR ALL TO authenticated
+  USING ((select public.auth_is_platform_owner()))
+  WITH CHECK ((select public.auth_is_platform_owner()));
 CREATE INDEX IF NOT EXISTS idx_leave_audits_tenant ON leave_balance_audits(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_leave_audits_employee ON leave_balance_audits(employee_id);

@@ -13,12 +13,15 @@ import { callApi } from './supabaseClient';
 const GET = { method: 'GET' };
 const DELETE = { method: 'DELETE' };
 
+const withTenant = (base, tenantId) =>
+  tenantId ? `${base}?tenant_id=${encodeURIComponent(tenantId)}` : base;
+
 // ── API keys (control plane for the external /api/v1 data plane) ───────────────
 export const apiKeysApi = {
-  listScopes: () => callApi('/api/api-keys/scopes', null, GET),
-  list: () => callApi('/api/api-keys', null, GET),
-  create: (payload) => callApi('/api/api-keys', payload, { method: 'POST' }),
-  revoke: (id) => callApi(`/api/api-keys/${id}`, null, DELETE),
+  listScopes: (tenantId) => callApi(withTenant('/api/api-keys/scopes', tenantId), null, GET),
+  list: (tenantId) => callApi(withTenant('/api/api-keys', tenantId), null, GET),
+  create: (payload, tenantId) => callApi('/api/api-keys', { ...payload, ...(tenantId && { tenant_id: tenantId }) }, { method: 'POST' }),
+  revoke: (id, tenantId) => callApi(withTenant(`/api/api-keys/${id}`, tenantId), null, DELETE),
 };
 
 // ── ATS connectors ────────────────────────────────────────────────────────────

@@ -13,25 +13,27 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { apiKeysApi } from '../../api/integrations';
 import { useLanguage } from '../LanguageContext';
+import { useTenantFilter } from '../../hooks/useTenantFilter';
 
 /** Manage API keys for the external /api/v1 data plane. */
 export default function ApiKeysTab() {
   const { isRTL } = useLanguage();
   const T = (en, ar) => (isRTL ? ar : en);
   const qc = useQueryClient();
+  const { tenantId } = useTenantFilter();
 
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState('');
   const [scopes, setScopes] = useState([]);
   const [revealedKey, setRevealedKey] = useState(null);
 
-  const { data: keysRes, isLoading } = useQuery({ queryKey: ['apiKeys'], queryFn: apiKeysApi.list });
-  const { data: scopesRes } = useQuery({ queryKey: ['apiKeyScopes'], queryFn: apiKeysApi.listScopes });
+  const { data: keysRes, isLoading } = useQuery({ queryKey: ['apiKeys', tenantId], queryFn: () => apiKeysApi.list(tenantId) });
+  const { data: scopesRes } = useQuery({ queryKey: ['apiKeyScopes', tenantId], queryFn: () => apiKeysApi.listScopes(tenantId) });
   const keys = keysRes?.data || [];
   const allScopes = scopesRes?.data || [];
 
   const createMut = useMutation({
-    mutationFn: () => apiKeysApi.create({ name: name.trim(), scopes }),
+    mutationFn: () => apiKeysApi.create({ name: name.trim(), scopes }, tenantId),
     onSuccess: (res) => {
       setRevealedKey(res.api_key);
       setShowCreate(false);
@@ -43,7 +45,7 @@ export default function ApiKeysTab() {
   });
 
   const revokeMut = useMutation({
-    mutationFn: (id) => apiKeysApi.revoke(id),
+    mutationFn: (id) => apiKeysApi.revoke(id, tenantId),
     onSuccess: () => {
       toast.success(T('Key revoked', 'تم إلغاء المفتاح'));
       qc.invalidateQueries({ queryKey: ['apiKeys'] });

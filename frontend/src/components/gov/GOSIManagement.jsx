@@ -13,8 +13,8 @@ export default function GOSIManagement() {
   const { isRTL } = useLanguage();
   const { tenant } = useTenant();
 
-  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').order()) });
-  const { data: gosiRecords = [], isLoading } = useQuery({ enabled: false /* gosi_records table not built */, queryKey: ['gosiRecords'], queryFn: () => fetchData(tenantQuery('gosi_records').select('*').order()), initialData: [] });
+  const { data: employees = [] } = useQuery({ queryKey: ['employees'], queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').order('created_at', { ascending: false })) });
+  const { data: gosiRecords = [], isLoading } = useQuery({ enabled: false /* gosi_records table not built */, queryKey: ['gosiRecords'], queryFn: () => fetchData(tenantQuery('gosi_records').select('*').order('created_at', { ascending: false })), initialData: [] });
 
   const enriched = useMemo(() => {
     return employees.map(emp => {

@@ -39,7 +39,7 @@ export default function MyPayslips() {
   const { data: deliveries = [] } = useQuery({ enabled: false /* payslip_deliverys table not built */, queryKey: ['myPayslipDeliveries', employee?.id], queryFn: () => fetchData(tenantQuery('payslip_deliverys').select('*').match({ employee_id: employee?.id })), initialData: [] });
 
   const { data: securitySettings = null } = useQuery({ enabled: false /* payslip_settings table not built */, queryKey: ['payslipSettings'], queryFn: async () => {
-      const { data: all = [] } = await tenantQuery('payslip_settings').select('*').order();
+      const { data: all = [] } = await tenantQuery('payslip_settings').select('*').order('created_at', { ascending: false });
       return all[0];
     }, initialData: null });
 

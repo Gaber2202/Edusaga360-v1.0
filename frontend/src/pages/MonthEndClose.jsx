@@ -64,7 +64,7 @@ export default function MonthEndClose() {
 
   const { data: fiscalPeriods = [] } = useQuery({
     queryKey: ['fiscalPeriods', tenantId],
-    queryFn: () => fetchData(tenantQuery('fiscal_periods').select('*').match(tenantFilter({ is_active: true }))),
+    queryFn: () => fetchData(tenantQuery('fiscal_periods').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
   });
 

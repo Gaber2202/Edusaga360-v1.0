@@ -19,7 +19,7 @@ export default function PayslipViewer({ payslip, employee, branch, open, onClose
   const [showPasswordNote, setShowPasswordNote] = React.useState(false);
 
   const { data: securitySettings = null } = useQuery({ enabled: false /* payslip_settings table not built */, queryKey: ['payslipSettings', tenantId], queryFn: async () => {
-      const { data: all = [] } = await tenantQuery('payslip_settings').select('*').order();
+      const { data: all = [] } = await tenantQuery('payslip_settings').select('*').order('created_at', { ascending: false });
       return all[0];
     }, initialData: null });
 

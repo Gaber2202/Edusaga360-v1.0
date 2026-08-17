@@ -53,7 +53,7 @@ export default function GOSISubmissions() {
         payrollData = data;
       } catch (_e) {
         // If filter fails, try listing all and filtering client-side
-        const { data: all = [] } = await tenantQuery('payroll_inputs').select('*').order();
+        const { data: all = [] } = await tenantQuery('payroll_inputs').select('*').order('created_at', { ascending: false });
         payrollData = all.filter(p => p.period === formData.period);
       }
 

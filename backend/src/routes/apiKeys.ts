@@ -55,7 +55,7 @@ apiKeysRouter.post('/', requireRole(MANAGE_ROLES), async (req: AuthenticatedRequ
   }
   const { name, scopes, expires_at } = parsed.data;
 
-  const { tenantId, error: tenantError } = await resolveTenantId(req, parsed.data.tenant_id);
+  const { tenantId, error: tenantError } = await resolveTenantId(req, parsed.data.tenant_id || req.user?.tenant_id);
   if (!tenantId) return res.status(400).json({ error: 'no_tenant', message: tenantError });
 
   const key = generateApiKey();
@@ -83,7 +83,7 @@ apiKeysRouter.post('/', requireRole(MANAGE_ROLES), async (req: AuthenticatedRequ
 
 // GET /api/api-keys — list this tenant's keys (metadata only, never the secret).
 apiKeysRouter.get('/', requireRole(MANAGE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
-  const { tenantId, error: tenantError } = await resolveTenantId(req, queryTenant(req));
+  const { tenantId, error: tenantError } = await resolveTenantId(req, queryTenant(req) || req.user?.tenant_id);
   if (!tenantId) return res.status(400).json({ error: 'no_tenant', message: tenantError });
 
   const { data, error } = await supabase
@@ -98,7 +98,7 @@ apiKeysRouter.get('/', requireRole(MANAGE_ROLES), async (req: AuthenticatedReque
 
 // DELETE /api/api-keys/:id — revoke a key (soft: sets revoked_at). Idempotent.
 apiKeysRouter.delete('/:id', requireRole(MANAGE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
-  const { tenantId, error: tenantError } = await resolveTenantId(req, queryTenant(req));
+  const { tenantId, error: tenantError } = await resolveTenantId(req, queryTenant(req) || req.user?.tenant_id);
   if (!tenantId) return res.status(400).json({ error: 'no_tenant', message: tenantError });
 
   const { data, error } = await supabase

@@ -37,7 +37,7 @@ export default function ITHelpdesk() {
   const { data: tickets = [], isLoading: ticketsLoading } = useQuery({
     queryKey: ['itTickets', tenantId, selectedBranchId],
     queryFn: async () => {
-      const { data = [], error } = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ ticket_type: 'it_helpdesk' }))).order('created_at', { ascending: false });
+      const { data = [], error } = await tenantQuery('service_tickets').select('*').match(tenantFilter(branchFilter({ category: 'it_helpdesk' }))).order('created_at', { ascending: false });
       if (error) throw error;
       return filterByBranch(data);
     },
