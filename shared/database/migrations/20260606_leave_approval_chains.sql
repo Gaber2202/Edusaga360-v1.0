@@ -40,10 +40,16 @@ CREATE TABLE IF NOT EXISTS holidays (
 );
 
 ALTER TABLE holidays ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "tenant_isolation" ON holidays;
 CREATE POLICY "tenant_isolation" ON holidays
   FOR ALL TO authenticated
   USING (tenant_id = (select public.auth_tenant_id()))
   WITH CHECK (tenant_id = (select public.auth_tenant_id()));
+DROP POLICY IF EXISTS "platform_owner_access" ON holidays;
+CREATE POLICY "platform_owner_access" ON holidays
+  FOR ALL TO authenticated
+  USING ((select public.auth_is_platform_owner()))
+  WITH CHECK ((select public.auth_is_platform_owner()));
 CREATE INDEX IF NOT EXISTS idx_holidays_tenant_date ON holidays(tenant_id, date);
 
 -- Configurable multi-level approval chains per leave type
@@ -64,10 +70,16 @@ CREATE TABLE IF NOT EXISTS leave_approval_chains (
 );
 
 ALTER TABLE leave_approval_chains ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "tenant_isolation" ON leave_approval_chains;
 CREATE POLICY "tenant_isolation" ON leave_approval_chains
   FOR ALL TO authenticated
   USING (tenant_id = (select public.auth_tenant_id()))
   WITH CHECK (tenant_id = (select public.auth_tenant_id()));
+DROP POLICY IF EXISTS "platform_owner_access" ON leave_approval_chains;
+CREATE POLICY "platform_owner_access" ON leave_approval_chains
+  FOR ALL TO authenticated
+  USING ((select public.auth_is_platform_owner()))
+  WITH CHECK ((select public.auth_is_platform_owner()));
 CREATE INDEX IF NOT EXISTS idx_leave_chains_tenant_type ON leave_approval_chains(tenant_id, leave_type_id);
 
 -- Add approval chain tracking columns to leave_requests
@@ -100,9 +112,15 @@ CREATE TABLE IF NOT EXISTS leave_balance_audits (
 );
 
 ALTER TABLE leave_balance_audits ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "tenant_isolation" ON leave_balance_audits;
 CREATE POLICY "tenant_isolation" ON leave_balance_audits
   FOR ALL TO authenticated
   USING (tenant_id = (select public.auth_tenant_id()))
   WITH CHECK (tenant_id = (select public.auth_tenant_id()));
+DROP POLICY IF EXISTS "platform_owner_access" ON leave_balance_audits;
+CREATE POLICY "platform_owner_access" ON leave_balance_audits
+  FOR ALL TO authenticated
+  USING ((select public.auth_is_platform_owner()))
+  WITH CHECK ((select public.auth_is_platform_owner()));
 CREATE INDEX IF NOT EXISTS idx_leave_audits_tenant ON leave_balance_audits(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_leave_audits_employee ON leave_balance_audits(employee_id);
