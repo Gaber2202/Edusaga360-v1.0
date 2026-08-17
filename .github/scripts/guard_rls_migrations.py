@@ -41,13 +41,42 @@ FORBIDDEN = [
 ]
 
 
+def _ensure_ref(ref: str) -> None:
+    """Fetch the base ref if it is not already available (e.g. shallow CI checkouts)."""
+    try:
+        subprocess.run(
+            ["git", "rev-parse", "--verify", f"{ref}^{{commit}}"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError:
+        remote_branch = ref.split("/", 1)[1] if ref.startswith("origin/") else ref
+        try:
+            subprocess.run(
+                ["git", "fetch", "origin", f"+refs/heads/{remote_branch}:refs/remotes/origin/{remote_branch}"],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            print(f"Could not fetch {remote_branch} from origin: {exc.stderr}")
+            sys.exit(1)
+
+
 def changed_files(args_base: str | None = None) -> list[Path]:
     base = args_base or os.environ.get("GITHUB_BASE_REF", "main")
     if not base.startswith(("refs/", "origin/")):
         base = f"origin/{base}"
-    merge_base = subprocess.check_output(
-        ["git", "merge-base", base, "HEAD"], text=True, stderr=subprocess.PIPE
-    ).strip()
+    _ensure_ref(base)
+    try:
+        merge_base = subprocess.check_output(
+            ["git", "merge-base", base, "HEAD"], text=True, stderr=subprocess.PIPE
+        ).strip()
+    except subprocess.CalledProcessError as exc:
+        print(f"Could not find merge base between {base} and HEAD: {exc.stderr}")
+        sys.exit(1)
     if not merge_base:
         print(f"Could not find merge base between {base} and HEAD")
         sys.exit(1)
