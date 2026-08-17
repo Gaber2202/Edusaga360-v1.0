@@ -185,6 +185,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Block legacy current_setting/auth.jwt() ->> 'tenant_id' tenant-isolation patterns
         run: python3 .github/scripts/guard_rls_migrations.py
 
