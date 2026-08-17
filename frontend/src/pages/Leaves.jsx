@@ -62,7 +62,11 @@ export default function Leaves() {
     enabled: hasTenantAccess,
   });
 
-  const { data: holidays = [] } = useQuery({ enabled: false /* holidays table not built */, queryKey: ['holidays', tenantId], queryFn: () => fetchData(tenantQuery('holidays').select('*').match(tenantFilter({ is_active: true }))), initialData: [] });
+  const { data: holidays = [] } = useQuery({
+    queryKey: ['holidays', tenantId],
+    queryFn: () => fetchData(tenantQuery('holidays').select('id, name_ar, name_en, date as start_date, end_date, type, is_recurring, branch_id, created_at').match(tenantFilter()).order('created_at', { ascending: false })),
+    enabled: hasTenantAccess,
+  });
 
   const { data: leaveBalances = [] } = useQuery({
     queryKey: ['leaveBalances', tenantId],

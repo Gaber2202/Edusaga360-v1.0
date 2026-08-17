@@ -70,11 +70,10 @@ export default function LeaveBalances() {
     try {
       const balance = showAdjustment;
       const newValue = parseFloat(balance.remaining_days) + parseFloat(adjustmentDays);
+      const deltaDays = parseFloat(adjustmentDays);
+      const usedDaysAfter = (balance.total_days || 0) - newValue;
 
-      await tenantQuery('leave_balances').update({
-        remaining_days: newValue,
-        last_updated: new Date().toISOString()
-      });
+      await tenantQuery('leave_balances').update({ remaining_days: newValue }).eq('id', balance.id);
 
       const tid = getTenantIdForCreate();
       await tenantQuery('leave_balance_audits').insert({
@@ -83,11 +82,10 @@ export default function LeaveBalances() {
         employee_id: balance.employee_id,
         leave_type_id: balance.leave_type_id,
         action: 'manual_adjustment',
-        old_value: balance.remaining_days,
-        new_value: newValue,
-        reason: adjustmentReason,
-        changed_by: 'admin', // Current user
-        timestamp: new Date().toISOString()
+        delta_days: deltaDays,
+        used_days_after: usedDaysAfter,
+        note: `${adjustmentReason} (old: ${balance.remaining_days}, new: ${newValue})`,
+        performed_by: 'admin'
       });
 
       await queryClient.invalidateQueries({ queryKey: ['leaveBalances'] });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
@@ -34,7 +34,23 @@ export default function HolidayCalendar() {
     is_active: true
   });
 
-  const { data: holidays = [], isLoading } = useQuery({ enabled: false /* holidays table not built */, queryKey: ['holidays', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('holidays').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
+  const { data: rawHolidays = [], isLoading } = useQuery({
+    enabled: hasTenantAccess,
+    queryKey: ['holidays', tenantId, selectedBranchId],
+    queryFn: () => fetchData(tenantQuery('holidays').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
+    initialData: []
+  });
+
+  const holidays = useMemo(() => rawHolidays.map(h => ({
+    ...h,
+    holiday_name_ar: h.name_ar,
+    holiday_name_en: h.name_en,
+    start_date: h.date,
+    end_date: h.end_date || h.date,
+    holiday_type: h.type,
+    applies_to_branches: h.branch_id ? [h.branch_id] : [],
+    is_active: true
+  })), [rawHolidays]);
 
   const { data: _branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
@@ -56,13 +72,18 @@ export default function HolidayCalendar() {
     try {
       const tid = getTenantIdForCreate();
       const data = {
-        ...formData,
-        ...(tid && { tenant_id: tid }),
-        end_date: formData.end_date || formData.start_date
+        name_ar: formData.holiday_name_ar,
+        name_en: formData.holiday_name_en,
+        date: formData.start_date,
+        end_date: formData.end_date || formData.start_date,
+        type: formData.holiday_type,
+        is_recurring: false,
+        branch_id: formData.applies_to_branches?.[0] || null,
+        ...(tid && { tenant_id: tid })
       };
 
       if (editingHoliday?.id) {
-        await tenantQuery('holidays').update(data);
+        await tenantQuery('holidays').update(data).eq('id', editingHoliday.id);
         toast.success(isRTL ? 'تم التحديث بنجاح' : 'Updated successfully');
       } else {
         await tenantQuery('holidays').insert(data);
