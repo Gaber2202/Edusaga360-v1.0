@@ -180,6 +180,14 @@ jobs:
       - name: Prove the guard with fixture tests
         run: python3 .github/scripts/test_guard_schema_drift.py
 
+  guard-rls-migrations:
+    name: Guard legacy RLS patterns in migrations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Block legacy current_setting/auth.jwt() ->> 'tenant_id' tenant-isolation patterns
+        run: python3 .github/scripts/guard_rls_migrations.py
+
   guard-frontend-query-tables:
     name: Guard frontend query table existence
     runs-on: ubuntu-latest
