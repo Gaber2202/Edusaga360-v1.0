@@ -45,6 +45,7 @@ export default function InvoiceDetails() {
   const vatPercent = Math.round((tenant?.vat_rate ?? 0.15) * 100);
   const { t, isRTL } = useLanguage();
   const { userRole, user } = useRole();
+  const canRecordPayment = ['admin', 'finance', 'accountant', 'creator'].includes(userRole);
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -697,7 +698,7 @@ EduSaga 360
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>{isRTL ? 'سجل الدفعات' : 'Payment History'}</CardTitle>
-                  {balance > 0 && (userRole === 'admin' || userRole === 'accountant') && (
+                  {balance > 0 && (canRecordPayment) && (
                     <Button onClick={() => setShowPaymentLogForm(true)} size="sm" className="gap-2">
                       <CreditCard className="w-4 h-4" />
                       {isRTL ? 'تسجيل دفعة' : 'Record Payment'}
@@ -847,7 +848,7 @@ EduSaga 360
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>{isRTL ? 'سجل المدفوعات' : 'Payments Log'}</CardTitle>
-            {balance > 0 && (userRole === 'admin' || userRole === 'accountant') && (
+            {balance > 0 && (canRecordPayment) && (
               <Button onClick={() => setShowPaymentLogForm(true)} className="gap-2 bg-najdi-900">
                 <CreditCard className="w-4 h-4" />
                 {isRTL ? 'تسجيل دفعة' : 'Record Payment'}
