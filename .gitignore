@@ -39,3 +39,4 @@ coverage/
 *.tsbuildinfo
 .vercel
 .claude/
+.env*
