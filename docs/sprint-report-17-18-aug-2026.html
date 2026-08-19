@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EduSaga 360 — Feature Report · 17–18 Aug 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --green-900: #0B3A29;
+      --green-700: #0F5138;
+      --green-500: #2E7D5B;
+      --green-100: #E3F0E8;
+      --gold-600: #B08D3A;
+      --gold-400: #C9A227;
+      --cream: #F5F0E4;
+      --sand: #EDE4D2;
+      --border: #E5DFCF;
+      --text: #12241C;
+      --muted: #5A6A61;
+      --warn: #D08A24;
+      --white: #FFFFFF;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Poppins, system-ui, sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      line-height: 1.55;
+      padding: 40px 20px 64px;
+    }
+
+    .page {
+      max-width: 920px;
+      margin: 0 auto;
+    }
+
+    header.hero {
+      background: linear-gradient(145deg, var(--green-900) 0%, var(--green-700) 70%);
+      color: var(--cream);
+      border-radius: 20px;
+      padding: 36px 40px 32px;
+      box-shadow: 0 16px 40px rgba(11, 58, 41, 0.18);
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold-400);
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .subtitle { color: rgba(245, 240, 228, 0.78); font-size: 15px; max-width: 620px; }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .chip {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(201, 162, 39, 0.35);
+      color: var(--cream);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 999px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 20px 0 28px;
+    }
+
+    .kpi {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+    }
+
+    .kpi strong { display: block; font-size: 26px; color: var(--green-700); line-height: 1.1; }
+    .kpi span { font-size: 12px; color: var(--muted); font-weight: 500; }
+
+    h2 {
+      font-size: 18px;
+      color: var(--green-900);
+      margin: 28px 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2 .day {
+      background: var(--green-700);
+      color: var(--cream);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    h2 .day.today { background: var(--gold-600); color: var(--green-900); }
+
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 24px 8px;
+      margin-bottom: 14px;
+    }
+
+    h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--green-700);
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--sand);
+    }
+
+    ul { padding: 0 0 14px 18px; }
+    li { margin: 0 0 7px; font-size: 14px; color: var(--text); }
+    li::marker { color: var(--gold-600); }
+
+    .note {
+      background: #FFF8E8;
+      border: 1px solid #E8D5A3;
+      border-radius: 14px;
+      padding: 16px 18px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .note strong { color: var(--warn); }
+
+    footer {
+      margin-top: 28px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 720px) {
+      .summary { grid-template-columns: 1fr 1fr; }
+      header.hero { padding: 28px 22px; }
+    }
+
+    @media print {
+      body { background: white; padding: 0; }
+      header.hero { box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .card, .kpi, .note { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <p class="eyebrow">EduSaga 360 · Delivery report</p>
+      <h1>Features developed · 17–18 August 2026</h1>
+      <p class="subtitle">
+        Two-day sprint covering parent portal, parent mobile, canteen, school store, and staff operations.
+      </p>
+      <div class="meta">
+        <span class="chip">Mon 17 Aug — parent portal live</span>
+        <span class="chip">Tue 18 Aug — commerce + mobile + staff</span>
+        <span class="chip">Demo tenant T-DEMO</span>
+      </div>
+    </header>
+
+    <section class="summary">
+      <div class="kpi"><strong>2</strong><span>Delivery days</span></div>
+      <div class="kpi"><strong>3</strong><span>Surfaces (web, staff, mobile)</span></div>
+      <div class="kpi"><strong>8</strong><span>Parent portal modules</span></div>
+      <div class="kpi"><strong>1</strong><span>Open item: per-school URLs</span></div>
+    </section>
+
+    <h2><span class="day">Mon 17 Aug</span> Parent portal foundation</h2>
+
+    <article class="card">
+      <h3>Parent portal (web) — first working product</h3>
+      <ul>
+        <li>Login-ready parent experience (replaced placeholders)</li>
+        <li>Dashboard with linked children, attendance %, outstanding fees, notifications</li>
+        <li>Student progress (grades by child)</li>
+        <li>Attendance list</li>
+        <li>Fees &amp; billing</li>
+        <li>Homework</li>
+        <li>Announcements</li>
+        <li>Messages (inbox + send to school)</li>
+        <li>Arabic / English with RTL</li>
+        <li>Demo seed: <code>parent.demo@edusaga.local</code> (Sara + Omar) and <code>parent.empty@edusaga.local</code> (Layla)</li>
+      </ul>
+    </article>
+
+    <article class="card">
+      <h3>Parent portal UX</h3>
+      <ul>
+        <li>Design-system visuals (Poppins, contrast, component refresh)</li>
+        <li>Richer dashboard KPIs and graphs</li>
+        <li>Attendance filters + PDF export</li>
+        <li>Fees filters, Pay on unpaid invoices, receipt PDF on paid invoices</li>
+      </ul>
+    </article>
+
+    <article class="card">
+      <h3>Parent API &amp; ops</h3>
+      <ul>
+        <li><code>/api/parent</code> catalog: children, attendance, invoices, grades, homework, announcements, messages, pay/PDF links</li>
+        <li>Repo on this machine; GitHub identity set to Gaber2202</li>
+        <li>CI/deploy wired for DEV, Stg, and Prod</li>
+      </ul>
+    </article>
+
+    <h2><span class="day today">Tue 18 Aug</span> Commerce, mobile, and staff</h2>
+
+    <article class="card">
+      <h3>School identity &amp; login</h3>
+      <ul>
+        <li>Public school lookup by tenant code / slug (<code>T-DEMO</code>)</li>
+        <li>Parent login pinned to that school</li>
+        <li>Teachers with linked children can use the parent portal; staff with no children are denied</li>
+      </ul>
+    </article>
+
+    <article class="card">
+      <h3>Parent mobile (Flutter, iOS + Android)</h3>
+      <ul>
+        <li>Tenant-code gate, then email/password</li>
+        <li>Home, progress, attendance, fees (pay in WebView + PDFs), homework, announcements, messages</li>
+        <li>Canteen + store screens</li>
+        <li>AR/EN, RTL, access-denied and empty states</li>
+      </ul>
+    </article>
+
+    <article class="card">
+      <h3>Child records (web + mobile)</h3>
+      <ul>
+        <li>Fees tabs: Invoices | Payments | Contracts | Admission docs</li>
+        <li>Signed download of admission files</li>
+      </ul>
+    </article>
+
+    <article class="card">
+      <h3>Canteen (cashless)</h3>
+      <ul>
+        <li>Parent: wallet balance, spend history, top-up (Moyasar invoice)</li>
+        <li>Parent: food-allergy types per child</li>
+        <li>Staff: Canteen Management — menu, stock, wallets, iPad-style Quick POS with allergy alerts</li>
+        <li>Staff: POS orders history with filters</li>
+      </ul>
+    </article>
+
+    <article class="card">
+      <h3>School store</h3>
+      <ul>
+        <li>Parent: catalog (uniforms, pool, playground, other), buy or rent, cart, checkout, click-and-collect</li>
+        <li>Parent: time-slot picker for bookable items (pitch/court)</li>
+        <li>Staff: School store — items, categories, images, sell/rent/both, stock, bookable hours and blackouts</li>
+        <li>Staff: Store orders — collect/cancel + booking calendar (including staff blocks)</li>
+        <li>Double-booking blocked; unpaid orders hold the slot until paid or cancelled</li>
+      </ul>
+    </article>
+
+    <article class="card">
+      <h3>Demo data</h3>
+      <ul>
+        <li>Canteen wallets/menu aligned between parent and staff</li>
+        <li>Store catalog with images; sample ready-to-collect and booked pitch orders</li>
+      </ul>
+    </article>
+
+    <p class="note">
+      <strong>Not fully shipped:</strong> per-school URLs such as
+      <code>{slug}.edusaga360.com/parentportal</code> (architecture agreed; DNS/rewrites still outstanding).
+      Mobile uses tenant code instead of a subdomain.
+    </p>
+
+    <footer>EduSaga 360 · Feature report generated 18 August 2026 · Open in a browser and print to PDF if needed</footer>
+  </div>
+</body>
+</html>

@@ -102,6 +102,9 @@ export const PAGE_MODULE_KEYS = {
 
   // School operations
   CanteenManagement: 'canteen',
+  CanteenPOSOrders: 'canteen',
+  StoreManagement: 'store',
+  StoreOrders: 'store',
   LibraryManagement: 'library',
   FleetManagement: 'transport',
   TransportManagement: 'transport',
@@ -209,6 +212,9 @@ export const NAV_MODULE_KEYS = {
   depreciation: 'assets',
   facilities: 'facilities',
   canteenManagement: 'canteen',
+  canteenPOSOrders: 'canteen',
+  storeManagement: 'store',
+  storeOrders: 'store',
   libraryManagement: 'library',
   transportManagement: 'transport',
   schoolClinic: 'clinic',

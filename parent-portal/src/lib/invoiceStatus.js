@@ -40,10 +40,18 @@ export const STATUS_LABELS = {
   cancelled: { en: 'Cancelled', ar: 'ملغاة' },
 };
 
+export const STATUS_TONES = {
+  paid: 'success',
+  partial: 'warn',
+  unpaid: 'muted',
+  overdue: 'danger',
+  cancelled: 'muted',
+};
+
 export const STATUS_STYLES = {
-  paid: 'bg-green-50 text-green-700 border-green-200',
-  partial: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  unpaid: 'bg-slate-50 text-slate-600 border-slate-200',
-  overdue: 'bg-red-50 text-red-700 border-red-200',
-  cancelled: 'bg-slate-50 text-slate-400 border-slate-200',
+  paid: 'bg-forest-100 text-forest-700',
+  partial: 'bg-[#F8EEDF] text-[#D08A24]',
+  unpaid: 'bg-sand-alt text-muted-foreground',
+  overdue: 'bg-[#F8E8E6] text-[#A8443A]',
+  cancelled: 'bg-sand-alt text-muted-foreground',
 };

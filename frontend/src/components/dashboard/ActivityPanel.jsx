@@ -36,7 +36,8 @@ export default function ActivityPanel({ leaveRequests, applications, invoices, i
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Pending Leave Requests */}
       {isHR && (
-        <Card>
+        <Card className="border-0 shadow-sm overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-amber-500 to-amber-400" />
           <div className="flex items-center justify-between p-5 pb-3">
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-ink text-sm">{isRTL ? 'إجازات معلقة' : 'Pending Leave Requests'}</h3>
@@ -74,7 +75,8 @@ export default function ActivityPanel({ leaveRequests, applications, invoices, i
 
       {/* Recent Applications */}
       {isSchoolAdmin && (
-        <Card>
+        <Card className="border-0 shadow-sm overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-najdi-900 to-najdi-600" />
           <div className="flex items-center justify-between p-5 pb-3">
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-ink text-sm">{isRTL ? 'أحدث الطلبات' : 'Recent Applications'}</h3>
@@ -107,7 +109,8 @@ export default function ActivityPanel({ leaveRequests, applications, invoices, i
 
       {/* Recent Invoices */}
       {isFinance && (
-        <Card>
+        <Card className="border-0 shadow-sm overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-emerald-500 to-emerald-400" />
           <div className="flex items-center justify-between p-5 pb-3">
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-ink text-sm">{isRTL ? 'أحدث الفواتير' : 'Recent Invoices'}</h3>

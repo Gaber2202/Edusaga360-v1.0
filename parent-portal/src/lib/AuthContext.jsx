@@ -1,7 +1,48 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from './supabase';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
 const AuthContext = createContext(null);
+
+async function rosterLinkedStudentIds(appUser, email) {
+  const claimed = Array.isArray(appUser.linked_student_ids) ? appUser.linked_student_ids : [];
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      const res = await fetch(`${API_BASE_URL}/api/parent/me`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (res.ok) {
+        const me = await res.json();
+        if (Array.isArray(me.linked_student_ids)) return me.linked_student_ids;
+      }
+    }
+  } catch {
+    /* fall through to local roster check */
+  }
+
+  const tenantId = appUser.tenant_id;
+  if (!tenantId) return [];
+  const found = new Set();
+  if (claimed.length > 0) {
+    const { data } = await supabase.from('students').select('id').eq('tenant_id', tenantId).in('id', claimed);
+    (data || []).forEach((row) => found.add(row.id));
+  }
+  if (email) {
+    const { data: guardian } = await supabase
+      .from('guardians')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .ilike('email', email)
+      .maybeSingle();
+    if (guardian?.id) {
+      const { data: kids } = await supabase.from('students').select('id').eq('tenant_id', tenantId).eq('guardian_id', guardian.id);
+      (kids || []).forEach((row) => found.add(row.id));
+    }
+  }
+  return [...found];
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -55,12 +96,17 @@ export function AuthProvider({ children }) {
         return;
       }
 
+      const meta = authUser.user_metadata || {};
       setUser({
         ...authUser,
-        ...authUser.user_metadata,
+        ...meta,
         ...appUser,
+        first_name: appUser.first_name || meta.first_name,
+        last_name: appUser.last_name || meta.last_name,
+        name: appUser.name || meta.full_name || meta.name,
         email: authUser.email,
         id: authUser.id,
+        linked_student_ids: await rosterLinkedStudentIds(appUser, authUser.email),
       });
       setAccessDenied(false);
     } catch (err) {

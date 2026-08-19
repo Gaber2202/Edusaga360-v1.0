@@ -24,6 +24,17 @@ function safeHijriDate(iso: string): string {
   }
 }
 
+function asIsoDate(value: unknown): string {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+  const raw = String(value ?? '').trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+  const parsed = raw ? new Date(raw) : null;
+  if (parsed && !Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+  return new Date().toISOString().slice(0, 10);
+}
+
 export function invoiceDataFromRow(row: Record<string, unknown>): InvoiceData {
   return {
     id: row.id as string | undefined,
@@ -31,7 +42,7 @@ export function invoiceDataFromRow(row: Record<string, unknown>): InvoiceData {
     document_type: (row.document_type as InvoiceData['document_type']) || 'invoice',
     invoice_type: (row.invoice_type as InvoiceData['invoice_type']) || 'simplified',
     zatca_invoice_type: (row.zatca_invoice_type as InvoiceData['invoice_type']) || (row.invoice_type as InvoiceData['invoice_type']) || 'simplified',
-    issue_date: row.issue_date as string,
+    issue_date: asIsoDate(row.issue_date || row.date),
     supply_date: row.supply_date as string | undefined,
     due_date: row.due_date as string | undefined,
     subtotal: Number(row.subtotal ?? 0),

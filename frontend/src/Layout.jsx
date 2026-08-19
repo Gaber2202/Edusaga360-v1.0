@@ -94,6 +94,7 @@ import {
           Heart,
           Route,
           UtensilsCrossed,
+          Store,
           Zap,
           Megaphone,
           Plane,
@@ -317,8 +318,20 @@ function LayoutContent({ children, currentPageName }) {
     {
       name: 'canteenManagement',
       icon: UtensilsCrossed,
-      page: 'CanteenManagement',
-      roles: ['admin', 'finance', 'branch_manager']
+      roles: ['admin', 'finance', 'branch_manager'],
+      children: [
+        { name: 'canteenManagement', icon: UtensilsCrossed, page: 'CanteenManagement', roles: ['admin', 'finance', 'branch_manager'] },
+        { name: 'canteenPOSOrders', icon: Receipt, page: 'CanteenPOSOrders', roles: ['admin', 'finance', 'branch_manager'] },
+      ]
+    },
+    {
+      name: 'storeManagement',
+      icon: Store,
+      roles: ['admin', 'finance', 'branch_manager'],
+      children: [
+        { name: 'storeManagement', icon: Store, page: 'StoreManagement', roles: ['admin', 'finance', 'branch_manager'] },
+        { name: 'storeOrders', icon: Receipt, page: 'StoreOrders', roles: ['admin', 'finance', 'branch_manager'] },
+      ]
     },
     // Expenses moved into HR module — keeping this comment for route compatibility
     // Phase 2 - Service & Operations

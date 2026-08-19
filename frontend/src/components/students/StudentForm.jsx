@@ -232,6 +232,7 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
         guardian2_national_id,
       };
 
+      let studentIdForInvite = student?.id;
       if (student?.id) {
         await tenantQuery('students').update(data).eq('id', student.id);
         await logAuditEvent({ action: AuditActions.UPDATE, entityType: 'Student', entityId: student.id, oldValues: student, newValues: data, page: 'Students' });
@@ -240,26 +241,27 @@ export default function StudentForm({ open, onClose, onSuccess, student }) {
         const created = await tenantQuery('students').insert(data);
         await logAuditEvent({ action: AuditActions.CREATE, entityType: 'Student', entityId: created?.id, newValues: data, page: 'Students' });
         if (data.status === 'active') NotificationHelper.notifyStudentEnrollment(created);
-        if (inviteParent && guardian_email && tenantId) {
-          try {
-            await callApi('/api/parents/invite', {
-              guardian_name_en: guardian_name_en || formData.emergency_contact || 'Parent',
-              guardian_name_ar,
-              guardian_email,
-              guardian_phone: guardian_phone || formData.emergency_phone || '',
-              guardian_relationship,
-              guardian_national_id,
-              student_id: created?.id || created?.[0]?.id,
-              student_name: formData.name_en || formData.name_ar,
-              tenant_id: tenantId,
-              school_name: tenant?.name || tenant?.name_en || 'School',
-            });
-            toast.success(tt('تم إرسال دعوة لولي الأمر', 'Parent invitation sent'));
-          } catch (err) {
-            console.error('Parent invite failed:', err);
-          }
-        }
         toast.success(tt('تم إنشاء الطالب بنجاح', 'Student created successfully'));
+        studentIdForInvite = created?.id || created?.[0]?.id;
+      }
+      if (inviteParent && guardian_email && tenantId && studentIdForInvite) {
+        try {
+          await callApi('/api/parents/invite', {
+            guardian_name_en: guardian_name_en || formData.emergency_contact || 'Parent',
+            guardian_name_ar,
+            guardian_email,
+            guardian_phone: guardian_phone || formData.emergency_phone || '',
+            guardian_relationship,
+            guardian_national_id,
+            student_id: studentIdForInvite,
+            student_name: formData.name_en || formData.name_ar,
+            tenant_id: tenantId,
+            school_name: tenant?.name || tenant?.name_en || 'School',
+          });
+          toast.success(tt('تم ربط ولي الأمر بالطالب', 'Parent linked to this student'));
+        } catch (err) {
+          console.error('Parent invite failed:', err);
+        }
       }
       onSuccess();
       onClose();

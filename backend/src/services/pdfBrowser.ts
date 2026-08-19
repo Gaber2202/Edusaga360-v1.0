@@ -7,6 +7,9 @@ let launchAttempted = false;
 export async function getBrowser() {
   if (browserInstance && browserInstance.connected) return browserInstance;
   if (launchPromise) return launchPromise;
+  if (launchAttempted && !browserInstance) {
+    launchAttempted = false;
+  }
   if (launchAttempted) {
     throw new Error('Browser singleton has already been instantiated once; a second instantiation is not allowed.');
   }
@@ -19,6 +22,11 @@ export async function getBrowser() {
     .then((b) => {
       browserInstance = b;
       return b;
+    })
+    .catch((err) => {
+      launchAttempted = false;
+      browserInstance = null;
+      throw err;
     });
   try {
     return await launchPromise;

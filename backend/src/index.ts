@@ -28,6 +28,8 @@ import { adminRouter } from './routes/admin.js';
 import { billingRouter } from './routes/billing.js';
 import { chequeRouter } from './routes/cheques.js';
 import { parentsRouter } from './routes/parents.js';
+import { parentPortalRouter, parentApiCatalog } from './routes/parentPortal.js';
+import { parentAuthRouter } from './routes/parentAuth.js';
 import { filesRouter } from './routes/files.js';
 import { execRouter } from './routes/exec.js';
 import { subscriptionRouter } from './routes/subscription.js';
@@ -44,6 +46,7 @@ import { collectionsRouter } from './routes/collections.js';
 import { billingPublicRouter } from './routes/billingPublic.js';
 import { messagingPublicRouter } from './routes/messagingPublic.js';
 import { infobipWebhookRouter } from './routes/infobipWebhooks.js';
+import { publicSchoolsRouter } from './routes/publicSchools.js';
 import cron from 'node-cron';
 import { SegmentationRunner } from './services/collections/runner.js';
 import { CollectionMessenger } from './services/collections/messenger.js';
@@ -103,7 +106,15 @@ const allowedOrigins = [
   'https://parentportal.edusaga360.com',
   'https://edusaga-360-admin-portal.vercel.app',
   'https://edusaga-360-parent-portal.vercel.app',
-  ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:5173', 'http://localhost:3000'] : []),
+  ...(process.env.NODE_ENV !== 'production' ? [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
+    'http://127.0.0.1:5175',
+    'http://localhost:3000',
+  ] : []),
   ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
 ].filter(Boolean);
 
@@ -158,6 +169,7 @@ app.use('/api/public/billing', billingPublicRouter);
 app.use('/api/public/messaging', messagingPublicRouter);
 // Infobip delivery-receipt webhook — verified by INFOBIP_WEBHOOK_SECRET if configured.
 app.use('/api/webhooks/infobip', infobipWebhookRouter);
+app.use('/api/public/schools', publicSchoolsRouter);
 
 // ── Authenticated routes — ALL protected by authMiddleware + tenantMiddleware ──
 // IMPORTANT: Register middleware on each router directly.
@@ -180,6 +192,9 @@ app.use('/api/subscription',        apiLimiter, subscriptionPublicRouter, authMi
 app.use('/api/ai',                  apiLimiter, authMiddleware, tenantMiddleware, aiRouter);
 app.use('/api/admin',               apiLimiter, authMiddleware, adminRouter);
 app.use('/api/parents',             apiLimiter, authMiddleware, tenantMiddleware, parentsRouter);
+app.get('/api/parent',              apiLimiter, parentApiCatalog);
+app.use('/api/parent/auth',         apiLimiter, parentAuthRouter);
+app.use('/api/parent',              apiLimiter, authMiddleware, tenantMiddleware, parentPortalRouter);
 app.use('/api/files',               apiLimiter, authMiddleware, tenantMiddleware, filesRouter);
 app.use('/api/exec',                apiLimiter, authMiddleware, tenantMiddleware, execRouter);
 app.use('/api/intake',              apiLimiter, authMiddleware, tenantMiddleware, intakeRouter);

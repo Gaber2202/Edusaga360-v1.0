@@ -55,6 +55,21 @@ parentsRouter.post('/invite', async (req: AuthenticatedRequest, res) => {
       });
     }
 
+    const { data: rosterStudent, error: rosterError } = await supabase
+      .from('students')
+      .select('id')
+      .eq('id', d.student_id)
+      .eq('tenant_id', d.tenant_id)
+      .maybeSingle();
+    if (rosterError) throw rosterError;
+    if (!rosterStudent) {
+      return res.status(400).json({
+        success: false,
+        error: 'STUDENT_NOT_FOUND',
+        message: 'Student must exist in the school student list first',
+      });
+    }
+
     // 1. Check if a parent user already exists for this email + tenant
     const { data: existingUsers } = await supabase
       .from('users')

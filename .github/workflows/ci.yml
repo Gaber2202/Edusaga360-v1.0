@@ -218,3 +218,17 @@ jobs:
         run: cd frontend && npm audit --audit-level=high || true
       - name: npm audit (backend)
         run: cd backend && npm audit --audit-level=high || true
+
+  test-parent-mobile:
+    name: Test (Parent mobile)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.5"
+          channel: stable
+          cache: true
+      - run: cd parent-mobile && flutter pub get
+      - run: cd parent-mobile && flutter analyze --no-fatal-infos
+      - run: cd parent-mobile && flutter test

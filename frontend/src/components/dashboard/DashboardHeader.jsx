@@ -3,10 +3,9 @@ import { format } from 'date-fns';
 import { formatDate } from '../../lib/localization';
 import JurisdictionFeatureGate from '../JurisdictionFeatureGate';
 import { HIJRI_CALENDAR_FEATURES } from '../../lib/jurisdictionFeatures';
+import { LayoutDashboard } from 'lucide-react';
 
-// Simple Hijri date conversion (Gregorian to Hijri approximation)
 function toHijri(date) {
-  // Using a reliable offset-based calculation
   const jd = Math.floor((date.getTime() / 86400000) + 2440587.5);
   let l = jd - 1948440 + 10632;
   const n = Math.floor((l - 1) / 10631);
@@ -21,7 +20,7 @@ function toHijri(date) {
   return { day, month, year, monthNameAr: hijriMonthsAr[month - 1], monthNameEn: hijriMonthsEn[month - 1] };
 }
 
-export default function DashboardHeader({ user, tenant, isRTL }) {
+export default function DashboardHeader({ user, tenant, isRTL, snapshot }) {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -42,40 +41,53 @@ export default function DashboardHeader({ user, tenant, isRTL }) {
   const schoolName = isRTL ? tenant?.name_ar : tenant?.name_en || tenant?.name_ar;
 
   return (
-    <div className="flex items-start justify-between flex-wrap gap-3">
-      <div className="flex items-center gap-3">
-        {tenant?.logo_url && (
-          <img src={tenant.logo_url} alt={schoolName || 'School'} className="w-12 h-12 rounded-xl object-cover border border-border bg-white" />
-        )}
-        <div>
-          {schoolName && <p className="text-sm font-bold text-emerald-600 mb-0.5">{schoolName}</p>}
-          <h1 className="text-ink text-xl font-extrabold tracking-tight">
-            {isRTL ? `مرحباً، ${displayName}` : `Welcome back, ${displayName}`}
-          </h1>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
-            <span className="text-muted-foreground text-sm">{gregorianDate}</span>
-            <JurisdictionFeatureGate featureKeys={HIJRI_CALENDAR_FEATURES}>
-              <span className="text-muted-foreground hidden sm:inline">|</span>
-              <span className="text-muted-foreground text-xs font-medium">{hijriDate}</span>
-            </JurisdictionFeatureGate>
+    <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-najdi-900 via-[#0a5a42] to-najdi-900 text-white shadow-lg">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(200,164,81,0.15),transparent_55%)] pointer-events-none" />
+      <div className="relative p-5 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          {tenant?.logo_url ? (
+            <img src={tenant.logo_url} alt={schoolName || 'School'} className="w-14 h-14 rounded-xl object-cover border-2 border-white/20 bg-white/10" />
+          ) : (
+            <div className="w-14 h-14 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center">
+              <LayoutDashboard className="w-7 h-7 text-white/90" />
+            </div>
+          )}
+          <div>
+            {schoolName && <p className="text-xs font-semibold uppercase tracking-wider text-white/60 mb-0.5">{schoolName}</p>}
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight">
+              {isRTL ? `مرحباً، ${displayName}` : `Welcome back, ${displayName}`}
+            </h1>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1.5 text-sm text-white/70">
+              <span>{gregorianDate}</span>
+              <JurisdictionFeatureGate featureKeys={HIJRI_CALENDAR_FEATURES}>
+                <span className="hidden sm:inline text-white/40">|</span>
+                <span className="text-xs">{hijriDate}</span>
+              </JurisdictionFeatureGate>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex items-center gap-4">
-        {/* Live clock */}
-        <div className="hidden sm:flex flex-col items-end">
-          <span className="text-ink text-lg font-mono font-bold tabular-nums">{timeStr}</span>
-          <span className="text-muted-foreground text-xs">{Intl.DateTimeFormat().resolvedOptions().timeZone}</span>
-        </div>
-
-        {/* System health */}
-        <div className="flex items-center gap-1.5">
-          <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
-          </span>
-          <span className="text-xs text-muted-foreground hidden sm:inline">{isRTL ? 'النظام يعمل' : 'All systems operational'}</span>
+        <div className="flex items-center gap-4 md:gap-6">
+          {snapshot?.length > 0 && (
+            <div className="hidden lg:flex items-center gap-4 pe-4 border-e border-white/15">
+              {snapshot.map(({ label, value }) => (
+                <div key={label} className="text-center">
+                  <p className="text-lg font-bold tabular-nums">{value}</p>
+                  <p className="text-[10px] uppercase tracking-wide text-white/55">{label}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex flex-col items-start md:items-end gap-1">
+            <span className="text-2xl font-mono font-bold tabular-nums">{timeStr}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+              </span>
+              <span className="text-[11px] text-white/60">{isRTL ? 'النظام يعمل' : 'All systems operational'}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

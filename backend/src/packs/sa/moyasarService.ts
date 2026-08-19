@@ -548,6 +548,15 @@ export async function processMoyasarWebhook(
         console.warn('[moyasarService] receipt generation failed:', (receiptErr as Error).message);
       }
 
+      if (newStatus === 'paid') {
+        try {
+          const { fulfillPaidCommerceInvoice } = await import('../../services/parentCommerce.js');
+          await fulfillPaidCommerceInvoice(supabase, invoice as Record<string, unknown>);
+        } catch (commerceErr) {
+          console.warn('[moyasarService] commerce fulfillment failed:', (commerceErr as Error).message);
+        }
+      }
+
       // Stop active collection sequences for this invoice.
       await supabase
         .from('collection_messages')

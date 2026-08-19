@@ -3,10 +3,6 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import type { InvoiceData } from '../packs/sa/vat.js';
 import type { TenantData } from '../types/tenant.js';
 
-function sar(n: number): number {
-  return Math.round(n * 100) / 100;
-}
-
 export interface InvoiceLikeRow {
   id: string;
   tenant_id: string;
@@ -21,27 +17,30 @@ export interface InvoiceLikeRow {
   total_amount?: number | null;
 }
 
-/**
- * Generate and persist a bilingual payment receipt linked to an invoice.
- *
- * The receipt is stored in the `invoices` table with `document_type='receipt'`
- * and `parent_document_id` pointing to the paid invoice. It returns the created
- * row and a base64-encoded PDF.
- */
-export async function createReceiptForPayment(
-  supabase: SupabaseClient,
+export interface PaymentLike {
+  id: string;
+  amount: number;
+  method: string;
+  reference?: string | null;
+  date?: string;
+}
+
+function asIsoDate(value?: string | null): string {
+  const raw = String(value ?? '').trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+  return new Date().toISOString().slice(0, 10);
+}
+
+export function buildReceiptInvoiceData(
   invoice: InvoiceLikeRow,
-  payment: { id: string; amount: number; method: string; reference?: string | null; date?: string },
-  tenant: TenantData,
-  currencyCode: string,
-  renderInvoicePdf: (invoice: InvoiceData, tenant: TenantData) => Promise<Buffer>,
-): Promise<{ receipt: Record<string, unknown>; pdf_base64: string }> {
-  const today = payment.date || new Date().toISOString().split('T')[0];
+  payment: PaymentLike,
+): InvoiceData {
+  const today = asIsoDate(payment.date);
   const receiptNumber = `RCP-${invoice.invoice_number}-${payment.id.slice(0, 8)}`;
   const buyerName = invoice.buyer_name || invoice.student_name || '';
   const amount = Number(payment.amount);
 
-  const receiptData: InvoiceData = {
+  return {
     invoice_number: receiptNumber,
     document_type: 'receipt',
     invoice_type: 'simplified',
@@ -55,6 +54,8 @@ export async function createReceiptForPayment(
     buyer_name: buyerName,
     buyer_vat_number: invoice.buyer_vat_number || undefined,
     buyer_address: invoice.buyer_address || undefined,
+    original_invoice_number: invoice.invoice_number,
+    parent_document_id: invoice.id,
     notes: `Payment receipt for ${invoice.invoice_number}. Method: ${payment.method}. Ref: ${payment.reference || payment.id}`,
     items: [
       {
@@ -70,16 +71,39 @@ export async function createReceiptForPayment(
     ],
     uuid: crypto.randomUUID(),
   };
+}
 
+/**
+ * Generate and persist a bilingual payment receipt linked to an invoice.
+ *
+ * The receipt is stored in the `invoices` table with `document_type='receipt'`
+ * and `parent_document_id` pointing to the paid invoice. Persist is best-effort:
+ * the PDF is still returned if the insert fails.
+ */
+export async function createReceiptForPayment(
+  supabase: SupabaseClient,
+  invoice: InvoiceLikeRow,
+  payment: PaymentLike,
+  tenant: TenantData,
+  currencyCode: string,
+  renderInvoicePdf: (invoice: InvoiceData, tenant: TenantData) => Promise<Buffer>,
+): Promise<{ receipt: Record<string, unknown> | null; pdf_base64: string }> {
+  const receiptData = buildReceiptInvoiceData(invoice, payment);
   const pdfBuffer = await renderInvoicePdf(receiptData, tenant);
+  const today = receiptData.issue_date;
+  const amount = Number(payment.amount);
 
   const insertPayload = {
     tenant_id: invoice.tenant_id,
     currency_code: currencyCode,
     branch_id: invoice.branch_id ?? null,
     student_id: invoice.student_id ?? null,
-    invoice_number: receiptNumber,
+    student_name: invoice.student_name ?? null,
+    buyer_name: invoice.buyer_name || invoice.student_name || null,
+    invoice_number: receiptData.invoice_number,
     academic_year: invoice.academic_year ?? null,
+    issue_date: today,
+    date: today,
     document_type: 'receipt',
     invoice_type: 'simplified',
     zatca_invoice_type: 'simplified',
@@ -99,7 +123,7 @@ export async function createReceiptForPayment(
     invoice_hash: null,
     previous_invoice_hash: null,
     ubl_xml: null,
-    zatca_status: 'not_applicable',
+    zatca_status: 'pending',
   };
 
   const { data: receipt, error } = await supabase
@@ -108,7 +132,10 @@ export async function createReceiptForPayment(
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.warn('[receipt] persist failed, returning PDF only:', error.message);
+    return { receipt: null, pdf_base64: pdfBuffer.toString('base64') };
+  }
 
   return { receipt: receipt as Record<string, unknown>, pdf_base64: pdfBuffer.toString('base64') };
 }

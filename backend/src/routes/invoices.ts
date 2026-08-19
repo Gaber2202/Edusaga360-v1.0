@@ -9,6 +9,7 @@ import { resolvePack } from '../packs/registry.js';
 import type { TenantData } from '../types/tenant.js';
 import { getTenantComplianceData } from '../services/tenant.js';
 import { PdfQueueSaturatedError } from '../lib/pdfConcurrency.js';
+import { createReceiptForPayment, buildReceiptInvoiceData } from '../services/receipt.js';
 
 export const invoiceRouter = Router();
 
@@ -299,6 +300,47 @@ invoiceRouter.get('/:id/zatca-status', async (req: AuthenticatedRequest, res: Re
   }
 });
 
+function invoiceOutstanding(invoice: Record<string, unknown>): number {
+  const total = Number(invoice.total_amount) || 0;
+  const paid = Number(invoice.paid_amount) || 0;
+  return Math.round((total - paid) * 100) / 100;
+}
+
+async function assertParentOwnsStudent(
+  req: AuthenticatedRequest,
+  studentId: string | null | undefined,
+): Promise<boolean> {
+  if (req.user?.role !== 'parent') return true;
+  const { data: parent } = await supabase
+    .from('users')
+    .select('linked_student_ids')
+    .eq('auth_id', req.user.id)
+    .single();
+  const linked: string[] = (parent?.linked_student_ids as string[] | null) ?? [];
+  return Boolean(studentId && linked.includes(studentId));
+}
+
+function sendPdf(res: Response, pdfBuffer: Buffer, filename: string, inline: boolean) {
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `${inline ? 'inline' : 'attachment'}; filename="${filename}"`);
+  res.setHeader('Content-Length', pdfBuffer.length);
+  return res.send(pdfBuffer);
+}
+
+async function loadInvoiceForPdf(req: AuthenticatedRequest, id: string) {
+  let tenantId = req.user?.tenant_id || (req.headers['x-tenant-id'] as string) || (req.query.tenant_id as string);
+
+  let invoiceQuery = supabase.from('invoices').select('*').eq('id', id);
+  if (tenantId) invoiceQuery = invoiceQuery.eq('tenant_id', tenantId);
+  const { data: invoiceRow, error: invoiceError } = await invoiceQuery.single();
+
+  if (invoiceRow && !tenantId && req.user?.is_platform_owner) {
+    tenantId = invoiceRow.tenant_id as string;
+  }
+
+  return { tenantId: tenantId as string | undefined, invoiceRow, invoiceError };
+}
+
 // ---------------------------------------------------------------------------
 // GET /api/invoices/:id/download-pdf
 // ---------------------------------------------------------------------------
@@ -306,53 +348,25 @@ invoiceRouter.get('/:id/zatca-status', async (req: AuthenticatedRequest, res: Re
 invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    let tenantId = req.user?.tenant_id || (req.headers['x-tenant-id'] as string) || (req.query.tenant_id as string);
-
-    // Fetch invoice from Supabase
-    let invoiceQuery = supabase.from('invoices').select('*').eq('id', id);
-    if (tenantId) invoiceQuery = invoiceQuery.eq('tenant_id', tenantId);
-    const { data: invoiceRow, error: invoiceError } = await invoiceQuery.single();
-
-    if (invoiceRow && !tenantId && req.user?.is_platform_owner) {
-      // Cross-tenant lookup succeeded; adopt the invoice's tenant.
-      tenantId = invoiceRow.tenant_id as string;
-    }
+    const { tenantId, invoiceRow, invoiceError } = await loadInvoiceForPdf(req, id);
 
     if (invoiceError || !invoiceRow || !tenantId) {
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
-    // Parents may only download invoices for their own linked children.
-    if (req.user!.role === 'parent') {
-      const { data: parent } = await supabase
-        .from('users')
-        .select('linked_student_ids')
-        .eq('auth_id', req.user!.id)
-        .single();
-      const linked: string[] = (parent?.linked_student_ids as string[] | null) ?? [];
-      if (!invoiceRow.student_id || !linked.includes(invoiceRow.student_id)) {
-        return res.status(403).json({ message: 'Not authorized to access this invoice' });
-      }
+    if (!(await assertParentOwnsStudent(req, invoiceRow.student_id as string | undefined))) {
+      return res.status(403).json({ message: 'Not authorized to access this invoice' });
     }
 
     const tenant = await getTenantComplianceData(supabase, tenantId);
-
     const ctx = await buildRequestContext(supabase, tenantId, (invoiceRow.branch_id as string) ?? undefined);
     const pack = resolvePack(ctx);
     if (!pack.documents?.renderInvoicePdf) {
       throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'invoice PDF');
     }
     const pdfBuffer = await pack.documents.renderInvoicePdf!(invoiceRow, tenant);
-
     const inline = req.query.inline === '1' || req.query.inline === 'true';
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader(
-      'Content-Disposition',
-      `${inline ? 'inline' : 'attachment'}; filename="invoice-${(invoiceRow as Record<string, unknown>).invoice_number}.pdf"`,
-    );
-    res.setHeader('Content-Length', pdfBuffer.length);
-
-    return res.send(pdfBuffer);
+    return sendPdf(res, pdfBuffer, `invoice-${invoiceRow.invoice_number}.pdf`, inline);
   } catch (err) {
     if (err instanceof NotImplementedInJurisdiction || (err as any).name === 'NotImplementedInJurisdiction') {
       return res.status(501).json({ message: (err as Error).message, code: 501, feature: (err as any).feature });
@@ -363,6 +377,121 @@ invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Re
     }
     console.error('Failed to generate invoice PDF:', err);
     return res.status(500).json({ message: 'Failed to generate invoice PDF' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/invoices/:id/receipt-pdf — payment receipt in the same bill layout
+// ---------------------------------------------------------------------------
+
+invoiceRouter.get('/:id/receipt-pdf', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { tenantId, invoiceRow, invoiceError } = await loadInvoiceForPdf(req, id);
+
+    if (invoiceError || !invoiceRow || !tenantId) {
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+
+    if (!(await assertParentOwnsStudent(req, invoiceRow.student_id as string | undefined))) {
+      return res.status(403).json({ message: 'Not authorized to access this invoice' });
+    }
+
+    if (invoiceRow.status === 'cancelled') {
+      return res.status(400).json({ message: 'Receipt is not available for a cancelled invoice' });
+    }
+    const paidInFull = invoiceRow.status === 'paid' || invoiceOutstanding(invoiceRow as Record<string, unknown>) <= 0.01;
+    if (!paidInFull) {
+      return res.status(400).json({ message: 'Receipt is only available for paid invoices' });
+    }
+
+    const tenant = await getTenantComplianceData(supabase, tenantId);
+    const ctx = await buildRequestContext(supabase, tenantId, (invoiceRow.branch_id as string) ?? undefined);
+    const pack = resolvePack(ctx);
+    if (!pack.documents?.renderInvoicePdf) {
+      throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'receipt PDF');
+    }
+
+    const { data: existingReceipt } = await supabase
+      .from('invoices')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('parent_document_id', id)
+      .eq('document_type', 'receipt')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const today = new Date().toISOString().slice(0, 10);
+    let pdfBuffer: Buffer;
+
+    if (existingReceipt) {
+      pdfBuffer = await pack.documents.renderInvoicePdf!(
+        {
+          ...existingReceipt,
+          document_type: 'receipt',
+          issue_date: existingReceipt.issue_date || existingReceipt.date || today,
+        },
+        tenant,
+      );
+    } else {
+      const { data: payment } = await supabase
+        .from('payments')
+        .select('id, amount, method, reference, date')
+        .eq('invoice_id', id)
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const paymentLike = payment
+        ? {
+            id: payment.id as string,
+            amount: Number(payment.amount),
+            method: (payment.method as string) || 'online',
+            reference: (payment.reference as string | null) ?? null,
+            date: (payment.date as string | undefined) || today,
+          }
+        : {
+            id: invoiceRow.id as string,
+            amount: Number(invoiceRow.paid_amount) || Number(invoiceRow.total_amount) || 0,
+            method: 'online',
+            reference: (invoiceRow.invoice_number as string) || id,
+            date: (invoiceRow.issue_date as string) || (invoiceRow.date as string) || today,
+          };
+
+      const receiptData = buildReceiptInvoiceData(
+        invoiceRow as Parameters<typeof buildReceiptInvoiceData>[0],
+        paymentLike,
+      );
+      pdfBuffer = await pack.documents.renderInvoicePdf!(receiptData, tenant);
+
+      createReceiptForPayment(
+        supabase,
+        invoiceRow as Parameters<typeof createReceiptForPayment>[1],
+        paymentLike,
+        tenant,
+        pack.currencyCode,
+        async () => pdfBuffer,
+      ).catch((receiptErr) => {
+        console.warn('[invoices] receipt persist failed:', (receiptErr as Error).message);
+      });
+    }
+
+    const receiptNumber = (existingReceipt?.invoice_number as string | undefined)
+      || `RCP-${invoiceRow.invoice_number}`;
+    const inline = req.query.inline === '1' || req.query.inline === 'true';
+    return sendPdf(res, pdfBuffer, `receipt-${receiptNumber}.pdf`, inline);
+  } catch (err) {
+    if (err instanceof NotImplementedInJurisdiction || (err as any).name === 'NotImplementedInJurisdiction') {
+      return res.status(501).json({ message: (err as Error).message, code: 501, feature: (err as any).feature });
+    }
+    if (err instanceof PdfQueueSaturatedError) {
+      res.setHeader('Retry-After', '5');
+      return res.status(503).json({ message: err.message, code: err.code });
+    }
+    console.error('Failed to generate receipt PDF:', err);
+    return res.status(500).json({ message: 'Failed to generate receipt PDF' });
   }
 });
 
@@ -395,23 +524,26 @@ invoiceRouter.get('/:id/payment-link', async (req: AuthenticatedRequest, res: Re
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
-    // Parents may only request payment links for their own linked children.
-    if (req.user!.role === 'parent') {
-      const { data: user } = await supabase
-        .from('users')
-        .select('linked_student_ids, email')
-        .eq('auth_id', req.user!.id)
-        .single();
-      const linked: string[] = (user?.linked_student_ids as string[] | null) ?? [];
+    const { data: parentRow } = await supabase
+      .from('users')
+      .select('linked_student_ids, email, user_role')
+      .eq('auth_id', req.user!.id)
+      .eq('tenant_id', tenantId)
+      .maybeSingle();
+    const linked: string[] = (parentRow?.linked_student_ids as string[] | null) ?? [];
+    const isParentPortalUser = parentRow?.user_role === 'parent' || linked.length > 0;
+
+    // Parents (and dual-role staff with linked children) may only pay their own kids.
+    if (isParentPortalUser && req.user!.role !== 'finance' && req.user!.role !== 'admin' && req.user!.role !== 'school_admin') {
       const isLinkedStudent = invoice.student_id && linked.includes(invoice.student_id as string);
 
       let isGuardian = false;
-      if (!isLinkedStudent && invoice.guardian_id && user?.email) {
+      if (!isLinkedStudent && invoice.guardian_id && parentRow?.email) {
         const { count } = await supabase
           .from('guardians')
           .select('*', { count: 'exact', head: true })
           .eq('id', invoice.guardian_id)
-          .eq('email', user.email as string)
+          .eq('email', parentRow.email as string)
           .eq('tenant_id', tenantId);
         isGuardian = (count ?? 0) > 0;
       }
@@ -422,6 +554,10 @@ invoiceRouter.get('/:id/payment-link', async (req: AuthenticatedRequest, res: Re
     }
 
     const baseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3001}`;
+    const mobileReturn = String(req.query.client || '') === 'mobile';
+    const appReturn = process.env.PARENT_APP_RETURN_URL || 'edusaga-parent://payment';
+    const portalReturn = process.env.PARENT_PORTAL_URL || process.env.FRONTEND_URL || 'https://parentportal.edusaga360.com';
+    const returnBase = mobileReturn ? appReturn : portalReturn;
     const ctx = await buildRequestContext(supabase, tenantId, (invoice.branch_id as string) ?? undefined);
     const pack = resolvePack(ctx);
     if (!pack.payments?.getOrCreatePaymentLink) {
@@ -431,8 +567,8 @@ invoiceRouter.get('/:id/payment-link', async (req: AuthenticatedRequest, res: Re
       tenantId: tenantId as string,
       invoiceId: invoiceId as string,
       callbackUrl: `${baseUrl}/api/public/billing/moyasar/webhook`,
-      successUrl: `${baseUrl}/payment/result?status=success`,
-      backUrl: `${baseUrl}/payment/result?status=pending`,
+      successUrl: `${returnBase}/result?status=success`,
+      backUrl: `${returnBase}/result?status=pending`,
     });
 
     if (!result.ok) {

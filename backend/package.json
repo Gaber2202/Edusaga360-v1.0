@@ -11,7 +11,8 @@
     "lint:fix": "eslint src/ --fix",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "seed:parent-portal": "tsx src/scripts/parentPortalSeed.ts --confirm-demo-target"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0",

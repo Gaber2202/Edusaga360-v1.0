@@ -4,109 +4,113 @@
 
 @layer base {
   :root {
-    /* EduSaga 360 Light Mode — Brand Color System */
-    --background: 40 45.5% 93.5%;
-    --foreground: 150 12.5% 12.5%;
-    --card: 0 0% 100%;
-    --card-foreground: 150 12.5% 12.5%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 150 12.5% 12.5%;
-    --primary: 162 76.9% 23.7%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 157 37.1% 93.1%;
-    --secondary-foreground: 162 76.9% 23.7%;
-    --muted: 41 43.9% 88.8%;
-    --muted-foreground: 144 5.2% 38%;
-    --accent: 42 52% 55.1%;
-    --accent-foreground: 150 12.5% 12.5%;
-    --destructive: 4 61.3% 53.3%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 150 8% 88%;
-    --input: 150 8% 88%;
-    --ring: 162 76.9% 23.7%;
-    --chart-1: 162 76.9% 23.7%;
-    --chart-2: 42 52% 55.1%;
-    --chart-3: 204 60% 43.1%;
-    --chart-4: 41 74.2% 52.9%;
-    --chart-5: 162 75.8% 35.7%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 150 12.5% 12.5%;
-    --sidebar-primary: 162 76.9% 23.7%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 157 37.1% 93.1%;
-    --sidebar-accent-foreground: 162 76.9% 23.7%;
-    --sidebar-border: 150 8% 88%;
-    --sidebar-ring: 162 76.9% 23.7%;
+    --es-green-900: #0B3A29;
+    --es-green-700: #0F5138;
+    --es-green-500: #2E7D5B;
+    --es-green-100: #E3F0E8;
+    --es-gold-600: #B08D3A;
+    --es-gold-400: #C9A227;
+    --es-cream-50: #F5F0E4;
+    --es-sand-100: #EDE4D2;
+    --es-surface-card: #FFFFFF;
+    --es-border: #E5DFCF;
+    --es-text-primary: #12241C;
+    --es-text-muted: #5A6A61;
+    --es-status-warn: #D08A24;
+    --es-status-danger: #A8443A;
+    --es-zebra: #FDFBF6;
+    --es-shadow-card: 0 8px 28px rgba(18, 36, 28, 0.06);
+    --es-shadow-panel: 0 8px 40px rgba(18, 36, 28, 0.08);
+    --es-dur-state: 120ms;
+    --es-dur-reveal: 240ms;
+    --es-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 
-    /* EduSaga brand semantic tokens */
-    --es-green-900: 163 74.3% 13.7%;
-    --es-green-700: 162 76.9% 23.7%;
-    --es-green-500: 162 75.8% 35.7%;
-    --es-green-100: 157 37.1% 93.1%;
-    --es-gold: 42 52% 55.1%;
-    --es-gold-bright: 43 59.8% 62.9%;
-    --es-sand: 40 45.5% 93.5%;
-    --es-sand-alt: 41 43.9% 88.8%;
-    --es-ink: 150 12.5% 12.5%;
-    --es-muted: 144 5.2% 38%;
-    --es-info: 204 60% 43.1%;
-    --es-warn: 41 74.2% 52.9%;
-    --es-error: 4 61.3% 53.3%;
+    --background: 42 46% 92.8%;
+    --foreground: 153 33% 10.6%;
+    --card: 0 0% 100%;
+    --card-foreground: 153 33% 10.6%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 153 33% 10.6%;
+    --primary: 157 69% 18.8%;
+    --primary-foreground: 42 46% 92.8%;
+    --secondary: 144 30% 92%;
+    --secondary-foreground: 157 69% 18.8%;
+    --muted: 40 43% 87.7%;
+    --muted-foreground: 146 8% 38.5%;
+    --accent: 42 51% 46%;
+    --accent-foreground: 153 33% 10.6%;
+    --destructive: 6 49% 44%;
+    --destructive-foreground: 42 46% 92.8%;
+    --border: 44 30% 85.5%;
+    --input: 44 30% 85.5%;
+    --ring: 157 69% 18.8%;
+    --chart-1: 154 46% 33.5%;
+    --chart-2: 46 68% 47%;
+    --chart-3: 159 68% 13.5%;
+    --chart-4: 36 71% 48%;
+    --chart-5: 157 69% 18.8%;
+    --radius: 1rem;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 153 33% 10.6%;
+    --sidebar-primary: 157 69% 18.8%;
+    --sidebar-primary-foreground: 42 46% 92.8%;
+    --sidebar-accent: 144 30% 92%;
+    --sidebar-accent-foreground: 157 69% 18.8%;
+    --sidebar-border: 44 30% 85.5%;
+    --sidebar-ring: 157 69% 18.8%;
   }
 
   .dark {
-    /* EduSaga 360 Dark Mode */
-    --background: 156 30% 4%;
-    --foreground: 150 15% 92%;
-    --card: 157 30% 9%;
-    --card-foreground: 150 15% 92%;
-    --popover: 157 30% 9%;
-    --popover-foreground: 150 15% 92%;
-    --primary: 162 67% 42%;
-    --primary-foreground: 160 50% 4%;
-    --secondary: 157 30% 11%;
-    --secondary-foreground: 150 15% 92%;
-    --muted: 157 20% 11%;
-    --muted-foreground: 150 12% 66%;
-    --accent: 43 59.8% 62.9%;
-    --accent-foreground: 160 50% 4%;
-    --destructive: 4 50% 40%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 155 15% 14%;
-    --input: 155 15% 14%;
-    --ring: 162 67% 42%;
-    --chart-1: 162 67% 42%;
-    --chart-2: 43 59.8% 62.9%;
-    --chart-3: 204 60% 55%;
-    --chart-4: 41 74% 60%;
-    --chart-5: 162 75.8% 50%;
-    --sidebar-background: 156 30% 4%;
-    --sidebar-foreground: 150 15% 92%;
-    --sidebar-primary: 162 67% 42%;
-    --sidebar-primary-foreground: 160 50% 4%;
-    --sidebar-accent: 157 30% 11%;
-    --sidebar-accent-foreground: 150 15% 92%;
-    --sidebar-border: 155 15% 14%;
-    --sidebar-ring: 162 67% 42%;
+    --es-green-900: #0B3A29;
+    --es-green-700: #57A57F;
+    --es-green-500: #57A57F;
+    --es-green-100: #10402D;
+    --es-gold-600: #D9B85C;
+    --es-gold-400: #D9B85C;
+    --es-cream-50: #0B3A29;
+    --es-sand-100: #10402D;
+    --es-surface-card: #10402D;
+    --es-border: rgba(245, 240, 228, 0.12);
+    --es-text-primary: #C9D6CE;
+    --es-text-muted: #9AADA4;
+    --es-status-warn: #D08A24;
+    --es-status-danger: #A8443A;
+    --es-zebra: rgba(245, 240, 228, 0.04);
+    --es-shadow-card: 0 8px 28px rgba(0, 0, 0, 0.18);
+    --es-shadow-panel: 0 8px 40px rgba(0, 0, 0, 0.24);
 
-    --es-green-900: 163 74.3% 13.7%;
-    --es-green-700: 162 67% 42%;
-    --es-green-500: 162 67% 42%;
-    --es-green-100: 157 30% 11%;
-    --es-gold: 43 59.8% 62.9%;
-    --es-gold-bright: 43 59.8% 62.9%;
-    --es-sand: 156 30% 4%;
-    --es-sand-alt: 157 20% 7%;
-    --es-ink: 150 15% 92%;
-    --es-muted: 150 12% 66%;
-    --es-info: 204 60% 55%;
-    --es-warn: 41 74% 60%;
-    --es-error: 4 50% 55%;
+    --background: 159 68% 13.5%;
+    --foreground: 144 14% 81%;
+    --card: 156 60% 16%;
+    --card-foreground: 144 14% 81%;
+    --popover: 156 60% 16%;
+    --popover-foreground: 144 14% 81%;
+    --primary: 151 31% 49%;
+    --primary-foreground: 159 68% 13.5%;
+    --secondary: 156 60% 16%;
+    --secondary-foreground: 144 14% 81%;
+    --muted: 156 40% 14%;
+    --muted-foreground: 150 10% 66%;
+    --accent: 44 62% 61%;
+    --accent-foreground: 159 68% 13.5%;
+    --destructive: 6 49% 44%;
+    --destructive-foreground: 144 14% 81%;
+    --border: 42 30% 90% / 0.12;
+    --input: 42 30% 90% / 0.12;
+    --ring: 151 31% 49%;
+    --chart-1: 151 31% 49%;
+    --chart-2: 44 62% 61%;
+    --chart-3: 42 46% 92.8%;
+    --sidebar-background: 159 68% 13.5%;
+    --sidebar-foreground: 144 14% 81%;
+    --sidebar-primary: 151 31% 49%;
+    --sidebar-primary-foreground: 159 68% 13.5%;
+    --sidebar-accent: 156 60% 16%;
+    --sidebar-accent-foreground: 144 14% 81%;
+    --sidebar-border: 42 30% 90% / 0.12;
+    --sidebar-ring: 151 31% 49%;
   }
 }
-
-
 
 @layer base {
   * {
@@ -114,31 +118,142 @@
     box-sizing: border-box;
   }
 
+  html {
+    font-family: 'Poppins', system-ui, sans-serif;
+  }
+
+  html[dir='rtl'] {
+    font-family: 'IBM Plex Sans Arabic', 'Poppins', sans-serif;
+  }
+
+  html[dir='rtl'] .font-display,
+  html[dir='rtl'] .font-sans {
+    font-family: 'IBM Plex Sans Arabic', 'Poppins', sans-serif;
+    letter-spacing: 0;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-weight: 400;
+    line-height: 1.7;
+    font-size: 15px;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
 
-  /* Ensure touch targets are at least 44px on mobile */
-  button, [role="button"] {
+  html[dir='rtl'] body {
+    line-height: 1.85;
+  }
+
+  button,
+  [role='button'] {
     touch-action: manipulation;
   }
 
-  /* Mobile-safe table overflow */
   table {
     border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
   }
 
-  /* Input consistency across browsers */
-  input, textarea, select {
+  input,
+  textarea,
+  select {
     -webkit-appearance: none;
     appearance: none;
   }
 
-  /* Firefox scrollbar */
   * {
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--border)) transparent;
   }
+}
+
+@layer components {
+  .es-eyebrow {
+    @apply text-xs font-semibold;
+    color: var(--es-green-700);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .dark .es-eyebrow {
+    color: var(--es-gold-600);
+  }
+
+  html[dir='rtl'] .es-eyebrow {
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .es-metric {
+    @apply font-sans font-semibold tabular-nums tracking-tight;
+    color: var(--es-text-primary);
+  }
+
+  .es-table thead {
+    background: var(--es-cream-50);
+  }
+
+  .es-table thead th {
+    @apply px-4 py-3 text-start font-semibold;
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--es-green-700);
+  }
+
+  html[dir='rtl'] .es-table thead th {
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .es-table tbody tr:nth-child(even) {
+    background: var(--es-zebra);
+  }
+
+  .es-table tbody tr {
+    transition: background-color var(--es-dur-state) var(--es-ease);
+  }
+
+  .es-table tbody tr:hover {
+    background: var(--es-sand-100);
+  }
+
+  .es-table td {
+    @apply px-4 py-3 text-sm;
+    color: var(--es-text-primary);
+  }
+}
+
+@layer utilities {
+  .es-reveal {
+    animation: es-reveal var(--es-dur-reveal) var(--es-ease) both;
+  }
+
+  .es-stagger-1 { animation-delay: 0ms; }
+  .es-stagger-2 { animation-delay: 60ms; }
+  .es-stagger-3 { animation-delay: 120ms; }
+  .es-stagger-4 { animation-delay: 180ms; }
+}
+
+@keyframes es-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .es-reveal {
+    animation: es-fade var(--es-dur-reveal) var(--es-ease) both;
+  }
+}
+
+@keyframes es-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

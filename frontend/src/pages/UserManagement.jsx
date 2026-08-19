@@ -73,8 +73,8 @@ export default function UserManagement() {
   });
 
   const { data: students = [] } = useQuery({
-    queryKey: ['students-for-linking', tenantId],
-    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter({ status: 'active' }))),
+    queryKey: ['students', tenantId],
+    queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 

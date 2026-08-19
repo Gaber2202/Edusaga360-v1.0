@@ -64,26 +64,24 @@ export default function LinkedStudentsPicker({ studentIds = [], onChange, studen
         />
       </div>
 
-      {search && (
+      {search && filteredStudents.length === 0 ? (
+        <p className="p-3 text-sm text-muted-foreground text-center">
+          {isRTL ? 'لا توجد نتائج' : 'No results'}
+        </p>
+      ) : (
         <ScrollArea className="max-h-40 border rounded-lg">
-          {filteredStudents.length === 0 ? (
-            <p className="p-3 text-sm text-muted-foreground text-center">
-              {isRTL ? 'لا توجد نتائج' : 'No results'}
-            </p>
-          ) : (
-            <div className="p-1">
-              {filteredStudents.slice(0, 10).map(s => (
-                <button
-                  key={s.id}
-                  onClick={() => addStudent(s.id)}
-                  className="w-full text-start px-3 py-2 text-sm rounded hover:bg-sand-alt flex justify-between items-center"
-                >
-                  <span>{isRTL ? s.name_ar : (s.name_en || s.name_ar)}</span>
-                  <span className="text-xs text-muted-foreground">{s.grade} {s.section && `- ${s.section}`}</span>
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="p-1">
+            {filteredStudents.slice(0, 10).map(s => (
+              <button
+                key={s.id}
+                onClick={() => addStudent(s.id)}
+                className="w-full text-start px-3 py-2 text-sm rounded hover:bg-sand-alt flex justify-between items-center"
+              >
+                <span>{isRTL ? s.name_ar : (s.name_en || s.name_ar)}</span>
+                <span className="text-xs text-muted-foreground">{s.grade} {s.section && `- ${s.section}`}</span>
+              </button>
+            ))}
+          </div>
         </ScrollArea>
       )}
 

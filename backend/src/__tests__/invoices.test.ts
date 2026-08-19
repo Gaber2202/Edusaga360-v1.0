@@ -18,6 +18,10 @@ import { createSupabaseStub, injectUser, QueryContext } from './support/supabase
 
 const db = createSupabaseStub();
 vi.mock('@supabase/supabase-js', () => ({ createClient: () => db.client }));
+vi.mock('../packs/sa/zatca.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../packs/sa/zatca.js')>()),
+  generateZATCAInvoicePDF: vi.fn(() => Promise.resolve(Buffer.from('%PDF-mock'))),
+}));
 
 const { invoiceRouter } = await import('../routes/invoices.js');
 
@@ -119,6 +123,73 @@ describe('GET /invoices/:id/download-pdf', () => {
     });
 
     const res = await request(makeApp(PARENT_USER)).get(`/invoices/${INVOICE_ID}/download-pdf`);
+    expect(res.status).toBe(403);
+  });
+});
+
+const PAID_INVOICE = {
+  ...INVOICE_ROW,
+  tenant_id: TENANT_ID,
+  paid_amount: 1150,
+  total_amount: 1150,
+  status: 'paid',
+  document_type: 'invoice',
+};
+
+const RECEIPT_ROW = {
+  id: 'rcp-1',
+  tenant_id: TENANT_ID,
+  invoice_number: 'RCP-INV-2026-000001-pmt1',
+  document_type: 'receipt',
+  parent_document_id: INVOICE_ID,
+  student_id: 'STU-1',
+  issue_date: '2026-06-19',
+  total_amount: 1150,
+  paid_amount: 1150,
+  status: 'paid',
+};
+
+describe('GET /invoices/:id/receipt-pdf', () => {
+  it('returns a receipt PDF for a paid invoice the parent is linked to', async () => {
+    db.setResolver((ctx: QueryContext) => {
+      if (ctx.table === 'tenants') return { data: TENANT_ROW };
+      if (ctx.table === 'users') return { data: { linked_student_ids: ['STU-1'] } };
+      if (ctx.table === 'invoices') {
+        const isReceipt = ctx.filters.some((f) => f.method === 'eq' && f.args[0] === 'document_type' && f.args[1] === 'receipt');
+        if (isReceipt) return { data: RECEIPT_ROW };
+        return { data: PAID_INVOICE };
+      }
+      return { data: null };
+    });
+
+    const res = await request(makeApp(PARENT_USER)).get(`/invoices/${INVOICE_ID}/receipt-pdf`).buffer(true);
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/pdf');
+    expect(res.headers['content-disposition']).toMatch(/receipt-/);
+  });
+
+  it('returns 400 when the invoice is still unpaid', async () => {
+    db.setResolver((ctx: QueryContext) => {
+      if (ctx.table === 'tenants') return { data: TENANT_ROW };
+      if (ctx.table === 'users') return { data: { linked_student_ids: ['STU-1'] } };
+      if (ctx.table === 'invoices') return { data: { ...INVOICE_ROW, tenant_id: TENANT_ID, paid_amount: 0, status: 'unpaid' } };
+      return { data: null };
+    });
+
+    const res = await request(makeApp(PARENT_USER)).get(`/invoices/${INVOICE_ID}/receipt-pdf`);
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/paid/i);
+  });
+
+  it("blocks a parent from another family's receipt (403)", async () => {
+    db.setResolver((ctx: QueryContext) => {
+      if (ctx.table === 'tenants') return { data: TENANT_ROW };
+      if (ctx.table === 'users') return { data: { linked_student_ids: ['STU-OTHER'] } };
+      if (ctx.table === 'invoices') return { data: PAID_INVOICE };
+      return { data: null };
+    });
+
+    const res = await request(makeApp(PARENT_USER)).get(`/invoices/${INVOICE_ID}/receipt-pdf`);
     expect(res.status).toBe(403);
   });
 });

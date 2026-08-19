@@ -124,6 +124,8 @@ export interface SupabaseStub {
   client: any;
   auth: {
     getUser: ReturnType<typeof vi.fn>;
+    signInWithPassword: ReturnType<typeof vi.fn>;
+    refreshSession: ReturnType<typeof vi.fn>;
     admin: { createUser: ReturnType<typeof vi.fn> };
   };
   from: ReturnType<typeof vi.fn>;
@@ -172,6 +174,8 @@ export function createSupabaseStub(initialResolver: Resolver = () => ({})): Supa
 
   const auth = {
     getUser: vi.fn(),
+    signInWithPassword: vi.fn(),
+    refreshSession: vi.fn(),
     admin: { createUser: vi.fn() },
   };
 

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from './components/ui/sonner';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { LanguageProvider } from './lib/LanguageContext';
+import { ThemeProvider } from './lib/ThemeContext';
 import ParentLayout from './components/ParentLayout';
 import Login from './pages/Login';
 import AccessDenied from './pages/AccessDenied';
@@ -14,6 +15,8 @@ import Fees from './pages/Fees';
 import Announcements from './pages/Announcements';
 import Homework from './pages/Homework';
 import Messages from './pages/Messages';
+import Canteen from './pages/Canteen';
+import Store from './pages/Store';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,8 +29,8 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-sand flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-border border-t-emerald-500 rounded-full" />
+      <div className="flex min-h-screen items-center justify-center bg-sand">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[color:var(--es-border)] border-t-forest-700" />
       </div>
     );
   }
@@ -50,6 +53,8 @@ function AppRoutes() {
         <Route path="/announcements" element={<Announcements />} />
         <Route path="/homework" element={<Homework />} />
         <Route path="/messages" element={<Messages />} />
+        <Route path="/canteen" element={<Canteen />} />
+        <Route path="/store" element={<Store />} />
       </Routes>
     </ParentLayout>
   );
@@ -57,15 +62,17 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <LanguageProvider>
-      <AuthProvider>
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-          <Toaster />
-        </QueryClientProvider>
-      </AuthProvider>
-    </LanguageProvider>
+    <ThemeProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <QueryClientProvider client={queryClient}>
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+            <Toaster />
+          </QueryClientProvider>
+        </AuthProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }

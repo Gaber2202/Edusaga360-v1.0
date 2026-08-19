@@ -140,6 +140,9 @@ import YamenCollections from './pages/YamenCollections';
 import SchoolClinic from './pages/SchoolClinic';
 import LibraryManagement from './pages/LibraryManagement';
 import CanteenManagement from './pages/CanteenManagement';
+import CanteenPOSOrders from './pages/CanteenPOSOrders';
+import StoreManagement from './pages/StoreManagement';
+import StoreOrders from './pages/StoreOrders';
 import TransportManagement from './pages/TransportManagement';
 import __Layout from './Layout.jsx';
 
@@ -238,6 +241,9 @@ export const PAGES = {
     "SchoolClinic": SchoolClinic,
     "LibraryManagement": LibraryManagement,
     "CanteenManagement": CanteenManagement,
+    "CanteenPOSOrders": CanteenPOSOrders,
+    "StoreManagement": StoreManagement,
+    "StoreOrders": StoreOrders,
     "TransportManagement": TransportManagement,
 }
 

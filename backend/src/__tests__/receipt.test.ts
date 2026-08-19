@@ -48,10 +48,38 @@ describe('createReceiptForPayment', () => {
     expect(inserted).toBeTruthy();
     expect(inserted.document_type).toBe('receipt');
     expect(inserted.status).toBe('paid');
+    expect(inserted.issue_date).toBe('2026-08-01');
+    expect(inserted.date).toBe('2026-08-01');
     expect(inserted.total_amount).toBe(1150);
     expect(inserted.paid_amount).toBe(1150);
     // Balance is generated. For a receipt paid in full it is 0.
     expect(inserted).not.toHaveProperty('balance');
     expect((inserted.total_amount as number) - (inserted.paid_amount as number)).toBe(0);
+  });
+
+  it('still returns a PDF when the receipt row cannot be persisted', async () => {
+    const db = createSupabaseStub();
+    db.setResolver((ctx: QueryContext) => {
+      if (ctx.table === 'invoices' && ctx.op === 'insert') {
+        return { data: null, error: { message: 'duplicate key' } };
+      }
+      return { data: null };
+    });
+
+    const result = await createReceiptForPayment(
+      db.client as any,
+      {
+        id: 'inv-1',
+        tenant_id: 'tenant-A',
+        invoice_number: 'INV-2026-000001',
+      } as any,
+      { id: 'pmt-1', amount: 100, method: 'cash', date: '2026-08-01' },
+      { name_en: 'School' } as any,
+      'SAR',
+      () => Promise.resolve(Buffer.from('pdf')),
+    );
+
+    expect(result.receipt).toBeNull();
+    expect(result.pdf_base64).toBe(Buffer.from('pdf').toString('base64'));
   });
 });

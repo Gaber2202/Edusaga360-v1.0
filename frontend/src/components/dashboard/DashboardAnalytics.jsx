@@ -95,12 +95,13 @@ export default function DashboardAnalytics({ students, invoices, employees: _emp
 
   return (
     <div>
-      <h2 className="text-ink mb-3 text-sm font-bold uppercase tracking-wide">{isRTL ? 'التحليلات والإحصاءات' : 'Analytics & Insights'}</h2>
+      <h2 className="text-ink mb-3 text-xs font-bold uppercase tracking-widest">{isRTL ? 'التحليلات والإحصاءات' : 'Analytics & Insights'}</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
 
-        <Card className="col-span-1">
+        <Card className="col-span-1 border-0 shadow-sm overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-najdi-900 to-najdi-600" />
           <CardHeader className="pb-2 px-4 pt-4">
-            <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{isRTL ? 'تطور التسجيل (6 أشهر)' : 'Enrollment Trend (6 Mo)'}</CardTitle>
+            <CardTitle className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{isRTL ? 'تطور التسجيل (6 أشهر)' : 'Enrollment Trend (6 Mo)'}</CardTitle>
           </CardHeader>
           <CardContent className="px-2 pb-3">
             {hasEnrollmentData ? (
@@ -119,9 +120,10 @@ export default function DashboardAnalytics({ students, invoices, employees: _emp
           </CardContent>
         </Card>
 
-        <Card className="col-span-1">
+        <Card className="col-span-1 border-0 shadow-sm overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-emerald-500 to-emerald-400" />
           <CardHeader className="pb-2 px-4 pt-4">
-            <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{isRTL ? `حالة التحصيل (ألف ${getCurrencySymbol(tenant?.localization, isRTL)})` : `Fee Collection (K ${getCurrencySymbol(tenant?.localization, isRTL)})`}</CardTitle>
+            <CardTitle className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{isRTL ? `حالة التحصيل (ألف ${getCurrencySymbol(tenant?.localization, isRTL)})` : `Fee Collection (K ${getCurrencySymbol(tenant?.localization, isRTL)})`}</CardTitle>
           </CardHeader>
           <CardContent className="px-2 pb-3 flex items-center justify-center">
             {feeData.length > 0 && feeData.some(d => d.value > 0) ? (
@@ -140,9 +142,10 @@ export default function DashboardAnalytics({ students, invoices, employees: _emp
           </CardContent>
         </Card>
 
-        <Card className="col-span-1">
+        <Card className="col-span-1 border-0 shadow-sm overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-amber-500 to-amber-400" />
           <CardHeader className="pb-0 px-4 pt-4">
-            <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{isRTL ? 'الحضور اليوم' : 'Attendance Today'}</CardTitle>
+            <CardTitle className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{isRTL ? 'الحضور اليوم' : 'Attendance Today'}</CardTitle>
           </CardHeader>
           <CardContent className="px-2 pb-3">
             {attendancePct > 0 ? (
@@ -153,9 +156,10 @@ export default function DashboardAnalytics({ students, invoices, employees: _emp
           </CardContent>
         </Card>
 
-        <Card className="col-span-1">
+        <Card className="col-span-1 border-0 shadow-sm overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-purple-500 to-purple-400" />
           <CardHeader className="pb-2 px-4 pt-4">
-            <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{isRTL ? 'الرواتب vs الميزانية (ألف)' : 'Payroll vs Budget (K)'}</CardTitle>
+            <CardTitle className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{isRTL ? 'الرواتب vs الميزانية (ألف)' : 'Payroll vs Budget (K)'}</CardTitle>
           </CardHeader>
           <CardContent className="px-2 pb-3">
             {payrollData.length > 0 ? (

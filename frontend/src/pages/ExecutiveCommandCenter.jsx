@@ -11,8 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import { Button } from '../components/ui/button';
-import StatCard from '../components/ui/StatCard';
 import ExportMenu from '../components/ui/ExportMenu';
+import ExecutiveKPICard from '../components/exec/ExecutiveKPICard';
+import ExecutivePersonaTabs from '../components/exec/ExecutivePersonaTabs';
+import ComplianceSignalRow from '../components/exec/ComplianceSignalRow';
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
@@ -22,7 +24,8 @@ import {
 } from 'recharts';
 import {
   Crown, RefreshCw, TrendingUp, DollarSign, Users, Building2,
-  AlertTriangle, ShieldCheck, ShieldAlert, ShieldX, Sparkles, Clock
+  AlertTriangle, ShieldCheck, ShieldAlert, ShieldX, Sparkles, Clock,
+  GraduationCap, Target, Wallet, FileWarning, Percent, Activity
 } from 'lucide-react';
 
 const COLORS = { najdi: '#0E6B4F', green: '#16A077', amber: '#E0A82E', red: '#D1493F', purple: '#8B5CF6', gold: '#C8A451', info: '#2C7BB0', ink: '#1C2420' };
@@ -259,18 +262,25 @@ export default function ExecutiveCommandCenter() {
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} className="p-4 md:p-6 space-y-6" ref={dashboardRef}>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-najdi-900 flex items-center justify-center">
-            <Crown className="w-5 h-5 text-white" />
+      {/* Header */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-najdi-900 to-najdi-800 flex items-center justify-center shadow-md">
+              <Crown className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-ink">{t('executiveCommandCenter')}</h1>
+              <p className="text-sm text-muted-foreground">{t('executive')}</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-semibold text-ink">{t('executiveCommandCenter')}</h1>
-            <p className="text-sm text-muted-foreground">{t('executive')}</p>
-          </div>
+          {showSwitcher && (
+            <ExecutivePersonaTabs value={persona} onChange={setPersona} available={availablePersonas} isRTL={isRTL} />
+          )}
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Filter bar */}
+        <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-white border border-border/60 shadow-sm">
           <ExportMenu
             persona={persona}
             tenantId={selectedTenantId || undefined}
@@ -280,9 +290,9 @@ export default function ExecutiveCommandCenter() {
           />
           {requiresTenantSelection && (
             <>
-              <span className="text-sm text-muted-foreground">{isRTL ? 'المدرسة' : 'School'}</span>
+              <span className="text-xs font-medium text-muted-foreground">{isRTL ? 'المدرسة' : 'School'}</span>
               <Select value={selectedTenantId || undefined} onValueChange={setSelectedTenantId} disabled={tenantsLoading || tenants.length === 0}>
-                <SelectTrigger className="w-56">
+                <SelectTrigger className="w-52 h-9">
                   <SelectValue placeholder={tenantsLoading ? (isRTL ? 'جارٍ التحميل...' : 'Loading...') : undefined} />
                 </SelectTrigger>
                 <SelectContent>
@@ -293,9 +303,9 @@ export default function ExecutiveCommandCenter() {
               </Select>
             </>
           )}
-          <span className="text-sm text-muted-foreground">{isRTL ? 'الفرع' : 'Branch'}</span>
+          <span className="text-xs font-medium text-muted-foreground">{isRTL ? 'الفرع' : 'Branch'}</span>
           <Select value={selectedBranchId} onValueChange={setSelectedBranchId} disabled={branchesLoading}>
-            <SelectTrigger className="w-44">
+            <SelectTrigger className="w-40 h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -305,9 +315,9 @@ export default function ExecutiveCommandCenter() {
               ))}
             </SelectContent>
           </Select>
-          <span className="text-sm text-muted-foreground">{isRTL ? 'الفترة' : 'Period'}</span>
+          <span className="text-xs font-medium text-muted-foreground">{isRTL ? 'الفترة' : 'Period'}</span>
           <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-36 h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -321,30 +331,18 @@ export default function ExecutiveCommandCenter() {
               })}
             </SelectContent>
           </Select>
-          {showSwitcher && (
-            <>
-              <span className="text-sm text-muted-foreground">{t('switchPersona')}</span>
-              <Select value={persona || undefined} onValueChange={setPersona}>
-                <SelectTrigger className="w-44">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availablePersonas.map((p) => (
-                    <SelectItem key={p} value={p}>{p.toUpperCase()}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </>
-          )}
-          <Button variant="outline" size="icon" onClick={refreshMetrics} disabled={metricsRefreshing} title={isRTL ? 'تحديث المؤشرات' : 'Refresh metrics'}>
-            <RefreshCw className={`w-4 h-4 ${metricsRefreshing ? 'animate-spin' : ''}`} />
-          </Button>
-          {dashboard?.computed_at && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
-              <Clock className="w-3.5 h-3.5" />
-              <span>{formatDateTime(dashboard.computed_at, tenant?.localization, isRTL)}</span>
-            </div>
-          )}
+          <div className="ms-auto flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={refreshMetrics} disabled={metricsRefreshing} className="gap-1.5 h-9">
+              <RefreshCw className={`w-3.5 h-3.5 ${metricsRefreshing ? 'animate-spin' : ''}`} />
+              {isRTL ? 'تحديث' : 'Refresh'}
+            </Button>
+            {dashboard?.computed_at && (
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground whitespace-nowrap">
+                <Clock className="w-3.5 h-3.5" />
+                <span>{formatDateTime(dashboard.computed_at, tenant?.localization, isRTL)}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -418,23 +416,6 @@ function PillarRadar({ subScores, isRTL }) {
   );
 }
 
-function MiniSparkline({ data, color, height = 40 }) {
-  if (!data || data.length === 0) return null;
-  return (
-    <ResponsiveContainer width="100%" height={height}>
-      <AreaChart data={data} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
-        <defs>
-          <linearGradient id={`spark-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={color} stopOpacity={0.2} />
-            <stop offset="95%" stopColor={color} stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <Area type="monotone" dataKey="value" stroke={color} fill={`url(#spark-${color.replace('#', '')})`} strokeWidth={1.5} dot={false} />
-      </AreaChart>
-    </ResponsiveContainer>
-  );
-}
-
 function MultiCurrencyBreakdown({ amounts, localization, isRTL }) {
   if (!amounts || Object.keys(amounts).length === 0) return '—';
   return (
@@ -455,35 +436,20 @@ function CurrencyValue({ value, byCurrency, localization, isRTL }) {
   return formatCurrency(value, localization, isRTL);
 }
 
-function KPICard({ title, value, delta, sparkData, color, isRTL }) {
-  const deltaColor = delta > 0 ? 'text-emerald-500' : delta < 0 ? 'text-red-500' : 'text-muted-foreground';
-  const deltaIcon = delta > 0 ? '▲' : delta < 0 ? '▼' : '';
+function aggregateUtilization(campusVitality) {
+  if (!campusVitality?.length) return null;
+  const totalCapacity = campusVitality.reduce((s, c) => s + (c.capacity || 0), 0);
+  const totalEnrolled = campusVitality.reduce((s, c) => s + (c.enrolled || 0), 0);
+  return totalCapacity > 0 ? round2((totalEnrolled / totalCapacity) * 100) : null;
+}
 
-  return (
-    <Card className="border-0 shadow-sm overflow-hidden">
-      <CardContent className="p-4">
-        <p className="text-xs text-muted-foreground mb-1">{title}</p>
-        <div className="flex items-end justify-between gap-2">
-          <div>
-            <div className="text-xl font-bold text-ink">{value}</div>
-            {delta !== undefined && delta !== null && (
-              <span className={`text-xs font-medium ${deltaColor}`}>
-                {deltaIcon} {Math.abs(delta).toFixed(1)}%
-              </span>
-            )}
-          </div>
-          <div className="w-24 flex-shrink-0">
-            <MiniSparkline data={sparkData} color={color || COLORS.najdi} />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+function round2(n) {
+  return Math.round(n * 100) / 100;
 }
 
 function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBrief, isRTL, t }) {
   const { tenant } = useTenant();
-  const { vitality, financials, collections, campus_vitality = [], strategic_alerts = [], revenue_trend = [], collection_trend = [], top_risks = [], cash_runway } = data;
+  const { vitality, financials, collections, growth = {}, compliance = {}, campus_vitality = [], strategic_alerts = [], revenue_trend = [], collection_trend = [], top_risks = [], cash_runway } = data;
 
   const collectionRate = collections?.collection_rate_pct;
   const collectionTotalInvoiced = collections?.total_invoiced ?? 0;
@@ -492,6 +458,20 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
     ? Object.values(invoicedByCurrency).some((v) => Number(v) > 0)
     : collectionTotalInvoiced > 0;
   const isCollectionCritical = !financials?.is_multi_currency && collectionRate !== undefined && collectionRate !== null && collectionRate === 0 && hasCollectionData;
+
+  const capacityUtil = aggregateUtilization(campus_vitality);
+  const revenueSpark = financials?.is_multi_currency ? null : revenue_trend?.map((v, i) => ({ name: i, value: v.revenue || 0 }));
+  const collectionSpark = financials?.is_multi_currency ? null : collection_trend?.map((v, i) => ({ name: i, value: v.rate || 0 }));
+  const enrollmentSpark = growth?.data_quality === 'real' && growth?.current_count != null
+    ? [{ value: growth.previous_count || 0 }, { value: growth.current_count }]
+    : null;
+
+  const complianceSignals = [
+    { key: 'einvoicing', label: isRTL ? 'الفوترة الإلكترونية' : 'E-Invoicing', signal: compliance.einvoicing },
+    { key: 'mudad', label: isRTL ? 'حماية الأجور' : 'Wage Protection', signal: compliance.mudad },
+    { key: 'gosi', label: isRTL ? 'التأمينات' : 'Social Insurance', signal: compliance.gosi },
+    { key: 'qiwa', label: isRTL ? 'قوى' : 'Labor Portal', signal: compliance.qiwa },
+  ];
 
   return (
     <div className="space-y-6">
@@ -527,45 +507,92 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
         </CardContent>
       </Card>
 
-      {/* 2. KPI Strip — Revenue, EBITDA, Collection Rate with sparklines */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <KPICard
+      {/* 2. KPI Grid — expanded executive metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <ExecutiveKPICard
+          id="revenue"
           title={isRTL ? 'الإيرادات' : 'Revenue'}
           value={<CurrencyValue value={financials?.revenue} byCurrency={financials?.revenue_by_currency} localization={tenant?.localization} isRTL={isRTL} />}
           delta={financials?.is_multi_currency ? null : financials?.revenue_delta_pct}
-          sparkData={financials?.is_multi_currency ? null : revenue_trend?.map((v, i) => ({ name: i, value: v.revenue || 0 }))}
-          color={COLORS.najdi}
-          isRTL={isRTL}
+          sparkData={revenueSpark}
+          color="najdi"
+          icon={DollarSign}
         />
-        <KPICard
-          title={isRTL ? 'الأرباح قبل الفوائد والضرائب والإهلاك' : 'EBITDA'}
+        <ExecutiveKPICard
+          id="ebitda"
+          title={isRTL ? 'الأرباح قبل الفوائد والضرائب' : 'EBITDA'}
           value={<CurrencyValue value={financials?.ebitda} byCurrency={financials?.ebitda_by_currency} localization={tenant?.localization} isRTL={isRTL} />}
           delta={financials?.is_multi_currency ? null : financials?.ebitda_delta_pct}
           sparkData={financials?.is_multi_currency ? null : revenue_trend?.map((v, i) => ({ name: i, value: v.ebitda || 0 }))}
-          color={COLORS.green}
-          isRTL={isRTL}
+          color="green"
+          icon={TrendingUp}
         />
-        <KPICard
+        <ExecutiveKPICard
+          id="collection"
           title={isRTL ? 'نسبة التحصيل' : 'Collection Rate'}
           value={financials?.is_multi_currency ? (
             <MultiCurrencyBreakdown amounts={collections?.collection_rate_by_currency} localization={tenant?.localization} isRTL={isRTL} />
           ) : isCollectionCritical
-            ? <span className="text-red-500 font-bold">{fmtPct(0)}</span>
-            : (
-              <span
-                className={collections?.collection_rate_note ? 'underline decoration-dotted cursor-help' : ''}
-                title={collections?.collection_rate_note || undefined}
-              >
-                {hasCollectionData ? fmtPct(collectionRate) : '—'}
-              </span>
-            )
+            ? <span className="text-red-500">{fmtPct(0)}</span>
+            : (hasCollectionData ? fmtPct(collectionRate) : '—')
           }
           delta={financials?.is_multi_currency || !hasCollectionData ? null : collections?.collection_delta_pct}
-          sparkData={financials?.is_multi_currency ? null : collection_trend?.map((v, i) => ({ name: i, value: v.rate || 0 }))}
-          color={isCollectionCritical ? COLORS.red : COLORS.gold}
-          isRTL={isRTL}
+          sparkData={collectionSpark}
+          color={isCollectionCritical ? 'red' : 'gold'}
+          icon={Wallet}
+        />
+        <ExecutiveKPICard
+          id="margin"
+          title={isRTL ? 'هامش الربح' : 'Profit Margin'}
+          value={financials?.margin != null ? fmtPct(round2(financials.margin)) : '—'}
+          subtitle={financials?.is_multi_currency ? (isRTL ? 'غير متاح للعملات المتعددة' : 'N/A for multi-currency') : undefined}
+          color="purple"
+          icon={Percent}
+        />
+        <ExecutiveKPICard
+          id="enrollment"
+          title={isRTL ? 'الطلاب المسجلون' : 'Enrolled Students'}
+          value={growth?.current_count != null ? fmtNumber(growth.current_count, isRTL) : '—'}
+          delta={growth?.data_quality === 'real' ? growth.growth_rate : null}
+          sparkData={enrollmentSpark}
+          color="info"
+          icon={GraduationCap}
+          subtitle={growth?.previous_count != null ? `${isRTL ? 'العام السابق' : 'Prior year'}: ${fmtNumber(growth.previous_count, isRTL)}` : undefined}
+        />
+        <ExecutiveKPICard
+          id="capacity"
+          title={isRTL ? 'استغلال السعة' : 'Capacity Utilization'}
+          value={capacityUtil != null ? fmtPct(capacityUtil) : '—'}
+          color={capacityUtil != null && capacityUtil < 60 ? 'red' : capacityUtil != null && capacityUtil >= 85 ? 'green' : 'info'}
+          icon={Building2}
+        />
+        <ExecutiveKPICard
+          id="compliance"
+          title={isRTL ? 'درجة الامتثال' : 'Compliance Score'}
+          value={compliance?.score != null ? `${compliance.score}/100` : '—'}
+          subtitle={compliance?.overdue_invoices > 0 ? `${compliance.overdue_invoices} ${isRTL ? 'فاتورة متأخرة' : 'overdue invoices'}` : undefined}
+          color={compliance?.score >= 80 ? 'green' : compliance?.score >= 60 ? 'gold' : 'red'}
+          icon={ShieldCheck}
+        />
+        <ExecutiveKPICard
+          id="cash-runway"
+          title={isRTL ? 'مدى النقد (أشهر)' : 'Cash Runway'}
+          value={cash_runway != null ? fmtNumber(cash_runway, isRTL) : '—'}
+          subtitle={isRTL ? 'بناءً على الإنفاق الشهري' : 'Based on monthly spend'}
+          color={cash_runway != null && cash_runway < 3 ? 'red' : cash_runway != null && cash_runway >= 6 ? 'green' : 'gold'}
+          icon={Activity}
         />
       </div>
+
+      {/* Compliance signals strip */}
+      {compliance?.score != null && (
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+            {isRTL ? 'إشارات الامتثال' : 'Compliance Signals'}
+          </p>
+          <ComplianceSignalRow signals={complianceSignals} isRTL={isRTL} />
+        </div>
+      )}
 
       {/* Collection = 0 red alert */}
       {isCollectionCritical && (
@@ -652,31 +679,44 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
         </Card>
       </div>
 
-      {/* 4. Branch Vitality — ranked bars */}
+      {/* 4. Branch Vitality — ranked bars with medals */}
       <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base">
-            {isRTL ? 'حيوية الفروع' : 'Branch Vitality'}
-          </CardTitle>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Target className="w-4 h-4 text-najdi-900" />
+              {isRTL ? 'حيوية الفروع' : 'Branch Vitality'}
+            </CardTitle>
+            <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> ≥70</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> 40–69</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> &lt;40</span>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {campus_vitality.length === 0 ? <EmptyState isRTL={isRTL} /> : (
             <div className="space-y-3">
-              {[...campus_vitality].sort((a, b) => (b.score || 0) - (a.score || 0)).map((c) => {
+              {[...campus_vitality].sort((a, b) => (b.score || 0) - (a.score || 0)).map((c, idx) => {
                 const barColor = c.score >= 70 ? COLORS.green : c.score >= 40 ? COLORS.amber : COLORS.red;
                 const collColor = (c.collection_rate || 0) === 0 ? 'text-red-600 font-bold' : 'text-muted-foreground';
+                const rankBadge = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : null;
                 return (
-                  <div key={c.branch_id} className="flex items-center gap-4">
-                    <span className="w-32 text-sm text-ink truncate">{isRTL ? c.name_ar : c.name_en}</span>
-                    <div className="flex-1 h-6 bg-sand-alt rounded-full overflow-hidden">
+                  <div key={c.branch_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-sand-alt/50 transition-colors">
+                    <span className="w-6 text-center text-sm">{rankBadge || <span className="text-muted-foreground text-xs">{idx + 1}</span>}</span>
+                    <span className="w-28 text-sm font-medium text-ink truncate">{isRTL ? c.name_ar : c.name_en}</span>
+                    <div className="flex-1 h-7 bg-sand-alt rounded-full overflow-hidden relative">
                       <div
-                        className="h-full rounded-full transition-all"
+                        className="h-full rounded-full transition-all duration-700 ease-out"
                         style={{ width: `${Math.min(c.score || 0, 100)}%`, background: barColor }}
                       />
+                      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-ink/70">
+                        {c.enrolled != null && c.capacity ? `${c.enrolled}/${c.capacity}` : ''}
+                      </span>
                     </div>
-                    <span className="w-10 text-sm font-semibold text-ink text-center">{c.score ?? '—'}</span>
-                    <span className={`w-16 text-xs text-center ${collColor}`}>
-                      {fmtPct(c.collection_rate)}
+                    <span className="w-10 text-sm font-bold text-ink text-center">{c.score ?? '—'}</span>
+                    <span className={`w-14 text-xs text-center ${collColor}`}>
+                      {fmtPct(c.collection_rate ?? c.utilization_pct)}
                     </span>
                   </div>
                 );
@@ -735,8 +775,8 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-0 shadow-sm md:col-span-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-0 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <ShieldX className="w-4 h-4 text-red-500" />
@@ -745,12 +785,15 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
           </CardHeader>
           <CardContent>
             {top_risks.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground text-sm">{isRTL ? 'لا توجد مخاطر مرتفعة' : 'No high-priority risks'}</div>
+              <div className="flex flex-col items-center py-8 text-muted-foreground">
+                <ShieldCheck className="w-8 h-8 text-emerald-300 mb-2" />
+                <p className="text-sm">{isRTL ? 'لا توجد مخاطر مرتفعة' : 'No high-priority risks'}</p>
+              </div>
             ) : (
               <ul className="space-y-2">
                 {top_risks.slice(0, 5).map((r, i) => (
-                  <li key={i} className="flex items-start gap-3 text-sm text-ink">
-                    <span className="w-5 h-5 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-xs font-semibold flex-shrink-0">{i + 1}</span>
+                  <li key={i} className="flex items-start gap-3 p-2.5 rounded-lg bg-red-50/50 border border-red-100/60 text-sm text-ink">
+                    <span className="w-6 h-6 rounded-full bg-red-100 text-red-700 flex items-center justify-center text-xs font-bold flex-shrink-0">{i + 1}</span>
                     <span>{isRTL ? r.message_ar : r.message_en}</span>
                   </li>
                 ))}
@@ -762,13 +805,31 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
         <Card className="border-0 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="w-4 h-4 text-najdi-900" />
-              {isRTL ? 'مدى النقد (أشهر)' : 'Cash Runway (months)'}
+              <FileWarning className="w-4 h-4 text-amber-500" />
+              {isRTL ? 'ملخص التحصيل' : 'Collections Summary'}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-ink">{cash_runway !== null && cash_runway !== undefined ? fmtNumber(cash_runway, isRTL) : '—'}</p>
-            <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'النقد المتوفر بناءً على الإنفاق الشهري' : 'Cash available based on monthly spend'}</p>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 rounded-xl bg-sand-alt border border-border/40">
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{isRTL ? 'إجمالي الفواتير' : 'Total Invoiced'}</p>
+                <p className="text-lg font-bold text-ink mt-1">
+                  <CurrencyValue value={collections?.total_invoiced} byCurrency={collections?.total_invoiced_by_currency} localization={tenant?.localization} isRTL={isRTL} />
+                </p>
+              </div>
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100/60">
+                <p className="text-[11px] text-emerald-700 uppercase tracking-wide">{isRTL ? 'المحصّل' : 'Collected'}</p>
+                <p className="text-lg font-bold text-emerald-800 mt-1">
+                  <CurrencyValue value={collections?.total_collected} byCurrency={collections?.total_collected_by_currency} localization={tenant?.localization} isRTL={isRTL} />
+                </p>
+              </div>
+            </div>
+            {compliance?.overdue_invoices > 0 && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-700">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                <span>{compliance.overdue_invoices} {isRTL ? 'فاتورة متأخرة السداد' : 'overdue invoices require attention'}</span>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -850,11 +911,11 @@ function CFODashboard({ data, isRTL, t }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard title={t('revenue')} value={<CurrencyValue value={kpis.revenue} byCurrency={kpis.revenue_by_currency} localization={tenant?.localization} isRTL={isRTL} />} icon={DollarSign} iconClassName="bg-najdi-50" />
-        <StatCard title={t('ebitda')} value={<CurrencyValue value={kpis.ebitda} byCurrency={kpis.ebitda_by_currency} localization={tenant?.localization} isRTL={isRTL} />} subtitle={isMultiCurrency ? null : fmtPct(kpis.margin_pct)} icon={TrendingUp} iconClassName="bg-emerald-50" />
-        <StatCard title={t('cashCollected')} value={<CurrencyValue value={kpis.cash_collected_30d} byCurrency={kpis.cash_collected_30d_by_currency} localization={tenant?.localization} isRTL={isRTL} />} icon={ShieldCheck} iconClassName="bg-purple-50" />
-        <StatCard title={t('dsoDays')} value={kpis.dso_days !== null && kpis.dso_days !== undefined ? fmtNumber(kpis.dso_days, isRTL) : '—'} icon={Clock} iconClassName="bg-amber-50" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <ExecutiveKPICard id="cfo-revenue" title={t('revenue')} value={<CurrencyValue value={kpis.revenue} byCurrency={kpis.revenue_by_currency} localization={tenant?.localization} isRTL={isRTL} />} color="najdi" icon={DollarSign} />
+        <ExecutiveKPICard id="cfo-ebitda" title={t('ebitda')} value={<CurrencyValue value={kpis.ebitda} byCurrency={kpis.ebitda_by_currency} localization={tenant?.localization} isRTL={isRTL} />} subtitle={isMultiCurrency ? null : fmtPct(kpis.margin_pct)} color="green" icon={TrendingUp} />
+        <ExecutiveKPICard id="cfo-cash" title={t('cashCollected')} value={<CurrencyValue value={kpis.cash_collected_30d} byCurrency={kpis.cash_collected_30d_by_currency} localization={tenant?.localization} isRTL={isRTL} />} color="purple" icon={Wallet} />
+        <ExecutiveKPICard id="cfo-dso" title={t('dsoDays')} value={kpis.dso_days != null ? fmtNumber(kpis.dso_days, isRTL) : '—'} color={kpis.dso_days > 90 ? 'red' : kpis.dso_days > 60 ? 'gold' : 'green'} icon={Clock} subtitle={isRTL ? 'يوم' : 'days'} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -998,22 +1059,11 @@ function COODashboard({ data, isRTL, t }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard title={t('capacityUtilization')} value={fmtPct(kpis.capacity_utilization_pct)} icon={Building2} iconClassName="bg-najdi-50" />
-        <StatCard
-          title={t('studentTeacherRatio')}
-          value={kpis.student_teacher_ratio ?? '—'}
-          subtitle={<DataQualityNote quality={kpis.student_teacher_ratio_data_quality} isRTL={isRTL} />}
-          icon={Users}
-          iconClassName="bg-emerald-50"
-        />
-        <StatCard
-          title={isRTL ? 'معدل حضور الطلاب' : 'Student Attendance'}
-          value={kpis.student_attendance_rate_pct !== null ? fmtPct(kpis.student_attendance_rate_pct) : '—'}
-          subtitle={<DataQualityNote quality={kpis.student_attendance_data_quality} isRTL={isRTL} />}
-          icon={ShieldCheck}
-          iconClassName="bg-purple-50"
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <ExecutiveKPICard id="coo-capacity" title={t('capacityUtilization')} value={fmtPct(kpis.capacity_utilization_pct)} color={kpis.capacity_utilization_pct >= 85 ? 'green' : kpis.capacity_utilization_pct < 60 ? 'red' : 'info'} icon={Building2} />
+        <ExecutiveKPICard id="coo-ratio" title={t('studentTeacherRatio')} value={kpis.student_teacher_ratio ?? '—'} subtitle={kpis.student_teacher_ratio_data_quality === 'not_tracked' ? (isRTL ? 'غير متتبع' : 'Not tracked') : undefined} color="green" icon={Users} />
+        <ExecutiveKPICard id="coo-attendance" title={isRTL ? 'معدل حضور الطلاب' : 'Student Attendance'} value={kpis.student_attendance_rate_pct != null ? fmtPct(kpis.student_attendance_rate_pct) : '—'} color="purple" icon={GraduationCap} />
+        <ExecutiveKPICard id="coo-applicants" title={isRTL ? 'طلبات القبول' : 'Applications'} value={fmtNumber(admissions_funnel.applicants_total, isRTL)} subtitle={`${fmtNumber(admissions_funnel.applicants_pending, isRTL)} ${isRTL ? 'قيد المراجعة' : 'pending'}`} color="gold" icon={Target} />
       </div>
 
       <Card className="border-0 shadow-sm">
@@ -1100,18 +1150,13 @@ function CHRODashboard({ data, isRTL, t }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard title={t('headcount')} value={fmtNumber(kpis.headcount, isRTL)} icon={Users} iconClassName="bg-najdi-50" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <ExecutiveKPICard id="chro-headcount" title={t('headcount')} value={fmtNumber(kpis.headcount, isRTL)} color="najdi" icon={Users} />
         {nationalisationEnabled && (
-          <StatCard title={t('saudizationRate')} value={fmtPct(kpis.saudization_pct)} icon={ShieldCheck} iconClassName="bg-emerald-50" />
+          <ExecutiveKPICard id="chro-saudization" title={t('saudizationRate')} value={fmtPct(kpis.saudization_pct)} color={nationalisation.band === 'green' || nationalisation.band === 'platinum' ? 'green' : nationalisation.band === 'red' ? 'red' : 'gold'} icon={ShieldCheck} subtitle={nationalisation.band ? nationalisation.band.toUpperCase() : undefined} />
         )}
-        <StatCard
-          title={t('retentionRate')}
-          value={kpis.retention_rate_pct !== null ? fmtPct(kpis.retention_rate_pct) : '—'}
-          subtitle={<DataQualityNote quality={kpis.retention_data_quality} isRTL={isRTL} />}
-          icon={TrendingUp}
-          iconClassName="bg-purple-50"
-        />
+        <ExecutiveKPICard id="chro-retention" title={t('retentionRate')} value={kpis.retention_rate_pct != null ? fmtPct(kpis.retention_rate_pct) : '—'} color="purple" icon={TrendingUp} />
+        <ExecutiveKPICard id="chro-open-roles" title={t('openRoles')} value={open_roles.count != null ? fmtNumber(open_roles.count, isRTL) : '—'} subtitle={open_roles.avg_time_to_fill_days != null ? `${fmtNumber(open_roles.avg_time_to_fill_days, isRTL)} ${isRTL ? 'يوم للتعيين' : 'days to fill'}` : undefined} color="info" icon={Building2} />
       </div>
 
       {nationalisationEnabled && (
@@ -1237,23 +1282,6 @@ function CHRODashboard({ data, isRTL, t }) {
             )}
           </CardContent>
         </Card>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <StatCard
-          title={t('openRoles')}
-          value={fmtNumber(open_roles.count, isRTL)}
-          subtitle={<DataQualityNote quality={open_roles.count_data_quality} isRTL={isRTL} />}
-          icon={Building2}
-          iconClassName="bg-najdi-50"
-        />
-        <StatCard
-          title={t('timeToFill')}
-          value={open_roles.avg_time_to_fill_days !== null ? `${fmtNumber(open_roles.avg_time_to_fill_days, isRTL)} ${isRTL ? 'يوم' : 'days'}` : '—'}
-          subtitle={<DataQualityNote quality={open_roles.time_to_fill_data_quality} isRTL={isRTL} />}
-          icon={Clock}
-          iconClassName="bg-amber-50"
-        />
       </div>
     </div>
   );
