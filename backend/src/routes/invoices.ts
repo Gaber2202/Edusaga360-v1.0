@@ -275,7 +275,7 @@ invoiceRouter.post('/zatca-compliance-check', requireRole(FINANCE_ROLES), async 
 
 invoiceRouter.get('/:id/zatca-status', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const tenantId = await resolveTenantId(req);
 
     if (!tenantId) {
@@ -502,7 +502,7 @@ invoiceRouter.get('/:id/receipt-pdf', async (req: AuthenticatedRequest, res: Res
 
 invoiceRouter.get('/:id/payment-link', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { id: invoiceId } = req.params;
+    const invoiceId = req.params.id as string;
     let tenantId = req.user?.tenant_id || (req.headers['x-tenant-id'] as string) || (req.query.tenant_id as string);
 
     // Platform owners may not have a tenant_id in their token; look up the invoice first.
