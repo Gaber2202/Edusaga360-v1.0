@@ -7,6 +7,7 @@ import {
 
 const sale = {
   kind: 'purchase',
+  currencyCode: 'SAR',
   receiptNo: 'CNT-ABC12345',
   schoolName: 'EduSaga 360 School',
   studentName: 'Omar Hassan',
@@ -44,6 +45,7 @@ describe('buildCanteenReceiptHtml', () => {
   it('renders a top-up credit line in RTL', () => {
     const html = buildCanteenReceiptHtml({
       kind: 'topup',
+      currencyCode: 'SAR',
       receiptNo: 'CNT-TOPUP01',
       studentName: 'خالد',
       amount: 50,
@@ -77,7 +79,7 @@ describe('receiptPayloadFromTransaction', () => {
       amount: 22,
       items: [{ name_en: 'Burger', quantity: 1, unit_price: 22 }],
       payment_method: 'wallet',
-    }, { schoolName: 'Demo' });
+    }, { schoolName: 'Demo', currencyCode: 'SAR' });
     expect(payload.kind).toBe('purchase');
     expect(payload.receiptNo).toBe('CNT-AAAAAAAA');
     expect(payload.items).toHaveLength(1);

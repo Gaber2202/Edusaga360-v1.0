@@ -347,7 +347,7 @@ async function loadInvoiceForPdf(req: AuthenticatedRequest, id: string) {
 
 invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const { tenantId, invoiceRow, invoiceError } = await loadInvoiceForPdf(req, id);
 
     if (invoiceError || !invoiceRow || !tenantId) {
@@ -386,7 +386,7 @@ invoiceRouter.get('/:id/download-pdf', async (req: AuthenticatedRequest, res: Re
 
 invoiceRouter.get('/:id/receipt-pdf', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const { tenantId, invoiceRow, invoiceError } = await loadInvoiceForPdf(req, id);
 
     if (invoiceError || !invoiceRow || !tenantId) {
@@ -456,7 +456,7 @@ invoiceRouter.get('/:id/receipt-pdf', async (req: AuthenticatedRequest, res: Res
             id: invoiceRow.id as string,
             amount: Number(invoiceRow.paid_amount) || Number(invoiceRow.total_amount) || 0,
             method: 'online',
-            reference: (invoiceRow.invoice_number as string) || id,
+            reference: String(invoiceRow.invoice_number || id),
             date: (invoiceRow.issue_date as string) || (invoiceRow.date as string) || today,
           };
 

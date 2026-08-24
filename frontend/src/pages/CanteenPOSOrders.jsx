@@ -107,7 +107,11 @@ export default function CanteenPOSOrders() {
         schoolName: isRTL ? (tenant?.name_ar || tenant?.name_en || '') : (tenant?.name_en || tenant?.name_ar || ''),
         isRTL,
       }),
-      currencyCode: tenant?.localization?.currencyCode || tenant?.currency_code || 'SAR',
+      currencyCode: (() => {
+        const code = tenant?.localization?.currencyCode || tenant?.currency_code;
+        if (!code) throw new Error('currency_unresolved: canteen orders require tenant currency');
+        return code;
+      })(),
     });
   };
 

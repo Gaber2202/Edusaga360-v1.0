@@ -90,7 +90,7 @@ Even with correct write paths, **legacy users** may still carry:
 
 **Symptoms:** ghost account (`??`), `XXX`/empty currency, intermittent 403s, onboarding loops.
 
-**Remediation:** Run `backend/src/scripts/syncAuthMetadata.ts` with `DRY_RUN=true` first, then founder runs without dry-run on prod. See P1-A-3.
+**Remediation:** Run `backend/src/scripts/syncAuthMetadata.ts` with `DRY_RUN=true` first, then founder runs without dry-run on prod. See [SYNC_AUTH_METADATA_RUNBOOK.md](./SYNC_AUTH_METADATA_RUNBOOK.md) and dry-run report [SYNC_AUTH_METADATA_DRY_RUN_2026-08-25.md](./SYNC_AUTH_METADATA_DRY_RUN_2026-08-25.md).
 
 ---
 

@@ -45,7 +45,7 @@ function CompliancePanel({ isRTL }) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">{isRTL ? 'الامتثال التلقائي' : 'Compliance Autopilot'}</h2>
-          <p className="text-sm text-muted-foreground">{isRTL ? 'مراجعة فورية لمخاطر الامتثال — إقامات، GOSI، فواتير، إجازات' : 'Instant compliance health check — iqama, GOSI, fees, leave'}</p>
+          <p className="text-sm text-muted-foreground">{isRTL ? 'مراجعة فورية لمخاطر الامتثال — الوثائق، التأمينات، الفواتير، الإجازات' : 'Instant compliance health check — documents, social insurance, fees, leave'}</p>
         </div>
         <button
           onClick={run}

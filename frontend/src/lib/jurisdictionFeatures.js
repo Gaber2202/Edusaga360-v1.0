@@ -28,4 +28,5 @@ export const PAGE_FEATURE_KEYS = {
   GovernmentRelations: GOVERNMENT_RELATIONS_FEATURES,
   GovIntegrations: GOV_INTEGRATIONS_FEATURES,
   SaudizationTracker: NATIONALISATION_FEATURES,
+  VATManagement: EINVOICING_FEATURES,
 };

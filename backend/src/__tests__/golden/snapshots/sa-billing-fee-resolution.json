@@ -128,12 +128,12 @@
         "subtotal": 1000,
         "vat_rate": 0.15,
         "vat_amount": 145,
-        "total": 1111.67,
+        "total": 1111.66,
         "discount": 0
       }
     ],
-    "redistributed_discount": 99.99,
-    "redistributed_discount_matches_discount_amount": false
+    "redistributed_discount": 100,
+    "redistributed_discount_matches_discount_amount": true
   },
   "case_c_grade_specific_and_null": {
     "summary": {
@@ -224,7 +224,7 @@
     "redistributed_discount_matches_discount_amount": true
   },
   "case_e_bulk_estimate_vs_actual": {
-    "estimated_total": 3450,
+    "estimated_total": 3335,
     "actual_total": 3335,
     "response_actual_total": 3335
   }

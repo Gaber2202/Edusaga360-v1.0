@@ -7,17 +7,18 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-function money(value, currencyCode = 'SAR') {
+function money(value, currencyCode) {
   const amount = Number(value) || 0;
+  if (!currencyCode) return `— ${amount.toFixed(2)}`;
   try {
     return new Intl.NumberFormat('en-SA', {
       style: 'currency',
-      currency: currencyCode || 'SAR',
+      currency: currencyCode,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
   } catch {
-    return `${currencyCode || 'SAR'} ${amount.toFixed(2)}`;
+    return `${currencyCode} ${amount.toFixed(2)}`;
   }
 }
 
@@ -118,7 +119,10 @@ export function receiptPayloadFromTransaction(txn, { schoolName = '', isRTL = fa
 
 export function buildCanteenReceiptHtml(opts = {}) {
   const labels = { ...canteenReceiptLabels(opts.isRTL), ...(opts.labels || {}) };
-  const currencyCode = opts.currencyCode || 'SAR';
+  const currencyCode = opts.currencyCode;
+  if (!currencyCode) {
+    throw new Error('currency_unresolved: canteen receipt requires currencyCode');
+  }
   const kind = opts.kind === 'topup' ? 'topup' : 'purchase';
   const title = kind === 'topup' ? labels.topupTitle : labels.saleTitle;
   const stamp = kind === 'topup' ? labels.toppedUp : labels.paid;

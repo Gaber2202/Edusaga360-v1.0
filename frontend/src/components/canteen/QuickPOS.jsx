@@ -58,7 +58,10 @@ export default function QuickPOS({ students, wallets, menuItems, getTenantIdForC
     ? (tenant?.name_ar || tenant?.school_name_ar || tenant?.name_en || '')
     : (tenant?.name_en || tenant?.school_name_en || tenant?.name_ar || '');
   const cashierName = user?._displayName || user?.email || 'cashier';
-  const currencyCode = tenant?.localization?.currencyCode || tenant?.currency_code || 'SAR';
+  const currencyCode = tenant?.localization?.currencyCode || tenant?.currency_code;
+  if (!currencyCode) {
+    throw new Error('currency_unresolved: canteen POS requires tenant localization currencyCode');
+  }
 
   const printReceipt = (payload) => {
     openCanteenReceipt({

@@ -148,6 +148,21 @@ describe('POST /api/public/billing/moyasar/webhook', () => {
 
     const stopUpdate = db.filtersFor('collection_messages').find((c) => c.op === 'update');
     expect((stopUpdate?.payload as { delivery_status?: string })?.delivery_status).toBe('stopped');
+
+    // Phase 3 gate: payment must post to GL (same accounts as manual payment route).
+    const journal = db.rpcCallsFor('post_journal')[0];
+    expect(journal).toBeTruthy();
+    expect(journal.params).toMatchObject({
+      p_tenant_id: TENANT_ID,
+      p_reference: PAYMENT_ID,
+    });
+    const lines = (journal.params as { p_lines: { account_code: string; debit: number; credit: number }[] }).p_lines;
+    expect(lines).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ account_code: '11', debit: 1000, credit: 0 }),
+        expect.objectContaining({ account_code: '12', debit: 0, credit: 1000 }),
+      ]),
+    );
   });
 
   it('is idempotent — second identical webhook is already_processed', async () => {
@@ -163,5 +178,8 @@ describe('POST /api/public/billing/moyasar/webhook', () => {
 
     const paymentInserts = db.filtersFor('payments').filter((c) => c.op === 'insert');
     expect(paymentInserts).toHaveLength(1);
+
+    // Journal must not be posted twice on replay.
+    expect(db.rpcCallsFor('post_journal')).toHaveLength(1);
   });
 });

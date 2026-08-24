@@ -75,7 +75,7 @@ const NAV_ITEMS = [
       { label: 'Collections', labelAr: 'التحصيل', page: 'Collections', icon: 'Banknote' },
       { label: 'Journal Entries', labelAr: 'القيود', page: 'JournalEntries', icon: 'FileText' },
       { label: 'General Ledger', labelAr: 'دفتر الأستاذ', page: 'GeneralLedger', icon: 'FolderOpen' },
-      { label: 'ZATCA / VAT', labelAr: 'زاتكا / ضريبة', page: 'VATManagement', icon: 'Receipt' },
+      { label: 'VAT / E-Invoicing', labelAr: 'الضريبة / الفوترة', page: 'VATManagement', icon: 'Receipt' },
     ],
   },
   {

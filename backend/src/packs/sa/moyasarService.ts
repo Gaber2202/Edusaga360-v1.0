@@ -564,6 +564,26 @@ export async function processMoyasarWebhook(
         .eq('tenant_id', tenantId)
         .eq('invoice_id', invoiceId)
         .in('delivery_status', ['pending', 'scheduled', 'failed']);
+
+      // GL journal — same double-entry as manual POST /billing/payments (Phase 3 gate).
+      try {
+        const { makeLedger } = await import('../../services/ledger.js');
+        const { postJournal } = makeLedger(supabase);
+        const actorId = process.env.MOYASAR_WEBHOOK_ACTOR_ID || '00000000-0000-0000-0000-000000000001';
+        await postJournal(
+          tenantId,
+          actorId,
+          moyasarPaymentId,
+          `Moyasar payment — ${invoice.invoice_number as string}`,
+          [
+            { account_code: '11', debit: amountMajor, credit: 0, description: 'online received' },
+            { account_code: '12', debit: 0, credit: amountMajor, description: `A/R cleared — ${invoice.invoice_number as string}` },
+          ],
+          (invoice.branch_id as string) ?? null,
+        );
+      } catch (journalErr) {
+        console.warn('[moyasarService] post_journal failed:', (journalErr as Error).message);
+      }
     }
   } else if (eventType === 'payment_refunded') {
     // Refund without a credit note goes to review queue.

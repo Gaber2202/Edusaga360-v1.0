@@ -195,14 +195,31 @@ export function buildInvoiceLines(
   });
 
   const taxableSubtotal = sar(subtotal - discountAmount);
-  let vatAmount = 0;
 
-  const lines = preDiscountLines.map((line) => {
+  // Allocate net by ratio with unrounded intermediates; push all rounding
+  // residual onto the last line so Σ line_total_gross === total_amount (#185).
+  const targetVat = sar(
+    preDiscountLines.reduce((sum, line) => sum + taxableSubtotal * (line.subtotal / (subtotal || 1)) * line.vat_rate, 0),
+  );
+  const totalAmount = sar(taxableSubtotal + targetVat);
+
+  let allocatedNet = 0;
+  let allocatedVat = 0;
+  const lines = preDiscountLines.map((line, idx) => {
+    const isLast = idx === preDiscountLines.length - 1;
     const lineRatio = line.subtotal / (subtotal || 1);
-    const lineVat = sar(taxableSubtotal * lineRatio * line.vat_rate);
-    const lineTotalGross = sar(taxableSubtotal * lineRatio + lineVat);
-    vatAmount = sar(vatAmount + lineVat);
-
+    let lineNet: number;
+    let lineVat: number;
+    if (isLast) {
+      lineNet = sar(taxableSubtotal - allocatedNet);
+      lineVat = sar(targetVat - allocatedVat);
+    } else {
+      lineNet = sar(taxableSubtotal * lineRatio);
+      lineVat = sar(taxableSubtotal * lineRatio * line.vat_rate);
+      allocatedNet = sar(allocatedNet + lineNet);
+      allocatedVat = sar(allocatedVat + lineVat);
+    }
+    const lineTotalGross = sar(lineNet + lineVat);
     return {
       ...line,
       vat_amount: lineVat,
@@ -212,13 +229,11 @@ export function buildInvoiceLines(
     };
   });
 
-  const totalAmount = sar(taxableSubtotal + vatAmount);
-
   return {
     lines,
     subtotal,
     discount_amount: discountAmount,
-    vat_amount: vatAmount,
+    vat_amount: targetVat,
     total_amount: totalAmount,
   };
 }

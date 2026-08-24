@@ -302,7 +302,11 @@ export default function CanteenManagement() {
         balanceBefore: before,
         balanceAfter: newBalance,
         isRTL,
-        currencyCode: tenant?.localization?.currencyCode || tenant?.currency_code || 'SAR',
+        currencyCode: (() => {
+          const code = tenant?.localization?.currencyCode || tenant?.currency_code;
+          if (!code) throw new Error('currency_unresolved: canteen management requires tenant currency');
+          return code;
+        })(),
       });
       queryClient.invalidateQueries({ queryKey: ['canteenWallets'] });
       queryClient.invalidateQueries({ queryKey: ['canteenTransactions'] });

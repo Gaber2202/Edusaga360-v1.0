@@ -82,7 +82,7 @@ const SAUDI_ENROLLMENT_TEMPLATE_EN = `
   <li>Books and educational materials (where selected)</li>
   <li>Extracurricular activities</li>
 </ul>
-<p><em>All fees are exclusive of VAT at 15% unless stated otherwise. A ZATCA-compliant tax invoice will be issued upon payment.</em></p>
+<p><em>All fees are exclusive of VAT at {{vat_rate_pct}}% unless stated otherwise. Where e-invoicing applies in this jurisdiction, a compliant tax invoice will be issued upon payment.</em></p>
 
 <h3>Article 3 — Payment Terms</h3>
 <p>Fees may be paid as follows:</p>
@@ -124,7 +124,7 @@ const SAUDI_ENROLLMENT_TEMPLATE_EN = `
   <li>Deliver the approved Ministry of Education curriculum</li>
   <li>Monitor student academic progress and communicate with the guardian</li>
   <li>Maintain student safety and wellbeing during school hours</li>
-  <li>Issue ZATCA-compliant invoices for all fee collections</li>
+  <li>Issue jurisdiction-compliant tax invoices for all fee collections where e-invoicing applies</li>
 </ol>
 
 <h3>Article 8 — Data Privacy</h3>

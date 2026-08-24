@@ -50,6 +50,20 @@ afterEach(() => {
 describe('POST /billing/invoices', () => {
   function invoiceResolver(opts: { studentFound?: boolean; vatTreatment?: string } = {}) {
     const { studentFound = true, vatTreatment = 'standard' } = opts;
+    db.setRpcResolver((fn, params) => {
+      if (fn === 'create_invoice_with_journal') {
+        const pInvoice = (params as Record<string, unknown> | undefined)?.p_invoice as Record<string, unknown> | undefined;
+        return {
+          data: {
+            invoice: { id: INVOICE_ID, ...(pInvoice ?? {}), invoice_number: 'INV-2026-000001' },
+            journal_entry_id: 'je1',
+            zatca_id: null,
+            payment_plan_id: null,
+          },
+        };
+      }
+      return {};
+    });
     return (ctx: QueryContext) => {
       if (ctx.table === 'students') {
         return studentFound
@@ -60,6 +74,7 @@ describe('POST /billing/invoices', () => {
       if (ctx.table === 'invoices' && ctx.head) return { count: 0 };
       if (ctx.table === 'invoices' && ctx.op === 'insert') return { data: { id: INVOICE_ID, invoice_number: 'INV-2026-000001', total_amount: 1150 } };
       if (ctx.table === 'tenants') return { data: TENANT_ROW };
+      if (ctx.table === 'jurisdiction_features') return { data: { enabled: false } };
       if (ctx.table === 'zatca_submissions' && ctx.op === 'insert') return { data: { id: 'z1' } };
       if (ctx.table === 'zatca_submissions') return { data: null };
       if (ctx.table === 'chart_of_accounts') return { data: null };
@@ -193,10 +208,24 @@ describe('POST /billing/payments', () => {
 // ── Credit notes ─────────────────────────────────────────────────────────────
 
 describe('POST /billing/invoices/:id/credit-note', () => {
-  function cnResolver(originalTotal = 1150) {
+  function cnResolver(originalTotal = 1150, originalVat = 150) {
     return (ctx: QueryContext) => {
-      if (ctx.table === 'invoices' && ctx.op === 'select') return { data: { id: INVOICE_ID, invoice_number: 'INV-1', total_amount: originalTotal, student_id: STUDENT_ID, academic_year: '2025-2026' } };
-      if (ctx.table === 'invoices' && ctx.op === 'insert') return { data: { id: 'cn1', invoice_number: 'CN-INV-1', total_amount: -500, invoice_type: 'credit_note' } };
+      if (ctx.table === 'invoices' && ctx.op === 'select') {
+        return {
+          data: {
+            id: INVOICE_ID,
+            invoice_number: 'INV-1',
+            total_amount: originalTotal,
+            vat_amount: originalVat,
+            student_id: STUDENT_ID,
+            academic_year: '2025-2026',
+            branch_id: null,
+          },
+        };
+      }
+      if (ctx.table === 'invoices' && ctx.op === 'insert') {
+        return { data: { id: 'cn1', invoice_number: 'CN-INV-1', total_amount: -500, invoice_type: 'credit_note', vat_amount: -65.22 } };
+      }
       if (ctx.table === 'tenants') return { data: TENANT_ROW };
       if (ctx.table === 'jurisdiction_features') return { data: { enabled: true } };
       if (ctx.table === 'zatca_submissions') return { data: null };
@@ -206,6 +235,10 @@ describe('POST /billing/invoices/:id/credit-note', () => {
   }
 
   it('issues a credit note for an amount within the original total', async () => {
+    db.setRpcResolver((fn) => {
+      if (fn === 'post_journal') return { data: 'je-cn-1' };
+      return {};
+    });
     db.setResolver(cnResolver());
     const res = await request(makeApp())
       .post(`/billing/invoices/${INVOICE_ID}/credit-note`)
@@ -214,15 +247,20 @@ describe('POST /billing/invoices/:id/credit-note', () => {
     expect(res.body.invoice_type).toBe('credit_note');
     expect(res.body.total_amount).toBe(-500);
 
-    // Balance must be generated, not written. Credit notes start with paid_amount=0 and a negative balance.
     const cnInsert = db.filtersFor('invoices').find((c) => c.op === 'insert');
     expect(cnInsert).toBeTruthy();
     const payload = cnInsert!.payload as Record<string, unknown>;
     expect(payload).not.toHaveProperty('balance');
     expect(payload.paid_amount).toBe(0);
     expect(payload.total_amount).toBe(-500);
-    // Generated balance will be total_amount - paid_amount = -500.
+    // VAT portion must reverse (not forced to 0)
+    expect(Number(payload.vat_amount)).not.toBe(0);
     expect((payload.total_amount as number) - (payload.paid_amount as number)).toBe(-500);
+
+    const journal = db.rpcCallsFor('post_journal')[0];
+    expect(journal).toBeTruthy();
+    const lines = (journal!.params as { p_lines: Array<{ account_code: string }> }).p_lines;
+    expect(lines.map((l) => l.account_code).sort()).toEqual(['12', '24', '41']);
   });
 
   it('refuses a credit note larger than the original invoice', async () => {

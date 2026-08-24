@@ -143,12 +143,11 @@ async function getZatcaChain(
 
 
 /**
- * Post a balanced double-entry journal (best-effort, non-fatal).
+ * Post a balanced double-entry journal.
  *
- * Delegates to the post_journal Postgres function so the header and lines are
- * written in a single transaction — a partial failure can no longer leave an
- * orphaned/unbalanced entry. If the chart of accounts is not configured the
- * function resolves nothing and returns null, and we skip silently as before.
+ * Delegates to the post_journal Postgres function (single transaction).
+ * Missing chart-of-accounts raises chart_of_accounts_incomplete (ADR-002 —
+ * no silent skip). Callers must handle or surface the error.
  */
 async function postJournal(
   tenant_id: string,
@@ -158,7 +157,7 @@ async function postJournal(
   lines: { account_code: string; debit: number; credit: number; description: string }[],
   branch_id?: string | null,
 ) {
-  const { error } = await supabase.rpc('post_journal', {
+  const { data, error } = await supabase.rpc('post_journal', {
     p_tenant_id: tenant_id,
     p_created_by: created_by,
     p_reference: reference,
@@ -166,7 +165,10 @@ async function postJournal(
     p_lines: lines,
     p_branch_id: branch_id ?? null,
   });
-  if (error) console.warn('[billing] post_journal failed:', error.message);
+  if (error) {
+    throw new Error(error.message || 'post_journal failed');
+  }
+  return data as string | null;
 }
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
@@ -308,7 +310,7 @@ billingRouter.get('/fee-categories', async (req: AuthenticatedRequest, res: Resp
 
 billingRouter.get('/fee-structures', async (req: AuthenticatedRequest, res: Response) => {
   const tenant_id = req.user!.tenant_id!;
-  const { academic_year, grade, campus_id, branch_id } = req.query as Record<string, string>;
+  const { academic_year, grade, campus_id, branch_id, include_expired } = req.query as Record<string, string>;
   const scopeId = branch_id || campus_id;
   let q = supabase
     .from('fee_structures')
@@ -319,7 +321,14 @@ billingRouter.get('/fee-structures', async (req: AuthenticatedRequest, res: Resp
   if (scopeId) q = q.or(`campus_id.eq.${scopeId},campus_id.is.null`);
   const { data, error } = await q.order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
-  return res.json(data);
+  if (include_expired === 'true') return res.json(data);
+  const asOf = new Date().toISOString().split('T')[0];
+  const filtered = (data ?? []).filter((fs: { effective_from?: string | null; effective_to?: string | null }) => {
+    if (fs.effective_from && fs.effective_from > asOf) return false;
+    if (fs.effective_to && fs.effective_to < asOf) return false;
+    return true;
+  });
+  return res.json(filtered);
 });
 
 billingRouter.post('/fee-structures', requireRole(FINANCE_ROLES), async (req: AuthenticatedRequest, res: Response) => {
@@ -464,8 +473,9 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       total_amount: totalAmount,
     } = buildResult;
 
-    // Generate ZATCA artifacts
-    const tenant = await getTenantComplianceData(supabase, tenant_id);
+    // Prepare the invoice data and VAT summary; ZATCA artifacts are generated
+    // inside the atomic RPC retry loop so the previous-hash/ICV can be refreshed
+    // if the ZATCA chain forks under concurrency.
     const invoiceData: InvoiceData = {
       invoice_number: invoiceNumber,
       document_type: document_type as InvoiceData['document_type'],
@@ -495,33 +505,15 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
     }
     invoiceData.vat_summary = vatSummary;
 
-    // ZATCA reporting data is only relevant for Saudi formal tax invoices.
-    let chain: { previous_invoice_hash?: string; icv?: number } = {};
-    let qr_code: string | null = null;
-    let ubl_xml: string | null = null;
-    let invoice_hash: string | null = null;
-    let previous_hash: string | null = null;
-    if (isEInvoiceEnabled) {
-      if (!pack.eInvoice) {
-        throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'e-invoice generation');
-      }
-      chain = await getZatcaChain(tenant_id);
-      invoiceData.previous_invoice_hash = chain.previous_invoice_hash;
-      invoiceData.icv = chain.icv;
-      previous_hash = chain.previous_invoice_hash ?? null;
-
-      qr_code = pack.eInvoice.generateTLVQR!(invoiceData, tenant);
-      ubl_xml = pack.eInvoice.generateUBLXml!(invoiceData, tenant);
-      invoice_hash = pack.eInvoice.generateInvoiceHash!(ubl_xml);
-    }
-
-    // Insert invoice — try extended schema first, fall back to base columns
+    // Build the invoice payload and any optional related records, then perform a
+    // single atomic RPC that validates the chart of accounts, locks the ZATCA
+    // chain, inserts the invoice/discounts/ZATCA/payment-plan, and posts the GL.
     const studentGrade = (student as Record<string, unknown>).grades
       ? ((student as Record<string, unknown>).grades as Record<string, string>)?.name_en ?? ''
       : '';
     const notesText = [notes_en, notes_ar].filter(Boolean).join(' | ') || null;
 
-    const extendedPayload = {
+    const invoiceBase = {
       tenant_id,
       currency_code: pack.currencyCode,
       branch_id: studentBranchId,
@@ -551,146 +543,132 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
       vat_summary: vatSummary,
       notes: notesText,
       payment_methods: payment_methods || [],
-      zatca_uuid: isEInvoiceEnabled ? invoiceData.uuid : null,
-      icv: isEInvoiceEnabled ? invoiceData.icv : null,
-      invoice_hash,
-      previous_invoice_hash: previous_hash,
-      ubl_xml,
-      qr_code,
       zatca_status: isEInvoiceEnabled ? 'pending' : 'not_applicable',
       zatca_response: null,
-    };
+    } as Record<string, unknown>;
 
-    let invoice: Record<string, unknown>;
-    const { data: extData, error: extError } = await supabase
-      .from('invoices')
-      .insert(extendedPayload)
-      .select()
-      .single();
+    const pDiscounts = discountDetails.map((d) => ({
+      discount_rule_id: d.rule_id,
+      discount_code: d.code,
+      description_ar: d.description_ar,
+      description_en: d.description_en,
+      amount: d.amount,
+    }));
 
-    if (extError) {
-      // Extended columns may not exist yet — fall back to base schema
-      console.warn('[billing] Extended insert failed, using base schema:', extError.message);
-      const basePayload = {
-        tenant_id,
-        currency_code: pack.currencyCode,
-        branch_id: studentBranchId,
+    let pPaymentPlan: Record<string, unknown> | null = null;
+    const pInstallments: Record<string, unknown>[] = [];
+    if (isTaxInvoice && installment_count > 1 && due_date) {
+      pPaymentPlan = {
         student_id,
-        guardian_id: student.guardian_id,
-        invoice_number: invoiceNumber,
-        date: today,
-        due_date: due_date ?? null,
+        academic_year,
+        plan_type: 'term',
         total_amount: totalAmount,
-        paid_amount: 0,
-        status: isTaxInvoice ? 'issued' : 'draft',
-        items: enrichedLines,
-        notes: notesText,
-        payment_methods: payment_methods || [],
+        status: 'active',
       };
-      const { data: baseData, error: baseError } = await supabase
-        .from('invoices')
-        .insert(basePayload)
-        .select()
-        .single();
-      if (baseError) throw baseError;
-      invoice = baseData as Record<string, unknown>;
-    } else {
-      invoice = extData as Record<string, unknown>;
+      const installmentAmount = sar(totalAmount / installment_count);
+      const baseDue = new Date(due_date);
+      for (let i = 0; i < installment_count; i += 1) {
+        const d = new Date(baseDue);
+        d.setMonth(d.getMonth() + i);
+        pInstallments.push({
+          installment_no: i + 1,
+          due_date: d.toISOString().split('T')[0],
+          amount: i === installment_count - 1
+            ? sar(totalAmount - installmentAmount * (installment_count - 1))
+            : installmentAmount,
+          status: 'pending',
+        });
+      }
     }
 
-    // Record applied discounts (best-effort)
-    if (discountDetails.length > 0) {
-      const { error: discErr } = await supabase.from('invoice_discounts').insert(
-        discountDetails.map((d) => ({
-          tenant_id,
-          currency_code: pack.currencyCode,
-          invoice_id: invoice.id,
-          discount_rule_id: d.rule_id,
-          discount_code: d.code,
-          description_ar: d.description_ar,
-          description_en: d.description_en,
-          amount: d.amount,
-        })),
-      );
-      if (discErr) console.warn('[billing] discount insert failed:', discErr.message);
-    }
+    const tenant = await getTenantComplianceData(supabase, tenant_id);
+    const ledgerCodes = { ar: '120001', revenue: '410001', vat_payable: '240001' };
 
-    // ZATCA submission, installments and GL journal only apply to formal invoices.
-    let zatcaRecord: Record<string, unknown> | null = null;
-    if (isEInvoiceEnabled) {
-      const submissionType = invoiceData.invoice_type === 'standard' ? 'clearance' : 'reporting';
-      const { data: zatcaData, error: zatcaErr } = await supabase
-        .from('zatca_submissions')
-        .insert({
-          tenant_id,
-          invoice_id: invoice.id,
-          invoice_number: invoiceNumber,
-          submission_type: submissionType,
+    let rpcResult: { invoice: Record<string, unknown>; zatca_id?: string; payment_plan_id?: string; journal_entry_id?: string } | null = null;
+    let qr_code: string | null = null;
+    let ubl_xml: string | null = null;
+    let invoice_hash: string | null = null;
+    let previous_hash: string | null = null;
+
+    const maxAttempts = 3;
+    let lastRpcError: any = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      let pZatca: Record<string, unknown> | null = null;
+
+      if (isEInvoiceEnabled) {
+        if (!pack.eInvoice) {
+          throw new NotImplementedInJurisdiction(resolveJurisdiction(ctx), 'e-invoice generation');
+        }
+
+        const chain = await getZatcaChain(tenant_id);
+        invoiceData.previous_invoice_hash = chain.previous_invoice_hash;
+        invoiceData.icv = chain.icv;
+        previous_hash = chain.previous_invoice_hash ?? null;
+
+        qr_code = pack.eInvoice.generateTLVQR!(invoiceData, tenant);
+        ubl_xml = pack.eInvoice.generateUBLXml!(invoiceData, tenant);
+        invoice_hash = pack.eInvoice.generateInvoiceHash!(ubl_xml);
+
+        pZatca = {
+          submission_type: invoiceData.invoice_type === 'standard' ? 'clearance' : 'reporting',
           invoice_hash,
-          previous_hash,
+          previous_hash: chain.previous_invoice_hash ?? null,
           ubl_xml,
           qr_code,
           zatca_status: 'pending',
-        })
-        .select()
-        .single();
-      if (zatcaErr) {
-        console.warn('[billing] ZATCA insert failed:', zatcaErr.message);
-      } else {
-        zatcaRecord = zatcaData;
+          zatca_uuid: invoiceData.uuid,
+        };
+
+        invoiceBase.zatca_uuid = invoiceData.uuid;
+        invoiceBase.icv = chain.icv;
+        invoiceBase.invoice_hash = invoice_hash;
+        invoiceBase.previous_invoice_hash = chain.previous_invoice_hash ?? null;
+        invoiceBase.ubl_xml = ubl_xml;
+        invoiceBase.qr_code = qr_code;
       }
+
+      const { data: rpcData, error: rpcError } = await supabase.rpc('create_invoice_with_journal', {
+        p_tenant_id: tenant_id,
+        p_created_by: req.user!.id,
+        p_branch_id: studentBranchId ?? null,
+        p_invoice: invoiceBase,
+        p_ledger_codes: ledgerCodes,
+        p_discounts: pDiscounts,
+        p_zatca: pZatca,
+        p_payment_plan: pPaymentPlan,
+        p_installments: pInstallments,
+        p_journal_description: `Invoice ${invoiceNumber}`,
+      });
+
+      if (!rpcError) {
+        rpcResult = rpcData as any;
+        break;
+      }
+
+      lastRpcError = rpcError;
+      if (rpcError.message?.includes('zatca_chain_fork') && attempt < maxAttempts) {
+        continue;
+      }
+      if (rpcError.message?.includes('chart_of_accounts_incomplete')) {
+        return res.status(422).json({ error: 'chart_of_accounts_incomplete' });
+      }
+      throw rpcError;
     }
 
-    // Generate installment plan if requested (tax invoices only)
+    if (!rpcResult) {
+      throw lastRpcError;
+    }
+
+    const invoice = rpcResult.invoice;
+
     let plan = null;
-    if (isTaxInvoice && installment_count > 1 && due_date) {
-      const { data: planData, error: planErr } = await supabase
+    if (rpcResult.payment_plan_id) {
+      const { data: planData } = await supabase
         .from('payment_plans')
-        .insert({
-          tenant_id,
-          currency_code: pack.currencyCode,
-          student_id,
-          academic_year,
-          plan_type: 'term',
-          total_amount: totalAmount,
-          paid_amount: 0,
-          status: 'active',
-        })
-        .select()
+        .select('*')
+        .eq('id', rpcResult.payment_plan_id)
         .single();
-      if (!planErr && planData) {
-        plan = planData;
-        const installmentAmount = sar(totalAmount / installment_count);
-        const baseDue = new Date(due_date);
-        const installments = Array.from({ length: installment_count }, (_, i) => {
-          const d = new Date(baseDue);
-          d.setMonth(d.getMonth() + i);
-          return {
-            tenant_id,
-            currency_code: pack.currencyCode,
-            plan_id: planData.id,
-            installment_no: i + 1,
-            due_date: d.toISOString().split('T')[0],
-            amount: i === installment_count - 1
-              ? sar(totalAmount - installmentAmount * (installment_count - 1))
-              : installmentAmount,
-            status: 'pending',
-            invoice_id: invoice.id,
-          };
-        });
-        await supabase.from('payment_plan_installments').insert(installments);
-      }
-    }
-
-    // Double-entry GL journal (best-effort, non-fatal) — tax invoices only
-    if (isTaxInvoice) try {
-      await postJournal(tenant_id, req.user!.id, invoiceNumber, `Invoice ${invoiceNumber}`, [
-        { account_code: '12', debit: totalAmount, credit: 0, description: `A/R — ${invoiceNumber}` },
-        { account_code: '41', debit: 0, credit: sar(subtotal - totalDiscount), description: `Revenue — ${invoiceNumber}` },
-        { account_code: '24', debit: 0, credit: vatAmount, description: `VAT Payable (15%) — ${invoiceNumber}` },
-      ], studentBranchId);
-    } catch (journalErr) {
-      console.warn('[billing] GL journal post failed:', (journalErr as Error).message);
+      plan = planData;
     }
 
     // Auto-issue a hosted payment link when the parent should pay digitally.
@@ -721,7 +699,7 @@ billingRouter.post('/invoices', requireRole(FINANCE_ROLES), async (req: Authenti
     return res.status(201).json({
       invoice,
       zatca: isEInvoiceEnabled
-        ? { id: zatcaRecord?.id, qr_code, invoice_hash, status: 'pending' }
+        ? { id: rpcResult.zatca_id, qr_code, invoice_hash, status: 'pending' }
         : { id: null, qr_code: null, invoice_hash: null, status: 'not_applicable' },
       payment_plan: plan,
       payment_link: paymentLink,
@@ -918,9 +896,44 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
     const ctx = await buildRequestContext(supabase, tenant_id, (original.branch_id as string) ?? undefined);
     const pack = resolvePack(ctx);
 
+    // Proportional VAT split from the original invoice (ADR-002 / credit-note VAT).
+    const originalTotal = Number(original.total_amount ?? 0);
+    const originalVat = Number(original.vat_amount ?? 0);
+    const originalNet = sar(originalTotal - originalVat);
+    const creditRatio = originalTotal > 0 ? amount / originalTotal : 0;
+    const vatReversal = sar(originalVat * creditRatio);
+    const netReversal = sar(amount - vatReversal);
+    const vatRate = originalNet > 0 ? originalVat / originalNet : 0;
+
     const cnItems = line_adjustments && line_adjustments.length > 0
-      ? line_adjustments.map((l: any) => ({ ...l, vat_category: 'out_of_scope', vat_category_code: 'O', vat_rate: 0, vat_amount: 0, line_total_gross: -(l.amount ?? 0), quantity: l.quantity ?? 1, unit_price_net: -(l.amount ?? 0) / (l.quantity ?? 1) }))
-      : [{ description_en: reason, description_ar: reason_ar, vat_category: 'out_of_scope', vat_category_code: 'O', vat_rate: 0, vat_amount: 0, line_total_gross: -amount, quantity: 1, unit_price_net: -amount, amount: -amount }];
+      ? line_adjustments.map((l: any) => {
+          const lineAmt = Number(l.amount ?? 0);
+          const lineVat = sar(lineAmt * (vatRate / (1 + vatRate) || 0));
+          const lineNet = sar(lineAmt - lineVat);
+          const qty = l.quantity ?? 1;
+          return {
+            ...l,
+            vat_category: originalVat > 0 ? 'standard' : 'out_of_scope',
+            vat_category_code: originalVat > 0 ? 'S' : 'O',
+            vat_rate: vatRate,
+            vat_amount: -lineVat,
+            line_total_gross: -lineAmt,
+            quantity: qty,
+            unit_price_net: -(lineNet / qty),
+          };
+        })
+      : [{
+          description_en: reason,
+          description_ar: reason_ar,
+          vat_category: originalVat > 0 ? 'standard' : 'out_of_scope',
+          vat_category_code: originalVat > 0 ? 'S' : 'O',
+          vat_rate: vatRate,
+          vat_amount: -vatReversal,
+          line_total_gross: -amount,
+          quantity: 1,
+          unit_price_net: -netReversal,
+          amount: -amount,
+        }];
     const { data: cn, error: cnErr } = await supabase
       .from('invoices')
       .insert({
@@ -935,9 +948,9 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
         document_type: 'credit_note',
         invoice_type: 'simplified',
         zatca_invoice_type: 'simplified',
-        subtotal: -amount,
+        subtotal: -netReversal,
         discount_amount: 0,
-        vat_amount: 0,
+        vat_amount: -vatReversal,
         total_amount: -amount,
         paid_amount: 0,
         status: 'issued',
@@ -965,9 +978,9 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
       document_type: 'credit_note',
       invoice_type: 'simplified',
       zatca_invoice_type: 'simplified',
-      subtotal: -amount,
+      subtotal: -netReversal,
       discount_amount: 0,
-      vat_amount: 0,
+      vat_amount: -vatReversal,
       total_amount: -amount,
       original_invoice_number: typeof original.invoice_number === 'string' ? original.invoice_number : (Array.isArray(original.invoice_number) ? original.invoice_number[0] : String(original.invoice_number ?? '')),
       parent_document_id: id as string,
@@ -990,11 +1003,20 @@ billingRouter.post('/invoices/:id/credit-note', requireRole(FINANCE_ROLES), asyn
       zatca_status: 'pending',
     });
 
-    // Reverse GL entry
-    await postJournal(tenant_id, req.user!.id, cnNumber, `Credit Note ${cnNumber}`, [
-      { account_code: '41', debit: amount, credit: 0, description: `Revenue reversal — ${cnNumber}` },
+    // Reverse GL entry — mirror invoice legs: 41 net, 24 VAT, 12 A/R gross.
+    const journalLines = [
+      { account_code: '41', debit: netReversal, credit: 0, description: `Revenue reversal — ${cnNumber}` },
       { account_code: '12', debit: 0, credit: amount, description: `A/R credit — ${cnNumber}` },
-    ], original.branch_id ?? null);
+    ];
+    if (vatReversal > 0) {
+      journalLines.splice(1, 0, {
+        account_code: '24',
+        debit: vatReversal,
+        credit: 0,
+        description: `VAT Payable reversal — ${cnNumber}`,
+      });
+    }
+    await postJournal(tenant_id, req.user!.id, cnNumber, `Credit Note ${cnNumber}`, journalLines, original.branch_id ?? null);
 
     void dispatchWebhook(supabase, tenant_id, 'credit_note.created', { credit_note_id: cn.id, credit_note_number: cnNumber, original_invoice_id: id, original_invoice_number: typeof original.invoice_number === 'string' ? original.invoice_number : String(original.invoice_number ?? ''), amount }, cn.id as string);
 
@@ -1253,6 +1275,9 @@ export async function createInvoiceForStudent(
     ? ((student as Record<string, unknown>).grades as Record<string, string>)?.name_en ?? ''
     : '';
 
+  const earlyCtx = await buildRequestContext(supabase, tenant_id, studentBranchId ?? undefined);
+  const earlyPack = resolvePack(earlyCtx);
+
   let sourceLines = fee_lines;
   if (!sourceLines || sourceLines.length === 0) {
     // Fall back to mandatory fee structures for this student's grade.
@@ -1260,6 +1285,8 @@ export async function createInvoiceForStudent(
       academicYear: academic_year,
       grade: student.grade_id ?? undefined,
       mandatoryOnly: true,
+      asOf: today,
+      jurisdictionCode: earlyPack.code,
     });
     sourceLines = feeStructures.map((fs) => ({
       category_id: fs.category_id,
@@ -1467,7 +1494,19 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
       grade: grade ?? undefined,
       branchId: campus_id ?? undefined,
       mandatoryOnly: true,
+      jurisdictionCode: pack.code,
     });
+
+    // P1-E activation gate — every fee category must have a tax treatment.
+    try {
+      const { assertFeeCategoriesHaveTaxTreatment } = await import('../lib/feeCategoryTaxMatrix.js');
+      assertFeeCategoriesHaveTaxTreatment(
+        pack.code,
+        feeStructures.map((fs) => fs.category_code),
+      );
+    } catch (taxErr) {
+      return res.status(422).json({ error: (taxErr as Error).message });
+    }
 
     if (!feeStructures.length) return res.status(400).json({ error: 'No fee structures found for the given criteria' });
 
@@ -1492,17 +1531,26 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
       .neq('status', 'cancelled');
     const existingIds = new Set((existing ?? []).map((e) => e.student_id));
 
-    const planForStudent = async (student: { grade_id?: string | null }) => {
+    const planForStudent = async (student: { id: string; grade_id?: string | null }) => {
       const relevant = feeStructures.filter((fs) => !fs.grade || fs.grade === student.grade_id);
-      // Dry-run total intentionally excludes discounts so it stays a preview of
-      // gross fees. Use the pack so the UAE gets 5% and Saudi Arabia keeps 15%.
-      const { total_amount: gross } = await pack.tax?.buildInvoiceLines?.(
+      // Preview must match what createInvoiceForStudent will charge (#186) —
+      // apply the same discount resolution before VAT.
+      const preSubtotal = relevant.reduce((sum, fs) => sar(sum + sar(fs.amount * (fs.quantity ?? 1))), 0);
+      const { total_discount } = await applyDiscounts(
+        supabase,
+        tenant_id,
+        student.id,
+        academic_year,
+        preSubtotal,
+        relevant[0]?.category_id,
+      );
+      const { total_amount: net } = await pack.tax?.buildInvoiceLines?.(
         relevant,
-        0,
+        total_discount,
         supabase,
         today,
       ) as BuildInvoiceLinesResult;
-      return { relevant, gross };
+      return { relevant, gross: net };
     };
 
     let eligible = 0;

@@ -33,6 +33,16 @@ export interface ResolveFeeStructuresInput {
   branchId?: string;
   program?: string;
   mandatoryOnly?: boolean;
+  /** As-of date for effective_from / effective_to filter (ISO date). Defaults to today. */
+  asOf?: string;
+  /** Jurisdiction code for fee-category tax treatment matrix (P1-E). */
+  jurisdictionCode?: string;
+}
+
+function isEffectiveOn(fs: { effective_from?: string | null; effective_to?: string | null }, asOf: string): boolean {
+  if (fs.effective_from && fs.effective_from > asOf) return false;
+  if (fs.effective_to && fs.effective_to < asOf) return false;
+  return true;
 }
 
 export async function resolveFeeStructures(
@@ -61,9 +71,11 @@ export async function resolveFeeStructures(
   // the legacy alias for branch_id (see issue #188).
   const grade = input.grade ?? null;
   const branchId = input.branchId ?? null;
+  const asOf = input.asOf ?? new Date().toISOString().split('T')[0];
 
   return (data ?? [])
     .filter((fs) => {
+      if (!isEffectiveOn(fs, asOf)) return false;
       if (grade != null && fs.grade != null && fs.grade !== grade) return false;
       if (
         branchId != null &&
@@ -74,10 +86,13 @@ export async function resolveFeeStructures(
     })
     .map((fs) => {
       const cat = (fs.fee_categories as Record<string, unknown> | undefined) ?? {};
+      const categoryCode = (cat.code as string | null) ?? null;
+      // P1-E activation gate validates category codes; vat_treatment stays on the
+      // fee_categories row (pack/buildInvoiceLines) unless a future pack hook applies matrix rates.
       return {
         id: fs.id as string,
         category_id: fs.category_id as string,
-        category_code: (cat.code as string | null) ?? null,
+        category_code: categoryCode,
         description_en: (cat.name_en as string) ?? 'Fee',
         description_ar: (cat.name_ar as string) ?? 'رسوم',
         vat_treatment: (cat.vat_treatment as string) ?? 'standard',

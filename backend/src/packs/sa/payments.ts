@@ -32,9 +32,39 @@ async function generateSadadBill(
     .single();
   if (error || !invoice) throw error ?? new Error('Invoice not found');
 
-  const companyCode = process.env.SADAD_COMPANY_CODE ?? '000';
+  // Tenant-scoped company code (#190). Prefer per-tenant settings; fall back to
+  // a stable 3-digit discriminator derived from tenant_id so two tenants never
+  // share the default '000' collision window.
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('settings')
+    .eq('id', tenantId)
+    .maybeSingle();
+  const settings = (tenant?.settings as Record<string, unknown> | null) ?? {};
+  const configured = typeof settings.sadad_company_code === 'string'
+    ? settings.sadad_company_code.replace(/\D/g, '').slice(0, 3)
+    : '';
+  const tenantDisc = tenantId.replace(/-/g, '').slice(0, 3).replace(/[a-f]/gi, (c) => String((parseInt(c, 16) % 10)));
+  const companyCode = (configured || process.env.SADAD_COMPANY_CODE || tenantDisc || '001').padStart(3, '0').slice(0, 3);
   const seq = String(invoice.invoice_number ?? '').replace(/\D/g, '').padStart(9, '0');
-  const sadadBillNumber = `${companyCode}${seq}`;
+  let sadadBillNumber = `${companyCode}${seq}`;
+
+  // Uniqueness check — bump a suffix digit if collision (same tenant or cross-tenant).
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const candidate = attempt === 0
+      ? sadadBillNumber
+      : `${companyCode}${seq.slice(0, 8)}${attempt % 10}`;
+    const { data: clash } = await supabase
+      .from('invoices')
+      .select('id')
+      .eq('sadad_bill_number', candidate)
+      .neq('id', invoiceId)
+      .maybeSingle();
+    if (!clash) {
+      sadadBillNumber = candidate;
+      break;
+    }
+  }
 
   return {
     sadad_bill_number: sadadBillNumber,
