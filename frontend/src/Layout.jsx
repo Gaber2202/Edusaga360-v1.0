@@ -731,8 +731,15 @@ function LayoutContent({ children, currentPageName }) {
               </div>
             )}
 
-            {/* Cmd+K Search */}
-            <Button variant="ghost" size="icon" onClick={() => setCmdOpen(true)} className="hidden sm:flex text-muted-foreground hover:text-ink h-9 w-9" title={isRTL ? 'بحث (Ctrl+K)' : 'Search (Ctrl+K)'} aria-label={isRTL ? 'بحث' : 'Search'}>
+            {/* Cmd+K / Ctrl+K Search — same pages as the role-filtered sidebar */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCmdOpen((open) => !open)}
+              className="flex text-muted-foreground hover:text-ink h-9 w-9"
+              title={isRTL ? 'بحث (⌘K / Ctrl+K)' : 'Search (⌘K / Ctrl+K)'}
+              aria-label={isRTL ? 'بحث' : 'Search'}
+            >
               <Search className="w-4 h-4" />
             </Button>
 
@@ -842,8 +849,8 @@ function LayoutContent({ children, currentPageName }) {
         </nav>
       </div>
 
-      {/* Global Command Palette */}
-      <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
+      {/* Global Command Palette — driven by the same filtered nav tree as the sidebar */}
+      <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} navigation={filteredNavigation} />
     </div>
   );
 }

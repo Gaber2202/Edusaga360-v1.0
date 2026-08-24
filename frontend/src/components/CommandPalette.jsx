@@ -1,22 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  Users,
-  GraduationCap,
-  ClipboardCheck,
-  DollarSign,
-  Calendar,
-  CheckCircle,
-  Shield,
-  Receipt,
-  Banknote,
-  FileText,
-  FolderOpen,
-  BarChart3,
-  Settings,
-  Bot,
-} from 'lucide-react';
 import {
   CommandDialog,
   CommandInput,
@@ -27,88 +10,22 @@ import {
 } from './ui/command';
 import { useLanguage } from './LanguageContext';
 import { createPageUrl } from '../utils';
-import { useJurisdictionFeatures } from './JurisdictionFeatureContext';
-import { PAGE_FEATURE_KEYS } from '../lib/jurisdictionFeatures.js';
+import { flattenNavigationForCommandPalette } from '../lib/staffNavigation';
 
-const ICONS = {
-  LayoutDashboard,
-  Users,
-  GraduationCap,
-  ClipboardCheck,
-  DollarSign,
-  Calendar,
-  CheckCircle,
-  Shield,
-  Receipt,
-  Banknote,
-  FileText,
-  FolderOpen,
-  BarChart3,
-  Settings,
-  Bot,
-};
-
-const NAV_ITEMS = [
-  {
-    group: 'School',
-    items: [
-      { label: 'Dashboard', labelAr: 'لوحة التحكم', page: 'Dashboard', icon: 'LayoutDashboard' },
-      { label: 'Students', labelAr: 'الطلاب', page: 'Students', icon: 'Users' },
-      { label: 'Admissions', labelAr: 'القبول', page: 'Admissions', icon: 'GraduationCap' },
-      { label: 'Attendance', labelAr: 'الحضور', page: 'StudentAttendancePage', icon: 'ClipboardCheck' },
-    ],
-  },
-  {
-    group: 'HR',
-    items: [
-      { label: 'Employees', labelAr: 'الموظفون', page: 'Employees', icon: 'Users' },
-      { label: 'Payroll', labelAr: 'الرواتب', page: 'Payroll', icon: 'DollarSign' },
-      { label: 'Leaves', labelAr: 'الإجازات', page: 'Leaves', icon: 'Calendar' },
-      { label: 'HR Approvals', labelAr: 'الموافقات', page: 'HRApprovalsInbox', icon: 'CheckCircle' },
-      { label: 'Gov. Relations', labelAr: 'العلاقات الحكومية', page: 'GovernmentRelations', icon: 'Shield' },
-    ],
-  },
-  {
-    group: 'Finance',
-    items: [
-      { label: 'Invoices / Fees', labelAr: 'الفواتير', page: 'Fees', icon: 'Receipt' },
-      { label: 'Collections', labelAr: 'التحصيل', page: 'Collections', icon: 'Banknote' },
-      { label: 'Journal Entries', labelAr: 'القيود', page: 'JournalEntries', icon: 'FileText' },
-      { label: 'General Ledger', labelAr: 'دفتر الأستاذ', page: 'GeneralLedger', icon: 'FolderOpen' },
-      { label: 'VAT / E-Invoicing', labelAr: 'الضريبة / الفوترة', page: 'VATManagement', icon: 'Receipt' },
-    ],
-  },
-  {
-    group: 'Other',
-    items: [
-      { label: 'Reports', labelAr: 'التقارير', page: 'Reports', icon: 'BarChart3' },
-      { label: 'Settings', labelAr: 'الإعدادات', page: 'Settings', icon: 'Settings' },
-      { label: 'Yamen AI', labelAr: 'يامن AI', page: 'YamenAI', icon: 'Bot' },
-      { label: 'Contracts', labelAr: 'العقود', page: 'Contracts', icon: 'FileText' },
-    ],
-  },
-];
-
-export default function CommandPalette({ open, onOpenChange }) {
+export default function CommandPalette({ open, onOpenChange, navigation = [] }) {
   const navigate = useNavigate();
-  const { isRTL } = useLanguage();
-  const { areAnyEnabled } = useJurisdictionFeatures();
+  const { t, isRTL } = useLanguage();
 
-  const navItems = NAV_ITEMS.map(({ group, items }) => ({
-    group,
-    items: items.filter((item) => {
-      const features = PAGE_FEATURE_KEYS[item.page];
-      return !features || areAnyEnabled(features);
-    }),
-  })).filter(({ items }) => items.length > 0);
+  const navGroups = useMemo(
+    () => flattenNavigationForCommandPalette(navigation, t),
+    [navigation, t],
+  );
 
   useEffect(() => {
     function handleKeyDown(e) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        if (onOpenChange) {
-          onOpenChange(true);
-        }
+        onOpenChange?.((prev) => !prev);
       }
     }
 
@@ -117,36 +34,38 @@ export default function CommandPalette({ open, onOpenChange }) {
   }, [onOpenChange]);
 
   function handleSelect(page) {
-    if (onOpenChange) {
-      onOpenChange(false);
-    }
-    navigate(createPageUrl(page));
+    onOpenChange?.(false);
+    requestAnimationFrame(() => navigate(createPageUrl(page)));
   }
+
+  const shortcutHint = typeof navigator !== 'undefined' && /Mac/i.test(navigator.platform)
+    ? (isRTL ? 'Esc للإغلاق · ⌘K للبحث' : 'Esc to close · ⌘K to search')
+    : (isRTL ? 'Esc للإغلاق · Ctrl+K للبحث' : 'Esc to close · Ctrl+K to search');
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
       <CommandInput placeholder={isRTL ? 'ابحث عن صفحة...' : 'Search pages...'} />
       <CommandList>
         <CommandEmpty>{isRTL ? 'لا توجد نتائج.' : 'No results found.'}</CommandEmpty>
-        {navItems.map(({ group, items }) => (
+        {navGroups.map(({ group, items }) => (
           <CommandGroup key={group} heading={group}>
             {items.map((item) => {
-              const Icon = ICONS[item.icon];
+              const Icon = item.icon;
               return (
                 <CommandItem
                   key={item.page}
-                  value={`${item.label} ${item.labelAr} ${item.page}`}
+                  value={item.searchValue}
                   onSelect={() => handleSelect(item.page)}
                 >
                   {Icon && <Icon />}
-                  <span>{isRTL ? item.labelAr : item.label}</span>
+                  <span>{item.label}</span>
                 </CommandItem>
               );
             })}
           </CommandGroup>
         ))}
       </CommandList>
-      <p className="text-xs text-muted-foreground px-3 pb-2">Press Esc to close</p>
+      <p className="text-xs text-muted-foreground px-3 pb-2">{shortcutHint}</p>
     </CommandDialog>
   );
 }
