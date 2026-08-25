@@ -57,8 +57,6 @@ function ChartTooltip({ active, payload, label }) {
   );
 }
 
-}
-
 function TypeRow({ label, count, total, color }) {
   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
   return (
