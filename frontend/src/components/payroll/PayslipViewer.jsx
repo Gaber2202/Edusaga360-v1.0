@@ -6,7 +6,7 @@ import { formatCurrency } from '../../lib/localization';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Alert, AlertDescription } from '../ui/alert';
-import { Download, Mail, Building2, Shield, Info } from 'lucide-react';
+import { Download, Mail, MessageCircle, Building2, Shield, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
@@ -56,20 +56,35 @@ export default function PayslipViewer({ payslip, employee, branch, open, onClose
     }
   };
 
-  const handleSendEmail = async () => {
+  const handleDeliverPayslip = async () => {
     try {
-      await callApi('/api/email/send', {
-        to: employee.email,
-        subject: isRTL ? `كشف الراتب - ${payslip.period}` : `Payslip - ${payslip.period}`,
-        body: isRTL 
-          ? `عزيزي ${employee.name_ar}،\n\nمرفق كشف راتبك لشهر ${payslip.period}.\n\nمع التحية`
-          : `Dear ${employee.name_en || employee.name_ar},\n\nPlease find attached your payslip for ${payslip.period}.\n\nBest regards`
-      });
-      
-      toast.success(isRTL ? 'تم إرسال الكشف بنجاح' : 'Payslip sent successfully');
+      toast.loading(isRTL ? 'جاري إرسال كشف الراتب...' : 'Sending payslip...');
+      const [month, year] = payslip.period
+        ? payslip.period.split('/').map(Number)
+        : [new Date().getMonth() + 1, new Date().getFullYear()];
+      const result = await callApi('/api/payroll/payslip-deliver', {
+        payslip_id: payslip.id,
+        employee_id: employee.id,
+        period_month: month,
+        period_year: year,
+      }, { method: 'POST' });
+      toast.dismiss();
+      if (result?.bothSucceeded) {
+        toast.success(isRTL ? 'تم الإرسال عبر البريد وواتساب' : 'Sent via email and WhatsApp');
+      } else {
+        const parts = [];
+        if (!result?.email?.success) parts.push(isRTL ? 'البريد' : 'email');
+        if (!result?.whatsapp?.success) parts.push(isRTL ? 'واتساب' : 'WhatsApp');
+        toast.warning(
+          isRTL
+            ? `إرسال جزئي — فشل: ${parts.join('، ')}`
+            : `Partial send — failed: ${parts.join(', ')}`,
+        );
+      }
     } catch (error) {
+      toast.dismiss();
       console.error('Error:', error);
-      toast.error(isRTL ? 'حدث خطأ' : 'Error occurred');
+      toast.error(isRTL ? 'تعذّر إرسال كشف الراتب' : 'Failed to deliver payslip');
     }
   };
 
@@ -83,8 +98,14 @@ export default function PayslipViewer({ payslip, employee, branch, open, onClose
               <Button size="sm" variant="outline" onClick={handleDownloadPDF}>
                 <Download className="w-4 h-4" />
               </Button>
-              <Button size="sm" variant="outline" onClick={handleSendEmail}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleDeliverPayslip}
+                title={isRTL ? 'إرسال عبر البريد وواتساب' : 'Send via email + WhatsApp'}
+              >
                 <Mail className="w-4 h-4" />
+                <MessageCircle className="w-4 h-4 ms-1" />
               </Button>
             </div>
           </DialogTitle>

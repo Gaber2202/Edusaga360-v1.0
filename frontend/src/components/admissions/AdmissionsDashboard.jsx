@@ -7,17 +7,13 @@ import {
   PieChart, Pie, Cell
 } from 'recharts';
 import { Users, GraduationCap, CheckCircle, XCircle, Clock, TrendingUp, AlertTriangle } from 'lucide-react';
+import { DEFAULT_ADMISSION_STAGES, appMatchesStage } from '../../lib/admissionsPipeline';
 
 const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#84cc16'];
 
-const STAGE_ORDER = ['inquiry','submitted','under_review','assessment','interview','committee','accepted','enrolled'];
-const STAGE_LABELS_AR = {
-  inquiry:'استفسار', submitted:'مقدَّم', under_review:'مراجعة', assessment:'اختبار',
-  interview:'مقابلة', committee:'اللجنة', accepted:'مقبول', enrolled:'ملتحق'
-};
-
-export default function AdmissionsDashboard({ applications, branches: _branches }) {
+export default function AdmissionsDashboard({ applications, branches: _branches, stages: stagesProp }) {
   const { isRTL } = useLanguage();
+  const stages = stagesProp?.length ? stagesProp : DEFAULT_ADMISSION_STAGES;
 
   const total = applications.length;
   const accepted = applications.filter(a => a.status === 'accepted').length;
@@ -30,17 +26,13 @@ export default function AdmissionsDashboard({ applications, branches: _branches 
     : 0;
   const overdueCount = applications.filter(a => differenceInDays(new Date(), new Date(a.updated_date || a.created_at)) > 7 && !['enrolled','rejected'].includes(a.status)).length;
 
-  // By stage funnel data
-  const funnelData = STAGE_ORDER.map(stage => {
-    const count = applications.filter(a => {
-      if (stage === 'submitted') return a.status === 'submitted' || a.status === 'pending';
-      return a.status === stage || a.pipeline_stage === stage;
-    }).length;
-    return {
-      name: isRTL ? STAGE_LABELS_AR[stage] : stage.charAt(0).toUpperCase() + stage.slice(1),
-      value: count
-    };
-  }).filter(d => d.value > 0);
+  const funnelData = stages
+    .filter((s) => !['rejected', 'waitlist'].includes(s.key))
+    .map((stage) => ({
+      name: isRTL ? stage.label_ar : stage.label_en,
+      value: applications.filter((a) => appMatchesStage(a, stage.key)).length,
+    }))
+    .filter((d) => d.value > 0);
 
   // By grade
   const gradeMap = {};

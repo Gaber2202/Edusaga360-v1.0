@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from './auth.js';
 import {
   hasParentPortalAccess,
   linkedStudentIds,
+  listParentProfilesForAuth,
   parentProfileForAuth,
   resolveRosterStudentIds,
   PARENT_ONLY,
@@ -31,17 +32,40 @@ export function requireParent(req: AuthenticatedRequest, res: Response, next: Ne
 }
 
 export async function attachParentScope(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  const row = await parentProfileForAuth(req.user!.id, req.user?.tenant_id);
+  const headerTenant = (req.headers['x-tenant-id'] as string | undefined)?.trim();
+  const preferredTenant = headerTenant || req.user?.tenant_id;
+
+  let row = preferredTenant
+    ? await parentProfileForAuth(req.user!.id, preferredTenant)
+    : null;
+
+  // Multi-school parents: JWT may omit tenant_id — fall back to first assigned profile.
+  if (!row) {
+    const profiles = await listParentProfilesForAuth(req.user!.id);
+    if (preferredTenant) {
+      row = profiles.find((p) => p.tenant_id === preferredTenant) ?? null;
+    } else if (profiles.length === 1) {
+      row = profiles[0] ?? null;
+    } else if (profiles.length > 1) {
+      return res.status(400).json({
+        message: 'Select a school',
+        code: 'school_selection_required',
+      });
+    }
+  }
+
   if (!row || !hasParentPortalAccess(row)) {
     return res.status(403).json({ message: PARENT_ONLY });
   }
 
-  const tenantId = req.user?.tenant_id || row.tenant_id;
+  // If client sent X-Tenant-Id, it must match a profile they own.
+  if (headerTenant && row.tenant_id !== headerTenant) {
+    return res.status(403).json({ message: PARENT_ONLY });
+  }
+
+  const tenantId = row.tenant_id;
   if (!tenantId) {
     return res.status(403).json({ message: 'No tenant assigned to user' });
-  }
-  if (row.tenant_id && tenantId !== row.tenant_id) {
-    return res.status(403).json({ message: PARENT_ONLY });
   }
 
   const linkedIds = await resolveRosterStudentIds({

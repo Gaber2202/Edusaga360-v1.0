@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTenantQuery } from '../../hooks/useTenantQuery';
-import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
+import { supabase, tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
 import { useLanguage } from '../LanguageContext';
 import { formatCurrency } from '../../lib/localization';
 import { useTenant } from '../TenantContext';
@@ -43,6 +43,8 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
   const [excludedStudents, setExcludedStudents] = useState([]);
   const [postMode, setPostMode] = useState('draft');
   const [batchName, setBatchName] = useState('');
+  const [apiPreview, setApiPreview] = useState(null);
+  const [previewing, setPreviewing] = useState(false);
 
   // Reset state when dialog opens/closes to prevent stale data
   React.useEffect(() => {
@@ -56,6 +58,7 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
       setSelectedStudents([]);
       setBatchName('');
       setPostMode('draft');
+      setApiPreview(null);
     }
   }, [open]);
 
@@ -77,6 +80,16 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
   const { data: academicYears = [] } = useTenantQuery(
     ['academicYears', tenantId],
     () => fetchData(tenantQuery('academic_years').select('*').match({ is_current: true }))
+  );
+
+  const { data: feePlans = [] } = useTenantQuery(
+    ['feeStructures', 'plans', tenantId, criteria.academic_year],
+    () => fetchData(
+      tenantQuery('fee_structures').select('id, name, academic_year, amount').match(
+        criteria.academic_year ? { academic_year: criteria.academic_year } : {}
+      )
+    ),
+    { enabled: !!criteria.academic_year }
   );
 
   // Existing invoices for the chosen year — drives idempotency so a re-run never
@@ -110,126 +123,75 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
     return !excludedStudents.includes(student.id);
   });
 
-  const handlePreview = () => {
+  const buildBulkPayload = (extra = {}) => ({
+    academic_year: criteria.academic_year,
+    campus_id: criteria.branch_id || undefined,
+    grade: criteria.grade || undefined,
+    section_id: criteria.section || undefined,
+    fee_plan_id: criteria.fee_plan || undefined,
+    excluded_student_ids: excludedStudents.length ? excludedStudents : undefined,
+    name: batchName || undefined,
+    ...extra,
+  });
+
+  const handlePreview = async () => {
     if (!criteria.academic_year) {
       toast.error(isRTL ? 'يرجى اختيار العام الدراسي' : 'Please select academic year');
       return;
     }
-    // Use full student list for preview (no academic_year filter if field is year_label)
-    const allStudents = students.filter(student => {
-      if (criteria.branch_id && student.branch_id !== criteria.branch_id) return false;
-      if (criteria.grade && student.grade !== criteria.grade) return false;
-      if (criteria.section && student.section !== criteria.section) return false;
-      return !excludedStudents.includes(student.id);
-    });
-    if (allStudents.length === 0) {
-      toast.error(isRTL ? 'لا يوجد طلاب مطابقين للمعايير' : 'No students match the criteria');
-      return;
+    setPreviewing(true);
+    try {
+      const preview = await callApi('/api/billing/bulk-invoices', buildBulkPayload({ dry_run: true }));
+      if (!preview.estimated_invoices && !preview.already_invoiced) {
+        toast.error(isRTL ? 'لا يوجد طلاب مطابقين للمعايير' : 'No students match the criteria');
+        return;
+      }
+      setApiPreview(preview);
+      const matched = students.filter((student) => {
+        if (criteria.branch_id && student.branch_id !== criteria.branch_id) return false;
+        if (criteria.grade && student.grade !== criteria.grade && student.grade_id !== criteria.grade) return false;
+        if (criteria.section && student.section_id !== criteria.section && student.section !== criteria.section) return false;
+        return !excludedStudents.includes(student.id);
+      });
+      setSelectedStudents(matched.length ? matched : students);
+      setStep(2);
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.message || (isRTL ? 'فشلت المعاينة' : 'Preview failed'));
+    } finally {
+      setPreviewing(false);
     }
-    setSelectedStudents(allStudents);
-    setStep(2);
   };
 
   const handleGenerate = async () => {
-    if (selectedStudents.length === 0) {
-      toast.error(isRTL ? 'لا يوجد طلاب محددين' : 'No students selected');
+    if (!apiPreview?.estimated_invoices && plan.eligible === 0) {
+      toast.error(isRTL ? 'لا يوجد طلاب مؤهلين' : 'No eligible students');
       return;
     }
 
     setGenerating(true);
     try {
-      const user = await supabase.auth.getUser().then(r => r.data?.user);
-      const batchNumber = `BATCH-${Date.now()}`;
-      
-      let totalAmount = 0;
-      let totalVat = 0;
-      let totalDiscount = 0;
-      const createdInvoices = [];
-
-      // Create batch record
-      const { data: batchRow, error: batchErr } = await tenantQuery('invoice_batches').insert({
-        batch_number: batchNumber,
-        batch_name: batchName || `Bulk Invoice - ${new Date().toLocaleDateString()}`,
-        created_by: user?.user_metadata?.full_name || user?.email,
-        created_by_email: user?.email,
-        created_at: new Date().toISOString(),
-        criteria: criteria,
-        student_count: selectedStudents.length,
-        excluded_students: excludedStudents,
-        status: 'generated',
-        posted_mode: postMode,
-        branch_id: criteria.branch_id || null
-      }).select().single();
-      if (batchErr) throw batchErr;
-      const batch = batchRow;
-
-      // Only create invoices for eligible students — this skips operator-excluded
-      // students, those already invoiced for this academic year (idempotent
-      // re-run), and any without an active contract. Per-student failures are
-      // counted, not fatal, so one bad row doesn't abort the whole batch.
-      const eligibleRows = plan.rows.filter((r) => r.status === 'eligible');
-      let failed = 0;
-
-      for (const { student, contract } of eligibleRows) {
-        const today = new Date().toISOString().split('T')[0];
-        const invoiceData = {
-          invoice_number: `INV-${Date.now()}-${student.id.slice(0, 6)}`,
-          student_id: student.id,
-          student_name: student.name_ar || student.name_en,
-          guardian_id: student.guardian_id,
-          branch_id: student.branch_id || null,
-          grade: student.grade,
-          academic_year: criteria.academic_year,
-          date: today,
-          issue_date: today,
-          due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          items: contract.services || [],
-          subtotal: contract.total_fees || 0,
-          vat_amount: (contract.total_fees || 0) * 0.15,
-          discount_amount: contract.discount_amount || 0,
-          total_amount: (contract.total_fees || 0) * 1.15 - (contract.discount_amount || 0),
-          balance: (contract.total_fees || 0) * 1.15 - (contract.discount_amount || 0),
-          status: postMode === 'final' ? 'issued' : 'draft',
-          batch_id: batch.id,
-          batch_number: batchNumber
-        };
-
-        try {
-          const { data: inv, error: invErr } = await tenantQuery('invoices').insert(invoiceData).select('id').single();
-          if (invErr) throw invErr;
-          totalAmount += invoiceData.subtotal;
-          totalVat += invoiceData.vat_amount;
-          totalDiscount += invoiceData.discount_amount;
-          createdInvoices.push(inv);
-        } catch (e) {
-          console.error('Invoice creation failed for student', student.id, e);
-          failed++;
-        }
-      }
-
-      // Update batch totals
-      await tenantQuery('invoice_batches').update({
-        invoice_count: createdInvoices.length,
-        total_amount: totalAmount,
-        total_vat: totalVat,
-        total_discount: totalDiscount,
-        net_total: totalAmount + totalVat - totalDiscount
-      }).eq('id', batch.id);
-
-      // Log audit event
+      const result = await callApi(
+        '/api/billing/bulk-invoices',
+        buildBulkPayload({ dry_run: false, approved: true }),
+      );
       await logAuditEvent({
         action: 'BULK_INVOICE_GENERATION',
         entityType: 'InvoiceBatch',
-        entityId: batch.id,
-        newValues: { batch_number: batchNumber, count: createdInvoices.length, total: totalAmount + totalVat - totalDiscount }
+        entityId: result.batch?.id,
+        newValues: {
+          batch_number: result.batch?.batch_number,
+          count: result.created,
+          total: result.totals?.net_total,
+        },
       });
-
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      const skippedCount = plan.excluded + plan.alreadyInvoiced + plan.skippedNoContract;
+      const failed = (result.errors || []).length;
+      const skipped = result.skipped ?? 0;
       toast.success(
         isRTL
-          ? `تم إنشاء ${createdInvoices.length} فاتورة • تم تخطي ${skippedCount} • فشل ${failed}`
-          : `${createdInvoices.length} created • ${skippedCount} skipped • ${failed} failed`
+          ? `تم إنشاء ${result.created} فاتورة • تم تخطي ${skipped} • فشل ${failed}`
+          : `${result.created} created • ${skipped} skipped • ${failed} failed`
       );
       onClose();
       setStep(1);
@@ -239,9 +201,10 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
       });
       setExcludedStudents([]);
       setSelectedStudents([]);
+      setApiPreview(null);
     } catch (error) {
       console.error('Error:', error);
-      toast.error(isRTL ? 'حدث خطأ' : 'Error occurred');
+      toast.error(error?.message || (isRTL ? 'حدث خطأ' : 'Error occurred'));
     } finally {
       setGenerating(false);
     }
@@ -313,6 +276,22 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
                     </Select>
                   </div>
                   <div>
+                    <Label>{isRTL ? 'خطة الرسوم' : 'Fee Plan'}</Label>
+                    <Select value={criteria.fee_plan} onValueChange={(v) => setCriteria({...criteria, fee_plan: v})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={isRTL ? 'جميع الخطط' : 'All fee plans'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={null}>{isRTL ? 'الكل' : 'All'}</SelectItem>
+                        {feePlans.map((fp) => (
+                          <SelectItem key={fp.id} value={fp.id}>
+                            {fp.name || fp.id}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
                     <Label>{isRTL ? 'الشركة' : 'Company'}</Label>
                     <Select value={criteria.company_id} onValueChange={(v) => setCriteria({...criteria, company_id: v})}>
                       <SelectTrigger>
@@ -332,7 +311,8 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
                     <Users className="w-5 h-5 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">{isRTL ? 'الطلاب المطابقين:' : 'Matching Students:'} <strong>{filteredStudents.length}</strong></span>
                   </div>
-                  <Button onClick={handlePreview} disabled={!criteria.academic_year}>
+                  <Button onClick={handlePreview} disabled={!criteria.academic_year || previewing}>
+                    {previewing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                     {isRTL ? 'معاينة' : 'Preview'}
                   </Button>
                 </div>
@@ -349,25 +329,31 @@ export default function BulkInvoiceGeneration({ open, onClose }) {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
                   <div>
                     <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي المطابقين' : 'Matched'}</p>
-                    <p className="text-2xl font-bold">{selectedStudents.length}</p>
+                    <p className="text-2xl font-bold">{apiPreview?.student_count ?? selectedStudents.length}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">{isRTL ? 'الفواتير المتوقعة' : 'Will Generate'}</p>
-                    <p className="text-2xl font-bold text-najdi-700">{plan.eligible}</p>
+                    <p className="text-2xl font-bold text-najdi-700">{apiPreview?.estimated_invoices ?? plan.eligible}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">{isRTL ? 'سيتم تخطيهم' : 'Skipped'}</p>
-                    <p className="text-2xl font-bold text-amber-600">{plan.excluded + plan.alreadyInvoiced + plan.skippedNoContract}</p>
+                    <p className="text-2xl font-bold text-amber-600">
+                      {apiPreview
+                        ? (apiPreview.already_invoiced || 0) + (apiPreview.skipped_no_fees || 0) + excludedStudents.length
+                        : plan.excluded + plan.alreadyInvoiced + plan.skippedNoContract}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">{isRTL ? 'القيمة المتوقعة (شاملة الضريبة)' : 'Est. Total (incl. VAT)'}</p>
-                    <p className="text-2xl font-bold text-emerald-600">{formatCurrency(plan.estimatedTotal, tenant?.localization, isRTL)}</p>
+                    <p className="text-2xl font-bold text-emerald-600">
+                      {formatCurrency(apiPreview?.estimated_total ?? plan.estimatedTotal, tenant?.localization, isRTL)}
+                    </p>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mb-4">
                   {isRTL
-                    ? `مفوتر مسبقاً: ${plan.alreadyInvoiced} • بدون عقد: ${plan.skippedNoContract} • مستبعد: ${plan.excluded}`
-                    : `Already invoiced: ${plan.alreadyInvoiced} • No contract: ${plan.skippedNoContract} • Excluded: ${plan.excluded}`}
+                    ? `مفوتر مسبقاً: ${apiPreview?.already_invoiced ?? plan.alreadyInvoiced} • بدون رسوم: ${apiPreview?.skipped_no_fees ?? plan.skippedNoContract} • مستبعد: ${excludedStudents.length || plan.excluded}`
+                    : `Already invoiced: ${apiPreview?.already_invoiced ?? plan.alreadyInvoiced} • No fees: ${apiPreview?.skipped_no_fees ?? plan.skippedNoContract} • Excluded: ${excludedStudents.length || plan.excluded}`}
                 </p>
                 <div className="space-y-3">
                   <div>

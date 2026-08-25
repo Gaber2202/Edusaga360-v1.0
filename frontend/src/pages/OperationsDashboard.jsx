@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import StatCard from '../components/ui/StatCard';
+import PageHeader from '../components/ui/PageHeader';
 import { 
   Ticket, CheckCircle, Clock,
   TrendingUp
@@ -16,11 +17,9 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { filterByDateRange } from '../lib/dateRange';
-import { useTenant } from '../components/TenantContext';
 
 export default function OperationsDashboard() {
   const { isRTL } = useLanguage();
-  const { tenant } = useTenant();
   const { selectedBranch: _selectedBranch, selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
   const [dateRange, setDateRange] = useState('30');
@@ -62,7 +61,19 @@ export default function OperationsDashboard() {
       if (error) throw error;
       return filterByBranch(data);
     },
-    { enabled: false /* customers table not built */, initialData: [] }
+    { enabled: hasTenantAccess }
+  );
+
+  const { data: helpdeskTickets = [] } = useTenantQuery(
+    ['schoolHelpdesk', tenantId, selectedBranchId],
+    async () => {
+      const { data = [], error } = await tenantQuery('service_tickets').select('*').match(
+        tenantFilter(branchFilter({ ticket_type: 'school_helpdesk' })),
+      );
+      if (error) throw error;
+      return filterByBranch(data);
+    },
+    { enabled: hasTenantAccess }
   );
 
   const { data: branches = [] } = useTenantQuery(
@@ -76,10 +87,11 @@ export default function OperationsDashboard() {
   const rangeDays = parseInt(dateRange, 10) || 30;
   const crm = filterByDateRange(crmTickets, rangeDays);
   const it = filterByDateRange(itTickets, rangeDays);
+  const help = filterByDateRange(helpdeskTickets, rangeDays);
   const wos = filterByDateRange(workOrders, rangeDays);
 
   // Calculate metrics
-  const allTickets = [...crm, ...it];
+  const allTickets = [...crm, ...it, ...help];
   const openTickets = allTickets.filter(t => t.status === 'open' || t.status === 'in_progress').length;
   const resolvedTickets = allTickets.filter(t => t.status === 'resolved' || t.status === 'closed').length;
   const slaBreached = allTickets.filter(t => t.sla_status === 'breached').length;
@@ -92,11 +104,12 @@ export default function OperationsDashboard() {
 
   // Chart data
   const ticketsByCategory = [
-    { name: isRTL ? 'أكاديمي' : 'Academic', value: crm.filter(t => t.category === 'academic').length, color: '#3B82F6' },
-    { name: isRTL ? 'مالي' : 'Financial', value: crm.filter(t => t.category === 'financial').length, color: '#10B981' },
-    { name: isRTL ? 'نقل' : 'Transport', value: crm.filter(t => t.category === 'transport').length, color: '#F59E0B' },
-    { name: isRTL ? 'مرافق' : 'Facilities', value: crm.filter(t => t.category === 'facilities').length, color: '#EF4444' },
-    { name: isRTL ? 'تقنية' : 'IT', value: it.length, color: '#8B5CF6' },
+    { name: isRTL ? 'أكاديمي' : 'Academic', value: crm.filter(t => t.category === 'academic').length, color: '#0F766E' },
+    { name: isRTL ? 'مالي' : 'Financial', value: crm.filter(t => t.category === 'financial').length, color: '#059669' },
+    { name: isRTL ? 'نقل' : 'Transport', value: crm.filter(t => t.category === 'transport').length, color: '#D97706' },
+    { name: isRTL ? 'مرافق' : 'Facilities', value: crm.filter(t => t.category === 'facilities').length, color: '#B45309' },
+    { name: isRTL ? 'تقنية' : 'IT', value: it.length, color: '#1D4ED8' },
+    { name: isRTL ? 'مكتب المساعدة' : 'Help Desk', value: help.length, color: '#7C3AED' },
   ].filter(d => d.value > 0);
 
   const itTicketsByType = [
@@ -117,12 +130,10 @@ export default function OperationsDashboard() {
 
   return (
     <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">{isRTL ? 'لوحة العمليات' : 'Operations Dashboard'}</h1>
-          <p className="text-gray-500">{isRTL ? 'نظرة شاملة على أداء الخدمات' : 'Service performance overview'}</p>
-        </div>
+      <PageHeader
+        title={isRTL ? 'لوحة العمليات' : 'Operations Dashboard'}
+        subtitle={isRTL ? 'نظرة شاملة على أداء الخدمات' : 'Service performance overview'}
+      >
         <Select value={dateRange} onValueChange={setDateRange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue />
@@ -133,7 +144,7 @@ export default function OperationsDashboard() {
             <SelectItem value="90">{isRTL ? 'آخر 90 يوم' : 'Last 90 days'}</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+      </PageHeader>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -147,28 +158,27 @@ export default function OperationsDashboard() {
           title={isRTL ? 'نسبة الحل' : 'Resolution Rate'}
           value={`${resolutionRate}%`}
           icon={CheckCircle}
-          iconClassName="bg-green-50"
+          iconClassName="bg-emerald-50"
         />
         <StatCard
           title={isRTL ? 'الالتزام بـ SLA' : 'SLA Compliance'}
           value={`${slaComplianceRate}%`}
           icon={Clock}
-          iconClassName="bg-purple-50"
+          iconClassName="bg-amber-50"
         />
         <StatCard
           title={isRTL ? 'رضا العملاء' : 'Customer Satisfaction'}
           value={avgSatisfaction > 0 ? `${avgSatisfaction.toFixed(1)}/5` : 'N/A'}
           icon={TrendingUp}
-          iconClassName="bg-yellow-50"
+          iconClassName="bg-gold-50"
         />
       </div>
 
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Tickets by Category */}
-        <Card>
+        <Card className="border-0 shadow-sm">
           <CardHeader>
-            <CardTitle>{isRTL ? 'التذاكر حسب الفئة' : 'Tickets by Category'}</CardTitle>
+            <CardTitle className="text-ink">{isRTL ? 'التذاكر حسب الفئة' : 'Tickets by Category'}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -195,20 +205,19 @@ export default function OperationsDashboard() {
           </CardContent>
         </Card>
 
-        {/* IT Tickets by Type */}
-        <Card>
+        <Card className="border-0 shadow-sm">
           <CardHeader>
-            <CardTitle>{isRTL ? 'تذاكر IT حسب النوع' : 'IT Tickets by Type'}</CardTitle>
+            <CardTitle className="text-ink">{isRTL ? 'تذاكر IT حسب النوع' : 'IT Tickets by Type'}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={itTicketsByType}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                  <XAxis dataKey="name" tick={{ fill: 'currentColor' }} className="text-muted-foreground" />
+                  <YAxis tick={{ fill: 'currentColor' }} className="text-muted-foreground" />
                   <Tooltip />
-                  <Bar dataKey="value" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" fill="#0F766E" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -218,65 +227,62 @@ export default function OperationsDashboard() {
 
       {/* Charts Row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Work Orders by Type */}
-        <Card>
+        <Card className="border-0 shadow-sm">
           <CardHeader>
-            <CardTitle>{isRTL ? 'أوامر العمل حسب النوع' : 'Work Orders by Type'}</CardTitle>
+            <CardTitle className="text-ink">{isRTL ? 'أوامر العمل حسب النوع' : 'Work Orders by Type'}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={workOrdersByType} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
                   <XAxis type="number" />
                   <YAxis dataKey="name" type="category" width={80} />
                   <Tooltip />
-                  <Bar dataKey="value" fill="#10B981" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="value" fill="#059669" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* Maintenance Stats */}
-        <Card>
+        <Card className="border-0 shadow-sm">
           <CardHeader>
-            <CardTitle>{isRTL ? 'إحصائيات الصيانة' : 'Maintenance Stats'}</CardTitle>
+            <CardTitle className="text-ink">{isRTL ? 'إحصائيات الصيانة' : 'Maintenance Stats'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
               <div className="flex justify-between mb-2">
-                <span className="text-sm text-gray-500">{isRTL ? 'أوامر مفتوحة' : 'Open Orders'}</span>
-                <span className="font-medium">{openWorkOrders}</span>
+                <span className="text-sm text-muted-foreground">{isRTL ? 'أوامر مفتوحة' : 'Open Orders'}</span>
+                <span className="font-medium text-ink">{openWorkOrders}</span>
               </div>
               <Progress value={workOrders.length > 0 ? (openWorkOrders / workOrders.length) * 100 : 0} className="h-2" />
             </div>
             <div>
               <div className="flex justify-between mb-2">
-                <span className="text-sm text-gray-500">{isRTL ? 'مكتملة' : 'Completed'}</span>
-                <span className="font-medium">{completedWorkOrders}</span>
+                <span className="text-sm text-muted-foreground">{isRTL ? 'مكتملة' : 'Completed'}</span>
+                <span className="font-medium text-ink">{completedWorkOrders}</span>
               </div>
-              <Progress value={workOrders.length > 0 ? (completedWorkOrders / workOrders.length) * 100 : 0} className="h-2 bg-green-100" />
+              <Progress value={workOrders.length > 0 ? (completedWorkOrders / workOrders.length) * 100 : 0} className="h-2" />
             </div>
-            <div className="pt-4 border-t">
+            <div className="pt-4 border-t border-border/60">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-500">{isRTL ? 'إجمالي التكلفة' : 'Total Cost'}</span>
-                <span className="font-bold text-lg"><Currency amount={totalMaintenanceCost} /></span>
+                <span className="text-sm text-muted-foreground">{isRTL ? 'إجمالي التكلفة' : 'Total Cost'}</span>
+                <span className="font-bold text-lg text-ink"><Currency amount={totalMaintenanceCost} /></span>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Customer Segments */}
-        <Card>
+        <Card className="border-0 shadow-sm">
           <CardHeader>
-            <CardTitle>{isRTL ? 'شرائح العملاء' : 'Customer Segments'}</CardTitle>
+            <CardTitle className="text-ink">{isRTL ? 'شرائح العملاء' : 'Customer Segments'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {[
-              { segment: 'active', label: isRTL ? 'نشط' : 'Active', color: 'bg-green-500' },
+              { segment: 'active', label: isRTL ? 'نشط' : 'Active', color: 'bg-emerald-500' },
               { segment: 'prospect', label: isRTL ? 'محتمل' : 'Prospect', color: 'bg-najdi-500' },
-              { segment: 'vip', label: 'VIP', color: 'bg-purple-500' },
+              { segment: 'vip', label: 'VIP', color: 'bg-amber-500' },
               { segment: 'withdrawn', label: isRTL ? 'منسحب' : 'Withdrawn', color: 'bg-red-500' },
             ].map(({ segment, label, color }) => {
               const count = customers.filter(c => c.segment === segment).length;
@@ -284,10 +290,10 @@ export default function OperationsDashboard() {
               return (
                 <div key={segment}>
                   <div className="flex justify-between mb-1">
-                    <span className="text-sm">{label}</span>
-                    <span className="text-sm font-medium">{count}</span>
+                    <span className="text-sm text-ink">{label}</span>
+                    <span className="text-sm font-medium text-muted-foreground">{count}</span>
                   </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2">
+                  <div className="w-full bg-sand-alt rounded-full h-2">
                     <div className={`${color} h-2 rounded-full`} style={{ width: `${pct}%` }} />
                   </div>
                 </div>
@@ -299,20 +305,20 @@ export default function OperationsDashboard() {
 
       {/* Branch Performance */}
       {branches.length > 1 && (
-        <Card>
+        <Card className="border-0 shadow-sm">
           <CardHeader>
-            <CardTitle>{isRTL ? 'أداء الفروع' : 'Branch Performance'}</CardTitle>
+            <CardTitle className="text-ink">{isRTL ? 'أداء الفروع' : 'Branch Performance'}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-start py-3 px-4">{isRTL ? 'الفرع' : 'Branch'}</th>
-                    <th className="text-center py-3 px-4">{isRTL ? 'تذاكر CRM' : 'CRM Tickets'}</th>
-                    <th className="text-center py-3 px-4">{isRTL ? 'تذاكر IT' : 'IT Tickets'}</th>
-                    <th className="text-center py-3 px-4">{isRTL ? 'أوامر صيانة' : 'Work Orders'}</th>
-                    <th className="text-center py-3 px-4">{isRTL ? 'نسبة الحل' : 'Resolution'}</th>
+                  <tr className="border-b border-border/60">
+                    <th className="text-start py-3 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{isRTL ? 'الفرع' : 'Branch'}</th>
+                    <th className="text-center py-3 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{isRTL ? 'تذاكر CRM' : 'CRM Tickets'}</th>
+                    <th className="text-center py-3 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{isRTL ? 'تذاكر IT' : 'IT Tickets'}</th>
+                    <th className="text-center py-3 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{isRTL ? 'أوامر صيانة' : 'Work Orders'}</th>
+                    <th className="text-center py-3 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{isRTL ? 'نسبة الحل' : 'Resolution'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -325,13 +331,13 @@ export default function OperationsDashboard() {
                     const branchResRate = branchAllTickets.length > 0 ? Math.round((branchResolved / branchAllTickets.length) * 100) : 0;
                     
                     return (
-                      <tr key={branch.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4 font-medium">{isRTL ? branch.name_ar : branch.name_en}</td>
-                        <td className="text-center py-3 px-4">{branchCrmTickets.length}</td>
-                        <td className="text-center py-3 px-4">{branchItTickets.length}</td>
-                        <td className="text-center py-3 px-4">{branchWOs.length}</td>
+                      <tr key={branch.id} className="border-b border-border/40 hover:bg-sand-alt/60">
+                        <td className="py-3 px-4 font-medium text-ink">{isRTL ? branch.name_ar : branch.name_en}</td>
+                        <td className="text-center py-3 px-4 text-ink">{branchCrmTickets.length}</td>
+                        <td className="text-center py-3 px-4 text-ink">{branchItTickets.length}</td>
+                        <td className="text-center py-3 px-4 text-ink">{branchWOs.length}</td>
                         <td className="text-center py-3 px-4">
-                          <Badge className={branchResRate >= 80 ? 'bg-green-100' : branchResRate >= 50 ? 'bg-yellow-100' : 'bg-red-100'}>
+                          <Badge className={branchResRate >= 80 ? 'bg-emerald-100 text-emerald-800' : branchResRate >= 50 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}>
                             {branchResRate}%
                           </Badge>
                         </td>

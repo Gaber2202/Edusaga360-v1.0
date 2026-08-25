@@ -45,8 +45,13 @@ import { messagingRouter } from './routes/messaging.js';
 import { collectionsRouter } from './routes/collections.js';
 import { billingPublicRouter } from './routes/billingPublic.js';
 import { messagingPublicRouter } from './routes/messagingPublic.js';
+import { payrollPublicRouter } from './routes/payrollPublic.js';
 import { infobipWebhookRouter } from './routes/infobipWebhooks.js';
 import { publicSchoolsRouter } from './routes/publicSchools.js';
+import { publicIntakeRouter } from './routes/publicIntake.js';
+import { admissionsRouter } from './routes/admissions.js';
+import { contractsRouter } from './routes/contracts.js';
+import { storeOrdersRouter } from './routes/storeOrders.js';
 import cron from 'node-cron';
 import { SegmentationRunner } from './services/collections/runner.js';
 import { CollectionMessenger } from './services/collections/messenger.js';
@@ -165,11 +170,14 @@ app.use('/api/auth', authRouter);
 app.use('/api/registration', registrationLimiter, registrationRouter);
 // Moyasar server-to-server webhook — verified by shared secret, not JWT.
 app.use('/api/public/billing', billingPublicRouter);
+app.use('/api/public/payroll', payrollPublicRouter);
 // Meta / Infobip inbound messaging webhooks — verified by provider signature/tokens at handler level.
 app.use('/api/public/messaging', messagingPublicRouter);
 // Infobip delivery-receipt webhook — verified by INFOBIP_WEBHOOK_SECRET if configured.
 app.use('/api/webhooks/infobip', infobipWebhookRouter);
 app.use('/api/public/schools', publicSchoolsRouter);
+// Parent intake (sharable URL) — unauthenticated, rate-limited inside router.
+app.use('/api/public/intake', publicIntakeRouter);
 
 // ── Authenticated routes — ALL protected by authMiddleware + tenantMiddleware ──
 // IMPORTANT: Register middleware on each router directly.
@@ -195,9 +203,12 @@ app.use('/api/parents',             apiLimiter, authMiddleware, tenantMiddleware
 app.get('/api/parent',              apiLimiter, parentApiCatalog);
 app.use('/api/parent/auth',         apiLimiter, parentAuthRouter);
 app.use('/api/parent',              apiLimiter, authMiddleware, tenantMiddleware, parentPortalRouter);
+app.use('/api/store',               apiLimiter, authMiddleware, tenantMiddleware, storeOrdersRouter);
 app.use('/api/files',               apiLimiter, authMiddleware, tenantMiddleware, filesRouter);
 app.use('/api/exec',                apiLimiter, authMiddleware, tenantMiddleware, execRouter);
 app.use('/api/intake',              apiLimiter, authMiddleware, tenantMiddleware, intakeRouter);
+app.use('/api/admissions',          apiLimiter, authMiddleware, tenantMiddleware, admissionsRouter);
+app.use('/api/contracts',           apiLimiter, authMiddleware, tenantMiddleware, contractsRouter);
 // API key management (control plane for the external /api/v1 data plane above).
 app.use('/api/api-keys',            apiLimiter, authMiddleware, tenantMiddleware, apiKeysRouter);
 // ATS integration — connect/sync an external Applicant Tracking System into HR.

@@ -15,6 +15,10 @@ class ParentApi {
         if (token != null && token.isNotEmpty) {
           options.headers['Authorization'] = 'Bearer $token';
         }
+        final tenant = tenantId;
+        if (tenant != null && tenant.isNotEmpty) {
+          options.headers['X-Tenant-Id'] = tenant;
+        }
         handler.next(options);
       },
       onError: (error, handler) async {
@@ -40,6 +44,7 @@ class ParentApi {
   final Dio _dio;
   Future<bool> Function()? onRefresh;
   String? accessToken;
+  String? tenantId;
   bool _refreshing = false;
 
   static String get defaultBaseUrl {
@@ -49,7 +54,8 @@ class ParentApi {
       if (!kIsWeb && Platform.isAndroid) return 'http://10.0.2.2:3001';
       return 'http://localhost:3001';
     }
-    return 'https://api.edusaga360.com';
+    // Custom domain api.edusaga360.com is not DNS-ready yet — use Railway.
+    return 'https://edusaga-360-production.up.railway.app';
   }
 
   ApiException _wrap(DioException error) {
@@ -79,39 +85,57 @@ class ParentApi {
   Future<AuthSession> login({
     required String email,
     required String password,
-    required School school,
   }) async {
     try {
       final res = await _dio.post('/api/parent/auth/login', data: {
         'email': email,
         'password': password,
-        'tenant_code': school.tenantCode,
-        'slug': school.slug,
       });
-      final data = Map<String, dynamic>.from(res.data as Map);
-      return AuthSession(
-        accessToken: data['access_token'] as String,
-        refreshToken: data['refresh_token'] as String,
-        user: ParentUser.fromJson(data['user'] as Map<String, dynamic>),
-        school: school,
-      );
+      return AuthSession.fromJson(Map<String, dynamic>.from(res.data as Map));
     } on DioException catch (e) {
       throw _wrap(e);
     }
   }
 
-  Future<AuthSession> refresh(String refreshToken, School school) async {
+  Future<AuthSession> selectSchool({
+    required String refreshToken,
+    String? tenantId,
+    String? slug,
+  }) async {
+    try {
+      final res = await _dio.post('/api/parent/auth/select-school', data: {
+        'refresh_token': refreshToken,
+        if (tenantId != null) 'tenant_id': tenantId,
+        if (slug != null) 'slug': slug,
+      });
+      return AuthSession.fromJson(Map<String, dynamic>.from(res.data as Map));
+    } on DioException catch (e) {
+      throw _wrap(e);
+    }
+  }
+
+  Future<List<School>> listSchools() async {
+    try {
+      final res = await _dio.get('/api/parent/auth/schools');
+      final data = res.data;
+      final list = data is Map ? data['schools'] : data;
+      if (list is! List) return const [];
+      return [
+        for (final item in list)
+          if (item is Map<String, dynamic>) School.fromJson(item),
+      ];
+    } on DioException catch (e) {
+      throw _wrap(e);
+    }
+  }
+
+  Future<AuthSession> refresh(String refreshToken, {String? tenantId}) async {
     try {
       final res = await _dio.post('/api/parent/auth/refresh', data: {
         'refresh_token': refreshToken,
+        if (tenantId != null) 'tenant_id': tenantId,
       });
-      final data = Map<String, dynamic>.from(res.data as Map);
-      return AuthSession(
-        accessToken: data['access_token'] as String,
-        refreshToken: data['refresh_token'] as String,
-        user: ParentUser.fromJson(data['user'] as Map<String, dynamic>),
-        school: school,
-      );
+      return AuthSession.fromJson(Map<String, dynamic>.from(res.data as Map));
     } on DioException catch (e) {
       throw _wrap(e);
     }
@@ -248,10 +272,15 @@ class ParentApi {
     }
   }
 
+  Future<List<StoreCategory>> storeCategories() => _get(
+        '/api/parent/store/categories',
+        (data) => parseList(data, StoreCategory.fromJson),
+      );
+
   Future<List<StoreProduct>> storeProducts({String? category}) => _get(
         '/api/parent/store/products',
         (data) => parseList(data, StoreProduct.fromJson),
-        query: {if (category != null) 'category': category},
+        query: {if (category != null && category.isNotEmpty) 'category': category},
       );
 
   Future<List<StoreOrder>> storeOrders({String? studentId}) => _get(

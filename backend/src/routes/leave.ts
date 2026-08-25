@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import { AuthenticatedRequest } from '../middleware/auth.js';
+import { buildRequestContext } from '../lib/jurisdiction.js';
+import { resolvePack } from '../packs/registry.js';
+import { syncStatutoryLeaveEntitlements } from '../services/leaveEntitlements.js';
 
 export const leaveRouter = Router();
 
@@ -13,6 +16,8 @@ const SubmitLeaveSchema = z.object({
   start_date:    z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   end_date:      z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   reason:        z.string().max(1000).optional(),
+  /** HR/admin may submit on behalf of an employee. */
+  employee_id:   z.string().uuid().optional(),
 });
 
 const ApproveSchema = z.object({
@@ -46,15 +51,35 @@ const HolidaySchema = z.object({
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-// Count working days between two dates, excluding weekends and tenant holidays
+/** Default SCRUM-124 chain when tenant has not configured levels: manager → HR. */
+export const DEFAULT_LEAVE_APPROVAL_CHAIN = [
+  { level: 1, approver_role: 'direct_manager', approver_user_id: null as string | null },
+  { level: 2, approver_role: 'hr_manager', approver_user_id: null as string | null },
+];
+
+// Count working days between two dates, excluding pack weekends and tenant holidays
 async function countWorkingDays(
   tenantId: string,
   startDate: string,
   endDate: string,
+  weekendDays?: number[],
 ): Promise<number> {
   const start = new Date(startDate);
   const end   = new Date(endDate);
   if (end < start) return 0;
+
+  let weekend = weekendDays;
+  if (!weekend?.length) {
+    try {
+      const ctx = await buildRequestContext(supabase, tenantId);
+      const pack = resolvePack(ctx);
+      weekend = pack.localisation?.getDefaultWeekend?.() ?? [5, 6];
+    } catch {
+      weekend = [5, 6];
+    }
+  }
+
+  const weekendSet = new Set(weekend);
 
   // Fetch holidays in range
   const { data: holidays } = await supabase
@@ -75,8 +100,8 @@ async function countWorkingDays(
 
   let count = 0;
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const day = d.getDay(); // 0=Sun, 5=Fri, 6=Sat
-    if (day === 5 || day === 6) continue; // KSA weekend: Fri + Sat
+    const day = d.getDay(); // 0=Sun … 6=Sat
+    if (weekendSet.has(day)) continue;
     const iso = d.toISOString().slice(0, 10);
     if (!holidayDates.has(iso)) count++;
   }
@@ -84,7 +109,7 @@ async function countWorkingDays(
 }
 
 // Resolve required approval levels for a leave type + day count
-async function resolveApprovalChain(
+export async function resolveApprovalChain(
   tenantId: string,
   leaveTypeId: string,
   days: number,
@@ -97,8 +122,7 @@ async function resolveApprovalChain(
     .order('level');
 
   if (!chains || chains.length === 0) {
-    // Default: single-level HR approval
-    return [{ level: 1, approver_role: 'hr_manager', approver_user_id: null }];
+    return DEFAULT_LEAVE_APPROVAL_CHAIN.map((c) => ({ ...c }));
   }
 
   // Filter levels that apply to this day count
@@ -119,8 +143,27 @@ leaveRouter.post('/submit', async (req: AuthenticatedRequest, res) => {
     if (!parsed.success) return res.status(400).json({ error: 'Validation failed', errors: parsed.error.flatten() });
 
     const tenant_id  = req.user!.tenant_id!;
-    const employee_id = req.user!.id;
-    const { leave_type_id, start_date, end_date, reason } = parsed.data;
+    const role = req.user!.role;
+    const isPrivileged = role === 'admin' || role === 'hr' || role === 'hr_manager' || role === 'hr_admin';
+    const { leave_type_id, start_date, end_date, reason, employee_id: bodyEmployeeId } = parsed.data;
+
+    let employee_id = bodyEmployeeId;
+    const { data: linked } = await supabase
+      .from('employees')
+      .select('id')
+      .eq('tenant_id', tenant_id)
+      .eq('user_id', req.user!.id)
+      .maybeSingle();
+    const linkedEmployeeId = (linked as { id?: string } | null)?.id;
+
+    if (employee_id) {
+      const maySubmitForOther = isPrivileged || employee_id === linkedEmployeeId || employee_id === req.user!.id;
+      if (!maySubmitForOther) {
+        return res.status(403).json({ error: 'Only HR/admin may submit leave for another employee' });
+      }
+    } else {
+      employee_id = linkedEmployeeId || req.user!.id;
+    }
 
     if (end_date < start_date) return res.status(400).json({ error: 'end_date must be on or after start_date' });
 
@@ -616,4 +659,22 @@ leaveRouter.delete('/holidays/:id', async (req: AuthenticatedRequest, res) => {
   const { error } = await supabase.from('holidays').delete().eq('id', req.params.id).eq('tenant_id', tenant_id);
   if (error) return res.status(500).json({ error: error.message });
   return res.json({ success: true });
+});
+
+// ─── POST /api/leave/entitlements/sync — pack statutory entitlements ─────────
+
+leaveRouter.post('/entitlements/sync', async (req: AuthenticatedRequest, res) => {
+  try {
+    const tenant_id = req.user!.tenant_id!;
+    const role = req.user!.role;
+    if (role !== 'admin' && role !== 'hr_manager' && role !== 'hr') {
+      return res.status(403).json({ error: 'Admin or HR role required' });
+    }
+    const branchId = typeof req.body?.branch_id === 'string' ? req.body.branch_id : undefined;
+    const result = await syncStatutoryLeaveEntitlements(supabase, tenant_id, { branchId });
+    return res.json({ synced: true, ...result });
+  } catch (err) {
+    console.error('leave entitlements sync:', err);
+    return res.status(500).json({ error: (err as Error).message || 'Entitlement sync failed' });
+  }
 });

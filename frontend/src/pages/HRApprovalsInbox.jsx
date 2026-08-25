@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, fetchData } from '../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import Currency from '../components/Currency';
 import { useRole } from '../components/RoleContext';
@@ -29,10 +29,23 @@ export default function HRApprovalsInbox() {
 
   const { data: leaveRequests = [], isLoading: loadingLeave } = useQuery({
     queryKey: ['leaveRequestsInbox', tenantId],
-    queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match({ status: 'pending' })),
+    queryFn: async () => {
+      const rows = await callApi('/api/leave/pending', null, { method: 'GET' });
+      const list = Array.isArray(rows) ? rows : rows?.requests || [];
+      return list.map((r) => ({
+        ...r,
+        employee_name: r.employees?.name_ar || r.employees?.name_en || r.employee_name,
+        leave_type_name: r.leave_types?.name || r.leave_type_name,
+      }));
+    },
   });
 
-  const { data: essRequests = [], isLoading: loadingESS } = useQuery({ enabled: false /* ess_requests table not built */, queryKey: ['essRequestsInbox', tenantId], queryFn: () => fetchData(tenantQuery('ess_requests').select('*').match({ status: 'pending' })), initialData: [] });
+  const { data: essRequests = [], isLoading: loadingESS } = useQuery({
+    enabled: !!tenantId,
+    queryKey: ['essRequestsInbox', tenantId],
+    queryFn: () => fetchData(tenantQuery('ess_requests').select('*').match({ status: 'pending' })),
+    initialData: [],
+  });
 
   const pendingLeave = leaveRequests.filter(r => ['pending', 'pending_manager', 'pending_hr'].includes(r.status));
   const pendingESS = essRequests.filter(r => ['pending', 'pending_manager', 'pending_hr'].includes(r.status));
@@ -54,7 +67,13 @@ export default function HRApprovalsInbox() {
       };
 
       if (type === 'leave') {
-        await tenantQuery('leave_requests').update(updateData).eq('id', item.id);
+        if (isApprove) {
+          await callApi(`/api/leave/requests/${item.id}/approve`, { note: comment || undefined }, { method: 'POST' });
+        } else {
+          await callApi(`/api/leave/requests/${item.id}/reject`, {
+            reason: comment || (isRTL ? 'مرفوض' : 'Rejected'),
+          }, { method: 'POST' });
+        }
         qc.invalidateQueries({ queryKey: ['leaveRequestsInbox'] });
         qc.invalidateQueries({ queryKey: ['leaveRequests'] });
       } else {

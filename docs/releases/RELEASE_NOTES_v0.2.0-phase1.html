@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduSaga 360 — Release Notes v0.2.0-phase1</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --surface-2: #243044;
+      --border: #2d3a4f;
+      --text: #e8edf4;
+      --muted: #8b9cb3;
+      --accent: #3b82f6;
+      --accent-dim: #1e3a5f;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --purple: #a78bfa;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem 1rem 4rem;
+    }
+
+    .container { max-width: 960px; margin: 0 auto; }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .badge-version { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); }
+    .badge-date    { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+    .badge-env     { background: #14532d; color: var(--green); border: 1px solid var(--green); }
+
+    h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--muted); font-size: 1.05rem; max-width: 640px; }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+
+    .meta-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+    }
+
+    .meta-card .label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .meta-card .value { font-size: 1rem; font-weight: 600; margin-top: 0.25rem; font-family: "SF Mono", "Fira Code", monospace; }
+
+    section { margin-bottom: 2.5rem; }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    h2 .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    .summary-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .summary-box strong { color: var(--text); }
+
+    .epic-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .epic-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+
+    .epic-card .epic-id {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.35rem;
+    }
+
+    .epic-card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .epic-card p  { font-size: 0.85rem; color: var(--muted); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--surface); }
+
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .status-pass  { color: var(--green); font-weight: 600; }
+    .status-warn  { color: var(--amber); font-weight: 600; }
+    .status-block { color: var(--red);   font-weight: 600; }
+
+    .commit-list { list-style: none; }
+
+    .commit-list li {
+      display: flex;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.875rem;
+    }
+
+    .commit-list li:last-child { border-bottom: none; }
+
+    .commit-hash {
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 0.8rem;
+      color: var(--accent);
+      flex-shrink: 0;
+      width: 72px;
+    }
+
+    .commit-msg { color: var(--text); }
+
+    .migration-list { list-style: none; }
+
+    .migration-list li {
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 0.8rem;
+      color: var(--purple);
+    }
+
+    .migration-list li:last-child { border-bottom: none; }
+
+    .blocker-list { list-style: none; }
+
+    .blocker-list li {
+      display: flex;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.875rem;
+    }
+
+    .blocker-list li:last-child { border-bottom: none; }
+    .blocker-list .owner { color: var(--amber); font-weight: 600; flex-shrink: 0; width: 80px; }
+
+    .test-bar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .test-bar .suite { flex: 1; font-weight: 500; }
+    .test-bar .result { font-weight: 700; font-size: 0.875rem; }
+
+    .progress-track {
+      flex: 2;
+      height: 6px;
+      background: var(--surface-2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 3px;
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 1.5rem; }
+      .commit-list li { flex-direction: column; gap: 0.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <header>
+      <div class="badge-row">
+        <span class="badge badge-version">v0.2.0-phase1</span>
+        <span class="badge badge-date">25 Aug 2026</span>
+        <span class="badge badge-env">DEV · Stg · Prod</span>
+      </div>
+      <h1>EduSaga 360 Release Notes</h1>
+      <p class="subtitle">
+        Phase 0 reconciliation programme kickoff + Phase 1 money-path, security, and deployment pipeline deliverables.
+        Deployed to all three branches at commit <code>2341bcc</code>.
+      </p>
+
+      <div class="meta-grid">
+        <div class="meta-card">
+          <div class="label">Commit</div>
+          <div class="value">2341bcc</div>
+        </div>
+        <div class="meta-card">
+          <div class="label">Branch</div>
+          <div class="value">work-257</div>
+        </div>
+        <div class="meta-card">
+          <div class="label">Repository</div>
+          <div class="value">Edusaga360-v1.0</div>
+        </div>
+        <div class="meta-card">
+          <div class="label">Baseline</div>
+          <div class="value">fb98ccb</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Summary -->
+    <section>
+      <h2><span class="dot" style="background:var(--accent)"></span>Summary</h2>
+      <div class="summary-box">
+        This release delivers <strong>Phase 0 programme documentation</strong> (reconciliation audit, access checklist, branch assessment, CI guard for auth metadata) and <strong>Phase 1 application changes</strong> spanning atomic GL invoice posting, RLS claim remediation, fee-category tax matrix, SADAD tenant discriminator, jurisdiction-aware canteen receipts, and a staging migration pipeline. Also includes <strong>Prod hotfixes</strong> for parent-portal API proxy and TypeScript route param casts.
+      </div>
+    </section>
+
+    <!-- Phase 1 Epics -->
+    <section>
+      <h2><span class="dot" style="background:var(--green)"></span>Phase 1 — What's New</h2>
+      <div class="epic-grid">
+
+        <div class="epic-card">
+          <div class="epic-id">P1-A</div>
+          <h3>Auth Metadata Sync</h3>
+          <p>Enhanced <code>syncAuthMetadata.ts</code> with dry-run summary, ghost detection, and production write guard. Runbook and dry-run report included (0 ghosts, 6 orphan privileged keys).</p>
+        </div>
+
+        <div class="epic-card">
+          <div class="epic-id">P1-B</div>
+          <h3>Atomic GL Invoice Posting</h3>
+          <p><code>create_invoice_with_journal</code> Postgres RPC seeds chart of accounts and posts journal entries atomically. Billing route wired to RPC with ZATCA chain retry on fork.</p>
+        </div>
+
+        <div class="epic-card">
+          <div class="epic-id">P1-B CN</div>
+          <h3>Credit Note VAT Reversal</h3>
+          <p>Credit notes now reverse VAT through account 24 and store non-zero <code>vat_amount</code> on the credit note document.</p>
+        </div>
+
+        <div class="epic-card">
+          <div class="epic-id">P1-C</div>
+          <h3>RLS Claim Remediation</h3>
+          <p>Migration remediates legacy <code>request.jwt.claims</code> patterns to canonical <code>auth.jwt() → app_metadata → tenant_id</code> via <code>auth_tenant_id()</code>.</p>
+        </div>
+
+        <div class="epic-card">
+          <div class="epic-id">P1-D</div>
+          <h3>Money-Path Fixes</h3>
+          <p>#185 residual-to-last-line rounding, #186 preview applies discounts, #187 effective date filtering, #190 SADAD tenant discriminator with unique index.</p>
+        </div>
+
+        <div class="epic-card">
+          <div class="epic-id">P1-E</div>
+          <h3>Fee-Category Tax Matrix</h3>
+          <p>SA / AE / QA fee-category → VAT treatment matrix with ADR-002 fail-closed errors. Bulk activation gate blocks unmapped categories.</p>
+        </div>
+
+        <div class="epic-card">
+          <div class="epic-id">P1-F</div>
+          <h3>De-Saudization</h3>
+          <p>SAR hardcodes removed from canteen receipts (jurisdiction-aware <code>currencyCode</code>). ContractTemplates, CommandPalette, and YamenAI copy updated.</p>
+        </div>
+
+        <div class="epic-card">
+          <div class="epic-id">P1-G</div>
+          <h3>Migration Pipeline</h3>
+          <p><code>applyMigrations.mjs</code> and <code>verifyMigrations.mjs</code> scripts plus staging workflow job for verify-then-apply with health check.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Phase 0 -->
+    <section>
+      <h2><span class="dot" style="background:var(--purple)"></span>Phase 0 — Programme Documentation</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Document</th><th>Story</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>ACCESS_CHECKLIST.md</td><td>SCRUM-4</td><td>Dev access and prod read-only snapshot checklist</td></tr>
+            <tr><td>STATE_LEDGER_RECONCILIATION.md</td><td>SCRUM-33</td><td>Handover state ledger audit with corrections</td></tr>
+            <tr><td>WORK_257_239_ASSESSMENT.md</td><td>SCRUM-34</td><td>Branch merge readiness for GL and RLS work</td></tr>
+            <tr><td>PHASE_1_ESTIMATE.md</td><td>SCRUM-35</td><td>Phase 1 scope and effort estimate</td></tr>
+            <tr><td>TENANT_ID_WRITE_PATHS.md</td><td>SCRUM-36</td><td>Complete tenant_id write-path audit</td></tr>
+            <tr><td>REVOKE_160_FOUNDER_RUNBOOK.md</td><td>SCRUM-41</td><td>Prior agent credential revocation procedure</td></tr>
+            <tr><td>guard_user_metadata_tenant_id.py</td><td>SCRUM-45</td><td>CI guard blocking privileged claims in user_metadata</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Hotfixes -->
+    <section>
+      <h2><span class="dot" style="background:var(--amber)"></span>Prod Hotfixes (merged)</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Commit</th><th>Fix</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>7174ca5</code></td><td>Parent portal: proxy <code>/api</code> to Railway backend in <code>vercel.json</code></td></tr>
+            <tr><td><code>563b653</code></td><td>Backend: cast Express route params to string for TypeScript build</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Migrations -->
+    <section>
+      <h2><span class="dot" style="background:var(--red)"></span>Database Migrations</h2>
+      <div class="table-wrap">
+        <ul class="migration-list">
+          <li>20260811_01_gl_invoice_posting.sql — CoA seed + create_invoice_with_journal + post_journal RAISE</li>
+          <li>20260825_01_rls_legacy_claim_remediation.sql — Canonical RLS claim helpers + 10 table policies</li>
+          <li>20260825_02_sadad_bill_unique.sql — SADAD tenant discriminator unique index</li>
+          <li>20260825_03_fee_category_tax_matrix.sql — Fee category tax treatment seed data</li>
+          <li>20260825_04_branch_limit_enforcement.sql — Subscription branch cap DB trigger</li>
+        </ul>
+      </div>
+      <p style="color:var(--amber); font-size:0.85rem; margin-top:0.75rem;">
+        Apply on DEV first. Generate a fresh RLS rollback snapshot from live pg_policies before production.
+      </p>
+    </section>
+
+    <!-- Tests -->
+    <section>
+      <h2><span class="dot" style="background:var(--green)"></span>Test Results</h2>
+
+      <div class="test-bar">
+        <span class="suite">Phase 1 backend (targeted)</span>
+        <div class="progress-track"><div class="progress-fill" style="width:100%"></div></div>
+        <span class="result status-pass">47 / 47 passed</span>
+      </div>
+
+      <div class="test-bar">
+        <span class="suite">Backend typecheck</span>
+        <div class="progress-track"><div class="progress-fill" style="width:100%"></div></div>
+        <span class="result status-pass">Passed</span>
+      </div>
+
+      <div class="test-bar">
+        <span class="suite">Frontend unit tests</span>
+        <div class="progress-track"><div class="progress-fill" style="width:100%"></div></div>
+        <span class="result status-pass">232 / 232 passed</span>
+      </div>
+
+      <div class="test-bar">
+        <span class="suite">Parent portal tests</span>
+        <div class="progress-track"><div class="progress-fill" style="width:100%"></div></div>
+        <span class="result status-pass">36 / 36 passed</span>
+      </div>
+
+      <div class="test-bar">
+        <span class="suite">CI guard: user_metadata</span>
+        <div class="progress-track"><div class="progress-fill" style="width:100%"></div></div>
+        <span class="result status-pass">Passed</span>
+      </div>
+
+      <div class="test-bar">
+        <span class="suite">CI guard: jurisdiction / pack imports</span>
+        <div class="progress-track"><div class="progress-fill" style="width:100%"></div></div>
+        <span class="result status-pass">Passed</span>
+      </div>
+    </section>
+
+    <!-- Commits -->
+    <section>
+      <h2><span class="dot" style="background:var(--muted)"></span>Commit History</h2>
+      <div class="table-wrap" style="padding: 0 1.25rem;">
+        <ul class="commit-list">
+          <li><span class="commit-hash">2341bcc</span><span class="commit-msg">merge: integrate Prod hotfixes (parent-portal API proxy, route param TS casts)</span></li>
+          <li><span class="commit-hash">038a69c</span><span class="commit-msg">feat(phase-1): GL invoice posting, RLS remediation, fee tax matrix, and money-path fixes</span></li>
+          <li><span class="commit-hash">1e6f7e7</span><span class="commit-msg">docs: Phase 0 programme kickoff v0.1.0-phase0-reconciliation</span></li>
+          <li><span class="commit-hash">563b653</span><span class="commit-msg">fix(backend): cast route params to string for TS build</span></li>
+          <li><span class="commit-hash">7174ca5</span><span class="commit-msg">fix(parent-portal): proxy /api to Railway backend in vercel.json</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Blockers -->
+    <section>
+      <h2><span class="dot" style="background:var(--amber)"></span>Founder Actions Required</h2>
+      <div class="table-wrap">
+        <ul class="blocker-list">
+          <li><span class="owner">Founder</span><span>Sign reconciliation report and restore GitHub Actions billing</span></li>
+          <li><span class="owner">Founder</span><span>Execute REVOKE_160_FOUNDER_RUNBOOK (prior agent prod credentials)</span></li>
+          <li><span class="owner">Founder</span><span>Configure <code>SUPABASE_STAGING_PROJECT_REF</code> for migration pipeline</span></li>
+          <li><span class="owner">Founder</span><span>Run <code>syncAuthMetadata.ts</code> dry-run on prod, then apply (6 orphan privileged keys)</span></li>
+          <li><span class="owner">Founder</span><span>Fresh RLS rollback snapshot before applying 20260825_01 on production</span></li>
+          <li><span class="owner">Founder</span><span>Decision #5: KSA national-student VAT treatment (P1-E)</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Deployment -->
+    <section>
+      <h2><span class="dot" style="background:var(--accent)"></span>Deployment Status</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Branch</th><th>Commit</th><th>Status</th><th>Auto-deploy</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>DEV</td><td><code>2341bcc</code></td><td class="status-pass">Deployed</td><td>CI on push</td></tr>
+            <tr><td>Stg</td><td><code>2341bcc</code></td><td class="status-pass">Deployed</td><td>Vercel + migration job</td></tr>
+            <tr><td>Prod</td><td><code>2341bcc</code></td><td class="status-pass">Deployed</td><td>Manual promote (Railway/Vercel)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      EduSaga 360 · Release v0.2.0-phase1 · Generated 25 Aug 2026 · Commit 2341bcc
+    </footer>
+
+  </div>
+</body>
+</html>

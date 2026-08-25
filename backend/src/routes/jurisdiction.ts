@@ -91,4 +91,47 @@ router.get('/context', async (
   }
 });
 
+/**
+ * GET /api/jurisdiction/vaccination-schedule
+ *
+ * Returns the country-pack vaccination schedule (MOH KSA / DHA UAE / Qatar MoPH)
+ * for the authenticated tenant's jurisdiction. Used by SchoolClinic to diff
+ * obligations against student_health_records (SCRUM-137).
+ */
+router.get('/vaccination-schedule', async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.user?.tenant_id) {
+      return res.status(403).json({ message: 'No tenant assigned to user' });
+    }
+
+    const branchId =
+      typeof req.query.branch_id === 'string' && req.query.branch_id
+        ? req.query.branch_id
+        : undefined;
+
+    const ctx = await buildRequestContext(supabase, req.user.tenant_id, branchId);
+    const code = resolveJurisdiction(ctx);
+    const pack = resolvePack(ctx);
+    const schedule = pack.vaccinationSchedule;
+
+    if (!schedule) {
+      return res.status(404).json({
+        message: `Vaccination schedule not configured for jurisdiction ${code}`,
+      });
+    }
+
+    return res.json({
+      jurisdiction: code,
+      source: schedule.source,
+      vaccines: schedule.vaccines,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export { router as jurisdictionRouter };

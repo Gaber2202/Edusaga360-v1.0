@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "EduSaga Parent",
+  "appTitle": "EduSaga Parent V2",
   "parentPortal": "Parent Portal",
   "dashboard": "Home",
   "studentProgress": "Student Progress",
@@ -22,6 +22,10 @@
   "schoolCodeHint": "Enter the code from your school (for example T-DEMO)",
   "continueLabel": "Continue",
   "changeSchool": "Change school",
+  "selectSchoolTitle": "Choose your school",
+  "selectSchoolLead": "Select the school you want to open.",
+  "selectSchoolLabel": "School",
+  "selectSchoolHint": "Please select a school",
   "schoolNotFound": "School not found",
   "accessDenied": "Access Denied",
   "accessDeniedDesc": "This portal is for parents only. Please contact your school administrator for access.",
@@ -124,6 +128,22 @@
   "canteenAllergiesSaved": "Allergies saved. Canteen staff will see an alert.",
   "store": "School store",
   "noStoreProducts": "No products available right now.",
+  "storeEmptyHint": "Uniforms, books, and rentals will show up here when your school publishes them.",
+  "storeLoadError": "Couldn’t load the school store",
+  "storeForChild": "Ordering for",
+  "allCategories": "All",
+  "recentOrders": "Recent orders",
+  "selectChildFirst": "Please select a child first",
+  "outOfStock": "Out of stock",
+  "inStockCount": "{count} in stock",
+  "@inStockCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "bookable": "Bookable",
+  "unavailable": "Unavailable",
+  "retry": "Try again",
   "purchase": "Buy",
   "rent": "Rent",
   "pickSlot": "Choose a time",

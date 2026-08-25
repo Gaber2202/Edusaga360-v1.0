@@ -9,6 +9,7 @@
 
 import { NotImplementedInJurisdiction } from '../../lib/jurisdiction.js';
 import { calculateEndOfServiceBenefit, calculateOvertime } from '../../lib/payroll.js';
+import { calculatePeriodPayroll } from '../../lib/periodPayroll.js';
 import type { PayrollService, GosiResult } from '../contract/CountryPack.js';
 
 const CURRENCY_CODE = 'QAR';
@@ -56,18 +57,20 @@ function calculateGosi(_basicSalary: number, _nationality?: string): GosiResult 
 }
 
 function calculatePayroll(
-  _supabase: unknown,
-  _tenantId: string,
-  _period: { start: string; end: string },
-  _employeeIds?: string[],
-  _branchId?: string,
+  supabase: unknown,
+  tenantId: string,
+  period: { start: string; end: string },
+  employeeIds?: string[],
+  branchId?: string,
 ): Promise<unknown> {
-  return Promise.reject(
-    new NotImplementedInJurisdiction(
-      JURISDICTION_CODE,
-      'PayrollService.calculatePayroll — full period payroll calculation not yet implemented for Qatar',
-    ),
-  );
+  return calculatePeriodPayroll(supabase as import('@supabase/supabase-js').SupabaseClient, tenantId, period, {
+    employeeIds,
+    branchId,
+    currencyCode: CURRENCY_CODE,
+    jurisdictionCode: JURISDICTION_CODE,
+    // Qatar private sector: no GOSI-equivalent payroll deduction in v1 (GRSIA/pension TBD)
+    socialSecurity: () => ({ employee: 0, employer: 0, wage: 0, is_national: false }),
+  });
 }
 
 function generateWpsFile(): Promise<{ filename: string; content: string }> {
@@ -80,8 +83,8 @@ function generateWpsFile(): Promise<{ filename: string; content: string }> {
 }
 
 export const qaPayroll: PayrollService = {
-  calculateEndOfServiceBenefit: (basicSalary, yearsOfService, nationality) =>
-    calculateEndOfServiceBenefit(basicSalary, yearsOfService, nationality, GRATUITY_RULES),
+  calculateEndOfServiceBenefit: (basicSalary, yearsOfService, nationality, options) =>
+    calculateEndOfServiceBenefit(basicSalary, yearsOfService, nationality, GRATUITY_RULES, options),
   calculateAnnualLeave,
   calculateOvertime: qaCalculateOvertime,
   calculateGosi,

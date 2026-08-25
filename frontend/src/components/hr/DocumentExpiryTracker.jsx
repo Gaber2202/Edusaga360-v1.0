@@ -2,13 +2,15 @@
  * Document Expiry Tracker — AC#8: alerts at exactly 90/60/30 days
  * No expired documents slip through
  */
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import { Badge } from '../ui/badge';
 import { differenceInDays, format } from 'date-fns';
 import { AlertTriangle, Clock, CheckCircle, FileText } from 'lucide-react';
+import DashboardKPICard from '../dashboard/DashboardKPICard';
+import { cn } from '../../lib/utils';
 
 const DOC_FIELDS = [
   { key: 'iqama_expiry', label: { ar: 'الإقامة', en: 'Iqama' } },
@@ -19,6 +21,7 @@ const DOC_FIELDS = [
 
 export default function DocumentExpiryTracker({ isRTL }) {
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
+  const [severityFilter, setSeverityFilter] = useState('all');
   const today = new Date();
 
   const { data: employees = [], isLoading } = useQuery({
@@ -66,12 +69,18 @@ export default function DocumentExpiryTracker({ isRTL }) {
     notice: { bg: 'bg-najdi-50', border: 'border-najdi-100', text: 'text-najdi-900', icon: FileText, iconColor: 'text-najdi-500', badgeBg: 'bg-najdi-50 text-najdi-900', label: { ar: 'تنبيه (90 يوم)', en: 'Notice (90d)' } },
   };
 
+  const visibleGroups = Object.entries(groups).filter(([sev, items]) =>
+    items.length > 0 && (severityFilter === 'all' || severityFilter === sev),
+  );
+
+  const kpiColors = { expired: 'red', critical: 'amber', warning: 'amber', notice: 'blue' };
+
   if (isLoading) return <div className="py-8 text-center text-muted-foreground text-sm">{isRTL ? 'جاري التحميل...' : 'Loading...'}</div>;
 
   if (expiryItems.length === 0) {
     return (
-      <div className="flex items-center justify-center py-12 flex-col gap-2">
-        <CheckCircle className="w-10 h-10 text-emerald-400" />
+      <div className="flex items-center justify-center py-12 flex-col gap-2 rounded-xl border border-border/60 bg-white">
+        <CheckCircle className="w-10 h-10 text-emerald-500" />
         <p className="text-muted-foreground text-sm">{isRTL ? 'جميع الوثائق سارية المفعول ✓' : 'All documents are valid ✓'}</p>
       </div>
     );
@@ -79,26 +88,61 @@ export default function DocumentExpiryTracker({ isRTL }) {
 
   return (
     <div className="space-y-4">
-      {/* Summary cards */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {Object.entries(groups).map(([sev, items]) => {
           const cfg = severityConfig[sev];
           const Icon = cfg.icon;
           return (
-            <div key={sev} className={`p-3 rounded-xl border ${cfg.bg} ${cfg.border}`}>
-              <div className="flex items-center gap-1.5 mb-1">
-                <Icon className={`w-4 h-4 ${cfg.iconColor}`} />
-                <span className={`text-xs font-medium ${cfg.text}`}>{isRTL ? cfg.label.ar : cfg.label.en}</span>
-              </div>
-              <p className={`text-2xl font-bold ${cfg.text}`}>{items.length}</p>
-            </div>
+            <button
+              key={sev}
+              type="button"
+              onClick={() => setSeverityFilter((f) => (f === sev ? 'all' : sev))}
+              className="text-start"
+            >
+              <DashboardKPICard
+                id={`doc-exp-${sev}`}
+                title={isRTL ? cfg.label.ar : cfg.label.en}
+                value={items.length}
+                icon={Icon}
+                color={kpiColors[sev]}
+                alert={sev === 'expired' && items.length > 0}
+                sub={severityFilter === sev
+                  ? (isRTL ? 'تصفية نشطة' : 'Filter active')
+                  : (isRTL ? 'اضغط للتصفية' : 'Click to filter')}
+              />
+            </button>
           );
         })}
       </div>
 
-      {/* Expiry list */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setSeverityFilter('all')}
+          className={cn(
+            'text-xs px-3 py-1.5 rounded-full border transition-colors',
+            severityFilter === 'all' ? 'bg-najdi-900 text-white border-najdi-900' : 'bg-white text-muted-foreground border-border',
+          )}
+        >
+          {isRTL ? 'الكل' : 'All'} ({expiryItems.length})
+        </button>
+        {Object.entries(groups).map(([sev, items]) => (
+          <button
+            key={sev}
+            type="button"
+            onClick={() => setSeverityFilter(sev)}
+            className={cn(
+              'text-xs px-3 py-1.5 rounded-full border transition-colors',
+              severityFilter === sev ? 'bg-najdi-900 text-white border-najdi-900' : 'bg-white text-muted-foreground border-border',
+            )}
+          >
+            {isRTL ? severityConfig[sev].label.ar : severityConfig[sev].label.en} ({items.length})
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-2">
-        {Object.entries(groups).filter(([, items]) => items.length > 0).map(([sev, items]) => {
+        {visibleGroups.map(([sev, items]) => {
           const cfg = severityConfig[sev];
           const Icon = cfg.icon;
           return (

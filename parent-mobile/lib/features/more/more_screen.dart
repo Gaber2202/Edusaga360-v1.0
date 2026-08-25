@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../auth/session_controller.dart';
 import '../../prefs/settings_controller.dart';
+import '../../theme/app_theme.dart';
+import '../../widgets/brand_mark.dart';
 
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
@@ -14,64 +16,101 @@ class MoreScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final settings = ref.watch(settingsProvider);
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(title: Text(l10n.more)),
-      body: ListView(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.school_outlined),
-            title: Text(l10n.studentProgress),
-            onTap: () => context.push('/progress'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.assignment_outlined),
-            title: Text(l10n.homework),
-            onTap: () => context.push('/homework'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.campaign_outlined),
-            title: Text(l10n.announcements),
-            onTap: () => context.push('/announcements'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.restaurant_outlined),
-            title: Text(l10n.canteen),
-            onTap: () => context.push('/canteen'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.storefront_outlined),
-            title: Text(l10n.store),
-            onTap: () => context.push('/store'),
-          ),
-          const Divider(),
-          SwitchListTile(
-            title: Text(settings.themeMode == ThemeMode.dark ? l10n.darkMode : l10n.lightMode),
-            value: settings.themeMode == ThemeMode.dark,
-            onChanged: (_) => ref.read(settingsProvider.notifier).toggleTheme(),
-          ),
-          ListTile(
-            leading: const Icon(Icons.language),
-            title: Text(l10n.language),
-            subtitle: Text(settings.isRtl ? 'العربية' : 'English'),
-            onTap: () => ref.read(settingsProvider.notifier).toggleLocale(),
-          ),
-          ListTile(
-            leading: const Icon(Icons.swap_horiz),
-            title: Text(l10n.switchSchool),
-            onTap: () async {
-              await ref.read(sessionProvider.notifier).switchSchool();
-              if (context.mounted) context.go('/school');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: Text(l10n.signOut),
-            onTap: () async {
-              await ref.read(sessionProvider.notifier).signOut(keepSchool: true);
-              if (context.mounted) context.go('/login');
-            },
-          ),
-        ],
+      body: SoftPageBackground(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+          children: [
+            Card(
+              child: Column(
+                children: [
+                  _tile(context, Icons.school_outlined, l10n.studentProgress, () => context.push('/progress')),
+                  const Divider(height: 1),
+                  _tile(context, Icons.assignment_outlined, l10n.homework, () => context.push('/homework')),
+                  const Divider(height: 1),
+                  _tile(context, Icons.campaign_outlined, l10n.announcements, () => context.push('/announcements')),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Column(
+                children: [
+                  _tile(context, Icons.restaurant_outlined, l10n.canteen, () => context.push('/canteen')),
+                  const Divider(height: 1),
+                  _tile(context, Icons.storefront_outlined, l10n.store, () => context.push('/store')),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Column(
+                children: [
+                  SwitchListTile(
+                    title: Text(settings.themeMode == ThemeMode.dark ? l10n.darkMode : l10n.lightMode),
+                    value: settings.themeMode == ThemeMode.dark,
+                    activeColor: EsColors.green700,
+                    onChanged: (_) => ref.read(settingsProvider.notifier).toggleTheme(),
+                  ),
+                  const Divider(height: 1),
+                  _tile(
+                    context,
+                    Icons.language,
+                    l10n.language,
+                    () => ref.read(settingsProvider.notifier).toggleLocale(),
+                    subtitle: settings.isRtl ? 'العربية' : 'English',
+                  ),
+                  const Divider(height: 1),
+                  _tile(
+                    context,
+                    Icons.swap_horiz,
+                    l10n.changeSchool,
+                    () async => ref.read(sessionProvider.notifier).changeSchool(),
+                  ),
+                  const Divider(height: 1),
+                  _tile(
+                    context,
+                    Icons.logout,
+                    l10n.signOut,
+                    () async {
+                      await ref.read(sessionProvider.notifier).signOut();
+                      if (context.mounted) context.go('/login');
+                    },
+                    danger: true,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _tile(
+    BuildContext context,
+    IconData icon,
+    String title,
+    VoidCallback onTap, {
+    String? subtitle,
+    bool danger = false,
+  }) {
+    final color = danger ? EsColors.danger : EsColors.green700;
+    return ListTile(
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: color, size: 20),
+      ),
+      title: Text(title, style: TextStyle(fontWeight: FontWeight.w600, color: danger ? EsColors.danger : null)),
+      subtitle: subtitle == null ? null : Text(subtitle),
+      trailing: Icon(Icons.chevron_right, color: EsColors.muted.withOpacity(0.7)),
+      onTap: onTap,
     );
   }
 }

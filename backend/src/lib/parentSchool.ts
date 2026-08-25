@@ -90,8 +90,9 @@ function isPubliclyListed(row: PublicSchool): boolean {
   return row.status === 'active' || row.status === 'trial';
 }
 
-export function publicSchoolPayload(row: PublicSchool) {
+export function publicSchoolPayload(row: PublicSchool, opts?: { includeId?: boolean }) {
   return {
+    ...(opts?.includeId ? { id: row.id } : {}),
     name_en: row.name_en,
     name_ar: row.name_ar,
     slug: row.slug,
@@ -124,6 +125,19 @@ export async function findListedSchool(opts: {
   return row;
 }
 
+export async function findListedSchoolById(tenantId: string): Promise<PublicSchool | null> {
+  const id = tenantId.trim();
+  if (!id) return null;
+  const { data } = await supabase
+    .from('tenants')
+    .select('id, slug, tenant_code, name_en, name_ar, logo_url, status')
+    .eq('id', id)
+    .maybeSingle();
+  const row = data as PublicSchool | null;
+  if (!row || !isPubliclyListed(row)) return null;
+  return row;
+}
+
 export async function parentProfileForAuth(
   authId: string,
   tenantId?: string,
@@ -139,4 +153,28 @@ export async function parentProfileForAuth(
 
   const { data } = await query.maybeSingle();
   return (data as ParentUserRow | null) ?? null;
+}
+
+/** All parent-capable user rows for an auth identity (one per school/tenant). */
+export async function listParentProfilesForAuth(authId: string): Promise<ParentUserRow[]> {
+  const { data } = await supabase
+    .from('users')
+    .select('id, email, name, tenant_id, user_role, linked_student_ids, status')
+    .eq('auth_id', authId);
+
+  const raw = data ?? [];
+  const rows = (Array.isArray(raw) ? raw : [raw]) as ParentUserRow[];
+  return rows.filter((row) => hasParentPortalAccess(row));
+}
+
+/** Active/trial schools assigned to this parent (from their users rows). */
+export async function listAssignedSchoolsForAuth(authId: string): Promise<PublicSchool[]> {
+  const profiles = await listParentProfilesForAuth(authId);
+  const byId = new Map<string, PublicSchool>();
+  for (const profile of profiles) {
+    if (!profile.tenant_id || byId.has(profile.tenant_id)) continue;
+    const school = await findListedSchoolById(profile.tenant_id);
+    if (school) byId.set(school.id, school);
+  }
+  return [...byId.values()];
 }

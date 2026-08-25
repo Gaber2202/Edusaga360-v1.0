@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
@@ -14,11 +14,13 @@ import { Badge } from '../components/ui/badge';
 import { Switch } from '../components/ui/switch';
 import { toast } from 'sonner';
 import PageHeader from '../components/ui/PageHeader';
-import { Plus, Copy, Loader2, Edit2, Send, ClipboardCheck } from 'lucide-react';
+import { Plus, Copy, Loader2, Edit2, Send, ClipboardCheck, Settings2 } from 'lucide-react';
 import { logAuditEvent } from '../components/AuditService';
 import SendIntakeLink from '../components/intake/SendIntakeLink';
 import DocumentVerificationQueue from '../components/intake/DocumentVerificationQueue';
+import IntakeFieldVisibilityConfig from '../components/intake/IntakeFieldVisibilityConfig';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { DEFAULT_VISIBLE_FIELDS } from '../lib/intakeFormFields';
 
 export default function ParentIntakeManagement() {
   const { t: _t, isRTL } = useLanguage();
@@ -30,6 +32,8 @@ export default function ParentIntakeManagement() {
   const [editingLink, setEditingLink] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showSendDialog, setShowSendDialog] = useState(null);
+  const [showFieldConfig, setShowFieldConfig] = useState(false);
+  const [fieldConfig, setFieldConfig] = useState(DEFAULT_VISIBLE_FIELDS);
 
   // Count pending verifications for badge
   const { data: pendingCount = 0 } = useQuery({
@@ -55,7 +59,16 @@ export default function ParentIntakeManagement() {
     expires_date: ''
   });
 
-  const { data: links = [], isLoading } = useQuery({ enabled: false /* parent_intake_links table not built */, queryKey: ['parentIntakeLinks', tenantId], queryFn: () => fetchData(tenantQuery('parent_intake_links').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
+  const { data: links = [], isLoading } = useQuery({
+    queryKey: ['parentIntakeLinks', tenantId],
+    queryFn: () => fetchData(
+      tenantQuery('parent_intake_links')
+        .select('*')
+        .match(tenantFilter())
+        .order('created_at', { ascending: false })
+    ),
+    enabled: hasTenantAccess,
+  });
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
@@ -69,6 +82,40 @@ export default function ParentIntakeManagement() {
     enabled: hasTenantAccess,
   });
 
+  useQuery({
+    queryKey: ['intake_visible_fields', tenantId],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('platform_settings')
+          .select('key, value')
+          .eq('key', `intake_visible_fields_${tenantId}`)
+          .maybeSingle();
+        if (error) throw error;
+        const value = data?.value;
+        if (value) setFieldConfig(value);
+        return value || DEFAULT_VISIBLE_FIELDS;
+      } catch {
+        return DEFAULT_VISIBLE_FIELDS;
+      }
+    },
+    enabled: hasTenantAccess && !!tenantId,
+  });
+
+  useEffect(() => {
+    if (editingLink) {
+      setFormData({
+        name_ar: editingLink.name_ar || '',
+        name_en: editingLink.name_en || '',
+        academic_year: editingLink.academic_year || '',
+        branch_id: editingLink.branch_id || '',
+        allowed_grades: editingLink.allowed_grades || [],
+        is_active: editingLink.is_active !== false,
+        expires_date: editingLink.expires_date || '',
+      });
+    }
+  }, [editingLink]);
+
   const handleSave = async () => {
     if (!formData.name_ar || !formData.academic_year || !formData.branch_id) {
       toast.error(isRTL ? 'يرجى ملء الحقول المطلوبة' : 'Please fill required fields');
@@ -80,23 +127,25 @@ export default function ParentIntakeManagement() {
       const user = await supabase.auth.getUser().then(r => r.data?.user);
       const linkCode = editingLink?.link_code || `INTAKE-${Date.now().toString(36).toUpperCase()}`;
       const baseUrl = window.location.origin;
-      const linkUrl = `${baseUrl}/#/ParentIntake?code=${linkCode}`;
+      const linkUrl = `${baseUrl}/ParentIntake?code=${linkCode}`;
 
       const data = {
         ...formData,
         link_code: linkCode,
         link_url: linkUrl,
-        created_by: editingLink ? undefined : user.email,
-        created_at: editingLink ? undefined : new Date().toISOString()
+        created_by: editingLink ? undefined : user?.email,
+        expires_date: formData.expires_date || null,
       };
 
       if (editingLink) {
-        await tenantQuery('parent_intake_links').update(data);
+        const { error } = await tenantQuery('parent_intake_links').update(data).eq('id', editingLink.id);
+        if (error) throw error;
         await logAuditEvent({ action: 'UPDATE', entityType: 'ParentIntakeLink', entityId: editingLink.id });
         toast.success(isRTL ? 'تم التحديث' : 'Link updated');
       } else {
-        const created = await tenantQuery('parent_intake_links').insert(data);
-        await logAuditEvent({ action: 'CREATE', entityType: 'ParentIntakeLink', entityId: created.id });
+        const { data: created, error } = await tenantQuery('parent_intake_links').insert(data).select('id').single();
+        if (error) throw error;
+        await logAuditEvent({ action: 'CREATE', entityType: 'ParentIntakeLink', entityId: created?.id });
         toast.success(isRTL ? 'تم الإنشاء' : 'Link created');
       }
 
@@ -122,7 +171,8 @@ export default function ParentIntakeManagement() {
 
   const toggleActive = async (link) => {
     try {
-      await tenantQuery('parent_intake_links').update({ is_active: !link.is_active });
+      const { error } = await tenantQuery('parent_intake_links').update({ is_active: !link.is_active }).eq('id', link.id);
+      if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['parentIntakeLinks'] });
       toast.success(isRTL ? 'تم التحديث' : 'Updated');
     } catch (_error) {
@@ -140,6 +190,15 @@ export default function ParentIntakeManagement() {
         actionIcon={Plus}
         onAction={() => setShowForm(true)}
       />
+
+      {activeTab === 'links' && (
+        <div className="flex justify-end">
+          <Button variant="outline" size="sm" onClick={() => setShowFieldConfig(true)}>
+            <Settings2 className="w-4 h-4 me-1" />
+            {isRTL ? 'حقول النموذج' : 'Form fields'}
+          </Button>
+        </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
@@ -317,6 +376,17 @@ export default function ParentIntakeManagement() {
           onOpenChange={(open) => !open && setShowSendDialog(null)} 
         />
       )}
+
+      <IntakeFieldVisibilityConfig
+        open={showFieldConfig}
+        onClose={() => setShowFieldConfig(false)}
+        tenantId={tenantId}
+        initialConfig={fieldConfig}
+        onSaved={(cfg) => {
+          setFieldConfig(cfg);
+          queryClient.invalidateQueries({ queryKey: ['intake_visible_fields'] });
+        }}
+      />
         </TabsContent>
       </Tabs>
     </div>

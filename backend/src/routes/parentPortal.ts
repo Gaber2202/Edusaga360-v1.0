@@ -21,8 +21,10 @@ export const PARENT_API_CATALOG = {
   auth: {
     login: 'POST /api/parent/auth/login',
     refresh: 'POST /api/parent/auth/refresh',
+    selectSchool: 'POST /api/parent/auth/select-school',
+    schools: 'GET /api/parent/auth/schools',
     header: 'Authorization: Bearer <access_token>',
-    school: 'tenant_code or slug is required on login',
+    tenantHeader: 'X-Tenant-Id: <tenant_uuid> (required when parent has multiple schools)',
   },
   public: {
     schoolByCode: 'GET /api/public/schools/by-code/:tenant_code',
@@ -46,6 +48,8 @@ export const PARENT_API_CATALOG = {
     paymentLink: 'GET /api/invoices/:id/payment-link',
     payments: 'GET /api/parent/payments?student_id=',
     contracts: 'GET /api/parent/contracts?student_id=',
+    contractDetail: 'GET /api/parent/contracts/:id',
+    contractSign: 'POST /api/parent/contracts/:id/sign',
     applications: 'GET /api/parent/applications?student_id=',
     documentSign: 'GET /api/parent/documents/sign?student_id=&path=',
     canteenWallet: 'GET /api/parent/canteen/wallet?student_id=',
@@ -458,7 +462,7 @@ parentPortalRouter.get('/contracts', async (req, res) => {
 
   const { data, error } = await supabase
     .from('student_contracts')
-    .select('id, student_id, template_id, academic_year, status, signed_at, created_at')
+    .select('id, student_id, template_id, academic_year, status, signed_date, signed_at, created_at, contract_number, student_name, grade, net_amount, delivery_status')
     .eq('tenant_id', r.parent.tenantId)
     .in('student_id', ids)
     .order('created_at', { ascending: false })
@@ -466,14 +470,14 @@ parentPortalRouter.get('/contracts', async (req, res) => {
   if (error) return res.status(500).json({ message: 'Failed to load contracts' });
 
   const templateIds = [...new Set((data ?? []).map((row) => row.template_id).filter(Boolean))] as string[];
-  let templateMap = new Map<string, { name?: string; type?: string }>();
+  let templateMap = new Map<string, { name_ar?: string; name_en?: string; name?: string; template_type?: string; type?: string }>();
   if (templateIds.length) {
     const { data: templates } = await supabase
       .from('contract_templates')
-      .select('id, name, type')
+      .select('id, name, name_ar, name_en, type, template_type')
       .eq('tenant_id', r.parent.tenantId)
       .in('id', templateIds);
-    templateMap = new Map((templates ?? []).map((tpl) => [tpl.id as string, tpl as { name?: string; type?: string }]));
+    templateMap = new Map((templates ?? []).map((tpl) => [tpl.id as string, tpl]));
   }
 
   const rows = (data ?? []).map((row) => {
@@ -481,15 +485,175 @@ parentPortalRouter.get('/contracts', async (req, res) => {
     return {
       id: row.id,
       student_id: row.student_id,
-      template_name: tpl?.name || null,
-      template_type: tpl?.type || null,
+      contract_number: row.contract_number,
+      student_name: row.student_name,
+      template_name: tpl?.name_en || tpl?.name_ar || tpl?.name || null,
+      template_type: tpl?.template_type || tpl?.type || null,
       academic_year: row.academic_year,
+      grade: row.grade,
+      net_amount: row.net_amount,
       status: row.status,
-      signed_at: row.signed_at,
+      signed_at: row.signed_date || row.signed_at,
+      delivery_status: row.delivery_status,
       created_at: row.created_at,
     };
   });
   return res.json({ data: rows });
+});
+
+parentPortalRouter.get('/contracts/:id', async (req, res) => {
+  const r = req as unknown as ParentRequest;
+  const { data: contract, error } = await supabase
+    .from('student_contracts')
+    .select('*')
+    .eq('id', req.params.id)
+    .eq('tenant_id', r.parent.tenantId)
+    .maybeSingle();
+  if (error || !contract) return res.status(404).json({ message: 'Contract not found' });
+  if (!r.parent.linkedIds.includes(contract.student_id as string)) {
+    return res.status(403).json({ message: 'Not authorized for this contract' });
+  }
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('name_en, name_ar, logo_url')
+    .eq('id', r.parent.tenantId)
+    .maybeSingle();
+
+  return res.json({ data: contract, school: tenant });
+});
+
+const SignSchema = z.object({
+  signer_typed_name: z.string().min(2).max(120),
+  signature_drawn_data: z.string().min(32),
+  agreement_accepted: z.literal(true),
+});
+
+parentPortalRouter.post('/contracts/:id/sign', async (req, res) => {
+  const r = req as unknown as ParentRequest;
+  const parsed = SignSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({
+      message: 'Drawn signature and typed full name are both required',
+      details: parsed.error.flatten(),
+    });
+  }
+
+  const { data: contract, error } = await supabase
+    .from('student_contracts')
+    .select('*')
+    .eq('id', req.params.id)
+    .eq('tenant_id', r.parent.tenantId)
+    .maybeSingle();
+  if (error || !contract) return res.status(404).json({ message: 'Contract not found' });
+  if (!r.parent.linkedIds.includes(contract.student_id as string)) {
+    return res.status(403).json({ message: 'Not authorized for this contract' });
+  }
+  if (contract.status === 'signed') {
+    return res.status(409).json({ message: 'Contract already signed' });
+  }
+
+  const signedAt = new Date().toISOString();
+  const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+
+  const { error: updErr } = await supabase.from('student_contracts').update({
+    status: 'signed',
+    signed_by_guardian: true,
+    signed_date: signedAt,
+    signed_at: signedAt,
+    signer_typed_name: parsed.data.signer_typed_name.trim(),
+    signature_drawn_data: parsed.data.signature_drawn_data,
+    signed_user_id: r.user!.id,
+    signed_ip: ip || 'unknown',
+    delivery_status: 'delivered',
+  }).eq('id', contract.id).eq('tenant_id', r.parent.tenantId);
+
+  if (updErr) return res.status(500).json({ message: updErr.message });
+
+  // Assign tuition fee structures by branch + grade (no auto-invoice)
+  const branchId = contract.branch_id as string | null;
+  const grade = contract.grade as string | null;
+  const academicYear = contract.academic_year as string | null;
+  let feeIds: string[] = [];
+  if (branchId && grade) {
+    let q = supabase
+      .from('fee_structures')
+      .select('id')
+      .eq('tenant_id', r.parent.tenantId)
+      .eq('branch_id', branchId)
+      .eq('grade', grade)
+      .eq('is_active', true);
+    if (academicYear) q = q.eq('academic_year', academicYear);
+    const { data: fees } = await q;
+    feeIds = (fees || []).map((f) => f.id as string);
+    if (feeIds.length) {
+      await supabase.from('student_contracts').update({
+        fee_structure_ids: feeIds,
+        tuition_assigned_at: signedAt,
+      }).eq('id', contract.id);
+
+      await supabase.from('students').update({
+        status: 'active',
+        grade,
+        academic_year: academicYear,
+      }).eq('id', contract.student_id).eq('tenant_id', r.parent.tenantId).then(() => {});
+    }
+  }
+
+  // Auto-advance linked admission → enrolled
+  let applicationId = contract.application_id as string | null;
+  if (!applicationId && contract.student_id) {
+    const { data: student } = await supabase
+      .from('students')
+      .select('application_id')
+      .eq('id', contract.student_id)
+      .eq('tenant_id', r.parent.tenantId)
+      .maybeSingle();
+    applicationId = (student?.application_id as string) || null;
+  }
+  if (applicationId) {
+    const { data: app } = await supabase
+      .from('applications')
+      .select('id, status, pipeline_stage')
+      .eq('id', applicationId)
+      .eq('tenant_id', r.parent.tenantId)
+      .maybeSingle();
+    if (app) {
+      await supabase.from('applications').update({
+        status: 'enrolled',
+        pipeline_stage: 'enrolled',
+      }).eq('id', app.id);
+      await supabase.from('application_stage_history').insert({
+        tenant_id: r.parent.tenantId,
+        application_id: app.id,
+        from_status: app.status,
+        to_status: 'enrolled',
+        note: `Contract ${contract.contract_number || contract.id} signed by parent`,
+        changed_by: r.user!.id,
+        changed_by_name: parsed.data.signer_typed_name.trim(),
+      }).then(() => {});
+    }
+  }
+
+  await supabase.from('notifications').insert({
+    tenant_id: r.parent.tenantId,
+    type: 'contract_signed',
+    title_ar: `تم توقيع العقد - ${contract.student_name}`,
+    title_en: `Contract Signed - ${contract.student_name}`,
+    body_ar: `وقّع ولي الأمر ${parsed.data.signer_typed_name} على عقد الطالب ${contract.student_name}`,
+    body_en: `Guardian ${parsed.data.signer_typed_name} signed the contract for ${contract.student_name}`,
+    reference_type: 'StudentContract',
+    reference_id: contract.id,
+    is_read: false,
+    recipient_role: 'admin',
+  }).then(() => {});
+
+  return res.json({
+    ok: true,
+    signed_at: signedAt,
+    tuition_fee_structure_ids: feeIds,
+    application_enrolled: !!applicationId,
+  });
 });
 
 parentPortalRouter.get('/applications', async (req, res) => {

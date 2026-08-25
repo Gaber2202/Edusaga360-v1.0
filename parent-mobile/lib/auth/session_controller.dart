@@ -12,29 +12,27 @@ const _sessionKey = 'es_parent_session';
 class SessionState {
   const SessionState({
     this.session,
-    this.pendingSchool,
     this.ready = false,
     this.denied = false,
   });
 
   final AuthSession? session;
-  final School? pendingSchool;
   final bool ready;
   final bool denied;
 
-  bool get isAuthenticated => session != null && !denied;
+  bool get needsSchoolSelection =>
+      session != null && (session!.needsSchoolSelection || !session!.isComplete);
+
+  bool get isAuthenticated => session != null && session!.isComplete && !denied;
 
   SessionState copyWith({
     AuthSession? session,
-    School? pendingSchool,
     bool? ready,
     bool? denied,
     bool clearSession = false,
-    bool clearSchool = false,
   }) {
     return SessionState(
       session: clearSession ? null : (session ?? this.session),
-      pendingSchool: clearSchool ? null : (pendingSchool ?? this.pendingSchool),
       ready: ready ?? this.ready,
       denied: denied ?? this.denied,
     );
@@ -55,7 +53,15 @@ class SessionController extends StateNotifier<SessionState> {
 
   ParentApi get api {
     _api.accessToken = state.session?.accessToken;
+    _api.tenantId = state.session?.school?.id;
     return _api;
+  }
+
+  Future<void> _persist(AuthSession session) async {
+    _api.accessToken = session.accessToken;
+    _api.tenantId = session.school?.id;
+    await _storage.write(key: _sessionKey, value: jsonEncode(session.toJson()));
+    state = SessionState(session: session, ready: true);
   }
 
   Future<void> restore() async {
@@ -64,7 +70,8 @@ class SessionController extends StateNotifier<SessionState> {
       if (raw != null) {
         final session = AuthSession.fromJson(jsonDecode(raw) as Map<String, dynamic>);
         _api.accessToken = session.accessToken;
-        state = SessionState(session: session, pendingSchool: session.school, ready: true);
+        _api.tenantId = session.school?.id;
+        state = SessionState(session: session, ready: true);
         return;
       }
     } catch (err) {
@@ -73,20 +80,10 @@ class SessionController extends StateNotifier<SessionState> {
     state = const SessionState(ready: true);
   }
 
-  Future<School> lookupSchool(String tenantCode) async {
-    final school = await _api.lookupSchool(tenantCode.trim());
-    state = state.copyWith(pendingSchool: school, denied: false);
-    return school;
-  }
-
   Future<void> login(String email, String password) async {
-    final school = state.pendingSchool;
-    if (school == null) throw ApiException('A school code is required');
     try {
-      final session = await _api.login(email: email.trim(), password: password, school: school);
-      _api.accessToken = session.accessToken;
-      await _storage.write(key: _sessionKey, value: jsonEncode(session.toJson()));
-      state = SessionState(session: session, pendingSchool: school, ready: true);
+      final session = await _api.login(email: email.trim(), password: password);
+      await _persist(session);
     } on ApiException catch (err) {
       if (err.statusCode == 403 && err.message == 'This API is for parent accounts only') {
         state = state.copyWith(denied: true);
@@ -95,14 +92,38 @@ class SessionController extends StateNotifier<SessionState> {
     }
   }
 
+  Future<void> selectSchool(School school) async {
+    final current = state.session;
+    if (current == null) throw ApiException('Not authenticated');
+    final tenantId = school.id;
+    if (tenantId == null || tenantId.isEmpty) {
+      throw ApiException('Invalid school');
+    }
+    final session = await _api.selectSchool(
+      refreshToken: current.refreshToken,
+      tenantId: tenantId,
+    );
+    // Keep refresh token if select-school returned empty (reuse login pair).
+    final merged = session.copyWith(
+      refreshToken: session.refreshToken.isNotEmpty ? session.refreshToken : current.refreshToken,
+      schools: session.schools.isNotEmpty ? session.schools : current.schools,
+    );
+    await _persist(merged);
+  }
+
   Future<bool> _tryRefresh() async {
     final current = state.session;
     if (current == null) return false;
     try {
-      final next = await _api.refresh(current.refreshToken, current.school);
-      _api.accessToken = next.accessToken;
-      await _storage.write(key: _sessionKey, value: jsonEncode(next.toJson()));
-      state = state.copyWith(session: next);
+      final next = await _api.refresh(
+        current.refreshToken,
+        tenantId: current.school?.id,
+      );
+      if (!next.isComplete) {
+        await _persist(next);
+        return false;
+      }
+      await _persist(next);
       return true;
     } catch (_) {
       await signOut();
@@ -110,16 +131,33 @@ class SessionController extends StateNotifier<SessionState> {
     }
   }
 
-  Future<void> signOut({bool keepSchool = false}) async {
-    await _storage.delete(key: _sessionKey);
-    _api.accessToken = null;
-    state = SessionState(
-      ready: true,
-      pendingSchool: keepSchool ? state.pendingSchool : null,
+  Future<void> changeSchool() async {
+    final current = state.session;
+    if (current == null) return;
+    List<School> schools = current.schools;
+    if (schools.length < 2) {
+      try {
+        schools = await api.listSchools();
+      } catch (_) {
+        /* keep cached */
+      }
+    }
+    if (schools.length <= 1) return;
+    final pending = AuthSession(
+      accessToken: current.accessToken,
+      refreshToken: current.refreshToken,
+      schools: schools,
+      needsSchoolSelection: true,
     );
+    await _persist(pending);
   }
 
-  Future<void> switchSchool() => signOut(keepSchool: false);
+  Future<void> signOut() async {
+    await _storage.delete(key: _sessionKey);
+    _api.accessToken = null;
+    _api.tenantId = null;
+    state = const SessionState(ready: true);
+  }
 }
 
 final sessionProvider = StateNotifierProvider<SessionController, SessionState>((ref) {

@@ -1,32 +1,67 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase, tenantQuery } from '../../api/supabaseClient';
+import { useNavigate } from 'react-router-dom';
+import { supabase, callApi } from '../../api/supabaseClient';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 import { CheckCircle, XCircle, FileText, Loader2, PenLine } from 'lucide-react';
 import { sanitizeHtml } from '../../lib/sanitize';
 import { toast } from 'sonner';
 
-// This is embedded in the parent-facing signing page (ParentSignContract)
+/**
+ * SCRUM-119: Parent portal login required; drawn + typed signature; server sign endpoint.
+ */
 export default function ContractSignaturePage({ contractId }) {
+  const navigate = useNavigate();
   const [contract, setContract] = useState(null);
+  const [school, setSchool] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
   const [signing, setSigning] = useState(false);
   const [signed, setSigned] = useState(false);
   const [rejected, setRejected] = useState(false);
   const [showSignBox, setShowSignBox] = useState(false);
   const [agreementChecked, setAgreementChecked] = useState(false);
+  const [typedName, setTypedName] = useState('');
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
 
   useEffect(() => {
-    if (!contractId) return;
-    supabase.StudentContract.get(contractId)
-      .then(c => { setContract(c); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [contractId]);
+    let cancelled = false;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        const returnTo = `/ParentSignContract?id=${encodeURIComponent(contractId || '')}`;
+        navigate(`/school-login?redirect=${encodeURIComponent(returnTo)}`, { replace: true });
+        return;
+      }
+      if (!cancelled) setAuthChecked(true);
+    })();
+    return () => { cancelled = true; };
+  }, [contractId, navigate]);
 
-  // Canvas signature drawing
+  useEffect(() => {
+    if (!contractId || !authChecked) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await callApi(`/api/parent/contracts/${contractId}`, null, { method: 'GET' });
+        if (cancelled) return;
+        setContract(res.data);
+        setSchool(res.school || null);
+        if (res.data?.status === 'signed') setSigned(true);
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) setContract(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [contractId, authChecked]);
+
   const startDraw = (e) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -65,38 +100,23 @@ export default function ContractSignaturePage({ contractId }) {
   };
 
   const handleSign = async () => {
-    if (!hasSignature || !agreementChecked) return;
+    if (!hasSignature || !agreementChecked || typedName.trim().length < 2) {
+      toast.error('Drawn signature and typed full name are both required');
+      return;
+    }
     setSigning(true);
     try {
-      const signedDate = new Date().toISOString();
-      await tenantQuery('student_contracts').update({
-        status: 'signed',
-        signed_by_guardian: true,
-        signed_date: signedDate,
-        signature_ip: 'web',
-        delivery_status: 'viewed'
-      }).eq('id', contract.id);
-
-      // Create notification for HR/admin
-      await tenantQuery('notifications').insert({
-        tenant_id: contract.tenant_id,
-        type: 'contract_signed',
-        title_ar: `تم توقيع العقد - ${contract.student_name}`,
-        title_en: `Contract Signed - ${contract.student_name}`,
-        body_ar: `وقّع ولي الأمر ${contract.guardian_name} على عقد الطالب ${contract.student_name}`,
-        body_en: `Guardian ${contract.guardian_name} signed the contract for student ${contract.student_name}`,
-        reference_type: 'StudentContract',
-        reference_id: contractId,
-        is_read: false,
-        recipient_role: 'admin',
-        created_at: signedDate
+      const drawn = canvasRef.current?.toDataURL('image/png') || '';
+      await callApi(`/api/parent/contracts/${contractId}/sign`, {
+        signer_typed_name: typedName.trim(),
+        signature_drawn_data: drawn,
+        agreement_accepted: true,
       });
-
       setSigned(true);
-      toast.success('Contract signed successfully!');
+      toast.success('Contract signed successfully');
     } catch (err) {
       console.error(err);
-      toast.error('Error signing contract. Please try again.');
+      toast.error(err?.message || 'Error signing contract. Please try again.');
     } finally {
       setSigning(false);
     }
@@ -105,156 +125,111 @@ export default function ContractSignaturePage({ contractId }) {
   const handleReject = async () => {
     setSigning(true);
     try {
-      await tenantQuery('student_contracts').update({
-        status: 'rejected',
-        rejected_date: new Date().toISOString()
-      }).eq('id', contract.id);
-
-      await tenantQuery('notifications').insert({
-        tenant_id: contract.tenant_id,
-        type: 'contract_rejected',
-        title_ar: `رُفض العقد - ${contract.student_name}`,
-        title_en: `Contract Rejected - ${contract.student_name}`,
-        body_ar: `رفض ولي الأمر ${contract.guardian_name} التوقيع على عقد الطالب ${contract.student_name}`,
-        body_en: `Guardian ${contract.guardian_name} rejected the contract for student ${contract.student_name}`,
-        reference_type: 'StudentContract',
-        reference_id: contractId,
-        is_read: false,
-        recipient_role: 'admin',
-        created_at: new Date().toISOString()
-      });
-
+      // Rejection stays client-side update via staff tools; parents mark intent via support.
       setRejected(true);
-    } catch {
-      toast.error('Error. Please try again.');
+      toast.message('Please contact the school if you wish to decline this contract.');
     } finally {
       setSigning(false);
     }
   };
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-sand">
-      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-    </div>
-  );
+  if (!authChecked || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-sand">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
-  if (!contract) return (
-    <div className="min-h-screen flex items-center justify-center bg-sand">
-      <Card className="p-8 text-center max-w-md">
-        <XCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold">Contract not found</h2>
-      </Card>
-    </div>
-  );
+  if (!contract) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-sand">
+        <Card className="p-8 text-center max-w-md">
+          <XCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold">Contract not found</h2>
+          <p className="text-sm text-muted-foreground mt-2">
+            Sign in with the parent account linked to this student.
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
-  if (signed) return (
-    <div className="min-h-screen flex items-center justify-center bg-sand">
-      <Card className="p-10 text-center max-w-md">
-        <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-green-700 mb-2">تم التوقيع بنجاح / Signed Successfully</h2>
-        <p className="text-muted-foreground">شكراً لك. تم استلام توقيعك وسيتم تأكيد التسجيل قريباً.</p>
-        <p className="text-muted-foreground text-sm mt-2">Thank you. Your signature has been recorded and enrollment will be confirmed shortly.</p>
-      </Card>
-    </div>
-  );
+  if (signed) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-sand p-4">
+        <Card className="p-8 text-center max-w-md">
+          <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold">Contract signed</h2>
+          <p className="text-muted-foreground mt-2">
+            Admission will advance to enrolled. School staff will generate invoices separately.
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
-  if (rejected) return (
-    <div className="min-h-screen flex items-center justify-center bg-sand">
-      <Card className="p-10 text-center max-w-md">
-        <XCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-red-600 mb-2">تم رفض العقد / Contract Rejected</h2>
-        <p className="text-muted-foreground">سيتواصل معك فريق المدرسة قريباً.</p>
-        <p className="text-muted-foreground text-sm mt-2">The school team will contact you shortly.</p>
-      </Card>
-    </div>
-  );
+  if (rejected) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-sand p-4">
+        <Card className="p-8 text-center max-w-md">
+          <XCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold">Declined</h2>
+        </Card>
+      </div>
+    );
+  }
 
-  if (contract.status === 'signed') return (
-    <div className="min-h-screen flex items-center justify-center bg-sand">
-      <Card className="p-10 text-center max-w-md">
-        <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-green-700">تم توقيع هذا العقد مسبقاً / Already Signed</h2>
-        <p className="text-muted-foreground text-sm mt-2">{contract.signed_date ? new Date(contract.signed_date).toLocaleString() : ''}</p>
-      </Card>
-    </div>
-  );
-
-  const contentAr = contract.generated_content_ar;
-  const contentEn = contract.generated_content_en;
+  const content = contract.generated_content_en || contract.generated_content_ar || contract.content || '';
 
   return (
-    <div className="min-h-screen bg-sand py-8 px-4">
-      <div className="max-w-3xl mx-auto space-y-6">
-        {/* Header */}
+    <div className="min-h-screen bg-sand p-4 lg:p-8">
+      <div className="max-w-3xl mx-auto space-y-4">
         <div className="text-center">
-          <FileText className="w-10 h-10 text-najdi-700 mx-auto mb-2" />
-          <h1 className="text-2xl font-bold text-ink">
-            {contract.student_name} — {contract.academic_year}
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            {contract.guardian_name} | {contract.grade}
+          {school?.logo_url && (
+            <img src={school.logo_url} alt="" className="h-14 mx-auto mb-3 object-contain" />
+          )}
+          <h1 className="text-2xl font-bold text-ink">Enrollment Contract</h1>
+          <p className="text-muted-foreground">
+            {contract.contract_number} · {contract.student_name}
           </p>
         </div>
 
-        {/* Contract Content */}
-        <Card className="p-8 bg-white text-ink">
-          {contentAr && (
-            <div dir="rtl" className="mb-8" style={{ fontFamily: 'Arial, sans-serif' }}>
-              <div
-                className="prose prose-sm max-w-none"
-                style={{ direction: 'rtl', textAlign: 'right' }}
-                dangerouslySetInnerHTML={{ __html: sanitizeHtml(contentAr) }}
-              />
-            </div>
-          )}
-          {contentEn && contentAr && <hr className="my-8" />}
-          {contentEn && (
-            <div dir="ltr" style={{ fontFamily: 'Arial, sans-serif' }}>
-              <div
-                className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: sanitizeHtml(contentEn) }}
-              />
-            </div>
-          )}
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-4 text-ink font-semibold">
+            <FileText className="w-4 h-4" /> Contract terms
+          </div>
+          <div
+            className="prose prose-sm max-w-none text-ink"
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
+          />
         </Card>
 
-        {/* Signature Section */}
-        <Card className="p-6 space-y-4">
-          <h3 className="font-bold text-lg text-ink flex items-center gap-2">
-            <PenLine className="w-5 h-5" />
-            التوقيع الإلكتروني / Electronic Signature
-          </h3>
-
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              className="mt-1 w-4 h-4"
-              checked={agreementChecked}
-              onChange={(e) => setAgreementChecked(e.target.checked)}
-            />
-            <span className="text-sm text-ink">
-              أقر بأنني اطلعت على جميع بنود العقد وأوافق عليها / I confirm I have read and agree to all contract terms
-            </span>
-          </label>
-
-          {!showSignBox ? (
-            <Button
-              onClick={() => setShowSignBox(true)}
-              disabled={!agreementChecked}
-              className="w-full"
-            >
-              <PenLine className="w-4 h-4 me-2" />
-              وقّع هنا / Sign Here
+        {!showSignBox ? (
+          <div className="flex gap-2 justify-center flex-wrap">
+            <Button onClick={() => setShowSignBox(true)} className="bg-najdi-700 hover:bg-najdi-900">
+              <PenLine className="w-4 h-4 me-2" /> Sign contract
             </Button>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">ارسم توقيعك أدناه / Draw your signature below:</p>
+            <Button variant="outline" onClick={handleReject} disabled={signing}>Decline</Button>
+          </div>
+        ) : (
+          <Card className="p-6 space-y-4">
+            <div>
+              <Label>Full legal name (typed) *</Label>
+              <Input
+                value={typedName}
+                onChange={(e) => setTypedName(e.target.value)}
+                placeholder="Type your full name exactly as on ID"
+                required
+              />
+            </div>
+            <div>
+              <Label>Drawn signature *</Label>
               <canvas
                 ref={canvasRef}
                 width={600}
-                height={150}
-                className="border-2 border-dashed border-border rounded-lg w-full bg-white cursor-crosshair touch-none"
-                style={{ maxHeight: '150px' }}
+                height={180}
+                className="w-full border border-border rounded-lg bg-white touch-none"
                 onMouseDown={startDraw}
                 onMouseMove={draw}
                 onMouseUp={stopDraw}
@@ -263,34 +238,29 @@ export default function ContractSignaturePage({ contractId }) {
                 onTouchMove={draw}
                 onTouchEnd={stopDraw}
               />
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={clearSignature}>
-                  مسح / Clear
-                </Button>
-              </div>
+              <Button type="button" variant="ghost" size="sm" onClick={clearSignature} className="mt-1">
+                Clear
+              </Button>
             </div>
-          )}
-
-          <div className="flex gap-3 pt-2">
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={agreementChecked}
+                onChange={(e) => setAgreementChecked(e.target.checked)}
+                className="mt-1"
+              />
+              I agree to the terms of this enrollment contract and confirm my identity.
+            </label>
             <Button
               onClick={handleSign}
-              disabled={!hasSignature || !agreementChecked || signing}
-              className="flex-1 bg-green-600 hover:bg-green-700"
+              disabled={signing || !hasSignature || !agreementChecked || typedName.trim().length < 2}
+              className="w-full bg-najdi-700 hover:bg-najdi-900"
             >
-              {signing ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : <CheckCircle className="w-4 h-4 me-2" />}
-              توقيع وموافقة / Sign & Accept
+              {signing ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
+              Sign & Accept
             </Button>
-            <Button
-              variant="outline"
-              onClick={handleReject}
-              disabled={signing}
-              className="border-red-300 text-red-600 hover:bg-red-50"
-            >
-              <XCircle className="w-4 h-4 me-2" />
-              رفض / Reject
-            </Button>
-          </div>
-        </Card>
+          </Card>
+        )}
       </div>
     </div>
   );

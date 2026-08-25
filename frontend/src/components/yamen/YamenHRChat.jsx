@@ -5,8 +5,10 @@ import { useRole } from '../RoleContext';
 import { useTenant } from '../TenantContext';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
-import { Bot, Send, Loader2, User, Lock, BarChart3, FileText, AlertCircle, Info } from 'lucide-react';
+import { Bot, Send, Loader2, User, Lock, Info } from 'lucide-react';
 import { format } from 'date-fns';
+import { YamenSection } from './YamenShellParts';
+import { yamenLayout } from '../../lib/yamenDesign';
 
 async function buildHRContext(isHRMode, userEmail, nationalisationEnabled = false) {
   try {
@@ -136,7 +138,6 @@ export default function YamenHRChat({ isRTL, isHRMode, nationalisationEnabled = 
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showQuickActions, setShowQuickActions] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
@@ -226,124 +227,116 @@ export default function YamenHRChat({ isRTL, isHRMode, nationalisationEnabled = 
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
+  const suggested = isHRMode
+    ? [
+        { id: '1', en: 'Summarize current HR risks', ar: 'لخّص مخاطر الموارد البشرية الحالية' },
+        { id: '2', en: 'Who has pending leave approvals?', ar: 'من لديه طلبات إجازة معلقة؟' },
+        { id: '3', en: 'Draft a warning letter template', ar: 'صغ قالب خطاب تحذير' },
+        { id: '4', en: 'Saudization status overview', ar: 'نظرة عامة على حالة السعودة' },
+      ]
+    : [
+        { id: '1', en: 'What is my leave balance?', ar: 'ما رصيد إجازاتي؟' },
+        { id: '2', en: 'Show my recent attendance', ar: 'اعرض حضوري الأخير' },
+        { id: '3', en: 'Status of my requests', ar: 'حالة طلباتي' },
+      ];
+
   return (
-    <div className="flex flex-col rounded-2xl border border-[hsl(220,14%,20%)] bg-[hsl(220,18%,10%)] overflow-hidden" style={{ height: 'calc(100vh - 320px)', minHeight: 480 }}>
-      {/* Chat Header */}
-      <div className={`flex items-center gap-3 px-4 py-3 border-b border-[hsl(220,14%,18%)] ${isHRMode ? 'bg-emerald-900/20' : 'bg-amber-900/20'}`}>
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isHRMode ? 'bg-emerald-900/60 border border-emerald-700' : 'bg-amber-900/60 border border-amber-700'}`}>
-          {isHRMode ? <Bot className="w-4 h-4 text-emerald-400" /> : <Lock className="w-4 h-4 text-amber-400" />}
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-najdi-100">YAMEN</p>
-          <p className={`text-xs ${isHRMode ? 'text-emerald-400' : 'text-amber-400'}`}>
-            {isHRMode
-              ? (isRTL ? 'وضع الموارد البشرية — صلاحيات كاملة' : 'HR Mode — Full Intelligence')
-              : (isRTL ? 'وضع الموظف — مساعد آمن' : 'Employee Mode — Safe & Restricted')}
-          </p>
-        </div>
-        <div className={`ms-auto w-2 h-2 rounded-full ${isHRMode ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />
-      </div>
-
-      {/* Trial mode soft warning */}
-      {tenant && !tenant.ai_enabled && (
-        <div className="px-4 py-2 bg-amber-900/20 border-b border-amber-700/30 flex items-center gap-2">
-          <Info className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-          <p className="text-xs text-amber-300">
-            {isRTL
-              ? `وضع تجريبي — ${getAiLimit(tenant) - (tenant.yamen_ai_used_this_month || 0)} طلب متبقي من ${getAiLimit(tenant)}`
-              : `Trial mode — ${getAiLimit(tenant) - (tenant.yamen_ai_used_this_month || 0)} of ${getAiLimit(tenant)} requests remaining`}
-          </p>
-        </div>
-      )}
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-4 p-4">
-        {messages.map((msg, i) => (
-          <div key={i} className={`flex gap-3 ${msg.role === 'user' ? (isRTL ? '' : 'flex-row-reverse') : ''}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${msg.role === 'assistant' ? 'bg-emerald-900/50 border border-emerald-700' : 'bg-ink border border-najdi-900'}`}>
-              {msg.role === 'assistant' ? <Bot className="w-4 h-4 text-emerald-400" /> : <User className="w-4 h-4 text-muted-foreground" />}
-            </div>
-            <div className={`max-w-[78%] flex flex-col gap-1 ${msg.role === 'user' ? (isRTL ? 'items-start' : 'items-end') : 'items-start'}`}>
-              <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap break-words ${
-                msg.role === 'assistant'
-                  ? `bg-[hsl(220,18%,15%)] border border-[hsl(220,14%,22%)] text-najdi-100 rounded-tl-sm ${msg.error ? 'border-red-700/60' : ''}`
-                  : 'bg-emerald-700/25 border border-emerald-700/40 text-emerald-50 rounded-tr-sm'
-              }`} dir="auto">
-                {msg.content.split(/(\*\*[^*]+\*\*)/g).map((part, idx) => 
-                  part.startsWith('**') && part.endsWith('**') 
-                    ? <strong key={idx}>{part.slice(2, -2)}</strong>
-                    : <span key={idx}>{part}</span>
-                )}
-              </div>
-              <span className="text-xs text-muted-foreground px-1">{format(msg.timestamp, 'HH:mm')}</span>
-            </div>
-          </div>
-        ))}
-        {loading && (
-          <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-emerald-900/50 border border-emerald-700 flex items-center justify-center mt-0.5">
-              <Bot className="w-4 h-4 text-emerald-400" />
-            </div>
-            <div className="bg-[hsl(220,18%,15%)] border border-[hsl(220,14%,22%)] rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-2">
-              <div className="flex gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
-              <span className="text-xs text-muted-foreground">{isRTL ? 'يامن يفكر...' : 'YAMEN is thinking...'}</span>
-            </div>
-          </div>
-        )}
-        <div ref={bottomRef} />
-      </div>
-
-      {/* Quick Actions */}
-      {isHRMode && (
-        <div className="border-t border-[hsl(220,14%,18%)] bg-[hsl(220,18%,11%)] px-3 py-2">
-          <button
-            onClick={() => setShowQuickActions(!showQuickActions)}
-            className="text-xs text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1"
-          >
-            ⚡ {isRTL ? 'إجراءات سريعة' : 'Quick Actions'}
-          </button>
-          {showQuickActions && (
-            <div className="grid grid-cols-3 gap-2 mt-2">
-              <button onClick={() => { setInput(isRTL ? 'أعط لي تحليل المخاطر الحالي' : 'Show me current risk analysis'); setShowQuickActions(false); }} className="text-xs bg-emerald-900/40 border border-emerald-700/40 rounded px-2 py-1 hover:bg-emerald-900/60 flex items-center gap-1 text-emerald-300">
-                <BarChart3 className="w-3 h-3" /> {isRTL ? 'التحليلات' : 'Analytics'}
-              </button>
-              <button onClick={() => { setInput(isRTL ? 'أعط توصيات السياسات' : 'Policy recommendations'); setShowQuickActions(false); }} className="text-xs bg-emerald-900/40 border border-emerald-700/40 rounded px-2 py-1 hover:bg-emerald-900/60 flex items-center gap-1 text-emerald-300">
-                <AlertCircle className="w-3 h-3" /> {isRTL ? 'السياسات' : 'Policies'}
-              </button>
-              <button onClick={() => { setInput(isRTL ? 'ساعدني في صياغة خطاب تحذير' : 'Draft a warning letter'); setShowQuickActions(false); }} className="text-xs bg-emerald-900/40 border border-emerald-700/40 rounded px-2 py-1 hover:bg-emerald-900/60 flex items-center gap-1 text-emerald-300">
-                <FileText className="w-3 h-3" /> {isRTL ? 'مستندات' : 'Documents'}
-              </button>
+    <div className={yamenLayout.page}>
+      <YamenSection
+        title={isRTL ? 'محادثة يامن' : 'YAMEN Chat'}
+        subtitle={isHRMode
+          ? (isRTL ? 'وضع الموارد البشرية — صلاحيات كاملة' : 'HR Mode — Full Intelligence')
+          : (isRTL ? 'وضع الموظف — مساعد آمن' : 'Employee Mode — Safe & Restricted')}
+        icon={isHRMode ? Bot : Lock}
+        className="overflow-hidden"
+      >
+        <div className="flex flex-col -m-4 mt-0 rounded-b-xl overflow-hidden border-t border-border/60" style={{ height: 'calc(100vh - 400px)', minHeight: 440 }}>
+          {tenant && (
+            <div className="px-4 py-2 bg-sand-alt/60 border-b border-border/50 flex items-center gap-2">
+              <Info className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+              <p className="text-xs text-muted-foreground">
+                {isRTL
+                  ? `${getAiLimit(tenant) - (tenant.yamen_ai_used_this_month || 0)} طلب متبقي من ${getAiLimit(tenant)} هذا الشهر`
+                  : `${getAiLimit(tenant) - (tenant.yamen_ai_used_this_month || 0)} of ${getAiLimit(tenant)} requests left this month`}
+              </p>
             </div>
           )}
-        </div>
-      )}
 
-      {/* Input Area */}
-      <div className="border-t border-[hsl(220,14%,18%)] p-3 bg-[hsl(220,18%,11%)]">
-        <div className="flex gap-2 items-end">
-          <Textarea
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={isRTL ? 'اسأل يامن...' : 'Ask YAMEN anything...'}
-            rows={2}
-            className="flex-1 resize-none bg-[hsl(220,16%,16%)] border-[hsl(220,14%,24%)] text-najdi-100 placeholder:text-muted-foreground focus:border-emerald-600 rounded-xl text-sm"
-            dir="auto"
-          />
-          <Button
-            onClick={handleSend}
-            disabled={loading || !input.trim()}
-            className="h-10 w-10 p-0 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 flex-shrink-0"
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-          </Button>
+          <div className="flex-1 overflow-y-auto space-y-4 p-4 bg-gradient-to-b from-sand-alt/30 to-white">
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex gap-3 ${msg.role === 'user' ? (isRTL ? '' : 'flex-row-reverse') : ''}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${msg.role === 'assistant' ? 'bg-najdi-50 border border-najdi-100 text-najdi-900' : 'bg-sand border border-border text-muted-foreground'}`}>
+                  {msg.role === 'assistant' ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
+                </div>
+                <div className={`max-w-[78%] flex flex-col gap-1 ${msg.role === 'user' ? (isRTL ? 'items-start' : 'items-end') : 'items-start'}`}>
+                  <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm ${
+                    msg.role === 'assistant'
+                      ? `bg-white border border-border/70 text-ink rounded-ss-sm ${msg.error ? 'border-red-300 bg-red-50' : ''}`
+                      : 'bg-najdi-900 text-white rounded-se-sm'
+                  }`} dir="auto">
+                    {msg.content.split(/(\*\*[^*]+\*\*)/g).map((part, idx) =>
+                      part.startsWith('**') && part.endsWith('**')
+                        ? <strong key={idx}>{part.slice(2, -2)}</strong>
+                        : <span key={idx}>{part}</span>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground px-1">{format(msg.timestamp, 'HH:mm')}</span>
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-full bg-najdi-50 border border-najdi-100 flex items-center justify-center mt-0.5">
+                  <Bot className="w-4 h-4 text-najdi-900" />
+                </div>
+                <div className="bg-white border border-border/70 rounded-2xl rounded-ss-sm px-4 py-3 flex items-center gap-2 shadow-sm">
+                  <div className="flex gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-najdi-600 animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-1.5 h-1.5 rounded-full bg-najdi-600 animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-1.5 h-1.5 rounded-full bg-najdi-600 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                  <span className="text-xs text-muted-foreground">{isRTL ? 'يامن يفكر...' : 'YAMEN is thinking...'}</span>
+                </div>
+              </div>
+            )}
+            <div ref={bottomRef} />
+          </div>
+
+          <div className="border-t border-border/60 bg-sand-alt/40 px-3 py-2.5 space-y-2">
+            <div className="flex flex-wrap gap-1.5">
+              {suggested.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setInput(isRTL ? p.ar : p.en)}
+                  className="text-[11px] px-2.5 py-1 rounded-full border border-border/70 bg-white hover:border-najdi-400 hover:bg-najdi-50 text-ink transition-colors"
+                >
+                  {isRTL ? p.ar : p.en}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2 items-end">
+              <Textarea
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={isRTL ? 'اسأل يامن...' : 'Ask YAMEN anything...'}
+                rows={2}
+                className="flex-1 resize-none bg-white border-border focus:border-najdi-500 rounded-xl text-sm"
+                dir="auto"
+              />
+              <Button
+                onClick={handleSend}
+                disabled={loading || !input.trim()}
+                className="h-10 w-10 p-0 rounded-xl bg-najdi-900 hover:bg-ink disabled:opacity-40 flex-shrink-0"
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted-foreground text-center">{isRTL ? 'Enter للإرسال • Shift+Enter لسطر جديد' : 'Enter to send • Shift+Enter for new line'}</p>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-1.5 text-center">{isRTL ? 'Enter للإرسال • Shift+Enter لسطر جديد' : 'Enter to send • Shift+Enter for new line'}</p>
-      </div>
+      </YamenSection>
     </div>
   );
 }

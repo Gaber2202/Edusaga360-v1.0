@@ -30,10 +30,18 @@ function resolveSender(): string {
   return raw.includes('<') ? raw : `EduSaga 360 <${raw}>`;
 }
 
+export interface EmailAttachment {
+  fileName: string;
+  contentType: string;
+  contentBase64: string;
+}
+
 export interface SendEmailInput {
   to: string;
   subject: string;
   html: string;
+  /** Optional Infobip attachments (e.g. payslip PDF retained after secure-link expiry). */
+  attachments?: EmailAttachment[];
 }
 
 /**
@@ -46,7 +54,7 @@ export interface SendEmailInput {
  * - When Infobip is not configured, logs a warning and resolves to null instead
  *   of throwing, so local/dev/test environments don't break on missing secrets.
  */
-export async function sendEmail({ to, subject, html }: SendEmailInput): Promise<unknown> {
+export async function sendEmail({ to, subject, html, attachments }: SendEmailInput): Promise<unknown> {
   const baseUrl = process.env.INFOBIP_BASE_URL;
   const apiKey = process.env.INFOBIP_API_KEY;
 
@@ -55,6 +63,15 @@ export async function sendEmail({ to, subject, html }: SendEmailInput): Promise<
       `[EMAIL] Infobip not configured (INFOBIP_API_KEY / INFOBIP_BASE_URL missing) — skipping email to ${to} ("${subject}")`,
     );
     return null;
+  }
+
+  const content: Record<string, unknown> = { subject, html };
+  if (attachments?.length) {
+    content.attachments = attachments.map((a) => ({
+      fileName: a.fileName,
+      contentType: a.contentType,
+      content: a.contentBase64,
+    }));
   }
 
   const endpoint = `${baseUrl.replace(/\/+$/, '')}/email/4/messages`;
@@ -70,7 +87,7 @@ export async function sendEmail({ to, subject, html }: SendEmailInput): Promise<
         {
           sender: resolveSender(),
           destinations: [{ to: [{ destination: to }] }],
-          content: { subject, html },
+          content,
         },
       ],
     }),

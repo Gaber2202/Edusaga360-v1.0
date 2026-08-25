@@ -93,6 +93,7 @@ import HRApprovalsInbox from './pages/HRApprovalsInbox';
 import HRContracts from './pages/HRContracts';
 import HRPoliciesLibrary from './pages/HRPoliciesLibrary';
 import HolidayCalendar from './pages/HolidayCalendar';
+import HelpDesk from './pages/HelpDesk';
 import ITHelpdesk from './pages/ITHelpdesk';
 import Integrations from './pages/Integrations';
 import InvoiceDetails from './pages/InvoiceDetails';
@@ -114,6 +115,7 @@ import PayslipsManagementPage from './pages/PayslipsManagementPage';
 import PerformanceEvaluation from './pages/PerformanceEvaluation';
 import PlatformConsole from './pages/PlatformConsole';
 import PolicyEditor from './pages/PolicyEditor';
+import Projects from './pages/Projects';
 import PurchaseOrders from './pages/PurchaseOrders';
 import PurchaseRequisitions from './pages/PurchaseRequisitions';
 import Reconciliation from './pages/Reconciliation';
@@ -194,6 +196,7 @@ export const PAGES = {
     "HRContracts": HRContracts,
     "HRPoliciesLibrary": HRPoliciesLibrary,
     "HolidayCalendar": HolidayCalendar,
+    "HelpDesk": HelpDesk,
     "ITHelpdesk": ITHelpdesk,
     "Integrations": Integrations,
     "InvoiceDetails": InvoiceDetails,
@@ -215,6 +218,7 @@ export const PAGES = {
     "PerformanceEvaluation": PerformanceEvaluation,
     "PlatformConsole": PlatformConsole,
     "PolicyEditor": PolicyEditor,
+    "Projects": Projects,
     "PurchaseOrders": PurchaseOrders,
     "PurchaseRequisitions": PurchaseRequisitions,
     "Reconciliation": Reconciliation,

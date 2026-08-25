@@ -11,6 +11,7 @@
 import { Router, Response } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { AuthenticatedRequest, requireRole } from '../middleware/auth.js';
+import { sendAdmissionsStageMessage } from '../services/admissionsMessaging.js';
 
 export const intakeRouter = Router();
 
@@ -255,6 +256,22 @@ intakeRouter.post('/submit', async (req: AuthenticatedRequest, res: Response) =>
         tenant_id: tenantId,
         metadata: { student_name: student_name_ar },
       }).then(() => {});
+    }
+
+    if (tenantId && application) {
+      try {
+        await sendAdmissionsStageMessage({ tenantId, application, event: 'welcome' });
+        if (!allDocsPresent) {
+          await sendAdmissionsStageMessage({
+            tenantId,
+            application: { ...application, missing_documents: missingDocs },
+            event: 'documents_missing',
+            extra: { missing_docs: missingDocs.join(', ') },
+          });
+        }
+      } catch (notifyErr) {
+        console.warn('[intake/submit] WhatsApp notify skipped:', notifyErr);
+      }
     }
 
     return res.status(201).json({

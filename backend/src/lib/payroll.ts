@@ -25,6 +25,20 @@ export interface GratuityRules {
   capYears?: number;
   /** Lowercase nationality strings that are exempt from foreign-worker gratuity. */
   nationalityExemptions?: string[];
+  /**
+   * Optional resignation payout factors by completed years of service (SCRUM-122 / SA Art. 85).
+   * Applied after unpaid-leave adjustment. Termination / end_of_contract = factor 1.
+   */
+  resignationFactors?: Array<{ maxYears: number; factor: number }>;
+}
+
+export type EosExitType = 'resignation' | 'termination' | 'end_of_contract';
+
+export interface EosOptions {
+  /** v1 locked: resignation. Other types pay full computed gratuity (no resignation factor). */
+  exitType?: EosExitType;
+  /** Unpaid leave days reduce qualifying service (days/365). No notice-period deductions in v1. */
+  unpaidLeaveDays?: number;
 }
 
 function tierRateAt(tiers: GratuityTier[], yearsOfService: number): number {
@@ -39,19 +53,47 @@ function tierRateAt(tiers: GratuityTier[], yearsOfService: number): number {
   return tiers[tiers.length - 1]?.daysPerYear ?? 0;
 }
 
+/** Subtract unpaid leave from tenure before gratuity tiers. */
+export function adjustServiceYearsForUnpaidLeave(
+  yearsOfService: number,
+  unpaidLeaveDays = 0,
+): number {
+  const days = Math.max(0, Number(unpaidLeaveDays) || 0);
+  return Math.max(0, yearsOfService - days / 365);
+}
+
+function resignationFactor(years: number, factors?: Array<{ maxYears: number; factor: number }>): number {
+  if (!factors?.length) return 1;
+  for (const row of factors) {
+    if (years < row.maxYears || !Number.isFinite(row.maxYears)) return row.factor;
+  }
+  return factors[factors.length - 1]?.factor ?? 1;
+}
+
 export function calculateEndOfServiceBenefit(
   basicSalary: number,
   yearsOfService: number,
   nationality: string | undefined,
   rules: GratuityRules,
-): { amount: number; currencyCode: string } {
+  options?: EosOptions,
+): { amount: number; currencyCode: string; qualifying_years: number; unpaid_leave_days: number; exit_type: EosExitType } {
+  const exitType: EosExitType = options?.exitType ?? 'resignation';
+  const unpaidLeaveDays = Math.max(0, Number(options?.unpaidLeaveDays) || 0);
+  const qualifyingYears = adjustServiceYearsForUnpaidLeave(yearsOfService, unpaidLeaveDays);
+
   const exempt = (rules.nationalityExemptions ?? []).map((n) => n.toLowerCase());
   if (nationality && exempt.includes(nationality.toLowerCase().trim())) {
-    return { amount: 0, currencyCode: rules.currencyCode };
+    return {
+      amount: 0,
+      currencyCode: rules.currencyCode,
+      qualifying_years: qualifyingYears,
+      unpaid_leave_days: unpaidLeaveDays,
+      exit_type: exitType,
+    };
   }
 
-  const wholeYears = Math.floor(yearsOfService);
-  const fraction = yearsOfService - wholeYears;
+  const wholeYears = Math.floor(qualifyingYears);
+  const fraction = qualifyingYears - wholeYears;
 
   let days = 0;
   let consumed = 0;
@@ -64,7 +106,7 @@ export function calculateEndOfServiceBenefit(
     consumed += span;
   }
 
-  if (fraction > 0 && yearsOfService >= 1) {
+  if (fraction > 0 && qualifyingYears >= 1) {
     days += fraction * tierRateAt(rules.tiers, wholeYears);
   }
 
@@ -75,9 +117,21 @@ export function calculateEndOfServiceBenefit(
 
   const annualWage = basicSalary * 12;
   const dailyWage = annualWage / 365;
-  const amount = roundToMinorUnits(dailyWage * days, 2);
+  let amount = roundToMinorUnits(dailyWage * days, 2);
 
-  return { amount, currencyCode: rules.currencyCode };
+  // v1: only resignation applies jurisdiction resignation factors; no notice deductions.
+  if (exitType === 'resignation') {
+    const factor = resignationFactor(qualifyingYears, rules.resignationFactors);
+    amount = roundToMinorUnits(amount * factor, 2);
+  }
+
+  return {
+    amount,
+    currencyCode: rules.currencyCode,
+    qualifying_years: roundToMinorUnits(qualifyingYears, 4),
+    unpaid_leave_days: unpaidLeaveDays,
+    exit_type: exitType,
+  };
 }
 
 export interface OvertimeRules {

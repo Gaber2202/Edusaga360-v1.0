@@ -27,3 +27,12 @@ export function getJurisdictionContext(tenantId, branchId) {
 
   return cachedPromise;
 }
+
+/**
+ * Load the pack vaccination schedule for the current tenant (SCRUM-137).
+ * Not cached with context — clinic page fetches on demand.
+ */
+export function getVaccinationSchedule(branchId) {
+  const query = branchId ? `?branch_id=${encodeURIComponent(branchId)}` : '';
+  return callApi(`/api/jurisdiction/vaccination-schedule${query}`, null, { method: 'GET' });
+}

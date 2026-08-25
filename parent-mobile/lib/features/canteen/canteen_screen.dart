@@ -7,9 +7,9 @@ import '../../auth/session_controller.dart';
 import '../../prefs/settings_controller.dart';
 import '../../widgets/child_pills.dart';
 import '../../widgets/empty_state.dart';
+import '../fees/payment_screen.dart';
 import '../filters.dart';
 import '../parent_data.dart';
-import 'payment_screen.dart';
 
 class CanteenScreen extends ConsumerStatefulWidget {
   const CanteenScreen({super.key});
@@ -63,6 +63,9 @@ class _CanteenScreenState extends ConsumerState<CanteenScreen> {
       if (mounted) setState(() => _savingAllergies = false);
     }
   }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final childId = ref.watch(selectedChildIdProvider);
     final kids = ref.watch(childrenProvider).value ?? const [];

@@ -160,3 +160,50 @@ payrollRouter.get('/wps-file', async (req: AuthenticatedRequest, res) => {
     return res.status(500).json({ error: 'Failed to generate WPS file', code: 500 });
   }
 });
+
+// ─── POST /api/payroll/end-of-service — EOS gratuity (SCRUM-122) ───────────
+
+const EosSchema = z.object({
+  basic_salary: z.number().positive(),
+  years_of_service: z.number().min(0),
+  nationality: z.string().optional(),
+  exit_type: z.enum(['resignation', 'termination', 'end_of_contract']).default('resignation'),
+  unpaid_leave_days: z.number().min(0).default(15),
+  branch_id: z.string().uuid().optional(),
+});
+
+payrollRouter.post('/end-of-service', requireRole(PAYROLL_ROLES), async (req: AuthenticatedRequest, res) => {
+  try {
+    const parsed = EosSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', code: 400, errors: parsed.error.flatten() });
+    }
+    const tenant_id = req.user!.tenant_id!;
+    const ctx = await buildRequestContext(supabase, tenant_id, parsed.data.branch_id);
+    const pack = resolvePack(ctx);
+    const calc = pack.payroll?.calculateEndOfServiceBenefit;
+    if (!calc) {
+      throw new NotImplementedInJurisdiction(pack.code, 'PayrollService.calculateEndOfServiceBenefit');
+    }
+    const result = calc(
+      parsed.data.basic_salary,
+      parsed.data.years_of_service,
+      parsed.data.nationality,
+      {
+        exitType: parsed.data.exit_type,
+        unpaidLeaveDays: parsed.data.unpaid_leave_days,
+      },
+    );
+    return res.json({
+      jurisdiction: pack.code,
+      ...result,
+      notice_period_deduction: 0, // locked v1: none
+    });
+  } catch (err: any) {
+    console.error('Failed to calculate EOS:', err);
+    if (err instanceof NotImplementedInJurisdiction || err.name === 'NotImplementedInJurisdiction') {
+      return res.status(501).json({ error: err.message, code: 501, feature: err.feature });
+    }
+    return res.status(500).json({ error: 'Failed to calculate end of service', code: 500 });
+  }
+});

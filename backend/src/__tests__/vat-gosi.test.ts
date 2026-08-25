@@ -82,18 +82,17 @@ describe('calculateGOSI — Saudi national', () => {
 });
 
 describe('calculateGOSI — expat', () => {
-  it('basic 10,000 SAR: no employee deduction, employer 200', () => {
+  it('basic 10,000 SAR: employee 150 (1.5%), employer 200 (2%) — aligned with SA pack', () => {
     const result = calculateGOSI(10_000, 'expat');
-    // Expats are not in the GOSI pension branch — no employee deduction.
-    expect(result.employeeContribution).toBeCloseTo(0);
-    expect(result.employerContribution).toBeCloseTo(200);  // 10000 * 2% Occupational Hazards
+    expect(result.employeeContribution).toBeCloseTo(150);
+    expect(result.employerContribution).toBeCloseTo(200);
   });
 
-  it('no cap: basic 50,000 → employer contribution on full 50,000', () => {
+  it('applies 45k wage cap like SA pack', () => {
     const result = calculateGOSI(50_000, 'expat');
-    expect(result.cappedSalary).toBe(50_000);
-    expect(result.employeeContribution).toBeCloseTo(0);
-    expect(result.employerContribution).toBeCloseTo(50_000 * 0.02);
+    expect(result.cappedSalary).toBe(45_000);
+    expect(result.employeeContribution).toBeCloseTo(45_000 * 0.015);
+    expect(result.employerContribution).toBeCloseTo(45_000 * 0.02);
   });
 
   it('totalContribution = employee + employer', () => {
@@ -103,9 +102,9 @@ describe('calculateGOSI — expat', () => {
     );
   });
 
-  it('records the original basicSalary even when cap would differ', () => {
+  it('records the original basicSalary', () => {
     const result = calculateGOSI(80_000, 'expat');
     expect(result.basicSalary).toBe(80_000);
-    expect(result.cappedSalary).toBe(80_000); // no cap for expats
+    expect(result.cappedSalary).toBe(45_000);
   });
 });

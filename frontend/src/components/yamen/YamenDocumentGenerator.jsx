@@ -4,6 +4,8 @@ import { extractAiText } from './yamenUtils';
 import { Button } from '../ui/button';
 import { FileText, Copy, Download, Loader2, CheckCircle } from 'lucide-react';
 import { documentTemplates } from './yamenUtils';
+import { YamenSection } from './YamenShellParts';
+import { yamenLayout } from '../../lib/yamenDesign';
 
 export default function YamenDocumentGenerator({ isRTL }) {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -65,44 +67,44 @@ export default function YamenDocumentGenerator({ isRTL }) {
 
   if (generatedDoc) {
     return (
-      <div className="space-y-3 p-4 bg-najdi-900 rounded-xl border border-najdi-900">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-emerald-400">
-            <CheckCircle className="w-4 h-4" />
-            <span className="text-sm font-semibold">{isRTL ? 'تم الإنشاء' : 'Document Generated'}</span>
+      <div className={yamenLayout.page}>
+        <YamenSection
+          title={isRTL ? 'تم الإنشاء' : 'Document Generated'}
+          icon={CheckCircle}
+          action={(
+            <button
+              onClick={() => setGeneratedDoc(null)}
+              className="text-xs text-muted-foreground hover:text-ink"
+            >
+              {isRTL ? 'جديد' : 'New'}
+            </button>
+          )}
+        >
+          <div className="bg-sand-alt/50 border border-border/50 p-3 rounded-lg text-sm text-ink whitespace-pre-wrap max-h-64 overflow-y-auto">
+            {generatedDoc}
           </div>
-          <button
-            onClick={() => setGeneratedDoc(null)}
-            className="text-xs text-muted-foreground hover:text-najdi-100"
-          >
-            {isRTL ? 'جديد' : 'New'}
-          </button>
-        </div>
 
-        <div className="bg-najdi-900 p-3 rounded text-sm text-najdi-100 whitespace-pre-wrap max-h-64 overflow-y-auto">
-          {generatedDoc}
-        </div>
-
-        <div className="flex gap-2">
-          <Button
-            onClick={copyToClipboard}
-            size="sm"
-            variant="outline"
-            className="text-xs"
-          >
-            <Copy className="w-3 h-3 mr-1" />
-            {copied ? (isRTL ? 'تم النسخ' : 'Copied') : (isRTL ? 'نسخ' : 'Copy')}
-          </Button>
-          <Button
-            onClick={downloadAsFile}
-            size="sm"
-            variant="outline"
-            className="text-xs"
-          >
-            <Download className="w-3 h-3 mr-1" />
-            {isRTL ? 'تحميل' : 'Download'}
-          </Button>
-        </div>
+          <div className="flex gap-2 mt-3">
+            <Button
+              onClick={copyToClipboard}
+              size="sm"
+              variant="outline"
+              className="text-xs"
+            >
+              <Copy className="w-3 h-3 mr-1" />
+              {copied ? (isRTL ? 'تم النسخ' : 'Copied') : (isRTL ? 'نسخ' : 'Copy')}
+            </Button>
+            <Button
+              onClick={downloadAsFile}
+              size="sm"
+              variant="outline"
+              className="text-xs"
+            >
+              <Download className="w-3 h-3 mr-1" />
+              {isRTL ? 'تحميل' : 'Download'}
+            </Button>
+          </div>
+        </YamenSection>
       </div>
     );
   }
@@ -110,70 +112,79 @@ export default function YamenDocumentGenerator({ isRTL }) {
   if (selectedTemplate) {
     const template = documentTemplates[selectedTemplate];
     return (
-      <div className="space-y-3 p-4 bg-najdi-900 rounded-xl border border-najdi-900">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-najdi-100">{template.name}</h3>
-          <button
-            onClick={() => setSelectedTemplate(null)}
-            className="text-xs text-muted-foreground hover:text-najdi-100"
-          >
-            {isRTL ? 'رجوع' : 'Back'}
-          </button>
-        </div>
-
-        <div className="space-y-2">
-          {template.variables.map(varName => (
-            <div key={varName}>
-              <label className="text-xs text-muted-foreground block mb-1">
-                {varName.charAt(0).toUpperCase() + varName.slice(1)}
-              </label>
-              <input
-                type="text"
-                value={variables[varName] || ''}
-                onChange={(e) => handleVariableChange(varName, e.target.value)}
-                className="w-full px-2 py-1.5 bg-najdi-900 border border-najdi-900 rounded text-xs text-najdi-100 placeholder:text-muted-foreground"
-                placeholder={`Enter ${varName}...`}
-              />
-            </div>
-          ))}
-        </div>
-
-        <Button
-          onClick={generateDocument}
-          disabled={loading || template.variables.some(v => !variables[v])}
-          className="w-full text-xs"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-              {isRTL ? 'جاري الإنشاء...' : 'Generating...'}
-            </>
-          ) : (
-            <>
-              <FileText className="w-3 h-3 mr-1" />
-              {isRTL ? 'إنشاء المستند' : 'Generate'}
-            </>
+      <div className={yamenLayout.page}>
+        <YamenSection
+          title={template.name}
+          subtitle={isRTL ? 'أدخل المتغيرات ثم أنشئ المستند' : 'Fill variables, then generate the document'}
+          icon={FileText}
+          action={(
+            <button
+              onClick={() => setSelectedTemplate(null)}
+              className="text-xs text-muted-foreground hover:text-ink"
+            >
+              {isRTL ? 'رجوع' : 'Back'}
+            </button>
           )}
-        </Button>
+        >
+          <div className="space-y-2">
+            {template.variables.map(varName => (
+              <div key={varName}>
+                <label className="text-xs text-muted-foreground block mb-1">
+                  {varName.charAt(0).toUpperCase() + varName.slice(1)}
+                </label>
+                <input
+                  type="text"
+                  value={variables[varName] || ''}
+                  onChange={(e) => handleVariableChange(varName, e.target.value)}
+                  className="w-full px-2 py-1.5 bg-white border border-border rounded-lg text-xs text-ink placeholder:text-muted-foreground"
+                  placeholder={`Enter ${varName}...`}
+                />
+              </div>
+            ))}
+          </div>
+
+          <Button
+            onClick={generateDocument}
+            disabled={loading || template.variables.some(v => !variables[v])}
+            className="w-full text-xs mt-3"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                {isRTL ? 'جاري الإنشاء...' : 'Generating...'}
+              </>
+            ) : (
+              <>
+                <FileText className="w-3 h-3 mr-1" />
+                {isRTL ? 'إنشاء المستند' : 'Generate'}
+              </>
+            )}
+          </Button>
+        </YamenSection>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2 p-4 bg-najdi-900 rounded-xl border border-najdi-900">
-      <div className="text-sm font-semibold text-najdi-100 mb-3">{isRTL ? 'اختر قالب' : 'Select Template'}</div>
-      <div className="grid grid-cols-2 gap-2">
-        {Object.entries(documentTemplates).map(([key, template]) => (
-          <button
-            key={key}
-            onClick={() => setSelectedTemplate(key)}
-            className="p-2 bg-najdi-900 hover:bg-ink border border-najdi-900 rounded text-xs text-najdi-100 text-left transition"
-          >
-            <FileText className="w-3 h-3 mb-1 text-najdi-500" />
-            <div className="font-medium">{template.name}</div>
-          </button>
-        ))}
-      </div>
+    <div className={yamenLayout.page}>
+      <YamenSection
+        title={isRTL ? 'إنشاء خطابات الموارد' : 'Generate HR Letters'}
+        subtitle={isRTL ? 'اختر قالباً لبدء الإنشاء' : 'Select a template to get started'}
+        icon={FileText}
+      >
+        <div className="grid grid-cols-2 gap-2">
+          {Object.entries(documentTemplates).map(([key, template]) => (
+            <button
+              key={key}
+              onClick={() => setSelectedTemplate(key)}
+              className="p-3 bg-sand-alt/40 hover:bg-najdi-50 border border-border/60 hover:border-najdi-300 rounded-xl text-xs text-ink text-start transition"
+            >
+              <FileText className="w-3.5 h-3.5 mb-1.5 text-najdi-700" />
+              <div className="font-medium">{template.name}</div>
+            </button>
+          ))}
+        </div>
+      </YamenSection>
     </div>
   );
 }

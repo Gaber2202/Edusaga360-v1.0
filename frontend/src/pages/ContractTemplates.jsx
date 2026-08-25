@@ -280,8 +280,18 @@ export default function ContractTemplates() {
   const hasUnsavedChanges = !!(formData.name_ar || formData.content_ar || formData.name_en || formData.content_en);
 
   const { data: templates = [], isLoading } = useQuery({
-    queryKey: ['contractTemplates', tenantId],
-    queryFn: () => fetchData(tenantQuery('contract_templates').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
+    queryKey: ['contractTemplates', tenantId, tenant?.jurisdiction_code],
+    queryFn: async () => {
+      try {
+        const res = await callApi('/api/contracts/templates', null, { method: 'GET' });
+        return res.data || [];
+      } catch {
+        const rows = await fetchData(tenantQuery('contract_templates').select('*').match(tenantFilter()).order('created_at', { ascending: false }));
+        const code = tenant?.jurisdiction_code;
+        if (!code) return rows;
+        return rows.filter((t) => !t.jurisdiction_code || t.jurisdiction_code === code);
+      }
+    },
     enabled: hasTenantAccess,
   });
 
@@ -327,10 +337,19 @@ export default function ContractTemplates() {
       };
 
       if (editingTemplate) {
-        await tenantQuery('contract_templates').update(data);
+        const { error } = await tenantQuery('contract_templates').update({
+          ...data,
+          source: 'school',
+          jurisdiction_code: editingTemplate.jurisdiction_code || tenant?.jurisdiction_code || null,
+        }).eq('id', editingTemplate.id);
+        if (error) throw error;
         toast.success(isRTL ? 'تم التحديث' : 'Template updated');
       } else {
-        await createRecord(data);
+        await createRecord({
+          ...data,
+          source: 'school',
+          jurisdiction_code: tenant?.jurisdiction_code || null,
+        });
         toast.success(isRTL ? 'تم الإنشاء' : 'Template created');
       }
 
@@ -390,24 +409,13 @@ export default function ContractTemplates() {
   const createDefaultTemplate = async () => {
     setSaving(true);
     try {
-      const user = await supabase.auth.getUser().then(r => r.data?.user);
-      await createRecord({
-        template_code: `TPL-DEFAULT-${Date.now().toString(36).toUpperCase()}`,
-        template_type: 'enrollment',
-        name_ar: 'عقد التسجيل القياسي (السعودية)',
-        name_en: 'Standard Enrollment Contract (KSA)',
-        description_ar: 'قالب عقد التسجيل القياسي للمدارس السعودية',
-        description_en: 'Standard enrollment contract template for Saudi schools',
-        content_ar: SAUDI_ENROLLMENT_TEMPLATE_AR.trim(),
-        content_en: SAUDI_ENROLLMENT_TEMPLATE_EN.trim(),
-        version: '1.0',
-        is_default: true,
-        is_active: true,
-        placeholders: DEFAULT_PLACEHOLDERS,
-        created_by: user.email
-      });
+      const res = await callApi('/api/contracts/templates/seed-defaults', {});
       queryClient.invalidateQueries({ queryKey: ['contractTemplates'] });
-      toast.success(isRTL ? 'تم إنشاء القالب القياسي السعودي' : 'Saudi default template created');
+      toast.success(
+        isRTL
+          ? `تم تهيئة القالب الافتراضي (${res.jurisdiction})`
+          : `Default template seeded (${res.jurisdiction})`
+      );
     } catch (error) {
       console.error('createDefaultTemplate error:', error);
       toast.error((isRTL ? 'حدث خطأ: ' : 'Error: ') + (error.message || String(error)));
@@ -438,10 +446,10 @@ export default function ContractTemplates() {
       {templates.length === 0 && !isLoading && (
         <Card className="p-8 text-center">
           <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground mb-4">{isRTL ? 'لا توجد قوالب. ابدأ بإنشاء القالب القياسي للمدارس السعودية' : 'No templates. Start by creating the Saudi standard template'}</p>
+          <p className="text-muted-foreground mb-4">{isRTL ? 'لا توجد قوالب. أنشئ القالب الافتراضي حسب دولة المدرسة' : 'No templates. Seed the default for this school jurisdiction'}</p>
           <Button onClick={createDefaultTemplate} disabled={saving}>
             {saving && <Loader2 className="w-4 h-4 animate-spin me-2" />}
-            {isRTL ? 'إنشاء القالب القياسي' : 'Create Default Template'}
+            {isRTL ? 'إنشاء القالب الافتراضي' : 'Create Default Template'}
           </Button>
         </Card>
       )}

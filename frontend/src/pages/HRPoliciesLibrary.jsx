@@ -13,15 +13,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import PageHeader from '../components/ui/PageHeader';
 import { Plus, Search, FileText, Eye, Edit2, Loader2, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
-import { POLICY_CATEGORIES, POLICY_TEMPLATES } from '../components/policies/policyTemplates';
+import { getPolicyTemplatesForJurisdiction, getPolicyCategoriesForJurisdiction } from '../components/policies/policyTemplates';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { useTenant } from '../components/TenantContext';
 
 export default function HRPoliciesLibrary() {
   const { t: _t, isRTL, language: _language } = useLanguage();
   const { selectedBranchId } = useBranch();
+  const { tenant } = useTenant();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
+
+  const jurisdictionCode = tenant?.jurisdiction_code || tenant?.country_code || 'SA';
+  const categories = getPolicyCategoriesForJurisdiction(jurisdictionCode);
+  const packTemplates = getPolicyTemplatesForJurisdiction(jurisdictionCode);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -29,14 +35,19 @@ export default function HRPoliciesLibrary() {
   const [viewMode, _setViewMode] = useState('grid');
   const [initializing, setInitializing] = useState(false);
 
-  const { data: policies = [], isLoading: _isLoading } = useQuery({ enabled: false /* hr_policys table not built */, queryKey: ['hrPolicies', tenantId, selectedBranchId], queryFn: () => {
+  const { data: policies = [], isLoading: _isLoading } = useQuery({
+    enabled: hasTenantAccess,
+    queryKey: ['hrPolicies', tenantId, selectedBranchId],
+    queryFn: () => {
       const filter = tenantFilter();
       if (selectedBranchId) filter.branch_id = selectedBranchId;
       return fetchData(tenantQuery('hr_policys').select('*').match(filter));
-    }, initialData: [] });
+    },
+    initialData: [],
+  });
 
   const getCategoryLabel = (categoryKey) => {
-    return isRTL ? POLICY_CATEGORIES[categoryKey]?.ar : POLICY_CATEGORIES[categoryKey]?.en;
+    return isRTL ? categories[categoryKey]?.ar : categories[categoryKey]?.en;
   };
 
   const filteredPolicies = policies.filter(policy => {
@@ -61,11 +72,12 @@ export default function HRPoliciesLibrary() {
     setInitializing(true);
     try {
       const tenantIdForCreate = getTenantIdForCreate();
-      const templatesToCreate = POLICY_TEMPLATES.map((template, idx) => ({
+      const templatesToCreate = packTemplates.map((template, idx) => ({
         ...template,
-        policy_code: `POL-${Date.now().toString(36).toUpperCase()}-${idx}`,
+        policy_code: `POL-${jurisdictionCode}-${Date.now().toString(36).toUpperCase()}-${idx}`,
         tenant_id: tenantIdForCreate,
         branch_id: selectedBranchId,
+        jurisdiction_code: jurisdictionCode,
         is_template: true,
         status: 'published',
         current_version: 'v1.0',
@@ -79,7 +91,11 @@ export default function HRPoliciesLibrary() {
         await tenantQuery('hr_policys').insert(tpl);
       }
       queryClient.invalidateQueries({ queryKey: ['hrPolicies'] });
-      toast.success(isRTL ? 'تم تحميل المكتبة' : 'Templates loaded successfully');
+      toast.success(
+        isRTL
+          ? `تم تحميل مكتبة ${jurisdictionCode}`
+          : `${jurisdictionCode} policy pack loaded`,
+      );
     } catch (error) {
       console.error('Error:', error);
       toast.error(isRTL ? 'خطأ في التحميل' : 'Error loading templates');
@@ -137,7 +153,7 @@ export default function HRPoliciesLibrary() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{isRTL ? 'جميع الفئات' : 'All'}</SelectItem>
-              {Object.entries(POLICY_CATEGORIES).map(([key, value]) => (
+              {Object.entries(categories).map(([key, value]) => (
                 <SelectItem key={key} value={key} className="text-sm">
                   {isRTL ? value.ar : value.en}
                 </SelectItem>

@@ -15,6 +15,7 @@ import UserNotRegisteredError from './components/UserNotRegisteredError';
 import OnboardingWizard from './pages/OnboardingWizard';
 import RegistrationWizard from './pages/RegistrationWizard';
 import ParentSignContractPage from './pages/ParentSignContract';
+import ParentIntakePage from './pages/ParentIntake';
 import InstitutionSetup from './pages/InstitutionSetup';
 import Register from './pages/Register';
 import SetupAccount from './pages/SetupAccount';
@@ -47,6 +48,7 @@ const PUBLIC_PAGE_KEYS = new Set([
   'SetupAccount',
   'PaymentResult',
   'ParentSignContract',
+  'ParentIntake',
   'InstitutionSetup',
   'MfaVerify',
 ]);
@@ -75,9 +77,10 @@ const AuthenticatedApp = () => {
     pathname === '/setup' ||
     pathname === '/OnboardingWizard' ||
     pathname === '/payment/result' ||
-    pathname === '/ParentSignContract' ||
+    pathname === '/ParentIntake' ||
     pathname === '/InstitutionSetup' ||
     pathname.startsWith('/onboarding/'); // /onboarding/:token is unauthenticated
+  // ParentSignContract requires authenticated parent portal session (SCRUM-119)
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -114,7 +117,7 @@ const AuthenticatedApp = () => {
             <Route path="/OnboardingWizard" element={<OnboardingWizard />} />
             <Route path="/onboarding/:token" element={<OnboardingWizard />} />
             <Route path="/payment/result" element={<PaymentResult />} />
-            <Route path="/ParentSignContract" element={<ParentSignContractPage />} />
+            <Route path="/ParentIntake" element={<ParentIntakePage />} />
             <Route path="/InstitutionSetup" element={<InstitutionSetup />} />
           </Routes>
         );
@@ -134,7 +137,7 @@ const AuthenticatedApp = () => {
             <Route path="/OnboardingWizard" element={<OnboardingWizard />} />
             <Route path="/onboarding/:token" element={<OnboardingWizard />} />
             <Route path="/payment/result" element={<PaymentResult />} />
-            <Route path="/ParentSignContract" element={<ParentSignContractPage />} />
+            <Route path="/ParentIntake" element={<ParentIntakePage />} />
             <Route path="/InstitutionSetup" element={<InstitutionSetup />} />
           </Routes>
         );
@@ -190,6 +193,7 @@ const AuthenticatedApp = () => {
       <Route path="/setup" element={<SetupAccount />} />
       <Route path="/payment/result" element={<PaymentResult />} />
       <Route path="/ParentSignContract" element={<ParentSignContractPage />} />
+      <Route path="/ParentIntake" element={<ParentIntakePage />} />
 
       <Route path="*" element={<PageNotFound />} />
     </Routes>

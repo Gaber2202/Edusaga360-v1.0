@@ -1,5 +1,5 @@
 /**
- * Bulk invoice generation — dry-run preview (P1.2).
+ * Bulk invoice generation — dry-run preview (SCRUM-128 / P1.2).
  *
  * Verifies the preview returns an accurate, idempotent picture before anything
  * is written:
@@ -8,6 +8,7 @@
  *   - reports the estimated total value (incl. 15% VAT on standard categories,
  *     0% on exempt) and a recipients sample
  *   - is finance-role gated and validates its payload
+ *   - returns a run_log for failure-isolation audit
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
@@ -41,20 +42,29 @@ const FEE_STRUCTURES = [
   { id: 'fs2', grade: null, amount: 500, category_id: 'c2', fee_categories: { id: 'c2', vat_treatment: 'exempt', name_en: 'Books', name_ar: 'كتب', code: 'BK' } },
 ];
 const STUDENTS = [
-  { id: 's1', grade_id: 'g1', name_en: 'Aisha', name_ar: 'عائشة' },
-  { id: 's2', grade_id: 'g1', name_en: 'Bilal', name_ar: 'بلال' },
-  { id: 's3', grade_id: 'g1', name_en: 'Carmen', name_ar: 'كارمن' },
+  { id: 's1', grade_id: 'g1', name_en: 'Aisha', name_ar: 'عائشة', enrollment_date: '2026-09-01' },
+  { id: 's2', grade_id: 'g1', name_en: 'Bilal', name_ar: 'بلال', enrollment_date: '2026-09-01' },
+  { id: 's3', grade_id: 'g1', name_en: 'Carmen', name_ar: 'كارمن', enrollment_date: '2026-09-01' },
 ];
+
+function defaultResolver(ctx: QueryContext) {
+  if (ctx.table === 'fee_structures') return { data: FEE_STRUCTURES };
+  if (ctx.table === 'students') {
+    if (ctx.single) return { data: STUDENTS[0] };
+    return { data: STUDENTS };
+  }
+  if (ctx.table === 'invoices') return { data: [{ student_id: 's2' }] };
+  if (ctx.table === 'tenants') return { data: { id: TENANT_ID, jurisdiction_code: 'SA' } };
+  if (ctx.table === 'academic_years') {
+    return { data: { id: 'ay1', name: '2026-2027', start_date: '2026-09-01', end_date: '2027-06-30' } };
+  }
+  if (ctx.table === 'discount_rules') return { data: [] };
+  return { data: null };
+}
 
 describe('POST /billing/bulk-invoices — dry-run preview', () => {
   it('counts only students that will be invoiced and totals incl. VAT', async () => {
-    db.setResolver((ctx: QueryContext) => {
-      if (ctx.table === 'fee_structures') return { data: FEE_STRUCTURES };
-      if (ctx.table === 'students') return { data: STUDENTS };
-      if (ctx.table === 'invoices') return { data: [{ student_id: 's2' }] }; // s2 already invoiced this year
-      if (ctx.table === 'tenants') return { data: { id: TENANT_ID, jurisdiction_code: 'SA' } };
-      return { data: null };
-    });
+    db.setResolver(defaultResolver);
 
     const res = await request(makeApp())
       .post('/billing/bulk-invoices')
@@ -71,8 +81,13 @@ describe('POST /billing/bulk-invoices — dry-run preview', () => {
     expect(res.body.estimated_total).toBe(3300);
     expect(res.body.recipients).toHaveLength(2);
     expect(res.body.recipients[0]).toMatchObject({ amount: 1650 });
-    // The estimate must NOT just echo the active-student count.
     expect(res.body.estimated_invoices).not.toBe(res.body.student_count);
+    expect(res.body.run_log).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ student_id: 's2', status: 'already_invoiced' }),
+        expect.objectContaining({ student_id: 's1', status: 'eligible' }),
+      ]),
+    );
   });
 
   it('returns 400 when no fee structures match the criteria', async () => {

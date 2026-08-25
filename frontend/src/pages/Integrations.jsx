@@ -18,8 +18,9 @@ import PlatformManagedCatalog from '../components/integrations/PlatformManagedCa
  *     • ATS      → hiring connectors (admin/HR only)
  *     • Email    → school mailbox (SMTP/Gmail/Microsoft 365/custom)
  *
- *   Platform-managed — regulated Saudi connectors (ZATCA, GOSI, Qiwa/Mudad,
- *     Noor, Madrasati, Nafath, …) that EduSaga provisions per school.
+ *   Platform-managed — regulated connectors provisioned by EduSaga per school.
+ *     Catalog is jurisdiction-gated (Phase 2 feature registry): SA, AE, and QA
+ *     each see only their available connectors.
  *
  * Tabs are shown per role so a user is never offered a tab whose backend would
  * reject them (e.g. ATS is admin/HR-owned).

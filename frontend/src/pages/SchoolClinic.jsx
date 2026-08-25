@@ -23,6 +23,8 @@ import {
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import QuickVisitPanel from '../components/clinic/QuickVisitPanel';
 import { fireEvent } from '../lib/integrationBus';
+import { getVaccinationSchedule } from '../api/jurisdiction';
+import { useBranch } from '../components/BranchContext';
 
 const COMPLAINTS = [
   { value: 'fever', ar: 'حمى', en: 'Fever' },
@@ -56,6 +58,7 @@ const BLANK_VISIT = {
 export default function SchoolClinic() {
   const { isRTL } = useLanguage();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
+  const { selectedBranchId } = useBranch();
   const queryClient = useQueryClient();
 
   const [tab, setTab] = useState('dashboard');
@@ -65,14 +68,30 @@ export default function SchoolClinic() {
   const [search, setSearch] = useState('');
   const [studentSearch, setStudentSearch] = useState('');
 
-  const { data: visits = [], isLoading } = useQuery({ enabled: false /* clinic_visits table not built */, queryKey: ['clinicVisits', tenantId], queryFn: () => fetchData(tenantQuery('clinic_visits').select('*').match(tenantFilter()).order('created_at', { ascending: false })), initialData: [] });
+  const { data: visits = [], isLoading } = useQuery({
+    enabled: hasTenantAccess,
+    queryKey: ['clinicVisits', tenantId],
+    queryFn: () => fetchData(tenantQuery('clinic_visits').select('*').match(tenantFilter()).order('created_at', { ascending: false })),
+    initialData: [],
+  });
 
-  const { data: healthRecords = [] } = useQuery({ enabled: false /* student_health_records table not built */, queryKey: ['healthRecords', tenantId], queryFn: () => fetchData(tenantQuery('student_health_records').select('*').match(tenantFilter())), initialData: [] });
+  const { data: healthRecords = [] } = useQuery({
+    enabled: hasTenantAccess,
+    queryKey: ['healthRecords', tenantId],
+    queryFn: () => fetchData(tenantQuery('student_health_records').select('*').match(tenantFilter())),
+    initialData: [],
+  });
 
   const { data: students = [] } = useQuery({
     queryKey: ['students', tenantId],
     queryFn: () => fetchData(tenantQuery('students').select('*').match(tenantFilter({ status: 'active' }))),
     enabled: hasTenantAccess,
+  });
+
+  const { data: vaccinationSchedule } = useQuery({
+    enabled: hasTenantAccess && tab === 'vaccinations',
+    queryKey: ['vaccinationSchedule', tenantId, selectedBranchId],
+    queryFn: () => getVaccinationSchedule(selectedBranchId),
   });
 
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -335,42 +354,173 @@ export default function SchoolClinic() {
           </div>
         </TabsContent>
 
-        {/* VACCINATIONS */}
-        <TabsContent value="vaccinations" className="mt-4">
+        {/* VACCINATIONS — pack schedule vs student records (SCRUM-137) */}
+        <TabsContent value="vaccinations" className="mt-4 space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">{isRTL ? 'حالة التطعيمات' : 'Vaccination Status'}</CardTitle>
+              <CardTitle className="text-base flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <span>{isRTL ? 'جدول التطعيمات الإلزامي' : 'Jurisdiction Vaccination Schedule'}</span>
+                {vaccinationSchedule?.source && (
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {(isRTL ? vaccinationSchedule.source.name_ar : vaccinationSchedule.source.name_en)
+                      || vaccinationSchedule.source.authority}
+                  </span>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!vaccinationSchedule?.vaccines?.length ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  {isRTL ? 'لا يتوفر جدول تطعيم لهذه الولاية القضائية' : 'No vaccination schedule for this jurisdiction'}
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{isRTL ? 'اللقاح' : 'Vaccine'}</TableHead>
+                      <TableHead>{isRTL ? 'العمر المستهدف' : 'Target age'}</TableHead>
+                      <TableHead>{isRTL ? 'الجرعات' : 'Doses'}</TableHead>
+                      <TableHead>{isRTL ? 'إلزامي' : 'Required'}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {vaccinationSchedule.vaccines.map((v) => (
+                      <TableRow key={v.code}>
+                        <TableCell className="text-sm font-medium">
+                          {isRTL ? v.name_ar : v.name_en}
+                          <span className="ms-2 text-[10px] text-muted-foreground font-mono">{v.code}</span>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {isRTL ? v.age_label_ar : v.age_label_en}
+                        </TableCell>
+                        <TableCell className="text-xs">{v.doses ?? '—'}</TableCell>
+                        <TableCell>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${v.required ? 'bg-najdi-50 text-najdi-900' : 'bg-sand-alt text-ink'}`}>
+                            {v.required ? (isRTL ? 'إلزامي' : 'Required') : (isRTL ? 'اختياري' : 'Optional')}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">{isRTL ? 'مقارنة بسجلات الطلاب' : 'Student Records vs Schedule'}</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>{isRTL ? 'الطالب' : 'Student'}</TableHead>
-                    <TableHead>{isRTL ? 'اللقاح' : 'Vaccine'}</TableHead>
-                    <TableHead>{isRTL ? 'تاريخ الإعطاء' : 'Date Given'}</TableHead>
-                    <TableHead>{isRTL ? 'الموعد القادم' : 'Next Due'}</TableHead>
+                    <TableHead>{isRTL ? 'اللقاح (الجدول)' : 'Schedule vaccine'}</TableHead>
+                    <TableHead>{isRTL ? 'في السجل' : 'On record'}</TableHead>
+                    <TableHead>{isRTL ? 'تاريخ الإعطاء' : 'Date given'}</TableHead>
                     <TableHead>{isRTL ? 'الحالة' : 'Status'}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {healthRecords.flatMap(r =>
-                    (r.vaccinations || []).map((vac, i) => (
-                      <TableRow key={`${r.id}-${i}`}>
-                        <TableCell className="text-sm font-medium">{r.student_name}</TableCell>
-                        <TableCell className="text-sm">{vac.vaccine_name}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{vac.date_given || '-'}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{vac.next_due || '-'}</TableCell>
-                        <TableCell>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${vac.status === 'complete' ? 'bg-green-100 text-green-700' : vac.status === 'overdue' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
-                            {vac.status || 'pending'}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                  {healthRecords.flatMap(r => r.vaccinations || []).length === 0 && (
-                    <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">{isRTL ? 'لا بيانات تطعيم' : 'No vaccination data'}</TableCell></TableRow>
-                  )}
+                  {(() => {
+                    const scheduleVaccines = vaccinationSchedule?.vaccines || [];
+                    const studentById = Object.fromEntries(students.map((s) => [s.id, s]));
+                    const rows = [];
+
+                    const recordsToDiff = healthRecords.length > 0
+                      ? healthRecords
+                      : students.slice(0, 25).map((s) => ({
+                          id: `virtual-${s.id}`,
+                          student_id: s.id,
+                          student_name: isRTL
+                            ? (s.name_ar || s.full_name_ar || s.name_en)
+                            : (s.name_en || s.full_name_en || s.name_ar),
+                          vaccinations: [],
+                        }));
+
+                    for (const r of recordsToDiff) {
+                      const student = studentById[r.student_id];
+                      const studentName = r.student_name
+                        || (isRTL
+                          ? (student?.name_ar || student?.full_name_ar || student?.name_en)
+                          : (student?.name_en || student?.full_name_en || student?.name_ar))
+                        || '—';
+                      const recorded = Array.isArray(r.vaccinations) ? r.vaccinations : [];
+
+                      const matchRecord = (vaccine) => recorded.find((vac) => {
+                        const code = (vac.code || vac.vaccine_code || '').toLowerCase();
+                        const name = (vac.vaccine_name || vac.name || '').toLowerCase();
+                        return code === vaccine.code.toLowerCase()
+                          || name.includes(vaccine.name_en.toLowerCase())
+                          || name.includes((vaccine.name_ar || '').toLowerCase());
+                      });
+
+                      if (scheduleVaccines.length === 0) {
+                        for (let i = 0; i < recorded.length; i++) {
+                          const vac = recorded[i];
+                          rows.push(
+                            <TableRow key={`${r.id}-rec-${i}`}>
+                              <TableCell className="text-sm font-medium">{studentName}</TableCell>
+                              <TableCell className="text-sm">{vac.vaccine_name || vac.code || '—'}</TableCell>
+                              <TableCell className="text-xs">{isRTL ? 'نعم' : 'Yes'}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{vac.date_given || '-'}</TableCell>
+                              <TableCell>
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${vac.status === 'complete' ? 'bg-green-100 text-green-700' : vac.status === 'overdue' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                                  {vac.status || 'pending'}
+                                </span>
+                              </TableCell>
+                            </TableRow>,
+                          );
+                        }
+                        continue;
+                      }
+
+                      for (const vaccine of scheduleVaccines) {
+                        if (!vaccine.required && !matchRecord(vaccine)) continue;
+                        const vac = matchRecord(vaccine);
+                        const status = vac
+                          ? (vac.status === 'overdue' ? 'overdue' : 'complete')
+                          : (vaccine.required ? 'missing' : 'optional');
+                        const statusCls = status === 'complete'
+                          ? 'bg-green-100 text-green-700'
+                          : status === 'overdue' || status === 'missing'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-amber-100 text-amber-700';
+                        const statusLabel = {
+                          complete: isRTL ? 'مكتمل' : 'Complete',
+                          overdue: isRTL ? 'متأخر' : 'Overdue',
+                          missing: isRTL ? 'ناقص' : 'Missing',
+                          optional: isRTL ? 'اختياري' : 'Optional',
+                        }[status];
+
+                        rows.push(
+                          <TableRow key={`${r.id}-${vaccine.code}`}>
+                            <TableCell className="text-sm font-medium">{studentName}</TableCell>
+                            <TableCell className="text-sm">{isRTL ? vaccine.name_ar : vaccine.name_en}</TableCell>
+                            <TableCell className="text-xs">{vac ? (isRTL ? 'نعم' : 'Yes') : (isRTL ? 'لا' : 'No')}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{vac?.date_given || '-'}</TableCell>
+                            <TableCell>
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusCls}`}>
+                                {statusLabel}
+                              </span>
+                            </TableCell>
+                          </TableRow>,
+                        );
+                      }
+                    }
+
+                    if (rows.length === 0) {
+                      return (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                            {isRTL ? 'لا بيانات تطعيم للمقارنة' : 'No vaccination data to compare'}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
+                    return rows;
+                  })()}
                 </TableBody>
               </Table>
             </CardContent>

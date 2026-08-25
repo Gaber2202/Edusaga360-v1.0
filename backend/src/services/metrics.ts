@@ -52,6 +52,8 @@ export interface DashboardData {
   cfo: any;
   coo: any;
   chro: any;
+  principal: any;
+  administrator: any;
   computed_at: string;
   period: string;
 }
@@ -114,6 +116,24 @@ export class MetricsService {
       { kpi: 'chro.contract_expiry_radar', name_ar: 'رادار انتهاء العقود', name_en: 'Contract Expiry Radar', owner_persona: ['chro'], display_format: 'text' },
       { kpi: 'chro.teacher_load_distribution', name_ar: 'توزيع حمل المعلمين', name_en: 'Teacher Load Distribution', owner_persona: ['chro'], display_format: 'text' },
       { kpi: 'chro.leave_absence_summary', name_ar: 'ملخص الإجازات والغياب', name_en: 'Leave & Absence Summary', owner_persona: ['chro'], display_format: 'text' },
+      // Principal
+      { kpi: 'principal.kpis.enrolled_students', name_ar: 'الطلاب المسجلون', name_en: 'Enrolled Students', owner_persona: ['principal'], display_format: 'number' },
+      { kpi: 'principal.kpis.capacity_utilization_pct', name_ar: 'استغلال السعة', name_en: 'Capacity Utilization %', owner_persona: ['principal', 'coo'], display_format: 'percent' },
+      { kpi: 'principal.kpis.student_teacher_ratio', name_ar: 'نسبة الطلاب للمعلمين', name_en: 'Student-Teacher Ratio', owner_persona: ['principal', 'coo'], display_format: 'ratio' },
+      { kpi: 'principal.kpis.student_attendance_rate_pct', name_ar: 'حضور الطلاب', name_en: 'Student Attendance %', owner_persona: ['principal', 'coo'], display_format: 'percent' },
+      { kpi: 'principal.kpis.average_score_pct', name_ar: 'متوسط الدرجات', name_en: 'Average Score %', owner_persona: ['principal'], display_format: 'percent' },
+      { kpi: 'principal.kpis.homework_overdue', name_ar: 'واجبات متأخرة', name_en: 'Overdue Homework', owner_persona: ['principal'], display_format: 'number' },
+      { kpi: 'principal.admissions_funnel', name_ar: 'قمع القبول', name_en: 'Admissions Funnel', owner_persona: ['principal', 'coo'], display_format: 'text' },
+      { kpi: 'principal.utilization_by_campus', name_ar: 'الاستغلال حسب الفرع', name_en: 'Utilization by Campus', owner_persona: ['principal'], display_format: 'text' },
+      // Administrator
+      { kpi: 'administrator.kpis.active_students', name_ar: 'الطلاب النشطون', name_en: 'Active Students', owner_persona: ['administrator'], display_format: 'number' },
+      { kpi: 'administrator.kpis.pending_applications', name_ar: 'طلبات قيد المراجعة', name_en: 'Pending Applications', owner_persona: ['administrator', 'principal'], display_format: 'number' },
+      { kpi: 'administrator.kpis.overdue_invoices', name_ar: 'فواتير متأخرة', name_en: 'Overdue Invoices', owner_persona: ['administrator', 'cfo'], display_format: 'number' },
+      { kpi: 'administrator.kpis.collection_rate_pct', name_ar: 'نسبة التحصيل', name_en: 'Collection Rate %', owner_persona: ['administrator', 'cfo'], display_format: 'percent' },
+      { kpi: 'administrator.kpis.pending_leave_requests', name_ar: 'طلبات إجازة معلقة', name_en: 'Pending Leave Requests', owner_persona: ['administrator', 'chro'], display_format: 'number' },
+      { kpi: 'administrator.kpis.staff_headcount', name_ar: 'عدد الموظفين', name_en: 'Staff Headcount', owner_persona: ['administrator', 'chro'], display_format: 'number' },
+      { kpi: 'administrator.kpis.iqama_expiring_30d', name_ar: 'إقامات تنتهي خلال 30 يوم', name_en: 'Iqamas Expiring (30d)', owner_persona: ['administrator', 'chro'], display_format: 'number' },
+      { kpi: 'administrator.operations', name_ar: 'ملخص العمليات', name_en: 'Operations Summary', owner_persona: ['administrator'], display_format: 'text' },
     ];
 
     const registryRows = (registry as any[]).map((row) => ({
@@ -170,7 +190,7 @@ export class MetricsService {
     return q;
   }
 
-  async computeAndStoreAll(tenantId: string, period = 'current', branchId?: string, persona?: 'ceo' | 'cfo' | 'coo' | 'chro'): Promise<DashboardData> {
+  async computeAndStoreAll(tenantId: string, period = 'current', branchId?: string, persona?: 'ceo' | 'cfo' | 'coo' | 'chro' | 'principal' | 'administrator'): Promise<DashboardData> {
     await this.ensureRegistry();
 
     const scope = await resolveScopeJurisdiction(this.supabase, tenantId, branchId ?? undefined);
@@ -183,6 +203,9 @@ export class MetricsService {
     const needsCFO = !persona || persona === 'cfo';
     const needsCOO = !persona || persona === 'coo';
     const needsCHRO = !persona || persona === 'chro';
+    const needsPrincipal = !persona || persona === 'principal';
+    const needsAdministrator = !persona || persona === 'administrator';
+    const needsAcademicOps = needsCEO || needsCOO || needsPrincipal || needsAdministrator;
 
     // Period range for trailing-financial computations.
     const periodEnd = todayStr();
@@ -229,7 +252,7 @@ export class MetricsService {
     // === Financials (cash basis: paid invoices - approved expenses) ===
     let invoices: any[] = [];
     let expenses: any[] = [];
-    if (needsCEO || needsCFO || needsCOO) {
+    if (needsCEO || needsCFO || needsCOO || needsAdministrator) {
       const [invRes, expRes] = await Promise.all([
         this.branchFilter(this.supabase.from('invoices').select('total_amount, paid_amount, date, branch_id, vat_amount, status, due_date').eq('tenant_id', tenantId).gte('date', periodStart).neq('status', 'cancelled'), branchId),
         this.branchFilter(this.supabase.from('expenses').select('amount, date, branch_id').eq('tenant_id', tenantId).eq('status', 'approved').gte('date', periodStart), branchId),
@@ -424,7 +447,7 @@ export class MetricsService {
 
     // === Growth (enrollment vs previous academic year, CEO/COO only) ===
     let growthData: any = { current_count: null, previous_count: null, growth_rate: null, score: 50, data_quality: 'not_tracked' };
-    if ((needsCEO || needsCOO) && academicYear) {
+    if ((needsCEO || needsCOO || needsPrincipal) && academicYear) {
       const currentRes = await this.branchFilter(this.supabase.from('students').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('academic_year', academicYear.id), branchId);
       const currentCount = (currentRes as any).count ?? 0;
       // previous academic year: largest start_date < current.start_date
@@ -451,7 +474,7 @@ export class MetricsService {
     let employees: any[] = [];
     let applicants: any[] = [];
     let applications: any[] = [];
-    if (needsCEO || needsCOO) {
+    if (needsAcademicOps) {
       const [sectionsRes, studentsRes, employeesRes, applicantsRes, applicationsRes] = await Promise.all([
         this.branchFilter(this.supabase.from('sections').select('branch_id, capacity, id, name, grade_id').eq('tenant_id', tenantId), branchId),
         this.branchFilter(this.supabase.from('students').select('id, branch_id, status').eq('tenant_id', tenantId).eq('status', 'active'), branchId),
@@ -520,15 +543,59 @@ export class MetricsService {
       ).map(([stage, count]) => ({ stage, count })).sort((a: any, b: any) => b.count - a.count),
     };
 
-    // Student attendance not tracked
-    const studentAttendanceRate = null;
+    // === Student attendance, academic KPIs (COO / Principal) ===
+    let studentAttendanceRate: number | null = null;
+    let studentAttendanceDataQuality: 'real' | 'not_tracked' = 'not_tracked';
+    let homeworkOverdueCount = 0;
+    let averageScorePct: number | null = null;
+    let averageScoreDataQuality: 'real' | 'not_tracked' = 'not_tracked';
+    let pendingLeaveCount = 0;
+
+    if (needsCOO || needsPrincipal) {
+      const attendanceRes = await this.branchFilter(
+        this.supabase.from('student_attendances').select('status').eq('tenant_id', tenantId).gte('date', daysAgoStr(30)),
+        branchId,
+      );
+      const studentAttRecords = (attendanceRes.data ?? []) as any[];
+      const marked = studentAttRecords.filter((r) => ['present', 'late', 'absent'].includes(r.status));
+      if (marked.length > 0) {
+        const attended = marked.filter((r) => r.status === 'present' || r.status === 'late').length;
+        studentAttendanceRate = round2((attended / marked.length) * 100);
+        studentAttendanceDataQuality = 'real';
+      }
+    }
+
+    if (needsPrincipal) {
+      const studentIds = students.map((s) => s.id);
+      if (studentIds.length > 0) {
+        const [homeworkRes, gradesRes] = await Promise.all([
+          this.supabase.from('homework_assignments').select('status, due_date').eq('tenant_id', tenantId).in('student_id', studentIds),
+          this.supabase.from('student_grades').select('score, max_score').eq('tenant_id', tenantId).in('student_id', studentIds),
+        ]);
+        const today = todayStr();
+        homeworkOverdueCount = ((homeworkRes.data ?? []) as any[]).filter(
+          (h) => h.status !== 'completed' && h.due_date && String(h.due_date) < today,
+        ).length;
+        const gradeRows = ((gradesRes.data ?? []) as any[]).filter((g) => Number(g.max_score) > 0);
+        if (gradeRows.length > 0) {
+          const avg = gradeRows.reduce((s, g) => s + (Number(g.score) / Number(g.max_score)) * 100, 0) / gradeRows.length;
+          averageScorePct = round2(avg);
+          averageScoreDataQuality = 'real';
+        }
+      }
+    }
+
+    if (needsAdministrator) {
+      const leaveRes = await this.supabase.from('leave_requests').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'pending');
+      pendingLeaveCount = (leaveRes as any).count ?? 0;
+    }
 
     // === HR / CHRO ===
     let employeesFull: any[] = [];
     let departments: any[] = [];
     let iqamaList: any[] = [];
     let attendanceRecords: any[] = [];
-    if (needsCHRO || needsCEO || needsCFO || needsCOO) {
+    if (needsCHRO || needsCEO || needsCFO || needsCOO || needsAdministrator) {
       const [employeesFullRes, departmentsRes, iqamaRes, attendanceRes] = await Promise.all([
         this.branchFilter(this.supabase.from('employees').select('id, status, nationality, gender, department_id, is_saudi, hire_date, end_date, contract_type').eq('tenant_id', tenantId), branchId),
         this.supabase.from('departments').select('id, name_en, name_ar').eq('tenant_id', tenantId),
@@ -754,7 +821,7 @@ export class MetricsService {
       scenario_baseline: { is_multi_currency: isMultiCurrency, revenue, revenue_by_currency: byCurrencyObject(revenueByCurrency), expenses: expTotal, expenses_by_currency: byCurrencyObject(expByCurrency), ebitda, ebitda_by_currency: byCurrencyObject(ebitdaByCurrency) },
     };
     const cooData = {
-      kpis: { capacity_utilization_pct: capacityUtilization, student_teacher_ratio: studentTeacherRatio, student_teacher_ratio_data_quality: teacherCount > 0 ? 'estimated' : 'not_tracked', student_attendance_rate_pct: studentAttendanceRate, student_attendance_data_quality: 'not_tracked' },
+      kpis: { capacity_utilization_pct: capacityUtilization, student_teacher_ratio: studentTeacherRatio, student_teacher_ratio_data_quality: teacherCount > 0 ? 'estimated' : 'not_tracked', student_attendance_rate_pct: studentAttendanceRate, student_attendance_data_quality: studentAttendanceDataQuality },
       capacity_to_cash: capacityToCash,
       admissions_funnel: funnel,
       utilization_by_campus: capacityToCash.map((c) => ({ branch_id: c.branch_id, name_en: c.name_en, name_ar: c.name_ar, utilization_pct: c.utilization_pct })),
@@ -773,6 +840,58 @@ export class MetricsService {
       teacher_load_distribution: { data_quality: 'not_tracked', message: 'Teaching load data not available.' },
       leave_absence_summary: leaveAbsenceSummary,
       open_roles: { count: null, avg_time_to_fill_days: null, count_data_quality: 'not_tracked', time_to_fill_data_quality: 'not_tracked', message: 'Open-role requisitions not configured.' },
+    };
+    const principalData = {
+      kpis: {
+        enrolled_students: totalEnrolled,
+        capacity_utilization_pct: capacityUtilization,
+        student_teacher_ratio: studentTeacherRatio,
+        student_teacher_ratio_data_quality: teacherCount > 0 ? 'estimated' : 'not_tracked',
+        student_attendance_rate_pct: studentAttendanceRate,
+        student_attendance_data_quality: studentAttendanceDataQuality,
+        average_score_pct: averageScorePct,
+        average_score_data_quality: averageScoreDataQuality,
+        homework_overdue: homeworkOverdueCount,
+        growth_rate_pct: growthData.growth_rate,
+        pending_applications: applicants.filter((a) => a.status === 'pending').length,
+      },
+      admissions_funnel: funnel,
+      utilization_by_campus: capacityToCash.map((c) => ({ branch_id: c.branch_id, name_en: c.name_en, name_ar: c.name_ar, utilization_pct: c.utilization_pct, enrolled: c.enrolled, capacity: c.capacity })),
+      growth: growthData,
+      employee_attendance_summary: leaveAbsenceSummary,
+    };
+    const administratorData = {
+      kpis: {
+        active_students: totalEnrolled,
+        pending_applications: applicants.filter((a) => a.status === 'pending').length,
+        overdue_invoices: overdueCount,
+        collection_rate_pct: collectionRate,
+        pending_leave_requests: pendingLeaveCount,
+        staff_headcount: headcount,
+        iqama_expiring_30d: iqamaExpiringCount,
+      },
+      operations: {
+        admissions: {
+          pending: applicants.filter((a) => a.status === 'pending').length,
+          accepted: applicants.filter((a) => a.status === 'accepted').length,
+          total: applicants.length,
+        },
+        finance: {
+          overdue_invoices: overdueCount,
+          collection_rate_pct: collectionRate,
+          total_invoiced: totalInvoicedAll,
+          total_collected: totalCollectedAll,
+        },
+        hr: {
+          pending_leave_requests: pendingLeaveCount,
+          staff_headcount: headcount,
+          iqama_expiring_30d: iqamaExpiringCount,
+          leave_absence_summary: leaveAbsenceSummary,
+        },
+      },
+      admissions_funnel: funnel,
+      overdue_by_campus: overdue_by_campus,
+      utilization_by_campus: capacityToCash.map((c) => ({ branch_id: c.branch_id, name_en: c.name_en, name_ar: c.name_ar, utilization_pct: c.utilization_pct })),
     };
 
     // Build metric snapshots (only for the requested persona when applicable)
@@ -811,9 +930,30 @@ export class MetricsService {
     if (needsCOO) {
       metricValues['coo.kpis.capacity_utilization_pct'] = { value: capacityUtilization, numerator: totalEnrolled, denominator: totalCapacity };
       metricValues['coo.kpis.student_teacher_ratio'] = { value: studentTeacherRatio };
+      metricValues['coo.kpis.student_attendance_rate_pct'] = { value: studentAttendanceRate };
       metricValues['coo.capacity_to_cash'] = { metadata: capacityToCash };
       metricValues['coo.admissions_funnel'] = { metadata: funnel };
       metricValues['coo.utilization_by_campus'] = { metadata: capacityToCash.map((c) => ({ branch_id: c.branch_id, name_en: c.name_en, name_ar: c.name_ar, utilization_pct: c.utilization_pct })) };
+    }
+    if (needsPrincipal) {
+      metricValues['principal.kpis.enrolled_students'] = { value: totalEnrolled };
+      metricValues['principal.kpis.capacity_utilization_pct'] = { value: capacityUtilization, numerator: totalEnrolled, denominator: totalCapacity };
+      metricValues['principal.kpis.student_teacher_ratio'] = { value: studentTeacherRatio };
+      metricValues['principal.kpis.student_attendance_rate_pct'] = { value: studentAttendanceRate };
+      metricValues['principal.kpis.average_score_pct'] = { value: averageScorePct };
+      metricValues['principal.kpis.homework_overdue'] = { value: homeworkOverdueCount };
+      metricValues['principal.admissions_funnel'] = { metadata: funnel };
+      metricValues['principal.utilization_by_campus'] = { metadata: capacityToCash.map((c) => ({ branch_id: c.branch_id, name_en: c.name_en, name_ar: c.name_ar, utilization_pct: c.utilization_pct })) };
+    }
+    if (needsAdministrator) {
+      metricValues['administrator.kpis.active_students'] = { value: totalEnrolled };
+      metricValues['administrator.kpis.pending_applications'] = { value: applicants.filter((a) => a.status === 'pending').length };
+      metricValues['administrator.kpis.overdue_invoices'] = { value: overdueCount };
+      metricValues['administrator.kpis.collection_rate_pct'] = { value: collectionRate, numerator: totalCollectedAll, denominator: totalInvoicedAll };
+      metricValues['administrator.kpis.pending_leave_requests'] = { value: pendingLeaveCount };
+      metricValues['administrator.kpis.staff_headcount'] = { value: headcount };
+      metricValues['administrator.kpis.iqama_expiring_30d'] = { value: iqamaExpiringCount };
+      metricValues['administrator.operations'] = { metadata: administratorData.operations };
     }
     if (needsCHRO) {
       metricValues['chro.kpis.headcount'] = { value: headcount };
@@ -848,6 +988,8 @@ export class MetricsService {
     if (needsCFO) dashboardRows.push({ tenant_id: tenantId, branch_id: branchId ?? null, metric_key: 'cfo.dashboard', period, metadata: cfoData, computed_at: new Date().toISOString() });
     if (needsCOO) dashboardRows.push({ tenant_id: tenantId, branch_id: branchId ?? null, metric_key: 'coo.dashboard', period, metadata: cooData, computed_at: new Date().toISOString() });
     if (needsCHRO) dashboardRows.push({ tenant_id: tenantId, branch_id: branchId ?? null, metric_key: 'chro.dashboard', period, metadata: chroData, computed_at: new Date().toISOString() });
+    if (needsPrincipal) dashboardRows.push({ tenant_id: tenantId, branch_id: branchId ?? null, metric_key: 'principal.dashboard', period, metadata: principalData, computed_at: new Date().toISOString() });
+    if (needsAdministrator) dashboardRows.push({ tenant_id: tenantId, branch_id: branchId ?? null, metric_key: 'administrator.dashboard', period, metadata: administratorData, computed_at: new Date().toISOString() });
     if (dashboardRows.length) {
       await this.supabase.from('kpi_snapshots').upsert(dashboardRows as any, { onConflict: 'tenant_id, branch_id, metric_key, period' });
     }
@@ -857,12 +999,14 @@ export class MetricsService {
       cfo: cfoData,
       coo: cooData,
       chro: chroData,
+      principal: principalData,
+      administrator: administratorData,
       computed_at: computedAt,
       period,
     };
   }
 
-  async getDashboard(persona: 'ceo' | 'cfo' | 'coo' | 'chro', tenantId: string, period = 'current', branchId?: string, force = false): Promise<any> {
+  async getDashboard(persona: 'ceo' | 'cfo' | 'coo' | 'chro' | 'principal' | 'administrator', tenantId: string, period = 'current', branchId?: string, force = false): Promise<any> {
     if (!force) {
       const cached = await this.loadDashboardSnapshot(persona, tenantId, period, branchId);
       if (cached) return cached;

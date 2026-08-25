@@ -76,8 +76,16 @@ final canteenTransactionsProvider = FutureProvider<List<CanteenTransaction>>((re
   return ref.read(sessionProvider.notifier).api.canteenTransactions(studentId: childId);
 });
 
+final storeCategoryFilterProvider = StateProvider<String?>((ref) => null);
+
 final storeProductsProvider = FutureProvider<List<StoreProduct>>((ref) {
-  return ref.read(sessionProvider.notifier).api.storeProducts();
+  final category = ref.watch(storeCategoryFilterProvider);
+  return ref.read(sessionProvider.notifier).api.storeProducts(category: category);
+});
+
+final storeCategoriesProvider = FutureProvider<List<StoreCategory>>((ref) {
+  ref.watch(sessionProvider.select((s) => s.session?.accessToken));
+  return ref.read(sessionProvider.notifier).api.storeCategories();
 });
 
 final storeOrdersProvider = FutureProvider<List<StoreOrder>>((ref) {

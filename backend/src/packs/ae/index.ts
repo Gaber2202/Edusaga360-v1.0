@@ -10,6 +10,7 @@ import { aePayments } from './payments.js';
 import { aePayroll } from './payroll.js';
 import { aeRegulatorReports } from './regulatorReports.js';
 import { aeTax } from './tax.js';
+import { aeVaccinationSchedule } from './vaccinationSchedule.js';
 
 export const aePack: CountryPack = {
   code: 'AE',
@@ -26,4 +27,5 @@ export const aePack: CountryPack = {
   documents: aeDocuments,
   localisation: aeLocalisation,
   localization: aeLocalization,
+  vaccinationSchedule: aeVaccinationSchedule,
 };

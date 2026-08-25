@@ -71,7 +71,7 @@ describe('requireExecAccess', () => {
   });
 
   it('lets a platform owner through for every persona', async () => {
-    for (const persona of ['ceo', 'cfo', 'coo', 'chro'] as const) {
+    for (const persona of ['ceo', 'cfo', 'coo', 'chro', 'principal', 'administrator'] as const) {
       const req = makeReq({ user: { id: 'u1', email: 'a@b.com', is_platform_owner: true } });
       const res = makeRes();
       const next = vi.fn();
@@ -111,7 +111,7 @@ describe('requireExecAccess', () => {
 
   it('403s a user with zero grants on every persona', async () => {
     db.setResolver(grantResolver([]));
-    for (const persona of ['ceo', 'cfo', 'coo', 'chro'] as const) {
+    for (const persona of ['ceo', 'cfo', 'coo', 'chro', 'principal', 'administrator'] as const) {
       const req = makeReq({ user: { id: 'u1', email: 'a@b.com', tenant_id: 'tenant-A' } });
       const res = makeRes();
       const next = vi.fn();
@@ -127,7 +127,7 @@ describe('requireExecAccess', () => {
 
     const allowed: string[] = [];
     const denied: string[] = [];
-    for (const persona of ['ceo', 'cfo', 'coo', 'chro'] as const) {
+    for (const persona of ['ceo', 'cfo', 'coo', 'chro', 'principal', 'administrator'] as const) {
       const req = makeReq({ user });
       const res = makeRes();
       const next = vi.fn();
@@ -136,7 +136,7 @@ describe('requireExecAccess', () => {
       else denied.push(persona);
     }
     expect(allowed.sort()).toEqual(['ceo', 'coo']);
-    expect(denied.sort()).toEqual(['cfo', 'chro']);
+    expect(denied.sort()).toEqual(['administrator', 'cfo', 'chro', 'principal']);
   });
 
   it('scopes the access lookup to the caller tenant_id', async () => {
@@ -155,7 +155,7 @@ describe('getAccessiblePersonas', () => {
   it('returns isAdmin + all personas for an admin, with no DB query', async () => {
     const result = await getAccessiblePersonas({ id: 'u1', email: 'a@b.com', role: 'admin' });
     expect(result.isAdmin).toBe(true);
-    expect(result.personas.sort()).toEqual(['ceo', 'cfo', 'chro', 'coo']);
+    expect(result.personas.sort()).toEqual(['administrator', 'ceo', 'cfo', 'chro', 'coo', 'principal']);
     expect(db.filtersFor('exec_dashboard_access').length).toBe(0);
   });
 

@@ -5,18 +5,20 @@ import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Search, Clock, Shield, DollarSign, TrendingDown } from 'lucide-react';
+import { Search, Clock, Shield, DollarSign, TrendingDown, ShieldAlert } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
+import { YamenSection, YamenPanelEmpty } from './YamenShellParts';
+import { yamenLayout } from '../../lib/yamenDesign';
 
-function ScoreBar({ value, color: _color }) {
+function ScoreBar({ value }) {
   const c = value >= 70 ? 'bg-red-500' : value >= 40 ? 'bg-amber-500' : 'bg-emerald-500';
   return (
     <div className="flex items-center gap-2">
-      <div className="w-20 bg-ink rounded-full h-1.5 flex-shrink-0">
+      <div className="w-20 bg-sand rounded-full h-1.5 flex-shrink-0">
         <div className={`h-1.5 rounded-full ${c}`} style={{ width: `${value}%` }} />
       </div>
-      <span className={`text-xs font-medium w-7 text-end ${value >= 70 ? 'text-red-400' : value >= 40 ? 'text-amber-400' : 'text-emerald-400'}`}>{value}%</span>
+      <span className={`text-xs font-medium w-7 text-end tabular-nums ${value >= 70 ? 'text-red-600' : value >= 40 ? 'text-amber-600' : 'text-emerald-600'}`}>{value}%</span>
     </div>
   );
 }
@@ -88,81 +90,114 @@ export default function YamenRiskMonitor({ isRTL }) {
     return matchSearch && matchRisk;
   });
 
+  const highCount = scored.filter((e) => e.overall >= 70).length;
+  const medCount = scored.filter((e) => e.overall >= 40 && e.overall < 70).length;
+  const lowCount = scored.filter((e) => e.overall < 40).length;
+  const avgRisk = scored.length ? Math.round(scored.reduce((s, e) => s + e.overall, 0) / scored.length) : 0;
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
-          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder={isRTL ? 'بحث...' : 'Search...'} className={isRTL ? 'pr-10' : 'pl-10'} />
+    <div className={yamenLayout.page}>
+      <div className={yamenLayout.kpiGrid}>
+        {[
+          { key: 'high', label: isRTL ? 'عالي' : 'High', value: highCount, color: 'text-red-600 bg-red-50 border-red-100' },
+          { key: 'medium', label: isRTL ? 'متوسط' : 'Medium', value: medCount, color: 'text-amber-600 bg-amber-50 border-amber-100' },
+          { key: 'low', label: isRTL ? 'منخفض' : 'Low', value: lowCount, color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
+          { key: 'avg', label: isRTL ? 'متوسط الدرجة' : 'Avg score', value: `${avgRisk}%`, color: 'text-ink bg-sand-alt border-border/60' },
+        ].map((k) => (
+          <button
+            key={k.key}
+            type="button"
+            onClick={() => k.key !== 'avg' && setRiskFilter(k.key === riskFilter ? 'all' : k.key)}
+            className={`rounded-xl border p-3 text-start transition-shadow hover:shadow-sm ${k.color}`}
+          >
+            <p className="text-[10px] uppercase tracking-wider font-semibold opacity-70">{k.label}</p>
+            <p className="text-2xl font-bold tabular-nums mt-0.5">{k.value}</p>
+          </button>
+        ))}
+      </div>
+
+      <YamenSection
+        title={isRTL ? 'مراقبة مخاطر الموظفين' : 'Employee Risk Monitor'}
+        subtitle={isRTL ? 'درجات مركّبة حسب الحضور والامتثال والرواتب والأداء' : 'Composite scores by attendance, compliance, payroll, and performance'}
+        icon={ShieldAlert}
+      >
+        <div className="flex flex-col sm:flex-row gap-3 mb-3">
+          <div className="relative flex-1">
+            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
+            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder={isRTL ? 'بحث بالاسم أو الرقم الوظيفي...' : 'Search by name or employee ID...'} className={isRTL ? 'pr-10' : 'pl-10'} />
+          </div>
+          <Select value={riskFilter} onValueChange={setRiskFilter}>
+            <SelectTrigger className="w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{isRTL ? 'جميع المستويات' : 'All Levels'}</SelectItem>
+              <SelectItem value="high">{isRTL ? 'مخاطر عالية' : 'High Risk'}</SelectItem>
+              <SelectItem value="medium">{isRTL ? 'مخاطر متوسطة' : 'Medium Risk'}</SelectItem>
+              <SelectItem value="low">{isRTL ? 'مخاطر منخفضة' : 'Low Risk'}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={riskFilter} onValueChange={setRiskFilter}>
-          <SelectTrigger className="w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{isRTL ? 'جميع المستويات' : 'All Levels'}</SelectItem>
-            <SelectItem value="high">{isRTL ? 'مخاطر عالية' : 'High Risk'}</SelectItem>
-            <SelectItem value="medium">{isRTL ? 'مخاطر متوسطة' : 'Medium Risk'}</SelectItem>
-            <SelectItem value="low">{isRTL ? 'مخاطر منخفضة' : 'Low Risk'}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
 
-      <p className="text-xs text-muted-foreground">{filtered.length} {isRTL ? 'موظف' : 'employees'}</p>
+        <p className="text-xs text-muted-foreground mb-3">{filtered.length} {isRTL ? 'موظف' : 'employees'}</p>
 
-      <div className="space-y-3">
-        {filtered.map(emp => {
-          const riskLevel = emp.overall >= 70 ? 'high' : emp.overall >= 40 ? 'medium' : 'low';
-          const badgeClass = riskLevel === 'high' ? 'bg-red-900/40 text-red-300 border-red-700' : riskLevel === 'medium' ? 'bg-amber-900/40 text-amber-300 border-amber-700' : 'bg-emerald-900/40 text-emerald-300 border-emerald-700';
-          return (
-            <Card key={emp.id}>
-              <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-semibold text-white">{isRTL ? emp.name_ar : (emp.name_en || emp.name_ar)}</p>
-                      <Badge className={`text-xs border ${badgeClass}`}>
-                        {emp.overall}% {riskLevel === 'high' ? (isRTL ? 'عالي' : 'High') : riskLevel === 'medium' ? (isRTL ? 'متوسط' : 'Medium') : (isRTL ? 'منخفض' : 'Low')}
-                      </Badge>
+        <div className="space-y-3">
+          {filtered.map(emp => {
+            const riskLevel = emp.overall >= 70 ? 'high' : emp.overall >= 40 ? 'medium' : 'low';
+            const badgeClass = riskLevel === 'high' ? 'bg-red-50 text-red-700 border-red-200' : riskLevel === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+            return (
+              <Card key={emp.id} className="border-border/60 shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <p className="font-semibold text-ink">{isRTL ? emp.name_ar : (emp.name_en || emp.name_ar)}</p>
+                        <Badge className={`text-xs border ${badgeClass}`}>
+                          {emp.overall}% {riskLevel === 'high' ? (isRTL ? 'عالي' : 'High') : riskLevel === 'medium' ? (isRTL ? 'متوسط' : 'Medium') : (isRTL ? 'منخفض' : 'Low')}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">{emp.employee_id}</p>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                        <div>
+                          <p className="text-muted-foreground mb-1 flex items-center gap-1"><Clock className="w-3 h-3" />{isRTL ? 'الحضور' : 'Attendance'}</p>
+                          <ScoreBar value={emp.attRisk} />
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground mb-1 flex items-center gap-1"><Shield className="w-3 h-3" />{isRTL ? 'الامتثال' : 'Compliance'}</p>
+                          <ScoreBar value={emp.compRisk} />
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground mb-1 flex items-center gap-1"><DollarSign className="w-3 h-3" />{isRTL ? 'الرواتب' : 'Payroll'}</p>
+                          <ScoreBar value={emp.payRisk} />
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground mb-1 flex items-center gap-1"><TrendingDown className="w-3 h-3" />{isRTL ? 'الأداء' : 'Performance'}</p>
+                          <ScoreBar value={emp.perfRisk} />
+                        </div>
+                      </div>
+
+                      {emp.flags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-3">
+                          {emp.flags.map((f, i) => (
+                            <span key={i} className="text-xs bg-sand-alt text-muted-foreground border border-border/60 px-2 py-0.5 rounded-full">{f}</span>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <p className="text-xs text-muted-foreground mb-3">{emp.employee_id}</p>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                      <div>
-                        <p className="text-muted-foreground mb-1 flex items-center gap-1"><Clock className="w-3 h-3" />{isRTL ? 'الحضور' : 'Attendance'}</p>
-                        <ScoreBar value={emp.attRisk} />
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground mb-1 flex items-center gap-1"><Shield className="w-3 h-3" />{isRTL ? 'الامتثال' : 'Compliance'}</p>
-                        <ScoreBar value={emp.compRisk} />
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground mb-1 flex items-center gap-1"><DollarSign className="w-3 h-3" />{isRTL ? 'الرواتب' : 'Payroll'}</p>
-                        <ScoreBar value={emp.payRisk} />
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground mb-1 flex items-center gap-1"><TrendingDown className="w-3 h-3" />{isRTL ? 'الأداء' : 'Performance'}</p>
-                        <ScoreBar value={emp.perfRisk} />
-                      </div>
-                    </div>
-
-                    {emp.flags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-3">
-                        {emp.flags.map((f, i) => (
-                          <span key={i} className="text-xs bg-ink text-muted-foreground px-2 py-0.5 rounded-full">{f}</span>
-                        ))}
-                      </div>
-                    )}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-        {filtered.length === 0 && (
-          <p className="text-center text-muted-foreground py-10">{isRTL ? 'لا توجد نتائج' : 'No results found'}</p>
-        )}
-      </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+          {filtered.length === 0 && (
+            <YamenPanelEmpty
+              icon={Search}
+              title={isRTL ? 'لا توجد نتائج' : 'No results found'}
+            />
+          )}
+        </div>
+      </YamenSection>
     </div>
   );
 }

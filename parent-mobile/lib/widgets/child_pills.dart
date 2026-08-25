@@ -11,6 +11,7 @@ class ChildPills extends StatelessWidget {
     required this.allLabel,
     required this.onChanged,
     required this.rtl,
+    this.requireSelection = false,
   });
 
   final List<Child> children;
@@ -19,10 +20,13 @@ class ChildPills extends StatelessWidget {
   final ValueChanged<String?> onChanged;
   final bool rtl;
 
+  /// When true, hides the "All children" chip (e.g. store checkout).
+  final bool requireSelection;
+
   @override
   Widget build(BuildContext context) {
     final chips = <Widget>[
-      _pill(context, null, allLabel),
+      if (!requireSelection) _pill(context, null, allLabel),
       for (final child in children) _pill(context, child.id, child.displayName(rtl: rtl)),
     ];
     return SingleChildScrollView(
@@ -35,10 +39,17 @@ class ChildPills extends StatelessWidget {
     final selected = selectedId == id;
     return Padding(
       padding: const EdgeInsetsDirectional.only(end: 8),
-      child: ChoiceChip(
+      child: FilterChip(
         label: Text(label),
         selected: selected,
+        showCheckmark: false,
         selectedColor: EsColors.green100,
+        backgroundColor: EsColors.white,
+        side: BorderSide(color: selected ? EsColors.green500 : EsColors.border),
+        labelStyle: TextStyle(
+          color: selected ? EsColors.green900 : EsColors.ink,
+          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+        ),
         onSelected: (_) => onChanged(id),
       ),
     );

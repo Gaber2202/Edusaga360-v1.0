@@ -2,14 +2,17 @@ import { Router, Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { supabase } from '../lib/supabase.js';
+import { authMiddleware, type AuthenticatedRequest } from '../middleware/auth.js';
 import {
-  findListedSchool,
+  findListedSchoolById,
   hasParentPortalAccess,
   linkedStudentIds,
+  listAssignedSchoolsForAuth,
   parentProfileForAuth,
+  publicSchoolPayload,
   resolveRosterStudentIds,
-  NOT_AT_SCHOOL,
   PARENT_ONLY,
+  type PublicSchool,
 } from '../lib/parentSchool.js';
 
 export const parentAuthRouter = Router();
@@ -27,14 +30,21 @@ const loginLimiter = process.env.VITEST
 const LoginSchema = z.object({
   email: z.string().email().max(254),
   password: z.string().min(1).max(200),
+  tenant_id: z.string().trim().min(1).max(64).optional(),
   tenant_code: z.string().trim().min(1).max(40).optional(),
   slug: z.string().trim().min(1).max(40).optional(),
-}).refine((d) => Boolean(d.tenant_code || d.slug), {
-  message: 'A school code is required',
 });
 
 const RefreshSchema = z.object({
   refresh_token: z.string().min(1),
+});
+
+const SelectSchoolSchema = z.object({
+  tenant_id: z.string().trim().min(1).max(64).optional(),
+  slug: z.string().trim().min(1).max(40).optional(),
+  refresh_token: z.string().min(1).optional(),
+}).refine((d) => Boolean(d.tenant_id || d.slug), {
+  message: 'tenant_id or slug is required',
 });
 
 function displayName(row: { first_name?: string | null; last_name?: string | null; name?: string | null; email?: string | null }) {
@@ -46,6 +56,8 @@ async function sessionPayload(
   session: { access_token: string; refresh_token: string; expires_in?: number },
   authUser: { id: string; email?: string },
   profile: { tenant_id: string; linked_student_ids?: unknown; first_name?: string | null; last_name?: string | null; name?: string | null; email?: string | null },
+  school: PublicSchool,
+  schools: PublicSchool[],
 ) {
   const linked_student_ids = await resolveRosterStudentIds({
     tenantId: profile.tenant_id,
@@ -57,6 +69,7 @@ async function sessionPayload(
     refresh_token: session.refresh_token,
     expires_in: session.expires_in ?? 3600,
     token_type: 'bearer',
+    needs_school_selection: false,
     user: {
       id: authUser.id,
       email: authUser.email,
@@ -65,26 +78,31 @@ async function sessionPayload(
       role: 'parent',
       linked_student_ids,
     },
+    school: publicSchoolPayload(school, { includeId: true }),
+    schools: schools.map((s) => publicSchoolPayload(s, { includeId: true })),
+  };
+}
+
+function pendingSchoolPayload(
+  session: { access_token: string; refresh_token: string; expires_in?: number },
+  schools: PublicSchool[],
+) {
+  return {
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+    expires_in: session.expires_in ?? 3600,
+    token_type: 'bearer',
+    needs_school_selection: true,
+    user: null,
+    school: null,
+    schools: schools.map((s) => publicSchoolPayload(s, { includeId: true })),
   };
 }
 
 parentAuthRouter.post('/login', loginLimiter, async (req, res) => {
   const parsed = LoginSchema.safeParse(req.body);
   if (!parsed.success) {
-    const schoolMissing = !req.body?.tenant_code && !req.body?.slug;
-    return res.status(400).json({
-      message: schoolMissing
-        ? 'A school code is required'
-        : 'A valid email and password are required',
-    });
-  }
-
-  const school = await findListedSchool({
-    tenantCode: parsed.data.tenant_code,
-    slug: parsed.data.slug,
-  });
-  if (!school) {
-    return res.status(404).json({ message: 'School not found' });
+    return res.status(400).json({ message: 'A valid email and password are required' });
   }
 
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -96,15 +114,101 @@ parentAuthRouter.post('/login', loginLimiter, async (req, res) => {
     return res.status(401).json({ message: 'Invalid email or password' });
   }
 
-  const profile = await parentProfileForAuth(data.user.id, school.id);
-  if (!profile) {
-    return res.status(403).json({ message: NOT_AT_SCHOOL });
-  }
-  if (!hasParentPortalAccess(profile)) {
+  const schools = await listAssignedSchoolsForAuth(data.user.id);
+  if (schools.length === 0) {
     return res.status(403).json({ message: PARENT_ONLY });
   }
 
-  return res.json(await sessionPayload(data.session, data.user, profile));
+  const hintId = parsed.data.tenant_id?.trim();
+  const hintCode = parsed.data.tenant_code?.trim();
+  const hintSlug = parsed.data.slug?.trim().toLowerCase();
+  const hinted = (hintId || hintCode || hintSlug)
+    ? schools.find((s) =>
+      (hintId && s.id === hintId)
+      || (hintCode && s.tenant_code.toLowerCase() === hintCode.toLowerCase())
+      || (hintSlug && s.slug === hintSlug),
+    )
+    : undefined;
+
+  if (hintId || hintCode || hintSlug) {
+    if (!hinted) {
+      return res.status(403).json({ message: 'This account is not registered at this school' });
+    }
+    const profile = await parentProfileForAuth(data.user.id, hinted.id);
+    if (!profile || !hasParentPortalAccess(profile)) {
+      return res.status(403).json({ message: PARENT_ONLY });
+    }
+    return res.json(await sessionPayload(data.session, data.user, profile, hinted, schools));
+  }
+
+  if (schools.length > 1) {
+    return res.json(pendingSchoolPayload(data.session, schools));
+  }
+
+  const school = schools[0]!;
+  const profile = await parentProfileForAuth(data.user.id, school.id);
+  if (!profile || !hasParentPortalAccess(profile)) {
+    return res.status(403).json({ message: PARENT_ONLY });
+  }
+
+  return res.json(await sessionPayload(data.session, data.user, profile, school, schools));
+});
+
+parentAuthRouter.post('/select-school', loginLimiter, authMiddleware, async (req: AuthenticatedRequest, res) => {
+  const parsed = SelectSchoolSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ message: 'tenant_id or slug is required' });
+  }
+
+  const schools = await listAssignedSchoolsForAuth(req.user!.id);
+  if (schools.length === 0) {
+    return res.status(403).json({ message: PARENT_ONLY });
+  }
+
+  const school = schools.find((s) =>
+    (parsed.data.tenant_id && s.id === parsed.data.tenant_id)
+    || (parsed.data.slug && s.slug === parsed.data.slug.trim().toLowerCase()),
+  );
+  if (!school) {
+    return res.status(403).json({ message: 'This account is not registered at this school' });
+  }
+
+  const profile = await parentProfileForAuth(req.user!.id, school.id);
+  if (!profile || !hasParentPortalAccess(profile)) {
+    return res.status(403).json({ message: PARENT_ONLY });
+  }
+
+  const refreshToken = parsed.data.refresh_token || '';
+
+  let session: { access_token: string; refresh_token: string; expires_in?: number };
+  if (refreshToken) {
+    const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
+    if (error || !data.session) {
+      return res.status(401).json({ message: 'Invalid or expired refresh token' });
+    }
+    session = data.session;
+  } else {
+    const authHeader = req.headers.authorization;
+    const accessToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    if (!accessToken) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+    session = {
+      access_token: accessToken,
+      refresh_token: '',
+      expires_in: 3600,
+    };
+  }
+
+  return res.json(await sessionPayload(session, req.user!, profile, school, schools));
+});
+
+parentAuthRouter.get('/schools', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  const schools = await listAssignedSchoolsForAuth(req.user!.id);
+  if (schools.length === 0) {
+    return res.status(403).json({ message: PARENT_ONLY });
+  }
+  return res.json({ schools: schools.map((s) => publicSchoolPayload(s, { includeId: true })) });
 });
 
 parentAuthRouter.post('/refresh', loginLimiter, async (req, res) => {
@@ -118,10 +222,23 @@ parentAuthRouter.post('/refresh', loginLimiter, async (req, res) => {
     return res.status(401).json({ message: 'Invalid or expired refresh token' });
   }
 
-  const profile = await parentProfileForAuth(data.user.id);
+  const schools = await listAssignedSchoolsForAuth(data.user.id);
+  if (schools.length === 0) {
+    return res.status(403).json({ message: PARENT_ONLY });
+  }
+
+  const tenantHint = typeof req.body?.tenant_id === 'string' ? req.body.tenant_id : undefined;
+  const school = (tenantHint && schools.find((s) => s.id === tenantHint))
+    || (schools.length === 1 ? schools[0]! : null);
+
+  if (!school) {
+    return res.json(pendingSchoolPayload(data.session, schools));
+  }
+
+  const profile = await parentProfileForAuth(data.user.id, school.id);
   if (!profile || !hasParentPortalAccess(profile)) {
     return res.status(403).json({ message: PARENT_ONLY });
   }
 
-  return res.json(await sessionPayload(data.session, data.user, profile));
+  return res.json(await sessionPayload(data.session, data.user, profile, school, schools));
 });

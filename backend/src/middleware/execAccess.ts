@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase.js';
 import { AuthenticatedRequest } from './auth.js';
 
 
-export const EXEC_PERSONAS = ['ceo', 'cfo', 'coo', 'chro'] as const;
+export const EXEC_PERSONAS = ['ceo', 'cfo', 'coo', 'chro', 'principal', 'administrator'] as const;
 export type ExecPersona = (typeof EXEC_PERSONAS)[number];
 
 /**

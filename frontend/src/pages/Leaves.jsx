@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Button } from '../components/ui/button';
@@ -14,12 +14,11 @@ import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import PageHeader from '../components/ui/PageHeader';
 import DataTable from '../components/ui/DataTable';
 import StatusBadge from '../components/ui/StatusBadge';
-import { Plus, Check, X, Loader2, Edit2, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Check, X, Loader2, Trash2, AlertCircle } from 'lucide-react';
 import YamenHRInsights from '../components/hr/YamenHRInsights';
-import { format, differenceInDays } from 'date-fns';
+import LeaveApprovalChainConfig from '../components/hr/LeaveApprovalChainConfig';
+import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { logAuditEvent, AuditActions } from '../components/AuditService';
-import { calculateDeductibleDays, canApplyUnpaidLeave, calculateBalanceAfter } from '../components/leaves/leaveCalculationUtils';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { fireEvent } from '../lib/integrationBus';
 
@@ -46,7 +45,16 @@ export default function Leaves() {
 
   const { data: leaves = [], isLoading } = useQuery({
     queryKey: ['leaveRequests', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
+    queryFn: async () => {
+      const rows = await callApi('/api/leave/requests', null, { method: 'GET' });
+      const list = Array.isArray(rows) ? rows : rows?.requests || [];
+      return list.map((r) => ({
+        ...r,
+        employee_name: r.employees?.name_ar || r.employees?.name_en || r.employee_name,
+        leave_type_name: r.leave_types?.name || r.leave_type_name,
+        total_days: r.days ?? r.total_days,
+      }));
+    },
     enabled: hasTenantAccess,
   });
 
@@ -59,12 +67,6 @@ export default function Leaves() {
   const { data: leaveTypes = [] } = useQuery({
     queryKey: ['leaveTypes', tenantId],
     queryFn: () => fetchData(tenantQuery('leave_types').select('*').match(tenantFilter())),
-    enabled: hasTenantAccess,
-  });
-
-  const { data: holidays = [] } = useQuery({
-    queryKey: ['holidays', tenantId],
-    queryFn: () => fetchData(tenantQuery('holidays').select('id, name_ar, name_en, start_date:date, end_date, type, is_recurring, branch_id, created_at').match(tenantFilter()).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
@@ -89,65 +91,34 @@ export default function Leaves() {
     }
     setSaving(true);
     try {
-      const employee = employees.find(e => e.id === formData.employee_id);
-      const leaveType = leaveTypes.find(lt => lt.id === formData.leave_type_id);
-      const leaveBalance = getEmployeeLeaveBalance(formData.employee_id, formData.leave_type_id);
-      
-      const { deductibleDays, overlappingHolidays, totalDays } = calculateDeductibleDays(
-        formData.start_date, 
-        formData.end_date, 
-        holidays
-      );
+      const result = await callApi('/api/leave/submit', {
+        employee_id: formData.employee_id,
+        leave_type_id: formData.leave_type_id,
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+        reason: formData.reason || undefined,
+      }, { method: 'POST' });
 
-      const currentBalance = leaveBalance?.remaining_days || 0;
-      const needsUnpaid = canApplyUnpaidLeave(deductibleDays, currentBalance) && !formData.is_unpaid_leave;
-
-      if (needsUnpaid && !formData.is_unpaid_leave) {
-        setValidationWarning(isRTL 
-          ? `الرصيد المتاح: ${currentBalance} أيام، الأيام المطلوبة: ${deductibleDays} أيام` 
-          : `Available balance: ${currentBalance} days, Requested: ${deductibleDays} days`
+      if (result?.insufficient_balance) {
+        setValidationWarning(
+          isRTL
+            ? `الرصيد غير كافٍ (${result.balance_before} يوم) — الطلب مُرسل للموافقة`
+            : `Insufficient balance (${result.balance_before} days) — request submitted for approval`,
         );
-        setSaving(false);
-        return;
-      }
-
-      const data = {
-        ...formData,
-        request_number: editingLeave ? editingLeave.request_number : `LVR-${Date.now().toString(36).toUpperCase()}`,
-        employee_name: employee?.name_ar,
-        branch_id: selectedBranchId || employee?.branch_id,
-        department_id: employee?.department_id,
-        leave_type_name: leaveType?.name_ar,
-        total_days: totalDays,
-        deductible_days: deductibleDays,
-        overlapping_holidays: overlappingHolidays,
-        current_balance: currentBalance,
-        balance_after: calculateBalanceAfter(currentBalance, deductibleDays, formData.is_unpaid_leave),
-        status: editingLeave ? 'edited' : 'pending'
-      };
-
-      if (editingLeave) {
-        await tenantQuery('leave_requests').update(data);
-        await logAuditEvent({ 
-          action: 'EDIT', 
-          entityType: 'LeaveRequest', 
-          entityId: editingLeave.id, 
-          oldValues: editingLeave,
-          newValues: data 
-        });
-      } else {
-        const created = await tenantQuery('leave_requests').insert(data);
-        await logAuditEvent({ action: AuditActions.CREATE, entityType: 'LeaveRequest', entityId: created.id, newValues: data });
       }
 
       queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
       setShowForm(false);
       setEditingLeave(null);
-      setValidationWarning('');
       resetForm();
-      toast.success(isRTL ? 'تم بنجاح' : 'Success');
-    } catch (_error) {
-      toast.error(isRTL ? 'حدث خطأ' : 'Error occurred');
+      toast.success(
+        isRTL
+          ? `تم الإرسال (${result?.days_requested ?? ''} يوم)`
+          : `Submitted (${result?.days_requested ?? ''} days)`,
+      );
+    } catch (error) {
+      const msg = error?.message || (isRTL ? 'حدث خطأ' : 'Error occurred');
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -168,13 +139,7 @@ export default function Leaves() {
 
   const handleCancel = async (leave) => {
     try {
-      const user = await supabase.auth.getUser().then(r => r.data?.user);
-      await tenantQuery('leave_requests').update({ 
-        status: 'cancelled',
-        cancelled_by: user?.email || '',
-        cancelled_date: new Date().toISOString()
-      });
-      await logAuditEvent({ action: 'CANCEL', entityType: 'LeaveRequest', entityId: leave.id });
+      await callApi(`/api/leave/requests/${leave.id}/cancel`, {}, { method: 'POST' });
       queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
       toast.success(isRTL ? 'تم الإلغاء' : 'Cancelled');
     } catch (_error) {
@@ -182,23 +147,16 @@ export default function Leaves() {
     }
   };
 
-  const handleApprove = async (leave, role) => {
+  const handleApprove = async (leave) => {
     try {
-      const isFinalApproval = role === 'hr';
-      const updates = role === 'manager' 
-        ? { manager_action: 'approved', manager_action_date: new Date().toISOString(), status: 'manager_approved' }
-        : { hr_action: 'approved', hr_action_date: new Date().toISOString(), status: 'approved' };
-      
-      await tenantQuery('leave_requests').update(updates);
-      await logAuditEvent({ action: AuditActions.APPROVE, entityType: 'LeaveRequest', entityId: leave.id, newValues: updates });
+      const result = await callApi(`/api/leave/requests/${leave.id}/approve`, {}, { method: 'POST' });
       queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
       toast.success(isRTL ? 'تم الاعتماد' : 'Approved');
 
-      // 🔌 Integration Bus: notify employee on final HR approval
-      if (isFinalApproval) {
+      if (result?.request?.status === 'approved' || result?.status === 'approved') {
         const emp = employees.find(e => e.id === leave.employee_id);
         fireEvent('leave_approved', {
-          tenant_id: leave.tenant_id,
+          tenant_id: leave.tenant_id || tenantId,
           employee_id: leave.employee_id,
           employee_name: leave.employee_name,
           employee_phone: emp?.phone || emp?.whatsapp_number || '',
@@ -206,33 +164,29 @@ export default function Leaves() {
           start_date: leave.start_date,
           end_date: leave.end_date,
           leave_type: leave.leave_type_name,
-        }, { sourceModule: 'HR', tenantId: leave.tenant_id });
+        }, { sourceModule: 'HR', tenantId: leave.tenant_id || tenantId });
       }
     } catch (_error) {
       toast.error(isRTL ? 'حدث خطأ' : 'Error occurred');
     }
   };
 
-  const handleReject = async (leave, role) => {
+  const handleReject = async (leave) => {
     try {
-      const updates = role === 'manager'
-        ? { manager_action: 'rejected', manager_action_date: new Date().toISOString(), status: 'rejected' }
-        : { hr_action: 'rejected', hr_action_date: new Date().toISOString(), status: 'rejected' };
-
-      await tenantQuery('leave_requests').update(updates);
-      await logAuditEvent({ action: AuditActions.REJECT, entityType: 'LeaveRequest', entityId: leave.id, newValues: updates });
+      await callApi(`/api/leave/requests/${leave.id}/reject`, {
+        reason: isRTL ? 'مرفوض من الإدارة' : 'Rejected by management',
+      }, { method: 'POST' });
       queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
       toast.success(isRTL ? 'تم الرفض' : 'Rejected');
 
-      // 🔌 Integration Bus: notify employee
       const emp = employees.find(e => e.id === leave.employee_id);
       fireEvent('leave_rejected', {
-        tenant_id: leave.tenant_id,
+        tenant_id: leave.tenant_id || tenantId,
         employee_id: leave.employee_id,
         employee_name: leave.employee_name,
         employee_phone: emp?.phone || emp?.whatsapp_number || '',
         reason: 'Rejected by management',
-      }, { sourceModule: 'HR', tenantId: leave.tenant_id });
+      }, { sourceModule: 'HR', tenantId: leave.tenant_id || tenantId });
     } catch (_error) {
       toast.error(isRTL ? 'حدث خطأ' : 'Error occurred');
     }
@@ -259,34 +213,16 @@ export default function Leaves() {
     { header: t('status'), cell: (row) => <StatusBadge status={row.status} /> },
     { header: t('actions'), cell: (row) => (
       <div className="flex gap-1">
-        {row.status === 'pending' || row.status === 'edited' ? (
+        {['pending', 'manager_approved'].includes(row.status) ? (
           <>
-            {row.status === 'pending' && (
-              <>
-                <Button size="sm" variant="ghost" onClick={() => handleApprove(row, 'manager')} className="text-emerald-600">
-                  <Check className="w-4 h-4" />
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => handleReject(row, 'manager')} className="text-red-600">
-                  <X className="w-4 h-4" />
-                </Button>
-              </>
-            )}
-            {row.status === 'edited' && (
-              <Button size="sm" variant="ghost" onClick={() => handleEdit(row)} className="text-najdi-700">
-                <Edit2 className="w-4 h-4" />
-              </Button>
-            )}
+            <Button size="sm" variant="ghost" onClick={() => handleApprove(row)} className="text-emerald-600">
+              <Check className="w-4 h-4" />
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => handleReject(row)} className="text-red-600">
+              <X className="w-4 h-4" />
+            </Button>
             <Button size="sm" variant="ghost" onClick={() => handleCancel(row)} className="text-orange-600">
               <Trash2 className="w-4 h-4" />
-            </Button>
-          </>
-        ) : row.status === 'manager_approved' ? (
-          <>
-            <Button size="sm" variant="ghost" onClick={() => handleApprove(row, 'hr')} className="text-emerald-600">
-              {isRTL ? 'اعتماد HR' : 'HR Approve'}
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => handleReject(row, 'hr')} className="text-red-600">
-              <X className="w-4 h-4" />
             </Button>
           </>
         ) : (
@@ -320,6 +256,8 @@ export default function Leaves() {
       </Tabs>
 
       <DataTable columns={columns} data={filteredLeaves} loading={isLoading} emptyMessage={t('noData')} />
+
+      <LeaveApprovalChainConfig />
 
       {/* Yamen AI */}
       <YamenHRInsights
@@ -393,20 +331,22 @@ export default function Leaves() {
               <div className="bg-sand p-3 rounded-lg space-y-2">
                 {(() => {
                   const leaveBalance = getEmployeeLeaveBalance(formData.employee_id, formData.leave_type_id);
-                  const { deductibleDays, overlappingHolidays } = calculateDeductibleDays(formData.start_date, formData.end_date, holidays);
-                  const totalDays = differenceInDays(new Date(formData.end_date), new Date(formData.start_date)) + 1;
-                  const balanceAfter = calculateBalanceAfter(leaveBalance?.remaining_days || 0, deductibleDays, formData.is_unpaid_leave);
-
+                  const start = new Date(formData.start_date);
+                  const end = new Date(formData.end_date);
+                  const totalDays = Math.max(0, Math.round((end - start) / 86400000) + 1);
                   return (
                     <>
-                      <p className="text-sm"><span className="font-medium">{isRTL ? 'إجمالي الأيام:' : 'Total Days:'}</span> {totalDays}</p>
-                      <p className="text-sm"><span className="font-medium">{isRTL ? 'الأيام المخصومة:' : 'Deductible Days:'}</span> {deductibleDays}</p>
-                      {overlappingHolidays.length > 0 && (
-                        <p className="text-sm text-najdi-700"><span className="font-medium">{isRTL ? 'أيام عطل رسمية:' : 'Holidays:'}</span> {overlappingHolidays.length}</p>
-                      )}
-                      <p className="text-sm"><span className="font-medium">{isRTL ? 'الرصيد الحالي:' : 'Current Balance:'}</span> {leaveBalance?.remaining_days || 0}</p>
-                      <p className={`text-sm font-medium ${balanceAfter < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                        {isRTL ? 'الرصيد بعد الإجازة:' : 'Balance After:'} {balanceAfter}
+                      <p className="text-sm">
+                        <span className="font-medium">{isRTL ? 'الأيام التقويمية:' : 'Calendar days:'}</span> {totalDays}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {isRTL
+                          ? 'أيام العمل والرصيد يُحسبان على الخادم عند التقديم'
+                          : 'Working days and balance are calculated server-side on submit'}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">{isRTL ? 'الرصيد الحالي:' : 'Current Balance:'}</span>{' '}
+                        {leaveBalance?.remaining_days || 0}
                       </p>
                     </>
                   );

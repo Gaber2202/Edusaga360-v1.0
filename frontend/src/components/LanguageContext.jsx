@@ -295,11 +295,13 @@ const translations = {
         // Phase 2
         crm: 'خدمة العملاء',
         itHelpdesk: 'الدعم التقني',
+        helpDesk: 'مكتب المساعدة',
         facilities: 'المرافق والصيانة',
         communications: 'الاتصالات',
         operations: 'لوحة العمليات',
         cms: 'إدارة المحتوى',
         parentPortal: 'بوابة أولياء الأمور',
+        projects: 'المشاريع',
 
         // Payroll Module
         payrollSystem: 'نظام الرواتب',
@@ -546,6 +548,18 @@ const translations = {
 
         // Executive Command Center
         executiveCommandCenter: 'مركز قيادة الإدارة التنفيذية',
+        execPersonaCeo: 'الرئيس التنفيذي',
+        execPersonaCeoDesc: 'الاستراتيجية والحيوية',
+        execPersonaCfo: 'المدير المالي',
+        execPersonaCfoDesc: 'المالية والامتثال',
+        execPersonaCoo: 'مدير العمليات',
+        execPersonaCooDesc: 'التشغيل والقبول',
+        execPersonaChro: 'مدير الموارد البشرية',
+        execPersonaChroDesc: 'القوى العاملة والتوطين',
+        execPersonaPrincipal: 'مدير المدرسة',
+        execPersonaPrincipalDesc: 'القيادة الأكاديمية',
+        execPersonaAdministrator: 'المسجل',
+        execPersonaAdministratorDesc: 'القبول والتحصيل والعمليات اليومية',
         executive: 'الإدارة التنفيذية',
         switchPersona: 'تبديل العرض التنفيذي',
         groupVitalityIndex: 'مؤشر حيوية المجموعة',
@@ -919,11 +933,13 @@ const translations = {
         // Phase 2
         crm: 'CRM',
         itHelpdesk: 'IT Helpdesk',
+        helpDesk: 'Help Desk',
         facilities: 'Facilities',
         communications: 'Communications',
         operations: 'Operations',
         cms: 'CMS',
         parentPortal: 'Parent Portal',
+        projects: 'Projects',
 
         // Payroll Module
         payrollSystem: 'Payroll System',
@@ -1187,6 +1203,18 @@ const translations = {
 
         // Executive Command Center
         executiveCommandCenter: 'Executive Command Center',
+        execPersonaCeo: 'Chief Executive',
+        execPersonaCeoDesc: 'Strategy & Vitality',
+        execPersonaCfo: 'Chief Financial Officer',
+        execPersonaCfoDesc: 'Finance & Compliance',
+        execPersonaCoo: 'Chief Operating Officer',
+        execPersonaCooDesc: 'Operations & Admissions',
+        execPersonaChro: 'Chief HR Officer',
+        execPersonaChroDesc: 'Workforce & Saudization',
+        execPersonaPrincipal: 'School Principal',
+        execPersonaPrincipalDesc: 'Academic Leadership',
+        execPersonaAdministrator: 'Registrar',
+        execPersonaAdministratorDesc: 'Admissions, collections & daily operations',
         executive: 'Executive',
         switchPersona: 'Switch Executive View',
         groupVitalityIndex: 'Group Vitality Index',

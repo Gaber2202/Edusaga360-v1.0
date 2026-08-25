@@ -17,6 +17,7 @@ class ApiException implements Exception {
 
 class School {
   const School({
+    this.id,
     required this.slug,
     required this.tenantCode,
     this.nameEn,
@@ -24,6 +25,7 @@ class School {
     this.logoUrl,
   });
 
+  final String? id;
   final String slug;
   final String tenantCode;
   final String? nameEn;
@@ -37,6 +39,7 @@ class School {
 
   factory School.fromJson(Map<String, dynamic> json) {
     return School(
+      id: json['id'] as String?,
       slug: json['slug'] as String? ?? '',
       tenantCode: json['tenant_code'] as String? ?? '',
       nameEn: json['name_en'] as String?,
@@ -46,6 +49,7 @@ class School {
   }
 
   Map<String, dynamic> toJson() => {
+        if (id != null) 'id': id,
         'slug': slug,
         'tenant_code': tenantCode,
         'name_en': nameEn,
@@ -95,43 +99,64 @@ class AuthSession {
   const AuthSession({
     required this.accessToken,
     required this.refreshToken,
-    required this.user,
-    required this.school,
+    this.user,
+    this.school,
+    this.schools = const [],
+    this.needsSchoolSelection = false,
   });
 
   final String accessToken;
   final String refreshToken;
-  final ParentUser user;
-  final School school;
+  final ParentUser? user;
+  final School? school;
+  final List<School> schools;
+  final bool needsSchoolSelection;
+
+  bool get isComplete => !needsSchoolSelection && school != null && user != null;
 
   AuthSession copyWith({
     String? accessToken,
     String? refreshToken,
     ParentUser? user,
     School? school,
+    List<School>? schools,
+    bool? needsSchoolSelection,
   }) {
     return AuthSession(
       accessToken: accessToken ?? this.accessToken,
       refreshToken: refreshToken ?? this.refreshToken,
       user: user ?? this.user,
       school: school ?? this.school,
+      schools: schools ?? this.schools,
+      needsSchoolSelection: needsSchoolSelection ?? this.needsSchoolSelection,
     );
   }
 
   factory AuthSession.fromJson(Map<String, dynamic> json) {
+    final schoolJson = json['school'];
+    final schoolsJson = json['schools'];
+    final userJson = json['user'];
     return AuthSession(
       accessToken: json['access_token'] as String,
-      refreshToken: json['refresh_token'] as String,
-      user: ParentUser.fromJson(json['user'] as Map<String, dynamic>),
-      school: School.fromJson(json['school'] as Map<String, dynamic>),
+      refreshToken: json['refresh_token'] as String? ?? '',
+      user: userJson is Map<String, dynamic> ? ParentUser.fromJson(userJson) : null,
+      school: schoolJson is Map<String, dynamic> ? School.fromJson(schoolJson) : null,
+      schools: [
+        if (schoolsJson is List)
+          for (final item in schoolsJson)
+            if (item is Map<String, dynamic>) School.fromJson(item),
+      ],
+      needsSchoolSelection: json['needs_school_selection'] as bool? ?? false,
     );
   }
 
   Map<String, dynamic> toJson() => {
         'access_token': accessToken,
         'refresh_token': refreshToken,
-        'user': user.toJson(),
-        'school': school.toJson(),
+        if (user != null) 'user': user!.toJson(),
+        if (school != null) 'school': school!.toJson(),
+        'schools': [for (final s in schools) s.toJson()],
+        'needs_school_selection': needsSchoolSelection,
       };
 }
 
@@ -619,6 +644,32 @@ class CanteenTransaction {
   }
 }
 
+class StoreCategory {
+  const StoreCategory({
+    required this.id,
+    required this.slug,
+    required this.nameEn,
+    required this.nameAr,
+  });
+
+  final String id;
+  final String slug;
+  final String nameEn;
+  final String nameAr;
+
+  String displayName({required bool rtl}) =>
+      rtl ? (nameAr.isNotEmpty ? nameAr : nameEn) : (nameEn.isNotEmpty ? nameEn : nameAr);
+
+  factory StoreCategory.fromJson(Map<String, dynamic> json) {
+    return StoreCategory(
+      id: json['id'] as String? ?? '',
+      slug: json['slug'] as String? ?? '',
+      nameEn: json['name_en'] as String? ?? '',
+      nameAr: json['name_ar'] as String? ?? '',
+    );
+  }
+}
+
 class StoreProduct {
   const StoreProduct({
     required this.id,
@@ -626,10 +677,15 @@ class StoreProduct {
     required this.nameAr,
     required this.category,
     required this.fulfillmentMode,
+    this.descriptionEn,
+    this.descriptionAr,
     this.pricePurchase,
     this.priceRental,
+    this.rentalUnit,
     this.stockQty = 0,
     this.isBookable = false,
+    this.imageUrl,
+    this.collectLocation,
   });
 
   final String id;
@@ -637,13 +693,37 @@ class StoreProduct {
   final String nameAr;
   final String category;
   final String fulfillmentMode;
+  final String? descriptionEn;
+  final String? descriptionAr;
   final double? pricePurchase;
   final double? priceRental;
+  final String? rentalUnit;
   final int stockQty;
   final bool isBookable;
+  final String? imageUrl;
+  final String? collectLocation;
 
   String displayName({required bool rtl}) =>
       rtl ? (nameAr.isNotEmpty ? nameAr : nameEn) : (nameEn.isNotEmpty ? nameEn : nameAr);
+
+  String? displayDescription({required bool rtl}) {
+    final ar = descriptionAr?.trim() ?? '';
+    final en = descriptionEn?.trim() ?? '';
+    final text = rtl ? (ar.isNotEmpty ? ar : en) : (en.isNotEmpty ? en : ar);
+    return text.isEmpty ? null : text;
+  }
+
+  bool get allowsPurchase {
+    final mode = fulfillmentMode.toLowerCase();
+    return (mode == 'purchase' || mode == 'both') && pricePurchase != null && pricePurchase! > 0;
+  }
+
+  bool get allowsRental {
+    final mode = fulfillmentMode.toLowerCase();
+    return (mode == 'rental' || mode == 'both') && priceRental != null && priceRental! > 0;
+  }
+
+  bool get inStock => isBookable || stockQty > 0;
 
   factory StoreProduct.fromJson(Map<String, dynamic> json) {
     return StoreProduct(
@@ -652,10 +732,15 @@ class StoreProduct {
       nameAr: json['name_ar'] as String? ?? '',
       category: json['category'] as String? ?? 'other',
       fulfillmentMode: json['fulfillment_mode'] as String? ?? 'purchase',
+      descriptionEn: json['description_en'] as String?,
+      descriptionAr: json['description_ar'] as String?,
       pricePurchase: (json['price_purchase'] as num?)?.toDouble(),
       priceRental: (json['price_rental'] as num?)?.toDouble(),
+      rentalUnit: json['rental_unit'] as String?,
       stockQty: (json['stock_qty'] as num?)?.toInt() ?? 0,
       isBookable: json['is_bookable'] == true,
+      imageUrl: json['image_url'] as String?,
+      collectLocation: json['collect_location'] as String?,
     );
   }
 }
@@ -687,6 +772,8 @@ class StoreOrder {
     required this.status,
     required this.totalAmount,
     this.invoiceId,
+    this.createdAt,
+    this.currencyCode,
   });
 
   final String id;
@@ -694,6 +781,8 @@ class StoreOrder {
   final String status;
   final double totalAmount;
   final String? invoiceId;
+  final String? createdAt;
+  final String? currencyCode;
 
   factory StoreOrder.fromJson(Map<String, dynamic> json) {
     return StoreOrder(
@@ -702,6 +791,8 @@ class StoreOrder {
       status: json['status'] as String? ?? '',
       totalAmount: (json['total_amount'] as num?)?.toDouble() ?? 0,
       invoiceId: json['invoice_id'] as String?,
+      createdAt: json['created_at'] as String?,
+      currencyCode: json['currency_code'] as String?,
     );
   }
 }

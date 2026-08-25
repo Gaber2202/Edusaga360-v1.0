@@ -99,6 +99,8 @@ export const PAGE_MODULE_KEYS = {
   AssetRentals: 'assets',
   Depreciation: 'assets',
   Facilities: 'facilities',
+  HelpDesk: 'operations',
+  Projects: 'accounting',
 
   // School operations
   CanteenManagement: 'canteen',
@@ -128,7 +130,6 @@ export const PAGE_MODULE_KEYS = {
   GovernmentRelations: 'gov_relations',
   GovIntegrations: 'gov_relations',
   ViolationsPenalties: 'gov_relations',
-  IntegrationHub: 'integrations',
 
   // Admissions extras
   ParentIntake: 'parent_intake',
@@ -211,6 +212,8 @@ export const NAV_MODULE_KEYS = {
   assetRentals: 'assets',
   depreciation: 'assets',
   facilities: 'facilities',
+  helpDesk: 'operations',
+  projects: 'accounting',
   canteenManagement: 'canteen',
   canteenPOSOrders: 'canteen',
   storeManagement: 'store',

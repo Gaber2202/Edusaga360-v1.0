@@ -4,7 +4,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery, fetchData } from '../../api/supabaseClient';
+import { tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent } from '../ui/card';
@@ -41,7 +41,16 @@ export default function LeaveWorkflow({ isRTL, viewMode = 'hr' }) {
 
   const { data: leaveRequests = [], isLoading } = useQuery({
     queryKey: ['leaveRequests', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
+    queryFn: async () => {
+      const rows = await callApi('/api/leave/requests', null, { method: 'GET' });
+      const list = Array.isArray(rows) ? rows : rows?.requests || [];
+      return list.map((r) => ({
+        ...r,
+        employee_name: r.employees?.name_ar || r.employees?.name_en || r.employee_name,
+        leave_type_name: r.leave_types?.name || r.leave_type_name,
+        total_days: r.days ?? r.total_days,
+      }));
+    },
     enabled: hasTenantAccess,
     refetchInterval: 30000,
   });
@@ -78,33 +87,7 @@ export default function LeaveWorkflow({ isRTL, viewMode = 'hr' }) {
 
   const handleApprove = async (request) => {
     try {
-      const user = await supabase.auth.getUser().then(r => r.data?.user);
-      await tenantQuery('leave_requests').update({
-        status: 'approved',
-        approved_by: user.email,
-        approved_date: new Date().toISOString(),
-        approved_by_name: user.full_name,
-      });
-
-      // Auto-update leave balance
-      const balance = leaveBalances.find(b => b.employee_id === request.employee_id && b.leave_type_id === request.leave_type_id);
-      if (balance) {
-        await tenantQuery('leave_balances').update({
-          used_days: (balance.used_days || 0) + (request.total_days || 0),
-          pending_days: Math.max(0, (balance.pending_days || 0) - (request.total_days || 0)),
-        });
-      }
-
-      // Auto-update employee attendance
-      await tenantQuery('employee_attendances').insert({
-        employee_id: request.employee_id,
-        employee_name: request.employee_name,
-        date: request.start_date,
-        status: 'on_leave',
-        leave_request_id: request.id,
-        leave_type: request.leave_type_name,
-      });
-
+      await callApi(`/api/leave/requests/${request.id}/approve`, {}, { method: 'POST' });
       queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
       queryClient.invalidateQueries({ queryKey: ['leaveBalances'] });
       toast.success(isRTL ? 'تم اعتماد الإجازة' : 'Leave approved');
@@ -115,19 +98,9 @@ export default function LeaveWorkflow({ isRTL, viewMode = 'hr' }) {
 
   const handleReject = async (request) => {
     try {
-      const user = await supabase.auth.getUser().then(r => r.data?.user);
-      await tenantQuery('leave_requests').update({
-        status: 'rejected',
-        rejected_by: user.email,
-        rejected_date: new Date().toISOString(),
-      });
-      // Return pending days to balance
-      const balance = leaveBalances.find(b => b.employee_id === request.employee_id && b.leave_type_id === request.leave_type_id);
-      if (balance) {
-        await tenantQuery('leave_balances').update({
-          pending_days: Math.max(0, (balance.pending_days || 0) - (request.total_days || 0)),
-        });
-      }
+      await callApi(`/api/leave/requests/${request.id}/reject`, {
+        reason: isRTL ? 'مرفوض' : 'Rejected',
+      }, { method: 'POST' });
       queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
       queryClient.invalidateQueries({ queryKey: ['leaveBalances'] });
       toast.success(isRTL ? 'تم رفض الإجازة' : 'Leave rejected');
@@ -143,32 +116,13 @@ export default function LeaveWorkflow({ isRTL, viewMode = 'hr' }) {
     }
     setSaving(true);
     try {
-      const emp = employees.find(e => e.id === form.employee_id);
-      const lt = leaveTypes.find(t => t.id === form.leave_type_id);
-      const days = calcDays();
-      const tid = getTenantIdForCreate();
-      await tenantQuery('leave_requests').insert({
-        ...(tid && { tenant_id: tid }),
+      await callApi('/api/leave/submit', {
         employee_id: form.employee_id,
-        employee_name: emp?.name_ar,
-        department_id: emp?.department_id,
-        branch_id: emp?.branch_id || selectedBranchId,
         leave_type_id: form.leave_type_id,
-        leave_type_name: lt?.name_ar,
         start_date: form.start_date,
         end_date: form.end_date,
-        total_days: days,
-        reason: form.reason,
-        status: 'pending',
-        submitted_date: new Date().toISOString(),
-        request_number: `LR-${Date.now().toString(36).toUpperCase()}`,
-      });
-
-      // Reserve balance
-      const balance = leaveBalances.find(b => b.employee_id === form.employee_id && b.leave_type_id === form.leave_type_id);
-      if (balance) {
-        await tenantQuery('leave_balances').update({ pending_days: (balance.pending_days || 0) + days });
-      }
+        reason: form.reason || undefined,
+      }, { method: 'POST' });
 
       queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
       queryClient.invalidateQueries({ queryKey: ['leaveBalances'] });

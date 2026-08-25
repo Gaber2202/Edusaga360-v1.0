@@ -1,7 +1,8 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import { cn } from '../../lib/utils';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, ChevronRight } from 'lucide-react';
 
 const GRADIENTS = {
   najdi: 'from-najdi-900/10 via-transparent to-transparent',
@@ -70,15 +71,17 @@ export default function ExecutiveKPICard({
   subtitle,
   className,
   id = 'kpi',
+  href,
 }) {
   const accent = ACCENTS[color] || ACCENTS.najdi;
   const gradient = GRADIENTS[color] || GRADIENTS.najdi;
 
-  return (
+  const inner = (
     <div
       className={cn(
-        'group relative overflow-hidden rounded-xl border border-border/60 bg-white shadow-sm',
+        'group relative overflow-hidden rounded-xl border border-border/60 bg-white shadow-sm h-full',
         'ring-1 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5',
+        href && 'cursor-pointer',
         accent.ring,
         className,
       )}
@@ -98,7 +101,12 @@ export default function ExecutiveKPICard({
           )}
         </div>
         <div className="flex items-end justify-between gap-2 mt-auto">
-          <DeltaBadge delta={delta} suffix={deltaSuffix} invert={invertDelta} />
+          <div className="flex items-center gap-1.5">
+            <DeltaBadge delta={delta} suffix={deltaSuffix} invert={invertDelta} />
+            {href && (
+              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            )}
+          </div>
           <div className="w-24 flex-shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
             <Sparkline data={sparkData} color={accent.spark} id={id} />
           </div>
@@ -106,4 +114,7 @@ export default function ExecutiveKPICard({
       </div>
     </div>
   );
+
+  if (href) return <Link to={href} className="block h-full">{inner}</Link>;
+  return inner;
 }

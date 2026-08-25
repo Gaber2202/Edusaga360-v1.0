@@ -132,7 +132,7 @@ execRouter.post('/access', async (req: AuthenticatedRequest, res: Response) => {
   res.json({ success: true });
 });
 
-async function getDashboard(req: AuthenticatedRequest, persona: 'ceo' | 'cfo' | 'coo' | 'chro', res: Response) {
+async function getDashboard(req: AuthenticatedRequest, persona: ExecPersona, res: Response) {
   const tenant_id = resolveTenantId(req);
   if (!tenant_id) return res.status(400).json({ error: 'No tenant context' });
   const period = typeof req.query.period === 'string' && req.query.period ? req.query.period : 'current';
@@ -151,13 +151,15 @@ execRouter.get('/ceo', requireExecAccess('ceo'), (req, res) => getDashboard(req,
 execRouter.get('/cfo', requireExecAccess('cfo'), (req, res) => getDashboard(req, 'cfo', res));
 execRouter.get('/coo', requireExecAccess('coo'), (req, res) => getDashboard(req, 'coo', res));
 execRouter.get('/chro', requireExecAccess('chro'), (req, res) => getDashboard(req, 'chro', res));
+execRouter.get('/principal', requireExecAccess('principal'), (req, res) => getDashboard(req, 'principal', res));
+execRouter.get('/administrator', requireExecAccess('administrator'), (req, res) => getDashboard(req, 'administrator', res));
 
 execRouter.get('/:persona/export', (req: AuthenticatedRequest, res: Response, next) => {
-  const persona = req.params.persona as 'ceo' | 'cfo' | 'coo' | 'chro';
-  if (!['ceo', 'cfo', 'coo', 'chro'].includes(persona)) return res.status(404).json({ error: 'Unknown persona' });
+  const persona = req.params.persona as ExecPersona;
+  if (!EXEC_PERSONAS.includes(persona)) return res.status(404).json({ error: 'Unknown persona' });
   return requireExecAccess(persona)(req, res, next);
 }, async (req: AuthenticatedRequest, res: Response) => {
-  const persona = req.params.persona as 'ceo' | 'cfo' | 'coo' | 'chro';
+  const persona = req.params.persona as ExecPersona;
   const tenant_id = resolveTenantId(req);
   if (!tenant_id) return res.status(400).json({ error: 'No tenant context' });
   const period = typeof req.query.period === 'string' && req.query.period ? req.query.period : 'current';

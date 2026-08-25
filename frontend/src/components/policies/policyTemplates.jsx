@@ -136,6 +136,142 @@ export const COMPLIANCE_CHECKLIST_ITEMS = [
   { key: "termination_process", ar: "عملية الإنهاء", en: "Termination Process" },
   { key: "eosb_references", ar: "مراجع مكافأة نهاية الخدمة", en: "EOSB References" },
   { key: "ksa_labour_law", ar: "قانون العمل السعودي", en: "KSA Labour Law Compliant" },
+  { key: "uae_labour_law", ar: "قانون العمل الإماراتي", en: "UAE Labour Law Compliant" },
+  { key: "qa_labour_law", ar: "قانون العمل القطري", en: "Qatar Labour Law Compliant" },
   { key: "child_safety", ar: "سلامة الطفل", en: "Child Safety Standards" },
   { key: "data_protection", ar: "حماية البيانات", en: "Data Protection" }
 ];
+
+/** Shared core templates used by all jurisdictions (excl. SA-only nationalization). */
+const CORE_TEMPLATES = POLICY_TEMPLATES.filter((p) => p.category !== 'saudization');
+
+const SA_ONLY = POLICY_TEMPLATES.filter((p) => p.category === 'saudization');
+
+const AE_NATIONALIZATION = [
+  {
+    category: 'nationalization',
+    title_ar: 'سياسة التوطين (الإمارات)',
+    title_en: 'Emiratization Compliance Policy',
+    body_ar: 'تلتزم المدرسة بنسب التوطين وفق أنظمة وزارة الموارد البشرية والتوطين الإماراتية...',
+    body_en: 'The school commits to Emiratization ratios per UAE MoHRE requirements...',
+    tags: ['emiratization', 'mohre'],
+  },
+  {
+    category: 'nationalization',
+    title_ar: 'سياسة تطوير الكوادر الإماراتية',
+    title_en: 'Emirati Talent Development Policy',
+    body_ar: 'تدريب وتأهيل الموظفين الإماراتيين للمناصب القيادية...',
+    body_en: 'Training and qualifying Emirati employees for leadership roles...',
+    tags: ['development', 'emiratization'],
+  },
+];
+
+const QA_NATIONALIZATION = [
+  {
+    category: 'nationalization',
+    title_ar: 'سياسة التقطير',
+    title_en: 'Qatarization Compliance Policy',
+    body_ar: 'تلتزم المدرسة بخطط التقطير المعتمدة من الجهات المختصة في دولة قطر...',
+    body_en: 'The school commits to Qatarization plans set by competent Qatari authorities...',
+    tags: ['qatarization', 'nationalization'],
+  },
+  {
+    category: 'nationalization',
+    title_ar: 'سياسة تطوير الكوادر القطرية',
+    title_en: 'Qatari Talent Development Policy',
+    body_ar: 'تدريب وتأهيل الموظفين القطريين للمناصب القيادية...',
+    body_en: 'Training and qualifying Qatari employees for leadership roles...',
+    tags: ['development', 'qatarization'],
+  },
+];
+
+const AE_OVERRIDES = [
+  {
+    category: 'leave_policies',
+    title_ar: 'سياسة إجازات الأمومة (الإمارات)',
+    title_en: 'Maternity Leave Policy (UAE)',
+    body_ar: 'الموظفة تستحق إجازة أمومة وفق قانون العمل الإماراتي (60 يوماً مدفوعة كحد أدنى في النسخة v1)...',
+    body_en: 'Female employees receive maternity leave per UAE Labour Law (60 paid days minimum in v1)...',
+    tags: ['maternity', 'uae'],
+  },
+  {
+    category: 'leave_policies',
+    title_ar: 'سياسة الإجازة السنوية (الإمارات)',
+    title_en: 'Annual Leave Policy (UAE)',
+    body_ar: 'يحق للموظف 30 يوماً إجازة سنوية بعد إكمال سنة خدمة...',
+    body_en: 'Employees get 30 days annual leave after one year of service...',
+    tags: ['annual_leave', 'uae'],
+  },
+];
+
+const QA_OVERRIDES = [
+  {
+    category: 'leave_policies',
+    title_ar: 'سياسة الإجازة السنوية (قطر)',
+    title_en: 'Annual Leave Policy (Qatar)',
+    body_ar: 'يحق للموظف إجازة سنوية وفق قانون العمل القطري...',
+    body_en: 'Employees receive annual leave per Qatar Labour Law...',
+    tags: ['annual_leave', 'qatar'],
+  },
+  {
+    category: 'payroll_deductions',
+    title_ar: 'سياسة اشتراكات التقاعد (قطر)',
+    title_en: 'Retirement Contribution Policy (Qatar)',
+    body_ar: 'تطبق اشتراكات التقاعد وفق أنظمة قطر للعملة المحلية...',
+    body_en: 'Retirement contributions apply per Qatar regulations...',
+    tags: ['retirement', 'qatar'],
+  },
+];
+
+function normalizeJurisdiction(code) {
+  const c = String(code || 'SA').toUpperCase();
+  if (c === 'AE' || c === 'UAE') return 'AE';
+  if (c === 'QA' || c === 'QAT' || c === 'QATAR') return 'QA';
+  return 'SA';
+}
+
+/**
+ * SCRUM-125: country-pack driven HR policy libraries (not static KSA-only).
+ */
+export function getPolicyTemplatesForJurisdiction(jurisdictionCode) {
+  const code = normalizeJurisdiction(jurisdictionCode);
+  if (code === 'AE') {
+    return [...CORE_TEMPLATES, ...AE_NATIONALIZATION, ...AE_OVERRIDES].map((t) => ({
+      ...t,
+      jurisdiction_code: 'AE',
+    }));
+  }
+  if (code === 'QA') {
+    return [...CORE_TEMPLATES, ...QA_NATIONALIZATION, ...QA_OVERRIDES].map((t) => ({
+      ...t,
+      jurisdiction_code: 'QA',
+    }));
+  }
+  return [...CORE_TEMPLATES, ...SA_ONLY].map((t) => ({
+    ...t,
+    jurisdiction_code: 'SA',
+  }));
+}
+
+export function getPolicyCategoriesForJurisdiction(jurisdictionCode) {
+  const code = normalizeJurisdiction(jurisdictionCode);
+  const base = { ...POLICY_CATEGORIES };
+  if (code === 'AE' || code === 'QA') {
+    delete base.saudization;
+    base.nationalization = {
+      ar: code === 'AE' ? 'التوطين (الإمارات)' : 'التقطير',
+      en: code === 'AE' ? 'Emiratization' : 'Qatarization',
+    };
+  }
+  return base;
+}
+
+export function getComplianceChecklistForJurisdiction(jurisdictionCode) {
+  const code = normalizeJurisdiction(jurisdictionCode);
+  return COMPLIANCE_CHECKLIST_ITEMS.filter((item) => {
+    if (item.key === 'ksa_labour_law') return code === 'SA';
+    if (item.key === 'uae_labour_law') return code === 'AE';
+    if (item.key === 'qa_labour_law') return code === 'QA';
+    return true;
+  });
+}

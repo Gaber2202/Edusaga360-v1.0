@@ -193,12 +193,14 @@ export interface PayrollService {
     period: { start: string; end: string },
   ): Promise<{ filename: string; content: string }>;
 
-  /** End-of-service gratuity for one employee (foreign workers). */
+  /** End-of-service gratuity for one employee.
+   *  options.exitType defaults to resignation in v1; unpaidLeaveDays reduce tenure. */
   calculateEndOfServiceBenefit?(
     basicSalary: number,
     yearsOfService: number,
     nationality?: string,
-  ): { amount: number; currencyCode: string };
+    options?: { exitType?: 'resignation' | 'termination' | 'end_of_contract'; unpaidLeaveDays?: number },
+  ): { amount: number; currencyCode: string; qualifying_years?: number; unpaid_leave_days?: number; exit_type?: string };
 
   /** Annual leave entitlement in days for a given length of service. */
   calculateAnnualLeave?(yearsOfService: number, isPartTime?: boolean): number;
@@ -354,6 +356,34 @@ export interface DocumentsService {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Vaccination schedule (SCRUM-137 — clinic obligations per jurisdiction)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface VaccinationScheduleItem {
+  /** Stable vaccine code used to match student_health_records.vaccinations[]. */
+  code: string;
+  name_en: string;
+  name_ar: string;
+  /** Recommended age label (e.g. "Birth", "2 months", "School entry"). */
+  age_label_en: string;
+  age_label_ar: string;
+  /** Approximate age in months when due (null = school-entry / catch-up). */
+  age_months: number | null;
+  required: boolean;
+  doses?: number;
+}
+
+export interface VaccinationSchedule {
+  /** Named authority source, e.g. MOH KSA / DHA UAE / Qatar MoPH. */
+  source: {
+    authority: string;
+    name_en: string;
+    name_ar: string;
+  };
+  vaccines: VaccinationScheduleItem[];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Localisation
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -426,6 +456,8 @@ export interface CountryPack {
   readonly localisation?: LocalisationService;
   /** Static localization payload served to the frontend per ADR-006. */
   readonly localization?: LocalizationConfig;
+  /** Childhood / school-entry vaccination obligations (SCRUM-137). */
+  readonly vaccinationSchedule?: VaccinationSchedule;
 }
 
 export type { JurisdictionCode, RequestContext };

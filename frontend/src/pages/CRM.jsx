@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { tenantQuery, fetchData } from '../api/supabaseClient';
+import { tenantQuery, fetchData, supabase } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useBranch } from '../components/BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -16,25 +16,133 @@ import DataTable from '../components/ui/DataTable';
 import StatCard from '../components/ui/StatCard';
 import { 
   Users, Ticket, Plus, Search,
-  AlertCircle, CheckCircle, Clock, User, Eye
+  AlertCircle, CheckCircle, Clock, User, Eye, Kanban, ArrowRight
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { useTenantFilter } from '../hooks/useTenantFilter';
-import { ticketStatusLabel, priorityLabel, slaLabel, segmentLabel, crmCategoryLabel } from '../lib/crmLabels';
+import {
+  ticketStatusLabel, priorityLabel, slaLabel, segmentLabel, crmCategoryLabel,
+  pipelineStageLabel, pipelineStageBadge, crmActivityLabel, CRM_PIPELINE_STAGES,
+} from '../lib/crmLabels';
+
+async function logCrmActivity({ customerId, activityType, subject, body, fromStage, toStage, admissionsApplicationId }) {
+  const { data: auth } = await supabase.auth.getUser();
+  const { error } = await tenantQuery('crm_activities').insert({
+    customer_id: customerId,
+    activity_type: activityType,
+    subject: subject || null,
+    body: body || null,
+    from_stage: fromStage || null,
+    to_stage: toStage || null,
+    admissions_application_id: admissionsApplicationId || null,
+    created_by: auth?.user?.id ?? null,
+    created_by_name: auth?.user?.email ?? null,
+  });
+  if (error) console.warn('CRM activity log skipped:', error);
+}
+
+/**
+ * Qualify a CRM lead: create/link an Admissions Inquiry application and move to Qualified.
+ * Mirrors ApplicationForm inquiry insert pattern (status + pipeline_stage = inquiry).
+ */
+async function qualifyCustomer(customer) {
+  const stage = customer.pipeline_stage || 'lead';
+  if (stage === 'qualified' && customer.admissions_application_id) {
+    return { applicationId: customer.admissions_application_id, created: false };
+  }
+
+  let applicationId = customer.admissions_application_id || null;
+  let created = false;
+
+  if (!applicationId) {
+    const appNumber = `APP-CRM-${Date.now().toString().slice(-6)}`;
+    const displayName = customer.name_en || customer.name_ar || 'Prospect';
+    const { data: createdApp, error: insertError } = await tenantQuery('applications').insert({
+      student_name_ar: customer.name_ar || displayName,
+      student_name_en: customer.name_en || displayName,
+      guardian_name_ar: customer.name_ar || displayName,
+      guardian_name_en: customer.name_en || displayName,
+      guardian_relationship: 'guardian',
+      guardian_phone: customer.phone || null,
+      guardian_whatsapp: customer.phone || null,
+      guardian_email: customer.email || null,
+      branch_id: customer.branch_id || null,
+      application_number: appNumber,
+      status: 'inquiry',
+      pipeline_stage: 'inquiry',
+      source: 'crm',
+      notes: `Created from CRM customer ${customer.customer_number || customer.id}`,
+    }).select('id').single();
+    if (insertError) throw insertError;
+    applicationId = createdApp?.id;
+    created = true;
+
+    if (applicationId) {
+      const { data: auth } = await supabase.auth.getUser();
+      try {
+        await tenantQuery('application_stage_history').insert({
+          application_id: applicationId,
+          from_status: null,
+          to_status: 'inquiry',
+          note: 'CRM Lead qualified → Admissions Inquiry',
+          changed_by: auth?.user?.id ?? null,
+          changed_by_name: auth?.user?.email ?? null,
+        });
+      } catch (histErr) {
+        console.warn('Stage history seed skipped:', histErr);
+      }
+    }
+  }
+
+  const { error: updateError } = await tenantQuery('customers').update({
+    pipeline_stage: 'qualified',
+    admissions_application_id: applicationId,
+    segment: customer.segment === 'prospect' ? 'active' : customer.segment,
+    total_interactions: (customer.total_interactions || 0) + 1,
+  }).eq('id', customer.id);
+  if (updateError) throw updateError;
+
+  await logCrmActivity({
+    customerId: customer.id,
+    activityType: 'qualified',
+    subject: 'Lead → Qualified',
+    body: created
+      ? `Created Admissions Inquiry ${applicationId}`
+      : `Linked existing Admissions application ${applicationId}`,
+    fromStage: stage,
+    toStage: 'qualified',
+    admissionsApplicationId: applicationId,
+  });
+
+  if (created && applicationId) {
+    await logCrmActivity({
+      customerId: customer.id,
+      activityType: 'application_linked',
+      subject: 'Admissions Inquiry created',
+      body: applicationId,
+      admissionsApplicationId: applicationId,
+    });
+  }
+
+  return { applicationId, created };
+}
 
 export default function CRM() {
   const { t: _t, isRTL } = useLanguage();
   const { selectedBranch: _selectedBranch, selectedBranchId, filterByBranch, branchFilter } = useBranch();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate: _getTenantIdForCreate } = useTenantFilter();
+  const queryClient = useQueryClient();
   
-  const [activeTab, setActiveTab] = useState('tickets');
+  const [activeTab, setActiveTab] = useState('pipeline');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showNewTicket, setShowNewTicket] = useState(false);
   const [showNewCustomer, setShowNewCustomer] = useState(false);
+  const [qualifyingId, setQualifyingId] = useState(null);
+  const [activityCustomerId, setActivityCustomerId] = useState(null);
   
   const { data: tickets = [], isLoading: ticketsLoading } = useQuery({
     queryKey: ['serviceTickets', tenantId, selectedBranchId],
@@ -46,11 +154,16 @@ export default function CRM() {
     enabled: hasTenantAccess,
   });
 
-  const { data: customers = [], isLoading: customersLoading } = useQuery({ enabled: false /* customers table not built */, queryKey: ['customers', tenantId, selectedBranchId], queryFn: async () => {
+  const { data: customers = [], isLoading: customersLoading } = useQuery({
+    enabled: hasTenantAccess,
+    queryKey: ['customers', tenantId, selectedBranchId],
+    queryFn: async () => {
       const { data = [], error } = await tenantQuery('customers').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false });
       if (error) throw error;
       return filterByBranch(data);
-    }, initialData: [] });
+    },
+    initialData: [],
+  });
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', tenantId],
@@ -58,15 +171,43 @@ export default function CRM() {
     enabled: hasTenantAccess,
   });
 
+  const { data: activities = [] } = useQuery({
+    enabled: hasTenantAccess && !!activityCustomerId,
+    queryKey: ['crmActivities', tenantId, activityCustomerId],
+    queryFn: () => fetchData(
+      tenantQuery('crm_activities')
+        .select('*')
+        .match(tenantFilter({ customer_id: activityCustomerId }))
+        .order('created_at', { ascending: false })
+        .limit(20),
+    ),
+    initialData: [],
+  });
+
+  const qualifyMutation = useMutation({
+    mutationFn: qualifyCustomer,
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['crmActivities'] });
+      toast.success(
+        isRTL
+          ? (result.created ? 'تم التأهيل وإنشاء طلب قبول (استفسار)' : 'تم التأهيل وربط طلب القبول')
+          : (result.created ? 'Qualified — Admissions Inquiry created' : 'Qualified — Admissions application linked'),
+      );
+      setQualifyingId(null);
+    },
+    onError: (err) => {
+      console.error(err);
+      toast.error(isRTL ? 'فشل التأهيل' : 'Qualify failed');
+      setQualifyingId(null);
+    },
+  });
+
   // Stats
   const openTickets = tickets.filter(t => t.status === 'open').length;
-  const inProgressTickets = tickets.filter(t => t.status === 'in_progress').length;
-  const resolvedToday = tickets.filter(t => 
-    t.status === 'resolved' && 
-    t.resolution_date && 
-    format(new Date(t.resolution_date), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
-  ).length;
   const slaBreached = tickets.filter(t => t.sla_status === 'breached').length;
+  const leadCount = customers.filter(c => (c.pipeline_stage || 'lead') === 'lead').length;
+  const qualifiedCount = customers.filter(c => c.pipeline_stage === 'qualified').length;
 
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = !searchTerm || 
@@ -74,7 +215,7 @@ export default function CRM() {
       ticket.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ticket.customer_name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    return matchesStatus && matchesSearch;
   });
 
   const filteredCustomers = customers.filter(customer => {
@@ -123,39 +264,117 @@ export default function CRM() {
     { key: 'name_ar', label: isRTL ? 'الاسم' : 'Name', render: (_, row) => (isRTL ? (row.name_ar || row.name_en) : (row.name_en || row.name_ar)) || '-' },
     { key: 'phone', label: isRTL ? 'الهاتف' : 'Phone' },
     { key: 'email', label: isRTL ? 'البريد' : 'Email' },
+    { key: 'pipeline_stage', label: isRTL ? 'المرحلة' : 'Stage', render: (_, row) => (
+      <Badge className={pipelineStageBadge(row.pipeline_stage)}>
+        {pipelineStageLabel(row.pipeline_stage || 'lead', isRTL)}
+      </Badge>
+    )},
     { key: 'segment', label: isRTL ? 'التصنيف' : 'Segment', render: (_, row) => {
       const colors = { prospect: 'bg-najdi-50', active: 'bg-green-100', vip: 'bg-purple-100', withdrawn: 'bg-red-100' };
       return <Badge className={colors[row.segment] || 'bg-gray-100'}>{segmentLabel(row.segment, isRTL)}</Badge>;
     }},
     { key: 'total_interactions', label: isRTL ? 'التفاعلات' : 'Interactions' },
-    { key: 'actions', label: '', render: (_, row) => (
-      <Link to={createPageUrl(`CustomerDetails?id=${row.id}`)}>
-        <Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button>
-      </Link>
-    )}
+    { key: 'actions', label: '', render: (_, row) => {
+      const isLead = (row.pipeline_stage || 'lead') === 'lead';
+      return (
+        <div className="flex items-center gap-1">
+          {isLead && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={qualifyingId === row.id}
+              onClick={() => {
+                setQualifyingId(row.id);
+                qualifyMutation.mutate(row);
+              }}
+            >
+              {isRTL ? 'تأهيل' : 'Qualify'}
+              <ArrowRight className="h-3 w-3 ms-1" />
+            </Button>
+          )}
+          {row.admissions_application_id && (
+            <Link to={createPageUrl(`ApplicationDetails?id=${row.admissions_application_id}`)}>
+              <Button variant="ghost" size="sm" title={isRTL ? 'طلب القبول' : 'Admissions'}>
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              </Button>
+            </Link>
+          )}
+          <Button variant="ghost" size="sm" onClick={() => setActivityCustomerId(row.id)}>
+            <Clock className="h-4 w-4" />
+          </Button>
+          <Link to={createPageUrl(`CustomerDetails?id=${row.id}`)}>
+            <Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button>
+          </Link>
+        </div>
+      );
+    }}
   ];
+
+  const renderPipelineCard = (customer) => {
+    const isLead = (customer.pipeline_stage || 'lead') === 'lead';
+    const name = (isRTL ? (customer.name_ar || customer.name_en) : (customer.name_en || customer.name_ar)) || '-';
+    return (
+      <Card key={customer.id} className="p-3 space-y-2 shadow-none border">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <div className="text-sm font-medium">{name}</div>
+            <div className="text-xs text-muted-foreground">{customer.customer_number || customer.phone || '—'}</div>
+          </div>
+          <Badge className={pipelineStageBadge(customer.pipeline_stage)}>
+            {pipelineStageLabel(customer.pipeline_stage || 'lead', isRTL)}
+          </Badge>
+        </div>
+        {customer.email && <div className="text-xs text-muted-foreground truncate">{customer.email}</div>}
+        <div className="flex flex-wrap gap-1 pt-1">
+          {isLead && (
+            <Button
+              size="sm"
+              className="h-7 text-xs"
+              disabled={qualifyingId === customer.id}
+              onClick={() => {
+                setQualifyingId(customer.id);
+                qualifyMutation.mutate(customer);
+              }}
+            >
+              {isRTL ? 'نقل إلى مؤهّل' : 'Move to Qualified'}
+            </Button>
+          )}
+          {customer.admissions_application_id && (
+            <Link to={createPageUrl(`ApplicationDetails?id=${customer.admissions_application_id}`)}>
+              <Button size="sm" variant="outline" className="h-7 text-xs">
+                {isRTL ? 'طلب القبول' : 'Admissions'}
+              </Button>
+            </Link>
+          )}
+          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setActivityCustomerId(customer.id)}>
+            {isRTL ? 'النشاط' : 'Activity'}
+          </Button>
+        </div>
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
+          title={isRTL ? 'عملاء محتملون' : 'Leads'}
+          value={leadCount}
+          icon={Kanban}
+          iconClassName="bg-najdi-50"
+        />
+        <StatCard
+          title={isRTL ? 'مؤهّلون' : 'Qualified'}
+          value={qualifiedCount}
+          icon={CheckCircle}
+          iconClassName="bg-green-50"
+        />
+        <StatCard
           title={isRTL ? 'تذاكر مفتوحة' : 'Open Tickets'}
           value={openTickets}
           icon={Ticket}
           iconClassName="bg-najdi-50"
-        />
-        <StatCard
-          title={isRTL ? 'قيد المعالجة' : 'In Progress'}
-          value={inProgressTickets}
-          icon={Clock}
-          iconClassName="bg-yellow-50"
-        />
-        <StatCard
-          title={isRTL ? 'تم الحل اليوم' : 'Resolved Today'}
-          value={resolvedToday}
-          icon={CheckCircle}
-          iconClassName="bg-green-50"
         />
         <StatCard
           title={isRTL ? 'تجاوز SLA' : 'SLA Breached'}
@@ -190,13 +409,17 @@ export default function CRM() {
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
-              <TabsTrigger value="tickets">
-                <Ticket className="h-4 w-4 me-2" />
-                {isRTL ? 'التذاكر' : 'Tickets'}
+              <TabsTrigger value="pipeline">
+                <Kanban className="h-4 w-4 me-2" />
+                {isRTL ? 'خط المبيعات' : 'Pipeline'}
               </TabsTrigger>
               <TabsTrigger value="customers">
                 <Users className="h-4 w-4 me-2" />
                 {isRTL ? 'العملاء' : 'Customers'}
+              </TabsTrigger>
+              <TabsTrigger value="tickets">
+                <Ticket className="h-4 w-4 me-2" />
+                {isRTL ? 'التذاكر' : 'Tickets'}
               </TabsTrigger>
             </TabsList>
 
@@ -228,6 +451,37 @@ export default function CRM() {
               )}
             </div>
 
+            <TabsContent value="pipeline">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {CRM_PIPELINE_STAGES.map((stage) => {
+                  const stageCustomers = filteredCustomers.filter(
+                    (c) => (c.pipeline_stage || 'lead') === stage.key,
+                  );
+                  return (
+                    <div key={stage.key} className="rounded-lg border bg-sand/40 p-3 space-y-3 min-h-[200px]">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge className={stage.badge}>{isRTL ? stage.ar : stage.en}</Badge>
+                          <span className="text-xs text-muted-foreground">{stageCustomers.length}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        {customersLoading && (
+                          <p className="text-sm text-muted-foreground text-center py-6">…</p>
+                        )}
+                        {!customersLoading && stageCustomers.length === 0 && (
+                          <p className="text-sm text-muted-foreground text-center py-6">
+                            {isRTL ? 'لا عملاء في هذه المرحلة' : 'No customers in this stage'}
+                          </p>
+                        )}
+                        {stageCustomers.map(renderPipelineCard)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </TabsContent>
+
             <TabsContent value="tickets">
               <DataTable
                 columns={ticketColumns}
@@ -248,6 +502,38 @@ export default function CRM() {
           </Tabs>
         </CardContent>
       </Card>
+
+      <Dialog open={!!activityCustomerId} onOpenChange={(open) => !open && setActivityCustomerId(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{isRTL ? 'أنشطة العميل' : 'Customer Activities'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 max-h-[360px] overflow-y-auto">
+            {activities.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-6">
+                {isRTL ? 'لا أنشطة بعد' : 'No activities yet'}
+              </p>
+            )}
+            {activities.map((a) => (
+              <div key={a.id} className="border rounded p-3 text-sm space-y-1">
+                <div className="flex justify-between gap-2">
+                  <Badge variant="outline">{crmActivityLabel(a.activity_type, isRTL)}</Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {a.created_at ? format(new Date(a.created_at), 'yyyy-MM-dd HH:mm') : ''}
+                  </span>
+                </div>
+                {a.subject && <div className="font-medium">{a.subject}</div>}
+                {a.body && <div className="text-xs text-muted-foreground">{a.body}</div>}
+                {(a.from_stage || a.to_stage) && (
+                  <div className="text-xs text-muted-foreground">
+                    {pipelineStageLabel(a.from_stage, isRTL)} → {pipelineStageLabel(a.to_stage, isRTL)}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -383,20 +669,42 @@ function NewCustomerDialog({ open, onOpenChange, branches, isRTL }) {
     name_en: '',
     phone: '',
     email: '',
-    segment: 'active',
+    segment: 'prospect',
+    pipeline_stage: 'lead',
     branch_id: ''
   });
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const customerNumber = `CUS-${Date.now().toString().slice(-6)}`;
-      return tenantQuery('customers').insert({ ...data, customer_number: customerNumber });
+      const { data: created, error } = await tenantQuery('customers')
+        .insert({
+          ...data,
+          customer_number: customerNumber,
+          pipeline_stage: 'lead',
+          total_interactions: 0,
+        })
+        .select('id')
+        .single();
+      if (error) throw error;
+      if (created?.id) {
+        await logCrmActivity({
+          customerId: created.id,
+          activityType: 'created',
+          subject: 'Customer created',
+          toStage: 'lead',
+        });
+      }
+      return created;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       toast.success(isRTL ? 'تم إنشاء العميل' : 'Customer created');
       onOpenChange(false);
-      setFormData({ customer_type: 'parent', name_ar: '', name_en: '', phone: '', email: '', segment: 'active', branch_id: '' });
+      setFormData({
+        customer_type: 'parent', name_ar: '', name_en: '', phone: '', email: '',
+        segment: 'prospect', pipeline_stage: 'lead', branch_id: '',
+      });
     }
   });
 
@@ -451,6 +759,9 @@ function NewCustomerDialog({ open, onOpenChange, branches, isRTL }) {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {isRTL ? 'المرحلة الابتدائية: عميل محتمل (Lead)' : 'Starts at pipeline stage: Lead'}
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>

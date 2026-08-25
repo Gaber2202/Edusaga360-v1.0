@@ -14,7 +14,7 @@ class ParentApp extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
-      title: 'EduSaga Parent',
+      title: 'EduSaga Parent V2',
       theme: buildLightTheme(),
       darkTheme: buildDarkTheme(),
       themeMode: settings.themeMode,

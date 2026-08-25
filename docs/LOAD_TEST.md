@@ -55,13 +55,38 @@ k6 exits non-zero if a threshold is breached, so this can gate a pipeline later.
 
 ## Results
 
-> **Not yet run.** This environment has no staging target or seeded load-test
-> tenant, so no numbers have been captured — stating otherwise would be
-> fabrication. Run the script against staging and record below.
-
 | Date | Env | Peak VUs | p95 (ms) | Error % | Notes / bottleneck |
 |------|-----|---------|----------|---------|--------------------|
-| _TBD_ | staging | 500 | — | — | — |
+| _TBD_ | staging | 500 | — | — | invoice smoke not re-run this session |
+
+## Payroll 10k (SCRUM-121)
+
+Script: **`load/k6-payroll.js`** (+ seed `backend/src/scripts/seedPayrollLoad.ts`).
+
+Seed demo tenant `edusaga360` with 10 000 `LOAD-*` employees, then:
+
+```bash
+# Seed (demo tenants only)
+cd backend && npx tsx src/scripts/seedPayrollLoad.ts --confirm-demo-target --count=10000 --tenant=edusaga360
+
+# Single full-period calculate (true 10k after PostgREST pagination fix)
+curl -X POST "$BASE_URL/api/payroll/calculate" -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"period_start":"2026-08-01","period_end":"2026-08-25"}'
+
+# Concurrent mix (keep VUs low — calculate returns ~7MB for 10k)
+k6 run -e BASE_URL=http://localhost:3001 -e AUTH_TOKEN=$TOKEN --vus 1 --duration 30s load/k6-payroll.js
+```
+
+### Results (10k employees)
+
+| Date | Env | Jurisdiction | Employees | Single calculate | k6 VUs / dur | p95 (ms) | Error % | Notes |
+|------|-----|--------------|-----------|------------------|--------------|----------|---------|-------|
+| 2026-08-25 | local API + Supabase demo | SA | **10001** | **9.07 s** (HTTP 200) | 1 VU / 30s | **5840** | **0.00%** | Pagination fix in `periodPayroll`; GOSI + attendance; response ~7.4 MB. Concurrent 5 VUs hit rate-limiter (~89% fail) — use 1 VU or raise limiter for load windows. |
+| — | — | AE | — | — | — | — | — | Seed AE tenant separately for AE pack path |
+| — | — | QA | — | — | — | — | — | Seed QA tenant separately for QA pack path |
+
+Single-run totals (SA, Aug 2026 period): gross **141 000 000**, GOSI employee **4 750 068.75**, GOSI employer **6 234 472.71**, net **136 249 931.25**.
 
 ## Where to look when it's slow
 
@@ -73,3 +98,4 @@ k6 exits non-zero if a threshold is breached, so this can gate a pipeline later.
    120 req/min/user, so sustained overload points to DB or instance sizing.
 4. **PDF/ZATCA** endpoints are the heaviest (Puppeteer) and are already capped by
    `PDF_MAX_CONCURRENCY` — keep them out of the hot-path load mix.
+5. **Payroll 10k** — PostgREST default max-rows is 1000; `calculatePeriodPayroll` pages in 1000-row batches. Large JSON responses dominate p95 under even modest concurrency.

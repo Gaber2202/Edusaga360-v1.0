@@ -17,8 +17,15 @@ Android emulator: `http://10.0.2.2:3001` (used automatically in debug).
 
 Seed first (`npm run seed:parent-portal` in `backend/`). Then in the app:
 
-1. School code: the tenant’s `tenant_code` (seeded as `T-DEMO` when missing)
-2. `parent.demo@edusaga.local` / `ParentPass123!`
+1. Email + password only (same as the web parent portal)
+2. If you have more than one school, pick it from the dropdown
+3. Example: `parent.demo@edusaga.local` / `ParentPass123!`
+
+Production builds talk to `https://edusaga-360-production.up.railway.app`
+(`api.edusaga360.com` is not DNS-ready yet).
+
+**Note:** Railway must be deployed with the new auth endpoints
+(`select-school`, multi-school login response) for the picker flow to work.
 
 ## Tests
 

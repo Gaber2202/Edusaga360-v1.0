@@ -79,3 +79,20 @@ describe('GET /jurisdiction/context', () => {
     await request(app).get('/jurisdiction/context').expect(500);
   });
 });
+
+describe('GET /jurisdiction/vaccination-schedule', () => {
+  beforeEach(() => {
+    db.reset();
+    db.setResolver(resolver);
+  });
+
+  it('returns MOH KSA schedule for SA tenants (SCRUM-137)', async () => {
+    const app = makeApp();
+    const res = await request(app).get('/jurisdiction/vaccination-schedule').expect(200);
+    expect(res.body.jurisdiction).toBe('SA');
+    expect(res.body.source.authority).toBe('MOH_KSA');
+    expect(Array.isArray(res.body.vaccines)).toBe(true);
+    expect(res.body.vaccines.length).toBeGreaterThan(0);
+    expect(res.body.vaccines[0]).toHaveProperty('code');
+  });
+});

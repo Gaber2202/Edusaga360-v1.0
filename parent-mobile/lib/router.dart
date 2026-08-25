@@ -7,7 +7,7 @@ import 'features/announcements/announcements_screen.dart';
 import 'features/attendance/attendance_screen.dart';
 import 'features/auth/access_denied_screen.dart';
 import 'features/auth/login_screen.dart';
-import 'features/auth/school_code_screen.dart';
+import 'features/auth/select_school_screen.dart';
 import 'features/fees/fees_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/homework/homework_screen.dart';
@@ -15,6 +15,7 @@ import 'features/messages/messages_screen.dart';
 import 'features/more/more_screen.dart';
 import 'features/progress/progress_screen.dart';
 import 'features/canteen/canteen_screen.dart';
+import 'features/splash/splash_screen.dart';
 import 'features/store/store_screen.dart';
 import 'features/shell/app_shell.dart';
 
@@ -24,28 +25,36 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.onDispose(refresh.dispose);
 
   return GoRouter(
-    initialLocation: '/school',
+    initialLocation: '/splash',
     refreshListenable: refresh,
     redirect: (context, state) {
       final session = ref.read(sessionProvider);
-      if (!session.ready) return null;
       final loc = state.matchedLocation;
-      final authed = session.isAuthenticated;
-      if (session.denied && loc != '/denied') return '/denied';
-      if (!authed && session.pendingSchool == null && loc != '/school' && loc != '/denied') {
-        return '/school';
+
+      if (!session.ready) {
+        return loc == '/splash' ? null : '/splash';
       }
-      if (!authed && session.pendingSchool != null && loc != '/login' && loc != '/school' && loc != '/denied') {
+      if (loc == '/splash') {
+        if (session.denied) return '/denied';
+        if (session.isAuthenticated) return '/home';
+        // Pending school selection stays on the login form (inline DDL).
         return '/login';
       }
-      if (authed && (loc == '/school' || loc == '/login' || loc == '/denied')) {
+
+      if (session.denied && loc != '/denied') return '/denied';
+      if (!session.isAuthenticated) {
+        if (loc != '/login' && loc != '/denied') return '/login';
+        return null;
+      }
+      if (session.isAuthenticated && (loc == '/login' || loc == '/denied' || loc == '/select-school' || loc == '/splash')) {
         return '/home';
       }
       return null;
     },
     routes: [
-      GoRoute(path: '/school', builder: (_, __) => const SchoolCodeScreen()),
+      GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+      GoRoute(path: '/select-school', builder: (_, __) => const SelectSchoolScreen()),
       GoRoute(path: '/denied', builder: (_, __) => const AccessDeniedScreen()),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) => AppShell(navigationShell: navigationShell),

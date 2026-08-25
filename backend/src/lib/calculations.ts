@@ -3,11 +3,10 @@
  * Saudi Arabia specifics:
  *   - VAT: 15% (since Jul 2020)
  *   - GOSI Saudi: employee 9%, employer 11.75%; capped at 45,000 SAR
- *   - GOSI Expat:  employee 0%, employer 2% (Occupational Hazards only); no cap
+ *   - GOSI Expat:  employee 1.5%, employer 2% (aligned with packs/sa/payroll.ts + golden snapshots)
  *
- * NOTE: Expatriates are NOT enrolled in the GOSI Annuities (pension) branch —
- * they are covered only under Occupational Hazards, which is 2% paid entirely
- * by the employer. Expat employees have no salary deduction.
+ * NOTE: Prefer packs/sa/payroll.ts for production GOSI. This helper stays for
+ * legacy unit tests; rates must stay in sync with the SA pack.
  *
  * These statutory rates are subject to change by royal decree (e.g. the 2024
  * reform introduced phased increases for new entrants). They are hardcoded here
@@ -43,8 +42,8 @@ const GOSI_SAUDI_CAP = 45_000;
 const GOSI_SAUDI_EMPLOYEE_RATE = 0.09;
 const GOSI_SAUDI_EMPLOYER_RATE = 0.1175;
 
-const GOSI_EXPAT_EMPLOYEE_RATE = 0; // expats have no employee GOSI deduction
-const GOSI_EXPAT_EMPLOYER_RATE = 0.02; // Occupational Hazards branch, employer only
+const GOSI_EXPAT_EMPLOYEE_RATE = 0.015; // aligned with packs/sa/payroll.ts
+const GOSI_EXPAT_EMPLOYER_RATE = 0.02;
 
 export function calculateGOSI(
   basicSalary: number,
@@ -59,8 +58,8 @@ export function calculateGOSI(
     employeeRate = GOSI_SAUDI_EMPLOYEE_RATE;
     employerRate = GOSI_SAUDI_EMPLOYER_RATE;
   } else {
-    // No cap for expats
-    cappedSalary = basicSalary;
+    // Same wage base cap as packs/sa/payroll.ts (GOSI_CAP_MONTHLY)
+    cappedSalary = Math.min(basicSalary, GOSI_SAUDI_CAP);
     employeeRate = GOSI_EXPAT_EMPLOYEE_RATE;
     employerRate = GOSI_EXPAT_EMPLOYER_RATE;
   }

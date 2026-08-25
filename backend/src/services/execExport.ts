@@ -88,7 +88,7 @@ function buildBaseHtml(body: string, title: string, isRTL: boolean): string {
 }
 
 export interface ExportOptions {
-  persona: 'ceo' | 'cfo' | 'coo' | 'chro';
+  persona: 'ceo' | 'cfo' | 'coo' | 'chro' | 'principal' | 'administrator';
   tenantName?: string;
   branchName?: string;
   period: string;
@@ -205,6 +205,44 @@ function renderCHRO(data: any, isRTL: boolean): string {
   ].join('');
 }
 
+function renderPrincipal(data: any, isRTL: boolean): string {
+  const k = data.kpis || {};
+  const funnel = data.admissions_funnel || {};
+  const util = data.utilization_by_campus || [];
+  const funnelRows = (funnel.applications_by_stage || []).map((s: any) => [s.stage, String(s.count)]);
+  const utilRows = util.map((c: any) => [isRTL ? c.name_ar : c.name_en, fmtPct(c.utilization_pct), String(c.enrolled ?? '—'), String(c.capacity ?? '—')]);
+  return [
+    kpiCards([
+      [isRTL ? 'الطلاب المسجلون' : 'Enrolled Students', String(k.enrolled_students ?? '—')],
+      [isRTL ? 'استغلال السعة' : 'Capacity Utilization', fmtPct(k.capacity_utilization_pct)],
+      [isRTL ? 'حضور الطلاب' : 'Student Attendance', fmtPct(k.student_attendance_rate_pct)],
+      [isRTL ? 'متوسط الدرجات' : 'Average Score', fmtPct(k.average_score_pct)],
+      [isRTL ? 'واجبات متأخرة' : 'Overdue Homework', String(k.homework_overdue ?? '—')],
+    ]),
+    section(isRTL ? 'قمع القبول' : 'Admissions Funnel', funnelRows.length ? table([isRTL ? 'المرحلة' : 'Stage', isRTL ? 'العدد' : 'Count'], funnelRows) : '<p>No funnel data.</p>', isRTL),
+    section(isRTL ? 'الاستغلال حسب الفرع' : 'Utilization by Campus', utilRows.length ? table([isRTL ? 'الفرع' : 'Campus', isRTL ? 'الاستغلال' : 'Utilization', isRTL ? 'المسجلون' : 'Enrolled', isRTL ? 'السعة' : 'Capacity'], utilRows) : '<p>No data.</p>', isRTL),
+  ].join('');
+}
+
+function renderAdministrator(data: any, isRTL: boolean): string {
+  const k = data.kpis || {};
+  const ops = data.operations || {};
+  const overdue = data.overdue_by_campus || [];
+  const overdueRows = overdue.filter((c: any) => c.overdue_amount > 0).map((c: any) => [isRTL ? c.name_ar : c.name_en, fmtSAR(c.overdue_amount)]);
+  return [
+    kpiCards([
+      [isRTL ? 'الطلاب النشطون' : 'Active Students', String(k.active_students ?? '—')],
+      [isRTL ? 'طلبات معلقة' : 'Pending Applications', String(k.pending_applications ?? '—')],
+      [isRTL ? 'فواتير متأخرة' : 'Overdue Invoices', String(k.overdue_invoices ?? '—')],
+      [isRTL ? 'نسبة التحصيل' : 'Collection Rate', fmtPct(k.collection_rate_pct)],
+      [isRTL ? 'إجازات معلقة' : 'Pending Leave', String(k.pending_leave_requests ?? '—')],
+      [isRTL ? 'عدد الموظفين' : 'Staff Headcount', String(k.staff_headcount ?? '—')],
+    ]),
+    section(isRTL ? 'ملخص العمليات' : 'Operations Summary', `<p>${isRTL ? 'قبول معلق' : 'Admissions pending'}: ${ops.admissions?.pending ?? '—'} · ${isRTL ? 'محصّل' : 'Collected'}: ${fmtSAR(ops.finance?.total_collected)} · ${isRTL ? 'إقامات تنتهي' : 'Iqamas expiring'}: ${ops.hr?.iqama_expiring_30d ?? '—'}</p>`, isRTL),
+    section(isRTL ? 'المتأخرات حسب الفرع' : 'Overdue by Campus', overdueRows.length ? table([isRTL ? 'الفرع' : 'Campus', isRTL ? 'المبلغ' : 'Amount'], overdueRows) : '<p>No overdue data.</p>', isRTL),
+  ].join('');
+}
+
 export async function renderDashboardExport(opts: ExportOptions): Promise<Buffer> {
   const { persona, tenantName, branchName, period, isRTL, data, format } = opts;
   let body = '';
@@ -212,6 +250,8 @@ export async function renderDashboardExport(opts: ExportOptions): Promise<Buffer
   else if (persona === 'cfo') body = renderCFO(data, isRTL);
   else if (persona === 'coo') body = renderCOO(data, isRTL);
   else if (persona === 'chro') body = renderCHRO(data, isRTL);
+  else if (persona === 'principal') body = renderPrincipal(data, isRTL);
+  else if (persona === 'administrator') body = renderAdministrator(data, isRTL);
   else body = '<p>Unknown persona.</p>';
 
   const title = `EduSaga 360 — ${persona.toUpperCase()} Dashboard`;

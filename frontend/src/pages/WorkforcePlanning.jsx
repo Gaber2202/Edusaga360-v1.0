@@ -9,10 +9,8 @@ import { getCurrencySymbol, formatCurrency } from '../lib/localization';
 import { createPageUrl } from '../utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Label } from '../components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
-import { Slider } from '../components/ui/slider';
 import { Progress } from '../components/ui/progress';
 import { Skeleton } from '../components/ui/skeleton';
 import PageHeader from '../components/ui/PageHeader';
@@ -25,6 +23,7 @@ import { cumulativeSeries, countSince } from '../lib/dashboardMetrics';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Bot, Loader2, Users, DollarSign, TrendingUp, Briefcase, Sparkles, Target, Wallet } from 'lucide-react';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import ExecScenarioSlider from '../components/exec/ExecScenarioSlider';
 import { cn } from '../lib/utils';
 
 const CHART = { najdi: '#0E6B4F', green: '#16A077', gold: '#C8A451', ink: '#1C2420' };
@@ -58,25 +57,6 @@ function ChartTooltip({ active, payload, label }) {
   );
 }
 
-function ScenarioSlider({ label, value, min, max, step, suffix, onChange }) {
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</Label>
-        <span className="text-sm font-semibold tabular-nums text-ink">
-          {typeof value === 'number' ? value.toLocaleString() : value}
-          {suffix ? <span className="text-muted-foreground font-medium"> {suffix}</span> : null}
-        </span>
-      </div>
-      <Slider
-        value={[value]}
-        min={min}
-        max={max}
-        step={step}
-        onValueChange={([v]) => onChange(v)}
-      />
-    </div>
-  );
 }
 
 function TypeRow({ label, count, total, color }) {
@@ -458,7 +438,7 @@ export default function WorkforcePlanning() {
                 </p>
               </CardHeader>
               <CardContent className="space-y-8 pt-4">
-                <ScenarioSlider
+                <ExecScenarioSlider
                   label={isRTL ? 'عدد الموظفين الجدد' : 'New Hires'}
                   value={hiringScenario.count}
                   min={1}
@@ -466,7 +446,7 @@ export default function WorkforcePlanning() {
                   step={1}
                   onChange={(count) => setHiringScenario((p) => ({ ...p, count }))}
                 />
-                <ScenarioSlider
+                <ExecScenarioSlider
                   label={isRTL ? 'متوسط الراتب' : 'Avg Salary'}
                   value={hiringScenario.avg_salary}
                   min={1000}
@@ -475,12 +455,13 @@ export default function WorkforcePlanning() {
                   suffix={getCurrencySymbol(tenant?.localization, isRTL)}
                   onChange={(avg_salary) => setHiringScenario((p) => ({ ...p, avg_salary }))}
                 />
-                <ScenarioSlider
+                <ExecScenarioSlider
                   label={isRTL ? 'عدد الأشهر' : 'Months'}
                   value={hiringScenario.months}
                   min={1}
                   max={24}
                   step={1}
+                  suffix={isRTL ? 'شهر' : 'mo'}
                   onChange={(months) => setHiringScenario((p) => ({ ...p, months }))}
                 />
               </CardContent>

@@ -15,6 +15,13 @@ import ExportMenu from '../components/ui/ExportMenu';
 import ExecutiveKPICard from '../components/exec/ExecutiveKPICard';
 import ExecutivePersonaTabs from '../components/exec/ExecutivePersonaTabs';
 import ComplianceSignalRow from '../components/exec/ComplianceSignalRow';
+import ExecScenarioSimulator from '../components/exec/ExecScenarioSimulator';
+import ExecSectionCard from '../components/exec/ExecSectionCard';
+import ExecHeroBanner from '../components/exec/ExecHeroBanner';
+import ExecEmptyState from '../components/exec/ExecEmptyState';
+import ExecScoreBar from '../components/exec/ExecScoreBar';
+import { execKpiHref } from '../lib/execLinks';
+import { EXEC_COLORS, EXEC_PIE_COLORS, EXEC_PILLAR_COLORS, execLayout } from '../lib/execDashboardDesign';
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
@@ -25,12 +32,13 @@ import {
 import {
   Crown, RefreshCw, TrendingUp, DollarSign, Users, Building2,
   AlertTriangle, ShieldCheck, ShieldAlert, ShieldX, Sparkles, Clock,
-  GraduationCap, Target, Wallet, FileWarning, Percent, Activity
+  GraduationCap, Target, Wallet, FileWarning, Percent, Activity,
+  BookOpen, ClipboardList, UserCheck, Receipt
 } from 'lucide-react';
 
-const COLORS = { najdi: '#0E6B4F', green: '#16A077', amber: '#E0A82E', red: '#D1493F', purple: '#8B5CF6', gold: '#C8A451', info: '#2C7BB0', ink: '#1C2420' };
-const PIE_COLORS = [COLORS.najdi, COLORS.green, COLORS.gold, COLORS.red, COLORS.purple];
-const PILLAR_COLORS = { retention: '#0E6B4F', engagement: '#2C7BB0', collection: '#C8A451', growth: '#16A077', financial: '#8B5CF6' };
+const COLORS = EXEC_COLORS;
+const PIE_COLORS = EXEC_PIE_COLORS;
+const PILLAR_COLORS = EXEC_PILLAR_COLORS;
 
 function fmtNumber(n, isRTL) {
   if (n === null || n === undefined) return '—';
@@ -44,15 +52,11 @@ function fmtPct(n) {
 }
 
 function ScoreBar({ label, value }) {
-  return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">{label}</span>
-        <span className="font-semibold text-ink">{fmtPct(value)}</span>
-      </div>
-      <Progress value={value || 0} className="h-1.5" />
-    </div>
-  );
+  return <ExecScoreBar label={label} value={value} />;
+}
+
+function EmptyState({ isRTL, message, compact }) {
+  return <ExecEmptyState isRTL={isRTL} message={message} compact={compact} />;
 }
 
 function TrafficLight({ label, signal }) {
@@ -70,14 +74,6 @@ function TrafficLight({ label, signal }) {
         <Icon className="w-5 h-5" />
       </div>
       <span className="text-sm font-medium text-ink">{label}</span>
-    </div>
-  );
-}
-
-function EmptyState({ isRTL, message }) {
-  return (
-    <div className="border-2 border-dashed border-border rounded-xl p-10 text-center text-muted-foreground">
-      {message || (isRTL ? 'لا توجد بيانات متاحة' : 'No data available')}
     </div>
   );
 }
@@ -125,7 +121,7 @@ export default function ExecutiveCommandCenter() {
     try {
       const res = await callApi('/api/exec/access', null, { method: 'GET' });
       setAccess(res);
-      const available = res.isAdmin ? ['ceo', 'cfo', 'coo', 'chro'] : (res.personas || []);
+      const available = res.isAdmin ? ['ceo', 'cfo', 'coo', 'chro', 'principal', 'administrator'] : (res.personas || []);
       if (available.length > 0) setPersona(available[0]);
     } catch {
       toast.error(isRTL ? 'فشل تحميل صلاحيات الوصول' : 'Failed to load access permissions');
@@ -241,7 +237,7 @@ export default function ExecutiveCommandCenter() {
     }
   };
 
-  const availablePersonas = access?.isAdmin ? ['ceo', 'cfo', 'coo', 'chro'] : (access?.personas || []);
+  const availablePersonas = access?.isAdmin ? ['ceo', 'cfo', 'coo', 'chro', 'principal', 'administrator'] : (access?.personas || []);
   const showSwitcher = access?.isAdmin || availablePersonas.length > 1;
 
   if (accessLoading) {
@@ -275,7 +271,7 @@ export default function ExecutiveCommandCenter() {
             </div>
           </div>
           {showSwitcher && (
-            <ExecutivePersonaTabs value={persona} onChange={setPersona} available={availablePersonas} isRTL={isRTL} />
+            <ExecutivePersonaTabs value={persona} onChange={setPersona} available={availablePersonas} isRTL={isRTL} t={t} />
           )}
         </div>
 
@@ -371,6 +367,12 @@ export default function ExecutiveCommandCenter() {
       )}
       {!dashboardLoading && !dashboardError && dashboard && persona === 'chro' && (
         <CHRODashboard data={dashboard} isRTL={isRTL} t={t} />
+      )}
+      {!dashboardLoading && !dashboardError && dashboard && persona === 'principal' && (
+        <PrincipalDashboard data={dashboard} isRTL={isRTL} t={t} />
+      )}
+      {!dashboardLoading && !dashboardError && dashboard && persona === 'administrator' && (
+        <AdministratorDashboard data={dashboard} isRTL={isRTL} t={t} />
       )}
     </div>
   );
@@ -474,7 +476,7 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
   ];
 
   return (
-    <div className="space-y-6">
+    <div className={execLayout.page}>
       {/* 1. Hero — Group Vitality Index with Radial Gauge + Radar Chart */}
       <Card className="border-0 shadow-lg bg-gradient-to-br from-najdi-900 via-[#0a5a42] to-najdi-900 text-white">
         <CardContent className="p-6">
@@ -508,9 +510,10 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
       </Card>
 
       {/* 2. KPI Grid — expanded executive metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className={execLayout.kpiGridWide}>
         <ExecutiveKPICard
           id="revenue"
+          href={execKpiHref('revenue')}
           title={isRTL ? 'الإيرادات' : 'Revenue'}
           value={<CurrencyValue value={financials?.revenue} byCurrency={financials?.revenue_by_currency} localization={tenant?.localization} isRTL={isRTL} />}
           delta={financials?.is_multi_currency ? null : financials?.revenue_delta_pct}
@@ -520,6 +523,7 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
         />
         <ExecutiveKPICard
           id="ebitda"
+          href={execKpiHref('ebitda')}
           title={isRTL ? 'الأرباح قبل الفوائد والضرائب' : 'EBITDA'}
           value={<CurrencyValue value={financials?.ebitda} byCurrency={financials?.ebitda_by_currency} localization={tenant?.localization} isRTL={isRTL} />}
           delta={financials?.is_multi_currency ? null : financials?.ebitda_delta_pct}
@@ -529,6 +533,7 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
         />
         <ExecutiveKPICard
           id="collection"
+          href={execKpiHref('collection')}
           title={isRTL ? 'نسبة التحصيل' : 'Collection Rate'}
           value={financials?.is_multi_currency ? (
             <MultiCurrencyBreakdown amounts={collections?.collection_rate_by_currency} localization={tenant?.localization} isRTL={isRTL} />
@@ -543,6 +548,7 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
         />
         <ExecutiveKPICard
           id="margin"
+          href={execKpiHref('margin')}
           title={isRTL ? 'هامش الربح' : 'Profit Margin'}
           value={financials?.margin != null ? fmtPct(round2(financials.margin)) : '—'}
           subtitle={financials?.is_multi_currency ? (isRTL ? 'غير متاح للعملات المتعددة' : 'N/A for multi-currency') : undefined}
@@ -551,6 +557,7 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
         />
         <ExecutiveKPICard
           id="enrollment"
+          href={execKpiHref('enrollment')}
           title={isRTL ? 'الطلاب المسجلون' : 'Enrolled Students'}
           value={growth?.current_count != null ? fmtNumber(growth.current_count, isRTL) : '—'}
           delta={growth?.data_quality === 'real' ? growth.growth_rate : null}
@@ -561,6 +568,7 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
         />
         <ExecutiveKPICard
           id="capacity"
+          href={execKpiHref('capacity')}
           title={isRTL ? 'استغلال السعة' : 'Capacity Utilization'}
           value={capacityUtil != null ? fmtPct(capacityUtil) : '—'}
           color={capacityUtil != null && capacityUtil < 60 ? 'red' : capacityUtil != null && capacityUtil >= 85 ? 'green' : 'info'}
@@ -568,6 +576,7 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
         />
         <ExecutiveKPICard
           id="compliance"
+          href={execKpiHref('compliance')}
           title={isRTL ? 'درجة الامتثال' : 'Compliance Score'}
           value={compliance?.score != null ? `${compliance.score}/100` : '—'}
           subtitle={compliance?.overdue_invoices > 0 ? `${compliance.overdue_invoices} ${isRTL ? 'فاتورة متأخرة' : 'overdue invoices'}` : undefined}
@@ -576,6 +585,7 @@ function CEODashboard({ data, brief, briefLoading, briefRefreshing, onRefreshBri
         />
         <ExecutiveKPICard
           id="cash-runway"
+          href={execKpiHref('cash-runway')}
           title={isRTL ? 'مدى النقد (أشهر)' : 'Cash Runway'}
           value={cash_runway != null ? fmtNumber(cash_runway, isRTL) : '—'}
           subtitle={isRTL ? 'بناءً على الإنفاق الشهري' : 'Based on monthly spend'}
@@ -893,7 +903,7 @@ function CFODashboard({ data, isRTL, t }) {
   const wageProtectionEnabled = isFeatureEnabled(WPS_FEATURES[0]);
   const socialInsuranceEnabled = isFeatureEnabled(SOCIAL_INSURANCE_FEATURES[0]);
   const showCompliance = einvoiceEnabled || wageProtectionEnabled || socialInsuranceEnabled;
-  const { kpis = {}, ar_aging = {}, overdue_by_campus = [], revenue_vs_ebitda = [], compliance_traffic_lights = {}, scenario_baseline = {} } = data;
+  const { kpis = {}, ar_aging = {}, overdue_by_campus = [], revenue_vs_ebitda = [], compliance_traffic_lights = {}, scenario_baseline = {}, revenue_by_fee_type = [], collections_forecast = [], vat_position = {}, collection_rate_pct } = data;
   const isMultiCurrency = kpis?.is_multi_currency;
 
   const [growthRate, setGrowthRate] = useState(0);
@@ -909,19 +919,42 @@ function CFODashboard({ data, isRTL, t }) {
     { label: '90+', value: ar_aging.buckets['90_plus'] || 0 },
   ] : [];
 
+  const feeTypeRows = revenue_by_fee_type?.by_category
+    ? Object.entries(revenue_by_fee_type.by_category).map(([name, row]) => ({
+        name,
+        amount: row?.revenue ?? 0,
+      })).sort((a, b) => b.amount - a.amount)
+    : [];
+
+  const forecastRows = collections_forecast?.by_date
+    ? Object.entries(collections_forecast.by_date).slice(0, 8).map(([label, expected]) => ({ label, expected }))
+    : [];
+
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <ExecutiveKPICard id="cfo-revenue" title={t('revenue')} value={<CurrencyValue value={kpis.revenue} byCurrency={kpis.revenue_by_currency} localization={tenant?.localization} isRTL={isRTL} />} color="najdi" icon={DollarSign} />
-        <ExecutiveKPICard id="cfo-ebitda" title={t('ebitda')} value={<CurrencyValue value={kpis.ebitda} byCurrency={kpis.ebitda_by_currency} localization={tenant?.localization} isRTL={isRTL} />} subtitle={isMultiCurrency ? null : fmtPct(kpis.margin_pct)} color="green" icon={TrendingUp} />
-        <ExecutiveKPICard id="cfo-cash" title={t('cashCollected')} value={<CurrencyValue value={kpis.cash_collected_30d} byCurrency={kpis.cash_collected_30d_by_currency} localization={tenant?.localization} isRTL={isRTL} />} color="purple" icon={Wallet} />
-        <ExecutiveKPICard id="cfo-dso" title={t('dsoDays')} value={kpis.dso_days != null ? fmtNumber(kpis.dso_days, isRTL) : '—'} color={kpis.dso_days > 90 ? 'red' : kpis.dso_days > 60 ? 'gold' : 'green'} icon={Clock} subtitle={isRTL ? 'يوم' : 'days'} />
+    <div className={execLayout.page}>
+      <ExecHeroBanner
+        persona="cfo"
+        eyebrow={t('execPersonaCfo')}
+        title={isRTL ? 'لوحة المدير المالي' : 'Chief Financial Officer Dashboard'}
+        subtitle={isRTL ? 'الإيرادات والتحصيل والامتثال الضريبي' : 'Revenue, collections, and tax compliance at a glance'}
+        stats={[
+          { value: kpis.revenue != null ? formatCurrency(kpis.revenue, tenant?.localization, isRTL) : '—', label: t('revenue') },
+          { value: collection_rate_pct != null ? fmtPct(collection_rate_pct) : '—', label: isRTL ? 'التحصيل' : 'Collection' },
+          { value: kpis.dso_days != null ? fmtNumber(kpis.dso_days, isRTL) : '—', label: isRTL ? 'DSO' : 'DSO' },
+        ]}
+      />
+
+      <div className={execLayout.kpiGridWide}>
+        <ExecutiveKPICard id="cfo-revenue" href={execKpiHref('cfo-revenue')} title={t('revenue')} value={<CurrencyValue value={kpis.revenue} byCurrency={kpis.revenue_by_currency} localization={tenant?.localization} isRTL={isRTL} />} color="najdi" icon={DollarSign} />
+        <ExecutiveKPICard id="cfo-ebitda" href={execKpiHref('cfo-ebitda')} title={t('ebitda')} value={<CurrencyValue value={kpis.ebitda} byCurrency={kpis.ebitda_by_currency} localization={tenant?.localization} isRTL={isRTL} />} subtitle={isMultiCurrency ? null : fmtPct(kpis.margin_pct)} color="green" icon={TrendingUp} />
+        <ExecutiveKPICard id="cfo-cash" href={execKpiHref('cfo-cash')} title={t('cashCollected')} value={<CurrencyValue value={kpis.cash_collected_30d} byCurrency={kpis.cash_collected_30d_by_currency} localization={tenant?.localization} isRTL={isRTL} />} color="purple" icon={Wallet} />
+        <ExecutiveKPICard id="cfo-dso" href={execKpiHref('cfo-dso')} title={t('dsoDays')} value={kpis.dso_days != null ? fmtNumber(kpis.dso_days, isRTL) : '—'} color={kpis.dso_days > 90 ? 'red' : kpis.dso_days > 60 ? 'gold' : 'green'} icon={Clock} subtitle={isRTL ? 'يوم' : 'days'} />
+        <ExecutiveKPICard id="cfo-collection" href={execKpiHref('cfo-collection')} title={isRTL ? 'نسبة التحصيل' : 'Collection Rate'} value={collection_rate_pct != null ? fmtPct(collection_rate_pct) : '—'} color={collection_rate_pct != null && collection_rate_pct < 80 ? 'red' : 'gold'} icon={Percent} />
+        <ExecutiveKPICard id="cfo-overdue" href={execKpiHref('cfo-overdue')} title={isRTL ? 'فروع بمتأخرات' : 'Campuses with Overdue'} value={fmtNumber(overdue_by_campus.filter((c) => c.overdue_amount > 0).length, isRTL)} subtitle={overdue_by_campus.length > 0 ? `${overdue_by_campus.length} ${isRTL ? 'فرع' : 'total campuses'}` : undefined} color="red" icon={FileWarning} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="border-0 shadow-sm">
-          <CardHeader><CardTitle className="text-base">{t('arAging')}</CardTitle></CardHeader>
-          <CardContent>
+      <div className={execLayout.chartGrid}>
+        <ExecSectionCard title={t('arAging')} icon={FileWarning} iconTone="red">
             {isMultiCurrency ? (
               <div className="space-y-2 text-sm">
                 {Object.entries(ar_aging?.by_currency || {}).map(([currency, buckets]) => (
@@ -947,12 +980,9 @@ function CFODashboard({ data, isRTL, t }) {
                 </BarChart>
               </ResponsiveContainer>
             )}
-          </CardContent>
-        </Card>
+        </ExecSectionCard>
 
-        <Card className="border-0 shadow-sm">
-          <CardHeader><CardTitle className="text-base">{t('revenueVsEbitda')}</CardTitle></CardHeader>
-          <CardContent>
+        <ExecSectionCard title={t('revenueVsEbitda')} icon={TrendingUp} iconTone="green">
             {isMultiCurrency ? (
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between items-center">
@@ -976,26 +1006,20 @@ function CFODashboard({ data, isRTL, t }) {
                 </LineChart>
               </ResponsiveContainer>
             )}
-          </CardContent>
-        </Card>
+        </ExecSectionCard>
       </div>
 
       {showCompliance && (
-      <Card className="border-0 shadow-sm">
-        <CardHeader><CardTitle className="text-base">{t('complianceTrafficLights')}</CardTitle></CardHeader>
-        <CardContent>
+      <ExecSectionCard title={t('complianceTrafficLights')} icon={ShieldCheck} iconTone="green">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {einvoiceEnabled && <TrafficLight label={t('complianceEinvoice')} signal={compliance_traffic_lights[EINVOICING_FEATURES[0]]} />}
             {wageProtectionEnabled && <TrafficLight label={t('complianceWps')} signal={compliance_traffic_lights[WPS_FEATURES[0]]} />}
             {socialInsuranceEnabled && <TrafficLight label={t('complianceSocialInsurance')} signal={compliance_traffic_lights[SOCIAL_INSURANCE_FEATURES[0]]} />}
           </div>
-        </CardContent>
-      </Card>
+      </ExecSectionCard>
       )}
 
-      <Card className="border-0 shadow-sm">
-        <CardHeader><CardTitle className="text-base">{t('overdueByCampus')}</CardTitle></CardHeader>
-        <CardContent>
+      <ExecSectionCard title={t('overdueByCampus')} icon={AlertTriangle} iconTone="gold">
           {overdue_by_campus.length === 0 ? <EmptyState isRTL={isRTL} /> : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -1016,39 +1040,86 @@ function CFODashboard({ data, isRTL, t }) {
               </table>
             </div>
           )}
-        </CardContent>
-      </Card>
+      </ExecSectionCard>
 
-      <Card className="border-0 shadow-sm">
-        <CardHeader><CardTitle className="text-base">{t('scenarioSimulator')}</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-muted-foreground">{isRTL ? 'نمو الإيراد' : 'Revenue growth'}</span>
-                <span className="font-medium">{growthRate}%</span>
+      <ExecScenarioSimulator
+        title={t('scenarioSimulator')}
+        subtitle={isRTL ? 'اضبط نمو الإيراد والمصروفات لمعاينة الأثر على الأرباح' : 'Adjust revenue and expense levers to preview EBITDA impact'}
+        isRTL={isRTL}
+        disabled={isMultiCurrency}
+        disabledMessage={isRTL ? 'المحاكاة غير متوفرة للعملات المتعددة' : 'Scenario simulator is not available for multi-currency scopes.'}
+        revenueGrowth={growthRate}
+        expenseChange={expenseRate}
+        onRevenueGrowthChange={setGrowthRate}
+        onExpenseChange={setExpenseRate}
+        outcomes={{
+          revenue: {
+            label: t('revenue'),
+            value: formatCurrency(simRevenue, tenant?.localization, isRTL),
+            tone: growthRate > 0 ? 'positive' : growthRate < 0 ? 'negative' : 'neutral',
+          },
+          expenses: {
+            label: isRTL ? 'المصروفات' : 'Expenses',
+            value: formatCurrency(simExpenses, tenant?.localization, isRTL),
+            tone: expenseRate > 0 ? 'negative' : expenseRate < 0 ? 'positive' : 'neutral',
+          },
+          ebitda: {
+            label: t('ebitda'),
+            value: formatCurrency(simEbitda, tenant?.localization, isRTL),
+            tone: simEbitda != null && simEbitda >= (scenario_baseline.ebitda || 0) ? 'highlight' : 'negative',
+          },
+        }}
+      />
+
+      <div className={execLayout.chartGrid3}>
+        <ExecSectionCard title={isRTL ? 'الإيرادات حسب نوع الرسم' : 'Revenue by Fee Type'} icon={Receipt} iconTone="najdi">
+            {!feeTypeRows.length ? <EmptyState isRTL={isRTL} /> : (
+              <div className="space-y-2">
+                {feeTypeRows.slice(0, 6).map((row) => (
+                  <div key={row.name} className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground truncate">{row.name}</span>
+                    <span className="font-semibold text-ink">{formatCurrency(row.amount, tenant?.localization, isRTL)}</span>
+                  </div>
+                ))}
               </div>
-              <input type="range" min={-20} max={20} value={growthRate} onChange={(e) => setGrowthRate(Number(e.target.value))} className="w-full" />
+            )}
+        </ExecSectionCard>
+
+        <ExecSectionCard title={isRTL ? 'توقع التحصيل' : 'Collections Forecast'} icon={Wallet} iconTone="gold">
+            {!forecastRows.length ? <EmptyState isRTL={isRTL} /> : (
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={forecastRows}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="label" fontSize={10} />
+                  <YAxis fontSize={10} />
+                  <Tooltip />
+                  <Bar dataKey="expected" name={isRTL ? 'المتوقع' : 'Expected'} fill={COLORS.gold} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+        </ExecSectionCard>
+
+        <ExecSectionCard title={isRTL ? 'موقف ضريبة القيمة المضافة' : 'VAT Position'} icon={Receipt} iconTone="info">
+            <div className="space-y-3 text-sm">
+            {vat_position?.output_vat_accrued != null ? (
+              <>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{isRTL ? 'ضريبة متراكمة' : 'Output VAT Accrued'}</span>
+                  <span className="font-semibold">{formatCurrency(vat_position.output_vat_accrued, tenant?.localization, isRTL)}</span>
+                </div>
+                {vat_position.next_filing_date && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">{isRTL ? 'موعد الإقرار التالي' : 'Next Filing'}</span>
+                    <span className="font-medium">{vat_position.next_filing_date}</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <EmptyState isRTL={isRTL} message={isRTL ? 'لا توجد بيانات ضريبة' : 'No VAT data'} />
+            )}
             </div>
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-muted-foreground">{isRTL ? 'تغير المصروفات' : 'Expense change'}</span>
-                <span className="font-medium">{expenseRate}%</span>
-              </div>
-              <input type="range" min={-20} max={20} value={expenseRate} onChange={(e) => setExpenseRate(Number(e.target.value))} className="w-full" />
-            </div>
-          </div>
-          {isMultiCurrency ? (
-            <div className="text-sm text-muted-foreground">{isRTL ? 'المحاكاة غير متوفرة للعملات المتعددة' : 'Scenario simulator is not available for multi-currency scopes.'}</div>
-          ) : (
-            <div className="grid grid-cols-3 gap-4 pt-2">
-              <div className="text-center"><p className="text-xs text-muted-foreground">{t('revenue')}</p><p className="font-semibold">{formatCurrency(simRevenue, tenant?.localization, isRTL)}</p></div>
-              <div className="text-center"><p className="text-xs text-muted-foreground">{isRTL ? 'المصروفات' : 'Expenses'}</p><p className="font-semibold">{formatCurrency(simExpenses, tenant?.localization, isRTL)}</p></div>
-              <div className="text-center"><p className="text-xs text-muted-foreground">{t('ebitda')}</p><p className="font-semibold">{formatCurrency(simEbitda, tenant?.localization, isRTL)}</p></div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        </ExecSectionCard>
+      </div>
     </div>
   );
 }
@@ -1058,17 +1129,27 @@ function COODashboard({ data, isRTL, t }) {
   const { kpis = {}, capacity_to_cash = [], admissions_funnel = {}, utilization_by_campus = [] } = data;
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <ExecutiveKPICard id="coo-capacity" title={t('capacityUtilization')} value={fmtPct(kpis.capacity_utilization_pct)} color={kpis.capacity_utilization_pct >= 85 ? 'green' : kpis.capacity_utilization_pct < 60 ? 'red' : 'info'} icon={Building2} />
-        <ExecutiveKPICard id="coo-ratio" title={t('studentTeacherRatio')} value={kpis.student_teacher_ratio ?? '—'} subtitle={kpis.student_teacher_ratio_data_quality === 'not_tracked' ? (isRTL ? 'غير متتبع' : 'Not tracked') : undefined} color="green" icon={Users} />
-        <ExecutiveKPICard id="coo-attendance" title={isRTL ? 'معدل حضور الطلاب' : 'Student Attendance'} value={kpis.student_attendance_rate_pct != null ? fmtPct(kpis.student_attendance_rate_pct) : '—'} color="purple" icon={GraduationCap} />
-        <ExecutiveKPICard id="coo-applicants" title={isRTL ? 'طلبات القبول' : 'Applications'} value={fmtNumber(admissions_funnel.applicants_total, isRTL)} subtitle={`${fmtNumber(admissions_funnel.applicants_pending, isRTL)} ${isRTL ? 'قيد المراجعة' : 'pending'}`} color="gold" icon={Target} />
+    <div className={execLayout.page}>
+      <ExecHeroBanner
+        persona="coo"
+        eyebrow={t('execPersonaCoo')}
+        title={isRTL ? 'لوحة مدير العمليات' : 'Chief Operating Officer Dashboard'}
+        subtitle={isRTL ? 'السعة والقبول والحضور عبر الفروع' : 'Capacity, admissions, and attendance across campuses'}
+        stats={[
+          { value: fmtPct(kpis.capacity_utilization_pct), label: t('capacityUtilization') },
+          { value: kpis.student_attendance_rate_pct != null ? fmtPct(kpis.student_attendance_rate_pct) : '—', label: isRTL ? 'حضور الطلاب' : 'Attendance' },
+          { value: fmtNumber(admissions_funnel.applicants_total, isRTL), label: isRTL ? 'الطلبات' : 'Applications' },
+        ]}
+      />
+
+      <div className={execLayout.kpiGrid}>
+        <ExecutiveKPICard id="coo-capacity" href={execKpiHref('coo-capacity')} title={t('capacityUtilization')} value={fmtPct(kpis.capacity_utilization_pct)} color={kpis.capacity_utilization_pct >= 85 ? 'green' : kpis.capacity_utilization_pct < 60 ? 'red' : 'info'} icon={Building2} />
+        <ExecutiveKPICard id="coo-ratio" href={execKpiHref('coo-ratio')} title={t('studentTeacherRatio')} value={kpis.student_teacher_ratio ?? '—'} subtitle={kpis.student_teacher_ratio_data_quality === 'not_tracked' ? (isRTL ? 'غير متتبع' : 'Not tracked') : undefined} color="green" icon={Users} />
+        <ExecutiveKPICard id="coo-attendance" href={execKpiHref('coo-attendance')} title={isRTL ? 'معدل حضور الطلاب' : 'Student Attendance'} value={kpis.student_attendance_rate_pct != null ? fmtPct(kpis.student_attendance_rate_pct) : '—'} subtitle={kpis.student_attendance_data_quality === 'not_tracked' ? (isRTL ? 'غير متتبع' : 'Not tracked') : undefined} color="purple" icon={GraduationCap} />
+        <ExecutiveKPICard id="coo-applicants" href={execKpiHref('coo-applicants')} title={isRTL ? 'طلبات القبول' : 'Applications'} value={fmtNumber(admissions_funnel.applicants_total, isRTL)} subtitle={`${fmtNumber(admissions_funnel.applicants_pending, isRTL)} ${isRTL ? 'قيد المراجعة' : 'pending'}`} color="gold" icon={Target} />
       </div>
 
-      <Card className="border-0 shadow-sm">
-        <CardHeader><CardTitle className="text-base">{t('capacityToCash')}</CardTitle></CardHeader>
-        <CardContent>
+      <ExecSectionCard title={t('capacityToCash')} icon={Building2} iconTone="najdi">
           {capacity_to_cash.length === 0 ? <EmptyState isRTL={isRTL} /> : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -1095,13 +1176,10 @@ function COODashboard({ data, isRTL, t }) {
               </table>
             </div>
           )}
-        </CardContent>
-      </Card>
+      </ExecSectionCard>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="border-0 shadow-sm">
-          <CardHeader><CardTitle className="text-base">{t('admissionsFunnel')}</CardTitle></CardHeader>
-          <CardContent>
+      <div className={execLayout.chartGrid}>
+        <ExecSectionCard title={t('admissionsFunnel')} icon={Target} iconTone="purple">
             {!admissions_funnel.applications_by_stage?.length ? <EmptyState isRTL={isRTL} /> : (
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={admissions_funnel.applications_by_stage} layout="vertical">
@@ -1113,12 +1191,9 @@ function COODashboard({ data, isRTL, t }) {
                 </BarChart>
               </ResponsiveContainer>
             )}
-          </CardContent>
-        </Card>
+        </ExecSectionCard>
 
-        <Card className="border-0 shadow-sm">
-          <CardHeader><CardTitle className="text-base">{t('utilizationByCampus')}</CardTitle></CardHeader>
-          <CardContent>
+        <ExecSectionCard title={t('utilizationByCampus')} icon={Activity} iconTone="info">
             {utilization_by_campus.length === 0 ? <EmptyState isRTL={isRTL} /> : (
               <div className="space-y-3">
                 {utilization_by_campus.map((c) => (
@@ -1126,8 +1201,7 @@ function COODashboard({ data, isRTL, t }) {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+        </ExecSectionCard>
       </div>
     </div>
   );
@@ -1140,7 +1214,7 @@ function CHRODashboard({ data, isRTL, t }) {
   const chroWageProtectionEnabled = isFeatureEnabled(WPS_FEATURES[0]);
   const chroLaborPortalEnabled = isFeatureEnabled(LABOR_PORTAL_FEATURES[0]);
   const showPayrollGovCompliance = chroSocialInsuranceEnabled || chroWageProtectionEnabled || chroLaborPortalEnabled;
-  const { kpis = {}, nationalisation = {}, workforce_composition = {}, payroll_gov_compliance = {}, open_roles = {}, contract_expiry_radar = {}, leave_absence_summary = {} } = data;
+  const { kpis = {}, nationalisation = {}, workforce_composition = {}, saudi_vs_non_saudi = {}, payroll_gov_compliance = {}, open_roles = {}, contract_expiry_radar = {}, leave_absence_summary = {} } = data;
 
   const bandColor = { platinum: 'text-purple-600 border-purple-200', green: 'text-emerald-600 border-emerald-200', yellow: 'text-amber-600 border-amber-200', red: 'text-red-600 border-red-200' }[nationalisation.band] || 'text-muted-foreground border-border';
 
@@ -1148,15 +1222,34 @@ function CHRODashboard({ data, isRTL, t }) {
     ? Object.entries(workforce_composition.by_gender).map(([k, v]) => ({ name: k, value: v }))
     : [];
 
+  const nationalityData = saudi_vs_non_saudi?.saudi != null
+    ? [
+        { name: isRTL ? 'سعودي' : 'Saudi', value: saudi_vs_non_saudi.saudi || 0 },
+        { name: isRTL ? 'غير سعودي' : 'Non-Saudi', value: saudi_vs_non_saudi.non_saudi || 0 },
+      ].filter((d) => d.value > 0)
+    : [];
+
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <ExecutiveKPICard id="chro-headcount" title={t('headcount')} value={fmtNumber(kpis.headcount, isRTL)} color="najdi" icon={Users} />
+    <div className={execLayout.page}>
+      <ExecHeroBanner
+        persona="chro"
+        eyebrow={t('execPersonaChro')}
+        title={isRTL ? 'لوحة مدير الموارد البشرية' : 'Chief HR Officer Dashboard'}
+        subtitle={isRTL ? 'التوطين والاستبقاء وتغطية الموظفين' : 'Saudization, retention, and workforce coverage'}
+        stats={[
+          { value: fmtNumber(kpis.headcount, isRTL), label: t('headcount') },
+          { value: fmtPct(kpis.saudization_pct), label: t('saudizationRate') },
+          { value: kpis.retention_rate_pct != null ? fmtPct(kpis.retention_rate_pct) : '—', label: t('retentionRate') },
+        ]}
+      />
+
+      <div className={execLayout.kpiGrid}>
+        <ExecutiveKPICard id="chro-headcount" href={execKpiHref('chro-headcount')} title={t('headcount')} value={fmtNumber(kpis.headcount, isRTL)} color="najdi" icon={Users} />
         {nationalisationEnabled && (
-          <ExecutiveKPICard id="chro-saudization" title={t('saudizationRate')} value={fmtPct(kpis.saudization_pct)} color={nationalisation.band === 'green' || nationalisation.band === 'platinum' ? 'green' : nationalisation.band === 'red' ? 'red' : 'gold'} icon={ShieldCheck} subtitle={nationalisation.band ? nationalisation.band.toUpperCase() : undefined} />
+          <ExecutiveKPICard id="chro-saudization" href={execKpiHref('chro-saudization')} title={t('saudizationRate')} value={fmtPct(kpis.saudization_pct)} color={nationalisation.band === 'green' || nationalisation.band === 'platinum' ? 'green' : nationalisation.band === 'red' ? 'red' : 'gold'} icon={ShieldCheck} subtitle={nationalisation.band ? nationalisation.band.toUpperCase() : undefined} />
         )}
-        <ExecutiveKPICard id="chro-retention" title={t('retentionRate')} value={kpis.retention_rate_pct != null ? fmtPct(kpis.retention_rate_pct) : '—'} color="purple" icon={TrendingUp} />
-        <ExecutiveKPICard id="chro-open-roles" title={t('openRoles')} value={open_roles.count != null ? fmtNumber(open_roles.count, isRTL) : '—'} subtitle={open_roles.avg_time_to_fill_days != null ? `${fmtNumber(open_roles.avg_time_to_fill_days, isRTL)} ${isRTL ? 'يوم للتعيين' : 'days to fill'}` : undefined} color="info" icon={Building2} />
+        <ExecutiveKPICard id="chro-retention" href={execKpiHref('chro-retention')} title={t('retentionRate')} value={kpis.retention_rate_pct != null ? fmtPct(kpis.retention_rate_pct) : '—'} color="purple" icon={TrendingUp} />
+        <ExecutiveKPICard id="chro-open-roles" href={execKpiHref('chro-open-roles')} title={t('openRoles')} value={open_roles.count != null ? fmtNumber(open_roles.count, isRTL) : '—'} subtitle={open_roles.avg_time_to_fill_days != null ? `${fmtNumber(open_roles.avg_time_to_fill_days, isRTL)} ${isRTL ? 'يوم للتعيين' : 'days to fill'}` : undefined} color="info" icon={Building2} />
       </div>
 
       {nationalisationEnabled && (
@@ -1208,11 +1301,11 @@ function CHRODashboard({ data, isRTL, t }) {
         <Card className="border-0 shadow-sm">
           <CardHeader><CardTitle className="text-base">{isRTL ? 'السعوديون مقابل غير السعوديين' : 'Saudi vs Non-Saudi'}</CardTitle></CardHeader>
           <CardContent>
-            {genderData.length === 0 ? <EmptyState isRTL={isRTL} /> : (
+            {nationalityData.length === 0 ? <EmptyState isRTL={isRTL} /> : (
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
-                  <Pie data={genderData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                    {genderData.map((entry, idx) => (
+                  <Pie data={nationalityData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                    {nationalityData.map((entry, idx) => (
                       <Cell key={entry.name} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
                     ))}
                   </Pie>
@@ -1278,6 +1371,187 @@ function CHRODashboard({ data, isRTL, t }) {
                   <p className="text-lg font-bold text-emerald-600">{fmtNumber(leave_absence_summary.excused, isRTL)}</p>
                   <p className="text-xs text-muted-foreground">{isRTL ? 'معذور' : 'Excused'}</p>
                 </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function PrincipalDashboard({ data, isRTL, t }) {
+  const { kpis = {}, admissions_funnel = {}, utilization_by_campus = [], growth = {}, employee_attendance_summary = {} } = data;
+
+  return (
+    <div className={execLayout.page}>
+      <ExecHeroBanner
+        persona="principal"
+        eyebrow={t('execPersonaPrincipal')}
+        title={isRTL ? 'لوحة المدير المدرسي' : 'School Principal Dashboard'}
+        subtitle={isRTL ? 'مؤشرات أكاديمية وتشغيلية للحرم المدرسي' : 'Academic and operational KPIs for your campus'}
+        stats={[
+          { value: fmtNumber(kpis.enrolled_students, isRTL), label: isRTL ? 'طلاب مسجلون' : 'Enrolled' },
+          { value: fmtPct(kpis.capacity_utilization_pct), label: t('capacityUtilization') },
+        ]}
+      />
+
+      <div className={execLayout.kpiGrid}>
+        <ExecutiveKPICard id="principal-enrolled" href={execKpiHref('principal-enrolled')} title={isRTL ? 'الطلاب المسجلون' : 'Enrolled Students'} value={fmtNumber(kpis.enrolled_students, isRTL)} delta={growth?.data_quality === 'real' ? growth.growth_rate : null} color="najdi" icon={GraduationCap} />
+        <ExecutiveKPICard id="principal-capacity" href={execKpiHref('principal-capacity')} title={t('capacityUtilization')} value={fmtPct(kpis.capacity_utilization_pct)} color={kpis.capacity_utilization_pct >= 85 ? 'green' : kpis.capacity_utilization_pct < 60 ? 'red' : 'info'} icon={Building2} />
+        <ExecutiveKPICard id="principal-ratio" href={execKpiHref('principal-ratio')} title={t('studentTeacherRatio')} value={kpis.student_teacher_ratio ?? '—'} subtitle={kpis.student_teacher_ratio_data_quality === 'not_tracked' ? (isRTL ? 'غير متتبع' : 'Not tracked') : undefined} color="green" icon={Users} />
+        <ExecutiveKPICard id="principal-attendance" href={execKpiHref('principal-attendance')} title={isRTL ? 'حضور الطلاب' : 'Student Attendance'} value={kpis.student_attendance_rate_pct != null ? fmtPct(kpis.student_attendance_rate_pct) : '—'} subtitle={kpis.student_attendance_data_quality === 'not_tracked' ? (isRTL ? 'غير متتبع' : 'Not tracked') : undefined} color="purple" icon={UserCheck} />
+        <ExecutiveKPICard id="principal-score" href={execKpiHref('principal-score')} title={isRTL ? 'متوسط الدرجات' : 'Average Score'} value={kpis.average_score_pct != null ? fmtPct(kpis.average_score_pct) : '—'} subtitle={kpis.average_score_data_quality === 'not_tracked' ? (isRTL ? 'غير متتبع' : 'Not tracked') : undefined} color="gold" icon={BookOpen} />
+        <ExecutiveKPICard id="principal-homework" href={execKpiHref('principal-homework')} title={isRTL ? 'واجبات متأخرة' : 'Overdue Homework'} value={fmtNumber(kpis.homework_overdue, isRTL)} color={kpis.homework_overdue > 0 ? 'red' : 'green'} icon={ClipboardList} />
+        <ExecutiveKPICard id="principal-admissions" href={execKpiHref('principal-admissions')} title={isRTL ? 'طلبات معلقة' : 'Pending Applications'} value={fmtNumber(kpis.pending_applications, isRTL)} subtitle={`${fmtNumber(admissions_funnel.applicants_total, isRTL)} ${isRTL ? 'إجمالي' : 'total'}`} color="info" icon={Target} />
+        <ExecutiveKPICard id="principal-growth" href={execKpiHref('principal-growth')} title={isRTL ? 'النمو السنوي' : 'YoY Growth'} value={growth?.growth_rate != null ? fmtPct(growth.growth_rate) : '—'} color={growth?.growth_rate < 0 ? 'red' : 'green'} icon={TrendingUp} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-0 shadow-sm">
+          <CardHeader><CardTitle className="text-base">{t('admissionsFunnel')}</CardTitle></CardHeader>
+          <CardContent>
+            {!admissions_funnel.applications_by_stage?.length ? <EmptyState isRTL={isRTL} /> : (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={admissions_funnel.applications_by_stage} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                  <XAxis type="number" fontSize={12} />
+                  <YAxis dataKey="stage" type="category" fontSize={12} width={100} />
+                  <Tooltip />
+                  <Bar dataKey="count" fill={COLORS.purple} radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm">
+          <CardHeader><CardTitle className="text-base">{t('utilizationByCampus')}</CardTitle></CardHeader>
+          <CardContent>
+            {utilization_by_campus.length === 0 ? <EmptyState isRTL={isRTL} /> : (
+              <div className="space-y-3">
+                {utilization_by_campus.map((c) => (
+                  <ScoreBar key={c.branch_id} label={isRTL ? c.name_ar : c.name_en} value={c.utilization_pct} isRTL={isRTL} />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {employee_attendance_summary?.data_quality === 'real' && (
+        <Card className="border-0 shadow-sm">
+          <CardHeader><CardTitle className="text-base">{isRTL ? 'حضور الموظفين (30 يوماً)' : 'Staff Attendance (30d)'}</CardTitle></CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="p-3 rounded-lg bg-red-50 border border-red-100">
+                <p className="text-lg font-bold text-red-600">{fmtNumber(employee_attendance_summary.absent, isRTL)}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'غياب' : 'Absent'}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-amber-50 border border-amber-100">
+                <p className="text-lg font-bold text-amber-600">{fmtNumber(employee_attendance_summary.late, isRTL)}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'تأخر' : 'Late'}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-100">
+                <p className="text-lg font-bold text-emerald-600">{fmtNumber(employee_attendance_summary.excused, isRTL)}</p>
+                <p className="text-xs text-muted-foreground">{isRTL ? 'معذور' : 'Excused'}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function AdministratorDashboard({ data, isRTL, t }) {
+  const { tenant } = useTenant();
+  const { kpis = {}, operations = {}, admissions_funnel = {}, overdue_by_campus = [], utilization_by_campus = [] } = data;
+
+  return (
+    <div className={execLayout.page}>
+      <ExecHeroBanner
+        persona="administrator"
+        eyebrow={t('execPersonaAdministrator')}
+        title={isRTL ? 'لوحة المسجل' : 'Registrar Dashboard'}
+        subtitle={isRTL ? 'عمليات يومية: قبول، تحصيل، موارد بشرية' : 'Daily ops: admissions, collections, HR'}
+        stats={[
+          { value: fmtNumber(kpis.active_students, isRTL), label: isRTL ? 'طلاب' : 'Students' },
+          { value: fmtPct(kpis.collection_rate_pct), label: isRTL ? 'تحصيل' : 'Collection' },
+          { value: fmtNumber(kpis.staff_headcount, isRTL), label: t('headcount') },
+        ]}
+      />
+
+      <div className={execLayout.kpiGrid}>
+        <ExecutiveKPICard id="admin-students" href={execKpiHref('admin-students')} title={isRTL ? 'الطلاب النشطون' : 'Active Students'} value={fmtNumber(kpis.active_students, isRTL)} color="najdi" icon={GraduationCap} />
+        <ExecutiveKPICard id="admin-admissions" href={execKpiHref('admin-admissions')} title={isRTL ? 'طلبات معلقة' : 'Pending Applications'} value={fmtNumber(kpis.pending_applications, isRTL)} color={kpis.pending_applications > 0 ? 'gold' : 'green'} icon={Target} subtitle={`${fmtNumber(admissions_funnel.applicants_accepted, isRTL)} ${isRTL ? 'مقبول' : 'accepted'}`} />
+        <ExecutiveKPICard id="admin-overdue" href={execKpiHref('admin-overdue')} title={isRTL ? 'فواتير متأخرة' : 'Overdue Invoices'} value={fmtNumber(kpis.overdue_invoices, isRTL)} color={kpis.overdue_invoices > 0 ? 'red' : 'green'} icon={FileWarning} />
+        <ExecutiveKPICard id="admin-collection" href={execKpiHref('admin-collection')} title={isRTL ? 'نسبة التحصيل' : 'Collection Rate'} value={kpis.collection_rate_pct != null ? fmtPct(kpis.collection_rate_pct) : '—'} color={kpis.collection_rate_pct != null && kpis.collection_rate_pct < 80 ? 'red' : 'gold'} icon={Percent} />
+        <ExecutiveKPICard id="admin-leave" href={execKpiHref('admin-leave')} title={isRTL ? 'إجازات معلقة' : 'Pending Leave'} value={fmtNumber(kpis.pending_leave_requests, isRTL)} color={kpis.pending_leave_requests > 0 ? 'gold' : 'green'} icon={Clock} />
+        <ExecutiveKPICard id="admin-staff" href={execKpiHref('admin-staff')} title={t('headcount')} value={fmtNumber(kpis.staff_headcount, isRTL)} color="info" icon={Users} />
+        <ExecutiveKPICard id="admin-iqama" href={execKpiHref('admin-iqama')} title={isRTL ? 'إقامات تنتهي (30 يوم)' : 'Iqamas Expiring (30d)'} value={fmtNumber(kpis.iqama_expiring_30d, isRTL)} color={kpis.iqama_expiring_30d > 0 ? 'red' : 'green'} icon={ShieldAlert} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-0 shadow-sm">
+          <CardHeader><CardTitle className="text-base">{isRTL ? 'ملخص القبول' : 'Admissions Summary'}</CardTitle></CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'معلق' : 'Pending'}</span><span className="font-semibold">{fmtNumber(operations.admissions?.pending, isRTL)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'مقبول' : 'Accepted'}</span><span className="font-semibold text-emerald-700">{fmtNumber(operations.admissions?.accepted, isRTL)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'الإجمالي' : 'Total'}</span><span className="font-semibold">{fmtNumber(operations.admissions?.total, isRTL)}</span></div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm">
+          <CardHeader><CardTitle className="text-base">{isRTL ? 'ملخص المالية' : 'Finance Summary'}</CardTitle></CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'متأخر' : 'Overdue'}</span><span className="font-semibold text-red-600">{fmtNumber(operations.finance?.overdue_invoices, isRTL)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'نسبة التحصيل' : 'Collection %'}</span><span className="font-semibold">{fmtPct(operations.finance?.collection_rate_pct)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'المحصّل' : 'Collected'}</span><span className="font-semibold">{formatCurrency(operations.finance?.total_collected, tenant?.localization, isRTL)}</span></div>
+            {operations.finance?.collected_by_currency && (
+              <div className="pt-2 border-t border-border/50">
+                <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'حسب العملة (ADR-008)' : 'By currency (ADR-008)'}</p>
+                <MultiCurrencyBreakdown amounts={operations.finance.collected_by_currency} localization={tenant?.localization} isRTL={isRTL} />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm">
+          <CardHeader><CardTitle className="text-base">{isRTL ? 'ملخص الموارد البشرية' : 'HR Summary'}</CardTitle></CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'إجازات معلقة' : 'Pending Leave'}</span><span className="font-semibold">{fmtNumber(operations.hr?.pending_leave_requests, isRTL)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{t('headcount')}</span><span className="font-semibold">{fmtNumber(operations.hr?.staff_headcount, isRTL)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{isRTL ? 'إقامات تنتهي' : 'Iqamas Expiring'}</span><span className="font-semibold text-amber-600">{fmtNumber(operations.hr?.iqama_expiring_30d, isRTL)}</span></div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-0 shadow-sm">
+          <CardHeader><CardTitle className="text-base">{t('overdueByCampus')}</CardTitle></CardHeader>
+          <CardContent>
+            {overdue_by_campus.length === 0 ? <EmptyState isRTL={isRTL} /> : (
+              <div className="space-y-2">
+                {overdue_by_campus.filter((c) => c.overdue_amount > 0).slice(0, 8).map((c) => (
+                  <div key={c.branch_id} className="flex items-center justify-between text-sm p-2 rounded-lg bg-red-50/50 border border-red-100/60">
+                    <span>{isRTL ? c.name_ar : c.name_en}</span>
+                    <span className="font-semibold text-red-700">{formatCurrency(c.overdue_amount, { ...tenant?.localization, currencyCode: c.currency_code }, isRTL)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm">
+          <CardHeader><CardTitle className="text-base">{t('utilizationByCampus')}</CardTitle></CardHeader>
+          <CardContent>
+            {utilization_by_campus.length === 0 ? <EmptyState isRTL={isRTL} /> : (
+              <div className="space-y-3">
+                {utilization_by_campus.map((c) => (
+                  <ScoreBar key={c.branch_id} label={isRTL ? c.name_ar : c.name_en} value={c.utilization_pct} isRTL={isRTL} />
+                ))}
               </div>
             )}
           </CardContent>

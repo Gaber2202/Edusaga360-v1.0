@@ -41,6 +41,27 @@ const CATEGORY = {
   inquiry: { en: 'Inquiry', ar: 'استفسار' },
 };
 
+/** SCRUM-131 — CRM sales pipeline (Lead → Qualified only). */
+export const CRM_PIPELINE_STAGES = [
+  { key: 'lead', en: 'Lead', ar: 'عميل محتمل', badge: 'bg-najdi-50 text-najdi-900' },
+  { key: 'qualified', en: 'Qualified', ar: 'مؤهّل', badge: 'bg-green-100 text-green-800' },
+];
+
+const PIPELINE = Object.fromEntries(
+  CRM_PIPELINE_STAGES.map((s) => [s.key, { en: s.en, ar: s.ar }]),
+);
+
+const ACTIVITY = {
+  created: { en: 'Created', ar: 'إنشاء' },
+  note: { en: 'Note', ar: 'ملاحظة' },
+  call: { en: 'Call', ar: 'اتصال' },
+  email: { en: 'Email', ar: 'بريد' },
+  meeting: { en: 'Meeting', ar: 'اجتماع' },
+  stage_change: { en: 'Stage change', ar: 'تغيير المرحلة' },
+  qualified: { en: 'Qualified', ar: 'تأهيل' },
+  application_linked: { en: 'Admissions linked', ar: 'ربط القبول' },
+};
+
 function pick(map, key, isRTL) {
   const v = map[key];
   if (!v) return key || '-';
@@ -52,3 +73,10 @@ export const priorityLabel = (k, isRTL) => pick(PRIORITY, k, isRTL);
 export const slaLabel = (k, isRTL) => pick(SLA, k, isRTL);
 export const segmentLabel = (k, isRTL) => pick(SEGMENT, k, isRTL);
 export const crmCategoryLabel = (k, isRTL) => pick(CATEGORY, k, isRTL);
+export const pipelineStageLabel = (k, isRTL) => pick(PIPELINE, k || 'lead', isRTL);
+export const crmActivityLabel = (k, isRTL) => pick(ACTIVITY, k, isRTL);
+
+export function pipelineStageBadge(stage) {
+  const s = CRM_PIPELINE_STAGES.find((x) => x.key === (stage || 'lead'));
+  return s?.badge || 'bg-gray-100 text-gray-800';
+}

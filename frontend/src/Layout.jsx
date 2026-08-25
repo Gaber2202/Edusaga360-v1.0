@@ -95,7 +95,6 @@ import {
           Route,
           UtensilsCrossed,
           Store,
-          Zap,
           Megaphone,
           Plane,
           Crown,
@@ -187,9 +186,10 @@ function LayoutContent({ children, currentPageName }) {
       roles: ['admin', 'hr_admin', 'hr_officer', 'branch_manager'],
       children: [
         { name: 'hrDashboard', icon: BarChart3, page: 'HRManagerDashboard', roles: ['admin', 'hr_admin', 'branch_manager'] },
-        { name: 'employees', icon: Users, page: 'Employees', roles: ['admin', 'hr_admin', 'hr_officer', 'branch_manager'] },
+        // P4-3-1: Recruitment → Onboarding → Employees
         { name: 'recruitment', icon: UserPlus, page: 'RecruitmentPage', roles: ['admin', 'hr_admin', 'hr_officer'] },
         { name: 'onboarding', icon: CheckCircle, page: 'Onboarding', roles: ['admin', 'hr_admin', 'hr_officer'] },
+        { name: 'employees', icon: Users, page: 'Employees', roles: ['admin', 'hr_admin', 'hr_officer', 'branch_manager'] },
         { name: 'archiveAndDocuments', icon: FolderOpen, page: 'HRContracts', roles: ['admin', 'hr_admin', 'hr_officer'] },
         { name: 'employee_attendance', icon: ClipboardCheck, page: 'EmployeeAttendance', roles: ['admin', 'hr_admin', 'hr_officer'] },
         { name: 'attendanceDevices', icon: Fingerprint, page: 'AttendanceDevices', roles: ['admin', 'hr_admin'] },
@@ -272,6 +272,7 @@ function LayoutContent({ children, currentPageName }) {
       roles: ['admin', 'finance', 'accountant', 'hr_admin'],
       children: [
         { name: 'assetRegister', icon: FolderOpen, page: 'Assets', roles: ['admin', 'finance', 'accountant'] },
+        { name: 'projects', icon: ClipboardList, page: 'Projects', roles: ['admin', 'finance', 'accountant', 'branch_manager'] },
         { name: 'depreciation', icon: Calculator, page: 'Depreciation', roles: ['admin', 'finance', 'accountant'] },
         { name: 'assetAssignments', icon: UserCheck, page: 'AssetAssignments', roles: ['admin', 'hr_admin', 'finance'] },
         { name: 'assetRentals', icon: Landmark, page: 'AssetRentals', roles: ['admin', 'finance', 'hr_admin'] },
@@ -290,7 +291,7 @@ function LayoutContent({ children, currentPageName }) {
     children: [
       { name: 'integrations', icon: Link2, page: 'Integrations', roles: ['admin', 'it_admin'] },
       { name: 'govIntegrations', icon: Shield, page: 'GovIntegrations', roles: ['admin', 'hr_admin', 'finance'] },
-      { name: 'integrationHub', icon: Zap, page: 'IntegrationHub', roles: ['admin', 'it_admin'] },
+      // P4-10-2: Integration Hub removed (founder decision #8)
     ]
     },
 
@@ -346,6 +347,12 @@ function LayoutContent({ children, currentPageName }) {
       icon: Monitor,
       page: 'ITHelpdesk',
       roles: ['admin', 'it_admin', 'it_support']
+    },
+    {
+      name: 'helpDesk',
+      icon: Headphones,
+      page: 'HelpDesk',
+      roles: ['admin', 'branch_manager', 'facilities_manager', 'it_admin', 'hr_admin', 'crm_agent']
     },
     {
       name: 'facilities',

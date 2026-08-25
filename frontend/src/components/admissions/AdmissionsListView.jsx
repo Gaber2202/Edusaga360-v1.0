@@ -7,51 +7,41 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Card } from '../ui/card';
 import { format, differenceInDays } from 'date-fns';
 import { Search, AlertTriangle, Eye, Edit } from 'lucide-react';
+import {
+  DEFAULT_ADMISSION_STAGES,
+  STATUS_COLORS,
+  appMatchesStage,
+  normalizeApplicationStage,
+  stageLabel,
+} from '../../lib/admissionsPipeline';
 
 const GRADES = ['KG1','KG2','KG3','Grade1','Grade2','Grade3','Grade4','Grade5','Grade6','Grade7','Grade8','Grade9','Grade10','Grade11','Grade12'];
 
-const STATUS_COLORS = {
-  inquiry: 'bg-sand-alt text-ink',
-  submitted: 'bg-najdi-50 text-najdi-900',
-  pending: 'bg-najdi-50 text-najdi-900',
-  under_review: 'bg-yellow-100 text-yellow-700',
-  assessment: 'bg-purple-100 text-purple-700',
-  interview: 'bg-indigo-100 text-indigo-700',
-  committee: 'bg-orange-100 text-orange-700',
-  accepted: 'bg-green-100 text-green-700',
-  waitlist: 'bg-teal-100 text-teal-700',
-  enrolled: 'bg-emerald-100 text-emerald-700',
-  rejected: 'bg-red-100 text-red-700',
-};
-
-const STATUS_LABELS_AR = {
-  inquiry: 'استفسار', submitted: 'مقدَّم', pending: 'معلق',
-  under_review: 'مراجعة', assessment: 'اختبار', interview: 'مقابلة',
-  committee: 'اللجنة', accepted: 'مقبول', waitlist: 'انتظار',
-  enrolled: 'ملتحق', rejected: 'مرفوض',
-};
-
-export default function AdmissionsListView({ applications, loading, branches: _branches, onView, onEdit, userRole }) {
+export default function AdmissionsListView({
+  applications,
+  loading,
+  branches: _branches,
+  stages: stagesProp,
+  onView,
+  onEdit,
+  userRole,
+}) {
   const { isRTL } = useLanguage();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [gradeFilter, setGradeFilter] = useState('all');
+  const stages = stagesProp?.length ? stagesProp : DEFAULT_ADMISSION_STAGES;
 
   const filtered = applications.filter(app => {
     const q = search.toLowerCase();
     const matchSearch = !q || app.student_name_ar?.toLowerCase().includes(q) ||
       app.student_name_en?.toLowerCase().includes(q) ||
       app.application_number?.toLowerCase().includes(q) ||
-      app.guardian_phone?.includes(q);
-    const matchStatus = statusFilter === 'all' || app.status === statusFilter ||
-      (statusFilter === 'submitted' && app.status === 'pending');
+      app.guardian_phone?.includes(q) ||
+      app.guardian_whatsapp?.includes(q);
+    const matchStatus = statusFilter === 'all' || appMatchesStage(app, statusFilter);
     const matchGrade = gradeFilter === 'all' || app.applying_for_grade === gradeFilter;
     return matchSearch && matchStatus && matchGrade;
-  });
-
-  const statusCounts = {};
-  applications.forEach(a => {
-    statusCounts[a.status] = (statusCounts[a.status] || 0) + 1;
   });
 
   return (
@@ -73,8 +63,8 @@ export default function AdmissionsListView({ applications, loading, branches: _b
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{isRTL ? 'جميع الحالات' : 'All Status'}</SelectItem>
-            {Object.entries(STATUS_LABELS_AR).map(([k,v]) => (
-              <SelectItem key={k} value={k}>{isRTL ? v : k.charAt(0).toUpperCase() + k.slice(1)}</SelectItem>
+            {stages.map((s) => (
+              <SelectItem key={s.key} value={s.key}>{isRTL ? s.label_ar : s.label_en}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -150,9 +140,14 @@ export default function AdmissionsListView({ applications, loading, branches: _b
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLORS[app.status] || 'bg-sand-alt text-muted-foreground'}`}>
-                          {isRTL ? (STATUS_LABELS_AR[app.status] || app.status) : (app.status?.charAt(0).toUpperCase() + app.status?.slice(1))}
-                        </span>
+                        {(() => {
+                          const stageKey = normalizeApplicationStage(app);
+                          return (
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLORS[stageKey] || 'bg-sand-alt text-muted-foreground'}`}>
+                              {stageLabel(stages, stageKey, isRTL) || stageKey}
+                            </span>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell onClick={e => e.stopPropagation()}>
                         <div className="flex gap-1">

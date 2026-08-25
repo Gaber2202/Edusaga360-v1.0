@@ -1,8 +1,7 @@
 import Currency from '../components/Currency';
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantQuery, fetchData, callApi, uploadFileApi } from '../api/supabaseClient';
-import { sanitizeHtml } from '../lib/sanitize';
+import { callApi } from '../api/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -13,6 +12,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
 import { Loader2, Upload, CheckCircle, School, FileText, Users, DollarSign, AlertTriangle, Camera } from 'lucide-react';
+import { isFieldVisible, resolveVisibleFields } from '../lib/intakeFormFields';
 
 const REQUIRED_DOCUMENT_TYPES = [
   { code: 'national_id',       label_ar: 'هوية وطنية / إقامة',       label_en: 'National ID / Iqama' },
@@ -22,6 +22,33 @@ const REQUIRED_DOCUMENT_TYPES = [
   { code: 'photo',              label_ar: 'صورة شخصية',               label_en: 'Student Photo' },
 ];
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
+async function uploadIntakeFile(file, linkCode) {
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]);
+  const data_base64 = btoa(binary);
+  const res = await fetch(`${API_BASE}/api/public/intake/upload`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-intake-link-code': linkCode,
+    },
+    body: JSON.stringify({
+      filename: file.name,
+      content_type: file.type,
+      data_base64,
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || body.error || 'Upload failed');
+  }
+  return res.json();
+}
+
 export default function ParentIntake() {
   const [language, setLanguage] = useState('ar');
   const isRTL = language === 'ar';
@@ -30,12 +57,13 @@ export default function ParentIntake() {
   const [submitting, setSubmitting] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [submissionResult, setSubmissionResult] = useState(null);
-  
+
   const [formData, setFormData] = useState({
     guardian_name_ar: '',
     guardian_name_en: '',
     guardian_national_id: '',
     guardian_phone: '',
+    guardian_whatsapp: '',
     guardian_email: '',
     guardian_relationship: 'father',
     address: '',
@@ -47,6 +75,7 @@ export default function ParentIntake() {
     national_id: '',
     academic_year: '',
     applying_for_grade: '',
+    previous_school: '',
     has_special_needs: false,
     special_care_notes: '',
     documents: []
@@ -65,47 +94,34 @@ export default function ParentIntake() {
     if (code) setLinkCode(code);
   }, []);
 
-  const { data: intakeLink } = useQuery({ enabled: false /* parent_intake_links table not built */, queryKey: ['intakeLink', linkCode], queryFn: () => fetchData(tenantQuery('parent_intake_links').select('*').match({ link_code: linkCode, is_active: true })), select: (data) => data[0], initialData: [] });
-
-  const { data: _branches = [] } = useQuery({
-    queryKey: ['branches'],
-    queryFn: () => fetchData(tenantQuery('branches').select('*').match({ status: 'active' })),
+  const { data: intakeContext, isLoading: linkLoading, isError: linkError } = useQuery({
+    queryKey: ['publicIntake', linkCode],
+    queryFn: () => callApi(`/api/public/intake/by-code/${encodeURIComponent(linkCode)}`, null, { method: 'GET' }),
+    enabled: !!linkCode,
+    retry: 1,
   });
 
-  const { data: academicYears = [] } = useQuery({
-    queryKey: ['academicYears'],
-    queryFn: () => fetchData(tenantQuery('academic_years').select('*').match({ is_current: true })),
-  });
+  const intakeLink = intakeContext?.link || null;
+  const school = intakeContext?.school || null;
+  const visible = resolveVisibleFields(intakeContext?.visible_fields);
+  const feeStructures = intakeContext?.fee_structures || [];
+  const requiredDocs = intakeContext?.required_documents || REQUIRED_DOCUMENT_TYPES;
+  const show = (key) => isFieldVisible(visible, key);
 
-  const { data: feeStructures = [] } = useQuery({
-    queryKey: ['feeStructures'],
-    queryFn: () => fetchData(tenantQuery('fee_structures').select('*').match({ is_active: true })),
-  });
-
-  const { data: specialCareFees = [] } = useQuery({
-    queryKey: ['specialCareFees'],
-    queryFn: () => fetchData(tenantQuery('special_care_fees').select('*').match({ is_active: true })),
-  });
-
-  const { data: currentTC } = useQuery({ enabled: false /* tc_versions table not built */, queryKey: ['currentTC'], queryFn: () => fetchData(tenantQuery('tc_versions').select('*').match({ is_current: true, applies_to: 'admissions' })), select: (data) => data[0], initialData: [] });
+  useEffect(() => {
+    if (intakeLink?.academic_year && !formData.academic_year) {
+      setFormData((prev) => ({ ...prev, academic_year: intakeLink.academic_year }));
+    }
+  }, [intakeLink?.academic_year]);
 
   useEffect(() => {
     if (formData.academic_year && formData.applying_for_grade && intakeLink?.branch_id) {
-      // Get all fee types for this grade/year/branch
-      const applicableFees = feeStructures.filter(f => 
+      const applicableFees = feeStructures.filter(f =>
         f.academic_year === formData.academic_year &&
         f.grade === formData.applying_for_grade &&
         f.branch_id === intakeLink.branch_id &&
         f.display_in_intake === true
       );
-
-      const specialCareFee = specialCareFees.find(f =>
-        f.academic_year === formData.academic_year &&
-        f.grade === formData.applying_for_grade &&
-        f.branch_id === intakeLink.branch_id
-      );
-
-      // Calculate breakdown
       const breakdown = {};
       applicableFees.forEach(fee => {
         breakdown[fee.fee_type_code] = {
@@ -114,107 +130,46 @@ export default function ParentIntake() {
           amount: fee.amount
         };
       });
-
-      let totalAmount = applicableFees.reduce((sum, fee) => sum + (fee.amount || 0), 0);
-      let specialCareAmount = 0;
-
-      if (formData.has_special_needs && specialCareFee) {
-        if (specialCareFee.fee_calculation_type === 'fixed') {
-          specialCareAmount = specialCareFee.fixed_amount || 0;
-        } else {
-          const tuitionFee = applicableFees.find(f => f.fee_type_code === 'TUITION_FEE');
-          const tuitionAmount = tuitionFee?.amount || 0;
-          specialCareAmount = (tuitionAmount * (specialCareFee.percentage || 0)) / 100;
-        }
-        breakdown['SPECIAL_CARE'] = {
-          name_ar: 'رسوم الرعاية الخاصة',
-          name_en: 'Special Care Fee',
-          amount: specialCareAmount
-        };
-        totalAmount += specialCareAmount;
-      }
-
+      const totalAmount = applicableFees.reduce((sum, fee) => sum + (fee.amount || 0), 0);
       setCalculatedFees({
         breakdown,
         total: totalAmount,
-        // Keep legacy fields for compatibility
         tuition: applicableFees.find(f => f.fee_type_code === 'TUITION_FEE')?.amount || 0,
-        specialCare: specialCareAmount
+        specialCare: 0
       });
     }
-  }, [formData.academic_year, formData.applying_for_grade, formData.has_special_needs, feeStructures, specialCareFees, intakeLink]);
+  }, [formData.academic_year, formData.applying_for_grade, feeStructures, intakeLink]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!termsAccepted) {
       toast.error(isRTL ? 'يرجى الموافقة على الشروط والأحكام' : 'Please accept Terms & Conditions');
       return;
     }
-
     setSubmitting(true);
     try {
-      // Try the backend automation API first; fallback to direct insert
       const payload = {
+        link_code: linkCode,
         intake_link_id: intakeLink.id,
         branch_id: intakeLink.branch_id,
         ...formData,
+        guardian_phone: formData.guardian_phone || formData.guardian_whatsapp,
+        guardian_whatsapp: formData.guardian_whatsapp || formData.guardian_phone,
         total_estimated_fees: calculatedFees.total,
-        tc_version_accepted: currentTC?.version_code,
-        required_document_codes: (intakeLink.required_documents || REQUIRED_DOCUMENT_TYPES).map(d => d.code),
+        required_document_codes: requiredDocs.map(d => d.code),
       };
-
-      let result;
-      try {
-        result = await callApi('/api/intake/submit', payload);
-      } catch (_apiErr) {
-        // Fallback: direct Supabase insert (graceful degradation)
-        const applicationNumber = `APP-${Date.now().toString(36).toUpperCase()}`;
-        const uploadedCodes = formData.documents.map(d => d.doc_code).filter(Boolean);
-        const requiredCodes = (intakeLink.required_documents || REQUIRED_DOCUMENT_TYPES).map(d => d.code);
-        const missingDocs = requiredCodes.filter(code => !uploadedCodes.includes(code));
-        const allDocsPresent = missingDocs.length === 0;
-
-        const applicationData = {
-          application_number: applicationNumber,
-          branch_id: intakeLink.branch_id,
-          ...formData,
-          tuition_fee_snapshot: calculatedFees.tuition,
-          special_care_fee_snapshot: calculatedFees.specialCare,
-          total_estimated_fees: calculatedFees.total,
-          source: 'parent_intake',
-          intake_link_id: intakeLink.id,
-          tc_version_accepted: currentTC?.version_code,
-          tc_accepted_date: new Date().toISOString(),
-          status: 'submitted',
-          pipeline_stage: allDocsPresent ? 'under_review' : 'submitted',
-          document_status: allDocsPresent ? 'documents_complete' : 'pending_physical_verification',
-          missing_documents: missingDocs,
-          submitted_at: new Date().toISOString(),
-        };
-
-        await tenantQuery('applications').insert(applicationData);
-        await tenantQuery('parent_intake_links').update({
-          submission_count: (intakeLink.submission_count || 0) + 1
-        });
-
-        result = {
-          document_status: applicationData.document_status,
-          missing_documents: missingDocs,
-        };
-      }
-
+      const result = await callApi('/api/public/intake/submit', payload);
       setSubmissionResult(result);
       setSubmitted(true);
       toast.success(isRTL ? 'تم إرسال الطلب بنجاح' : 'Application submitted successfully');
     } catch (error) {
       console.error('Error:', error);
       if (error?.body?.error === 'duplicate') {
-        toast.error(isRTL 
-          ? 'يوجد طلب بنفس رقم الهوية لهذا العام الدراسي' 
+        toast.error(isRTL
+          ? 'يوجد طلب بنفس رقم الهوية لهذا العام الدراسي'
           : 'An application with this national ID already exists for this year');
       } else {
-        toast.error(isRTL ? 'حدث خطأ' : 'Error occurred');
+        toast.error(error?.message || (isRTL ? 'حدث خطأ' : 'Error occurred'));
       }
     } finally {
       setSubmitting(false);
@@ -223,10 +178,11 @@ export default function ParentIntake() {
 
   const handleDocUpload = async (file, docCode) => {
     try {
-      const result = await uploadFileApi(file);
+      const result = await uploadIntakeFile(file, linkCode);
       const newDoc = {
         name: file.name,
         url: result.signedUrl || result.path,
+        path: result.path,
         type: file.type,
         doc_code: docCode,
         uploaded_date: new Date().toISOString()
@@ -237,20 +193,20 @@ export default function ParentIntake() {
       }));
       toast.success(isRTL ? 'تم رفع الملف' : 'File uploaded');
     } catch (_error) {
-      toast.error(isRTL ? 'فشل رفع الملف' : 'Upload failed');
+      toast.error(_error?.message || (isRTL ? 'فشل رفع الملف' : 'Upload failed'));
     }
   };
 
   const handleFileUpload = async (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []);
     const uploadedDocs = [];
-
     for (const file of files) {
       try {
-        const result = await uploadFileApi(file);
+        const result = await uploadIntakeFile(file, linkCode);
         uploadedDocs.push({
           name: file.name,
           url: result.signedUrl || result.path,
+          path: result.path,
           type: file.type,
           doc_code: 'other',
           uploaded_date: new Date().toISOString()
@@ -259,7 +215,6 @@ export default function ParentIntake() {
         toast.error(`${isRTL ? 'فشل رفع' : 'Failed to upload'} ${file.name}`);
       }
     }
-
     setFormData({
       ...formData,
       documents: [...formData.documents, ...uploadedDocs]
@@ -281,13 +236,26 @@ export default function ParentIntake() {
     );
   }
 
-  if (!intakeLink) {
+  if (linkLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-najdi-50 to-sand flex items-center justify-center p-4">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <Loader2 className="w-8 h-8 animate-spin mx-auto text-najdi-700 mb-4" />
             <p className="text-muted-foreground">{isRTL ? 'جاري التحميل...' : 'Loading...'}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (linkError || !intakeLink) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-najdi-50 to-sand flex items-center justify-center p-4">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center">
+            <School className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">{isRTL ? 'الرابط غير صالح أو منتهٍ' : 'Link invalid or expired'}</p>
           </CardContent>
         </Card>
       </div>
@@ -376,10 +344,15 @@ export default function ParentIntake() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <img 
-              src="/edusaga-logo.svg" 
-              alt="EduSaga" 
-              className="h-16"
+              src={school?.logo_url || '/edusaga-logo.svg'} 
+              alt={school?.name_en || school?.name_ar || 'School'} 
+              className="h-16 object-contain"
             />
+            {(school?.name_en || school?.name_ar) && (
+              <p className="text-sm font-semibold text-ink">
+                {isRTL ? (school.name_ar || school.name_en) : (school.name_en || school.name_ar)}
+              </p>
+            )}
           </div>
           <h1 className="text-3xl font-bold text-ink mb-2">
             {isRTL ? 'طلب قبول طالب جديد' : 'New Student Admission Application'}
@@ -403,22 +376,36 @@ export default function ParentIntake() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {show('guardian_name_ar') && (
                 <div>
                   <Label>{isRTL ? 'الاسم الكامل (عربي)' : 'Full Name (Arabic)'} *</Label>
                   <Input required value={formData.guardian_name_ar} onChange={(e) => setFormData({...formData, guardian_name_ar: e.target.value})} />
                 </div>
+                )}
+                {show('guardian_name_en') && (
                 <div>
-                  <Label>{isRTL ? 'الاسم الكامل (إنجليزي)' : 'Full Name (English)'}</Label>
-                  <Input value={formData.guardian_name_en} onChange={(e) => setFormData({...formData, guardian_name_en: e.target.value})} />
+                  <Label>{isRTL ? 'الاسم الكامل (إنجليزي)' : 'Full Name (English)'} *</Label>
+                  <Input required value={formData.guardian_name_en} onChange={(e) => setFormData({...formData, guardian_name_en: e.target.value})} />
                 </div>
+                )}
+                {show('guardian_phone') && (
                 <div>
-                  <Label>{isRTL ? 'رقم الجوال' : 'Phone Number'} *</Label>
-                  <Input required type="tel" value={formData.guardian_phone} onChange={(e) => setFormData({...formData, guardian_phone: e.target.value})} />
+                  <Label>{isRTL ? 'رقم الجوال' : 'Phone Number'}</Label>
+                  <Input type="tel" value={formData.guardian_phone} onChange={(e) => setFormData({...formData, guardian_phone: e.target.value})} dir="ltr" />
                 </div>
+                )}
+                {show('guardian_whatsapp') && (
                 <div>
-                  <Label>{isRTL ? 'البريد الإلكتروني' : 'Email'}</Label>
-                  <Input type="email" value={formData.guardian_email} onChange={(e) => setFormData({...formData, guardian_email: e.target.value})} />
+                  <Label>{isRTL ? 'واتساب' : 'WhatsApp'} *</Label>
+                  <Input required type="tel" value={formData.guardian_whatsapp} onChange={(e) => setFormData({...formData, guardian_whatsapp: e.target.value})} dir="ltr" />
                 </div>
+                )}
+                {show('guardian_email') && (
+                <div>
+                  <Label>{isRTL ? 'البريد الإلكتروني' : 'Email'} *</Label>
+                  <Input required type="email" value={formData.guardian_email} onChange={(e) => setFormData({...formData, guardian_email: e.target.value})} dir="ltr" />
+                </div>
+                )}
                 <div>
                   <Label>{isRTL ? 'رقم الهوية / الإقامة' : 'National ID / Iqama'}</Label>
                   <Input value={formData.guardian_national_id} onChange={(e) => setFormData({...formData, guardian_national_id: e.target.value})} />
@@ -489,18 +476,12 @@ export default function ParentIntake() {
                 </div>
                 <div>
                   <Label>{isRTL ? 'العام الدراسي' : 'Academic Year'} *</Label>
-                  <Select required value={formData.academic_year} onValueChange={(v) => setFormData({...formData, academic_year: v})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={isRTL ? 'اختر العام' : 'Select Year'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {academicYears.map(year => (
-                        <SelectItem key={year.id} value={year.name}>
-                          {isRTL ? year.name_ar || year.name : year.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    required
+                    value={formData.academic_year}
+                    onChange={(e) => setFormData({ ...formData, academic_year: e.target.value })}
+                    placeholder={intakeLink.academic_year || ''}
+                  />
                 </div>
                 <div>
                   <Label>{isRTL ? 'الصف المطلوب' : 'Applying for Grade'} *</Label>
@@ -509,7 +490,10 @@ export default function ParentIntake() {
                       <SelectValue placeholder={isRTL ? 'اختر الصف' : 'Select Grade'} />
                     </SelectTrigger>
                     <SelectContent>
-                      {grades.map(g => (
+                      {(Array.isArray(intakeLink.allowed_grades) && intakeLink.allowed_grades.length > 0
+                        ? intakeLink.allowed_grades
+                        : grades
+                      ).map(g => (
                         <SelectItem key={g} value={g}>{g}</SelectItem>
                       ))}
                     </SelectContent>
@@ -586,7 +570,7 @@ export default function ParentIntake() {
               </p>
             </CardHeader>
             <CardContent className="space-y-3">
-              {(intakeLink.required_documents || REQUIRED_DOCUMENT_TYPES).map(docType => {
+              {requiredDocs.map(docType => {
                 const uploaded = formData.documents.find(d => d.doc_code === docType.code);
                 return (
                   <div key={docType.code} className={`flex items-center gap-3 p-3 rounded-lg border ${uploaded ? 'border-green-200 bg-green-50' : 'border-border bg-sand'}`}>
@@ -675,30 +659,25 @@ export default function ParentIntake() {
           </Card>
 
           {/* Terms & Conditions */}
-          {currentTC && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{isRTL ? 'الشروط والأحكام' : 'Terms & Conditions'}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-sand p-4 rounded-lg max-h-48 overflow-y-auto mb-4 text-sm">
-                  <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(isRTL ? currentTC.content_ar : currentTC.content_en) }} />
-                </div>
-                <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                  <Checkbox 
-                    checked={termsAccepted} 
-                    onCheckedChange={setTermsAccepted}
-                    className="mt-1"
-                  />
-                  <Label className="cursor-pointer text-sm leading-relaxed">
-                    {isRTL 
-                      ? 'أوافق على الشروط والأحكام ورسوم الدراسة والسياسات المالية للمدرسة'
-                      : "I agree to the school's Terms & Conditions, tuition fees, and financial policies"}
-                  </Label>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          <Card>
+            <CardHeader>
+              <CardTitle>{isRTL ? 'الشروط والأحكام' : 'Terms & Conditions'}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <Checkbox
+                  checked={termsAccepted}
+                  onCheckedChange={setTermsAccepted}
+                  className="mt-1"
+                />
+                <Label className="cursor-pointer text-sm leading-relaxed">
+                  {isRTL
+                    ? 'أوافق على الشروط والأحكام ورسوم الدراسة والسياسات المالية للمدرسة'
+                    : "I agree to the school's Terms & Conditions, tuition fees, and financial policies"}
+                </Label>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Submit */}
           <div className="flex justify-center pt-4">

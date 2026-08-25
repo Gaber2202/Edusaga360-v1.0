@@ -115,6 +115,7 @@ describe('GET /api/parent catalog', () => {
     expect(res.body.endpoints.children).toContain('/api/parent/children');
     expect(res.body.endpoints.storeSlots).toContain('/slots');
     expect(res.body.auth.login).toContain('/api/parent/auth/login');
+    expect(res.body.auth.selectSchool).toContain('/api/parent/auth/select-school');
     expect(res.body.public.schoolByCode).toContain('/api/public/schools/by-code/');
   });
 });
@@ -180,24 +181,21 @@ describe('POST /api/parent/auth/login', () => {
     });
   }
 
+  function mockAuthUser(user = PARENT_USER) {
+    db.auth.getUser.mockResolvedValue({
+      data: { user: { id: user.id, email: user.email, app_metadata: { tenant_id: user.tenant_id, role: user.role } } },
+      error: null,
+    });
+  }
+
   it('rejects a missing password', async () => {
     const res = await request(authApp()).post('/parent/auth/login').send({
       email: 'a@b.com',
-      tenant_code: 'T-DEMO',
     });
     expect(res.status).toBe(400);
   });
 
-  it('requires a school code', async () => {
-    const res = await request(authApp()).post('/parent/auth/login').send({
-      email: PARENT_USER.email,
-      password: 'ParentPass123!',
-    });
-    expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(/school code/i);
-  });
-
-  it('returns tokens for a parent account at that school', async () => {
+  it('auto-selects when the parent has exactly one school', async () => {
     mockPasswordLogin();
     db.setResolver(parentTables((ctx: QueryContext) => {
       if (ctx.table === 'tenants') return { data: SCHOOL };
@@ -208,15 +206,84 @@ describe('POST /api/parent/auth/login', () => {
     const res = await request(authApp()).post('/parent/auth/login').send({
       email: PARENT_USER.email,
       password: 'ParentPass123!',
-      tenant_code: 'T-DEMO',
     });
     expect(res.status).toBe(200);
     expect(res.body.access_token).toBe('tok');
+    expect(res.body.needs_school_selection).toBe(false);
+    expect(res.body.school?.id).toBe(SCHOOL.id);
+    expect(res.body.school?.tenant_code).toBe(SCHOOL.tenant_code);
+    expect(res.body.schools).toHaveLength(1);
     expect(res.body.user.role).toBe('parent');
     expect(res.body.user.linked_student_ids).toEqual(['STU-1', 'STU-2']);
   });
 
-  it('allows a teacher who also has linked children at that school', async () => {
+  it('returns a school list when the parent has multiple schools', async () => {
+    mockPasswordLogin();
+    const schoolB = {
+      ...SCHOOL,
+      id: OTHER_TENANT,
+      slug: 'other',
+      tenant_code: 'T-OTHER',
+      name_en: 'Other School',
+    };
+    const parentB = { ...PARENT_ROW, id: 'user-row-2', tenant_id: OTHER_TENANT };
+    db.setResolver((ctx: QueryContext) => {
+      if (ctx.table === 'users' && !ctx.single) {
+        return { data: [PARENT_ROW, parentB] };
+      }
+      if (ctx.table === 'users' && ctx.single) {
+        const tenantEq = ctx.filters.find((f) => f.method === 'eq' && f.args[0] === 'tenant_id');
+        const tenantId = tenantEq?.args[1];
+        if (tenantId === OTHER_TENANT) return { data: parentB };
+        return { data: PARENT_ROW };
+      }
+      if (ctx.table === 'tenants') {
+        const idEq = ctx.filters.find((f) => f.method === 'eq' && f.args[0] === 'id');
+        if (idEq?.args[1] === OTHER_TENANT) return { data: schoolB };
+        return { data: SCHOOL };
+      }
+      return { data: null };
+    });
+
+    const res = await request(authApp()).post('/parent/auth/login').send({
+      email: PARENT_USER.email,
+      password: 'ParentPass123!',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.needs_school_selection).toBe(true);
+    expect(res.body.school).toBeNull();
+    expect(res.body.user).toBeNull();
+    expect(res.body.schools.map((s: { id: string }) => s.id).sort()).toEqual(
+      [SCHOOL.id, schoolB.id].sort(),
+    );
+  });
+
+  it('select-school locks in one of the assigned schools', async () => {
+    mockAuthUser();
+    db.auth.refreshSession.mockResolvedValue({
+      data: {
+        session: { access_token: 'tok2', refresh_token: 'ref2', expires_in: 3600 },
+        user: { id: PARENT_USER.id, email: PARENT_USER.email },
+      },
+      error: null,
+    });
+    db.setResolver(parentTables((ctx: QueryContext) => {
+      if (ctx.table === 'tenants') return { data: SCHOOL };
+      if (ctx.table === 'users') return { data: PARENT_ROW };
+      return undefined;
+    }));
+
+    const res = await request(authApp())
+      .post('/parent/auth/select-school')
+      .set('Authorization', 'Bearer tok')
+      .send({ tenant_id: SCHOOL.id, refresh_token: 'ref' });
+    expect(res.status).toBe(200);
+    expect(res.body.needs_school_selection).toBe(false);
+    expect(res.body.school?.id).toBe(SCHOOL.id);
+    expect(res.body.user.tenant_id).toBe(SCHOOL.id);
+  });
+
+  it('allows a teacher who also has linked children', async () => {
     mockPasswordLogin(TEACHER_USER);
     db.setResolver(parentTables((ctx: QueryContext) => {
       if (ctx.table === 'tenants') return { data: SCHOOL };
@@ -227,7 +294,6 @@ describe('POST /api/parent/auth/login', () => {
     const res = await request(authApp()).post('/parent/auth/login').send({
       email: TEACHER_USER.email,
       password: 'x',
-      slug: 'demo',
     });
     expect(res.status).toBe(200);
     expect(res.body.user.linked_student_ids).toEqual(['STU-1']);
@@ -244,29 +310,22 @@ describe('POST /api/parent/auth/login', () => {
     const res = await request(authApp()).post('/parent/auth/login').send({
       email: TEACHER_USER.email,
       password: 'x',
-      tenant_code: 'T-DEMO',
     });
     expect(res.status).toBe(403);
     expect(res.body.access_token).toBeUndefined();
     expect(res.body.message).toMatch(/parent accounts only/i);
   });
 
-  it('rejects a parent of another school without naming that school', async () => {
+  it('rejects an account with no parent school assignment', async () => {
     mockPasswordLogin();
-    db.setResolver((ctx: QueryContext) => {
-      if (ctx.table === 'tenants') return { data: SCHOOL };
-      if (ctx.table === 'users') return { data: null };
-      return { data: null };
-    });
+    db.setResolver(() => ({ data: null }));
 
     const res = await request(authApp()).post('/parent/auth/login').send({
       email: PARENT_USER.email,
       password: 'ParentPass123!',
-      tenant_code: 'T-DEMO',
     });
     expect(res.status).toBe(403);
-    expect(res.body.message).toBe('This account is not registered at this school');
-    expect(JSON.stringify(res.body)).not.toContain(OTHER_TENANT);
+    expect(res.body.message).toMatch(/parent accounts only/i);
   });
 });
 

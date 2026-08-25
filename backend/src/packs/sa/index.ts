@@ -19,6 +19,7 @@ import { saAcademicCalendar } from './academicCalendar.js';
 import { saFeeGovernance } from './feeGovernance.js';
 import { saDocuments } from './documents.js';
 import { saLocalisation, saLocalization } from './localisation.js';
+import { saVaccinationSchedule } from './vaccinationSchedule.js';
 
 export const saPack: CountryPack = {
   code: 'SA',
@@ -35,6 +36,7 @@ export const saPack: CountryPack = {
   documents: saDocuments,
   localisation: saLocalisation,
   localization: saLocalization,
+  vaccinationSchedule: saVaccinationSchedule,
 };
 
 export default saPack;

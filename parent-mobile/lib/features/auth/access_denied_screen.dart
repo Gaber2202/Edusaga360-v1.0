@@ -26,9 +26,9 @@ class AccessDeniedScreen extends ConsumerWidget {
             FilledButton(
               onPressed: () async {
                 await ref.read(sessionProvider.notifier).signOut();
-                if (context.mounted) context.go('/school');
+                if (context.mounted) context.go('/login');
               },
-              child: Text(l10n.changeSchool),
+              child: Text(l10n.signOut),
             ),
           ],
         ),

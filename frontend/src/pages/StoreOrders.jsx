@@ -3,13 +3,15 @@ import { format, addDays } from 'date-fns';
 import { toast } from 'sonner';
 import { CalendarDays, Receipt, Search } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { useTenant } from '../components/TenantContext';
+import { useRole } from '../components/RoleContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { useTenantQuery } from '../hooks/useTenantQuery';
 import { formatCurrency } from '../lib/localization';
 import { generateSlots } from '../lib/storeAvailability';
+import { openStoreReceipt, shortStoreReceiptNo } from '../lib/storeReceipt';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -21,6 +23,12 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 
 const STATUSES = ['all', 'pending_payment', 'ready_for_collect', 'collected', 'cancelled'];
 const KINDS = ['all', 'purchase', 'booking'];
+const PAYMENT_METHODS = [
+  { value: 'cash', en: 'Cash', ar: 'نقداً' },
+  { value: 'card', en: 'Card', ar: 'بطاقة' },
+  { value: 'mada', en: 'Mada', ar: 'مدى' },
+  { value: 'bank_transfer', en: 'Bank transfer', ar: 'تحويل بنكي' },
+];
 
 function productName(row, isRTL) {
   return isRTL ? (row?.name_ar || row?.name_en || '') : (row?.name_en || row?.name_ar || '');
@@ -47,6 +55,7 @@ function statusLabel(status, isRTL) {
 export default function StoreOrders() {
   const { isRTL } = useLanguage();
   const { tenant } = useTenant();
+  const { user } = useRole();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
   const queryClient = useQueryClient();
 
@@ -55,9 +64,14 @@ export default function StoreOrders() {
   const [status, setStatus] = useState('all');
   const [kind, setKind] = useState('all');
   const [selected, setSelected] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [paymentReference, setPaymentReference] = useState('');
   const [calDate, setCalDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [calProduct, setCalProduct] = useState('all');
   const [busy, setBusy] = useState(false);
+
+  const actorName = user?.full_name || user?.email || '';
+  const currencyCode = tenant?.localization?.currencyCode || tenant?.currency_code;
 
   const { data: orders = [], isLoading } = useTenantQuery(
     ['storeOrders', tenantId],
@@ -123,6 +137,46 @@ export default function StoreOrders() {
       bookings: bookings.filter((b) => b.product_id === calProduct),
     });
   }, [calDate, calProduct, hours, blackouts, bookings]);
+
+  const collectPayment = async (order) => {
+    if (!currencyCode) {
+      toast.error(isRTL ? 'تعذر تحديد العملة' : 'Could not resolve currency');
+      return;
+    }
+    setBusy(true);
+    try {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const time = format(new Date(), 'HH:mm');
+      const result = await callApi(`/api/store/orders/${order.id}/collect-payment`, {
+        payment_method: paymentMethod,
+        amount: Number(order.total_amount) || 0,
+        reference: paymentReference.trim() || undefined,
+      });
+      const updated = result.order || { ...order, status: 'ready_for_collect' };
+      setSelected(updated);
+      refresh();
+      openStoreReceipt({
+        receiptNo: shortStoreReceiptNo(result.payment?.id || result.receipt?.id),
+        orderNo: order.order_number,
+        invoiceNo: result.invoice?.invoice_number || '',
+        schoolName: isRTL ? (tenant?.name_ar || tenant?.name_en || '') : (tenant?.name_en || tenant?.name_ar || ''),
+        studentName: studentName(students, order.student_id, isRTL),
+        date: today,
+        time,
+        cashier: actorName,
+        paymentMethod,
+        items: updated.store_order_lines || order.store_order_lines || [],
+        amount: Number(order.total_amount) || 0,
+        isRTL,
+        currencyCode,
+      });
+      toast.success(isRTL ? 'تم تحصيل الدفع — جاهز للاستلام' : 'Payment collected — ready for pickup');
+    } catch (err) {
+      toast.error(err.message || (isRTL ? 'فشل تحصيل الدفع' : 'Failed to collect payment'));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const markCollected = async (order) => {
     setBusy(true);
@@ -365,13 +419,13 @@ export default function StoreOrders() {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null); }}>
+      <Dialog open={!!selected} onOpenChange={(open) => { if (!open) { setSelected(null); setPaymentReference(''); setPaymentMethod('cash'); } }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{selected?.order_number}</DialogTitle>
           </DialogHeader>
           {selected && (
-            <div className="space-y-2 text-sm">
+            <div className="space-y-3 text-sm">
               <p>{studentName(students, selected.student_id, isRTL)}</p>
               <p>{statusLabel(selected.status, isRTL)} · {formatCurrency(selected.total_amount, tenant?.localization, isRTL)}</p>
               {(selected.store_order_lines || []).map((line) => (
@@ -380,9 +434,34 @@ export default function StoreOrders() {
                   {line.slot_start ? ` · ${String(line.slot_start).slice(0, 16).replace('T', ' ')}` : ''}
                 </p>
               ))}
+              {selected.status === 'pending_payment' && (
+                <div className="space-y-2 pt-2 border-t">
+                  <p className="font-medium">{isRTL ? 'تحصيل الدفع في المدرسة' : 'Collect in-school payment'}</p>
+                  <div>
+                    <Label>{isRTL ? 'طريقة الدفع' : 'Payment method'}</Label>
+                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {PAYMENT_METHODS.map((m) => (
+                          <SelectItem key={m.value} value={m.value}>{isRTL ? m.ar : m.en}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>{isRTL ? 'مرجع (اختياري)' : 'Reference (optional)'}</Label>
+                    <Input value={paymentReference} onChange={(e) => setPaymentReference(e.target.value)} placeholder={isRTL ? 'رقم إيصال / مرجع' : 'Receipt or reference #'} />
+                  </div>
+                </div>
+              )}
             </div>
           )}
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 flex-wrap">
+            {selected?.status === 'pending_payment' && (
+              <Button disabled={busy} onClick={() => collectPayment(selected)}>
+                {isRTL ? 'تحصيل الدفع وطباعة الإيصال' : 'Collect payment & print receipt'}
+              </Button>
+            )}
             {selected?.status === 'ready_for_collect' && (
               <Button disabled={busy} onClick={() => markCollected(selected)}>{isRTL ? 'تم الاستلام' : 'Mark collected'}</Button>
             )}

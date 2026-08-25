@@ -16,6 +16,7 @@ import { qaPayments } from './payments.js';
 import { qaPayroll } from './payroll.js';
 import { qaRegulatorReports } from './regulatorReports.js';
 import { qaTax } from './tax.js';
+import { qaVaccinationSchedule } from './vaccinationSchedule.js';
 
 export const qaPack: CountryPack = {
   code: 'QA',
@@ -32,4 +33,5 @@ export const qaPack: CountryPack = {
   documents: qaDocuments,
   localisation: qaLocalisation,
   localization: qaLocalization,
+  vaccinationSchedule: qaVaccinationSchedule,
 };

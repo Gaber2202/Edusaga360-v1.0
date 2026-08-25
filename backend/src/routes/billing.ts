@@ -23,7 +23,7 @@ import { sanitizeSearchTerm } from '../lib/sanitize.js';
 import { type InvoiceData, type VatSummary, type BuildInvoiceLineInput, type BuiltInvoiceLine, type BuildInvoiceLinesResult } from '../packs/sa/vat.js';
 import type { TenantData } from '../types/tenant.js';
 import { getTenantComplianceData } from '../services/tenant.js';
-import { createReceiptForPayment } from '../services/receipt.js';
+import { recordInvoicePayment } from '../services/invoicePayment.js';
 import { convertToInvoice } from '../services/lifecycle.js';
 import { shareInvoice } from '../services/share.js';
 import type { ShareChannel } from '../services/share.js';
@@ -40,6 +40,10 @@ import {
 } from '../services/reports.js';
 import { dispatchWebhook } from '../services/webhookDelivery.js';
 import { resolveFeeStructures, type ResolvedFeeStructure } from '../services/feeResolution.js';
+import {
+  prorateMidTermFee,
+  type BulkRunLogEntry,
+} from '../services/bulkInvoiceEngine.js';
 import { resolvePack } from '../packs/registry.js';
 import { buildRequestContext, resolveJurisdiction, isFeatureEnabled, NotImplementedInJurisdiction } from '../lib/jurisdiction.js';
 
@@ -203,7 +207,14 @@ const BulkInvoiceSchema = z.object({
   academic_year: z.string().min(4),
   grade: z.string().optional(),
   campus_id: z.string().uuid().optional(),
+  /** Fee plan = fee_structure id (v1 segmentation). */
+  fee_plan_id: z.string().uuid().optional(),
   program: z.string().optional(),
+  section_id: z.string().uuid().optional(),
+  /** Explicit student allow-list (custom filter). */
+  student_ids: z.array(z.string().uuid()).optional(),
+  /** Operator exclusions (still skip already-invoiced separately). */
+  excluded_student_ids: z.array(z.string().uuid()).optional(),
   due_date: z.string().optional(),
   dry_run: z.boolean().optional().default(false),
   approved: z.boolean().optional().default(false),
@@ -1073,86 +1084,33 @@ billingRouter.post('/payments', async (req: AuthenticatedRequest, res: Response)
     const tenant_id = req.user!.tenant_id!;
     const { invoice_id, amount, payment_method, reference, installment_id } = parsed.data;
 
-    const { data: invoice, error: fetchErr } = await supabase
-      .from('invoices')
-      .select('*')
-      .eq('id', invoice_id)
-      .eq('tenant_id', tenant_id)
-      .single();
-    if (fetchErr || !invoice) return res.status(404).json({ error: 'Invoice not found' });
-    if (['paid', 'cancelled'].includes(invoice.status)) return res.status(400).json({ error: `Invoice already ${invoice.status}` });
+    const result = await recordInvoicePayment({
+      tenantId: tenant_id,
+      userId: req.user!.id,
+      invoiceId: invoice_id,
+      amount,
+      paymentMethod: payment_method,
+      reference,
+      installmentId: installment_id,
+    });
 
-    const remaining = sar(invoice.total_amount - invoice.paid_amount);
-    if (amount > remaining + 0.01) return res.status(400).json({ error: `Payment (${amount}) exceeds balance (${remaining})` });
-
-    const today = new Date().toISOString().split('T')[0];
-    const newPaid = sar(invoice.paid_amount + amount);
-    const newStatus = newPaid >= invoice.total_amount - 0.01 ? 'paid' : 'partial';
-    const ctx = await buildRequestContext(supabase, tenant_id, (invoice.branch_id as string) ?? undefined);
-    const pack = resolvePack(ctx);
-
-    const { data: payment, error: pmtErr } = await supabase
-      .from('payments')
-      .insert({ tenant_id, currency_code: pack.currencyCode, branch_id: invoice.branch_id ?? null, invoice_id, amount, method: payment_method, reference: reference ?? null, date: today, status: 'completed' })
-      .select()
-      .single();
-    if (pmtErr) throw pmtErr;
-
-    await supabase.from('invoices').update({ paid_amount: newPaid, status: newStatus, updated_at: new Date().toISOString() }).eq('id', invoice_id).eq('tenant_id', tenant_id);
-
-    // Auto-issue a bilingual receipt for this payment.
-    let receipt: Record<string, unknown> | null = null;
-    try {
-      const tenantData = await getTenantComplianceData(supabase, tenant_id);
-      const receiptCtx = await buildRequestContext(supabase, tenant_id, (invoice.branch_id as string) ?? undefined);
-      const receiptPack = resolvePack(receiptCtx);
-      if (!receiptPack.documents?.renderInvoicePdf) {
-        throw new NotImplementedInJurisdiction(resolveJurisdiction(receiptCtx), 'receipt PDF');
-      }
-      const { receipt: receiptRow, pdf_base64 } = await createReceiptForPayment(
-        supabase,
-        invoice as any,
-        { id: payment.id, amount, method: payment_method, reference: reference ?? payment.id, date: today },
-        tenantData,
-        receiptPack.currencyCode,
-        receiptPack.documents.renderInvoicePdf as (invoice: unknown, tenant: unknown) => Promise<Buffer>,
-      );
-      receipt = { ...receiptRow, pdf_base64 };
-    } catch (receiptErr) {
-      console.warn('[billing] receipt generation failed:', (receiptErr as Error).message);
-    }
-
-    // Update installment if specified
-    if (installment_id) {
-      await supabase.from('payment_plan_installments').update({ paid_amount: amount, status: 'paid', paid_date: today, invoice_id }).eq('id', installment_id).eq('tenant_id', tenant_id);
-      // Check if all installments are paid to close the plan
-      const { data: planInst } = await supabase.from('payment_plan_installments').select('plan_id, status').eq('tenant_id', tenant_id);
-      const planId = planInst?.find((i) => i.plan_id)?.plan_id;
-      if (planId) {
-        const allPaid = planInst?.filter((i) => i.plan_id === planId).every((i) => i.status === 'paid' || i.status === 'waived');
-        if (allPaid) await supabase.from('payment_plans').update({ status: 'completed', paid_amount: invoice.total_amount }).eq('id', planId);
-        else {
-          const { data: planRow } = await supabase.from('payment_plans').select('paid_amount').eq('id', planId).single();
-          await supabase.from('payment_plans').update({ paid_amount: sar((planRow?.paid_amount ?? 0) + amount) }).eq('id', planId);
-        }
-      }
-    }
-
-    // GL journal
-    await postJournal(tenant_id, req.user!.id, reference ?? `PMT-${invoice_id.slice(0, 8)}`, `Payment — ${invoice.invoice_number}`, [
-      { account_code: '11', debit: amount, credit: 0, description: `${payment_method} received` },
-      { account_code: '12', debit: 0, credit: amount, description: `A/R cleared — ${invoice.invoice_number}` },
-    ], invoice.branch_id ?? null);
-
-    void dispatchWebhook(supabase, tenant_id, 'payment.received', { invoice_id, payment_id: payment.id, amount, method: payment_method }, payment.id);
-    if (newStatus === 'paid') {
-      void dispatchWebhook(supabase, tenant_id, 'invoice.paid', { invoice_id, invoice_number: invoice.invoice_number, total: invoice.total_amount, paid_amount: newPaid }, invoice_id);
-    }
-
-    return res.status(201).json({ payment, invoice: { id: invoice_id, paid_amount: newPaid, status: newStatus, remaining_balance: Math.max(0, sar(invoice.total_amount - newPaid)) }, receipt });
+    return res.status(201).json({
+      payment: result.payment,
+      invoice: {
+        id: result.invoice.id,
+        paid_amount: result.invoice.paid_amount,
+        status: result.invoice.status,
+        remaining_balance: result.invoice.remaining_balance,
+      },
+      receipt: result.receipt,
+    });
   } catch (err) {
     console.error('billing/payments:', err);
-    return res.status(500).json({ error: 'Failed to record payment' });
+    const message = err instanceof Error ? err.message : 'Failed to record payment';
+    const status = message.includes('not found') ? 404
+      : message.includes('already') || message.includes('exceeds') ? 400
+        : 500;
+    return res.status(status).json({ error: message });
   }
 });
 
@@ -1484,20 +1442,35 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
     const tenant_id = req.user!.tenant_id!;
     const parsed = BulkInvoiceSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
-    const { academic_year, grade, campus_id, due_date, dry_run, approved, name } = parsed.data;
+    const {
+      academic_year,
+      grade,
+      campus_id,
+      fee_plan_id,
+      program,
+      section_id,
+      student_ids,
+      excluded_student_ids,
+      due_date,
+      dry_run,
+      approved,
+      name,
+    } = parsed.data;
     const ctx = await buildRequestContext(supabase, tenant_id, campus_id ?? undefined);
     const pack = resolvePack(ctx);
 
-    // Fetch active fee structures (generic, jurisdiction-neutral resolution).
-    const feeStructures = await resolveFeeStructures(supabase, tenant_id, {
+    let feeStructures = await resolveFeeStructures(supabase, tenant_id, {
       academicYear: academic_year,
       grade: grade ?? undefined,
       branchId: campus_id ?? undefined,
-      mandatoryOnly: true,
+      program: program ?? undefined,
+      mandatoryOnly: fee_plan_id ? false : true,
       jurisdictionCode: pack.code,
     });
+    if (fee_plan_id) {
+      feeStructures = feeStructures.filter((fs) => fs.id === fee_plan_id);
+    }
 
-    // P1-E activation gate — every fee category must have a tax treatment.
     try {
       const { assertFeeCategoriesHaveTaxTreatment } = await import('../lib/feeCategoryTaxMatrix.js');
       assertFeeCategoriesHaveTaxTreatment(
@@ -1510,19 +1483,32 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
 
     if (!feeStructures.length) return res.status(400).json({ error: 'No fee structures found for the given criteria' });
 
-    // Fetch students
-    let stuQuery = supabase.from('students').select('id, name_en, name_ar, grade_id, branch_id, grades(name_en)').eq('tenant_id', tenant_id).eq('status', 'active');
+    const { data: academicYearRow } = await supabase
+      .from('academic_years')
+      .select('id, name, start_date, end_date')
+      .eq('tenant_id', tenant_id)
+      .or(`name.eq.${academic_year},id.eq.${academic_year}`)
+      .maybeSingle();
+    const termStart = (academicYearRow?.start_date as string | undefined) ?? `${academic_year.slice(0, 4)}-09-01`;
+    const termEnd = (academicYearRow?.end_date as string | undefined) ?? `${Number(academic_year.slice(0, 4)) + 1}-06-30`;
+
+    let stuQuery = supabase
+      .from('students')
+      .select('id, name_en, name_ar, grade_id, branch_id, section_id, guardian_id, enrollment_date, grades(name_en)')
+      .eq('tenant_id', tenant_id)
+      .eq('status', 'active');
     if (grade) stuQuery = stuQuery.eq('grade_id', grade);
     if (campus_id) stuQuery = stuQuery.eq('branch_id', campus_id);
-    const { data: students } = await stuQuery;
+    if (section_id) stuQuery = stuQuery.eq('section_id', section_id);
+    if (student_ids?.length) stuQuery = stuQuery.in('id', student_ids);
+    const { data: studentsRaw } = await stuQuery;
+    const excludedSet = new Set(excluded_student_ids ?? []);
+    const students = (studentsRaw ?? []).filter((s) => !excludedSet.has(s.id));
 
-    if (!students?.length) return res.status(400).json({ error: 'No active students found' });
+    if (!students.length) return res.status(400).json({ error: 'No active students found' });
 
     const today = new Date().toISOString().split('T')[0];
 
-    // Determine which students already have a (non-cancelled) invoice for this
-    // academic year. The same rule drives both the preview and the real run, so
-    // re-running is idempotent (no silent duplicates).
     const { data: existing } = await supabase
       .from('invoices')
       .select('student_id')
@@ -1531,10 +1517,26 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
       .neq('status', 'cancelled');
     const existingIds = new Set((existing ?? []).map((e) => e.student_id));
 
-    const planForStudent = async (student: { id: string; grade_id?: string | null }) => {
-      const relevant = feeStructures.filter((fs) => !fs.grade || fs.grade === student.grade_id);
-      // Preview must match what createInvoiceForStudent will charge (#186) —
-      // apply the same discount resolution before VAT.
+    type StudentRow = {
+      id: string;
+      name_en?: string;
+      name_ar?: string;
+      grade_id?: string | null;
+      branch_id?: string | null;
+      enrollment_date?: string | null;
+    };
+
+    const planForStudent = async (student: StudentRow) => {
+      const relevantBase = feeStructures.filter((fs) => !fs.grade || fs.grade === student.grade_id);
+      const relevant: ResolvedFeeStructure[] = relevantBase.map((fs) => {
+        const { amount, prorated } = prorateMidTermFee(
+          fs.amount,
+          termStart,
+          termEnd,
+          student.enrollment_date,
+        );
+        return { ...fs, amount, _prorated: prorated } as ResolvedFeeStructure & { _prorated?: boolean };
+      });
       const preSubtotal = relevant.reduce((sum, fs) => sar(sum + sar(fs.amount * (fs.quantity ?? 1))), 0);
       const { total_discount } = await applyDiscounts(
         supabase,
@@ -1550,43 +1552,70 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
         supabase,
         today,
       ) as BuildInvoiceLinesResult;
-      return { relevant, gross: net };
+      const anyProrated = relevant.some((fs) => (fs as { _prorated?: boolean })._prorated);
+      return { relevant, gross: net, discount: total_discount, prorated: anyProrated };
     };
 
     let eligible = 0;
     let alreadyInvoiced = 0;
     let skippedNoFees = 0;
     let estimatedTotal = 0;
-    const recipients: { student_id: string; name_en?: string; name_ar?: string; amount: number }[] = [];
+    const recipients: { student_id: string; name_en?: string; name_ar?: string; amount: number; prorated?: boolean }[] = [];
+    const runLog: BulkRunLogEntry[] = [];
 
     for (const student of students) {
-      if (existingIds.has(student.id)) { alreadyInvoiced++; continue; }
-      const { relevant, gross } = await planForStudent(student);
-      if (!relevant.length) { skippedNoFees++; continue; }
+      if (existingIds.has(student.id)) {
+        alreadyInvoiced++;
+        runLog.push({ student_id: student.id, status: 'already_invoiced' });
+        continue;
+      }
+      const { relevant, gross, prorated } = await planForStudent(student);
+      if (!relevant.length) {
+        skippedNoFees++;
+        runLog.push({ student_id: student.id, status: 'no_fees' });
+        continue;
+      }
       eligible++;
       estimatedTotal = sar(estimatedTotal + gross);
+      runLog.push({ student_id: student.id, status: 'eligible', amount: gross });
       if (recipients.length < 20) {
-        recipients.push({ student_id: student.id, name_en: student.name_en, name_ar: student.name_ar, amount: gross });
+        recipients.push({
+          student_id: student.id,
+          name_en: student.name_en,
+          name_ar: student.name_ar,
+          amount: gross,
+          prorated,
+        });
       }
     }
 
+    const previewPayload = {
+      student_count: students.length,
+      fee_structures: feeStructures.length,
+      estimated_invoices: eligible,
+      already_invoiced: alreadyInvoiced,
+      skipped_no_fees: skippedNoFees,
+      estimated_total: estimatedTotal,
+      recipients,
+      run_log: runLog,
+      proration: { term_start: termStart, term_end: termEnd },
+    };
+
     if (dry_run) {
-      return res.json({
-        dry_run: true,
-        student_count: students.length,
-        fee_structures: feeStructures.length,
-        estimated_invoices: eligible,
-        already_invoiced: alreadyInvoiced,
-        skipped_no_fees: skippedNoFees,
-        estimated_total: estimatedTotal,
-        recipients,
-      });
+      return res.json({ dry_run: true, ...previewPayload });
     }
 
-    // Approval-first batch workflow:
-    // - approved=false (default): create a pending batch, return preview for review.
-    // - approved=true: create/generate invoices inside the batch.
-    const criteria = { academic_year, grade, campus_id, due_date };
+    const criteria = {
+      academic_year,
+      grade,
+      campus_id,
+      fee_plan_id,
+      program,
+      section_id,
+      student_ids,
+      excluded_student_ids,
+      due_date,
+    };
     const batchNumber = `BATCH-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const batchPayload = {
       tenant_id,
@@ -1595,7 +1624,7 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
       batch_name: name || `Term invoice batch ${batchNumber}`,
       criteria,
       student_count: students.length,
-      excluded_students: [...existingIds],
+      excluded_students: [...existingIds, ...excludedSet],
       invoice_count: 0,
       total_amount: 0,
       total_vat: 0,
@@ -1605,6 +1634,7 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
       posted_mode: approved ? 'generated' : 'draft',
       branch_id: campus_id ?? null,
       created_by: req.user!.id,
+      run_log: runLog,
     };
 
     const { data: batch, error: batchErr } = await supabase.from('invoice_batches').insert(batchPayload).select().single();
@@ -1615,13 +1645,7 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
         approved: false,
         batch,
         dry_run: false,
-        student_count: students.length,
-        fee_structures: feeStructures.length,
-        estimated_invoices: eligible,
-        already_invoiced: alreadyInvoiced,
-        skipped_no_fees: skippedNoFees,
-        estimated_total: estimatedTotal,
-        recipients,
+        ...previewPayload,
       });
     }
 
@@ -1629,15 +1653,24 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
     let skipped = 0;
     const errors: string[] = [];
     const invoiceIds: string[] = [];
+    const execLog: BulkRunLogEntry[] = [];
     let totalAmount = 0;
     let totalVat = 0;
     let totalDiscount = 0;
 
     for (const student of students) {
-      if (existingIds.has(student.id)) { skipped++; continue; }
+      if (existingIds.has(student.id)) {
+        skipped++;
+        execLog.push({ student_id: student.id, status: 'already_invoiced' });
+        continue;
+      }
       try {
-        const { relevant } = await planForStudent(student);
-        if (!relevant.length) { skipped++; continue; }
+        const { relevant, gross } = await planForStudent(student);
+        if (!relevant.length) {
+          skipped++;
+          execLog.push({ student_id: student.id, status: 'no_fees' });
+          continue;
+        }
 
         const feeLines: FeeLineInput[] = relevant.map((fs: ResolvedFeeStructure) => ({
           category_id: fs.category_id,
@@ -1649,14 +1682,30 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
           quantity: fs.quantity,
         }));
 
-        const invoice = await createInvoiceForStudent(tenant_id, req.user!.id, student.id, academic_year, feeLines, due_date, student.branch_id ?? null, { batch_id: batch.id });
+        const invoice = await createInvoiceForStudent(
+          tenant_id,
+          req.user!.id,
+          student.id,
+          academic_year,
+          feeLines,
+          due_date,
+          student.branch_id ?? null,
+          { batch_id: batch.id },
+        );
         invoiceIds.push(invoice.id as string);
         totalAmount = sar(totalAmount + Number(invoice.total_amount ?? 0));
         totalVat = sar(totalVat + Number(invoice.vat_amount ?? 0));
         totalDiscount = sar(totalDiscount + Number(invoice.discount_amount ?? 0));
         created++;
+        execLog.push({
+          student_id: student.id,
+          status: 'created',
+          amount: Number(invoice.total_amount ?? gross),
+        });
       } catch (e) {
-        errors.push(`${student.id}: ${(e as Error).message}`);
+        const message = (e as Error).message;
+        errors.push(`${student.id}: ${message}`);
+        execLog.push({ student_id: student.id, status: 'failed', error: message });
       }
     }
 
@@ -1670,6 +1719,7 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
         total_vat: totalVat,
         total_discount: totalDiscount,
         net_total: netTotal,
+        run_log: execLog,
       })
       .eq('id', batch.id)
       .eq('tenant_id', tenant_id)
@@ -1682,6 +1732,9 @@ billingRouter.post('/bulk-invoices', requireRole(FINANCE_ROLES), async (req: Aut
       created,
       skipped,
       errors,
+      run_log: execLog,
+      estimated_invoices: eligible,
+      estimated_total: estimatedTotal,
       totals: { total_amount: totalAmount, total_vat: totalVat, total_discount: totalDiscount, net_total: netTotal },
     });
   } catch (err) {

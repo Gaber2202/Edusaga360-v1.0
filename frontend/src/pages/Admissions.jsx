@@ -9,23 +9,32 @@ import ApplicationDetails from '../components/applications/ApplicationDetails';
 import AdmissionsPipeline from '../components/admissions/AdmissionsPipeline';
 import AdmissionsListView from '../components/admissions/AdmissionsListView';
 import AdmissionsDashboard from '../components/admissions/AdmissionsDashboard';
-import { Plus, LayoutGrid, List, BarChart3 } from 'lucide-react';
+import AdmissionsStagesConfig from '../components/admissions/AdmissionsStagesConfig';
+import { Plus, LayoutGrid, List, BarChart3, Settings2 } from 'lucide-react';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { mapPipelineStages } from '../lib/admissionsPipeline';
 
 export default function Admissions() {
-  const { t: _t, isRTL } = useLanguage();
+  const { isRTL } = useLanguage();
   const { userRole } = useRole();
   const queryClient = useQueryClient();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
 
-  const [viewMode, setViewMode] = useState('pipeline'); // pipeline | list | dashboard
+  const [viewMode, setViewMode] = useState('pipeline');
   const [showForm, setShowForm] = useState(false);
+  const [showStagesConfig, setShowStagesConfig] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [viewingApplication, setViewingApplication] = useState(null);
 
   const { data: applications = [], isLoading } = useQuery({
     queryKey: ['applications', tenantId],
-    queryFn: () => fetchData(tenantQuery('applications').select('*').match(tenantFilter()).order('created_at', { ascending: false }).limit(200)),
+    queryFn: () => fetchData(
+      tenantQuery('applications')
+        .select('*')
+        .match(tenantFilter())
+        .order('created_at', { ascending: false })
+        .limit(200)
+    ),
     enabled: hasTenantAccess,
   });
 
@@ -35,14 +44,41 @@ export default function Admissions() {
     enabled: hasTenantAccess,
   });
 
+  const { data: stageRows = [] } = useQuery({
+    queryKey: ['admission_pipeline_stages', tenantId],
+    queryFn: () => fetchData(
+      tenantQuery('admission_pipeline_stages')
+        .select('*')
+        .match(tenantFilter())
+        .order('sort_order', { ascending: true })
+    ),
+    enabled: hasTenantAccess,
+  });
+
+  const stages = mapPipelineStages(stageRows);
+
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['applications'] });
+    queryClient.invalidateQueries({ queryKey: ['application_stage_history'] });
+  };
+
+  const handleStagesSaved = () => {
+    queryClient.invalidateQueries({ queryKey: ['admission_pipeline_stages'] });
   };
 
   const handleViewApplication = (app) => setViewingApplication(app);
-  const handleEditApplication = (app) => { setSelectedApplication(app); setShowForm(true); };
+  const handleEditApplication = (app) => {
+    setSelectedApplication(app);
+    setShowForm(true);
+  };
 
   const canCreate = ['admin', 'admissions', 'branch_manager'].includes(userRole);
+  const canConfigure = ['admin', 'admissions'].includes(userRole);
+
+  // Keep details panel in sync after list refresh
+  const viewingFresh = viewingApplication
+    ? (applications.find((a) => a.id === viewingApplication.id) || viewingApplication)
+    : null;
 
   return (
     <div className="space-y-4">
@@ -52,10 +88,10 @@ export default function Admissions() {
           <p className="text-sm text-muted-foreground">{isRTL ? 'خط سير طلبات القبول بالكامل' : 'Full admission pipeline management'}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {/* View toggle */}
           <div className="flex items-center bg-sand-alt rounded-lg p-1 gap-1">
             <Button
-              size="sm" variant={viewMode === 'pipeline' ? 'default' : 'ghost'}
+              size="sm"
+              variant={viewMode === 'pipeline' ? 'default' : 'ghost'}
               onClick={() => setViewMode('pipeline')}
               className="h-7 px-2"
             >
@@ -63,7 +99,8 @@ export default function Admissions() {
               {isRTL ? 'كانبان' : 'Pipeline'}
             </Button>
             <Button
-              size="sm" variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="sm"
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
               onClick={() => setViewMode('list')}
               className="h-7 px-2"
             >
@@ -71,7 +108,8 @@ export default function Admissions() {
               {isRTL ? 'قائمة' : 'List'}
             </Button>
             <Button
-              size="sm" variant={viewMode === 'dashboard' ? 'default' : 'ghost'}
+              size="sm"
+              variant={viewMode === 'dashboard' ? 'default' : 'ghost'}
               onClick={() => setViewMode('dashboard')}
               className="h-7 px-2"
             >
@@ -79,8 +117,20 @@ export default function Admissions() {
               {isRTL ? 'لوحة التحكم' : 'Dashboard'}
             </Button>
           </div>
+          {canConfigure && (
+            <Button variant="outline" size="sm" onClick={() => setShowStagesConfig(true)} className="h-8">
+              <Settings2 className="w-4 h-4 me-1" />
+              {isRTL ? 'المراحل' : 'Stages'}
+            </Button>
+          )}
           {canCreate && (
-            <Button onClick={() => { setSelectedApplication(null); setShowForm(true); }} className="bg-najdi-700 hover:bg-najdi-900 text-white">
+            <Button
+              onClick={() => {
+                setSelectedApplication(null);
+                setShowForm(true);
+              }}
+              className="bg-najdi-700 hover:bg-najdi-900 text-white"
+            >
               <Plus className="w-4 h-4 me-1" />
               {isRTL ? 'طلب جديد' : 'New Application'}
             </Button>
@@ -93,8 +143,8 @@ export default function Admissions() {
           applications={applications}
           loading={isLoading}
           branches={branches}
+          stages={stages}
           onView={handleViewApplication}
-          onRefresh={handleRefresh}
         />
       )}
 
@@ -103,6 +153,7 @@ export default function Admissions() {
           applications={applications}
           loading={isLoading}
           branches={branches}
+          stages={stages}
           onView={handleViewApplication}
           onEdit={handleEditApplication}
           userRole={userRole}
@@ -110,21 +161,33 @@ export default function Admissions() {
       )}
 
       {viewMode === 'dashboard' && (
-        <AdmissionsDashboard applications={applications} branches={branches} />
+        <AdmissionsDashboard applications={applications} branches={branches} stages={stages} />
       )}
 
       <ApplicationForm
         open={showForm}
-        onClose={() => { setShowForm(false); setSelectedApplication(null); }}
+        onClose={() => {
+          setShowForm(false);
+          setSelectedApplication(null);
+        }}
         onSuccess={handleRefresh}
         application={selectedApplication}
+        branches={branches}
       />
 
       <ApplicationDetails
-        open={!!viewingApplication}
+        open={!!viewingFresh}
         onClose={() => setViewingApplication(null)}
-        application={viewingApplication}
+        application={viewingFresh}
         onUpdate={handleRefresh}
+        stages={stages}
+      />
+
+      <AdmissionsStagesConfig
+        open={showStagesConfig}
+        onClose={() => setShowStagesConfig(false)}
+        stageRows={stageRows}
+        onSaved={handleStagesSaved}
       />
     </div>
   );

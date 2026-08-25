@@ -45,12 +45,17 @@ export async function authMiddleware(
 
     if ((!tenantId || !role) && typeof supabase.from === 'function') {
       try {
-        const { data: appUser } = await supabase
+        const headerTenant = (req.headers['x-tenant-id'] as string | undefined)?.trim();
+        let userQuery = supabase
           .from('users')
           .select('tenant_id, user_role, is_platform_owner')
           .eq('auth_id', user.id)
-          .eq('status', 'active')
-          .maybeSingle();
+          .eq('status', 'active');
+        if (headerTenant) {
+          userQuery = userQuery.eq('tenant_id', headerTenant);
+        }
+        const { data: appUsers } = await userQuery.limit(1);
+        const appUser = Array.isArray(appUsers) ? appUsers[0] : appUsers;
         if (appUser) {
           tenantId = tenantId ?? (appUser.tenant_id as string | undefined);
           role = role ?? (appUser.user_role as string | undefined);

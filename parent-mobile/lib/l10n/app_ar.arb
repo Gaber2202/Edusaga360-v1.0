@@ -1,6 +1,6 @@
 {
   "@@locale": "ar",
-  "appTitle": "EduSaga ولي الأمر",
+  "appTitle": "EduSaga Parent V2",
   "parentPortal": "بوابة ولي الأمر",
   "dashboard": "الرئيسية",
   "studentProgress": "مستوى الطالب",
@@ -22,6 +22,10 @@
   "schoolCodeHint": "أدخل الرمز من مدرستك (مثال T-DEMO)",
   "continueLabel": "متابعة",
   "changeSchool": "تغيير المدرسة",
+  "selectSchoolTitle": "اختر مدرستك",
+  "selectSchoolLead": "اختر المدرسة التي تريد فتحها.",
+  "selectSchoolLabel": "المدرسة",
+  "selectSchoolHint": "يرجى اختيار مدرسة",
   "schoolNotFound": "المدرسة غير موجودة",
   "accessDenied": "تم رفض الوصول",
   "accessDeniedDesc": "هذه البوابة مخصصة لأولياء الأمور فقط. يرجى التواصل مع إدارة المدرسة للحصول على صلاحية الدخول.",
@@ -124,6 +128,22 @@
   "canteenAllergiesSaved": "تم حفظ الحساسية. سيظهر تنبيه لموظفي المقصف.",
   "store": "المتجر المدرسي",
   "noStoreProducts": "لا توجد منتجات متاحة حالياً.",
+  "storeEmptyHint": "ستظهر الزي والكتب والإيجار هنا عندما ينشرها المدرسة.",
+  "storeLoadError": "تعذر تحميل المتجر المدرسي",
+  "storeForChild": "الطلب باسم",
+  "allCategories": "الكل",
+  "recentOrders": "الطلبات الأخيرة",
+  "selectChildFirst": "يرجى اختيار طالب أولاً",
+  "outOfStock": "غير متوفر",
+  "inStockCount": "{count} متوفر",
+  "@inStockCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "bookable": "قابل للحجز",
+  "unavailable": "غير متاح",
+  "retry": "إعادة المحاولة",
   "purchase": "شراء",
   "rent": "إيجار",
   "pickSlot": "اختر وقتاً",

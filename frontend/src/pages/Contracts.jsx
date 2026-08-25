@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
+import { supabase, tenantQuery, fetchData, callApi } from '../api/supabaseClient';
 import { useLanguage } from '../components/LanguageContext';
 import { getCurrencySymbol } from '../lib/localization';
 import { useBranch } from '../components/BranchContext';
@@ -494,49 +494,19 @@ export default function Contracts() {
 
 
 
-      const created = await tenantQuery('student_contracts').insert(contractData);
-      
+      const { data: created, error: createErr } = await tenantQuery('student_contracts').insert(contractData).select('id').single();
+      if (createErr) throw createErr;
+      const createdId = created?.id;
 
-
-      // Generate first invoice
-      const firstInstallment = paymentSchedule[0];
-      const invoiceData = {
-        ...(tid && { tenant_id: tid }),
-        invoice_number: `INV-${Date.now().toString(36).toUpperCase()}`,
-        student_id: formData.student_id,
-        student_name: formData.student_name,
-        contract_id: created.id,
-        branch_id: formData.branch_id,
-        grade: formData.grade,
-        academic_year: formData.academic_year,
-        installment_number: 1,
-        issue_date: format(new Date(), 'yyyy-MM-dd'),
-        due_date: firstInstallment.due_date,
-        items: formData.services.map(s => ({
-          description: s.service_name,
-          description_ar: s.service_name,
-          amount: s.net_amount / paymentSchedule.length,
-          fee_type: s.service_type
-        })),
-        subtotal: firstInstallment.amount,
-        total_amount: firstInstallment.amount,
-        status: 'issued'
-      };
-
-
-
-      await tenantQuery('invoices').insert(invoiceData);
-
-      await logAuditEvent({ action: AuditActions.CREATE, entityType: 'StudentContract', entityId: created.id, newValues: contractData });
+      await logAuditEvent({ action: AuditActions.CREATE, entityType: 'StudentContract', entityId: createdId, newValues: contractData });
       
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
       
       setShowForm(false);
       setFormData({ student_id: '', academic_year: '2025-2026', template_id: '', services: [], discount_type: 'none', discount_percentage: 0, discount_reason: '', payment_schedule: [], status: 'draft' });
       setHasUnsavedChanges(false);
       
-      toast.success(isRTL ? 'تم إنشاء العقد والفاتورة الأولى بنجاح ✓' : 'Contract and first invoice created successfully ✓');
+      toast.success(isRTL ? 'تم إنشاء العقد. أنشئ الفاتورة يدوياً بعد التوقيع.' : 'Contract created. Generate invoice manually after signing.');
     } catch (error) {
 
       
@@ -585,39 +555,35 @@ export default function Contracts() {
   const handleSendForSigning = async (contract) => {
     setSendingId(contract.id);
     try {
-      const signingUrl = `${window.location.origin}/ParentSignContract?id=${contract.id}`;
-      await tenantQuery('student_contracts').update({
-        status: 'sent',
-        sent_date: new Date().toISOString(),
-        delivery_status: 'sent'
-      }).eq('id', contract.id);
-      // Notify admin in system
-      await tenantQuery('notifications').insert({
-        tenant_id: contract.tenant_id,
-        type: 'contract_sent',
-        title_ar: `تم إرسال العقد - ${contract.student_name}`,
-        title_en: `Contract Sent - ${contract.student_name}`,
-        body_ar: `تم إرسال العقد رقم ${contract.contract_number} لولي الأمر للتوقيع`,
-        body_en: `Contract ${contract.contract_number} sent to guardian for signing`,
-        reference_type: 'StudentContract',
-        reference_id: contract.id,
-        is_read: false,
-        recipient_role: 'admin',
-        created_at: new Date().toISOString()
-      });
+      const result = await callApi(`/api/contracts/${contract.id}/share`, {});
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
-      // Copy signing link to clipboard
-      await navigator.clipboard.writeText(signingUrl).catch(() => {});
+      await navigator.clipboard.writeText(result.signingUrl || '').catch(() => {});
       toast.success(
         isRTL
-          ? `تم الإرسال! رابط التوقيع نُسخ. أرسله لولي الأمر عبر واتساب أو البريد.`
-          : `Sent! Signing link copied. Share with guardian via WhatsApp or email.`,
+          ? 'تم الإرسال عبر البريد وواتساب بنجاح'
+          : 'Sent via email AND WhatsApp successfully',
         { duration: 6000 }
       );
-    } catch {
-      toast.error(isRTL ? 'حدث خطأ' : 'Error occurred');
+    } catch (error) {
+      const body = error?.body;
+      toast.error(
+        body?.message
+          || (isRTL
+            ? `فشل الإرسال (يلزم نجاح البريد وواتساب): ${error.message || ''}`
+            : `Send failed (email AND WhatsApp required): ${error.message || ''}`)
+      );
     } finally {
       setSendingId(null);
+    }
+  };
+
+  const handleGenerateInvoice = async (contract) => {
+    try {
+      await callApi(`/api/contracts/${contract.id}/generate-invoice`, { installment_index: 0 });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast.success(isRTL ? 'تم إنشاء الفاتورة' : 'Invoice generated');
+    } catch (error) {
+      toast.error(error?.message || (isRTL ? 'تعذر إنشاء الفاتورة' : 'Could not generate invoice'));
     }
   };
 
@@ -673,6 +639,16 @@ export default function Contracts() {
               title={isRTL ? 'إرسال للتوقيع' : 'Send for Signing'}
             >
               {sendingId === row.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            </Button>
+          )}
+          {row.status === 'signed' && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleGenerateInvoice(row)}
+              title={isRTL ? 'إنشاء فاتورة' : 'Generate invoice'}
+            >
+              {isRTL ? 'فاتورة' : 'Invoice'}
             </Button>
           )}
           <ContractActions contract={row} />

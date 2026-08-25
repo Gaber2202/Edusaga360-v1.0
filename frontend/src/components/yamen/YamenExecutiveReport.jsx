@@ -4,7 +4,7 @@ import { tenantQuery, fetchData, callApi } from '../../api/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { FileBarChart, RefreshCw, Loader2 } from 'lucide-react';
+import { FileBarChart, RefreshCw, Loader2, HeartPulse, Target, Wallet, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { differenceInDays } from 'date-fns';
 import { useTenantFilter } from '../../hooks/useTenantFilter';
@@ -13,6 +13,9 @@ import { useJurisdictionFeatures } from '../JurisdictionFeatureContext';
 import { NATIONALISATION_FEATURES } from '../../lib/jurisdictionFeatures.js';
 import { useTenant } from '../TenantContext';
 import { getCurrencySymbol, formatCurrency } from '../../lib/localization';
+import DashboardKPICard from '../dashboard/DashboardKPICard';
+import { YamenSection } from './YamenShellParts';
+import { yamenLayout } from '../../lib/yamenDesign';
 
 const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'];
 
@@ -59,13 +62,6 @@ export default function YamenExecutiveReport({ isRTL }) {
       return (attRisk + compRisk) / 2 >= 50;
     }).length;
 
-    // Dept distribution
-    const deptMap = {};
-    active.forEach((e) => {
-      const dept = e.department_id || 'other';
-      deptMap[dept] = (deptMap[dept] || 0) + 1;
-    });
-
     const healthScore = Math.max(0, 100 - highRiskCount * 8 - expiredIqama.length * 5 - Math.round(pendingLeaves * 0.5));
 
     return { active: active.length, saudis: saudis.length, saudizationPct, expiredIqama: expiredIqama.length, expiringSoon: expiringSoon.length, totalPayroll, pendingLeaves, absentDays, highRiskCount, healthScore };
@@ -81,109 +77,122 @@ export default function YamenExecutiveReport({ isRTL }) {
   }, [payrollInputs]);
 
   const statusPie = [
-  { name: isRTL ? 'سعودي' : 'Saudi', value: stats.saudis },
-  { name: isRTL ? 'غير سعودي' : 'Non-Saudi', value: stats.active - stats.saudis }];
-
+    { name: isRTL ? 'سعودي' : 'Saudi', value: stats.saudis },
+    { name: isRTL ? 'غير سعودي' : 'Non-Saudi', value: stats.active - stats.saudis },
+  ];
 
   const handleGenerateAI = async () => {
     setGenerating(true);
     setAiSummary('');
     try {
-      const prompt = isRTL ?
-      `أنت يامن، مساعد الموارد البشرية الذكي لنظام EduSaga. اكتب تقريراً تنفيذياً أسبوعياً لإدارة الموارد البشرية بأسلوب احترافي سعودي باللغة العربية.\n\nالبيانات:\n- إجمالي الموظفين النشطين: ${stats.active}\n- نسبة السعودة: ${stats.saudizationPct}%\n- موظفون عالي المخاطر: ${stats.highRiskCount}\n- إقامات منتهية: ${stats.expiredIqama}\n- طلبات إجازة معلقة: ${stats.pendingLeaves}\n- إجمالي الرواتب هذا الشهر: ${formatCurrency(stats.totalPayroll, tenant?.localization, isRTL)}\n- درجة صحة الموارد البشرية: ${stats.healthScore}%\n\nاكتب ملخصاً تنفيذياً من 3 فقرات يشمل: الوضع العام، المخاطر الرئيسية، التوصيات. لا تختلق أرقاماً خارج المعطيات.` :
-      `You are YAMEN, the AI HR Companion for EduSaga. Write a professional weekly executive HR report summary in English.\n\nData:\n- Active employees: ${stats.active}\n- Saudization: ${stats.saudizationPct}%\n- High risk employees: ${stats.highRiskCount}\n- Expired Iqamas: ${stats.expiredIqama}\n- Pending leaves: ${stats.pendingLeaves}\n- Monthly payroll: ${formatCurrency(stats.totalPayroll, tenant?.localization, isRTL)}\n- HR Health Score: ${stats.healthScore}%\n\nWrite a 3-paragraph executive summary: overall status, key risks, recommendations. Use only the provided data.`;
+      const prompt = isRTL
+        ? `أنت يامن، مساعد الموارد البشرية الذكي لنظام EduSaga. اكتب تقريراً تنفيذياً أسبوعياً لإدارة الموارد البشرية بأسلوب احترافي سعودي باللغة العربية.\n\nالبيانات:\n- إجمالي الموظفين النشطين: ${stats.active}\n- نسبة السعودة: ${stats.saudizationPct}%\n- موظفون عالي المخاطر: ${stats.highRiskCount}\n- إقامات منتهية: ${stats.expiredIqama}\n- طلبات إجازة معلقة: ${stats.pendingLeaves}\n- إجمالي الرواتب هذا الشهر: ${formatCurrency(stats.totalPayroll, tenant?.localization, isRTL)}\n- درجة صحة الموارد البشرية: ${stats.healthScore}%\n\nاكتب ملخصاً تنفيذياً من 3 فقرات يشمل: الوضع العام، المخاطر الرئيسية، التوصيات. لا تختلق أرقاماً خارج المعطيات.`
+        : `You are YAMEN, the AI HR Companion for EduSaga. Write a professional weekly executive HR report summary in English.\n\nData:\n- Active employees: ${stats.active}\n- Saudization: ${stats.saudizationPct}%\n- High risk employees: ${stats.highRiskCount}\n- Expired Iqamas: ${stats.expiredIqama}\n- Pending leaves: ${stats.pendingLeaves}\n- Monthly payroll: ${formatCurrency(stats.totalPayroll, tenant?.localization, isRTL)}\n- HR Health Score: ${stats.healthScore}%\n\nWrite a 3-paragraph executive summary: overall status, key risks, recommendations. Use only the provided data.`;
 
       const res = await callApi('/api/ai/invoke-llm', { prompt, source: 'executive' });
       setAiSummary(extractAiText(res));
-    } catch (e) {toast.error(aiErrorMessage(e, isRTL));} finally
-    {setGenerating(false);}
+    } catch (e) {
+      toast.error(aiErrorMessage(e, isRTL));
+    } finally {
+      setGenerating(false);
+    }
   };
 
   return (
-    <div className="space-y-6">
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card><CardContent className="p-4">
-          <p className="text-xs text-muted-foreground">{isRTL ? 'صحة الموارد البشرية' : 'HR Health'}</p>
-          <p className={`text-3xl font-bold ${stats.healthScore >= 70 ? 'text-emerald-400' : stats.healthScore >= 50 ? 'text-amber-400' : 'text-red-400'}`}>{stats.healthScore}%</p>
-        </CardContent></Card>
+    <div className={yamenLayout.page}>
+      <div className={yamenLayout.kpiGrid}>
+        <DashboardKPICard
+          id="exec-health"
+          title={isRTL ? 'صحة الموارد البشرية' : 'HR Health'}
+          value={`${stats.healthScore}%`}
+          icon={HeartPulse}
+          color={stats.healthScore >= 70 ? 'emerald' : stats.healthScore >= 50 ? 'amber' : 'red'}
+          sub={isRTL ? 'درجة الصحة الأسبوعية' : 'Weekly health score'}
+        />
         {nationalisationEnabled && (
-        <Card><CardContent className="p-4">
-          <p className="text-xs text-muted-foreground">{isRTL ? 'السعودة' : 'Saudization'}</p>
-          <p className={`text-3xl font-bold ${stats.saudizationPct >= 40 ? 'text-emerald-400' : 'text-amber-400'}`}>{stats.saudizationPct}%</p>
-        </CardContent></Card>
+          <DashboardKPICard
+            id="exec-saud"
+            title={isRTL ? 'السعودة' : 'Saudization'}
+            value={`${stats.saudizationPct}%`}
+            icon={Target}
+            color={stats.saudizationPct >= 40 ? 'emerald' : 'amber'}
+            sub={isRTL ? `${stats.saudis} سعودي` : `${stats.saudis} Saudi`}
+          />
         )}
-        <Card><CardContent className="p-4">
-          <p className="text-xs text-muted-foreground">{isRTL ? 'إجمالي الرواتب' : 'Monthly Payroll'}</p>
-          <p className="text-2xl font-bold text-white">{stats.totalPayroll > 0 ? (stats.totalPayroll / 1000).toFixed(0) + 'K' : '-'}</p>
-          <p className="text-xs text-muted-foreground">{getCurrencySymbol(tenant?.localization, isRTL)}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <p className="text-xs text-muted-foreground">{isRTL ? 'عالي المخاطر' : 'High Risk'}</p>
-          <p className="text-3xl font-bold text-red-400">{stats.highRiskCount}</p>
-          <p className="text-xs text-muted-foreground">{isRTL ? 'من' : 'of'} {stats.active}</p>
-        </CardContent></Card>
+        <DashboardKPICard
+          id="exec-payroll"
+          title={isRTL ? 'إجمالي الرواتب' : 'Monthly Payroll'}
+          value={stats.totalPayroll > 0 ? `${(stats.totalPayroll / 1000).toFixed(0)}K` : '—'}
+          icon={Wallet}
+          color="blue"
+          sub={getCurrencySymbol(tenant?.localization, isRTL)}
+        />
+        <DashboardKPICard
+          id="exec-risk"
+          title={isRTL ? 'عالي المخاطر' : 'High Risk'}
+          value={stats.highRiskCount}
+          icon={ShieldAlert}
+          color="red"
+          alert={stats.highRiskCount > 0}
+          sub={isRTL ? `من ${stats.active}` : `of ${stats.active}`}
+        />
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
+      <div className={yamenLayout.chartGrid}>
+        <Card className="border-border/60 shadow-sm">
           <CardHeader><CardTitle className="text-sm">{isRTL ? 'مسار الرواتب (آخر 6 أشهر)' : 'Payroll Trend (6 months)'}</CardTitle></CardHeader>
           <CardContent>
-            {payrollChart.length > 0 ?
-            <ResponsiveContainer width="100%" height={180}>
+            {payrollChart.length > 0 ? (
+              <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={payrollChart}>
                   <XAxis dataKey="period" tick={{ fill: '#64748b', fontSize: 10 }} />
                   <YAxis tick={{ fill: '#64748b', fontSize: 10 }} />
-                  <Tooltip contentStyle={{ background: '#1e2535', border: '1px solid #334155', color: '#e2e8f0' }} />
-                  <Bar dataKey="total" fill="#10b981" radius={[3, 3, 0, 0]} />
+                  <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', color: '#1C2420', borderRadius: 8 }} />
+                  <Bar dataKey="total" fill="#0E6B4F" radius={[3, 3, 0, 0]} />
                 </BarChart>
-              </ResponsiveContainer> :
-            <p className="text-muted-foreground text-center py-10 text-sm">{isRTL ? 'لا توجد بيانات' : 'No data'}</p>}
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-muted-foreground text-center py-10 text-sm">{isRTL ? 'لا توجد بيانات' : 'No data'}</p>
+            )}
           </CardContent>
         </Card>
 
         {nationalisationEnabled && (
-        <Card>
-          <CardHeader><CardTitle className="text-sm">{isRTL ? 'توزيع الجنسية' : 'Nationality Distribution'}</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={180}>
-              <PieChart>
-                <Pie data={statusPie} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
-                  {statusPie.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip contentStyle={{ background: '#1e2535', border: '1px solid #334155', color: '#e2e8f0' }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          <Card className="border-border/60 shadow-sm">
+            <CardHeader><CardTitle className="text-sm">{isRTL ? 'توزيع الجنسية' : 'Nationality Distribution'}</CardTitle></CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={180}>
+                <PieChart>
+                  <Pie data={statusPie} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
+                    {statusPie.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', color: '#1C2420', borderRadius: 8 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         )}
       </div>
 
-      {/* AI Executive Summary */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <FileBarChart className="w-4 h-4 text-emerald-400" />
-              {isRTL ? 'الملخص التنفيذي — يامن' : 'Executive Summary — YAMEN'}
-            </CardTitle>
-            <Button size="sm" onClick={handleGenerateAI} disabled={generating}>
-              {generating ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : <RefreshCw className="w-4 h-4 me-2" />}
-              {isRTL ? 'توليد التقرير' : 'Generate Report'}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {aiSummary ?
-          <div className="text-ink text-sm leading-7 whitespace-pre-wrap" dir={isRTL ? 'rtl' : 'ltr'}>{aiSummary}</div> :
-
+      <YamenSection
+        title={isRTL ? 'الملخص التنفيذي — يامن' : 'Executive Summary — YAMEN'}
+        subtitle={isRTL ? 'توليد تقرير أسبوعي بالذكاء الاصطناعي' : 'Generate a weekly AI executive brief'}
+        icon={FileBarChart}
+        action={(
+          <Button size="sm" onClick={handleGenerateAI} disabled={generating} className="gap-1.5 bg-najdi-900 hover:bg-ink">
+            {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+            {isRTL ? 'توليد التقرير' : 'Generate Report'}
+          </Button>
+        )}
+      >
+        {aiSummary ? (
+          <div className="text-ink text-sm leading-7 whitespace-pre-wrap" dir={isRTL ? 'rtl' : 'ltr'}>{aiSummary}</div>
+        ) : (
           <p className="text-muted-foreground text-sm text-center py-6">
-              {isRTL ? 'اضغط "توليد التقرير" للحصول على الملخص التنفيذي من يامن' : 'Click "Generate Report" to get YAMEN\'s executive summary'}
-            </p>
-          }
-        </CardContent>
-      </Card>
-    </div>);
-
+            {isRTL ? 'اضغط "توليد التقرير" للحصول على الملخص التنفيذي من يامن' : 'Click "Generate Report" to get YAMEN\'s executive summary'}
+          </p>
+        )}
+      </YamenSection>
+    </div>
+  );
 }

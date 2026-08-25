@@ -1,0 +1,138 @@
+{
+  "sprint_name": "P4 Sprint 1 — Admissions & Contracts",
+  "sprint_in_progress": [
+    "SCRUM-111", "SCRUM-112", "SCRUM-113", "SCRUM-114", "SCRUM-115",
+    "SCRUM-116", "SCRUM-117", "SCRUM-118", "SCRUM-119",
+    "SCRUM-120", "SCRUM-140", "SCRUM-138"
+  ],
+  "stories": {
+    "SCRUM-111": {
+      "summary": "P4-1-1: Manual admission request creation",
+      "description": "## Acceptance Criteria\n\n- [ ] Officer can create admission request in-platform\n- [ ] Required fields: parent name (AR + EN), email, WhatsApp number, grade, branch, academic year\n- [ ] Student admission documents upload supported (basic school application format)\n- [ ] Request persists and appears in school-configurable pipeline\n\n## Locked decisions\n- Pipeline defaults (school-configurable): Inquiry → Submitted → Docs Review → Assessment → Interview → Committee → Accepted → Waitlist → Enrolled (+ Rejected)\n\n**Story Points:** 5\n\n**Test:** Admissions officer creates manual request; verify persisted and visible in pipeline"
+    },
+    "SCRUM-112": {
+      "summary": "P4-1-2: Stage pipeline + audit trail",
+      "description": "## Acceptance Criteria\n\n- [ ] Kanban pipeline with owner assignment\n- [ ] Stages are school-configurable (defaults from Admissions Management page)\n- [ ] Default stages: Inquiry, Submitted, Docs Review, Assessment, Interview, Committee, Accepted, Waitlist, Enrolled, Rejected\n- [ ] Audit trail on every stage change (actor, timestamp, from→to)\n\n**Story Points:** 8\n\n**Test:** Move application through stages; verify audit log entries with owner and timestamp"
+    },
+    "SCRUM-113": {
+      "summary": "P4-1-3: Rebuild parent intake link generator",
+      "description": "## Acceptance Criteria\n\n- [ ] Extend existing intake (do not full-replace); apply best practice\n- [ ] Parent name / email / WhatsApp fields captured\n- [ ] Required table migration(s) applied for extended fields\n- [ ] Sharable intake URL works end-to-end\n\n**Story Points:** 8\n\n**Test:** Generate intake link; parent completes form; verify data captured with all fields"
+    },
+    "SCRUM-114": {
+      "summary": "P4-1-4: Configurable intake form + school logo",
+      "description": "## Acceptance Criteria\n\n- [ ] Intake is a school-portal form with a sharable URL\n- [ ] School configures by show/hide of registration-template fields only (no custom fields)\n- [ ] Form mirrors registration form structure for visible fields\n- [ ] School logo displayed on public intake page\n\n**Story Points:** 13\n\n**Test:** Configure show/hide fields; open sharable URL; verify logo and selected fields render"
+    },
+    "SCRUM-115": {
+      "summary": "P4-1-5: Automated bilingual parent messaging",
+      "description": "## Acceptance Criteria\n\n- [ ] One bilingual (AR+EN) Infobip WhatsApp message per event\n- [ ] Auto-triggered on stage change\n- [ ] Events covered: welcome, rejection, documents missing / physical visit required, assessment + results, interview scheduling\n\n**Story Points:** 5\n\n**Test:** Trigger each event; verify one bilingual WhatsApp message sent via Infobip"
+    },
+    "SCRUM-116": {
+      "summary": "P4-2-1: Country-aware contract templates",
+      "description": "## Acceptance Criteria\n\n- [ ] UAE tenant never sees KSA templates (and vice versa per pack)\n- [ ] Templates are school-editable per tenant\n- [ ] Platform seeds country-pack defaults; schools may customize\n\n**Story Points:** 8\n\n**Test:** Login as UAE tenant; only UAE templates visible; edit template and verify persistence"
+    },
+    "SCRUM-117": {
+      "summary": "P4-2-2: PDF generation (data/render split)",
+      "description": "## Acceptance Criteria\n\n- [ ] School logo in PDF\n- [ ] ADR-006 compliant (data/render ownership split)\n\n**Story Points:** 8\n\n**Test:** Generate contract PDF; verify logo, data fields, ADR-006 separation"
+    },
+    "SCRUM-118": {
+      "summary": "P4-2-3: Send via email + WhatsApp",
+      "description": "## Acceptance Criteria\n\n- [ ] One-click share for admin\n- [ ] Both email AND WhatsApp must succeed (not either-or)\n\n**Story Points:** 5\n\n**Test:** Send contract; verify delivery on both email and WhatsApp"
+    },
+    "SCRUM-119": {
+      "summary": "P4-2-4: Parent signature + audit trail",
+      "description": "## Acceptance Criteria\n\n- [ ] Parent must be logged into parent portal (no magic-link)\n- [ ] Both drawn signature and typed name required\n- [ ] Signed copy stored with timestamp + signer identity audit trail\n- [ ] On sign: auto-advance admission → enrolled\n- [ ] Assign tuition fee plan by branch + grade; staff generate invoice themselves (no auto-invoice)\n\n**Story Points:** 8\n\n**Test:** Parent signs in portal; verify enrolled + fee assignment; staff can generate invoice"
+    },
+    "SCRUM-120": {
+      "summary": "P4-3-1: Submodule reorder Recruitment to Onboarding to Employees",
+      "description": "## Acceptance Criteria\n\n- [ ] HR nav order: Recruitment → Onboarding → Employees\n\n**Story Points:** 2\n\n**Test:** Verify HR nav order matches spec"
+    },
+    "SCRUM-121": {
+      "summary": "P4-3-2: Payroll country-sensitive 10k load test",
+      "description": "## Acceptance Criteria\n\n- [ ] Fix/harden existing payroll calculations (not load-test-only)\n- [ ] GOSI / Mudad / WPS / Qatar calculations correct\n- [ ] k6 numbers reported for 10k employees\n\n**Story Points:** 21\n\n**Test:** Run payroll for 10k employees; k6 load test; verify jurisdiction deductions"
+    },
+    "SCRUM-122": {
+      "summary": "P4-3-3: End of Service gratuity",
+      "description": "## Acceptance Criteria\n\n- [ ] Per jurisdiction pack calculation\n- [ ] Exit type in v1: resignation\n- [ ] Include 15 unpaid leave days in calculation\n- [ ] No notice-period deductions in v1\n\n**Story Points:** 8\n\n**Test:** Calculate EOS for SA/AE/QA resignation with 15 unpaid leave days; match pack rules"
+    },
+    "SCRUM-123": {
+      "summary": "P4-3-4: Pay slips via WhatsApp",
+      "description": "## Acceptance Criteria\n\n- [ ] Infobip rail for payslip delivery\n- [ ] Deliver PDF + secure link (link expiry = 30 days)\n- [ ] Also send via email and WhatsApp so email retains the document after link expiry\n\n**Story Points:** 5\n\n**Test:** Generate payslip; verify WA + email with PDF/link; link expires after 30d"
+    },
+    "SCRUM-124": {
+      "summary": "P4-3-5: Leave requests enhancement",
+      "description": "## Acceptance Criteria\n\n- [ ] Approval chains are configurable\n- [ ] Default chain: manager → HR\n- [ ] Leave types and statutory entitlements from country labour law / pack localization (SA/AE/QA)\n- [ ] Balances deducted correctly\n\n**Story Points:** 8\n\n**Test:** Submit leave; verify chain, balance, pack statutory rules"
+    },
+    "SCRUM-125": {
+      "summary": "P4-3-6: Fix HR Policies Library Initialize",
+      "description": "## Acceptance Criteria\n\n- [ ] Country-pack driven libraries for KSA/UAE/QA (not static KSA)\n\n**Story Points:** 5\n\n**Test:** Initialize policies per jurisdiction; verify pack-specific templates"
+    },
+    "SCRUM-126": {
+      "summary": "P4-3-7: YAMEN AI HR dashboard rebuild",
+      "description": "## Acceptance Criteria\n\n- [ ] Matches platform look and feel\n\n**Story Points:** 8\n\n**Test:** Visual review against platform design system"
+    },
+    "SCRUM-127": {
+      "summary": "P4-3-8: Qashio corporate cards (UAE pack)",
+      "description": "## Acceptance Criteria\n\n- [ ] Provider abstraction for Qashio\n- [ ] Stub/provider interface only (no live credentials required)\n\n**Story Points:** 13\n\n**Test:** UAE tenant connects stub Qashio; verify transaction sync path to expenses"
+    },
+    "SCRUM-128": {
+      "summary": "P4-4-1: Enterprise bulk invoice engine",
+      "description": "## Acceptance Criteria\n\n- [ ] Preview = actual\n- [ ] Dry-run supported\n- [ ] Segmentation: branch, grade, fee plan, custom filters (all required for v1)\n- [ ] Proration: mid-term join = days/total × fee\n- [ ] Sibling rules: 5% first sibling, 10% second sibling\n- [ ] Failure isolation + run log\n- [ ] Safe re-run: skip already-invoiced students only\n\n**Story Points:** 13\n\n**Test:** Bulk generate 500 students; preview matches actual; re-run skips invoiced"
+    },
+    "SCRUM-129": {
+      "summary": "P4-5-1: Projects module",
+      "description": "## Acceptance Criteria\n\n- [ ] CapEx and OpEx supported\n- [ ] Budgets, costs, milestones\n- [ ] Main GL linkage; SA posting rules for v1\n\n**Story Points:** 13\n\n**Test:** Create project with budget; record cost; verify GL entry + milestones"
+    },
+    "SCRUM-130": {
+      "summary": "P4-6-1: Fix CRM customer save defect",
+      "description": "## Acceptance Criteria\n\n- [ ] Create persists to DB\n\n**Story Points:** 3\n\n**Test:** Create CRM customer; reload; verify persisted"
+    },
+    "SCRUM-131": {
+      "summary": "P4-6-2: Full sales pipeline",
+      "description": "## Acceptance Criteria\n\n- [ ] CRM stages: Lead → Qualified\n- [ ] On Qualified: create/link Admissions opportunity at Inquiry stage\n- [ ] Opportunities and activities tracked\n\n**Story Points:** 13\n\n**Test:** Move Lead→Qualified; verify Admissions Inquiry created/linked"
+    },
+    "SCRUM-132": {
+      "summary": "P4-7-1: School-operational help desk",
+      "description": "## Acceptance Criteria\n\n- [ ] Categories = all school departments\n- [ ] Requester types: staff, parent, student, management\n- [ ] Asset linkage to Fixed Assets module (computer, iPad, laptop, etc.)\n- [ ] SLA targets use industry best practice defaults (e.g. P1=4h, P2=24h, P3=72h) unless school overrides\n- [ ] Routing supported\n\n**Story Points:** 13\n\n**Test:** Create ticket with department category, SLA, requester type, asset link"
+    },
+    "SCRUM-133": {
+      "summary": "P4-8-1: Operations UI enhancement",
+      "description": "## Acceptance Criteria\n\n- [ ] Match platform visual standard\n\n**Story Points:** 8\n\n**Test:** Visual review Operations module against design system"
+    },
+    "SCRUM-134": {
+      "summary": "P4-8-2: Dashboard richer charting",
+      "description": "## Acceptance Criteria\n\n- [ ] Deferred / skipped for current P4 cut (founder decision)\n\n**Status note:** Out of current P4 delivery cut.\n\n**Story Points:** 8"
+    },
+    "SCRUM-135": {
+      "summary": "P4-8-3: Persona-based reports",
+      "description": "## Acceptance Criteria\n\n- [ ] Extension of Executive Command Center personas (not separate report app)\n- [ ] CEO/CFO/COO/CHRO/Principal/Registrar views\n- [ ] Branch scoping\n- [ ] ADR-008 compliant per-currency breakdown\n\n**Story Points:** 13\n\n**Test:** Login as each persona; verify role-appropriate Exec CC views with branch + currency"
+    },
+    "SCRUM-136": {
+      "summary": "P4-9-1: Fix clinic visit save",
+      "description": "## Acceptance Criteria\n\n- [ ] clinic_visits table/query enabled\n- [ ] Visit save persists\n\n**Story Points:** 5\n\n**Test:** Create clinic visit via QuickVisitPanel; reload; verify in clinic_visits"
+    },
+    "SCRUM-137": {
+      "summary": "P4-9-2: Country-pack vaccination schedule",
+      "description": "## Acceptance Criteria\n\n- [ ] Encode from named country sources in packs: MOH KSA / DHA UAE / Qatar MoPH\n- [ ] Obligations differ per jurisdiction pack\n\n**Story Points:** 5\n\n**Test:** View schedule per SA/AE/QA; verify pack-specific obligations"
+    },
+    "SCRUM-140": {
+      "summary": "P4-10-1: Confirm removal plan with founder",
+      "description": "## Acceptance Criteria\n\n- [ ] Founder decision #8 documented: **Remove Integration Hub** (not absorb)\n\n**Story Points:** 1\n\n**Test:** Decision documented; unblocks P4-10-2"
+    },
+    "SCRUM-138": {
+      "summary": "P4-10-2: Remove Integration Hub submodule",
+      "description": "## Acceptance Criteria\n\n- [ ] Integration Hub nav and routes removed\n- [ ] Follows founder decision: remove (not absorb)\n\n**Story Points:** 3\n\n**Test:** Verify Integration Hub not accessible in nav or routes"
+    },
+    "SCRUM-139": {
+      "summary": "P4-10-3: Country-aware integrations list",
+      "description": "## Acceptance Criteria\n\n- [ ] Uses Phase 2 registry\n- [ ] Integrations page shows only jurisdiction-available integrations\n\n**Story Points:** 5\n\n**Test:** Per-jurisdiction tenant sees only allowed integrations"
+    },
+    "SCRUM-141": {
+      "summary": "P4-11-1: Root-cause investigation report",
+      "description": "## Acceptance Criteria\n\n- [ ] Report before any fixes\n- [ ] Use current seeded test employee; note missing data/docs\n\n**Story Points:** 3\n\n**Test:** Investigation report lists Self Service errors with root causes"
+    },
+    "SCRUM-142": {
+      "summary": "P4-11-2: Fix identified errors",
+      "description": "## Acceptance Criteria\n\n- [ ] Link/use current seeded test employee; add any missing data or docs\n- [ ] Fix all identified Self Service errors from report\n\n**Story Points:** 8\n\n**Test:** Re-run Self Service flows with seeded employee; previously failing paths pass"
+    }
+  }
+}

@@ -52,10 +52,15 @@ export default function ESSPortal() {
   });
 
   // Get ESS settings for test mode
-  const { data: essSettings = null } = useQuery({ enabled: false /* ess_settings table not built */, queryKey: ['essSettings'], queryFn: async () => {
+  const { data: essSettings = null } = useQuery({
+    enabled: hasTenantAccess,
+    queryKey: ['essSettings', tenantId],
+    queryFn: async () => {
       const { data: settings = [] } = await tenantQuery('ess_settings').select('*').order('created_at', { ascending: false });
       return settings[0] || { test_mode_enabled: false };
-    }, initialData: null });
+    },
+    initialData: null,
+  });
 
   // Get employee record linked to current user
   const { data: employees = [] } = useQuery({
@@ -71,11 +76,24 @@ export default function ESSPortal() {
     return employees.find(e => e.email === user?.email);
   })();
 
-  const { data: myRequests = [] } = useQuery({ enabled: false /* ess_requests table not built */, queryKey: ['essRequests', currentEmployee?.id], queryFn: () => fetchData(tenantQuery('ess_requests').select('*').match({ employee_id: currentEmployee?.id })), initialData: [] });
+  const { data: myRequests = [] } = useQuery({
+    enabled: !!currentEmployee?.id,
+    queryKey: ['essRequests', currentEmployee?.id],
+    queryFn: () => fetchData(tenantQuery('ess_requests').select('*').match({ employee_id: currentEmployee?.id })),
+    initialData: [],
+  });
 
   const { data: myLeaves = [] } = useQuery({
     queryKey: ['leaveRequests', currentEmployee?.id],
-    queryFn: () => fetchData(tenantQuery('leave_requests').select('*').match({ employee_id: currentEmployee?.id })),
+    queryFn: async () => {
+      const rows = await callApi('/api/leave/requests', null, { method: 'GET' });
+      const list = Array.isArray(rows) ? rows : rows?.requests || [];
+      return list.map((r) => ({
+        ...r,
+        leave_type_name: r.leave_types?.name || r.leave_type_name,
+        total_days: r.days ?? r.total_days,
+      }));
+    },
     enabled: !!currentEmployee?.id,
   });
 
@@ -154,27 +172,13 @@ export default function ESSPortal() {
 
       const tid = getTenantIdForCreate();
       if (requestType === 'leave') {
-        const totalDays = differenceInDays(new Date(requestForm.end_date), new Date(requestForm.start_date)) + 1;
-        await tenantQuery('leave_requests').insert({
-          ...(tid && { tenant_id: tid }),
-          request_number: requestNumber,
+        await callApi('/api/leave/submit', {
           employee_id: currentEmployee.id,
-          employee_name: currentEmployee.name_ar,
-          branch_id: currentEmployee.branch_id || selectedBranchId,
-          department_id: currentEmployee.department_id,
           leave_type_id: requestForm.leave_type_id,
-          leave_type_name: leaveTypes.find(lt => lt.id === requestForm.leave_type_id)?.name_ar,
           start_date: requestForm.start_date,
           end_date: requestForm.end_date,
-          total_days: totalDays,
-          reason: requestForm.reason,
-          status: 'pending',
-          workflow_stage: lineManagerId ? 'pending_manager' : 'pending_hr',
-          line_manager_id: lineManagerId,
-          routing_note: routingNote,
-          submitted_date: new Date().toISOString(),
-          submitted_by: currentEmployee.id
-        });
+          reason: requestForm.reason || undefined,
+        }, { method: 'POST' });
       } else {
         await tenantQuery('ess_requests').insert({
           ...(tid && { tenant_id: tid }),
