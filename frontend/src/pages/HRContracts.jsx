@@ -140,11 +140,13 @@ export default function HRContracts() {
         .match({ employee_id: doc.employee_id, document_id: documentId }),
     );
     if (existing[0]?.id) {
-      await tenantQuery('employee_contracts')
+      const { error } = await tenantQuery('employee_contracts')
         .update({ ...payload, updated_at: new Date().toISOString() })
         .eq('id', existing[0].id);
+      if (error) throw error;
     } else {
-      await tenantQuery('employee_contracts').insert(payload);
+      const { error } = await tenantQuery('employee_contracts').insert(payload);
+      if (error) throw error;
     }
   };
 
