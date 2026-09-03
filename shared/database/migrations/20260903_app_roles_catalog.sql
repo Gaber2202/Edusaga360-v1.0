@@ -51,7 +51,7 @@ BEGIN
         ON public.roles FOR SELECT TO authenticated
         USING (
           tenant_id IS NULL
-          OR tenant_id::text = (SELECT public.auth_tenant_id())
+          OR tenant_id::text = (SELECT public.auth_tenant_id())::text
           OR (SELECT public.auth_is_platform_owner())
         )
     $p$;
