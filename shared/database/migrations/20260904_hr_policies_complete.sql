@@ -36,11 +36,19 @@ CREATE TABLE IF NOT EXISTS public.policy_versions (
 ALTER TABLE public.policy_versions ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
+  DROP POLICY IF EXISTS tenant_isolation_policy_versions ON public.policy_versions;
+  DROP POLICY IF EXISTS tenant_isolation ON public.policy_versions;
   EXECUTE format(
-    'CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid) WITH CHECK (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid)',
-    'policy_versions', 'policy_versions'
+    'CREATE POLICY tenant_isolation ON %I FOR ALL TO authenticated USING (tenant_id::text = (SELECT public.auth_tenant_id())) WITH CHECK (tenant_id::text = (SELECT public.auth_tenant_id()))',
+    'policy_versions'
   );
-EXCEPTION WHEN duplicate_object THEN NULL;
+EXCEPTION WHEN undefined_function THEN
+  EXECUTE $p$
+    CREATE POLICY tenant_isolation ON public.policy_versions FOR ALL TO authenticated
+      USING (tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id'))
+      WITH CHECK (tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id'))
+  $p$;
+WHEN duplicate_object THEN NULL;
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_policy_versions_policy
@@ -73,11 +81,19 @@ CREATE TABLE IF NOT EXISTS public.onboardings (
 ALTER TABLE public.onboardings ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
+  DROP POLICY IF EXISTS tenant_isolation_onboardings ON public.onboardings;
+  DROP POLICY IF EXISTS tenant_isolation ON public.onboardings;
   EXECUTE format(
-    'CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid) WITH CHECK (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid)',
-    'onboardings', 'onboardings'
+    'CREATE POLICY tenant_isolation ON %I FOR ALL TO authenticated USING (tenant_id::text = (SELECT public.auth_tenant_id())) WITH CHECK (tenant_id::text = (SELECT public.auth_tenant_id()))',
+    'onboardings'
   );
-EXCEPTION WHEN duplicate_object THEN NULL;
+EXCEPTION WHEN undefined_function THEN
+  EXECUTE $p$
+    CREATE POLICY tenant_isolation ON public.onboardings FOR ALL TO authenticated
+      USING (tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id'))
+      WITH CHECK (tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id'))
+  $p$;
+WHEN duplicate_object THEN NULL;
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_onboardings_tenant ON public.onboardings (tenant_id);
