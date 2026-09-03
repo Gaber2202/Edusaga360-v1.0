@@ -37,6 +37,8 @@ export const LEGACY_TO_CANONICAL_MODULE_KEYS = {
   communications: 'core',
   reports: 'core',
   integrations: 'integrations',
+  onboarding: 'basic_hr',
+  hr_documents: 'basic_hr',
 };
 
 // Normalize a tenant's enabled_modules into canonical feature keys.
@@ -85,9 +87,9 @@ export const PAGE_MODULE_KEYS = {
   TrainingDevelopment: 'training_performance',
   PerformanceEvaluation: 'training_performance',
   DisciplinaryCases: 'training_performance',
-  Onboarding: 'onboarding',
-  PolicyEditor: 'onboarding',
-  HRPoliciesLibrary: 'onboarding',
+  Onboarding: 'basic_hr',
+  PolicyEditor: 'basic_hr',
+  HRPoliciesLibrary: 'basic_hr',
   Engagement: 'engagement',
   CorporateCards: 'travel_expenses',
   BusinessTravel: 'travel_expenses',
@@ -167,7 +169,7 @@ export const PAGE_MODULE_KEYS = {
   VATManagement: 'reconciliation',
 
   // HR documents
-  HRContracts: 'hr_documents',
+  HRContracts: 'basic_hr',
 
   // Website / content / admin
   CMS: 'cms',
@@ -197,7 +199,8 @@ export const NAV_MODULE_KEYS = {
   hrApprovalsInbox: 'basic_hr',
   holidayCalendar: 'basic_hr',
   leaveBalances: 'basic_hr',
-  hrDocuments: 'hr_documents',
+  hrDocuments: 'basic_hr',
+  archiveAndDocuments: 'basic_hr',
   operations: 'operations',
   ess: 'ess',
   essSettings: 'ess',
@@ -209,9 +212,9 @@ export const NAV_MODULE_KEYS = {
   trainingDevelopment: 'training_performance',
   performanceEvaluation: 'training_performance',
   disciplinaryCases: 'training_performance',
-  onboarding: 'onboarding',
-  hrPoliciesLibrary: 'onboarding',
-  policyEditor: 'onboarding',
+  onboarding: 'basic_hr',
+  hrPoliciesLibrary: 'basic_hr',
+  policyEditor: 'basic_hr',
   engagement: 'engagement',
   corporateCards: 'travel_expenses',
   businessTravel: 'travel_expenses',

@@ -62,8 +62,9 @@ export default function OnboardingDetailDialog({ onb, onClose, onUpdated, hrPoli
   const saveAndSync = async (updates) => {
     const merged = { ...localOnb, ...updates };
     const pct = recalcPct(merged.hr_documents || [], merged.policy_acknowledgements || [], merged.training_assignments || []);
-    const finalData = { ...updates, overall_completion_pct: pct };
-    await tenantQuery('onboardings').update(finalData);
+    const finalData = { ...updates, overall_completion_pct: pct, updated_at: new Date().toISOString() };
+    const { error } = await tenantQuery('onboardings').update(finalData).eq('id', localOnb.id);
+    if (error) throw error;
     setLocalOnb(prev => ({ ...prev, ...updates, overall_completion_pct: pct }));
     queryClient.invalidateQueries({ queryKey: ['onboardings'] });
     onUpdated?.({ ...localOnb, ...updates, overall_completion_pct: pct });

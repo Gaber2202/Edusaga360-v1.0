@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import LinkedStudentsPicker from '../components/users/LinkedStudentsPicker';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { resolveEmployeeForUser, userIdForEmployeeLink } from '../lib/employeeLink';
 
 function userDisplayName(user) {
   if (!user) return '';
@@ -34,15 +35,6 @@ function personLabel(person, isRTL) {
     ? (person.name_ar || person.name_en || person.name)
     : (person.name_en || person.name_ar || person.name);
   return name || person.email || '';
-}
-
-function linkedEmployeeForUser(employees, user) {
-  if (!user) return null;
-  const byId = employees.find((e) => e.user_id && e.user_id === user.id);
-  if (byId) return byId;
-  const email = user.email?.toLowerCase();
-  if (!email) return null;
-  return employees.find((e) => e.email && e.email.toLowerCase() === email) || null;
 }
 
 async function assertQuery(query) {
@@ -121,7 +113,7 @@ export default function UserManagement() {
   const assignableRoles = roles.filter((r) => r.is_assignable !== false && r.role_code !== 'creator');
 
   const openEdit = (row) => {
-    const linked = linkedEmployeeForUser(employees, row);
+    const linked = resolveEmployeeForUser(employees, row);
     setEditingUser(row);
     setEditData({
       name: userDisplayName(row) === row.email ? '' : userDisplayName(row),
@@ -204,7 +196,7 @@ export default function UserManagement() {
 
       await assertQuery(tenantQuery('users').update(payload).eq('id', editingUser.id));
 
-      const previous = linkedEmployeeForUser(employees, editingUser);
+      const previous = resolveEmployeeForUser(employees, editingUser);
       const nextEmployeeId = isParent ? '' : editData.employee_id;
 
       if (previous && previous.id !== nextEmployeeId) {
@@ -212,8 +204,13 @@ export default function UserManagement() {
       }
       if (nextEmployeeId) {
         const target = employees.find((e) => e.id === nextEmployeeId);
-        if (target && target.user_id !== editingUser.id) {
-          await assertQuery(tenantQuery('employees').update({ user_id: editingUser.id }).eq('id', nextEmployeeId));
+        const linkId = userIdForEmployeeLink({ ...editingUser, _appUserId: editingUser.id });
+        if (target && target.user_id !== linkId) {
+          await assertQuery(
+            tenantQuery('employees')
+              .update({ user_id: linkId })
+              .eq('id', nextEmployeeId),
+          );
         }
       }
 
@@ -261,7 +258,7 @@ export default function UserManagement() {
         </span>
       );
     }
-    const emp = linkedEmployeeForUser(employees, row);
+    const emp = resolveEmployeeForUser(employees, row);
     if (!emp) return <span className="text-muted-foreground">-</span>;
     const code = emp.employee_id ? ` (${emp.employee_id})` : '';
     return <span className="text-sm">{personLabel(emp, isRTL)}{code}</span>;

@@ -1,5 +1,6 @@
 import { tenantQuery } from '../../api/supabaseClient';
 import { logAuditEvent, AuditActions } from '../AuditService';
+import { selectPoliciesForOnboarding } from '../../lib/hrPolicyHelpers';
 
 // Base HR document checklist (always included)
 const BASE_HR_DOCS = [
@@ -38,11 +39,14 @@ export async function triggerOnboardingForEmployee(employee, applicant) {
     notes: '',
   }));
 
-  // Pull published HR policies from library to auto-assign
+  // Pull published (prefer mandatory) HR policies from library to auto-assign
   let policyAcks = [];
   try {
-    const { data: publishedPolicies = [] } = await tenantQuery('hr_policys').select('*').match({ status: 'published' });
-    policyAcks = (publishedPolicies || []).map(p => ({
+    const { data: publishedPolicies = [] } = await tenantQuery('hr_policys')
+      .select('*')
+      .match({ status: 'published' });
+    const toAssign = selectPoliciesForOnboarding(publishedPolicies || []);
+    policyAcks = toAssign.map((p) => ({
       id: `pol_${p.id}`,
       policy_id: p.id,
       ar: p.title_ar,

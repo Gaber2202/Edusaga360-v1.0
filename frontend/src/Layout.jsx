@@ -201,7 +201,7 @@ function LayoutContent({ children, currentPageName }) {
         { name: 'governmentRelations', icon: Shield, page: 'GovernmentRelations', roles: ['admin', 'hr_admin', 'hr_officer', 'finance'] },
         { name: 'holidayCalendar', icon: Calendar, page: 'HolidayCalendar', roles: ['admin', 'hr_admin', 'branch_manager'] },
         { name: 'leaveBalances', icon: Clock, page: 'LeaveBalances', roles: ['admin', 'hr_admin', 'hr_officer', 'branch_manager'] },
-        { name: 'hrPoliciesLibrary', icon: FileText, page: 'HRPoliciesLibrary', roles: ['admin', 'hr_admin'] },
+        { name: 'hrPoliciesLibrary', icon: FileText, page: 'HRPoliciesLibrary', roles: ['admin', 'hr_admin', 'hr_officer'] },
         { name: 'performanceEvaluation', icon: Star, page: 'PerformanceEvaluation', roles: ['admin', 'hr_admin', 'hr_officer', 'branch_manager'] },
         { name: 'yamenAI', icon: Bot, page: 'YamenAI', roles: ['admin', 'hr_admin', 'hr_officer'] },
         { name: 'trainingDevelopment', icon: GraduationCap, page: 'TrainingDevelopment', roles: ['admin', 'hr_admin', 'hr_officer', 'branch_manager'] },

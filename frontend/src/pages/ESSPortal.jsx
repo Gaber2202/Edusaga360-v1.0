@@ -27,6 +27,7 @@ import ESSProfileTab from '../components/ess/ESSProfileTab';
 import ESSOnboardingTab from '../components/ess/ESSOnboardingTab';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import { useTenant } from '../components/TenantContext';
+import { resolveEmployeeForUser, userIdForEmployeeLink } from '../lib/employeeLink';
 
 export default function ESSPortal() {
   const { t, isRTL } = useLanguage();
@@ -64,16 +65,23 @@ export default function ESSPortal() {
 
   // Get employee record linked to current user
   const { data: employees = [] } = useQuery({
-    queryKey: ['employees', tenantId],
-    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').match(tenantFilter())),
+    queryKey: ['employees', tenantId, 'ess'],
+    queryFn: () =>
+      fetchData(
+        tenantQuery('employees')
+          .select(
+            'id, employee_id, name_ar, name_en, email, phone, national_id, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, manager_id, created_at, basic_salary, total_salary, bank_name, iban, bank_account',
+          )
+          .match(tenantFilter()),
+      ),
     enabled: hasTenantAccess,
   });
 
   const currentEmployee = (() => {
     if (essSettings?.test_mode_enabled && essSettings?.test_employee_id) {
-      return employees.find(e => e.id === essSettings.test_employee_id);
+      return employees.find((e) => e.id === essSettings.test_employee_id) || null;
     }
-    return employees.find(e => e.email === user?.email);
+    return resolveEmployeeForUser(employees, user);
   })();
 
   const { data: myRequests = [] } = useQuery({
@@ -235,19 +243,29 @@ export default function ESSPortal() {
       return;
     }
 
+    const linkUserId = userIdForEmployeeLink(user);
+    if (!linkUserId) {
+      toast.error(isRTL ? 'تعذر تحديد المستخدم' : 'Could not resolve current user');
+      return;
+    }
+
     setSaving(true);
     try {
-      await tenantQuery('employees').update({
-        email: user.email,
-        user_id: user.id,
-      }).eq('id', linkEmployeeId);
-      
+      const { error } = await tenantQuery('employees')
+        .update({
+          email: user.email || null,
+          user_id: linkUserId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', linkEmployeeId);
+      if (error) throw error;
+
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       setShowLinkDialog(false);
       toast.success(isRTL ? 'تم ربط الحساب بنجاح' : 'Account linked successfully');
     } catch (error) {
       console.error('Error:', error);
-      toast.error(isRTL ? 'حدث خطأ' : 'Error occurred');
+      toast.error(error?.message || (isRTL ? 'حدث خطأ' : 'Error occurred'));
     } finally {
       setSaving(false);
     }

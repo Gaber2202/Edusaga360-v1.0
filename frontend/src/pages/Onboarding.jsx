@@ -50,9 +50,28 @@ export default function OnboardingPage() {
   const [aiInsight, setAiInsight] = useState('');
   const [loadingAI, setLoadingAI] = useState(false);
 
-  const { data: onboardings = [], isLoading } = useQuery({ enabled: false /* onboardings table not built */, queryKey: ['onboardings', tenantId, selectedBranchId], queryFn: () => fetchData(tenantQuery('onboardings').select('*').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })), initialData: [] });
+  const { data: onboardings = [], isLoading } = useQuery({
+    enabled: hasTenantAccess,
+    queryKey: ['onboardings', tenantId, selectedBranchId],
+    queryFn: () =>
+      fetchData(
+        tenantQuery('onboardings')
+          .select('*')
+          .match(tenantFilter(branchFilter()))
+          .order('created_at', { ascending: false }),
+      ),
+    initialData: [],
+  });
 
-  const { data: hrPolicies = [] } = useQuery({ enabled: false /* hr_policys table not built */, queryKey: ['hr_policies_published', tenantId], queryFn: () => fetchData(tenantQuery('hr_policys').select('*').match({ status: 'published' })), initialData: [] });
+  const { data: hrPolicies = [] } = useQuery({
+    enabled: hasTenantAccess,
+    queryKey: ['hr_policies_published', tenantId],
+    queryFn: () =>
+      fetchData(
+        tenantQuery('hr_policys').select('*').match({ status: 'published' }),
+      ),
+    initialData: [],
+  });
 
   const filtered = filterByBranch(onboardings);
   const active = filtered.filter(o => o.status === 'in_progress');

@@ -1,6 +1,6 @@
 import { formatCurrency, getCurrencySymbol } from '../../lib/localization';
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tenantQuery, fetchData } from '../../api/supabaseClient';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -61,6 +61,7 @@ function generateDocContent({ type, employee, params, isAr, tenant, isRTL }) {
 export default function YamenDraftDocuments({ isRTL }) {
   const { tenant } = useTenant();
   const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
+  const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
   const [selectedType, setSelectedType] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState('');
@@ -92,11 +93,13 @@ export default function YamenDraftDocuments({ isRTL }) {
         employee_id: emp.id,
         employee_name: emp.name_ar,
         document_type: selectedType,
-        title: isRTL ? docType?.ar : docType?.en,
+        document_name: isRTL ? docType?.ar : docType?.en,
         notes: docContent,
-        status: 'active',
+        status: 'draft',
         issue_date: format(new Date(), 'yyyy-MM-dd'),
+        requires_signature: false,
       });
+      queryClient.invalidateQueries({ queryKey: ['hrDocuments'] });
       toast.success(isRTL ? 'تم حفظ المستند في الأرشيف' : 'Document saved to archive');
       setShowDialog(false);
       setStep(1);

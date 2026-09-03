@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { logAuditEvent, AuditActions } from '../components/AuditService';
 import { useTenantFilter } from '../hooks/useTenantFilter';
+import { resolveEmployeeForUser } from '../lib/employeeLink';
 import { EXPENSE_CATEGORIES, expenseCategoryLabel } from '../lib/expenseCategories';
 import { useTenant } from '../components/TenantContext';
 
@@ -55,7 +56,7 @@ export default function Expenses() {
 
   const { data: employees = [] } = useQuery({
     queryKey: ['employees', tenantId],
-    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').match(tenantFilter())),
+    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, email, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').match(tenantFilter())),
     enabled: hasTenantAccess,
   });
 
@@ -92,7 +93,7 @@ export default function Expenses() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const currentEmp = employees.find(e => e.email === user?.email);
+      const currentEmp = resolveEmployeeForUser(employees, user);
       
       const tid = getTenantIdForCreate();
       const data = {

@@ -24,18 +24,35 @@ const QIWA_STATUS = {
 export default function QiwaContracts() {
   const { isRTL } = useLanguage();
   const queryClient = useQueryClient();
-  const { tenantId } = useTenantFilter();
+  const { tenantId, hasTenantAccess } = useTenantFilter();
   const [search, setSearch] = useState('');
   const [showUpdateDialog, setShowUpdateDialog] = useState(null);
   const [qiwaRef, setQiwaRef] = useState('');
   const [newStatus, setNewStatus] = useState('submitted');
   const [saving, setSaving] = useState(false);
 
-  const { data: contracts = [], isLoading } = useQuery({ enabled: false /* employee_documents table not built */, queryKey: ['hrDocuments_contracts', tenantId], queryFn: () => fetchData(tenantQuery('employee_documents').select('*').match({ document_type: 'employment_contract' })), initialData: [] });
+  const { data: contracts = [], isLoading } = useQuery({
+    enabled: hasTenantAccess,
+    queryKey: ['hrDocuments_contracts', tenantId],
+    queryFn: () =>
+      fetchData(
+        tenantQuery('employee_documents')
+          .select('*')
+          .match({ document_type: 'employment_contract' })
+          .order('created_at', { ascending: false }),
+      ),
+    initialData: [],
+  });
 
   const { data: employees = [] } = useQuery({
+    enabled: hasTenantAccess,
     queryKey: ['employees_active', tenantId],
-    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').match({ status: 'active' })),
+    queryFn: () =>
+      fetchData(
+        tenantQuery('employees').select(
+          'id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at, national_id, iqama_number',
+        ).match({ status: 'active' }),
+      ),
   });
 
   const enriched = contracts.map(c => ({
@@ -68,22 +85,42 @@ export default function QiwaContracts() {
       total_salary: contract.contract_data?.total_salary,
     };
     console.info('[QIWA API PLACEHOLDER]', qiwaPayload);
-    await tenantQuery('employee_documents').update({ qiwa_status: 'submitted', qiwa_submitted_date: new Date().toISOString() });
+    const { error } = await tenantQuery('employee_documents')
+      .update({
+        qiwa_status: 'submitted',
+        qiwa_submitted_date: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', contract.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     queryClient.invalidateQueries({ queryKey: ['hrDocuments_contracts'] });
     toast.success(isRTL ? 'تم الإرسال لقوى (محاكاة)' : 'Submitted to Qiwa (simulated)');
   };
 
   const handleManualUpdate = async () => {
+    if (!showUpdateDialog?.id) return;
     setSaving(true);
-    await tenantQuery('employee_documents').update({
-      qiwa_status: newStatus,
-      qiwa_reference_id: qiwaRef,
-      qiwa_updated_date: new Date().toISOString(),
-    });
-    queryClient.invalidateQueries({ queryKey: ['hrDocuments_contracts'] });
-    setShowUpdateDialog(null);
-    setSaving(false);
-    toast.success(isRTL ? 'تم تحديث حالة قوى' : 'Qiwa status updated');
+    try {
+      const { error } = await tenantQuery('employee_documents')
+        .update({
+          qiwa_status: newStatus,
+          qiwa_reference_id: qiwaRef,
+          qiwa_updated_date: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', showUpdateDialog.id);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['hrDocuments_contracts'] });
+      setShowUpdateDialog(null);
+      toast.success(isRTL ? 'تم تحديث حالة قوى' : 'Qiwa status updated');
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const columns = [

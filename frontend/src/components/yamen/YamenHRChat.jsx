@@ -9,11 +9,12 @@ import { Bot, Send, Loader2, User, Lock, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { YamenSection } from './YamenShellParts';
 import { yamenLayout } from '../../lib/yamenDesign';
+import { resolveEmployeeForUser } from '../../lib/employeeLink';
 
-async function buildHRContext(isHRMode, userEmail, nationalisationEnabled = false) {
+async function buildHRContext(isHRMode, user, nationalisationEnabled = false) {
   try {
     const [employees, allLeaves, attendance, iqama, _payroll, leaveBalances, payRuns, gosiRecords, violations, _essRequests] = await Promise.all([
-      fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').order('created_at', { ascending: false }).limit()),
+      fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, email, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').order('created_at', { ascending: false }).limit()),
       fetchData(tenantQuery('leave_requests').select('*').order('created_at', { ascending: false }).limit()),
       fetchData(tenantQuery('employee_attendances').select('*').order('created_at', { ascending: false }).limit()),
       fetchData(tenantQuery('iqama_records').select('*').order('created_at', { ascending: false })),
@@ -64,7 +65,7 @@ async function buildHRContext(isHRMode, userEmail, nationalisationEnabled = fals
 
     if (!isHRMode) {
       // Employee self-service: only return data for the current user's employee record
-      const myEmp = employees.find(e => e.email === userEmail);
+      const myEmp = resolveEmployeeForUser(employees, user);
       if (!myEmp) return { _selfMode: true, _noEmployee: true };
       const myBalances = leaveBalances.filter(b => b.employee_id === myEmp.id);
       const myAttendance = attendance.filter(a => a.employee_id === myEmp.id);
