@@ -25,6 +25,16 @@ import QuickVisitPanel from '../components/clinic/QuickVisitPanel';
 import { fireEvent } from '../lib/integrationBus';
 import { getVaccinationSchedule } from '../api/jurisdiction';
 import { useBranch } from '../components/BranchContext';
+import {
+  normalizeAllergies,
+  normalizeConditions,
+  isCriticalHealth,
+  criticalNote,
+  bloodTypeOf,
+  parseListInput,
+  allergiesToInput,
+  buildClinicVisitEvent,
+} from '../lib/clinicHelpers';
 
 const COMPLAINTS = [
   { value: 'fever', ar: 'حمى', en: 'Fever' },
@@ -55,6 +65,23 @@ const BLANK_VISIT = {
   outcome: 'returned_to_class', parent_notified: false, notes: ''
 };
 
+const BLANK_HEALTH = {
+  id: null,
+  student_id: '',
+  student_name: '',
+  blood_type: '',
+  allergies_text: '',
+  conditions_text: '',
+  vaccinations_text: '',
+  has_critical_condition: false,
+  critical_condition_note: '',
+  insurance_company: '',
+  insurance_policy_number: '',
+  notes: '',
+};
+
+const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
 export default function SchoolClinic() {
   const { isRTL } = useLanguage();
   const { tenantFilter, tenantId, hasTenantAccess, getTenantIdForCreate } = useTenantFilter();
@@ -64,9 +91,12 @@ export default function SchoolClinic() {
   const [tab, setTab] = useState('dashboard');
   const [showVisitForm, setShowVisitForm] = useState(false);
   const [visitForm, setVisitForm] = useState(BLANK_VISIT);
+  const [showHealthForm, setShowHealthForm] = useState(false);
+  const [healthForm, setHealthForm] = useState(BLANK_HEALTH);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
   const [studentSearch, setStudentSearch] = useState('');
+  const [healthStudentSearch, setHealthStudentSearch] = useState('');
 
   const { data: visits = [], isLoading } = useQuery({
     enabled: hasTenantAccess,
@@ -122,37 +152,147 @@ export default function SchoolClinic() {
     setSaving(true);
     try {
       const tid = getTenantIdForCreate();
-      const created = await tenantQuery('clinic_visits').insert({ ...visitForm, ...(tid && { tenant_id: tid }) });
-      await logAuditEvent({ action: AuditActions.CREATE, entityType: 'ClinicVisit', entityId: created.id });
+      const student = students.find((s) => s.id === visitForm.student_id);
+      const payload = {
+        ...visitForm,
+        temperature: visitForm.temperature ? parseFloat(visitForm.temperature) : null,
+        pulse: visitForm.pulse ? parseInt(visitForm.pulse, 10) : null,
+        spo2: visitForm.spo2 ? parseInt(visitForm.spo2, 10) : null,
+        parent_notified_at: visitForm.parent_notified ? new Date().toISOString() : null,
+        ...(tid && { tenant_id: tid }),
+      };
+      delete payload.complaint;
+      delete payload.rest_start;
+      delete payload.rest_end;
+
+      const { data: created, error } = await tenantQuery('clinic_visits').insert(payload).select('id').single();
+      if (error) throw error;
+
+      await logAuditEvent({ action: AuditActions.CREATE, entityType: 'ClinicVisit', entityId: created?.id });
       queryClient.invalidateQueries({ queryKey: ['clinicVisits'] });
       setShowVisitForm(false);
       setVisitForm(BLANK_VISIT);
       toast.success(isRTL ? 'تم تسجيل الزيارة' : 'Visit recorded');
 
-      // 🔌 Integration Bus: notify parent + auto-update attendance if sent home
-      const student = students.find(s => s.id === visitForm.student_id);
-      fireEvent('clinic_visit_completed', {
-        tenant_id: tid,
-        student_id: visitForm.student_id,
-        student_name: visitForm.student_name,
-        visit_time: visitForm.visit_time,
-        complaint: COMPLAINTS.find(c => c.value === visitForm.complaint_category)?.en || visitForm.complaint_category,
-        treatment: visitForm.treatment_given || visitForm.medication_dispensed || 'treatment given',
-        outcome: visitForm.outcome,
-        guardian_phone: student?.emergency_phone || '',
-        guardian_name: student?.emergency_contact || '',
-        branch_id: student?.branch_id || '',
-      }, { sourceModule: 'Clinic', tenantId: tid });
-    } finally { setSaving(false); }
+      fireEvent(
+        'clinic_visit_completed',
+        buildClinicVisitEvent({
+          student,
+          visit: {
+            ...payload,
+            complaint: COMPLAINTS.find((c) => c.value === visitForm.complaint_category)?.en || visitForm.complaint_category,
+          },
+          tenantId: tid,
+          parentNotified: visitForm.parent_notified,
+        }),
+        { sourceModule: 'Clinic', tenantId: tid },
+      );
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || (isRTL ? 'حدث خطأ' : 'Error occurred'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openHealthForm = (record = null, student = null) => {
+    if (record) {
+      const st = students.find((s) => s.id === record.student_id);
+      setHealthForm({
+        id: record.id,
+        student_id: record.student_id || '',
+        student_name: record.student_name || st?.name_ar || '',
+        blood_type: bloodTypeOf(record, st),
+        allergies_text: allergiesToInput(normalizeAllergies(record, st)),
+        conditions_text: normalizeConditions(record, st).join(', '),
+        vaccinations_text: Array.isArray(record.vaccinations)
+          ? record.vaccinations.map((v) => v.code || v.vaccine_name || v.name).filter(Boolean).join(', ')
+          : '',
+        has_critical_condition: Boolean(record.has_critical_condition),
+        critical_condition_note: record.critical_condition_note || '',
+        insurance_company: record.insurance_company || '',
+        insurance_policy_number: record.insurance_policy_number || '',
+        notes: record.notes || '',
+      });
+      setHealthStudentSearch(record.student_name || st?.name_ar || '');
+    } else {
+      setHealthForm({
+        ...BLANK_HEALTH,
+        student_id: student?.id || '',
+        student_name: student?.name_ar || '',
+        blood_type: student?.blood_type || '',
+        allergies_text: allergiesToInput(normalizeAllergies(null, student)),
+        conditions_text: normalizeConditions(null, student).join(', '),
+      });
+      setHealthStudentSearch(student?.name_ar || '');
+    }
+    setShowHealthForm(true);
+  };
+
+  const handleSaveHealth = async () => {
+    if (!healthForm.student_id) {
+      toast.error(isRTL ? 'اختر طالباً' : 'Select a student');
+      return;
+    }
+    setSaving(true);
+    try {
+      const tid = getTenantIdForCreate();
+      const student = students.find((s) => s.id === healthForm.student_id);
+      const allergies = parseListInput(healthForm.allergies_text).map((name) => ({ name }));
+      const chronic_conditions = parseListInput(healthForm.conditions_text);
+      const vaccinations = parseListInput(healthForm.vaccinations_text).map((code) => ({
+        code,
+        vaccine_name: code,
+        status: 'complete',
+      }));
+      const payload = {
+        student_id: healthForm.student_id,
+        student_name: healthForm.student_name || student?.name_ar || student?.name_en,
+        blood_type: healthForm.blood_type || null,
+        allergies,
+        chronic_conditions,
+        vaccinations,
+        has_critical_condition: Boolean(healthForm.has_critical_condition),
+        critical_condition_note: healthForm.critical_condition_note || null,
+        insurance_company: healthForm.insurance_company || null,
+        insurance_policy_number: healthForm.insurance_policy_number || null,
+        notes: healthForm.notes || null,
+        updated_at: new Date().toISOString(),
+        ...(tid && { tenant_id: tid }),
+      };
+
+      if (healthForm.id) {
+        const { error } = await tenantQuery('student_health_records').update(payload).eq('id', healthForm.id);
+        if (error) throw error;
+      } else {
+        const { error } = await tenantQuery('student_health_records').insert(payload);
+        if (error) throw error;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['healthRecords'] });
+      setShowHealthForm(false);
+      setHealthForm(BLANK_HEALTH);
+      toast.success(isRTL ? 'تم حفظ السجل الصحي' : 'Health record saved');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || (isRTL ? 'حدث خطأ' : 'Error occurred'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const selectStudent = (s) => {
-    setVisitForm(f => ({ ...f, student_id: s.id, student_name: s.name_ar, grade: s.grade }));
+    setVisitForm((f) => ({ ...f, student_id: s.id, student_name: s.name_ar, grade: s.grade }));
     setStudentSearch(s.name_ar);
   };
 
+  const criticalRecords = healthRecords.filter((r) => {
+    const st = students.find((s) => s.id === r.student_id);
+    return isCriticalHealth(r, st);
+  });
+
   const OutcomeBadge = ({ outcome }) => {
-    const cfg = OUTCOMES.find(o => o.value === outcome) || OUTCOMES[0];
+    const cfg = OUTCOMES.find((o) => o.value === outcome) || OUTCOMES[0];
     return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cfg.cls}`}>{isRTL ? cfg.ar : cfg.en}</span>;
   };
 
@@ -248,7 +388,7 @@ export default function SchoolClinic() {
           </div>
 
           {/* Critical health alerts */}
-          {healthRecords.filter(r => r.has_critical_condition).length > 0 && (
+          {criticalRecords.length > 0 && (
             <Card className="border-red-200">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base text-red-700 flex items-center gap-2">
@@ -258,12 +398,15 @@ export default function SchoolClinic() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {healthRecords.filter(r => r.has_critical_condition).map(r => (
-                    <div key={r.id} className="p-3 bg-red-50 rounded-lg border border-red-200">
-                      <p className="font-medium text-red-800 text-sm">{r.student_name}</p>
-                      <p className="text-xs text-red-600">{r.critical_condition_note}</p>
-                    </div>
-                  ))}
+                  {criticalRecords.map((r) => {
+                    const st = students.find((s) => s.id === r.student_id);
+                    return (
+                      <div key={r.id} className="p-3 bg-red-50 rounded-lg border border-red-200">
+                        <p className="font-medium text-red-800 text-sm">{r.student_name || st?.name_ar}</p>
+                        <p className="text-xs text-red-600">{criticalNote(r, st) || (isRTL ? 'حالة حرجة' : 'Critical condition')}</p>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -315,40 +458,70 @@ export default function SchoolClinic() {
 
         {/* HEALTH RECORDS */}
         <TabsContent value="health" className="mt-4 space-y-4">
+          <div className="flex justify-end">
+            <Button onClick={() => openHealthForm()} className="bg-red-600 hover:bg-red-700 text-white">
+              <Plus className="w-4 h-4 me-1" />
+              {isRTL ? 'سجل صحي جديد' : 'New Health Record'}
+            </Button>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {healthRecords.map(r => (
-              <Card key={r.id} className={r.has_critical_condition ? 'border-red-300' : ''}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <p className="font-semibold text-ink">{r.student_name}</p>
-                      <p className="text-xs text-muted-foreground">{isRTL ? 'فصيلة الدم:' : 'Blood type:'} {r.blood_type || '—'}</p>
-                    </div>
-                    {r.has_critical_condition && <AlertTriangle className="w-5 h-5 text-red-500" />}
-                  </div>
-                  {r.allergies?.length > 0 && (
-                    <div className="mb-2">
-                      <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'الحساسية:' : 'Allergies:'}</p>
-                      <div className="flex flex-wrap gap-1">
-                        {r.allergies.map((a, i) => <span key={i} className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">{a.name}</span>)}
+            {healthRecords.map((r) => {
+              const st = students.find((s) => s.id === r.student_id);
+              const allergies = normalizeAllergies(r, st);
+              const conditions = normalizeConditions(r, st);
+              const critical = isCriticalHealth(r, st);
+              return (
+                <Card key={r.id} className={critical ? 'border-red-300' : ''}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="font-semibold text-ink">{r.student_name || st?.name_ar || '—'}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {isRTL ? 'فصيلة الدم:' : 'Blood type:'} {bloodTypeOf(r, st) || '—'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {critical && <AlertTriangle className="w-5 h-5 text-red-500" />}
+                        <Button size="sm" variant="ghost" onClick={() => openHealthForm(r, st)}>
+                          {isRTL ? 'تعديل' : 'Edit'}
+                        </Button>
                       </div>
                     </div>
-                  )}
-                  {r.chronic_conditions?.length > 0 && (
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'الأمراض المزمنة:' : 'Conditions:'}</p>
-                      <div className="flex flex-wrap gap-1">
-                        {r.chronic_conditions.map((c, i) => <span key={i} className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">{c}</span>)}
+                    {allergies.length > 0 && (
+                      <div className="mb-2">
+                        <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'الحساسية:' : 'Allergies:'}</p>
+                        <div className="flex flex-wrap gap-1">
+                          {allergies.map((a, i) => (
+                            <span key={`${a.name}-${i}`} className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">{a.name}</span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {r.insurance_company && <p className="text-xs text-muted-foreground mt-2">🏥 {r.insurance_company} · {r.insurance_policy_number}</p>}
-                </CardContent>
-              </Card>
-            ))}
+                    )}
+                    {conditions.length > 0 && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">{isRTL ? 'الأمراض المزمنة:' : 'Conditions:'}</p>
+                        <div className="flex flex-wrap gap-1">
+                          {conditions.map((c, i) => (
+                            <span key={`${c}-${i}`} className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">{c}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {(r.insurance_company || r.insurance_policy_number) && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {r.insurance_company}{r.insurance_policy_number ? ` · ${r.insurance_policy_number}` : ''}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
             {healthRecords.length === 0 && (
-              <div className="col-span-3 text-center py-12 text-muted-foreground">
-                {isRTL ? 'لا توجد سجلات صحية' : 'No health records found'}
+              <div className="col-span-3 text-center py-12 text-muted-foreground space-y-3">
+                <p>{isRTL ? 'لا توجد سجلات صحية بعد' : 'No health records yet'}</p>
+                <Button variant="outline" onClick={() => openHealthForm()}>
+                  {isRTL ? 'إنشاء أول سجل' : 'Create first record'}
+                </Button>
               </div>
             )}
           </div>
@@ -428,16 +601,18 @@ export default function SchoolClinic() {
                     const studentById = Object.fromEntries(students.map((s) => [s.id, s]));
                     const rows = [];
 
-                    const recordsToDiff = healthRecords.length > 0
-                      ? healthRecords
-                      : students.slice(0, 25).map((s) => ({
-                          id: `virtual-${s.id}`,
-                          student_id: s.id,
-                          student_name: isRTL
-                            ? (s.name_ar || s.full_name_ar || s.name_en)
-                            : (s.name_en || s.full_name_en || s.name_ar),
-                          vaccinations: [],
-                        }));
+                    const recordsToDiff = healthRecords;
+                    if (recordsToDiff.length === 0) {
+                      return (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                            {isRTL
+                              ? 'لا توجد سجلات صحية للمقارنة — أضف سجلاً من تبويب السجلات الصحية'
+                              : 'No health records to compare — add one from the Health Records tab'}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
 
                     for (const r of recordsToDiff) {
                       const student = studentById[r.student_id];
@@ -606,16 +781,146 @@ export default function SchoolClinic() {
 
             <div className="space-y-2">
               <Label>{isRTL ? 'النتيجة *' : 'Outcome *'}</Label>
-              <Select value={visitForm.outcome} onValueChange={v => setVisitForm(f => ({ ...f, outcome: v }))}>
+              <Select value={visitForm.outcome} onValueChange={(v) => setVisitForm((f) => ({
+                ...f,
+                outcome: v,
+                parent_notified: v !== 'returned_to_class' ? true : f.parent_notified,
+              }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{OUTCOMES.map(o => <SelectItem key={o.value} value={o.value}>{isRTL ? o.ar : o.en}</SelectItem>)}</SelectContent>
+                <SelectContent>{OUTCOMES.map((o) => <SelectItem key={o.value} value={o.value}>{isRTL ? o.ar : o.en}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={visitForm.parent_notified}
+                onChange={(e) => setVisitForm((f) => ({ ...f, parent_notified: e.target.checked }))}
+              />
+              {isRTL ? 'إشعار ولي الأمر (واتساب)' : 'Notify parent (WhatsApp)'}
+            </label>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowVisitForm(false)}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
             <Button onClick={handleSaveVisit} disabled={saving} className="bg-red-600 hover:bg-red-700 text-white">
               {isRTL ? 'حفظ الزيارة' : 'Save Visit'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showHealthForm} onOpenChange={setShowHealthForm}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {healthForm.id
+                ? (isRTL ? 'تعديل السجل الصحي' : 'Edit Health Record')
+                : (isRTL ? 'سجل صحي جديد' : 'New Health Record')}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{isRTL ? 'الطالب *' : 'Student *'}</Label>
+              <Input
+                placeholder={isRTL ? 'ابحث عن الطالب...' : 'Search student...'}
+                value={healthStudentSearch}
+                onChange={(e) => {
+                  setHealthStudentSearch(e.target.value);
+                  setHealthForm((f) => ({ ...f, student_id: '', student_name: '' }));
+                }}
+                disabled={Boolean(healthForm.id)}
+              />
+              {healthStudentSearch && !healthForm.student_id && !healthForm.id && (
+                <div className="border rounded-lg max-h-40 overflow-y-auto">
+                  {students
+                    .filter((s) =>
+                      s.name_ar?.includes(healthStudentSearch)
+                      || s.name_en?.toLowerCase().includes(healthStudentSearch.toLowerCase())
+                      || s.student_id?.includes(healthStudentSearch))
+                    .slice(0, 8)
+                    .map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => {
+                          setHealthForm((f) => ({
+                            ...f,
+                            student_id: s.id,
+                            student_name: s.name_ar,
+                            blood_type: f.blood_type || s.blood_type || '',
+                            allergies_text: f.allergies_text || allergiesToInput(normalizeAllergies(null, s)),
+                            conditions_text: f.conditions_text || normalizeConditions(null, s).join(', '),
+                          }));
+                          setHealthStudentSearch(s.name_ar);
+                        }}
+                        className="w-full text-start px-3 py-2 hover:bg-sand text-sm border-b last:border-0"
+                      >
+                        <span className="font-medium">{s.name_ar}</span>
+                        <span className="text-muted-foreground ms-2">{s.grade}</span>
+                      </button>
+                    ))}
+                </div>
+              )}
+              {healthForm.student_name && (
+                <p className="text-xs text-green-600 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" /> {healthForm.student_name}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>{isRTL ? 'فصيلة الدم' : 'Blood type'}</Label>
+              <Select value={healthForm.blood_type || 'none'} onValueChange={(v) => setHealthForm((f) => ({ ...f, blood_type: v === 'none' ? '' : v }))}>
+                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">—</SelectItem>
+                  {BLOOD_TYPES.map((bt) => <SelectItem key={bt} value={bt}>{bt}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{isRTL ? 'الحساسية (مفصولة بفاصلة)' : 'Allergies (comma-separated)'}</Label>
+              <Textarea rows={2} value={healthForm.allergies_text} onChange={(e) => setHealthForm((f) => ({ ...f, allergies_text: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>{isRTL ? 'الأمراض المزمنة' : 'Chronic conditions'}</Label>
+              <Textarea rows={2} value={healthForm.conditions_text} onChange={(e) => setHealthForm((f) => ({ ...f, conditions_text: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>{isRTL ? 'التطعيمات (رموز/أسماء)' : 'Vaccinations (codes/names)'}</Label>
+              <Textarea rows={2} value={healthForm.vaccinations_text} onChange={(e) => setHealthForm((f) => ({ ...f, vaccinations_text: e.target.value }))} placeholder="BCG, MMR, HepB" />
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={healthForm.has_critical_condition}
+                onChange={(e) => setHealthForm((f) => ({ ...f, has_critical_condition: e.target.checked }))}
+              />
+              {isRTL ? 'حالة حرجة / تنبيه عاجل' : 'Critical condition alert'}
+            </label>
+            {healthForm.has_critical_condition && (
+              <div className="space-y-2">
+                <Label>{isRTL ? 'ملاحظة الحالة الحرجة' : 'Critical note'}</Label>
+                <Textarea rows={2} value={healthForm.critical_condition_note} onChange={(e) => setHealthForm((f) => ({ ...f, critical_condition_note: e.target.value }))} />
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>{isRTL ? 'شركة التأمين' : 'Insurance company'}</Label>
+                <Input value={healthForm.insurance_company} onChange={(e) => setHealthForm((f) => ({ ...f, insurance_company: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>{isRTL ? 'رقم البوليصة' : 'Policy number'}</Label>
+                <Input value={healthForm.insurance_policy_number} onChange={(e) => setHealthForm((f) => ({ ...f, insurance_policy_number: e.target.value }))} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{isRTL ? 'ملاحظات' : 'Notes'}</Label>
+              <Textarea rows={2} value={healthForm.notes} onChange={(e) => setHealthForm((f) => ({ ...f, notes: e.target.value }))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowHealthForm(false)}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
+            <Button onClick={handleSaveHealth} disabled={saving} className="bg-red-600 hover:bg-red-700 text-white">
+              {isRTL ? 'حفظ' : 'Save'}
             </Button>
           </DialogFooter>
         </DialogContent>

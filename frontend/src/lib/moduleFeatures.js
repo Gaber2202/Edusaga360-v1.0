@@ -176,6 +176,14 @@ export const PAGE_MODULE_KEYS = {
   TicketDetails: 'it_helpdesk',
 };
 
+/**
+ * Optional role allow-lists for sensitive pages. When present, Layout redirects
+ * users whose role is not listed (admins/creators always allowed).
+ */
+export const PAGE_ROLE_KEYS = {
+  SchoolClinic: ['admin', 'creator', 'branch_manager', 'teacher', 'nurse'],
+};
+
 // Sidebar navigation item name -> module key. Used for top-level/nested menus
 // where the page name does not match the route key.
 export const NAV_MODULE_KEYS = {

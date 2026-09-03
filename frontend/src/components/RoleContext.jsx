@@ -166,6 +166,7 @@ export function RoleProvider({ children }) {
       it_user: ['view', 'manage_users', 'view_logs'],
       accountant: ['create', 'edit', 'view', 'export', 'view_finance_amounts'],
       teacher: ['view', 'edit_attendance'],
+      nurse: ['create', 'edit', 'send', 'export'],
       parent: ['view_own'],
       hr_admin: ['all_hr', 'employees', 'attendance', 'leaves', 'payroll', 'eosb', 'view_salary_amounts'],
       hr_officer: ['employees', 'attendance', 'leaves'],
@@ -190,12 +191,13 @@ export function RoleProvider({ children }) {
       hr_head: ['dashboard', 'hr', 'employees', 'employee_attendance', 'leaves', 'overtime', 'payroll', 'eosb', 'reports', 'settings'],
       it_user: ['dashboard', 'settings', 'integrations', 'security', 'audit_logs'],
       accountant: ['dashboard', 'students', 'fees', 'finance', 'reports'],
-      teacher: ['dashboard', 'student_attendance', 'students'],
+      teacher: ['dashboard', 'student_attendance', 'students', 'clinic'],
+      nurse: ['dashboard', 'students', 'student_attendance', 'clinic', 'communications'],
       parent: ['dashboard', 'students', 'student_attendance', 'fees'],
       hr_admin: ['dashboard', 'employees', 'employee_attendance', 'leaves', 'overtime', 'payroll', 'eosb', 'reports'],
       hr_officer: ['dashboard', 'employees', 'employee_attendance', 'leaves', 'reports'],
       finance: ['dashboard', 'fees', 'finance', 'procurement', 'assets', 'payroll', 'eosb', 'reports'],
-      branch_manager: ['dashboard', 'admissions', 'students', 'student_attendance', 'employees', 'employee_attendance', 'leaves', 'fees', 'reports', 'settings']
+      branch_manager: ['dashboard', 'admissions', 'students', 'student_attendance', 'employees', 'employee_attendance', 'leaves', 'fees', 'reports', 'settings', 'clinic']
     };
     const allowed = moduleAccess[userRole] || [];
     return allowed.includes(module) || allowed.includes('all') || userRole === 'creator';

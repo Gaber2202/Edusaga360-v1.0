@@ -11,6 +11,16 @@ export function registerHandler(eventType, handlerFn) {
   EVENT_HANDLERS[eventType].push(handlerFn);
 }
 
+/**
+ * Wrap a handler so the bus can attribute success/failure to a module name.
+ * Used by integrationHandlers.js (must stay exported).
+ */
+export function namedHandler(moduleName, handlerFn) {
+  const wrapped = async (payload, meta) => handlerFn(payload, meta);
+  wrapped._moduleName = moduleName;
+  return wrapped;
+}
+
 export async function fireEvent(eventType, payload = {}, meta = {}) {
   const logEntry = {
     event_type: eventType,

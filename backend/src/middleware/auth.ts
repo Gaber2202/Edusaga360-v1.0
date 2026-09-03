@@ -98,6 +98,7 @@ export const STAFF_ROLES = [
   'hr_head', 'hr_admin', 'hr_officer', 'accountant', 'finance', 'collections',
   'crm_agent', 'content_manager', 'admissions', 'teacher', 'procurement',
   'facilities_manager', 'auditor', 'it_admin', 'it_support', 'it_user', 'creator',
+  'nurse',
 ];
 
 // Executive / leadership roles — analytics and cross-cutting snapshots.

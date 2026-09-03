@@ -100,7 +100,7 @@ import {
           } from 'lucide-react';
 
 import { PAGE_FEATURE_KEYS } from './lib/jurisdictionFeatures.js';
-import { PAGE_MODULE_KEYS } from './lib/moduleFeatures.js';
+import { PAGE_MODULE_KEYS, PAGE_ROLE_KEYS } from './lib/moduleFeatures.js';
 
 function filterNavigationByFeatures(items, areAnyEnabled, isModuleEnabled) {
   const out = [];
@@ -306,7 +306,7 @@ function LayoutContent({ children, currentPageName }) {
       name: 'schoolClinic',
       icon: Heart,
       page: 'SchoolClinic',
-      roles: ['admin', 'branch_manager', 'teacher']
+      roles: ['admin', 'branch_manager', 'teacher', 'nurse']
     },
     {
       name: 'libraryManagement',
@@ -469,6 +469,11 @@ function LayoutContent({ children, currentPageName }) {
   // Module feature flags: an unbuilt/disabled module is absent, not a 404.
   const moduleKey = PAGE_MODULE_KEYS[currentPageName];
   if (moduleKey && !isModuleEnabled(moduleKey)) {
+    return <Navigate to="/" replace />;
+  }
+
+  const pageRoles = PAGE_ROLE_KEYS[currentPageName];
+  if (pageRoles && userRole && !pageRoles.includes(userRole) && !isPlatformOwner(user)) {
     return <Navigate to="/" replace />;
   }
 

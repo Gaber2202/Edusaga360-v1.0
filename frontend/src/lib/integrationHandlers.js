@@ -266,6 +266,8 @@ registerHandler('invoice_overdue', namedHandler('Communications', async (payload
  * clinic_visit_completed → Communications: WhatsApp to parent within 5 min
  */
 registerHandler('clinic_visit_completed', namedHandler('Communications', async (payload) => {
+  // Honour the nurse "Notify Parent" toggle — do not message unless requested.
+  if (!payload.parent_notified) return;
   if (!payload.guardian_phone) return;
 
   await tenantQuery('communications').insert({
@@ -277,7 +279,7 @@ registerHandler('clinic_visit_completed', namedHandler('Communications', async (
     channel: 'whatsapp',
     subject: 'زيارة العيادة / Clinic Visit',
     body: `زار ${payload.student_name} العيادة الساعة ${payload.visit_time} بسبب ${payload.complaint}. العلاج: ${payload.treatment}. النتيجة: ${payload.outcome}.\n\nYour child ${payload.student_name} visited the clinic at ${payload.visit_time} for ${payload.complaint}. Treatment: ${payload.treatment}. Outcome: ${payload.outcome}. Please contact us if needed.`,
-    status: 'sent',
+    status: 'pending',
     sent_date: new Date().toISOString(),
     source_module: 'Clinic',
     event_type: 'clinic_visit_completed',
@@ -289,8 +291,11 @@ registerHandler('clinic_visit_completed', namedHandler('Communications', async (
  */
 registerHandler('clinic_visit_completed', namedHandler('Attendance', async (payload) => {
   if (payload.outcome !== 'sent_home') return;
+  if (!payload.student_id) return;
 
   const today = new Date().toISOString().split('T')[0];
+  const note = `Sent home from clinic at ${payload.visit_time || ''}`.trim();
+
   const { data: existing = [] } = await tenantQuery('student_attendances').select('*').match({
     student_id: payload.student_id,
     date: today,
@@ -299,9 +304,21 @@ registerHandler('clinic_visit_completed', namedHandler('Attendance', async (payl
   if (existing.length > 0) {
     await tenantQuery('student_attendances').update({
       status: 'absent',
-      notes: `Sent home from clinic at ${payload.visit_time}`,
+      notes: note,
     }).eq('id', existing[0].id);
+    return;
   }
+
+  // No attendance row yet for today — create one so the absence is recorded.
+  await tenantQuery('student_attendances').insert({
+    tenant_id: payload.tenant_id,
+    branch_id: payload.branch_id || null,
+    student_id: payload.student_id,
+    student_name: payload.student_name || null,
+    date: today,
+    status: 'absent',
+    notes: note,
+  });
 }));
 
 // ─── ATTENDANCE EVENTS ────────────────────────────────────────────────────────

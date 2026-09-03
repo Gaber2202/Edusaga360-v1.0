@@ -29,6 +29,7 @@ export const ROLE_MODULE_KEYS = [
   'audit_logs',
   'integrations',
   'settings',
+  'clinic',
 ] as const;
 
 export const ROLE_ACTION_KEYS = [
@@ -376,6 +377,18 @@ export const APP_ROLE_CATALOG: AppRoleDefinition[] = [
     is_assignable: true,
     modules: ['dashboard', 'communications'],
     actions: ['create', 'edit', 'send'],
+  },
+  {
+    role_code: 'nurse',
+    name_en: 'School Nurse',
+    name_ar: 'ممرض/ة المدرسة',
+    description_en: 'School clinic visits and student health records',
+    description_ar: 'زيارات العيادة المدرسية والسجلات الصحية',
+    data_scope: 'branch',
+    is_creator_role: false,
+    is_assignable: true,
+    modules: ['dashboard', 'students', 'student_attendance', 'clinic', 'communications'],
+    actions: ['create', 'edit', 'send', 'export'],
   },
   {
     role_code: 'unassigned',

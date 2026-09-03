@@ -53,6 +53,7 @@ export const VALID_APP_ROLES = [
   'it_support',
   'facilities_manager',
   'content_manager',
+  'nurse',
 ];
 
 /**
