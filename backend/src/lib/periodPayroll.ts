@@ -44,7 +44,7 @@ export async function calculatePeriodPayroll(
     if (opts.employeeIds?.length) pageQuery = pageQuery.in('id', opts.employeeIds);
     const { data, error } = await pageQuery.range(from, from + pageSize - 1);
     if (error) throw error;
-    const batch = (data ?? []) as Record<string, unknown>[];
+    const batch = ((data ?? []) as unknown) as Record<string, unknown>[];
     employees.push(...batch);
     if (batch.length < pageSize) break;
   }
@@ -107,7 +107,7 @@ export async function calculatePeriodPayroll(
   }) as Record<string, number>;
 
   const attByEmp = new Map<string, Record<string, unknown>[]>();
-  for (const r of (attResult.data ?? []) as Record<string, unknown>[]) {
+  for (const r of ((attResult.data ?? []) as unknown) as Record<string, unknown>[]) {
     const eid = String(r.employee_id);
     if (!attByEmp.has(eid)) attByEmp.set(eid, []);
     attByEmp.get(eid)!.push(r);
