@@ -32,11 +32,19 @@ CREATE TABLE IF NOT EXISTS public.employee_documents (
 ALTER TABLE public.employee_documents ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
+  DROP POLICY IF EXISTS tenant_isolation_employee_documents ON public.employee_documents;
+  DROP POLICY IF EXISTS tenant_isolation ON public.employee_documents;
   EXECUTE format(
-    'CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid) WITH CHECK (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid)',
-    'employee_documents', 'employee_documents'
+    'CREATE POLICY tenant_isolation ON %I FOR ALL TO authenticated USING (tenant_id::text = (SELECT public.auth_tenant_id())) WITH CHECK (tenant_id::text = (SELECT public.auth_tenant_id()))',
+    'employee_documents'
   );
-EXCEPTION WHEN duplicate_object THEN NULL;
+EXCEPTION WHEN undefined_function THEN
+  EXECUTE $p$
+    CREATE POLICY tenant_isolation ON public.employee_documents FOR ALL TO authenticated
+      USING (tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id'))
+      WITH CHECK (tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id'))
+  $p$;
+WHEN duplicate_object THEN NULL;
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_employee_documents_tenant

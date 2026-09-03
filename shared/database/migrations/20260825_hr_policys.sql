@@ -24,11 +24,20 @@ CREATE TABLE IF NOT EXISTS hr_policys (
 ALTER TABLE hr_policys ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
+  DROP POLICY IF EXISTS tenant_isolation_hr_policys ON public.hr_policys;
+  DROP POLICY IF EXISTS tenant_isolation ON public.hr_policys;
   EXECUTE format(
-    'CREATE POLICY tenant_isolation_%s ON %I FOR ALL TO authenticated USING (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid) WITH CHECK (tenant_id = ((current_setting(''request.jwt.claims'', true)::json)->>''tenant_id'')::uuid)',
-    'hr_policys', 'hr_policys'
+    'CREATE POLICY tenant_isolation ON %I FOR ALL TO authenticated USING (tenant_id::text = (SELECT public.auth_tenant_id())) WITH CHECK (tenant_id::text = (SELECT public.auth_tenant_id()))',
+    'hr_policys'
   );
-EXCEPTION WHEN duplicate_object THEN NULL;
+EXCEPTION WHEN undefined_function THEN
+  -- auth_tenant_id may not exist yet on very old baselines; fall back to app_metadata path
+  EXECUTE $p$
+    CREATE POLICY tenant_isolation ON public.hr_policys FOR ALL TO authenticated
+      USING (tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id'))
+      WITH CHECK (tenant_id::text = (auth.jwt() -> 'app_metadata' ->> 'tenant_id'))
+  $p$;
+WHEN duplicate_object THEN NULL;
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_hr_policys_tenant ON hr_policys (tenant_id);
