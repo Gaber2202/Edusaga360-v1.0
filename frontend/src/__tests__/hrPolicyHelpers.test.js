@@ -5,6 +5,9 @@ import {
   buildVersionSnapshot,
   selectPoliciesForOnboarding,
   statusBadgeLabel,
+  selectMissingPolicyTemplates,
+  groupPoliciesByCategory,
+  buildTemplateInsertRows,
 } from '../lib/hrPolicyHelpers';
 
 describe('bumpPolicyVersion', () => {
@@ -110,5 +113,73 @@ describe('statusBadgeLabel', () => {
   it('returns localized labels', () => {
     expect(statusBadgeLabel('published', false)).toBe('Published');
     expect(statusBadgeLabel('published', true)).toBe('منشورة');
+  });
+});
+
+describe('selectMissingPolicyTemplates', () => {
+  it('skips templates already present by jurisdiction+category+title', () => {
+    const pack = [
+      { category: 'leave_policies', title_en: 'Annual Leave Policy' },
+      { category: 'leave_policies', title_en: 'Annual Leave Policy' }, // pack dup
+      { category: 'code_of_conduct', title_en: 'Code of Conduct' },
+    ];
+    const existing = [
+      { category: 'leave_policies', title_en: 'Annual Leave Policy', jurisdiction_code: 'SA' },
+    ];
+    const missing = selectMissingPolicyTemplates(pack, existing, 'SA');
+    expect(missing).toHaveLength(1);
+    expect(missing[0].title_en).toBe('Code of Conduct');
+  });
+
+  it('returns empty when pack fully seeded', () => {
+    const pack = [{ category: 'nda', title_en: 'NDA' }];
+    const existing = [{ category: 'nda', title_en: 'NDA', jurisdiction_code: 'AE' }];
+    expect(selectMissingPolicyTemplates(pack, existing, 'AE')).toEqual([]);
+  });
+});
+
+describe('buildTemplateInsertRows', () => {
+  it('builds draft template rows with codes', () => {
+    const rows = buildTemplateInsertRows(
+      [{ category: 'nda', title_en: 'NDA', title_ar: 'سرية' }],
+      {
+        jurisdictionCode: 'SA',
+        tenantId: 't1',
+        ownerId: 'u1',
+        ownerName: 'Admin',
+        stamp: 'ABC',
+        effectiveDate: '2026-09-04',
+      },
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      tenant_id: 't1',
+      jurisdiction_code: 'SA',
+      is_template: true,
+      status: 'draft',
+      policy_code: 'POL-SA-ABC-0',
+      owner_name: 'Admin',
+      effective_date: '2026-09-04',
+    });
+  });
+});
+
+describe('groupPoliciesByCategory', () => {
+  it('groups in category order and keeps extras', () => {
+    const groups = groupPoliciesByCategory(
+      [
+        { id: 1, category: 'leave_policies' },
+        { id: 2, category: 'code_of_conduct' },
+        { id: 3, category: 'leave_policies' },
+        { id: 4, category: null },
+      ],
+      ['code_of_conduct', 'leave_policies'],
+    );
+    expect(groups.map((g) => g.category)).toEqual([
+      'code_of_conduct',
+      'leave_policies',
+      'uncategorized',
+    ]);
+    expect(groups[1].policies).toHaveLength(2);
   });
 });

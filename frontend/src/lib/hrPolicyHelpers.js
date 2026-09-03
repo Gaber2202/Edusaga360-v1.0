@@ -96,3 +96,84 @@ export function statusBadgeLabel(status, isRTL) {
   const entry = map[status] || map.draft;
   return isRTL ? entry.ar : entry.en;
 }
+
+/** Stable identity for pack templates vs existing rows (dedupe initialize). */
+export function policyTemplateKey(policyOrTemplate, jurisdictionCode) {
+  const jurisdiction = String(
+    policyOrTemplate?.jurisdiction_code || jurisdictionCode || 'SA',
+  )
+    .trim()
+    .toUpperCase();
+  const category = String(policyOrTemplate?.category || '')
+    .trim()
+    .toLowerCase();
+  const title = String(policyOrTemplate?.title_en || '')
+    .trim()
+    .toLowerCase();
+  return `${jurisdiction}::${category}::${title}`;
+}
+
+/**
+ * Return pack templates not already present (by jurisdiction+category+title_en).
+ * Also collapses duplicate entries inside the pack itself.
+ */
+export function selectMissingPolicyTemplates(packTemplates, existingPolicies, jurisdictionCode) {
+  const existing = new Set(
+    (existingPolicies || []).map((p) =>
+      policyTemplateKey(p, p.jurisdiction_code || jurisdictionCode),
+    ),
+  );
+  const missing = [];
+  const seenPack = new Set();
+  for (const template of packTemplates || []) {
+    const key = policyTemplateKey(template, jurisdictionCode);
+    if (!key.endsWith('::') && !seenPack.has(key) && !existing.has(key)) {
+      seenPack.add(key);
+      missing.push(template);
+    }
+  }
+  return missing;
+}
+
+/**
+ * Build DB insert rows for staged pack templates (draft-first, is_template).
+ */
+export function buildTemplateInsertRows(templates, {
+  jurisdictionCode,
+  tenantId,
+  ownerId,
+  ownerName,
+  stamp = Date.now().toString(36).toUpperCase(),
+  effectiveDate = new Date().toISOString().split('T')[0],
+} = {}) {
+  return (templates || []).map((template, idx) => ({
+    ...template,
+    policy_code: `POL-${jurisdictionCode}-${stamp}-${idx}`,
+    tenant_id: tenantId,
+    branch_id: null,
+    jurisdiction_code: jurisdictionCode,
+    is_template: true,
+    status: 'draft',
+    is_mandatory: false,
+    current_version: 'v1.0',
+    owner_id: ownerId || 'system',
+    owner_name: ownerName || 'System',
+    effective_date: effectiveDate,
+  }));
+}
+
+/** Group policies by category key; unknown categories go under "other". */
+export function groupPoliciesByCategory(policies, categoryOrder = []) {
+  const groups = new Map();
+  for (const key of categoryOrder) groups.set(key, []);
+  for (const policy of policies || []) {
+    const key = policy.category && groups.has(policy.category)
+      ? policy.category
+      : policy.category || 'uncategorized';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(policy);
+  }
+  return [...groups.entries()]
+    .filter(([, rows]) => rows.length > 0)
+    .map(([category, rows]) => ({ category, policies: rows }));
+}
