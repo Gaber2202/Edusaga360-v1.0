@@ -102,7 +102,7 @@ const SETTINGS_CATALOG = [
     key: 'access', titleEn: 'People & Access', titleAr: 'الأشخاص والصلاحيات',
     items: [
       { key: 'users', section: 'users', icon: Users, titleEn: 'Users', titleAr: 'المستخدمون', descEn: 'Active users in your account', descAr: 'المستخدمون النشطون في حسابك' },
-      { key: 'roles', page: 'RolesPermissions', icon: ShieldCheck, titleEn: 'Roles & Permissions', titleAr: 'الأدوار والصلاحيات', descEn: 'Access control by role', descAr: 'التحكم في الوصول حسب الدور' },
+      { key: 'roles', page: 'RoleManagement', icon: ShieldCheck, titleEn: 'Roles & Permissions', titleAr: 'الأدوار والصلاحيات', descEn: 'Access control by role', descAr: 'التحكم في الوصول حسب الدور' },
     ],
   },
   {

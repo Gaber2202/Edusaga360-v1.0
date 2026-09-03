@@ -67,7 +67,7 @@ export function cumulativeSeries(records = [], dateField = 'created_at', buckets
 }
 
 /** % change of the last value vs the previous non-zero baseline. */
-function periodTrend(arr) {
+export function periodTrend(arr) {
   if (!arr || arr.length < 2) return 0;
   const last = arr[arr.length - 1];
   const prev = arr[arr.length - 2];

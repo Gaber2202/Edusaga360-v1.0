@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery, fetchData, callApi } from '../api/supabaseClient';
+import { supabase, tenantQuery, callApi } from '../api/supabaseClient';
+import { fetchRoles } from '../api/roles';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { Card, CardContent } from '../components/ui/card';
@@ -39,9 +40,9 @@ export default function TrialUsers() {
     enabled: isCreator()
   });
 
-  const { data: _roles = [] } = useQuery({
+  const { data: roleOptions = [] } = useQuery({
     queryKey: ['roles'],
-    queryFn: () => fetchData(tenantQuery('roles').select('*').order('created_at')),
+    queryFn: () => fetchRoles(),
   });
 
   if (!isCreator()) {
@@ -252,10 +253,11 @@ export default function TrialUsers() {
                 value={form.role_code}
                 onChange={(e) => setForm({...form, role_code: e.target.value})}
               >
-                <option value="ceo">{isRTL ? 'الرئيس التنفيذي (CEO)' : 'CEO'}</option>
-                <option value="cfo">{isRTL ? 'المدير المالي (CFO)' : 'CFO'}</option>
-                <option value="hr_head">{isRTL ? 'مدير الموارد البشرية' : 'HR Head'}</option>
-                <option value="it_user">{isRTL ? 'مستخدم IT' : 'IT User'}</option>
+                {roleOptions.filter((r) => r.is_assignable !== false && r.role_code !== 'parent').map((r) => (
+                  <option key={r.role_code} value={r.role_code}>
+                    {isRTL ? (r.name_ar || r.name_en) : (r.name_en || r.name_ar)}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="space-y-2">

@@ -44,7 +44,7 @@ export default function Integrations() {
   }, [canIt, canHr]);
 
   return (
-    <div className="p-6 max-w-6xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="p-4 md:p-6 w-full max-w-none" dir={isRTL ? 'rtl' : 'ltr'}>
       <PageHeader
         title={T('Integrations', 'التكاملات')}
         subtitle={T('Technical area for your IT admin. Configure self-service connectors, or request an EduSaga-managed integration.',

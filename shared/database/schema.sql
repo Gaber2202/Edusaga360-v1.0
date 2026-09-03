@@ -63,11 +63,29 @@ CREATE TABLE branches (
 
 CREATE TABLE roles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+  role_code TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL,
+  name_en TEXT,
+  name_ar TEXT,
   description TEXT,
+  description_en TEXT,
+  description_ar TEXT,
   permissions JSONB DEFAULT '[]',
+  module_access JSONB DEFAULT '{}'::jsonb,
+  action_permissions JSONB DEFAULT '{}'::jsonb,
+  data_scope TEXT DEFAULT 'branch',
   is_system BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  is_system_role BOOLEAN DEFAULT FALSE,
+  is_creator_role BOOLEAN DEFAULT FALSE,
+  is_assignable BOOLEAN DEFAULT TRUE,
+  is_active BOOLEAN DEFAULT TRUE,
+  is_trial BOOLEAN DEFAULT FALSE,
+  created_by TEXT,
+  last_modified_by TEXT,
+  last_modified_date TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE users (

@@ -283,7 +283,7 @@ attendancePolicyRouter.post('/apply', requireRole(HR_ROLES), async (req: Authent
     const tenant_id = req.user!.tenant_id!;
     const { period_start, period_end, employee_ids, policy_id } = parsed.data;
 
-    // 1. Fetch policy (specific or default)
+    // 1. Fetch policy (specific or default) — missing table → code defaults
     let policyQuery = supabase
       .from('attendance_policies')
       .select('*')
@@ -295,7 +295,10 @@ attendancePolicyRouter.post('/apply', requireRole(HR_ROLES), async (req: Authent
       policyQuery = policyQuery.eq('is_default', true);
     }
 
-    const { data: policyData } = await policyQuery.single();
+    const { data: policyData, error: policyError } = await policyQuery.maybeSingle();
+    if (policyError && !/attendance_policies|schema cache|PGRST205|PGRST116/i.test(policyError.message)) {
+      throw policyError;
+    }
 
     // Fall back to sensible KSA defaults if no policy configured
     const policy: AttendancePolicy = policyData ?? {

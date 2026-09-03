@@ -47,7 +47,7 @@ export default function BankDetailsForm({ value = {}, onChange, readOnly = false
           {readOnly ? (
             <p className="text-sm font-medium">{value.bank_name || '-'}</p>
           ) : (
-            <Select value={value.bank_name || ''} onValueChange={v => update('bank_name', v)}>
+            <Select value={value.bank_name || undefined} onValueChange={v => update('bank_name', v)}>
               <SelectTrigger><SelectValue placeholder={isRTL ? 'اختر البنك' : 'Select bank'} /></SelectTrigger>
               <SelectContent>
                 {SAUDI_BANKS.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
@@ -149,7 +149,7 @@ export default function BankDetailsForm({ value = {}, onChange, readOnly = false
           {readOnly ? (
             <p className="text-sm">{value.status === 'inactive' ? (isRTL ? 'غير نشط' : 'Inactive') : (isRTL ? 'نشط' : 'Active')}</p>
           ) : (
-            <Select value={value.status || 'active'} onValueChange={v => update('status', v)}>
+            <Select value={value.status || 'active'} onValueChange={v => update('status', v || 'active')}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="active">{isRTL ? 'نشط' : 'Active'}</SelectItem>

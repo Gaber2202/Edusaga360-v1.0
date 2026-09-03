@@ -118,14 +118,16 @@ export default function PayRunsList({ onViewPayRun }) {
       const user = await supabase.auth.getUser().then(r => r.data?.user);
       
       // Create pay run
-      const payRun = await tenantQuery('pay_runs').insert({
+      const { data: payRun, error: payRunError } = await tenantQuery('pay_runs').insert({
         pay_run_number: `PR-${newPayRun.period.replace('-', '')}-${branch?.code || (isAllBranches ? 'ALL' : 'BR')}`,
         period: newPayRun.period,
         period_start: format(startOfMonth(new Date(newPayRun.period + '-01')), 'yyyy-MM-dd'),
         period_end: format(endOfMonth(new Date(newPayRun.period + '-01')), 'yyyy-MM-dd'),
+        month: Number(newPayRun.period.split('-')[1]),
+        year: Number(newPayRun.period.split('-')[0]),
         branch_id: newPayRun.branch_id || 'all',
         branch_name: isAllBranches ? (isRTL ? 'جميع الفروع' : 'All Branches') : (isRTL ? branch?.name_ar : branch?.name_en || branch?.name_ar),
-        company_id: branch?.company_id,
+        company_id: branch?.company_id || null,
         employee_count: branchEmployees.length,
         saudi_count: saudiCount,
         non_saudi_count: nonSaudiCount,
@@ -134,7 +136,9 @@ export default function PayRunsList({ onViewPayRun }) {
         total_transport: totalTransport,
         total_other_allowances: totalOther,
         total_earnings: totalEarnings,
+        total_gross: totalEarnings,
         net_payroll: totalEarnings,
+        total_net: totalEarnings,
         status: 'draft',
         workflow_stage: 'draft',
         stage_history: [{
@@ -145,7 +149,8 @@ export default function PayRunsList({ onViewPayRun }) {
           done_by: user.email,
           notes: 'Pay run created'
         }]
-      });
+      }).select().single();
+      if (payRunError) throw payRunError;
 
       // Create payroll inputs for each employee
       const inputs = branchEmployees.map(emp => {
@@ -162,39 +167,44 @@ export default function PayRunsList({ onViewPayRun }) {
           employee_id: emp.id,
           employee_name: emp.name_ar,
           employee_number: emp.employee_id,
-          branch_id: emp.branch_id,
-          department_id: emp.department_id,
-          job_title: emp.job_title_name,
+          branch_id: emp.branch_id || null,
+          department_id: emp.department_id || null,
+          job_title: emp.job_title_name || emp.job_title || null,
           is_saudi: isSaudi,
           basic_salary: emp.basic_salary || 0,
           housing_allowance: emp.housing_allowance || 0,
           transport_allowance: emp.transport_allowance || 0,
-          other_allowances: emp.other_allowances || 0,
+          other_allowances: typeof emp.other_allowances === 'number' ? emp.other_allowances : 0,
           gross_salary: grossSalary,
           gosi_employee: employeeSocialInsurance,
           gosi_employer: employerSocialInsurance,
           gosi_wage: socialInsuranceWage,
           total_deductions: employeeSocialInsurance,
           net_salary: grossSalary - employeeSocialInsurance,
-          bank_name: emp.bank_name,
-          iban: emp.iban,
+          bank_name: emp.bank_name || null,
+          iban: emp.iban || null,
           status: 'draft'
         };
       });
 
-      await supabase.PayrollInput.bulkCreate(inputs);
+      if (inputs.length) {
+        const { error: inputsError } = await tenantQuery('payroll_inputs').insert(inputs);
+        if (inputsError) throw inputsError;
+      }
 
       // Update pay run with social insurance totals
       const totalEmployeeSocialInsurance = inputs.reduce((sum, i) => sum + i.gosi_employee, 0);
       const totalEmployerSocialInsurance = inputs.reduce((sum, i) => sum + i.gosi_employer, 0);
       const netPayroll = inputs.reduce((sum, i) => sum + i.net_salary, 0);
 
-      await tenantQuery('pay_runs').update({
+      const { error: updateError } = await tenantQuery('pay_runs').update({
         total_gosi_employee: totalEmployeeSocialInsurance,
         total_gosi_employer: totalEmployerSocialInsurance,
         total_deductions: totalEmployeeSocialInsurance,
-        net_payroll: netPayroll
-      });
+        net_payroll: netPayroll,
+        total_net: netPayroll,
+      }).eq('id', payRun.id);
+      if (updateError) throw updateError;
 
       await queryClient.invalidateQueries({ queryKey: ['payRuns'] });
       await queryClient.invalidateQueries({ queryKey: ['payrollInputs'] });

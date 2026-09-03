@@ -43,7 +43,7 @@ export default function Payroll() {
 
   const allNavItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: { ar: 'لوحة التحكم', en: 'Dashboard' } },
-    { id: 'engine', icon: PlayCircle, label: { ar: '⚡ محرك الرواتب', en: '⚡ Payroll Engine' } },
+    { id: 'engine', icon: PlayCircle, label: { ar: 'محرك الرواتب', en: 'Payroll Engine' } },
     { id: 'payruns', icon: PlayCircle, label: { ar: 'كشوفات الرواتب', en: 'Pay Runs' } },
     { id: 'components', icon: Sliders, label: { ar: 'عناصر الراتب', en: 'Salary Components' } },
     { id: 'loans', icon: Wallet, label: { ar: 'القروض والسلف', en: 'Loans & Advances' } },
@@ -163,19 +163,22 @@ export default function Payroll() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-120px)] bg-sand -m-6">
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-120px)] bg-gradient-to-br from-sand via-[#f7f3ea] to-sand -m-6">
       {/* Left Sidebar Navigation */}
-      <aside className="hidden lg:flex lg:w-64 bg-white border-e border-border flex-shrink-0 flex-col">
-        <div className="p-4 border-b border-border">
-          <h1 className="text-xl font-bold text-ink">
-            {isRTL ? 'نظام الرواتب' : 'Payroll System'}
+      <aside className="hidden lg:flex lg:w-64 bg-white/90 backdrop-blur-sm border-e border-border/80 flex-shrink-0 flex-col shadow-[4px_0_24px_rgba(15,40,30,0.04)]">
+        <div className="p-5 border-b border-border/80">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-najdi-700/80">
+            EduSaga 360
+          </p>
+          <h1 className="text-xl font-bold text-ink mt-0.5">
+            {isRTL ? 'نظام الرواتب' : 'Payroll'}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isRTL ? 'إدارة رواتب الموظفين' : 'Employee Payroll Management'}
+            {isRTL ? 'من المسير إلى قيد الأستاذ العام' : 'From pay run to general ledger'}
           </p>
         </div>
         
-        <ScrollArea className="h-[calc(100%-80px)]">
+        <ScrollArea className="h-[calc(100%-96px)]">
           <nav className="p-2 space-y-1">
             {navItems.map(item => {
               const Icon = item.icon;
@@ -186,8 +189,10 @@ export default function Payroll() {
                 <Button
                   key={item.id}
                   variant={isActive ? 'secondary' : 'ghost'}
-                  className={`w-full justify-start gap-3 h-11 ${
-                    isActive ? 'bg-sand-alt text-ink font-medium' : 'text-muted-foreground'
+                  className={`w-full justify-start gap-3 h-11 rounded-xl ${
+                    isActive
+                      ? 'bg-najdi-50 text-najdi-900 font-medium border border-najdi-100'
+                      : 'text-muted-foreground hover:text-ink'
                   }`}
                   onClick={() => handleNavigate(item.id)}
                 >
@@ -201,7 +206,7 @@ export default function Payroll() {
       </aside>
 
       {/* Mobile Navigation */}
-      <div className="lg:hidden bg-white border-b border-border p-3 overflow-x-auto">
+      <div className="lg:hidden bg-white/95 border-b border-border p-3 overflow-x-auto">
         <div className="flex gap-2 min-w-max">
           {navItems.map(item => {
             const Icon = item.icon;
@@ -213,7 +218,7 @@ export default function Payroll() {
                 key={item.id}
                 variant={isActive ? 'default' : 'outline'}
                 size="sm"
-                className={`gap-2 ${isActive ? 'bg-najdi-900' : ''}`}
+                className={`gap-2 rounded-full ${isActive ? 'bg-najdi-900' : ''}`}
                 onClick={() => handleNavigate(item.id)}
               >
                 <Icon className="w-4 h-4" />
@@ -226,7 +231,7 @@ export default function Payroll() {
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
-        <div className="p-6">
+        <div className="p-4 md:p-6 w-full max-w-none">
           {renderContent()}
         </div>
       </main>

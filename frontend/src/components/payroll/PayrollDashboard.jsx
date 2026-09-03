@@ -6,9 +6,7 @@ import { formatCurrency } from '../../lib/localization';
 import { useTenant } from '../TenantContext';
 import { useBranch } from '../BranchContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { format, differenceInDays } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -18,7 +16,6 @@ import { PAGE_FEATURE_KEYS, SOCIAL_INSURANCE_FEATURES, NATIONALISATION_FEATURES 
 import {
   Users,
   DollarSign,
-  Calendar,
   AlertTriangle,
   CheckCircle2,
   Clock,
@@ -28,8 +25,11 @@ import {
   ArrowRight,
   Bell,
   UserCheck,
-  Landmark
+  Landmark,
+  GraduationCap,
 } from 'lucide-react';
+import PayrollDashboardHero from './PayrollDashboardHero';
+import PayrollKpiStrip from './PayrollKpiStrip';
 
 export default function PayrollDashboard({ onNavigate }) {
   const { isRTL } = useLanguage();
@@ -66,13 +66,12 @@ export default function PayrollDashboard({ onNavigate }) {
   const filteredEmployees = filterByBranch(employees);
   const currentPayRun = payRuns.find(p => p.period === currentPeriod && (!selectedBranchId || p.branch_id === selectedBranchId));
 
-  // Calculate stats
   const saudiCount = filteredEmployees.filter(e => e.is_saudi).length;
   const nonSaudiCount = filteredEmployees.length - saudiCount;
   const teacherCount = filteredEmployees.filter(e => e.job_title_name?.toLowerCase().includes('teacher') || e.job_title_name?.includes('معلم')).length;
   const adminCount = filteredEmployees.length - teacherCount;
+  const postedCount = payRuns.filter(p => p.journal_entry_id).length;
 
-  // Alerts
   const expiringIqama = filteredEmployees.filter(e => {
     if (!e.iqama_expiry) return false;
     const daysUntil = differenceInDays(new Date(e.iqama_expiry), new Date());
@@ -85,7 +84,7 @@ export default function PayrollDashboard({ onNavigate }) {
   });
 
   const missingIBAN = filteredEmployees.filter(e => !e.iban || e.iban.length < 20);
-  
+
   const pendingLoans = loans.filter(l => l.status === 'pending' || l.status === 'manager_approved' || l.status === 'hr_approved');
   const pendingTuition = tuitionAdvances.filter(t => t.status === 'pending' || t.status === 'manager_approved' || t.status === 'hr_approved');
 
@@ -97,10 +96,9 @@ export default function PayrollDashboard({ onNavigate }) {
     return sum + (e.total_salary || (basic + housing + transport + other) || e.salary || 0);
   }, 0);
 
-  // Social Insurance Calculation (simplified)
-  const employeeSocialInsuranceRate = 0.0975; // 9.75% for Saudis
-  const employerSocialInsuranceRate = 0.1175; // 11.75% for Saudis
-  const nonSaudiSocialInsuranceRate = 0.02; // 2% Social Insurance for non-Saudis (employer only)
+  const employeeSocialInsuranceRate = 0.0975;
+  const employerSocialInsuranceRate = 0.1175;
+  const nonSaudiSocialInsuranceRate = 0.02;
 
   const estimatedSocialInsuranceEmployee = filteredEmployees.reduce((sum, e) => {
     const socialInsuranceWage = Math.min((e.basic_salary || 0) + (e.housing_allowance || 0), 45000);
@@ -140,179 +138,108 @@ export default function PayrollDashboard({ onNavigate }) {
     aborted: { ar: 'ملغي', en: 'Aborted' },
   };
 
+  const netAmount = currentPayRun
+    ? (currentPayRun.net_payroll || 0)
+    : totalGrossSalary * 0.85;
+
+  const primaryKpis = [
+    {
+      key: 'employees',
+      label: isRTL ? 'إجمالي الموظفين' : 'Total employees',
+      value: filteredEmployees.length,
+      hint: `${isRTL ? 'إجمالي الرواتب:' : 'Gross est:'} ${formatCurrency(totalGrossSalary, tenant?.localization, isRTL)}`,
+      icon: Users,
+      tone: 'najdi',
+      onClick: () => navigate(createPageUrl('Employees')),
+    },
+    {
+      key: 'teachers',
+      label: isRTL ? 'معلمون' : 'Teachers',
+      value: teacherCount,
+      hint: `${isRTL ? 'إداريون:' : 'Admin:'} ${adminCount}`,
+      icon: GraduationCap,
+      tone: 'sand',
+    },
+    {
+      key: 'gl',
+      label: isRTL ? 'كشوف مرحّلة للأستاذ' : 'Pay runs posted to GL',
+      value: postedCount,
+      hint: `${payRuns.length} ${isRTL ? 'كشف أخير' : 'recent runs'}`,
+      icon: Landmark,
+      tone: 'emerald',
+      onClick: () => onNavigate('payruns'),
+    },
+    {
+      key: 'iban',
+      label: isRTL ? 'IBAN ناقص' : 'Missing IBAN',
+      value: missingIBAN.length,
+      hint: isRTL ? 'يجب إكماله قبل التحويل' : 'Required before bank export',
+      icon: CreditCard,
+      tone: missingIBAN.length ? 'amber' : 'emerald',
+      onClick: () => navigate(createPageUrl('Employees')),
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Current Pay Run Card */}
-      <Card className="bg-gradient-to-br from-najdi-900 to-najdi-900 text-white">
-        <CardContent className="p-6">
-          <div className="flex flex-col lg:flex-row justify-between gap-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-muted-foreground" />
-                <span className="text-muted-foreground">{isRTL ? 'كشف الرواتب الحالي' : 'Current Pay Run'}</span>
-              </div>
-              <h2 className="text-3xl font-bold">
-                {format(new Date(), isRTL ? 'MMMM yyyy' : 'MMMM yyyy')}
-              </h2>
-              {currentPayRun ? (
-                <div className="flex items-center gap-4">
-                  <Badge className={statusColors[currentPayRun.status]}>
-                    {isRTL ? statusLabels[currentPayRun.status]?.ar : statusLabels[currentPayRun.status]?.en}
-                  </Badge>
-                  <span className="text-muted-foreground">
-                    {currentPayRun.employee_count} {isRTL ? 'موظف' : 'employees'}
-                  </span>
-                </div>
-              ) : (
-                <Badge className="bg-ink text-muted-foreground">
-                  {isRTL ? 'لم يتم الإنشاء بعد' : 'Not Created Yet'}
-                </Badge>
-              )}
-            </div>
-            
-            <div className="flex flex-col items-end gap-2">
-              <span className="text-muted-foreground text-sm">{isRTL ? 'صافي الرواتب' : 'Net Payroll'}</span>
-              <span className="text-4xl font-bold">
-                {currentPayRun 
-                  ? `${formatCurrency((currentPayRun.net_payroll || 0), tenant?.localization, isRTL)}`
-                  : `${formatCurrency((totalGrossSalary * 0.85), tenant?.localization, isRTL)}`
-                }
-              </span>
-              {currentPayRun?.payment_date && (
-                <span className="text-muted-foreground text-sm">
-                  {isRTL ? 'تاريخ الصرف:' : 'Payment Date:'} {format(new Date(currentPayRun.payment_date), 'dd/MM/yyyy')}
-                </span>
-              )}
-            </div>
-          </div>
+      <PayrollDashboardHero
+        isRTL={isRTL}
+        tenant={tenant}
+        periodLabel={format(new Date(), isRTL ? 'MMMM yyyy' : 'MMMM yyyy')}
+        currentPayRun={currentPayRun}
+        netAmount={netAmount}
+        statusLabel={
+          currentPayRun
+            ? (isRTL ? statusLabels[currentPayRun.status]?.ar : statusLabels[currentPayRun.status]?.en)
+            : null
+        }
+        statusClass={currentPayRun ? statusColors[currentPayRun.status] : ''}
+        onNavigatePayRuns={() => onNavigate('payruns')}
+      />
 
-          <div className="flex gap-3 mt-6">
-            <Button 
-              variant="secondary" 
-              className="bg-white/10 hover:bg-white/20 text-white border-0"
-              onClick={() => onNavigate('payruns')}
-            >
-              <FileText className="w-4 h-4 me-2" />
-              {isRTL ? 'عرض التفاصيل' : 'View Details'}
-            </Button>
-            {!currentPayRun && (
-              <Button 
-                className="bg-emerald-500 hover:bg-emerald-600 text-white"
-                onClick={() => onNavigate('payruns')}
-              >
-                {isRTL ? 'إنشاء كشف الرواتب' : 'Create Pay Run'}
-              </Button>
-            )}
-            {currentPayRun?.status === 'draft' && (
-              <Button 
-                className="bg-najdi-500 hover:bg-najdi-700 text-white"
-                onClick={() => onNavigate('payruns')}
-              >
-                {isRTL ? 'متابعة المعالجة' : 'Continue Processing'}
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <PayrollKpiStrip items={primaryKpis} />
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Link to={createPageUrl('Employees')} className="block">
-        <Card className="bg-white hover:shadow-md transition-shadow cursor-pointer">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{isRTL ? 'إجمالي الموظفين' : 'Total Employees'}</p>
-                <p className="text-2xl font-bold mt-1">{filteredEmployees.length}</p>
-                <p className="text-xs text-muted-foreground mt-1">{isRTL ? 'إجمالي الرواتب:' : 'Total Payroll:'} {formatCurrency(totalGrossSalary, tenant?.localization, isRTL)}</p>
-              </div>
-              <div className="w-12 h-12 bg-najdi-50 rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6 text-najdi-700" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        </Link>
-
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <JurisdictionFeatureGate featureKeys={NATIONALISATION_FEATURES}>
-          <Card className="bg-white">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{isRTL ? 'سعودي / غير سعودي' : 'Saudi / Non-Saudi'}</p>
-                  <p className="text-2xl font-bold mt-1">{saudiCount} / {nonSaudiCount}</p>
-                </div>
-                <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
-                  <UserCheck className="w-6 h-6 text-emerald-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="rounded-2xl border border-border/70 bg-white p-4 shadow-sm">
+            <p className="text-xs text-muted-foreground">{isRTL ? 'سعودي / غير سعودي' : 'Saudi / Non-Saudi'}</p>
+            <p className="text-2xl font-bold mt-1 tabular-nums">{saudiCount} / {nonSaudiCount}</p>
+            <div className="mt-3 w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+              <UserCheck className="w-5 h-5 text-emerald-600" />
+            </div>
+          </div>
         </JurisdictionFeatureGate>
 
         <JurisdictionFeatureGate featureKeys={SOCIAL_INSURANCE_FEATURES}>
-          <Card className="bg-white">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{isRTL ? 'التأمينات (موظف)' : 'Social Insurance (Employee)'}</p>
-                  <p className="text-2xl font-bold mt-1">{(estimatedSocialInsuranceEmployee / 1000).toFixed(1)}K</p>
-                </div>
-                <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
-                  <Landmark className="w-6 h-6 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="rounded-2xl border border-border/70 bg-white p-4 shadow-sm">
+            <p className="text-xs text-muted-foreground">{isRTL ? 'التأمينات (موظف)' : 'Social Insurance (Employee)'}</p>
+            <p className="text-2xl font-bold mt-1 tabular-nums">{(estimatedSocialInsuranceEmployee / 1000).toFixed(1)}K</p>
+            <div className="mt-3 w-10 h-10 bg-najdi-50 rounded-xl flex items-center justify-center">
+              <Landmark className="w-5 h-5 text-najdi-700" />
+            </div>
+          </div>
 
-          <Card className="bg-white">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{isRTL ? 'التأمينات (صاحب العمل)' : 'Social Insurance (Employer)'}</p>
-                  <p className="text-2xl font-bold mt-1">{(estimatedSocialInsuranceEmployer / 1000).toFixed(1)}K</p>
-                </div>
-                <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-amber-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="rounded-2xl border border-border/70 bg-white p-4 shadow-sm">
+            <p className="text-xs text-muted-foreground">{isRTL ? 'التأمينات (صاحب العمل)' : 'Social Insurance (Employer)'}</p>
+            <p className="text-2xl font-bold mt-1 tabular-nums">{(estimatedSocialInsuranceEmployer / 1000).toFixed(1)}K</p>
+            <div className="mt-3 w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-amber-600" />
+            </div>
+          </div>
         </JurisdictionFeatureGate>
+
+        <div className="rounded-2xl border border-border/70 bg-white p-4 shadow-sm">
+          <p className="text-xs text-muted-foreground">{isRTL ? 'قروض نشطة' : 'Active loans'}</p>
+          <p className="text-2xl font-bold mt-1 tabular-nums">{loans.filter(l => l.status === 'active').length}</p>
+        </div>
+        <div className="rounded-2xl border border-border/70 bg-white p-4 shadow-sm">
+          <p className="text-xs text-muted-foreground">{isRTL ? 'سلف رسوم نشطة' : 'Active tuition'}</p>
+          <p className="text-2xl font-bold mt-1 tabular-nums">{tuitionAdvances.filter(t => t.status === 'active').length}</p>
+        </div>
       </div>
 
-      {/* Secondary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-white">
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">{isRTL ? 'معلمين' : 'Teachers'}</p>
-            <p className="text-xl font-bold mt-1">{teacherCount}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-white">
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">{isRTL ? 'إداريين' : 'Admin Staff'}</p>
-            <p className="text-xl font-bold mt-1">{adminCount}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-white">
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">{isRTL ? 'قروض نشطة' : 'Active Loans'}</p>
-            <p className="text-xl font-bold mt-1">{loans.filter(l => l.status === 'active').length}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-white">
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">{isRTL ? 'سلف رسوم نشطة' : 'Active Tuition'}</p>
-            <p className="text-xl font-bold mt-1">{tuitionAdvances.filter(t => t.status === 'active').length}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Alerts & To-Do */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Alerts Panel */}
-        <Card className="bg-white">
+        <Card className="bg-white border-border/70 shadow-sm rounded-2xl">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Bell className="w-5 h-5 text-amber-500" />
@@ -323,7 +250,7 @@ export default function PayrollDashboard({ onNavigate }) {
             <JurisdictionFeatureGate featureKeys={PAGE_FEATURE_KEYS.GovernmentRelations}>
             {expiredIqama.length > 0 && (
               <button
-                className="w-full flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100 hover:bg-red-100 transition-colors cursor-pointer text-start"
+                className="w-full flex items-center justify-between p-3 bg-red-50 rounded-xl border border-red-100 hover:bg-red-100 transition-colors cursor-pointer text-start"
                 onClick={() => navigate(createPageUrl('GovernmentRelations'))}
               >
                 <div className="flex items-center gap-3">
@@ -339,7 +266,7 @@ export default function PayrollDashboard({ onNavigate }) {
 
             {expiringIqama.length > 0 && (
               <button
-                className="w-full flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-100 hover:bg-amber-100 transition-colors cursor-pointer text-start"
+                className="w-full flex items-center justify-between p-3 bg-amber-50 rounded-xl border border-amber-100 hover:bg-amber-100 transition-colors cursor-pointer text-start"
                 onClick={() => navigate(createPageUrl('GovernmentRelations'))}
               >
                 <div className="flex items-center gap-3">
@@ -356,7 +283,7 @@ export default function PayrollDashboard({ onNavigate }) {
 
             {missingIBAN.length > 0 && (
               <button
-                className="w-full flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-100 hover:bg-orange-100 transition-colors cursor-pointer text-start"
+                className="w-full flex items-center justify-between p-3 bg-orange-50 rounded-xl border border-orange-100 hover:bg-orange-100 transition-colors cursor-pointer text-start"
                 onClick={() => navigate(createPageUrl('Employees'))}
               >
                 <div className="flex items-center gap-3">
@@ -372,7 +299,7 @@ export default function PayrollDashboard({ onNavigate }) {
 
             {pendingLoans.length > 0 && (
               <button
-                className="w-full flex items-center justify-between p-3 bg-najdi-50 rounded-lg border border-najdi-100 hover:bg-najdi-50 transition-colors cursor-pointer text-start"
+                className="w-full flex items-center justify-between p-3 bg-najdi-50 rounded-xl border border-najdi-100 hover:bg-najdi-50 transition-colors cursor-pointer text-start"
                 onClick={() => onNavigate('loans')}
               >
                 <div className="flex items-center gap-3">
@@ -388,17 +315,17 @@ export default function PayrollDashboard({ onNavigate }) {
 
             {pendingTuition.length > 0 && (
               <button
-                className="w-full flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-100 hover:bg-purple-100 transition-colors cursor-pointer text-start"
+                className="w-full flex items-center justify-between p-3 bg-sand-alt rounded-xl border border-border hover:bg-sand transition-colors cursor-pointer text-start"
                 onClick={() => onNavigate('tuition')}
               >
                 <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-purple-500" />
+                  <FileText className="w-5 h-5 text-ink" />
                   <div>
-                    <p className="font-medium text-purple-700">{isRTL ? 'طلبات سلف رسوم معلقة' : 'Pending Tuition Advances'}</p>
-                    <p className="text-sm text-purple-600">{pendingTuition.length} {isRTL ? 'طلب' : 'requests'}</p>
+                    <p className="font-medium text-ink">{isRTL ? 'طلبات سلف رسوم معلقة' : 'Pending Tuition Advances'}</p>
+                    <p className="text-sm text-muted-foreground">{pendingTuition.length} {isRTL ? 'طلب' : 'requests'}</p>
                   </div>
                 </div>
-                <ArrowRight className="w-4 h-4 text-purple-500" />
+                <ArrowRight className="w-4 h-4 text-muted-foreground" />
               </button>
             )}
 
@@ -411,8 +338,7 @@ export default function PayrollDashboard({ onNavigate }) {
           </CardContent>
         </Card>
 
-        {/* Recent Pay Runs */}
-        <Card className="bg-white">
+        <Card className="bg-white border-border/70 shadow-sm rounded-2xl">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <FileText className="w-5 h-5 text-muted-foreground" />
@@ -423,13 +349,14 @@ export default function PayrollDashboard({ onNavigate }) {
             {payRuns.slice(0, 5).map(run => (
               <button
                 key={run.id}
-                className="w-full flex items-center justify-between p-3 bg-sand rounded-lg hover:bg-sand-alt transition-colors cursor-pointer text-start"
+                className="w-full flex items-center justify-between p-3 bg-sand rounded-xl hover:bg-sand-alt transition-colors cursor-pointer text-start"
                 onClick={() => onNavigate('payruns')}
               >
                 <div>
                   <p className="font-medium">{run.period}</p>
                   <p className="text-sm text-muted-foreground">
                     {run.employee_count} {isRTL ? 'موظف' : 'employees'} • {formatCurrency((run.net_payroll || 0), tenant?.localization, isRTL)}
+                    {run.journal_entry_id ? (isRTL ? ' • مرحّل' : ' • GL posted') : ''}
                   </p>
                 </div>
                 <Badge className={statusColors[run.status]}>

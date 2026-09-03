@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduSaga 360 — Release Notes v0.3.1</title>
+  <style>
+    :root {
+      --bg: #0f1419; --surface: #1a2332; --surface-2: #243044; --border: #2d3a4f;
+      --text: #e8edf4; --muted: #8b9cb3; --accent: #3b82f6; --accent-dim: #1e3a5f;
+      --green: #22c55e; --amber: #f59e0b; --red: #ef4444; --purple: #a78bfa;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 2rem 1rem 4rem; }
+    .container { max-width: 960px; margin: 0 auto; }
+    header { border-bottom: 1px solid var(--border); padding-bottom: 2rem; margin-bottom: 2.5rem; }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+    .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; }
+    .badge-version { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); }
+    .badge-date { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+    .badge-env { background: #14532d; color: var(--green); border: 1px solid var(--green); }
+    h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--muted); font-size: 1.05rem; max-width: 720px; }
+    .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin: 2rem 0; }
+    .meta-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; }
+    .meta-card .label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .meta-card .value { font-size: 1rem; font-weight: 600; margin-top: 0.25rem; font-family: "SF Mono", monospace; }
+    section { margin-bottom: 2.5rem; }
+    h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 1rem; font-weight: 600; margin: 1.25rem 0 0.5rem; }
+    .summary-box { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 1.25rem 1.5rem; color: var(--muted); font-size: 0.95rem; }
+    .summary-box strong { color: var(--text); }
+    ul { margin: 0.5rem 0 0 1.25rem; color: var(--muted); font-size: 0.9rem; }
+    li { margin-bottom: 0.35rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    thead th { text-align: left; padding: 0.75rem 1rem; background: var(--surface-2); color: var(--muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .status-pass { color: var(--green); font-weight: 600; }
+    .status-warn { color: var(--amber); font-weight: 600; }
+    .migration-list { list-style: none; }
+    .migration-list li { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); font-family: monospace; font-size: 0.78rem; color: var(--purple); }
+    .note { color: var(--amber); font-size: 0.85rem; margin-top: 0.75rem; }
+    code { font-family: monospace; font-size: 0.85em; background: var(--surface-2); padding: 0.1em 0.35em; border-radius: 4px; }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.8rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge-row">
+        <span class="badge badge-version">v0.3.1</span>
+        <span class="badge badge-date">3 Sep 2026</span>
+        <span class="badge badge-env">DEV · Stg · Prod</span>
+      </div>
+      <h1>EduSaga 360 Release Notes</h1>
+      <p class="subtitle">
+        Post-P4 patch — canonical role catalogue, HR &amp; payroll dashboard refresh,
+        attendance→payroll cycle schema alignment, employee PII save fix, and navigation
+        wired to live role permissions. Builds on <code>v0.3.0-p4</code>.
+      </p>
+      <div class="meta-grid">
+        <div class="meta-card"><div class="label">Prior release</div><div class="value">v0.3.0-p4</div></div>
+        <div class="meta-card"><div class="label">Repository</div><div class="value">Edusaga360-v1.0</div></div>
+        <div class="meta-card"><div class="label">Branches</div><div class="value">DEV → Stg → Prod</div></div>
+        <div class="meta-card"><div class="label">Migrations</div><div class="value">3 new</div></div>
+      </div>
+    </header>
+
+    <section>
+      <h2>Summary</h2>
+      <div class="summary-box">
+        This patch replaces hard-coded role lists with a <strong>26-role system catalogue</strong>
+        (backend seed + <code>GET /api/roles</code>), refreshes the <strong>HR Manager</strong> and
+        <strong>Payroll</strong> dashboards with KPI hero layouts, fixes the July attendance→payroll
+        API drift (missing tables/columns), keeps employee PII readable after save, and restores
+        legacy <code>createJournalEntry</code> posting for finance flows.
+      </div>
+    </section>
+
+    <section>
+      <h2>Features &amp; fixes</h2>
+      <h3>Roles &amp; access control</h3>
+      <ul>
+        <li>New <code>/api/roles</code> CRUD with system-role protection and tenant-scoped custom roles</li>
+        <li><code>appRoles.ts</code> catalogue synced with sidebar module keys and action permissions</li>
+        <li>User Management &amp; Role Management pages consume live catalogue (Arabic/English labels)</li>
+        <li>Sidebar navigation filtered by role module access from API</li>
+      </ul>
+      <h3>HR &amp; Payroll UI</h3>
+      <ul>
+        <li>HR Manager Dashboard: hero, workforce mix, priority actions, demo-tenant banner</li>
+        <li>Payroll Dashboard: KPI strip, period-aware pay-run list, improved run details</li>
+        <li>Employees page layout aligned with new HR metrics helpers</li>
+      </ul>
+      <h3>Payroll engine</h3>
+      <ul>
+        <li>Attendance rows paginated (1k pages) so 10k-employee months are not truncated</li>
+        <li>Attendance load failures now fail loudly instead of zeroing deductions</li>
+        <li>Graceful fallback when <code>attendance_policies</code> table is absent</li>
+        <li><code>POST /api/functions/createJournalEntry</code> compatibility route for GL posting</li>
+      </ul>
+      <h3>Build fix</h3>
+      <ul>
+        <li>Removed stray brace in <code>WorkforcePlanning.jsx</code> (Vercel build blocker)</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Code review</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>Verdict</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Roles API</td><td class="status-pass">Approved</td><td>RLS read-only for clients; writes via service role; reserved codes blocked; 5 unit tests pass</td></tr>
+            <tr><td>Migrations</td><td class="status-pass">Approved</td><td>All additive; dedup before unique index; PostgREST reload included</td></tr>
+            <tr><td>PII trigger</td><td class="status-pass">Approved</td><td>Encrypts to <code>*_enc</code> columns but keeps plaintext for HR UI; best-effort on vault miss</td></tr>
+            <tr><td>Frontend lint</td><td class="status-warn">Pre-existing</td><td>6 unused-import warnings in unrelated files; none in this patch's core HR/roles paths</td></tr>
+            <tr><td>Parent mobile</td><td class="status-warn">Excluded</td><td>Local parent-mobile WIP not included in this promotion</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Database migrations</h2>
+      <div class="table-wrap">
+        <ul class="migration-list">
+          <li>20260902_attendance_payroll_cycle_fix.sql</li>
+          <li>20260903_app_roles_catalog.sql</li>
+          <li>20260903_employee_pii_keep_plaintext.sql</li>
+        </ul>
+      </div>
+      <p class="note">Apply all three on Supabase before validating attendance import and payroll run in staging.</p>
+    </section>
+
+    <section>
+      <h2>Test evidence</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Suite</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td><code>backend/src/__tests__/roles.test.ts</code></td><td class="status-pass">5/5 passed</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Deployment checklist</h2>
+      <ul>
+        <li>Run migrations on target Supabase project</li>
+        <li>Verify <code>GET /api/roles</code> seeds 26 system roles</li>
+        <li>Smoke-test HR dashboard, payroll run create, employee bank/IBAN save</li>
+        <li>Confirm sidebar modules match assigned role (e.g. hr_admin vs teacher)</li>
+      </ul>
+    </section>
+
+    <footer>
+      EduSaga 360 · Release v0.3.1 · Generated 3 Sep 2026 · Gaber2202/Edusaga360-v1.0
+    </footer>
+  </div>
+</body>
+</html>

@@ -23,6 +23,26 @@ import BankDetailsForm from '../components/employees/BankDetailsForm';
 import { useTenantFilter } from '../hooks/useTenantFilter';
 import HRDemoDataSeeder from '../components/hr/HRDemoDataSeeder';
 
+const SELECT_NONE = '__none__';
+const selectValue = (v) => (v ? v : undefined);
+const fromSelect = (v) => (!v || v === SELECT_NONE ? '' : v);
+
+function mergeBankDetails(employee = {}, existingBd = {}) {
+  const bd = existingBd && typeof existingBd === 'object' && !Array.isArray(existingBd)
+    ? existingBd
+    : {};
+  return {
+    bank_name: bd.bank_name || employee.bank_name || '',
+    iban: (bd.iban || employee.iban || employee.bank_iban || '').replace(/\s/g, '').toUpperCase(),
+    account_number: bd.account_number || employee.bank_account || '',
+    account_holder_name: bd.account_holder_name || employee.name_ar || '',
+    bank_branch: bd.bank_branch || '',
+    wps_id: bd.wps_id || '',
+    effective_date: bd.effective_date || '',
+    status: bd.status || 'active',
+  };
+}
+
 export default function Employees() {
   const { t, isRTL } = useLanguage();
   const { selectedBranchId, filterByBranch, branchFilter } = useBranch();
@@ -37,6 +57,7 @@ export default function Employees() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [saving, setSaving] = useState(false);
+  const [formTab, setFormTab] = useState('general');
 
   const [formData, setFormData] = useState({
     employee_id: '',
@@ -78,7 +99,7 @@ export default function Employees() {
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ['employees', tenantId, selectedBranchId],
-    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, status, job_title, department_id, branch_id, hire_date, end_date, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
+    queryFn: () => fetchData(tenantQuery('employees').select('id, employee_id, name_ar, name_en, email, personal_email, phone, national_id, date_of_birth, status, job_title, job_title_id, department_id, branch_id, hire_date, end_date, contract_end_date, contract_type, work_schedule, employing_company_id, visa_company_id, visa_type, manager_id, is_saudi, is_gosi_applicable, iqama_expiry, passport_expiry, visa_expiry, nationality, gender, employment_type, photo_url, user_id, created_at, basic_salary, housing_allowance, transport_allowance, total_salary, salary, bank_name, bank_account, iban, bank_details, compensation, emergency_contact_name, emergency_contact_phone, notes, license_expiry_date').match(tenantFilter(branchFilter())).order('created_at', { ascending: false })),
     enabled: hasTenantAccess,
   });
 
@@ -125,9 +146,20 @@ export default function Employees() {
     setSaving(true);
     try {
       const empId = formData.employee_id || `EMP-${Date.now().toString(36).toUpperCase()}`;
-      
-      // Sync top-level bank fields from bank_details for backward compat
-      const bd = formData.bank_details || {};
+      const emptyToNull = (v) => (v === '' || v === undefined ? null : v);
+
+      // Sync top-level bank fields from bank_details for backward compat / payroll
+      const bd = formData.bank_details && typeof formData.bank_details === 'object'
+        ? formData.bank_details
+        : {};
+      const bankDetails = {
+        ...bd,
+        bank_name: bd.bank_name || formData.bank_name || '',
+        iban: (bd.iban || formData.iban || '').replace(/\s/g, '').toUpperCase(),
+        account_number: bd.account_number || formData.bank_account || '',
+        account_holder_name: bd.account_holder_name || formData.name_ar || '',
+        status: bd.status || 'active',
+      };
 
       // Sync top-level salary fields from compensation.salary_structure so payroll can read them
       const salaryStructure = formData.compensation?.salary_structure || {};
@@ -142,33 +174,64 @@ export default function Employees() {
       const basicSalary = salaryStructure.basic_salary || formData.basic_salary || formData.salary || 0;
       const totalSalary = basicSalary + housingAllowance + transportAllowance + otherAllowances;
 
-      const data = { 
-        ...formData, 
-        employee_id: empId, 
-        branch_id: formData.branch_id || selectedBranchId || null,
-        tenant_id: tenantId,
-        // Empty date strings must be NULL, never '' (invalid DATE input).
-        contract_end_date: formData.contract_end_date || null,
-        end_date: formData.end_date || null,
-        is_saudi: formData.is_saudi,
+      // Explicit payload — avoid spreading UI-only / empty UUID strings that make PostgREST reject the whole update.
+      const data = {
+        employee_id: empId,
+        name_ar: formData.name_ar,
+        name_en: emptyToNull(formData.name_en) || '',
+        email: emptyToNull(formData.email),
+        personal_email: emptyToNull(formData.personal_email),
+        phone: emptyToNull(formData.phone),
+        national_id: emptyToNull(formData.national_id),
+        date_of_birth: emptyToNull(formData.date_of_birth),
+        gender: formData.gender || null,
+        nationality: emptyToNull(formData.nationality),
+        is_saudi: !!formData.is_saudi,
         is_gosi_applicable: formData.is_saudi || !!formData.national_id,
-        bank_name: bd.bank_name || formData.bank_name || '',
-        iban: bd.iban || formData.iban || '',
-        bank_account: bd.account_number || formData.bank_account || '',
-        // Sync salary fields to top-level so payroll can use them
+        branch_id: formData.branch_id || selectedBranchId || null,
+        employing_company_id: emptyToNull(formData.employing_company_id),
+        visa_company_id: emptyToNull(formData.visa_company_id),
+        visa_type: emptyToNull(formData.visa_type),
+        department_id: emptyToNull(formData.department_id),
+        job_title_id: emptyToNull(formData.job_title_id),
+        manager_id: emptyToNull(formData.manager_id),
+        hire_date: emptyToNull(formData.hire_date),
+        contract_end_date: emptyToNull(formData.contract_end_date),
+        end_date: emptyToNull(formData.end_date),
+        employment_type: formData.employment_type || null,
+        contract_type: formData.contract_type || null,
+        work_schedule: formData.work_schedule || null,
+        status: formData.status || 'active',
+        notes: emptyToNull(formData.notes),
+        license_expiry_date: emptyToNull(formData.license_expiry_date),
+        emergency_contact_name: emptyToNull(formData.emergency_contact_name),
+        emergency_contact_phone: emptyToNull(formData.emergency_contact_phone),
+        compensation: formData.compensation || {},
+        bank_details: bankDetails,
+        bank_name: bankDetails.bank_name || null,
+        iban: bankDetails.iban || null,
+        bank_iban: bankDetails.iban || null,
+        bank_account: bankDetails.account_number || null,
         basic_salary: basicSalary,
         housing_allowance: housingAllowance,
         transport_allowance: transportAllowance,
-        other_allowances: otherAllowances,
         total_salary: totalSalary,
         salary: totalSalary,
       };
 
       if (editingEmployee?.id) {
-        await tenantQuery('employees').update(data).eq('id', editingEmployee.id);
+        const { data: saved, error } = await tenantQuery('employees')
+          .update(data)
+          .eq('id', editingEmployee.id)
+          .select('id, personal_email, phone, national_id, date_of_birth, iban, bank_name, bank_account, bank_details')
+          .maybeSingle();
+        if (error) throw error;
+        if (!saved) {
+          throw new Error(isRTL ? 'لم يتم حفظ بيانات الموظف' : 'Employee update did not apply');
+        }
         await logAuditEvent({ action: AuditActions.UPDATE, entityType: 'Employee', entityId: editingEmployee.id, oldValues: editingEmployee, newValues: data });
       } else {
-        const { data: created, error } = await tenantQuery('employees').insert(data).select().single();
+        const { data: created, error } = await tenantQuery('employees').insert({ ...data, tenant_id: tenantId }).select().single();
         if (error) throw error;
         await logAuditEvent({ action: AuditActions.CREATE, entityType: 'Employee', entityId: created?.id, newValues: data });
       }
@@ -186,7 +249,10 @@ export default function Employees() {
 
   const handleEdit = (employee) => {
     setEditingEmployee(employee);
-    // CRITICAL FIX: Properly load employee data for editing
+    setFormTab('general');
+    const existingBd = employee.bank_details && typeof employee.bank_details === 'object'
+      ? employee.bank_details
+      : {};
     setFormData({
       employee_id: employee.employee_id || '',
       name_ar: employee.name_ar || '',
@@ -213,28 +279,23 @@ export default function Employees() {
       employment_type: employee.employment_type || 'full_time',
       work_schedule: employee.work_schedule || 'morning',
       salary: employee.salary || 0,
-      bank_account: employee.bank_account || '',
-      iban: employee.iban || '',
-      bank_name: employee.bank_name || '',
-      bank_details: employee.bank_details || {
-        bank_name: employee.bank_name || '',
-        iban: employee.iban || '',
-        account_number: employee.bank_account || '',
-        account_holder_name: employee.name_ar || '',
-        status: 'active',
-      },
+      bank_account: employee.bank_account || existingBd.account_number || '',
+      iban: employee.iban || existingBd.iban || '',
+      bank_name: employee.bank_name || existingBd.bank_name || '',
+      bank_details: mergeBankDetails(employee, existingBd),
       emergency_contact_name: employee.emergency_contact_name || '',
       emergency_contact_phone: employee.emergency_contact_phone || '',
       status: employee.status || 'active',
       notes: employee.notes || '',
       license_expiry_date: employee.license_expiry_date || '',
-      compensation: employee.compensation || {}
+      compensation: employee.compensation || {},
     });
     setShowForm(true);
   };
 
   const resetForm = () => {
     setEditingEmployee(null);
+    setFormTab('general');
     setFormData({
       employee_id: '', name_ar: '', name_en: '', email: '', personal_email: '', phone: '', national_id: '',
       date_of_birth: '', gender: 'male', nationality: '', is_saudi: false, branch_id: '', 
@@ -305,18 +366,21 @@ export default function Employees() {
       <DataTable columns={columns} data={filteredEmployees} loading={isLoading} emptyMessage={t('noData')} />
 
       {/* Employee Form Dialog */}
-      <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <Dialog open={showForm} onOpenChange={(open) => { if (!open) setShowForm(false); }}>
+        <DialogContent
+          className="max-w-4xl max-h-[90vh] overflow-y-auto"
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>{editingEmployee ? (isRTL ? 'تعديل الموظف' : 'Edit Employee') : (isRTL ? 'إضافة موظف' : 'Add Employee')}</DialogTitle>
           </DialogHeader>
-          <Tabs defaultValue="general">
+          <Tabs value={formTab} onValueChange={setFormTab}>
             <TabsList className="bg-white border">
               <TabsTrigger value="general">{isRTL ? 'بيانات عامة' : 'General Info'}</TabsTrigger>
               <TabsTrigger value="bank">{isRTL ? 'البنك' : 'Bank Details'}</TabsTrigger>
               <TabsTrigger value="compensation">{isRTL ? 'التعويضات والمزايا' : 'Compensation'}</TabsTrigger>
             </TabsList>
-            <TabsContent value="general" className="space-y-4">
+            <TabsContent value="general" className="space-y-4" forceMount hidden={formTab !== 'general'}>
               <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{isRTL ? 'الاسم (عربي)' : 'Name (Arabic)'} *</Label>
@@ -348,7 +412,7 @@ export default function Employees() {
               </div>
               <div className="space-y-2">
                 <Label>{t('gender')}</Label>
-                <Select value={formData.gender} onValueChange={(v) => setFormData(p => ({...p, gender: v}))}>
+                <Select value={selectValue(formData.gender) || 'male'} onValueChange={(v) => setFormData(p => ({...p, gender: v}))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="male">{t('male')}</SelectItem>
@@ -366,7 +430,7 @@ export default function Employees() {
                </div>
                <div className="space-y-2">
                  <Label>{t('branch')} *</Label>
-                 <Select value={formData.branch_id} onValueChange={(v) => setFormData(p => ({...p, branch_id: v}))}>
+                 <Select value={selectValue(formData.branch_id)} onValueChange={(v) => setFormData(p => ({...p, branch_id: fromSelect(v)}))}>
                    <SelectTrigger><SelectValue placeholder={isRTL ? 'اختر الفرع' : 'Select Branch'} /></SelectTrigger>
                    <SelectContent>
                      {branchesData.map(b => <SelectItem key={b.id} value={b.id}>{isRTL ? b.name_ar : b.name_en || b.name_ar}</SelectItem>)}
@@ -375,28 +439,30 @@ export default function Employees() {
                </div>
                <div className="space-y-2">
                  <Label>{isRTL ? 'القسم' : 'Department'}</Label>
-                <Select value={formData.department_id} onValueChange={(v) => setFormData(p => ({...p, department_id: v}))}>
+                <Select value={selectValue(formData.department_id)} onValueChange={(v) => setFormData(p => ({...p, department_id: fromSelect(v)}))}>
                   <SelectTrigger><SelectValue placeholder={isRTL ? 'اختر' : 'Select'} /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value={SELECT_NONE}>{isRTL ? 'بدون قسم' : 'No department'}</SelectItem>
                     {departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name_ar}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>{isRTL ? 'المسمى الوظيفي' : 'Job Title'}</Label>
-                <Select value={formData.job_title_id} onValueChange={(v) => setFormData(p => ({...p, job_title_id: v}))}>
+                <Select value={selectValue(formData.job_title_id)} onValueChange={(v) => setFormData(p => ({...p, job_title_id: fromSelect(v)}))}>
                   <SelectTrigger><SelectValue placeholder={isRTL ? 'اختر' : 'Select'} /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value={SELECT_NONE}>{isRTL ? 'بدون مسمى' : 'No job title'}</SelectItem>
                     {jobTitles.map(j => <SelectItem key={j.id} value={j.id}>{isRTL ? j.name_ar : (j.name_en || j.name_ar)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>{isRTL ? 'المدير المباشر' : 'Line Manager'}</Label>
-                <Select value={formData.manager_id || ''} onValueChange={(v) => setFormData(p => ({...p, manager_id: v}))}>
+                <Select value={selectValue(formData.manager_id)} onValueChange={(v) => setFormData(p => ({...p, manager_id: fromSelect(v)}))}>
                   <SelectTrigger><SelectValue placeholder={isRTL ? 'اختر المدير المباشر' : 'Select Line Manager'} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={null}>{isRTL ? 'بدون مدير' : 'No Manager'}</SelectItem>
+                    <SelectItem value={SELECT_NONE}>{isRTL ? 'بدون مدير' : 'No Manager'}</SelectItem>
                     {employees.filter(e => e.id !== editingEmployee?.id && e.status === 'active').map(e => (
                       <SelectItem key={e.id} value={e.id}>{isRTL ? (e.name_ar || e.name_en) : (e.name_en || e.name_ar)}</SelectItem>
                     ))}
@@ -462,18 +528,20 @@ export default function Employees() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>{isRTL ? 'شركة الإقامة' : 'Visa Company'}</Label>
-                    <Select value={formData.visa_company_id || ''} onValueChange={(v) => setFormData(p => ({...p, visa_company_id: v}))}>
+                    <Select value={selectValue(formData.visa_company_id)} onValueChange={(v) => setFormData(p => ({...p, visa_company_id: fromSelect(v)}))}>
                       <SelectTrigger><SelectValue placeholder={isRTL ? 'اختر' : 'Select'} /></SelectTrigger>
                       <SelectContent>
+                        <SelectItem value={SELECT_NONE}>{isRTL ? 'بدون' : 'None'}</SelectItem>
                         {companies.map(c => <SelectItem key={c.id} value={c.id}>{isRTL ? c.name_ar : c.name_en}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>{isRTL ? 'الشركة المشغلة' : 'Employing Company'}</Label>
-                    <Select value={formData.employing_company_id || ''} onValueChange={(v) => setFormData(p => ({...p, employing_company_id: v}))}>
+                    <Select value={selectValue(formData.employing_company_id)} onValueChange={(v) => setFormData(p => ({...p, employing_company_id: fromSelect(v)}))}>
                       <SelectTrigger><SelectValue placeholder={isRTL ? 'اختر' : 'Select'} /></SelectTrigger>
                       <SelectContent>
+                        <SelectItem value={SELECT_NONE}>{isRTL ? 'بدون' : 'None'}</SelectItem>
                         {companies.map(c => <SelectItem key={c.id} value={c.id}>{isRTL ? c.name_ar : c.name_en}</SelectItem>)}
                       </SelectContent>
                     </Select>
@@ -496,7 +564,7 @@ export default function Employees() {
                 </div>
               </div>
               </TabsContent>
-              <TabsContent value="bank" className="space-y-4 pt-2">
+              <TabsContent value="bank" className="space-y-4 pt-2" forceMount hidden={formTab !== 'bank'}>
                 <BankDetailsForm
                   value={formData.bank_details}
                   onChange={(bd) => setFormData(p => ({ ...p, bank_details: bd }))}
@@ -504,14 +572,14 @@ export default function Employees() {
                   nationalId={formData.national_id || formData.iqama_number}
                 />
               </TabsContent>
-              <TabsContent value="compensation" className="space-y-4">
+              <TabsContent value="compensation" className="space-y-4" forceMount hidden={formTab !== 'compensation'}>
               <CompensationForm value={formData.compensation} onChange={(comp) => setFormData(p => ({...p, compensation: comp}))} />
               </TabsContent>
               </Tabs>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowForm(false)}>{t('cancel')}</Button>
-            <Button onClick={handleSave} disabled={saving}>
+            <Button variant="outline" type="button" onClick={() => setShowForm(false)}>{t('cancel')}</Button>
+            <Button type="button" onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 animate-spin me-2" />}
               {t('save')}
             </Button>
@@ -555,11 +623,7 @@ export default function Employees() {
               </TabsContent>
               <TabsContent value="bank" className="space-y-4 pt-2">
                 <BankDetailsForm
-                  value={showDetails.bank_details || {
-                    bank_name: showDetails.bank_name || '',
-                    iban: showDetails.iban || '',
-                    account_number: showDetails.bank_account || '',
-                  }}
+                  value={mergeBankDetails(showDetails, showDetails.bank_details)}
                   readOnly
                   employeeNameAr={showDetails.name_ar}
                   nationalId={showDetails.national_id || showDetails.iqama_number}

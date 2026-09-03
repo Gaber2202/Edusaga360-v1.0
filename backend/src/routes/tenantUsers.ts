@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.js';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { AuthenticatedRequest } from '../middleware/auth.js';
+import { isAssignableRoleCode } from '../lib/appRoles.js';
 
 export const tenantUsersRouter = Router();
 
@@ -40,6 +41,9 @@ tenantUsersRouter.post('/request', async (req: AuthenticatedRequest, res) => {
       return res.status(400).json({ error: 'VALIDATION', errors: parsed.error.flatten() });
     }
     const { name, email, requested_role } = parsed.data;
+    if (!isAssignableRoleCode(requested_role)) {
+      return res.status(400).json({ error: 'INVALID_ROLE', message: 'Requested role is not assignable' });
+    }
 
     // Enforce the trial cap (active users + pending requests).
     const { data: tenant } = await supabase.from('tenants').select('max_users, status').eq('id', tenantId).single();

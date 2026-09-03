@@ -67,7 +67,7 @@ export default function CompensationForm({ value = {}, onChange }) {
               <Input
                 type="date"
                 value={compensation.effective_start_date || ''}
-                onChange={(e) => handleChange('', 'effective_start_date', e.target.value)}
+                onChange={(e) => onChange({ ...compensation, effective_start_date: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -75,7 +75,7 @@ export default function CompensationForm({ value = {}, onChange }) {
               <Input
                 type="date"
                 value={compensation.effective_end_date || ''}
-                onChange={(e) => handleChange('', 'effective_end_date', e.target.value)}
+                onChange={(e) => onChange({ ...compensation, effective_end_date: e.target.value })}
               />
             </div>
           </div>

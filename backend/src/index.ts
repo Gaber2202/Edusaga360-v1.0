@@ -11,6 +11,7 @@ import { healthRouter } from './routes/health.js';
 import { authRouter } from './routes/auth.js';
 import { mfaRouter } from './routes/mfa.js';
 import { journalEntryRouter } from './routes/journalEntries.js';
+import { createJournalEntryRouter } from './routes/createJournalEntry.js';
 import { tenantRequestRouter } from './routes/tenantRequests.js';
 import { registrationRouter } from './routes/registration.js';
 import { invoiceRouter } from './routes/invoices.js';
@@ -52,6 +53,7 @@ import { publicIntakeRouter } from './routes/publicIntake.js';
 import { admissionsRouter } from './routes/admissions.js';
 import { contractsRouter } from './routes/contracts.js';
 import { storeOrdersRouter } from './routes/storeOrders.js';
+import { rolesRouter } from './routes/roles.js';
 import cron from 'node-cron';
 import { SegmentationRunner } from './services/collections/runner.js';
 import { CollectionMessenger } from './services/collections/messenger.js';
@@ -183,6 +185,8 @@ app.use('/api/public/intake', publicIntakeRouter);
 // IMPORTANT: Register middleware on each router directly.
 // app.use('/api', middleware) does NOT apply to separately mounted routers.
 app.use('/api/journal-entries', apiLimiter, authMiddleware, tenantMiddleware, journalEntryRouter);
+// Legacy Base44-compatible path used by frontend createJournalEntry()
+app.use('/api/functions/createJournalEntry', apiLimiter, authMiddleware, tenantMiddleware, createJournalEntryRouter);
 app.use('/api/tenant-requests', apiLimiter, authMiddleware, tenantMiddleware, tenantRequestRouter);
 app.use('/api/invoices',        apiLimiter, authMiddleware, tenantMiddleware, invoiceRouter);
 app.use('/api/fees',            apiLimiter, authMiddleware, tenantMiddleware, feesRouter);
@@ -221,6 +225,7 @@ app.use('/api/messaging',           apiLimiter, authMiddleware, tenantMiddleware
 app.use('/api/collections',         apiLimiter, collectionsRouter);
 // Jurisdiction context for frontend gating (features, VAT rate, currency).
 app.use('/api/jurisdiction',        apiLimiter, authMiddleware, tenantMiddleware, jurisdictionRouter);
+app.use('/api/roles',               apiLimiter, authMiddleware, tenantMiddleware, rolesRouter);
 
 app.use(
   (

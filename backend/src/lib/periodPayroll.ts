@@ -56,13 +56,41 @@ export async function calculatePeriodPayroll(
       .eq('tenant_id', tenantId)
       .eq('is_default', true)
       .maybeSingle(),
-    supabase
-      .from('employee_attendance')
-      .select('employee_id, status, late_minutes, is_excused')
-      .eq('tenant_id', tenantId)
-      .gte('date', period_start)
-      .lte('date', period_end),
+    (async () => {
+      // Page attendance rows — PostgREST max-rows can truncate a full-month 10k cohort.
+      const rows: Record<string, unknown>[] = [];
+      const attPage = 1000;
+      for (let from = 0; ; from += attPage) {
+        let q = supabase
+          .from('employee_attendance')
+          .select('employee_id, status, late_minutes, is_excused')
+          .eq('tenant_id', tenantId)
+          .gte('date', period_start)
+          .lte('date', period_end);
+        if (opts.employeeIds?.length) q = q.in('employee_id', opts.employeeIds);
+        const { data, error } = await q.range(from, from + attPage - 1);
+        if (error) return { data: null as Record<string, unknown>[] | null, error };
+        const batch = (data ?? []) as Record<string, unknown>[];
+        rows.push(...batch);
+        if (batch.length < attPage) break;
+      }
+      return { data: rows, error: null as null };
+    })(),
   ]);
+
+  // Missing attendance_policies table → treat as no policy (use code defaults).
+  // Any other policy error should surface.
+  if (policyResult.error && !/attendance_policies|schema cache|PGRST205/i.test(policyResult.error.message)) {
+    throw policyResult.error;
+  }
+
+  // Attendance query failures must NOT silently zero deductions (prior production bug).
+  if (attResult.error) {
+    throw Object.assign(
+      new Error(`Failed to load employee attendance for payroll: ${attResult.error.message}`),
+      { status: 500, cause: attResult.error },
+    );
+  }
 
   if (!employees.length) {
     throw Object.assign(new Error('No active employees found'), { status: 404 });

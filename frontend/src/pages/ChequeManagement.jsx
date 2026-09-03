@@ -167,7 +167,7 @@ export default function ChequeManagement() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="w-full max-w-none p-4 md:p-6 space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">

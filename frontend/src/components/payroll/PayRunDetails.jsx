@@ -6,6 +6,7 @@ import { formatCurrency } from '../../lib/localization';
 import { useTenant } from '../TenantContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
@@ -58,7 +59,7 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
   const { data: payrollInputs = [], isLoading } = useQuery({
     queryKey: ['payrollInputs', payRun.id],
     queryFn: () => fetchData(tenantQuery('payroll_inputs').select('*').match({ pay_run_id: payRun.id })),
-    enabled: false, // payroll_inputs table not built (Bucket C, #246)
+    enabled: !!payRun?.id,
   });
 
   const filteredInputs = payrollInputs.filter(p => 
@@ -108,25 +109,49 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
         updateData.is_posted_to_finance = true;
       }
 
-      await tenantQuery('pay_runs').update(updateData);
+      const { error: statusErr } = await tenantQuery('pay_runs').update(updateData).eq('id', payRun.id);
+      if (statusErr) throw statusErr;
 
       // Create payroll journal entry when completing
       if (newStatus === 'completed') {
         try {
-          const grossTotal = summary.totalEarnings;
-          const employeeSocialInsuranceTotal = summary.totalSocialInsuranceEmployee;
-          const employerSocialInsuranceTotal = summary.totalSocialInsuranceEmployer;
-          const netTotal = summary.netPayroll;
+          const grossTotal = Math.round((summary.totalEarnings || 0) * 100) / 100;
+          const employeeSocialInsuranceTotal = Math.round((summary.totalSocialInsuranceEmployee || 0) * 100) / 100;
+          const employerSocialInsuranceTotal = Math.round((summary.totalSocialInsuranceEmployer || 0) * 100) / 100;
+          const netTotal = Math.round((summary.netPayroll || 0) * 100) / 100;
+          const otherDeductions = Math.round(
+            Math.max(0, (summary.totalDeductions || 0) - employeeSocialInsuranceTotal) * 100,
+          ) / 100;
           const period = payRun.period || `${payRun.period_month}/${payRun.period_year}`;
 
           const jeLines = [
-            { line_number: 1, account_code: '6000', account_name: 'Salary Expense', debit: grossTotal, credit: 0, description: `Gross Salaries - ${period}` },
-            { line_number: 3, account_code: '2100', account_name: 'Salaries Payable', debit: 0, credit: netTotal, description: `Net Payroll - ${period}` },
-            ...(socialInsuranceEnabled ? [
-              { line_number: 2, account_code: '6010', account_name: 'Social Insurance Employer Expense', debit: employerSocialInsuranceTotal, credit: 0, description: `Social Insurance Employer - ${period}` },
-              { line_number: 4, account_code: '2200', account_name: 'Social Insurance Payable', debit: 0, credit: employeeSocialInsuranceTotal + employerSocialInsuranceTotal, description: `Social Insurance Payable - ${period}` },
-            ] : []),
-          ];
+            { line_number: 1, account_code: '510001', account_name: 'Salary Expense', debit: grossTotal, credit: 0, description: `Gross Salaries - ${period}` },
+            ...(employerSocialInsuranceTotal > 0 ? [{
+              line_number: 2,
+              account_code: '511001',
+              account_name: 'Social Insurance Employer Expense',
+              debit: employerSocialInsuranceTotal,
+              credit: 0,
+              description: `Social Insurance Employer - ${period}`,
+            }] : []),
+            { line_number: 3, account_code: '220001', account_name: 'Salaries Payable', debit: 0, credit: netTotal, description: `Net Payroll - ${period}` },
+            ...((employeeSocialInsuranceTotal + employerSocialInsuranceTotal) > 0 ? [{
+              line_number: 4,
+              account_code: '221001',
+              account_name: 'Social Insurance Payable',
+              debit: 0,
+              credit: Math.round((employeeSocialInsuranceTotal + employerSocialInsuranceTotal) * 100) / 100,
+              description: `Social Insurance Payable - ${period}`,
+            }] : []),
+            ...(otherDeductions > 0 ? [{
+              line_number: 5,
+              account_code: '222001',
+              account_name: 'Payroll Deductions Clearing',
+              debit: 0,
+              credit: otherDeductions,
+              description: `Other payroll deductions - ${period}`,
+            }] : []),
+          ].filter((l) => (l.debit || 0) > 0 || (l.credit || 0) > 0);
 
           const je = await createJournalEntry({
             journal_type: 'payments',
@@ -140,8 +165,12 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
             requested_status: 'approved',
           });
 
-          await tenantQuery('pay_runs').update({ journal_entry_id: je.id });
+          const { error: jeLinkErr } = await tenantQuery('pay_runs')
+            .update({ journal_entry_id: je.id })
+            .eq('id', payRun.id);
+          if (jeLinkErr) throw jeLinkErr;
           setPayRun(prev => ({ ...prev, journal_entry_id: je.id }));
+          toast.success(isRTL ? 'تم ترحيل قيد اليومية للرواتب' : 'Payroll journal entry posted to GL');
         } catch (jeErr) {
           reportError({
             error: jeErr,
@@ -150,6 +179,11 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
             severity: 'high',
             context: { pay_run_id: payRun.id, pay_run_number: payRun.pay_run_number },
           });
+          toast.error(
+            isRTL
+              ? `اكتمل المسير لكن فشل قيد GL: ${jeErr?.message || 'خطأ'}`
+              : `Pay run completed but GL posting failed: ${jeErr?.message || 'Unknown error'}`,
+          );
         }
       }
 
@@ -182,7 +216,7 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
     setProcessing(true);
     try {
       const user = await supabase.auth.getUser().then(r => r.data?.user);
-      await tenantQuery('pay_runs').update({
+      const { error: abortErr } = await tenantQuery('pay_runs').update({
         status: 'aborted',
         workflow_stage: 'aborted',
         abort_reason: abortReason,
@@ -199,7 +233,8 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
             reason: abortReason
           }
         ]
-      });
+      }).eq('id', payRun.id);
+      if (abortErr) throw abortErr;
 
       // Update local state immediately
       setPayRun(prev => ({ ...prev, status: 'aborted', workflow_stage: 'aborted', abort_reason: abortReason }));
@@ -231,7 +266,7 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
     setProcessing(true);
     try {
       const user = await supabase.auth.getUser().then(r => r.data?.user);
-      await tenantQuery('pay_runs').update({
+      const { error: rollbackErr } = await tenantQuery('pay_runs').update({
         status: rollbackStage,
         workflow_stage: rollbackStage,
         stage_history: [
@@ -245,7 +280,8 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
             reason: rollbackReason
           }
         ]
-      });
+      }).eq('id', payRun.id);
+      if (rollbackErr) throw rollbackErr;
 
       // Update local state immediately
       setPayRun(prev => ({ ...prev, status: rollbackStage, workflow_stage: rollbackStage }));
@@ -272,7 +308,7 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
       const user = await supabase.auth.getUser().then(r => r.data?.user);
       const previousStage = payRun.workflow_stage === 'review' ? 'calculated' : 'review';
       
-      await tenantQuery('pay_runs').update({
+      const { error: rejectErr } = await tenantQuery('pay_runs').update({
         status: previousStage,
         workflow_stage: previousStage,
         rejection_reason: rejectReason,
@@ -289,7 +325,8 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
             reason: rejectReason
           }
         ]
-      });
+      }).eq('id', payRun.id);
+      if (rejectErr) throw rejectErr;
 
       // Update local state immediately
       setPayRun(prev => ({ ...prev, status: previousStage, workflow_stage: previousStage }));
@@ -397,7 +434,14 @@ export default function PayRunDetails({ payRun: initialPayRun, onBack }) {
             {isRTL ? 'رجوع' : 'Back'}
           </Button>
           <div>
-            <h2 className="text-xl font-semibold">{payRun.pay_run_number}</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-xl font-semibold">{payRun.pay_run_number}</h2>
+              {payRun.journal_entry_id && (
+                <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  {isRTL ? 'قيد أستاذ مرحّل' : 'GL posted'}
+                </Badge>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground">{payRun.period} • {payRun.branch_name}</p>
           </div>
         </div>

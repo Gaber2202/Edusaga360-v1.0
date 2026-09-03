@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase, tenantQuery } from '../api/supabaseClient';
+import { supabase, tenantQuery, callApi } from '../api/supabaseClient';
 import { isPlatformOwner, VALID_APP_ROLES, DEFAULT_UNASSIGNED_ROLE } from '../lib/authHelpers';
 
 const RoleContext = createContext();
@@ -117,13 +117,27 @@ export function RoleProvider({ children }) {
       }
       setUserRole(roleCode);
 
-      // Load role data for granular permissions
-      if (currentUser.role_id) {
-        try {
+      // Load role data for granular permissions from the backend catalogue
+      try {
+        const { roles: catalogue = [] } = await callApi('/api/roles', null, { method: 'GET' });
+        const matched = catalogue.find((r) => r.role_code === roleCode)
+          || catalogue.find((r) => currentUser.role_id && r.id === currentUser.role_id)
+          || null;
+        if (matched) {
+          setRoleData(matched);
+        } else if (currentUser.role_id) {
           const { data: roles } = await tenantQuery('roles').select('*').eq('id', currentUser.role_id);
           setRoleData(roles?.[0] || null);
-        } catch (err) {
-          console.error('Error loading role data:', err);
+        }
+      } catch (err) {
+        console.error('Error loading role data:', err);
+        if (currentUser.role_id) {
+          try {
+            const { data: roles } = await tenantQuery('roles').select('*').eq('id', currentUser.role_id);
+            setRoleData(roles?.[0] || null);
+          } catch (inner) {
+            console.error('Error loading role row:', inner);
+          }
         }
       }
 

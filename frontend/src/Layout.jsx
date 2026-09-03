@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from './components/ui/select';
-import { Sheet, SheetContent, SheetTrigger } from './components/ui/sheet';
+import { Sheet, SheetContent } from './components/ui/sheet';
 import PullToRefresh from './components/ui/PullToRefresh';
 import {
   Collapsible,
@@ -48,8 +48,7 @@ import {
           Settings,
           LogOut,
           Menu,
-          ChevronLeft,
-          ChevronRight,
+          X,
           ChevronDown,
           Globe,
           Search,
@@ -130,8 +129,7 @@ function LayoutContent({ children, currentPageName }) {
   const { branches, selectedBranchId, selectBranch } = useBranch();
   const { areAnyEnabled } = useJurisdictionFeatures();
   const queryClient = useQueryClient();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState({});
 
@@ -374,7 +372,7 @@ function LayoutContent({ children, currentPageName }) {
       roles: ['admin', 'creator'],
       children: [
         { name: 'users', icon: UserCog, page: 'UserManagement', roles: ['admin', 'creator'] },
-        { name: 'rolesPermissions', icon: Key, page: 'RolesPermissions', roles: ['admin', 'creator'] },
+        { name: 'rolesPermissions', icon: Key, page: 'RoleManagement', roles: ['admin', 'creator'] },
         { name: 'auditLogs', icon: History, page: 'AuditLogs', roles: ['creator'], creatorOnly: true },
         { name: 'companies', icon: Building2, page: 'Companies', roles: ['admin', 'creator'] },
         { name: 'branches', icon: Building2, page: 'Branches', roles: ['admin', 'creator'] },
@@ -415,6 +413,16 @@ function LayoutContent({ children, currentPageName }) {
 
   // Apply jurisdiction feature gating so Saudi-government pages are absent for non-SA tenants.
   const filteredNavigation = filterNavigationByFeatures(roleFilteredNavigation, areAnyEnabled, isModuleEnabled);
+
+  // Resolve a human label for the current page from the filtered nav tree.
+  const currentPageLabel = (() => {
+    for (const item of filteredNavigation) {
+      if (item.page === currentPageName) return t(item.name);
+      const child = item.children?.find((c) => c.page === currentPageName);
+      if (child) return t(child.name);
+    }
+    return currentPageName || (isRTL ? 'لوحة التحكم' : 'Dashboard');
+  })();
 
   // Resolve a tappable target page for a top-level nav item (its own page, or
   // the first accessible child). Used to build a role-aware mobile bottom nav.
@@ -464,11 +472,13 @@ function LayoutContent({ children, currentPageName }) {
     return <Navigate to="/" replace />;
   }
 
-  const NavItem = ({ item, mobile = false, depth: _depth = 0 }) => {
+  const closeMenu = () => setMenuOpen(false);
+
+  const NavItem = ({ item }) => {
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedMenus[item.name];
     const isPageActive = currentPageName === item.page;
-    const isParentOfActive = item.children?.some(c => c.page === currentPageName);
+    const isParentOfActive = item.children?.some((c) => c.page === currentPageName);
     const isActive = isPageActive || isParentOfActive;
 
     if (hasChildren) {
@@ -476,42 +486,39 @@ function LayoutContent({ children, currentPageName }) {
         <Collapsible open={isExpanded} onOpenChange={() => toggleMenu(item.name)}>
           <CollapsibleTrigger asChild>
             <button
-            className={`
-              w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-base font-medium
-              ${isActive ? 'bg-najdi-700 text-white shadow-sm' : 'text-ink hover:bg-najdi-50 hover:text-najdi-900'}
-              ${sidebarCollapsed && !mobile ? 'justify-center' : ''}
-            `}
+              type="button"
+              className={`
+                w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
+                ${isActive ? 'bg-najdi-700 text-white shadow-sm' : 'text-ink hover:bg-najdi-50 hover:text-najdi-900'}
+              `}
             >
-              <div className="flex items-center gap-3">
-                <item.icon className={`w-5 h-5 flex-shrink-0 text-muted-foreground`} />
-                {(!sidebarCollapsed || mobile) && <span className="font-medium text-sm">{t(item.name)}</span>}
+              <div className="flex items-center gap-3 min-w-0">
+                <item.icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-white/90' : 'text-muted-foreground'}`} />
+                <span className="font-medium text-sm truncate">{t(item.name)}</span>
               </div>
-              {(!sidebarCollapsed || mobile) && (
-                <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-              )}
+              <ChevronDown className={`w-4 h-4 flex-shrink-0 opacity-70 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
             </button>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className={`${isRTL ? 'pr-4' : 'pl-4'} mt-2 space-y-1`}>
-              {item.children.map(child => {
+            <div className={`${isRTL ? 'pr-3' : 'pl-3'} mt-1.5 space-y-0.5 border-s border-border/70 ms-5`}>
+              {item.children.map((child) => {
                 const isChildActive = currentPageName === child.page;
                 return (
-                <Link
-                  key={child.name}
-                  to={createPageUrl(child.page)}
-                  onClick={() => mobile && setMobileOpen(false)}
-                  className={`
-                    flex items-center gap-2 px-2 py-2 rounded-lg transition-all duration-200 text-sm
-                    ${isChildActive
-                      ? 'bg-najdi-700 text-white shadow-sm' 
-                      : 'text-ink hover:bg-najdi-50 hover:text-najdi-900'
-                    }
-                  `}
-                >
-                  <child.icon className={`w-4 h-4 flex-shrink-0 ${isChildActive ? 'text-white' : 'text-muted-foreground'}`} />
-                  <span>{t(child.name)}</span>
-                </Link>
-              );
+                  <Link
+                    key={child.name}
+                    to={createPageUrl(child.page)}
+                    onClick={closeMenu}
+                    className={`
+                      flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200 text-sm
+                      ${isChildActive
+                        ? 'bg-najdi-700 text-white shadow-sm'
+                        : 'text-ink hover:bg-najdi-50 hover:text-najdi-900'}
+                    `}
+                  >
+                    <child.icon className={`w-4 h-4 flex-shrink-0 ${isChildActive ? 'text-white' : 'text-muted-foreground'}`} />
+                    <span className="truncate">{t(child.name)}</span>
+                  </Link>
+                );
               })}
             </div>
           </CollapsibleContent>
@@ -522,31 +529,30 @@ function LayoutContent({ children, currentPageName }) {
     return (
       <Link
         to={createPageUrl(item.page)}
-        onClick={() => mobile && setMobileOpen(false)}
+        onClick={closeMenu}
         className={`
-          flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
+          flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
           ${isPageActive
-            ? 'bg-najdi-700 text-white shadow-sm' 
+            ? 'bg-najdi-700 text-white shadow-sm'
             : 'text-ink hover:bg-najdi-50 hover:text-najdi-900'}
-          ${sidebarCollapsed && !mobile ? 'justify-center' : ''}
         `}
       >
         <item.icon className={`w-5 h-5 flex-shrink-0 ${isPageActive ? 'text-white' : 'text-muted-foreground'}`} />
-        {(!sidebarCollapsed || mobile) && <span className="font-medium text-sm">{t(item.name)}</span>}
+        <span className="font-medium text-sm truncate">{t(item.name)}</span>
       </Link>
     );
   };
 
-  const NavItems = ({ mobile = false }) => (
-    <nav className="space-y-1.5 px-3 py-3 w-full">
+  const NavItems = () => (
+    <nav className="space-y-1 px-3 py-3 w-full" aria-label={isRTL ? 'القائمة الرئيسية' : 'Main navigation'}>
       {filteredNavigation.map((item) => (
-        <NavItem key={item.name} item={item} mobile={mobile} />
+        <NavItem key={item.name} item={item} />
       ))}
     </nav>
   );
 
   return (
-    <div className={`flex h-[100dvh] bg-sand ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className={`flex flex-col h-[100dvh] bg-sand ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       <style>{`
         html, body, #root {
           width: 100%;
@@ -594,188 +600,180 @@ function LayoutContent({ children, currentPageName }) {
         }
       `}</style>
 
-      {/* Desktop Sidebar */}
-      <aside className={`
-        hidden lg:flex flex-col bg-white shadow-sm
-        transition-all duration-300 z-20 flex-shrink-0
-        ${sidebarCollapsed ? 'w-20 min-w-20' : 'w-72 min-w-72'}
-        ${isRTL ? 'border-l' : 'border-r'} border-border
-      `}>
-        {/* Logo */}
-        <div className="h-14 flex items-center justify-between px-3 border-b border-border flex-shrink-0 w-full">
-          {!sidebarCollapsed && (
-                <div className="flex items-center gap-2">
-                  <img 
-                    src="/edusaga-logo.svg" 
-                    alt="EduSaga Logo" 
-                    className="h-8 w-auto"
-                  />
-                  <div>
-                    <span className="font-semibold text-sm text-ink block leading-tight">EduSaga 360</span>
-                    <span className="text-xs text-muted-foreground">v1.0</span>
-                  </div>
-                </div>
-              )}
-              {sidebarCollapsed && (
-                <img 
-                  src="/edusaga-logo.svg" 
-                  alt="EduSaga Logo" 
-                  className="h-6 w-auto mx-auto"
-                />
-              )}
-        </div>
-
-        <div className="flex-1 overflow-y-auto overflow-x-hidden w-full">
-          <NavItems />
-        </div>
-
-        {/* Collapse Button */}
-        <div className="p-3 border-t border-border flex-shrink-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="w-full justify-center text-muted-foreground hover:text-ink"
-          >
-            {sidebarCollapsed 
-              ? (isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)
-              : (isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />)
-            }
-          </Button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className={`flex flex-col flex-1 min-w-0 overflow-hidden`}>
-        {/* Top Header */}
-        <header className="w-full h-14 bg-white border-b border-border flex items-center justify-between px-2 sm:px-3 lg:px-4 sticky top-0 z-10 shadow-sm overflow-x-hidden">
-          {/* Trial Banner */}
-          {isTrial() && (
-            <div className="absolute top-full left-0 right-0 bg-najdi-700 text-white py-2 px-4 text-center text-sm font-medium z-10">
-              <TestTube className="w-4 h-4 inline me-2" />
-              {isRTL ? 'وضع تجريبي' : 'Trial Mode'}
-              {user?.trial_expires_date && (
-                <span className="opacity-90">
-                  {' • '}
-                  {isRTL ? 'ينتهي في:' : 'Expires:'} {format(new Date(user.trial_expires_date), 'dd/MM/yyyy')}
-                </span>
-              )}
+      {/* Hamburger navigation drawer — all breakpoints (21st floating-header / drawer pattern) */}
+      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+        <SheetContent
+          side={isRTL ? 'right' : 'left'}
+          className="w-[min(100vw,22rem)] sm:max-w-[22rem] p-0 flex flex-col h-full border-border/60 bg-white [&>button]:hidden"
+        >
+          <div className="relative h-16 flex items-center justify-between gap-3 px-4 border-b border-border/70 flex-shrink-0 bg-gradient-to-br from-najdi-900 via-[#0a5a42] to-slate-900">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center flex-shrink-0">
+                <img src="/edusaga-logo.svg" alt="" className="h-6 w-auto brightness-0 invert" />
+              </div>
+              <div className="min-w-0">
+                <span className="font-semibold text-base text-white block leading-tight truncate">EduSaga 360</span>
+                <span className="text-[11px] text-white/60">{isRTL ? 'القائمة الرئيسية' : 'Main menu'}</span>
+              </div>
             </div>
-          )}
-          {/* Mobile Menu */}
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden" aria-label={isRTL ? 'فتح القائمة' : 'Open menu'}>
-                <Menu className="w-5 h-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side={isRTL ? 'right' : 'left'} className="w-72 p-0 flex flex-col h-full">
-              <div className="h-16 flex items-center px-4 border-b border-border flex-shrink-0">
-                <div className="flex items-center gap-3">
-                  <img 
-                    src="/edusaga-logo.svg" 
-                    alt="EduSaga Logo" 
-                    className="h-10 w-auto"
-                  />
-                  <div>
-                    <span className="font-semibold text-base text-ink block leading-tight">EduSaga 360</span>
-                    <span className="text-xs text-muted-foreground">Platform</span>
-                  </div>
-                </div>
-              </div>
-              {/* Branch selector — surfaced here since it's hidden from the
-                  compact mobile header, so branch switching stays reachable. */}
-              {branches.length > 0 && (
-                <div className="px-3 py-3 border-b border-border flex-shrink-0">
-                  <Select value={selectedBranchId || 'all'} onValueChange={selectBranch}>
-                    <SelectTrigger className="w-full bg-white text-sm">
-                      <Building2 className="w-4 h-4 flex-shrink-0" />
-                      <SelectValue placeholder={t('selectBranch')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t('allBranches')}</SelectItem>
-                      {branches.map(branch => (
-                        <SelectItem key={branch.id} value={branch.id}>
-                          {isRTL ? branch.name_ar : branch.name_en || branch.name_ar}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              <div className="flex-1 overflow-y-auto">
-                <NavItems mobile />
-              </div>
-            </SheetContent>
-          </Sheet>
-
-          {/* Branch Selector */}
-          <div className="hidden md:flex items-center gap-2 lg:gap-4 flex-1">
-            <Select value={selectedBranchId || 'all'} onValueChange={selectBranch}>
-              <SelectTrigger className="w-32 sm:w-40 lg:w-48 bg-white text-xs sm:text-sm">
-                <Building2 className="w-4 h-4 flex-shrink-0" />
-                <SelectValue placeholder={t('selectBranch')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('allBranches')}</SelectItem>
-                {branches.map(branch => (
-                  <SelectItem key={branch.id} value={branch.id}>
-                    {isRTL ? branch.name_ar : branch.name_en || branch.name_ar}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={closeMenu}
+              className="text-white/80 hover:text-white hover:bg-white/10 h-9 w-9 flex-shrink-0"
+              aria-label={isRTL ? 'إغلاق القائمة' : 'Close menu'}
+            >
+              <X className="w-5 h-5" />
+            </Button>
           </div>
 
-          <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 ml-auto">
-            {/* Tenant Badge */}
+          {branches.length > 0 && (
+            <div className="px-3 py-3 border-b border-border flex-shrink-0 bg-sand-alt/40">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 px-0.5">
+                {isRTL ? 'الفرع' : 'Branch'}
+              </p>
+              <Select value={selectedBranchId || 'all'} onValueChange={selectBranch}>
+                <SelectTrigger className="w-full bg-white text-sm border-border/70">
+                  <Building2 className="w-4 h-4 flex-shrink-0" />
+                  <SelectValue placeholder={t('selectBranch')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('allBranches')}</SelectItem>
+                  {branches.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {isRTL ? branch.name_ar : branch.name_en || branch.name_ar}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="flex-1 overflow-y-auto overscroll-contain">
+            <NavItems />
+          </div>
+
+          <div className="p-3 border-t border-border flex-shrink-0 bg-sand-alt/30 space-y-1">
+            <p className="text-[11px] text-muted-foreground text-center truncate">
+              {tenant
+                ? (isRTL ? tenant.name_ar || tenant.name_en : tenant.name_en || tenant.name_ar)
+                : 'EduSaga 360'}
+            </p>
+            <p className="text-[10px] font-medium text-muted-foreground/80 text-center tracking-wide">
+              v2.03
+            </p>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Full-width shell: sticky glass header + content */}
+      <header className="w-full sticky top-0 z-30 border-b border-border/60 bg-white/85 backdrop-blur-xl shadow-[0_1px_0_rgba(28,36,32,0.04)]">
+        {isTrial() && (
+          <div className="bg-najdi-700 text-white py-1.5 px-4 text-center text-xs sm:text-sm font-medium">
+            <TestTube className="w-3.5 h-3.5 inline me-1.5" />
+            {isRTL ? 'وضع تجريبي' : 'Trial Mode'}
+            {user?.trial_expires_date && (
+              <span className="opacity-90">
+                {' • '}
+                {isRTL ? 'ينتهي في:' : 'Expires:'} {format(new Date(user.trial_expires_date), 'dd/MM/yyyy')}
+              </span>
+            )}
+          </div>
+        )}
+
+        <div className="h-14 w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 lg:px-5">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setMenuOpen(true)}
+            className="h-10 w-10 rounded-xl text-ink hover:bg-najdi-50 hover:text-najdi-900 border border-transparent hover:border-border/60 flex-shrink-0"
+            aria-label={isRTL ? 'فتح القائمة' : 'Open menu'}
+            aria-expanded={menuOpen}
+          >
+            <Menu className="w-5 h-5" />
+          </Button>
+
+          <Link to={createPageUrl('Dashboard')} className="flex items-center gap-2.5 min-w-0 flex-shrink-0 group">
+            <img src="/edusaga-logo.svg" alt="EduSaga" className="h-8 w-auto" />
+            <div className="hidden sm:block min-w-0">
+              <span className="font-semibold text-sm text-ink block leading-tight group-hover:text-najdi-900 transition-colors">
+                EduSaga 360
+              </span>
+              <span className="text-[10px] text-muted-foreground truncate block max-w-[12rem]">
+                {currentPageLabel}
+              </span>
+            </div>
+          </Link>
+
+          <div className="hidden md:flex items-center gap-2 flex-1 min-w-0 ms-1">
+            {branches.length > 0 && (
+              <Select value={selectedBranchId || 'all'} onValueChange={selectBranch}>
+                <SelectTrigger className="w-36 lg:w-48 bg-white/90 text-xs sm:text-sm border-border/70 h-9 rounded-xl">
+                  <Building2 className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
+                  <SelectValue placeholder={t('selectBranch')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('allBranches')}</SelectItem>
+                  {branches.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {isRTL ? branch.name_ar : branch.name_en || branch.name_ar}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          <div className="flex items-center gap-0.5 sm:gap-1.5 ms-auto flex-shrink-0">
             {tenant && (
-              <div className="hidden lg:flex items-center gap-1 px-2 py-1 bg-najdi-50 rounded-lg border border-border text-xs">
-                <Building2 className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                <span className="font-medium text-muted-foreground max-w-[100px] truncate">
+              <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 bg-najdi-50/80 rounded-xl border border-border/60 text-xs max-w-[9rem]">
+                <Building2 className="w-3 h-3 text-najdi-700 flex-shrink-0" />
+                <span className="font-medium text-najdi-900 truncate">
                   {isRTL ? tenant.name_ar : tenant.name_en}
                 </span>
               </div>
             )}
 
-            {/* Cmd+K / Ctrl+K Search — same pages as the role-filtered sidebar */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setCmdOpen((open) => !open)}
-              className="flex text-muted-foreground hover:text-ink h-9 w-9"
+              className="flex text-muted-foreground hover:text-ink h-9 w-9 rounded-xl"
               title={isRTL ? 'بحث (⌘K / Ctrl+K)' : 'Search (⌘K / Ctrl+K)'}
               aria-label={isRTL ? 'بحث' : 'Search'}
             >
               <Search className="w-4 h-4" />
             </Button>
 
-            {/* Notification Bell */}
             <NotificationBell />
 
-            {/* Dark Mode Toggle */}
-            {/* Language Toggle */}
-            <Button variant="ghost" size="icon" onClick={toggleLanguage} className="text-muted-foreground hover:text-ink h-9 w-9" aria-label={isRTL ? 'تغيير اللغة' : 'Toggle language'}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleLanguage}
+              className="text-muted-foreground hover:text-ink h-9 w-9 rounded-xl"
+              aria-label={isRTL ? 'تغيير اللغة' : 'Toggle language'}
+            >
               <Globe className="w-4 h-4" />
             </Button>
 
-            {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-1 sm:gap-2 px-1 sm:px-2 h-9">
-                  <Avatar className="w-7 h-7 sm:w-8 sm:h-8">
+                <Button variant="ghost" className="gap-1.5 sm:gap-2 px-1 sm:px-2 h-9 rounded-xl">
+                  <Avatar className="w-7 h-7 sm:w-8 sm:h-8 ring-2 ring-border/50">
                     <AvatarFallback className="bg-najdi-900 text-white text-xs">
-                        {(user?.display_name || user?.full_name || user?.email || '?')[0]?.toUpperCase()}
-                      </AvatarFallback>
+                      {(user?.display_name || user?.full_name || user?.email || '?')[0]?.toUpperCase()}
+                    </AvatarFallback>
                   </Avatar>
-                  <div className="hidden md:flex flex-col text-left min-w-0">
-                    <p className="text-xs sm:text-sm font-medium text-ink truncate">
+                  <div className="hidden md:flex flex-col text-start min-w-0">
+                    <p className="text-xs sm:text-sm font-medium text-ink truncate max-w-[8rem]">
                       {isRTL
                         ? ([user?.first_name_ar, user?.last_name_ar].filter(Boolean).join(' ') || user?._displayName || user?.display_name || user?.full_name || user?.email || '')
-                        : ([user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.display_name || user?.full_name || user?.email || '')
-                      }
+                        : ([user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.display_name || user?.full_name || user?.email || '')}
                     </p>
-                    <p className="text-xs text-muted-foreground">{t(userRole)}</p>
+                    <p className="text-[11px] text-muted-foreground">{t(userRole)}</p>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
@@ -800,63 +798,52 @@ function LayoutContent({ children, currentPageName }) {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </header>
+        </div>
+      </header>
 
-        {/* Suspended Tenant Banner */}
-        {tenant && !isTenantActive() && (
-          <div className="bg-red-600 text-white py-2 px-4 text-center text-sm font-medium">
-            {isRTL ? '⚠ حساب المؤسسة موقوف. يرجى التواصل مع الدعم.' : '⚠ Your institution account is suspended. Please contact support.'}
+      {tenant && !isTenantActive() && (
+        <div className="bg-red-600 text-white py-2 px-4 text-center text-sm font-medium flex-shrink-0">
+          {isRTL ? '⚠ حساب المؤسسة موقوف. يرجى التواصل مع الدعم.' : '⚠ Your institution account is suspended. Please contact support.'}
+        </div>
+      )}
+
+      <main className="flex-1 w-full min-w-0 bg-sand overflow-hidden flex flex-col min-h-0">
+        <PullToRefresh
+          onRefresh={handleRefresh}
+          className="flex-1 w-full overflow-y-auto p-3 sm:p-4 lg:p-6 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-6"
+        >
+          <div className="w-full max-w-none min-h-full">
+            <TenantAccessGate>{children}</TenantAccessGate>
           </div>
-        )}
+        </PullToRefresh>
+      </main>
 
-        {/* Page Content.
-            PullToRefresh is the scroll container. Bottom padding clears the
-            fixed mobile bottom nav (3.5rem) PLUS the iOS home-indicator
-            safe-area inset, so the last row of content and any action buttons
-            scroll fully above the nav instead of hiding behind it (where the
-            nav also used to swallow taps). */}
-        <main className="flex-1 w-full bg-sand overflow-hidden flex flex-col min-h-0">
-          <PullToRefresh
-            onRefresh={handleRefresh}
-            className="flex-1 w-full overflow-y-auto p-2 sm:p-4 lg:p-6 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-6"
-          >
-            <div className="w-full min-h-full">
-              <TenantAccessGate>{children}</TenantAccessGate>
-            </div>
-          </PullToRefresh>
-        </main>
+      {/* Mobile bottom quick nav */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-border flex items-stretch justify-around h-[calc(3.5rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] px-1">
+        {bottomNavItems.map((item) => {
+          const Icon = item.icon;
+          const active = isNavActive(item);
+          return (
+            <Link
+              key={item.name}
+              to={createPageUrl(navTarget(item))}
+              className={`flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 px-1 py-1.5 rounded-lg transition-colors ${active ? 'text-najdi-700' : 'text-muted-foreground'}`}
+            >
+              <Icon className="w-5 h-5 flex-shrink-0" />
+              <span className="text-[11px] font-medium leading-none truncate max-w-full">{t(item.name)}</span>
+            </Link>
+          );
+        })}
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          className="flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 px-1 py-1.5 rounded-lg text-muted-foreground transition-colors"
+        >
+          <Menu className="w-5 h-5 flex-shrink-0" />
+          <span className="text-[11px] font-medium leading-none truncate max-w-full">{isRTL ? 'القائمة' : 'Menu'}</span>
+        </button>
+      </nav>
 
-        {/* Mobile Bottom Navigation — role-aware, derived from accessible menu.
-            Height = icon row (3.5rem) + safe-area inset below, so the icons are
-            never squeezed by the home indicator. */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-border flex items-stretch justify-around h-[calc(3.5rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] px-1">
-          {bottomNavItems.map((item) => {
-            const Icon = item.icon;
-            const active = isNavActive(item);
-            return (
-              <Link
-                key={item.name}
-                to={createPageUrl(navTarget(item))}
-                className={`flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 px-1 py-1.5 rounded-lg transition-colors ${active ? 'text-najdi-700' : 'text-muted-foreground'}`}
-              >
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                <span className="text-[11px] font-medium leading-none truncate max-w-full">{t(item.name)}</span>
-              </Link>
-            );
-          })}
-          {/* "More" opens the full slide-out drawer so every module stays reachable */}
-          <button
-            type="button"
-            onClick={() => setMobileOpen(true)}
-            className="flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 px-1 py-1.5 rounded-lg text-muted-foreground transition-colors"
-          >
-            <Menu className="w-5 h-5 flex-shrink-0" />
-            <span className="text-[11px] font-medium leading-none truncate max-w-full">{isRTL ? 'المزيد' : 'More'}</span>
-          </button>
-        </nav>
-      </div>
-
-      {/* Global Command Palette — driven by the same filtered nav tree as the sidebar */}
       <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} navigation={filteredNavigation} />
     </div>
   );

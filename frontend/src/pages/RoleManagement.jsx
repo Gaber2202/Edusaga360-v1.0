@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, tenantQuery, fetchData } from '../api/supabaseClient';
+import { supabase, tenantQuery } from '../api/supabaseClient';
+import { fetchRoles, createRole, updateRole, deleteRole } from '../api/roles';
 import { useLanguage } from '../components/LanguageContext';
 import { useRole } from '../components/RoleContext';
 import { useTenantFilter } from '../hooks/useTenantFilter';
@@ -67,9 +68,9 @@ import {
 
 export default function RoleManagement() {
   const { t, isRTL } = useLanguage();
-  const { hasPermission } = useRole();
+  const { hasPermission, userRole } = useRole();
   const queryClient = useQueryClient();
-  const { tenantFilter, tenantId, hasTenantAccess } = useTenantFilter();
+  const { tenantId, hasTenantAccess } = useTenantFilter();
 
   const [showForm, setShowForm] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
@@ -79,11 +80,15 @@ export default function RoleManagement() {
 
   const { data: roles = [], isLoading } = useQuery({
     queryKey: ['roles', tenantId],
-    queryFn: () => fetchData(tenantQuery('roles').select('*').match(tenantFilter())),
+    queryFn: () => fetchRoles({ includeInactive: true }),
     enabled: hasTenantAccess,
   });
 
-  const canManage = hasPermission('manage_users') || hasPermission('all');
+  const canManage =
+    hasPermission('manage_users') ||
+    hasPermission('all') ||
+    userRole === 'admin' ||
+    userRole === 'creator';
 
   // Audit-log writes must never fail the primary CRUD op. If the Role.create/
   // update/delete already succeeded, an audit-log failure should be logged and
@@ -164,11 +169,7 @@ export default function RoleManagement() {
       };
 
       if (editingRole?.id) {
-        await tenantQuery('roles').update({
-          ...payload,
-          last_modified_by: user.email,
-          last_modified_date: new Date().toISOString(),
-        });
+        await updateRole(editingRole.id, payload);
         await writeAuditLog({
           action: 'UPDATE_ROLE',
           entity_type: 'Role',
@@ -178,16 +179,11 @@ export default function RoleManagement() {
         });
         toast.success(isRTL ? 'تم التحديث بنجاح' : 'Updated successfully');
       } else {
-        const created = await tenantQuery('roles').insert({
-          ...payload,
-          is_system_role: false,
-          is_active: true,
-          created_by: user.email,
-        });
+        const created = await createRole(payload);
         await writeAuditLog({
           action: 'CREATE_ROLE',
           entity_type: 'Role',
-          entity_id: created.id,
+          entity_id: created?.id,
           user_email: user.email,
           details: `Created role: ${payload.name_en}`,
         });
@@ -221,7 +217,7 @@ export default function RoleManagement() {
 
     try {
       const user = await supabase.auth.getUser().then(r => r.data?.user);
-      await tenantQuery('roles').delete().eq('id', role.id);
+      await deleteRole(role.id);
       await writeAuditLog({
         action: 'DELETE_ROLE',
         entity_type: 'Role',
